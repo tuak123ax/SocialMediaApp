@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1055427097108",
+    "project_id": "facenotebook-7777e",
+    "storage_bucket": "facenotebook-7777e.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1055427097108:android:405ea78c01e6a3a6e36d01",
+        "android_client_info": {
+          "package_name": "com.minhtu.firenotebook"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAirrBsFMSEn99IofFjitUH9wqVzaQlEXg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
