@@ -1,19 +1,23 @@
 package com.minhtu.firesocialmedia
 
 import android.Manifest
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.paint
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -23,12 +27,22 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.google.android.gms.tasks.OnCompleteListener
-import com.google.firebase.auth.AuthResult
+import com.google.android.gms.auth.api.identity.BeginSignInRequest
+import com.google.android.gms.auth.api.identity.Identity
+import com.google.android.gms.auth.api.identity.SignInClient
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.auth.GoogleAuthProvider
+import com.google.firebase.auth.ktx.auth
+import com.google.firebase.ktx.Firebase
 import com.minhtu.firesocialmedia.home.Home
+import com.minhtu.firesocialmedia.home.HomeViewModel
+import com.minhtu.firesocialmedia.home.search.Search
+import com.minhtu.firesocialmedia.home.showimage.ShowImage
 import com.minhtu.firesocialmedia.home.uploadnewsfeed.UploadNewsfeed
+import com.minhtu.firesocialmedia.home.userinformation.UserInformation
 import com.minhtu.firesocialmedia.information.Information
+import com.minhtu.firesocialmedia.instance.UserInstance
 import com.minhtu.firesocialmedia.signin.SignIn
 import com.minhtu.firesocialmedia.signup.SignUp
 import com.minhtu.firesocialmedia.signup.SignUpViewModel
@@ -37,10 +51,6 @@ import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-//    companion object{
-//        var signInRequest: BeginSignInRequest? = null
-//        var oneTapClient: SignInClient? = null
-//    }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 //        setUpGoogleSignIn(applicationContext)
@@ -56,20 +66,6 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
-//    fun setUpGoogleSignIn(context : Context){
-//        signInRequest = BeginSignInRequest.builder()
-//            .setGoogleIdTokenRequestOptions(
-//                BeginSignInRequest.GoogleIdTokenRequestOptions.builder()
-//                    .setSupported(true)
-//                    // Your server's client ID, not your Android client ID.
-//                    .setServerClientId(ContextCompat.getString(context, R.string.server_client_id))
-//                    // Only show accounts previously used to sign in.
-//                    .setFilterByAuthorizedAccounts(true)
-//                    .build()
-//            )
-//            .build()
-//        oneTapClient = Identity.getSignInClient(context)
-//    }
 
     @Composable
     private fun MainApp(){
@@ -80,12 +76,17 @@ class MainActivity : ComponentActivity() {
     private fun SetUpNavigation(){
         val navController = rememberNavController()
         val startDestination = SignIn.getScreenName()
+        var selectedImage = ""
+        var selectedUser: UserInstance? = null
 
         //Define shared viewModel instance to use for signUp and information screens.
         val signUpViewModel: SignUpViewModel = viewModel()
+        //Define shared viewModel instance to use for Home and Search screens.
+        val homeViewModel: HomeViewModel = viewModel()
         NavHost(navController = navController, startDestination = startDestination){
             composable(route = SignIn.getScreenName()){
-                SignIn.SignInScreen(modifier = Modifier
+                SignIn.SignInScreen(this@MainActivity,
+                    modifier = Modifier
                     .fillMaxSize()
                     .paint(
                         painter = painterResource(id = R.drawable.background),
@@ -97,11 +98,11 @@ class MainActivity : ComponentActivity() {
             composable(route = SignUp.getScreenName()){
                 SignUp.SignUpScreen(signUpViewModel,
                     modifier = Modifier
-                    .fillMaxSize()
-                    .paint(
-                        painter = painterResource(id = R.drawable.background),
-                        contentScale = ContentScale.FillBounds
-                    ),
+                        .fillMaxSize()
+                        .paint(
+                            painter = painterResource(id = R.drawable.background),
+                            contentScale = ContentScale.FillBounds
+                        ),
                     onNavigateToSignInScreen = {navController.navigate(route = SignIn.getScreenName())},
                     onNavigateToInformationScreen = {navController.navigate(route = Information.getScreenName())})
             }
@@ -120,7 +121,13 @@ class MainActivity : ComponentActivity() {
                             painter = painterResource(id = R.drawable.background),
                             contentScale = ContentScale.FillBounds
                         ),
-                    onNavigateToUploadNews = {navController.navigate(route = UploadNewsfeed.getScreenName())}
+                    homeViewModel,
+                    onNavigateToUploadNews = {navController.navigate(route = UploadNewsfeed.getScreenName())},
+                    onNavigateToShowImageScreen = {image ->
+                        selectedImage = image
+                        navController.navigate(route = ShowImage.getScreenName())},
+                    onNavigateToSearch = {navController.navigate(route = Search.getScreenName())},
+                    onNavigateToSignIn = {navController.navigate(route = SignIn.getScreenName())}
                     )
             }
             composable(route = UploadNewsfeed.getScreenName()){
@@ -130,8 +137,33 @@ class MainActivity : ComponentActivity() {
                         painter = painterResource(id = R.drawable.background),
                         contentScale = ContentScale.FillBounds
                     ),
+                    homeViewModel,
                     onNavigateToHomeScreen = {navController.navigate(route = Home.getScreenName())}
                 )
+            }
+            composable(route = ShowImage.getScreenName()) {
+                ShowImage.ShowImageScreen(selectedImage, modifier = Modifier
+                    .fillMaxSize()
+                    .background(color = Color.Black)
+                )
+            }
+            composable(route = Search.getScreenName()) {
+                Search.SearchScreen(modifier = Modifier.fillMaxSize().background(color = Color.White),
+                    hiltViewModel(),
+                    homeViewModel,
+                    onNavigateToUserInfomation = {user ->
+                        selectedUser = user
+                        navController.navigate(route = UserInformation.getScreenName())}
+                    )
+            }
+            composable(route = UserInformation.getScreenName()){
+                UserInformation.UserInformationScreen(selectedUser,
+                    modifier = Modifier.fillMaxSize().background(color = Color.White),
+                    homeViewModel,
+                    onNavigateToShowImageScreen = {image ->
+                        selectedImage = image
+                        navController.navigate(route = ShowImage.getScreenName())}
+                    )
             }
         }
     }

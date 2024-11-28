@@ -14,6 +14,9 @@ import com.minhtu.firesocialmedia.instance.UserInstance
 import java.util.UUID
 
 class HomeViewModel : ViewModel() {
+    var listUsers: ArrayList<UserInstance>? = ArrayList()
+    var listNews: ArrayList<NewsInstance>? = ArrayList()
+    var currentUser : UserInstance? = null
     private val _allUsers : MutableLiveData<ArrayList<UserInstance>> = MutableLiveData()
     val allUsers = _allUsers
     fun updateUsers(users: ArrayList<UserInstance>) {
@@ -38,12 +41,12 @@ class HomeViewModel : ViewModel() {
         image = input
     }
 
-    private val _createPostStatus = MutableLiveData<Boolean>()
-    val createPostStatus = _createPostStatus
+    private var _createPostStatus = MutableLiveData<Boolean>()
+    var createPostStatus = _createPostStatus
 
-    fun createPost(poster: String, avatar: String){
+    fun createPost(user : UserInstance){
         val newsRandomId = generateRandomId()
-        val newsInstance = NewsInstance(newsRandomId,poster,avatar,message,image)
+        val newsInstance = NewsInstance(newsRandomId,user.uid, user.name,user.image,message,image)
         val storageReference = FirebaseStorage.getInstance().getReference()
             .child("news").child(newsRandomId)
         val databaseReference = FirebaseDatabase.getInstance().getReference()
@@ -75,5 +78,12 @@ class HomeViewModel : ViewModel() {
     }
     private fun generateRandomId(): String {
         return UUID.randomUUID().toString()
+    }
+
+    fun resetPostStatus() {
+        _createPostStatus = MutableLiveData<Boolean>()
+        createPostStatus = _createPostStatus
+        message = ""
+        image = ""
     }
 }

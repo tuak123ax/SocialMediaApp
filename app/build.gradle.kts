@@ -24,8 +24,17 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
+        signingConfig = signingConfigs.getByName("debug")
     }
 
+    signingConfigs{
+        getByName("debug") {
+            keyAlias = "test"
+            keyPassword = "123456"
+            storeFile = file("test.jks")
+            storePassword = "123456"
+        }
+    }
     buildTypes {
         release {
             isMinifyEnabled = false

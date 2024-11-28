@@ -39,10 +39,10 @@ class UploadNewsfeed {
     companion object{
         @Composable
         fun UploadNewsfeedScreen(modifier: Modifier,
-                                 homeViewModel: HomeViewModel = viewModel(),
+                                 homeViewModel: HomeViewModel,
                                  onNavigateToHomeScreen: () -> Unit){
             val context = LocalContext.current
-            val lifecycleOwner = rememberUpdatedState(newValue = LocalLifecycleOwner.current)
+            val lifecycleOwner = LocalLifecycleOwner.current
             val galleryIntent = intentNavigateToGallery()
             val getAvatarFromGalleryLauncher = rememberLauncherForActivityResult(
                 ActivityResultContracts.StartActivityForResult()){
@@ -56,16 +56,18 @@ class UploadNewsfeed {
                     }
                 }
             }
-            LaunchedEffect(lifecycleOwner.value) {
-                homeViewModel.createPostStatus.observe(lifecycleOwner.value){createPostStatus ->
-                    if(createPostStatus) {
-                        Toast.makeText(context, "create post successfully!", Toast.LENGTH_SHORT).show()
-                        onNavigateToHomeScreen()
-                    } else {
-
-                        Toast.makeText(context, "create post failed! Please try again!", Toast.LENGTH_SHORT).show()
-                        onNavigateToHomeScreen()
-                    }
+            LaunchedEffect(lifecycleOwner) {
+                 homeViewModel.createPostStatus.observe(lifecycleOwner){createPostStatus ->
+                     if(createPostStatus != null) {
+                         if(createPostStatus == true) {
+                             Toast.makeText(context, "create post successfully!", Toast.LENGTH_SHORT).show()
+                         } else {
+                             Toast.makeText(context, "create post failed! Please try again!", Toast.LENGTH_SHORT).show()
+                         }
+                         homeViewModel.resetPostStatus()
+                         homeViewModel.createPostStatus.removeObservers(lifecycleOwner)
+                         onNavigateToHomeScreen()
+                     }
                 }
             }
             Column(verticalArrangement = Arrangement.Center, modifier = modifier) {
@@ -106,9 +108,9 @@ class UploadNewsfeed {
                         Text(text = "Back")
                     }
                     Button(onClick = {
-                        val currentUser = Home.currentUser
+                        val currentUser = homeViewModel.currentUser
                         if(currentUser != null){
-                            homeViewModel.createPost(currentUser.name, currentUser.image)
+                            homeViewModel.createPost(currentUser)
                         } else {
                             Log.e("UploadNewsfeedScreen", "Cannot get user information!")
                         }
