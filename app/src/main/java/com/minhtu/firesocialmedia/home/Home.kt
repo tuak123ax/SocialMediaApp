@@ -1,18 +1,16 @@
 package com.minhtu.firesocialmedia.home
 
-import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -21,7 +19,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -35,17 +32,16 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.paint
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -59,15 +55,10 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.database.DataSnapshot
-import com.google.firebase.database.DatabaseError
-import com.google.firebase.database.DatabaseReference
-import com.google.firebase.database.FirebaseDatabase
-import com.google.firebase.database.ValueEventListener
 import com.minhtu.firesocialmedia.R
-import com.minhtu.firesocialmedia.instance.NewsInstance
 import com.minhtu.firesocialmedia.instance.UserInstance
-import com.minhtu.firesocialmedia.signin.SignIn
+import com.minhtu.firesocialmedia.loading.Loading
+import com.minhtu.firesocialmedia.loading.LoadingViewModel
 import com.minhtu.firesocialmedia.utils.UiUtils
 import com.minhtu.firesocialmedia.utils.Utils
 
@@ -76,12 +67,15 @@ class Home {
         @Composable
         fun HomeScreen(modifier: Modifier,
                        homeViewModel: HomeViewModel,
+                       loadingViewModel: LoadingViewModel = viewModel(),
                        onNavigateToUploadNews: () -> Unit,
                        onNavigateToShowImageScreen: (image : String) -> Unit,
                        onNavigateToSearch: () -> Unit,
-                       onNavigateToSignIn: () -> Unit){
+                       onNavigateToSignIn: () -> Unit,
+                       onNavigateToUserInformation: (user: UserInstance?) -> Unit){
             val context = LocalContext.current
             val lifecycleOwner = rememberUpdatedState(newValue = LocalLifecycleOwner.current)
+            val isLoading by loadingViewModel.isLoading.collectAsState()
 
             showAlertDialogToLogout(context, onNavigateToSignIn)
 
@@ -114,8 +108,23 @@ class Home {
             }
 
             LaunchedEffect(lifecycleOwner.value) {
-                getAllUsers(homeViewModel)
+                loadingViewModel.showLoading()
+                //Load users list and news list.
+                homeViewModel.numberOfListNeedToLoad = 2
+                Utils.getAllUsers(homeViewModel)
                 Utils.getAllNews(homeViewModel)
+                homeViewModel.allUsers.observe(lifecycleOwner.value){ _ ->
+                    homeViewModel.decreaseNumberOfListNeedToLoad(1)
+                    if(homeViewModel.numberOfListNeedToLoad == 0) {
+                        loadingViewModel.hideLoading()
+                    }
+                }
+                homeViewModel.allNews.observe(lifecycleOwner.value){ _ ->
+                    homeViewModel.decreaseNumberOfListNeedToLoad(1)
+                    if(homeViewModel.numberOfListNeedToLoad == 0) {
+                        loadingViewModel.hideLoading()
+                    }
+                }
             }
 
             val openChatAppIntent = getChatAppIntent(context)
@@ -127,119 +136,100 @@ class Home {
             val usersList =  homeViewModel.allUsers.observeAsState(initial = emptyList())
 
             val newsList = homeViewModel.allNews.observeAsState(initial = emptyList())
-            Column(verticalArrangement = Arrangement.Top, modifier = modifier) {
-                Row(horizontalArrangement = Arrangement.Start, modifier = Modifier
-                    .padding(20.dp)
-                    .fillMaxWidth()) {
-                    AsyncImage(model = ImageRequest.Builder(context)
-                        .data(R.drawable.fire_chat_icon)
-                        .crossfade(true)
-                        .build(),
-                        contentDescription = "Chat App Icon",
-                        contentScale = ContentScale.Fit,
-                        modifier = Modifier
-                            .size(32.dp)
-                            .clip(CircleShape)
-                            .clickable {
-                                if (openChatAppIntent != null) {
-                                    openChatAppLauncher.launch(openChatAppIntent)
-                                } else {
-                                    Toast
-                                        .makeText(
-                                            context,
-                                            "Can't find this app on your device!",
-                                            Toast.LENGTH_SHORT
-                                        )
-                                        .show()
+
+            Box(modifier = Modifier.fillMaxSize()) {
+                Column(verticalArrangement = Arrangement.Top, modifier = modifier) {
+                    Row(horizontalArrangement = Arrangement.Start, modifier = Modifier
+                        .padding(20.dp)
+                        .fillMaxWidth()) {
+                        AsyncImage(model = ImageRequest.Builder(context)
+                            .data(R.drawable.fire_chat_icon)
+                            .crossfade(true)
+                            .build(),
+                            contentDescription = "Chat App Icon",
+                            contentScale = ContentScale.Fit,
+                            modifier = Modifier
+                                .size(32.dp)
+                                .clip(CircleShape)
+                                .clickable {
+                                    if (openChatAppIntent != null) {
+                                        openChatAppLauncher.launch(openChatAppIntent)
+                                    } else {
+                                        Toast
+                                            .makeText(
+                                                context,
+                                                "Can't find this app on your device!",
+                                                Toast.LENGTH_SHORT
+                                            )
+                                            .show()
+                                    }
+                                })
+
+                        Spacer(modifier = Modifier.weight(1f))
+
+                        Text(
+                            text = "FireNotebook",
+                            color = Color.Cyan,
+                            fontSize = 25.sp,
+                            textAlign = TextAlign.Center,
+                        )
+
+                        Spacer(modifier = Modifier.weight(1f))
+
+                        AsyncImage(model = ImageRequest.Builder(context)
+                            .data(R.drawable.search)
+                            .crossfade(true)
+                            .build(),
+                            contentDescription = "Search Icon",
+                            contentScale = ContentScale.FillBounds,
+                            modifier = Modifier
+                                .size(30.dp)
+                                .clickable {
+                                    onNavigateToSearch()
+                                })
+                    }
+
+                    AnimatedVisibility(visible = isAllUsersVisible) {
+                        Column(verticalArrangement = Arrangement.Top){
+                            Row(horizontalArrangement = Arrangement.Center, modifier = Modifier.fillMaxWidth()){
+                                OutlinedTextField(
+                                    value = "", onValueChange = {
+                                    }, modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(20.dp)
+                                        .clickable {
+                                            onNavigateToUploadNews()
+                                        },
+                                    label = { Text(text = "What are you thinking?")},
+                                    enabled = false,    // Disables the TextField
+                                    singleLine = true
+                                )
+                            }
+                            LazyRow(horizontalArrangement = Arrangement.spacedBy(5.dp), modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(10.dp)) {
+                                items(usersList.value){user ->
+                                    UserCard(user = user, context, onNavigateToUserInformation)
                                 }
-                            })
-
-                    Spacer(modifier = Modifier.weight(1f))
-
-                    Text(
-                        text = "FireNotebook",
-                        color = Color.Cyan,
-                        fontSize = 25.sp,
-                        textAlign = TextAlign.Center,
-                    )
-
-                    Spacer(modifier = Modifier.weight(1f))
-
-                    AsyncImage(model = ImageRequest.Builder(context)
-                        .data(R.drawable.search)
-                        .crossfade(true)
-                        .build(),
-                        contentDescription = "Chat App Icon",
-                        contentScale = ContentScale.FillBounds,
-                        modifier = Modifier
-                            .size(30.dp)
-                            .clickable {
-                                onNavigateToSearch()
-                            })
-                }
-
-                AnimatedVisibility(visible = isAllUsersVisible) {
-                    Column(verticalArrangement = Arrangement.Top){
-                        Row(horizontalArrangement = Arrangement.Center, modifier = Modifier.fillMaxWidth()){
-                            OutlinedTextField(
-                                value = "", onValueChange = {
-                                }, modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(20.dp)
-                                    .clickable {
-                                        onNavigateToUploadNews()
-                                    },
-                                label = { Text(text = "What are you thinking?")},
-                                enabled = false,    // Disables the TextField
-                                singleLine = true
-                            )
-                        }
-                        LazyRow(horizontalArrangement = Arrangement.spacedBy(5.dp), modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(10.dp)) {
-                            items(usersList.value){user ->
-                                UserCard(user = user, context)
                             }
                         }
                     }
-                }
 
-                LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier
-                    .fillMaxSize(), state = listState) {
-                    items(newsList.value){news ->
-                        UiUtils.NewsCard(news = news, context, onNavigateToShowImageScreen)
+                    LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier
+                        .fillMaxSize(), state = listState) {
+                        items(newsList.value){news ->
+                            UiUtils.NewsCard(news = news, context, onNavigateToShowImageScreen, onNavigateToUserInformation, homeViewModel)
+                        }
                     }
+                }
+                if(isLoading){
+                    Loading.LoadingScreen()
                 }
             }
         }
 
-        private fun getAllUsers(homeViewModel: HomeViewModel) {
-            val currentUserId = FirebaseAuth.getInstance().uid
-            val database = FirebaseDatabase.getInstance()
-            val databaseReference: DatabaseReference = database.getReference().child("users")
-            databaseReference.addValueEventListener(object : ValueEventListener {
-                override fun onDataChange(snapshot: DataSnapshot) {
-                    homeViewModel.listUsers!!.clear()
-                    for (dataSnapshot in snapshot.getChildren()) {
-                        val user: UserInstance? = dataSnapshot.getValue(UserInstance::class.java)
-                        if (user != null) {
-                            if(user.uid != currentUserId) {
-                                homeViewModel.listUsers!!.add(user)
-                            } else {
-                                Log.e("Home", "set current user: "+ user.name)
-                                homeViewModel.currentUser = user
-                            }
-                        }
-                    }
-                    homeViewModel.updateUsers(homeViewModel.listUsers!!)
-                }
-
-                override fun onCancelled(error: DatabaseError) {}
-            })
-        }
-
         @Composable
-        private fun UserCard(user: UserInstance, context: Context) {
+        private fun UserCard(user: UserInstance, context: Context, onNavigateToUserInformation: (user: UserInstance) -> Unit) {
             Card(
                 modifier = Modifier.size(100.dp, 120.dp),
                 colors = CardDefaults.cardColors(containerColor = Color.LightGray)
@@ -256,6 +246,7 @@ class Home {
                             .weight(1f) // Allocates equal space to the image and text
                             .clickable {
                                 // Handle image click
+                                onNavigateToUserInformation(user)
                             }
                     )
                     Spacer(modifier = Modifier.height(1.dp)) // Optional spacing between image and text

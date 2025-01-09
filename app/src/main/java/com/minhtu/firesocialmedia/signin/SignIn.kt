@@ -2,21 +2,18 @@ package com.minhtu.firesocialmedia.signin
 
 import android.app.Activity
 import android.content.Context
-import android.content.Intent
-import android.content.IntentSender
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
-import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.ActivityResult
-import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -33,6 +30,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -50,25 +48,13 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.google.android.gms.auth.api.identity.BeginSignInRequest
 import com.google.android.gms.auth.api.identity.Identity
-import com.google.android.gms.auth.api.identity.SignInClient
-import com.google.android.gms.auth.api.identity.SignInCredential
-import com.google.android.gms.auth.api.signin.GoogleSignIn
-import com.google.android.gms.auth.api.signin.GoogleSignInAccount
-import com.google.android.gms.auth.api.signin.GoogleSignInOptions
-import com.google.android.gms.common.api.ApiException
-import com.google.android.gms.tasks.Task
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.FirebaseUser
-import com.google.firebase.auth.GoogleAuthProvider
-import com.google.firebase.auth.ktx.auth
-import com.google.firebase.ktx.Firebase
 import com.minhtu.firesocialmedia.R
 import com.minhtu.firesocialmedia.constants.Constants
+import com.minhtu.firesocialmedia.loading.Loading
+import com.minhtu.firesocialmedia.loading.LoadingViewModel
 
 class SignIn {
     companion object{
@@ -76,9 +62,12 @@ class SignIn {
         fun SignInScreen(
             activity: Activity,
             signInViewModel: SignInViewModel = viewModel(),
+            loadingViewModel: LoadingViewModel = viewModel(),
             modifier: Modifier,
             onNavigateToSignUpScreen:() -> Unit,
-            onNavigateToHomeScreen:()-> Unit) {
+            onNavigateToHomeScreen:()-> Unit,
+            onNavigateToInformationScreen:() -> Unit) {
+            val isLoading by loadingViewModel.isLoading.collectAsState()
             val context = LocalContext.current
             val resultLauncher = rememberLauncherForActivityResult(
                 contract = ActivityResultContracts.StartIntentSenderForResult(),
@@ -86,7 +75,7 @@ class SignIn {
                     result ->
                     try{
                         val task = Identity.getSignInClient(context).getSignInCredentialFromIntent(result.data)
-                        handleSignInResult(task, activity, onNavigateToHomeScreen)
+                        signInViewModel.handleSignInResult(task, activity)
                     } catch(e : Exception){
                         Log.e("SignIn", "Exception: ${e.message}")
                     }
@@ -95,9 +84,15 @@ class SignIn {
             val lifecycleOwner = rememberUpdatedState(LocalLifecycleOwner.current)
             LaunchedEffect(lifecycleOwner.value) {
                 signInViewModel.signInState.observe(lifecycleOwner.value){signInState ->
+                    Log.e("signInState", "receive data")
+                    loadingViewModel.hideLoading()
                     if(signInState.signInStatus){
                         Toast.makeText(context,"Sign in successfully!!!", Toast.LENGTH_SHORT).show()
-                        onNavigateToHomeScreen()
+                        if(signInState.message == Constants.ACCOUNT_NOT_EXISTED) {
+                            onNavigateToInformationScreen()
+                        } else {
+                            onNavigateToHomeScreen()
+                        }
                     } else{
                         when(signInState.message){
                             Constants.DATA_EMPTY-> Toast.makeText(context,"Please fill all information!", Toast.LENGTH_SHORT).show()
@@ -108,95 +103,77 @@ class SignIn {
             }
 
             //Back button
-            showAlertDialog(context)
+            QuitAlertDialog(context)
 
-            Column(modifier = modifier, verticalArrangement = Arrangement.Center) {
-                //Title
-                Text(
-                    text = "FireMedia",
-                    color = Color.Blue,
-                    fontSize = 30.sp,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Spacer(modifier = Modifier.padding(bottom = 50.dp))
-                //Username textfield
-                OutlinedTextField(
-                    value = signInViewModel.email, onValueChange = {
-                        signInViewModel.updateEmail(it)
-                    }, modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(20.dp),
-                    label = { Text(text = "Username")},
-                    singleLine = true
-                )
-                //Password textfield
-                PasswordTextField(Constants.PASSWORD, signInViewModel)
-                //Row contains buttons
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(20.dp), horizontalArrangement = Arrangement.Center
-                ) {
-                    //SignIn button
-                    Button(onClick = { signInViewModel.signIn(context) }) {
-                        Text(text = "Sign In")
+            Box(modifier = Modifier.fillMaxSize()) {
+                Column(modifier = modifier, verticalArrangement = Arrangement.Center) {
+                    //Title
+                    Text(
+                        text = "FireMedia",
+                        color = Color.Blue,
+                        fontSize = 30.sp,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(modifier = Modifier.padding(bottom = 50.dp))
+                    //Username textfield
+                    OutlinedTextField(
+                        value = signInViewModel.email, onValueChange = {
+                            signInViewModel.updateEmail(it)
+                        }, modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(20.dp),
+                        label = { Text(text = "Username")},
+                        singleLine = true
+                    )
+                    //Password textfield
+                    PasswordTextField(Constants.PASSWORD, signInViewModel)
+                    //Row contains buttons
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(20.dp), horizontalArrangement = Arrangement.Center
+                    ) {
+                        //SignIn button
+                        Button(onClick = {
+                            loadingViewModel.showLoading()
+                            signInViewModel.signIn(context) }) {
+                            Text(text = "Sign In")
+                        }
+                        Spacer(modifier = Modifier.padding(horizontal = 20.dp))
+                        //SignUp button
+                        Button(onClick = {onNavigateToSignUpScreen()}) {
+                            Text(text = "Sign Up")
+                        }
                     }
-                    Spacer(modifier = Modifier.padding(horizontal = 20.dp))
-                    //SignUp button
-                    Button(onClick = {onNavigateToSignUpScreen()}) {
-                        Text(text = "Sign Up")
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(20.dp), horizontalArrangement = Arrangement.Center
+                    ) {
+                        //Google button
+                        Button(onClick = {
+                            signInViewModel.signInWithGoogle(context, resultLauncher)
+                        }, colors = ButtonDefaults.buttonColors(Color.White)) {
+                            Image(
+                                painter = painterResource(id = R.drawable.google),
+                                contentDescription = "Google",
+                                modifier = Modifier
+                                    .size(25.dp)
+                                    .padding(end = 5.dp)
+                            )
+                            Text(text = "Sign In With Google", color = Color.Black)
+                        }
                     }
                 }
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(20.dp), horizontalArrangement = Arrangement.Center
-                ) {
-                    //Google button
-                    Button(onClick = {
-                        setupGoogleSignIn(context, resultLauncher)
-                    }, colors = ButtonDefaults.buttonColors(Color.White)) {
-                        Image(
-                            painter = painterResource(id = R.drawable.google),
-                            contentDescription = "Google",
-                            modifier = Modifier
-                                .size(25.dp)
-                                .padding(end = 5.dp)
-                        )
-                        Text(text = "Sign In With Google", color = Color.Black)
-                    }
+                if (isLoading) {
+                    Loading.LoadingScreen()
                 }
             }
-        }
-
-        private fun setupGoogleSignIn(context: Context, resultLauncher: ManagedActivityResultLauncher<IntentSenderRequest, ActivityResult>){
-            val signInRequest = BeginSignInRequest.builder()
-                .setGoogleIdTokenRequestOptions(
-                    BeginSignInRequest.GoogleIdTokenRequestOptions.builder()
-                        .setSupported(true)
-                        // Your server's client ID, not your Android client ID.
-                        .setServerClientId("744458948813-qktjfopd2cr9b1a87pbr3981ujllb3mt.apps.googleusercontent.com")
-                        .setFilterByAuthorizedAccounts(false)
-                        .build())
-                .build()
-            val googleSignInClient = Identity.getSignInClient(context)
-            googleSignInClient.beginSignIn(signInRequest).addOnSuccessListener { result ->
-                try {
-                    // Launch the One Tap UI
-                    val intentSenderRequest = IntentSenderRequest.Builder(result.pendingIntent).build()
-                    resultLauncher.launch(intentSenderRequest)
-                } catch (e: IntentSender.SendIntentException) {
-                    Log.e("OneTapSignIn", "Error launching intent: ${e.localizedMessage}")
-                }
-            }
-                .addOnFailureListener { exception ->
-                    Log.e("OneTapSignIn", "Sign-in failed: ${exception.localizedMessage}")
-                }
         }
 
         @Composable
-        private fun showAlertDialog(context : Context) {
+        private fun QuitAlertDialog(context : Context) {
             var showDialog by remember { mutableStateOf(false) }
             BackHandler {
                 showDialog = true
@@ -217,33 +194,6 @@ class SignIn {
                         }
                     }
                 )
-            }
-        }
-
-        private fun handleSignInResult(credential : SignInCredential, activity: Activity, onNavigateToHomeScreen: () -> Unit) {
-            val idToken = credential.googleIdToken
-            when {
-                idToken != null -> {
-                    // Got an ID token from Google. Use it to authenticate
-                    // with Firebase.
-                    val firebaseCredential = GoogleAuthProvider.getCredential(idToken, null)
-                    Firebase.auth.signInWithCredential(firebaseCredential)
-                        .addOnCompleteListener(activity) { task ->
-                            if (task.isSuccessful) {
-                                // Sign in success, update UI with the signed-in user's information
-                                Log.d("Signin", "signInWithCredential:success")
-                                val user = Firebase.auth.currentUser
-                                onNavigateToHomeScreen()
-                            } else {
-                                // If sign in fails, display a message to the user.
-                                Log.w("Signin", "signInWithCredential:failure", task.exception)
-                            }
-                        }
-                }
-                else -> {
-                    // Shouldn't happen.
-                    Log.d("Signin", "No ID token!")
-                }
             }
         }
 

@@ -42,42 +42,14 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.minhtu.firesocialmedia.home.HomeViewModel
 import com.minhtu.firesocialmedia.instance.NewsInstance
+import com.minhtu.firesocialmedia.instance.UserInstance
 
 class UiUtils {
     companion object{
-//        @Composable
-//        fun PasswordTextField(label : String) {
-//            var password by rememberSaveable {
-//                mutableStateOf("")
-//            }
-//            var passwordVisibility by rememberSaveable {
-//                mutableStateOf(false)
-//            }
-//            OutlinedTextField(
-//                value = password, onValueChange = {
-//                    password = it
-//                },
-//                modifier = Modifier
-//                    .fillMaxWidth()
-//                    .padding(20.dp)
-//                    //Fix crash: java.lang.IllegalStateException: Already in the pool! when using visualTransformation
-//                    .clearAndSetSemantics {  },
-//                label = { Text(text = label) },
-//                singleLine = true,
-//                visualTransformation = if(passwordVisibility) VisualTransformation.None else PasswordVisualTransformation(),
-//                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-//                trailingIcon = {
-//                    val icon = if(passwordVisibility) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
-//                    val descriptionOfIcon = if(passwordVisibility) "Hide password" else "Show password"
-//                    IconButton(onClick = {passwordVisibility = !passwordVisibility}) {
-//                        Icon(imageVector = icon, descriptionOfIcon)
-//                    }
-//                }
-//            )
-//        }
 @Composable
-fun NewsCard(news: NewsInstance, context: Context, onNavigateToShowImageScreen: (image: String) -> Unit) {
+fun NewsCard(news: NewsInstance, context: Context, onNavigateToShowImageScreen: (image: String) -> Unit, onNavigateToUserInfomation: (user: UserInstance?) -> Unit, homeViewModel: HomeViewModel) {
     Card(
         modifier = Modifier
             .padding(10.dp)
@@ -88,7 +60,11 @@ fun NewsCard(news: NewsInstance, context: Context, onNavigateToShowImageScreen: 
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
             Row(horizontalArrangement = Arrangement.Start,
-                modifier = Modifier.background(color = Color.Cyan).padding(10.dp).fillMaxWidth()){
+                modifier = Modifier.background(color = Color.Cyan).padding(10.dp).fillMaxWidth()
+                    .clickable {
+                        val user = homeViewModel.findUserById(news.posterId)
+                        onNavigateToUserInfomation(user)
+                    }){
                 AsyncImage(
                     model = ImageRequest.Builder(context)
                         .data(Uri.parse(news.avatar))
@@ -99,9 +75,6 @@ fun NewsCard(news: NewsInstance, context: Context, onNavigateToShowImageScreen: 
                     modifier = Modifier
                         .size(40.dp)
                         .clip(CircleShape)
-                        .clickable {
-                            // Handle image click
-                        }
                 )
                 Spacer(modifier = Modifier.width(10.dp))
                 Text(
