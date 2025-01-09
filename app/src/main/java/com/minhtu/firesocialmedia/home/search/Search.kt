@@ -42,7 +42,7 @@ class Search {
         fun SearchScreen(modifier: Modifier,
                          searchViewModel: SearchViewModel,
                          homeViewModel: HomeViewModel,
-                         onNavigateToUserInfomation: (user : UserInstance) -> Unit){
+                         onNavigateToUserInformation: (user : UserInstance) -> Unit){
             Column(verticalArrangement = Arrangement.Top, modifier = modifier) {
                 val context = LocalContext.current
                 SearchBar(query = searchViewModel.query, onQueryChange = {
@@ -55,7 +55,7 @@ class Search {
                        user.name.contains(searchViewModel.query, ignoreCase = true)
                    }?: emptyList()
                     items(filterList){user ->
-                        UserRow(user, context, onNavigateToUserInfomation)
+                        UserRow(user, context, onNavigateToUserInformation)
                     }
                 }
             }
@@ -65,7 +65,7 @@ class Search {
         private fun UserRow(user : UserInstance, context : Context, onNavigateToUserInfomation: (user: UserInstance) -> Unit) {
             Row(horizontalArrangement = Arrangement.Start,
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(1.dp)
+                modifier = Modifier.padding(5.dp)
                     .fillMaxWidth()
                     .border(1.dp, Color.Black, RectangleShape)
                     .clickable {
@@ -79,7 +79,7 @@ class Search {
                     contentDescription = "Avatar",
                     contentScale = ContentScale.FillBounds,
                     modifier = Modifier
-                        .size(40.dp)
+                        .size(60.dp)
                         .padding(5.dp)
                         .clip(CircleShape)
                 )

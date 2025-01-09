@@ -3,9 +3,11 @@ package com.minhtu.firesocialmedia.signup
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
@@ -19,6 +21,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberUpdatedState
@@ -38,21 +41,26 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.minhtu.firesocialmedia.constants.Constants
+import com.minhtu.firesocialmedia.loading.Loading
+import com.minhtu.firesocialmedia.loading.LoadingViewModel
 
 class SignUp {
     companion object{
         @Composable
         fun SignUpScreen(
             signUpViewModel: SignUpViewModel,
+            loadingViewModel: LoadingViewModel = viewModel(),
             modifier: Modifier,
             onNavigateToSignInScreen : () -> Unit,
             onNavigateToInformationScreen: ()-> Unit
         ){
+            val isLoading by loadingViewModel.isLoading.collectAsState()
             val context = LocalContext.current
             val lifecycleOwner = rememberUpdatedState(LocalLifecycleOwner.current)
             //Use launched effect to observe state one time although recomposition happened
             LaunchedEffect(lifecycleOwner.value) {
                 signUpViewModel.signUpStatus.observe(lifecycleOwner.value) { signUpState ->
+                    loadingViewModel.hideLoading()
                     Log.e("signUpEmail", signUpViewModel.email)
                     Log.e("signUpStatus", signUpState.signUpStatus.toString() +" "+signUpState.message)
                     if (signUpState.signUpStatus) {
@@ -68,46 +76,53 @@ class SignUp {
                     }
                 }
             }
-            Column(modifier = modifier, verticalArrangement = Arrangement.Center){
-                //Title
-                Text(
-                    text = "Sign Up",
-                    color = Color.Blue,
-                    fontSize = 30.sp,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Spacer(modifier = Modifier.padding(bottom = 30.dp))
-                //Username textfield
-                OutlinedTextField(
-                    value = signUpViewModel.email,
-                    onValueChange = {
-                            email -> signUpViewModel.updateEmail(email)
-                    }, modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(20.dp),
-                    label = { Text(text = "Username")},
-                    singleLine = true
-                )
-                //Password textfield
-                PasswordTextField(Constants.PASSWORD, signUpViewModel)
-                //Confirm password textfield
-                PasswordTextField(Constants.CONFIRM_PASSWORD, signUpViewModel)
+            Box(modifier = Modifier.fillMaxSize()){
+                Column(modifier = modifier, verticalArrangement = Arrangement.Center){
+                    //Title
+                    Text(
+                        text = "Sign Up",
+                        color = Color.Blue,
+                        fontSize = 30.sp,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(modifier = Modifier.padding(bottom = 30.dp))
+                    //Username textfield
+                    OutlinedTextField(
+                        value = signUpViewModel.email,
+                        onValueChange = {
+                                email -> signUpViewModel.updateEmail(email)
+                        }, modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(20.dp),
+                        label = { Text(text = "Username")},
+                        singleLine = true
+                    )
+                    //Password textfield
+                    PasswordTextField(Constants.PASSWORD, signUpViewModel)
+                    //Confirm password textfield
+                    PasswordTextField(Constants.CONFIRM_PASSWORD, signUpViewModel)
 
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(20.dp), horizontalArrangement = Arrangement.Center
-                ) {
-                    //Back button
-                    Button(onClick = {onNavigateToSignInScreen()}) {
-                        Text(text = "Back")
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(20.dp), horizontalArrangement = Arrangement.Center
+                    ) {
+                        //Back button
+                        Button(onClick = {onNavigateToSignInScreen()}) {
+                            Text(text = "Back")
+                        }
+                        Spacer(modifier = Modifier.padding(horizontal = 20.dp))
+                        //SignUp button
+                        Button(onClick = {
+                            loadingViewModel.showLoading()
+                            signUpViewModel.signUp() }) {
+                            Text(text = "Sign Up")
+                        }
                     }
-                    Spacer(modifier = Modifier.padding(horizontal = 20.dp))
-                    //SignUp button
-                    Button(onClick = { signUpViewModel.signUp() }) {
-                        Text(text = "Sign Up")
-                    }
+                }
+                if(isLoading) {
+                    Loading.LoadingScreen()
                 }
             }
         }

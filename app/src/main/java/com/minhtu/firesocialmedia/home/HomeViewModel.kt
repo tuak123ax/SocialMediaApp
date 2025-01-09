@@ -3,6 +3,7 @@ package com.minhtu.firesocialmedia.home
 import android.net.Uri
 import android.util.Log
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.MutableLiveData
@@ -24,6 +25,15 @@ class HomeViewModel : ViewModel() {
         Log.e("HomeViewModel", "updateUsers")
     }
 
+    fun findUserById(userId : String) : UserInstance?{
+        for(user in listUsers!!){
+            if(user.uid == userId) {
+                return user
+            }
+        }
+        return null
+    }
+
     private  val _allNews : MutableLiveData<ArrayList<NewsInstance>> = MutableLiveData()
     val allNews  = _allNews
     fun updateNews(news: ArrayList<NewsInstance>) {
@@ -39,6 +49,11 @@ class HomeViewModel : ViewModel() {
     var image by mutableStateOf("")
     fun updateImage(input:String){
         image = input
+    }
+
+    var numberOfListNeedToLoad by mutableIntStateOf(0)
+    fun decreaseNumberOfListNeedToLoad(input : Int) {
+        numberOfListNeedToLoad -=  input
     }
 
     private var _createPostStatus = MutableLiveData<Boolean>()
