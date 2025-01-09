@@ -20,12 +20,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class SignUpViewModel @Inject constructor(): ViewModel() {
-    private var userInstance : UserInstance? = null
     private val _signUpStatus = MutableLiveData<SignUpState>()
     val signUpStatus = _signUpStatus
-
-    private val _addInformationStatus = MutableLiveData<Boolean>()
-    val addInformationStatus = _addInformationStatus
 
     var email by mutableStateOf("")
     fun updateEmail(input : String){
@@ -40,16 +36,6 @@ class SignUpViewModel @Inject constructor(): ViewModel() {
     var confirmPassword by mutableStateOf("")
     fun updateConfirmPassword(input : String){
         confirmPassword =  input
-    }
-
-    var avatar by mutableStateOf(Constants.DEFAULT_AVATAR_URL)
-    fun updateAvatar(input:String){
-        avatar = input
-    }
-
-    var username by mutableStateOf("")
-    fun updateUsername(input : String){
-        username = input
     }
 
     fun signUp(){
@@ -79,46 +65,5 @@ class SignUpViewModel @Inject constructor(): ViewModel() {
                 }
             }
         }
-    }
-
-    fun finishSignUpStage(context: Context){
-        val uid = FirebaseAuth.getInstance().uid
-        val storageReference = FirebaseStorage.getInstance().getReference()
-            .child("avatar").child(uid!!)
-        val databaseReference = FirebaseDatabase.getInstance().getReference()
-            .child("users").child(uid)
-        userInstance = UserInstance(email, avatar,username,"",
-            context.getSharedPreferences("local_data", MODE_PRIVATE).getString(Constants.KEY_FCM_TOKEN, "")!!,uid!!)
-        if(avatar != Constants.DEFAULT_AVATAR_URL){
-            storageReference.putFile(Uri.parse(userInstance!!.image)).addOnCompleteListener{ putFileTask ->
-                if(putFileTask.isSuccessful){
-                    storageReference.downloadUrl.addOnSuccessListener { avatarUrl ->
-                        userInstance!!.updateImage(avatarUrl.toString())
-                        databaseReference.setValue(userInstance).addOnCompleteListener{addUserTask ->
-                            if(addUserTask.isSuccessful){
-                                _addInformationStatus.postValue(true)
-                            } else {
-                                _addInformationStatus.postValue(false)
-                            }
-                        }
-                    }
-                }
-            }
-        } else {
-            databaseReference.setValue(userInstance).addOnCompleteListener{addUserTask ->
-                if(addUserTask.isSuccessful){
-                    _addInformationStatus.postValue(true)
-                } else {
-                    _addInformationStatus.postValue(false)
-                }
-            }
-        }
-        saveAccount(context, email, password)
-    }
-    private fun saveAccount(context: Context, email: String, password: String){
-        val sharedPreferences: SharedPreferences =
-            context.getSharedPreferences("local_data", MODE_PRIVATE)
-        sharedPreferences.edit().putString("email", email).apply()
-        sharedPreferences.edit().putString("password", password).apply()
     }
 }

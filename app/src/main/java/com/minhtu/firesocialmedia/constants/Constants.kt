@@ -9,6 +9,7 @@ class Constants {
         const val PASSWORD_MISMATCH = "PASSWORD_MISMATCH"
         const val PASSWORD_SHORT = "PASSWORD_SHORT"
         const val ACCOUNT_EXISTED = "ACCOUNT_EXISTED"
+        const val ACCOUNT_NOT_EXISTED = "ACCOUNT_NOT_EXISTED"
         const val LOGIN_ERROR = "LOGIN_ERROR"
         const val SIGNUP_FAIL = "SIGNUP_FAIL"
         const val DEFAULT_AVATAR_URL = "https://firebasestorage.googleapis.com/v0/b/firechat-aa433.appspot.com/o/unknownavatar.png?alt=media&token=9a49ff27-e5fa-4813-97d4-47bd15281550"

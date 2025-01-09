@@ -1,12 +1,9 @@
 package com.minhtu.firesocialmedia
 
 import android.Manifest
-import android.content.Context
-import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
@@ -27,14 +24,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.google.android.gms.auth.api.identity.BeginSignInRequest
-import com.google.android.gms.auth.api.identity.Identity
-import com.google.android.gms.auth.api.identity.SignInClient
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.FirebaseUser
-import com.google.firebase.auth.GoogleAuthProvider
-import com.google.firebase.auth.ktx.auth
-import com.google.firebase.ktx.Firebase
 import com.minhtu.firesocialmedia.home.Home
 import com.minhtu.firesocialmedia.home.HomeViewModel
 import com.minhtu.firesocialmedia.home.search.Search
@@ -53,7 +42,6 @@ import dagger.hilt.android.AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-//        setUpGoogleSignIn(applicationContext)
         setContent {
             FireNotebookTheme {
                 // A surface container using the 'background' color from the theme
@@ -87,13 +75,15 @@ class MainActivity : ComponentActivity() {
             composable(route = SignIn.getScreenName()){
                 SignIn.SignInScreen(this@MainActivity,
                     modifier = Modifier
-                    .fillMaxSize()
-                    .paint(
-                        painter = painterResource(id = R.drawable.background),
-                        contentScale = ContentScale.FillBounds
-                    ),
+                        .fillMaxSize()
+                        .paint(
+                            painter = painterResource(id = R.drawable.background),
+                            contentScale = ContentScale.FillBounds
+                        ),
                     onNavigateToSignUpScreen = {navController.navigate(route = SignUp.getScreenName())},
-                    onNavigateToHomeScreen = {navController.navigate(route = Home.getScreenName())})
+                    onNavigateToHomeScreen = {navController.navigate(route = Home.getScreenName())},
+                    onNavigateToInformationScreen = {navController.navigate(route = Information.getScreenName())}
+                )
             }
             composable(route = SignUp.getScreenName()){
                 SignUp.SignUpScreen(signUpViewModel,
@@ -127,8 +117,11 @@ class MainActivity : ComponentActivity() {
                         selectedImage = image
                         navController.navigate(route = ShowImage.getScreenName())},
                     onNavigateToSearch = {navController.navigate(route = Search.getScreenName())},
-                    onNavigateToSignIn = {navController.navigate(route = SignIn.getScreenName())}
-                    )
+                    onNavigateToSignIn = {navController.navigate(route = SignIn.getScreenName())},
+                    onNavigateToUserInformation = {user ->
+                        selectedUser = user
+                        navController.navigate(route = UserInformation.getScreenName())}
+                )
             }
             composable(route = UploadNewsfeed.getScreenName()){
                 UploadNewsfeed.UploadNewsfeedScreen(modifier = Modifier
@@ -148,22 +141,29 @@ class MainActivity : ComponentActivity() {
                 )
             }
             composable(route = Search.getScreenName()) {
-                Search.SearchScreen(modifier = Modifier.fillMaxSize().background(color = Color.White),
+                Search.SearchScreen(modifier = Modifier
+                    .fillMaxSize()
+                    .background(color = Color.White),
                     hiltViewModel(),
                     homeViewModel,
-                    onNavigateToUserInfomation = {user ->
+                    onNavigateToUserInformation = {user ->
                         selectedUser = user
                         navController.navigate(route = UserInformation.getScreenName())}
                     )
             }
             composable(route = UserInformation.getScreenName()){
                 UserInformation.UserInformationScreen(selectedUser,
-                    modifier = Modifier.fillMaxSize().background(color = Color.White),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(color = Color.White),
                     homeViewModel,
                     onNavigateToShowImageScreen = {image ->
                         selectedImage = image
-                        navController.navigate(route = ShowImage.getScreenName())}
-                    )
+                        navController.navigate(route = ShowImage.getScreenName())},
+                    onNavigateToUserInformation = {user ->
+                        selectedUser = user
+                        navController.navigate(route = UserInformation.getScreenName())}
+                )
             }
         }
     }
