@@ -78,13 +78,15 @@ class SignIn {
                         signInViewModel.handleSignInResult(task, activity)
                     } catch(e : Exception){
                         Log.e("SignIn", "Exception: ${e.message}")
+                        signInViewModel.signInState.postValue(SignInState(false, Constants.LOGIN_ERROR))
                     }
                 }
             )
             val lifecycleOwner = rememberUpdatedState(LocalLifecycleOwner.current)
             LaunchedEffect(lifecycleOwner.value) {
+                //Check login information in storage
+                signInViewModel.checkAccountInLocalStorage(context)
                 signInViewModel.signInState.observe(lifecycleOwner.value){signInState ->
-                    Log.e("signInState", "receive data")
                     loadingViewModel.hideLoading()
                     if(signInState.signInStatus){
                         Toast.makeText(context,"Sign in successfully!!!", Toast.LENGTH_SHORT).show()

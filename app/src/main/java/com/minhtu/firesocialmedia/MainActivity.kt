@@ -71,6 +71,7 @@ class MainActivity : ComponentActivity() {
         val signUpViewModel: SignUpViewModel = viewModel()
         //Define shared viewModel instance to use for Home and Search screens.
         val homeViewModel: HomeViewModel = viewModel()
+
         NavHost(navController = navController, startDestination = startDestination){
             composable(route = SignIn.getScreenName()){
                 SignIn.SignInScreen(this@MainActivity,
@@ -165,16 +166,6 @@ class MainActivity : ComponentActivity() {
                         navController.navigate(route = UserInformation.getScreenName())}
                 )
             }
-        }
-    }
-
-    private fun checkAccountInLocal() : String{
-        val email = getSharedPreferences("local_data", MODE_PRIVATE).getString("email", "{}")
-        val password = getSharedPreferences("local_data", MODE_PRIVATE).getString("password", "{}")
-        return if(email != null || password != null) {
-            Home.getScreenName()
-        } else {
-            SignIn.getScreenName()
         }
     }
     // Declare the launcher at the top of your Activity/Fragment:

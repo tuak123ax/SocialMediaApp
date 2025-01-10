@@ -13,6 +13,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.google.android.gms.auth.api.identity.BeginSignInRequest
 import com.google.android.gms.auth.api.identity.Identity
 import com.google.android.gms.auth.api.identity.SignInCredential
@@ -26,7 +27,12 @@ import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.ktx.Firebase
 import com.minhtu.firesocialmedia.constants.Constants
+import com.minhtu.firesocialmedia.crypto.CryptoHelper
+import com.minhtu.firesocialmedia.home.Home
 import com.minhtu.firesocialmedia.instance.UserInstance
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class SignInViewModel : ViewModel() {
     private val _signInStatus = MutableLiveData<SignInState>()
@@ -43,27 +49,35 @@ class SignInViewModel : ViewModel() {
     }
 
     fun signIn(context: Context){
-        if(email == "" || password == "")
-        {
-            signInState.postValue(SignInState(false, Constants.DATA_EMPTY))
-            Log.e("SignInViewModel","signIn: DATA_EMPTY")
-        }else{
-            FirebaseAuth.getInstance().signInWithEmailAndPassword(email,password)
-                .addOnCompleteListener{
-                    task->
-                    if(task.isSuccessful){
-                        saveAccount(context, email, password)
-                        signInState.postValue(SignInState(true, ""))
-                    } else{
-                        signInState.postValue(SignInState(false, Constants.LOGIN_ERROR))
-                        Log.e("SignInViewModel","signIn: LOGIN_ERROR")
-                    }
+        viewModelScope.launch {
+            if(email == "" || password == "")
+            {
+                signInState.postValue(SignInState(false, Constants.DATA_EMPTY))
+                Log.e("SignInViewModel","signIn: DATA_EMPTY")
+            }else{
+                withContext(Dispatchers.IO){
+                    FirebaseAuth.getInstance().signInWithEmailAndPassword(email,password)
+                        .addOnCompleteListener{
+                                task->
+                            if(task.isSuccessful){
+                                saveAccount(context, email, password)
+                                signInState.postValue(SignInState(true, ""))
+                            } else{
+                                signInState.postValue(SignInState(false, Constants.LOGIN_ERROR))
+                                Log.e("SignInViewModel","signIn: LOGIN_ERROR")
+                            }
+                        }
                 }
+            }
         }
     }
 
     fun signInWithGoogle(context: Context, resultLauncher: ManagedActivityResultLauncher<IntentSenderRequest, ActivityResult>){
-        setupGoogleSignIn(context, resultLauncher)
+        viewModelScope.launch {
+            withContext(Dispatchers.IO){
+                setupGoogleSignIn(context, resultLauncher)
+            }
+        }
     }
 
     private fun setupGoogleSignIn(context: Context, resultLauncher: ManagedActivityResultLauncher<IntentSenderRequest, ActivityResult>){
@@ -92,30 +106,34 @@ class SignInViewModel : ViewModel() {
     }
 
     fun handleSignInResult(credential : SignInCredential, activity: Activity) {
-        val idToken = credential.googleIdToken
-        when {
-            idToken != null -> {
-                // Got an ID token from Google. Use it to authenticate
-                // with Firebase.
-                val firebaseCredential = GoogleAuthProvider.getCredential(idToken, null)
-                Firebase.auth.signInWithCredential(firebaseCredential)
-                    .addOnCompleteListener(activity) { task ->
-                        if (task.isSuccessful) {
-                            // Sign in success, update UI with the signed-in user's information
-                            Log.d("Signin", "signInWithCredential:success")
-                            val user = Firebase.auth.currentUser
-                            emailExistedInDatabase(user!!.email)
-                        } else {
-                            // If sign in fails, display a message to the user.
-                            Log.w("Signin", "signInWithCredential:failure", task.exception)
-                            signInState.postValue(SignInState(false, Constants.LOGIN_ERROR))
-                            Log.e("SignInViewModel","signIn: LOGIN_ERROR")
-                        }
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) {
+                val idToken = credential.googleIdToken
+                when {
+                    idToken != null -> {
+                        // Got an ID token from Google. Use it to authenticate
+                        // with Firebase.
+                        val firebaseCredential = GoogleAuthProvider.getCredential(idToken, null)
+                        Firebase.auth.signInWithCredential(firebaseCredential)
+                            .addOnCompleteListener(activity) { task ->
+                                if (task.isSuccessful) {
+                                    // Sign in success, update UI with the signed-in user's information
+                                    Log.d("Signin", "signInWithCredential:success")
+                                    val user = Firebase.auth.currentUser
+                                    emailExistedInDatabase(user!!.email)
+                                } else {
+                                    // If sign in fails, display a message to the user.
+                                    Log.w("Signin", "signInWithCredential:failure", task.exception)
+                                    signInState.postValue(SignInState(false, Constants.LOGIN_ERROR))
+                                    Log.e("SignInViewModel","signIn: LOGIN_ERROR")
+                                }
+                            }
                     }
-            }
-            else -> {
-                // Shouldn't happen.
-                Log.d("Signin", "No ID token!")
+                    else -> {
+                        // Shouldn't happen.
+                        Log.d("Signin", "No ID token!")
+                    }
+                }
             }
         }
     }
@@ -152,9 +170,25 @@ class SignInViewModel : ViewModel() {
     }
 
     private fun saveAccount(context: Context, email: String, password: String){
-        val sharedPreferences: SharedPreferences =
-            context.getSharedPreferences("local_data", Context.MODE_PRIVATE)
-        sharedPreferences.edit().putString("email", email).apply()
-        sharedPreferences.edit().putString("password", password).apply()
+        val secureSharedPreferences: SharedPreferences = CryptoHelper.getEncryptedSharedPreferences(context)
+        secureSharedPreferences.edit().putString(Constants.KEY_EMAIL, email).apply()
+        secureSharedPreferences.edit().putString(Constants.KEY_PASSWORD, password).apply()
+    }
+
+    fun checkAccountInLocalStorage(context: Context){
+        viewModelScope.launch{
+            withContext(Dispatchers.IO) {
+                val secureSharedPreferences: SharedPreferences = CryptoHelper.getEncryptedSharedPreferences(context)
+                val email = secureSharedPreferences.getString(Constants.KEY_EMAIL, "")
+                val password = secureSharedPreferences.getString(Constants.KEY_PASSWORD, "")
+                if(email != null && password != null) {
+                    if(email.isNotEmpty() && password.isNotEmpty()){
+                        updateEmail(email)
+                        updatePassword(password)
+                        signIn(context)
+                    }
+                }
+            }
+        }
     }
 }

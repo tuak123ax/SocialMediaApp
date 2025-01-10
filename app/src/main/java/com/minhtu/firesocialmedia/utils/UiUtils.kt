@@ -54,7 +54,6 @@ fun NewsCard(news: NewsInstance, context: Context, onNavigateToShowImageScreen: 
         modifier = Modifier
             .padding(10.dp)
             .fillMaxWidth()
-            .height(300.dp)
             .border(3.dp, Color.Gray),
         colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
@@ -80,28 +79,30 @@ fun NewsCard(news: NewsInstance, context: Context, onNavigateToShowImageScreen: 
                 Text(
                     text = news.posterName,
                     color = Color.Black,
-                    modifier = Modifier.padding(horizontal = 2.dp) // Adds padding around text
+                    modifier = Modifier.padding(horizontal = 2.dp)
                 )
             }
             Spacer(modifier = Modifier.height(1.dp))
             Text(
                 text = news.message,
                 color = Color.Black,
-                modifier = Modifier.padding(horizontal = 4.dp) // Adds padding around text
+                modifier = Modifier.padding(10.dp) // Adds padding around text
             )
             Spacer(modifier = Modifier.height(1.dp))
-            AsyncImage(
-                model = news.image,
-                contentDescription = "Image",
-                contentScale = ContentScale.Fit,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(250.dp)
-                    .padding(10.dp)
-                    .clickable {
-                        onNavigateToShowImageScreen(news.image)
-                    }
-            )
+            if(news.image.isNotEmpty()){
+                AsyncImage(
+                    model = news.image,
+                    contentDescription = "Image",
+                    contentScale = ContentScale.Fit,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(250.dp)
+                        .padding(10.dp)
+                        .clickable {
+                            onNavigateToShowImageScreen(news.image)
+                        }
+                )
+            }
         }
     }
 }

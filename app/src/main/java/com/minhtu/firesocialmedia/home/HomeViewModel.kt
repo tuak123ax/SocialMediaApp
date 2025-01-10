@@ -8,10 +8,14 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.storage.FirebaseStorage
 import com.minhtu.firesocialmedia.instance.NewsInstance
 import com.minhtu.firesocialmedia.instance.UserInstance
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.UUID
 
 class HomeViewModel : ViewModel() {
@@ -60,33 +64,37 @@ class HomeViewModel : ViewModel() {
     var createPostStatus = _createPostStatus
 
     fun createPost(user : UserInstance){
-        val newsRandomId = generateRandomId()
-        val newsInstance = NewsInstance(newsRandomId,user.uid, user.name,user.image,message,image)
-        val storageReference = FirebaseStorage.getInstance().getReference()
-            .child("news").child(newsRandomId)
-        val databaseReference = FirebaseDatabase.getInstance().getReference()
-            .child("news").child(newsRandomId)
-        if(image.isNotEmpty()){
-            storageReference.putFile(Uri.parse(newsInstance.image)).addOnCompleteListener{ putFileTask ->
-                if(putFileTask.isSuccessful){
-                    storageReference.downloadUrl.addOnSuccessListener { imageUrl ->
-                        newsInstance.updateImage(imageUrl.toString())
-                        databaseReference.setValue(newsInstance).addOnCompleteListener{addUserTask ->
-                            if(addUserTask.isSuccessful){
-                                _createPostStatus.postValue(true)
-                            } else {
-                                _createPostStatus.postValue(false)
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) {
+                val newsRandomId = generateRandomId()
+                val newsInstance = NewsInstance(newsRandomId,user.uid, user.name,user.image,message,image)
+                val storageReference = FirebaseStorage.getInstance().getReference()
+                    .child("news").child(newsRandomId)
+                val databaseReference = FirebaseDatabase.getInstance().getReference()
+                    .child("news").child(newsRandomId)
+                if(image.isNotEmpty()){
+                    storageReference.putFile(Uri.parse(newsInstance.image)).addOnCompleteListener{ putFileTask ->
+                        if(putFileTask.isSuccessful){
+                            storageReference.downloadUrl.addOnSuccessListener { imageUrl ->
+                                newsInstance.updateImage(imageUrl.toString())
+                                databaseReference.setValue(newsInstance).addOnCompleteListener{addUserTask ->
+                                    if(addUserTask.isSuccessful){
+                                        _createPostStatus.postValue(true)
+                                    } else {
+                                        _createPostStatus.postValue(false)
+                                    }
+                                }
                             }
                         }
                     }
-                }
-            }
-        } else {
-            databaseReference.setValue(newsInstance).addOnCompleteListener{addNewsTask ->
-                if(addNewsTask.isSuccessful){
-                    _createPostStatus.postValue(true)
                 } else {
-                    _createPostStatus.postValue(false)
+                    databaseReference.setValue(newsInstance).addOnCompleteListener{addNewsTask ->
+                        if(addNewsTask.isSuccessful){
+                            _createPostStatus.postValue(true)
+                        } else {
+                            _createPostStatus.postValue(false)
+                        }
+                    }
                 }
             }
         }

@@ -15,6 +15,7 @@ import com.minhtu.firesocialmedia.MainActivity
 import com.minhtu.firesocialmedia.R
 import com.minhtu.firesocialmedia.instance.UserInstance
 import com.minhtu.firesocialmedia.constants.Constants
+import com.minhtu.firesocialmedia.crypto.CryptoHelper
 import java.io.IOException
 import java.net.URL
 
@@ -66,11 +67,7 @@ class AppFirebaseNotificationService: FirebaseMessagingService() {
     }
 
     private fun updateToken(token: String) {
-        val sharedPreferences = getSharedPreferences()
-        sharedPreferences.edit().putString(Constants.KEY_FCM_TOKEN, token).apply()
-    }
-
-    private fun getSharedPreferences(): SharedPreferences {
-        return getSharedPreferences("local_data", MODE_PRIVATE)
+        val secureSharedPreferences = CryptoHelper.getEncryptedSharedPreferences(applicationContext)
+        secureSharedPreferences.edit().putString(Constants.KEY_FCM_TOKEN, token).apply()
     }
 }
