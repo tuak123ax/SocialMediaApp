@@ -10,12 +10,16 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.storage.FirebaseStorage
 import com.minhtu.firesocialmedia.instance.UserInstance
 import com.minhtu.firesocialmedia.constants.Constants
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 @HiltViewModel
@@ -39,29 +43,33 @@ class SignUpViewModel @Inject constructor(): ViewModel() {
     }
 
     fun signUp(){
-        if(email.isEmpty() || password.isEmpty() || confirmPassword.isEmpty())
-        {
-            _signUpStatus.postValue(SignUpState(false, Constants.DATA_EMPTY))
-            Log.e("SignUpViewModel","signUp: DATA_EMPTY")
-        } else{
-            if(password != confirmPassword){
-                _signUpStatus.postValue(SignUpState(false, Constants.PASSWORD_MISMATCH))
-                Log.e("SignUpViewModel","signUp: PASSWORD_MISMATCH")
+        viewModelScope.launch {
+            if(email.isEmpty() || password.isEmpty() || confirmPassword.isEmpty())
+            {
+                _signUpStatus.postValue(SignUpState(false, Constants.DATA_EMPTY))
+                Log.e("SignUpViewModel","signUp: DATA_EMPTY")
             } else{
-                if(password.length < 6){
-                    _signUpStatus.postValue(SignUpState(false, Constants.PASSWORD_SHORT))
-                    Log.e("SignUpViewModel","signUp: PASSWORD_SHORT")
+                if(password != confirmPassword){
+                    _signUpStatus.postValue(SignUpState(false, Constants.PASSWORD_MISMATCH))
+                    Log.e("SignUpViewModel","signUp: PASSWORD_MISMATCH")
                 } else{
-                    FirebaseAuth.getInstance().createUserWithEmailAndPassword(email, password)
-                        .addOnCompleteListener { task ->
-                            if(task.isSuccessful){
-                                _signUpStatus.postValue(SignUpState(true, ""))
-                                Log.e("SignUpViewModel","signUp: success")
-                            } else{
-                                _signUpStatus.postValue(SignUpState(false, Constants.SIGNUP_FAIL))
-                                Log.e("SignUpViewModel","signUp: SIGNUP_FAIL")
-                            }
+                    if(password.length < 6){
+                        _signUpStatus.postValue(SignUpState(false, Constants.PASSWORD_SHORT))
+                        Log.e("SignUpViewModel","signUp: PASSWORD_SHORT")
+                    } else{
+                        withContext(Dispatchers.IO) {
+                            FirebaseAuth.getInstance().createUserWithEmailAndPassword(email, password)
+                                .addOnCompleteListener { task ->
+                                    if(task.isSuccessful){
+                                        _signUpStatus.postValue(SignUpState(true, ""))
+                                        Log.e("SignUpViewModel","signUp: success")
+                                    } else{
+                                        _signUpStatus.postValue(SignUpState(false, Constants.SIGNUP_FAIL))
+                                        Log.e("SignUpViewModel","signUp: SIGNUP_FAIL")
+                                    }
+                                }
                         }
+                    }
                 }
             }
         }
