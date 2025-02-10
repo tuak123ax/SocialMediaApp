@@ -23,6 +23,8 @@ class Constants {
         const val FCM_URL = "https://fcm.googleapis.com/fcm/"
 
         const val KEY_FCM_TOKEN = "fcm_token"
+        const val PRIVATE_KEY = "PRIVATE_KEY"
+        const val IV = "IV"
         const val KEY_MESSAGE = "message"
 
         const val KEY_USER_ID = "user_id"

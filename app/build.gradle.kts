@@ -7,6 +7,8 @@ plugins {
     id ("kotlin-android")
     id ("kotlin-kapt")
     id ("dagger.hilt.android.plugin")
+    // Add the Crashlytics Gradle plugin
+    id("com.google.firebase.crashlytics")
 }
 
 android {
@@ -37,7 +39,8 @@ android {
     }
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -94,10 +97,12 @@ dependencies {
     // TODO: Add the dependencies for Firebase products you want to use
     // When using the BoM, don't specify versions in Firebase dependencies
     implementation("com.google.firebase:firebase-analytics")
+    implementation("com.google.firebase:firebase-crashlytics")
     implementation("com.google.firebase:firebase-auth")
     implementation("com.google.firebase:firebase-messaging")
     implementation("com.google.firebase:firebase-database")
     implementation("com.google.firebase:firebase-storage")
+    implementation("com.google.firebase:firebase-config")
     implementation("com.google.android.gms:play-services-auth:21.2.0")
 
     implementation("androidx.compose.material:material-icons-extended:1.7.5")

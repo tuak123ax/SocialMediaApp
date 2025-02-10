@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
@@ -24,6 +25,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.minhtu.firesocialmedia.constants.Constants
+import com.minhtu.firesocialmedia.crypto.CryptoHelper
 import com.minhtu.firesocialmedia.home.Home
 import com.minhtu.firesocialmedia.home.HomeViewModel
 import com.minhtu.firesocialmedia.home.search.Search
@@ -32,6 +35,8 @@ import com.minhtu.firesocialmedia.home.uploadnewsfeed.UploadNewsfeed
 import com.minhtu.firesocialmedia.home.userinformation.UserInformation
 import com.minhtu.firesocialmedia.information.Information
 import com.minhtu.firesocialmedia.instance.UserInstance
+import com.minhtu.firesocialmedia.services.remoteconfig.FetchResultCallback
+import com.minhtu.firesocialmedia.services.remoteconfig.RemoteConfigHelper
 import com.minhtu.firesocialmedia.signin.SignIn
 import com.minhtu.firesocialmedia.signup.SignUp
 import com.minhtu.firesocialmedia.signup.SignUpViewModel
@@ -57,6 +62,16 @@ class MainActivity : ComponentActivity() {
 
     @Composable
     private fun MainApp(){
+        RemoteConfigHelper.getRemoteConfig()
+        fetchDataFromRemoteConfig(object : FetchResultCallback {
+            override fun fetchSuccess() {
+                Log.e("Fetch", "Fetch success")
+            }
+
+            override fun fetchFail() {
+                Log.e("Fetch", "Fetch fail")
+            }
+        })
         askNotificationPermission()
         SetUpNavigation()
     }
@@ -196,6 +211,10 @@ class MainActivity : ComponentActivity() {
                 requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
             }
         }
+    }
+
+    fun fetchDataFromRemoteConfig(fetchResultCallback: FetchResultCallback) {
+        RemoteConfigHelper.fetchAndActiveConfig(RemoteConfigHelper.getRemoteConfig(), fetchResultCallback)
     }
 
     @Preview(showBackground = true, showSystemUi = true)
