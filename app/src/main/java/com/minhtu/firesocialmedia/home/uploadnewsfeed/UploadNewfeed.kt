@@ -81,27 +81,39 @@ class UploadNewsfeed {
                 )
                 Spacer(modifier = Modifier.padding(bottom = 20.dp))
                 OutlinedTextField(
-                    value = homeViewModel.message, onValueChange = {
+                    value = homeViewModel.message,
+                    onValueChange = {
                         homeViewModel.updateMessage(it)
-                    }, modifier = Modifier
+                    },
+                    maxLines = 4,
+                    modifier = Modifier
                         .fillMaxWidth()
                         .padding(20.dp),
                     label = { Text(text = "Message") }
                 )
-                Spacer(modifier = Modifier.padding(bottom = 20.dp))
-                AsyncImage(model = homeViewModel.image,
-                    contentDescription = "Image",
-                    contentScale = ContentScale.FillBounds,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(400.dp)
-                        .padding(20.dp)
-                        .border(1.dp, Color.Gray)
-                        .clickable {
-                            getAvatarFromGalleryLauncher.launch(galleryIntent)
-                        })
-                Spacer(modifier = Modifier.padding(bottom = 30.dp))
-                Row(horizontalArrangement = Arrangement.SpaceAround, modifier = Modifier.fillMaxWidth()){
+                Spacer(modifier = Modifier.padding(bottom = 10.dp))
+                Row(horizontalArrangement = Arrangement.Center, modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp)) {
+                    Button(onClick = {
+                        getAvatarFromGalleryLauncher.launch(galleryIntent)
+                    }) {
+                        Text(text = "Select image")
+                    }
+                }
+                Spacer(modifier = Modifier.padding(bottom = 10.dp))
+                if(homeViewModel.image.isNotEmpty()) {
+                    Row(horizontalArrangement = Arrangement.Center, modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp)) {
+                        AsyncImage(model = homeViewModel.image,
+                            contentDescription = "Image",
+                            contentScale = ContentScale.Fit,
+                            modifier = Modifier
+                                .height(400.dp)
+                                .padding(20.dp)
+                                .border(1.dp, Color.Gray)
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.padding(bottom = 10.dp))
+                Row(horizontalArrangement = Arrangement.SpaceAround, modifier = Modifier.fillMaxWidth().padding(5.dp)){
                     Button(onClick = {
                         onNavigateToHomeScreen()
                     }) {

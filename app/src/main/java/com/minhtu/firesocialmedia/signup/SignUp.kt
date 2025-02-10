@@ -71,7 +71,7 @@ class SignUp {
                             Constants.DATA_EMPTY ->  Toast.makeText(context,"Please fill all information!", Toast.LENGTH_SHORT).show()
                             Constants.PASSWORD_MISMATCH -> Toast.makeText(context,"Passwords are different!", Toast.LENGTH_SHORT).show()
                             Constants.PASSWORD_SHORT -> Toast.makeText(context,"Password is too short!",Toast.LENGTH_SHORT).show()
-                            Constants.ACCOUNT_EXISTED ->  Toast.makeText(context, "This account existed!", Toast.LENGTH_SHORT).show()
+                            Constants.SIGNUP_FAIL ->  Toast.makeText(context, "Sign up failed. Something went wrong!", Toast.LENGTH_SHORT).show()
                         }
                     }
                 }
