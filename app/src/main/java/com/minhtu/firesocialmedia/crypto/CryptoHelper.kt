@@ -4,41 +4,62 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.util.Log
 import androidx.security.crypto.EncryptedSharedPreferences
-import androidx.security.crypto.MasterKey
+import androidx.security.crypto.MasterKeys
 import com.minhtu.firesocialmedia.constants.Constants
 import java.io.File
+import java.security.KeyStore
+import javax.crypto.AEADBadTagException
 import javax.crypto.Cipher
 import javax.crypto.spec.GCMParameterSpec
 import javax.crypto.spec.SecretKeySpec
 
 class CryptoHelper {
     companion object{
-        fun getEncryptedSharedPreferences(context: Context) : SharedPreferences {
-            return try {
+        fun getEncryptedSharedPreferences(context: Context): SharedPreferences {
+            if (!doesKeyExist("androidx.security.master_key_default")) {
+                Log.e("EncryptedPrefs", "Keystore key missing. Resetting preferences...")
+                resetEncryptedPreferences(context)
+            }
+
+            val prefs = try {
                 createEncryptedSharedPreferences(context)
             } catch (e: Exception) {
-                Log.e("EncryptedPrefs", "Error accessing EncryptedSharedPreferences: ${e.message}")
-
-                // If there's an error, delete and reset encrypted preferences
+                Log.e("EncryptedPrefs", "Corrupted encrypted storage detected. Resetting...")
                 resetEncryptedPreferences(context)
-
-                // Recreate after reset
                 createEncryptedSharedPreferences(context)
             }
+
+            // Ensure first-time write
+            if (!prefs.contains("initialized")) {
+                Log.e("EncryptedPrefs", "Write first time")
+                prefs.edit().putBoolean("initialized", true).apply()
+            }
+
+            return prefs
         }
 
         private fun createEncryptedSharedPreferences(context: Context) : SharedPreferences{
-            val masterKey = MasterKey.Builder(context)
-                .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
-                .build()
+            var sharedPrefs: SharedPreferences? = null
+            var attempts = 0
 
-            return EncryptedSharedPreferences.create(
-                context,
-                "account_secure_prefs",
-                masterKey,
-                EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-                EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
-            )
+            while (sharedPrefs == null && attempts < 3) {
+                try {
+                    val masterKeyAlias = MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC)
+                    sharedPrefs = EncryptedSharedPreferences.create(
+                        "secure_prefs_file",
+                        masterKeyAlias,
+                        context,
+                        EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+                        EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+                    )
+                } catch (e: Exception) {
+                    Log.e("EncryptedPrefs", "Keystore error, retrying... Attempt: ${attempts + 1}")
+                    Thread.sleep(500) // Wait 500ms before retrying
+                    attempts++
+                }
+            }
+
+            return sharedPrefs ?: throw RuntimeException("Failed to create EncryptedSharedPreferences after multiple attempts")
         }
         const val GCM_IV_SIZE = 12   // IV size in bytes (96 bits)
         const val GCM_TAG_SIZE = 128 // Authentication tag size in bits
@@ -69,6 +90,17 @@ class CryptoHelper {
             val sharedPrefsFile = File(context.filesDir, "shared_prefs/account_secure_prefs.xml")
             if (sharedPrefsFile.exists()) {
                 sharedPrefsFile.delete()
+                Log.e("EncryptedPrefs", "Deleted corrupted preferences file.")
+            }
+        }
+
+        // Checks if the Keystore key exists
+        fun doesKeyExist(alias: String): Boolean {
+            return try {
+                val keyStore = KeyStore.getInstance("AndroidKeyStore").apply { load(null) }
+                keyStore.getKey(alias, null) != null
+            } catch (e: Exception) {
+                false
             }
         }
 

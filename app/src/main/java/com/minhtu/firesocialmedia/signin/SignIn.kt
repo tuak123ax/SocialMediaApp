@@ -113,7 +113,7 @@ class SignIn{
                 Column(modifier = modifier, verticalArrangement = Arrangement.Center) {
                     //Title
                     Text(
-                        text = "FireMedia",
+                        text = "FireSocialMedia",
                         color = Color.Blue,
                         fontSize = 30.sp,
                         textAlign = TextAlign.Center,
