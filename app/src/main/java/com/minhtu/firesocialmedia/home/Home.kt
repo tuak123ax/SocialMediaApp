@@ -32,6 +32,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
@@ -77,7 +78,8 @@ class Home {
             val lifecycleOwner = rememberUpdatedState(newValue = LocalLifecycleOwner.current)
             val isLoading by loadingViewModel.isLoading.collectAsState()
 
-            showAlertDialogToLogout(context, homeViewModel, onNavigateToSignIn)
+            val showDialog = remember { mutableStateOf(false) }
+            ShowAlertDialogToLogout(context, homeViewModel, onNavigateToSignIn, showDialog)
 
             val listState = rememberLazyListState()
             var isAllUsersVisible by remember { mutableStateOf(true) }
@@ -139,8 +141,16 @@ class Home {
             Box(modifier = Modifier.fillMaxSize()) {
                 Column(verticalArrangement = Arrangement.Top, modifier = modifier) {
                     Row(horizontalArrangement = Arrangement.Start, modifier = Modifier
-                        .padding(20.dp)
+                        .padding(10.dp)
                         .fillMaxWidth()) {
+                        Text(
+                            text = "FireSocialMedia",
+                            color = Color.Cyan,
+                            fontSize = 25.sp,
+                            textAlign = TextAlign.Center,
+                        )
+                        Spacer(modifier = Modifier.weight(1f))
+
                         AsyncImage(model = ImageRequest.Builder(context)
                             .data(R.drawable.fire_chat_icon)
                             .crossfade(true)
@@ -163,18 +173,7 @@ class Home {
                                             .show()
                                     }
                                 })
-
-                        Spacer(modifier = Modifier.weight(1f))
-
-                        Text(
-                            text = "FireNotebook",
-                            color = Color.Cyan,
-                            fontSize = 25.sp,
-                            textAlign = TextAlign.Center,
-                        )
-
-                        Spacer(modifier = Modifier.weight(1f))
-
+                        Spacer(modifier = Modifier.padding(horizontal = 4.dp))
                         AsyncImage(model = ImageRequest.Builder(context)
                             .data(R.drawable.search)
                             .crossfade(true)
@@ -185,6 +184,19 @@ class Home {
                                 .size(30.dp)
                                 .clickable {
                                     onNavigateToSearch()
+                                })
+                        Spacer(modifier = Modifier.padding(horizontal = 4.dp))
+
+                        AsyncImage(model = ImageRequest.Builder(context)
+                            .data(R.drawable.logout)
+                            .crossfade(true)
+                            .build(),
+                            contentDescription = "Logout Icon",
+                            contentScale = ContentScale.FillBounds,
+                            modifier = Modifier
+                                .size(30.dp)
+                                .clickable {
+                                    showDialog.value = true
                                 })
                     }
 
@@ -270,14 +282,13 @@ class Home {
         }
 
         @Composable
-        private fun showAlertDialogToLogout(context : Context, homeViewModel: HomeViewModel, onNavigateToSignIn:() -> Unit) {
-            var showDialog by remember { mutableStateOf(false) }
+        private fun ShowAlertDialogToLogout(context : Context, homeViewModel: HomeViewModel, onNavigateToSignIn:() -> Unit, showDialog : MutableState<Boolean>) {
             BackHandler {
-                showDialog = true
+                showDialog.value = true
             }
-            if (showDialog) {
+            if (showDialog.value) {
                 AlertDialog(
-                    onDismissRequest = { showDialog = false },
+                    onDismissRequest = { showDialog.value = false },
                     title = { Text("Logout") },
                     text = { Text("Are you sure you want to logout?") },
                     confirmButton = {
@@ -293,7 +304,7 @@ class Home {
                         }
                     },
                     dismissButton = {
-                        Button(onClick = { showDialog = false }) {
+                        Button(onClick = { showDialog.value = false }) {
                             Text("No")
                         }
                     }
