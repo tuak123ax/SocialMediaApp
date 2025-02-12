@@ -1,5 +1,6 @@
 package com.minhtu.firesocialmedia.home
 
+import android.content.Context
 import android.net.Uri
 import android.util.Log
 import androidx.compose.runtime.getValue
@@ -13,6 +14,7 @@ import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.remoteconfig.FirebaseRemoteConfig
 import com.google.firebase.storage.FirebaseStorage
 import com.minhtu.firesocialmedia.constants.Constants
+import com.minhtu.firesocialmedia.crypto.CryptoHelper
 import com.minhtu.firesocialmedia.instance.NewsInstance
 import com.minhtu.firesocialmedia.instance.UserInstance
 import kotlinx.coroutines.Dispatchers
@@ -110,5 +112,9 @@ class HomeViewModel : ViewModel() {
         createPostStatus = _createPostStatus
         message = ""
         image = ""
+    }
+
+    fun clearAccountInStorage(context : Context){
+        CryptoHelper.clearAccount(context)
     }
 }

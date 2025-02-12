@@ -61,7 +61,7 @@ class SignInViewModel : ViewModel() {
                         .addOnCompleteListener{
                                 task->
                             if(task.isSuccessful){
-                                saveAccount(context, email, password)
+                                CryptoHelper.saveAccount(context, email, password)
                                 signInState.postValue(SignInState(true, ""))
                             } else{
                                 signInState.postValue(SignInState(false, Constants.LOGIN_ERROR))
@@ -168,12 +168,6 @@ class SignInViewModel : ViewModel() {
                 }
             })
         }
-    }
-
-    private fun saveAccount(context: Context, email: String, password: String){
-        val secureSharedPreferences: SharedPreferences = CryptoHelper.getEncryptedSharedPreferences(context)
-        secureSharedPreferences.edit().putString(Constants.KEY_EMAIL, email).apply()
-        secureSharedPreferences.edit().putString(Constants.KEY_PASSWORD, password).apply()
     }
 
     fun checkAccountInLocalStorage(context: Context){

@@ -5,26 +5,40 @@ import android.content.SharedPreferences
 import android.util.Log
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
-import java.security.SecureRandom
+import com.minhtu.firesocialmedia.constants.Constants
+import java.io.File
 import javax.crypto.Cipher
-import javax.crypto.KeyGenerator
-import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
 import javax.crypto.spec.SecretKeySpec
-import kotlin.io.encoding.Base64
 
 class CryptoHelper {
     companion object{
         fun getEncryptedSharedPreferences(context: Context) : SharedPreferences {
+            return try {
+                createEncryptedSharedPreferences(context)
+            } catch (e: Exception) {
+                Log.e("EncryptedPrefs", "Error accessing EncryptedSharedPreferences: ${e.message}")
+
+                // If there's an error, delete and reset encrypted preferences
+                resetEncryptedPreferences(context)
+
+                // Recreate after reset
+                createEncryptedSharedPreferences(context)
+            }
+        }
+
+        private fun createEncryptedSharedPreferences(context: Context) : SharedPreferences{
             val masterKey = MasterKey.Builder(context)
                 .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
                 .build()
+
             return EncryptedSharedPreferences.create(
                 context,
                 "account_secure_prefs",
                 masterKey,
                 EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-                EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM)
+                EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+            )
         }
         const val GCM_IV_SIZE = 12   // IV size in bytes (96 bits)
         const val GCM_TAG_SIZE = 128 // Authentication tag size in bits
@@ -49,6 +63,24 @@ class CryptoHelper {
             val cipher = Cipher.getInstance("AES/GCM/NoPadding")
             cipher.init(Cipher.DECRYPT_MODE, secretKey, GCMParameterSpec(GCM_TAG_SIZE, iv))
             return cipher.doFinal(cipherText)
+        }
+
+        private fun resetEncryptedPreferences(context: Context) {
+            val sharedPrefsFile = File(context.filesDir, "shared_prefs/account_secure_prefs.xml")
+            if (sharedPrefsFile.exists()) {
+                sharedPrefsFile.delete()
+            }
+        }
+
+        fun saveAccount(context: Context, email: String, password: String){
+            val secureSharedPreferences: SharedPreferences = getEncryptedSharedPreferences(context)
+            secureSharedPreferences.edit().putString(Constants.KEY_EMAIL, email).apply()
+            secureSharedPreferences.edit().putString(Constants.KEY_PASSWORD, password).apply()
+        }
+
+        fun clearAccount(context: Context){
+            val secureSharedPreferences: SharedPreferences = getEncryptedSharedPreferences(context)
+            secureSharedPreferences.edit().clear().apply()
         }
     }
 }
