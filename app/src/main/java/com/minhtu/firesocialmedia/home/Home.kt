@@ -77,7 +77,7 @@ class Home {
             val lifecycleOwner = rememberUpdatedState(newValue = LocalLifecycleOwner.current)
             val isLoading by loadingViewModel.isLoading.collectAsState()
 
-            showAlertDialogToLogout(context, onNavigateToSignIn)
+            showAlertDialogToLogout(context, homeViewModel, onNavigateToSignIn)
 
             val listState = rememberLazyListState()
             var isAllUsersVisible by remember { mutableStateOf(true) }
@@ -129,7 +129,6 @@ class Home {
 
             val openChatAppIntent = getChatAppIntent(context)
             val openChatAppLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-                
             }
 
             //Observe Live Data as State
@@ -271,7 +270,7 @@ class Home {
         }
 
         @Composable
-        private fun showAlertDialogToLogout(context : Context, onNavigateToSignIn:() -> Unit) {
+        private fun showAlertDialogToLogout(context : Context, homeViewModel: HomeViewModel, onNavigateToSignIn:() -> Unit) {
             var showDialog by remember { mutableStateOf(false) }
             BackHandler {
                 showDialog = true
@@ -287,6 +286,7 @@ class Home {
                             if(account != null) {
                                 FirebaseAuth.getInstance().signOut()
                             }
+                            homeViewModel.clearAccountInStorage(context)
                             onNavigateToSignIn()
                         }) {
                             Text("Yes")
