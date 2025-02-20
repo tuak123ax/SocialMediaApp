@@ -48,6 +48,7 @@ class CommentViewModel : ViewModel() {
                     updateComments(listComments)
                     Log.d("CommentViewModel", "Comment added: $commentInstance")
                     DatabaseHelper.saveInstanceToDatabase(commentRandomId,Constants.NEWS_PATH+"/"+selectedNew.id+"/"+Constants.COMMENT_PATH,commentInstance,_createCommentStatus)
+                    DatabaseHelper.updateCountValueInDatabase(selectedNew.id,Constants.NEWS_PATH,Constants.COMMENT_COUNT_PATH, listComments.size)
                     updateMessage("")
                 } catch(e: Exception) {
                     Log.e("SendComment", "Error saving comment: ${e.message}")

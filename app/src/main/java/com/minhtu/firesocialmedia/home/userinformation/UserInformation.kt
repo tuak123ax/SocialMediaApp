@@ -39,7 +39,7 @@ class UserInformation {
             onNavigateToUserInformation : (user : UserInstance?) -> Unit,
         ){
             val newsList = homeViewModel.allNews.observeAsState(initial = emptyList())
-            Column(verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally, modifier = modifier.padding(20.dp)) {
+            Column(verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally, modifier = modifier.padding(10.dp)) {
                 val context = LocalContext.current
                 AsyncImage(model = ImageRequest.Builder(context)
                     .data(user?.image)
