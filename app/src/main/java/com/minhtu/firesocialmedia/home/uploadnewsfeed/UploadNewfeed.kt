@@ -59,10 +59,10 @@ class UploadNewsfeed {
             LaunchedEffect(lifecycleOwner) {
                  homeViewModel.createPostStatus.observe(lifecycleOwner){createPostStatus ->
                      if(createPostStatus != null) {
-                         if(createPostStatus == true) {
-                             Toast.makeText(context, "create post successfully!", Toast.LENGTH_SHORT).show()
+                         if(createPostStatus) {
+                             Toast.makeText(context, "Create post successfully!", Toast.LENGTH_SHORT).show()
                          } else {
-                             Toast.makeText(context, "create post failed! Please try again!", Toast.LENGTH_SHORT).show()
+                             Toast.makeText(context, "Create post failed! Please try again!", Toast.LENGTH_SHORT).show()
                          }
                          homeViewModel.resetPostStatus()
                          homeViewModel.createPostStatus.removeObservers(lifecycleOwner)
@@ -120,12 +120,7 @@ class UploadNewsfeed {
                         Text(text = "Back")
                     }
                     Button(onClick = {
-                        val currentUser = homeViewModel.currentUser
-                        if(currentUser != null){
-                            homeViewModel.createPost(currentUser)
-                        } else {
-                            Log.e("UploadNewsfeedScreen", "Cannot get user information!")
-                        }
+                        homeViewModel.createPost(homeViewModel.currentUser)
                     }) {
                         Text(text = "Post")
                     }

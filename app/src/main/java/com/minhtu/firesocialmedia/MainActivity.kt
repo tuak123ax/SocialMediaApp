@@ -29,11 +29,13 @@ import com.minhtu.firesocialmedia.constants.Constants
 import com.minhtu.firesocialmedia.crypto.CryptoHelper
 import com.minhtu.firesocialmedia.home.Home
 import com.minhtu.firesocialmedia.home.HomeViewModel
+import com.minhtu.firesocialmedia.home.comment.Comment
 import com.minhtu.firesocialmedia.home.search.Search
 import com.minhtu.firesocialmedia.home.showimage.ShowImage
 import com.minhtu.firesocialmedia.home.uploadnewsfeed.UploadNewsfeed
 import com.minhtu.firesocialmedia.home.userinformation.UserInformation
 import com.minhtu.firesocialmedia.information.Information
+import com.minhtu.firesocialmedia.instance.NewsInstance
 import com.minhtu.firesocialmedia.instance.UserInstance
 import com.minhtu.firesocialmedia.services.remoteconfig.FetchResultCallback
 import com.minhtu.firesocialmedia.services.remoteconfig.RemoteConfigHelper
@@ -81,6 +83,7 @@ class MainActivity : ComponentActivity() {
         val startDestination = SignIn.getScreenName()
         var selectedImage = ""
         var selectedUser: UserInstance? = null
+        lateinit var selectedNew : NewsInstance
 
         //Define shared viewModel instance to use for signUp and information screens.
         val signUpViewModel: SignUpViewModel = viewModel()
@@ -136,7 +139,11 @@ class MainActivity : ComponentActivity() {
                     onNavigateToSignIn = {navController.navigate(route = SignIn.getScreenName())},
                     onNavigateToUserInformation = {user ->
                         selectedUser = user
-                        navController.navigate(route = UserInformation.getScreenName())}
+                        navController.navigate(route = UserInformation.getScreenName())},
+                    onNavigateToCommentScreen = { new ->
+                        selectedNew = new
+                        navController.navigate(route = Comment.getScreenName())
+                    }
                 )
             }
             composable(route = UploadNewsfeed.getScreenName()){
@@ -180,6 +187,21 @@ class MainActivity : ComponentActivity() {
                         selectedUser = user
                         navController.navigate(route = UserInformation.getScreenName())}
                 )
+            }
+            composable(route = Comment.getScreenName()) {
+                Comment.CommentScreen(modifier = Modifier
+                    .fillMaxSize()
+                    .background(color = Color.White),
+                    currentUser = homeViewModel.currentUser,
+                    selectedNew = selectedNew,
+                    onNavigateToShowImageScreen = {image ->
+                        selectedImage = image
+                        navController.navigate(route = ShowImage.getScreenName())},
+                    onNavigateToUserInformation = {user ->
+                        selectedUser = user
+                        navController.navigate(route = UserInformation.getScreenName())}) {
+                    navController.navigate(route = Home.getScreenName())
+                }
             }
         }
     }

@@ -17,24 +17,31 @@ import com.minhtu.firesocialmedia.constants.Constants
 import com.minhtu.firesocialmedia.crypto.CryptoHelper
 import com.minhtu.firesocialmedia.instance.NewsInstance
 import com.minhtu.firesocialmedia.instance.UserInstance
+import com.minhtu.firesocialmedia.services.database.DatabaseHelper
+import com.minhtu.firesocialmedia.utils.Utils
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.UUID
 
 class HomeViewModel : ViewModel() {
-    var listUsers: ArrayList<UserInstance>? = ArrayList()
-    var listNews: ArrayList<NewsInstance>? = ArrayList()
-    var currentUser : UserInstance? = null
+    var listUsers: ArrayList<UserInstance> = ArrayList()
+    var listNews: ArrayList<NewsInstance> = ArrayList()
+    lateinit var currentUser : UserInstance
     private val _allUsers : MutableLiveData<ArrayList<UserInstance>> = MutableLiveData()
     val allUsers = _allUsers
     fun updateUsers(users: ArrayList<UserInstance>) {
         _allUsers.value = users
+        likeCache = currentUser.likedPosts
         Log.e("HomeViewModel", "updateUsers")
     }
 
     fun findUserById(userId : String) : UserInstance?{
-        for(user in listUsers!!){
+        for(user in listUsers){
             if(user.uid == userId) {
                 return user
             }
@@ -68,43 +75,16 @@ class HomeViewModel : ViewModel() {
     var createPostStatus = _createPostStatus
 
     fun createPost(user : UserInstance){
-        viewModelScope.launch {
-            withContext(Dispatchers.IO) {
-                val newsRandomId = generateRandomId()
+        viewModelScope.launch(Dispatchers.IO) {
+            try{
+                val newsRandomId = Utils.generateRandomId()
                 val newsInstance = NewsInstance(newsRandomId,user.uid, user.name,user.image,message,image)
-                val storageReference = FirebaseStorage.getInstance().getReference()
-                    .child("news").child(newsRandomId)
-                val databaseReference = FirebaseDatabase.getInstance().getReference()
-                    .child("news").child(newsRandomId)
-                if(image.isNotEmpty()){
-                    storageReference.putFile(Uri.parse(newsInstance.image)).addOnCompleteListener{ putFileTask ->
-                        if(putFileTask.isSuccessful){
-                            storageReference.downloadUrl.addOnSuccessListener { imageUrl ->
-                                newsInstance.updateImage(imageUrl.toString())
-                                databaseReference.setValue(newsInstance).addOnCompleteListener{addUserTask ->
-                                    if(addUserTask.isSuccessful){
-                                        _createPostStatus.postValue(true)
-                                    } else {
-                                        _createPostStatus.postValue(false)
-                                    }
-                                }
-                            }
-                        }
-                    }
-                } else {
-                    databaseReference.setValue(newsInstance).addOnCompleteListener{addNewsTask ->
-                        if(addNewsTask.isSuccessful){
-                            _createPostStatus.postValue(true)
-                        } else {
-                            _createPostStatus.postValue(false)
-                        }
-                    }
-                }
+                DatabaseHelper.saveInstanceToDatabase(newsRandomId,Constants.NEWS_PATH,newsInstance,_createPostStatus)
+            } catch(e: Exception) {
+                Log.e("CreatePost", "Error saving post: ${e.message}")
+                _createPostStatus.postValue(false)
             }
         }
-    }
-    private fun generateRandomId(): String {
-        return UUID.randomUUID().toString()
     }
 
     fun resetPostStatus() {
@@ -116,5 +96,53 @@ class HomeViewModel : ViewModel() {
 
     fun clearAccountInStorage(context : Context){
         CryptoHelper.clearAccount(context)
+    }
+
+    //-----------------------------Like and comment function-----------------------------//
+    // StateFlow to update UI in Compose
+    private var _likedPosts = MutableStateFlow<HashMap<String,Boolean>>(HashMap())
+    val likedPosts = _likedPosts.asStateFlow()
+    var likeCache : HashMap<String,Boolean> = HashMap()
+    private var updateLikeJob : Job? = null
+    fun clickLikeButton(news : NewsInstance) {
+        val isLiked = likeCache[news.id] ?: false
+        if (isLiked) {
+            likeCache.remove(news.id) // Unlike
+        } else {
+            likeCache[news.id] = true // Like
+        }
+
+        _likedPosts.value = HashMap(likeCache)
+
+        updateLikeJob?.cancel()
+        updateLikeJob = viewModelScope.launch(Dispatchers.IO) {
+            try{
+                delay(3000)
+                sendLikeUpdatesToFirebase()
+            } catch(e: Exception) {
+                Log.e("ClickLikeButton", "Error updating like status: ${e.message}")
+            }
+        }
+    }
+
+    private fun sendLikeUpdatesToFirebase() {
+        currentUser.likedPosts = likeCache
+        DatabaseHelper.saveValueToDatabase(currentUser.uid,Constants.USER_PATH, likeCache, Constants.LIKED_POSTS_PATH)
+    }
+
+    fun updateLikeStatus(){
+        _likedPosts.value = likeCache
+    }
+
+    private var _commentStatus : MutableLiveData<NewsInstance> = MutableLiveData()
+    var commentStatus = _commentStatus
+    fun clickCommentButton(newsInstance: NewsInstance) {
+        _commentStatus.value = newsInstance
+    }
+    fun resetCommentStatus() {
+        _commentStatus = MutableLiveData<NewsInstance>()
+        commentStatus = _commentStatus
+        message = ""
+        image = ""
     }
 }

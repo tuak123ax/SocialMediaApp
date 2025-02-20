@@ -18,6 +18,7 @@ import com.minhtu.firesocialmedia.constants.Constants
 import com.minhtu.firesocialmedia.crypto.CryptoHelper
 import java.io.IOException
 import java.net.URL
+import java.util.HashMap
 
 class AppFirebaseNotificationService: FirebaseMessagingService() {
     override fun onMessageReceived(message: RemoteMessage) {
@@ -28,7 +29,7 @@ class AppFirebaseNotificationService: FirebaseMessagingService() {
         val fcm_token = message.getData()[Constants.KEY_FCM_TOKEN]
         val email = message.getData()[Constants.KEY_EMAIL]
         val notificationMessage = message.getData()[Constants.KEY_MESSAGE]
-        val user = UserInstance(email!!,avatar!!,name!!,"",fcm_token!!,userId!!)
+        val user = UserInstance(email!!,avatar!!,name!!,"",fcm_token!!,userId!!, HashMap())
         sendNotification(user, notificationMessage)
     }
 

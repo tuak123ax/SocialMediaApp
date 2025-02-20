@@ -38,6 +38,9 @@ android {
         }
     }
     buildTypes {
+        debug {
+            signingConfig = signingConfigs.getByName("debug")
+        }
         release {
             isMinifyEnabled = true
             isShrinkResources = true
@@ -110,7 +113,7 @@ dependencies {
     implementation("io.coil-kt:coil-compose:2.7.0")
 
     implementation ("androidx.hilt:hilt-navigation-compose:1.2.0")
-    implementation ("com.google.dagger:hilt-android:2.51.1") // Replace x with the latest version
+    implementation ("com.google.dagger:hilt-android:2.51.1")
     kapt("com.google.dagger:hilt-compiler:2.51.1")
 
     //Kotlin coroutines
