@@ -166,7 +166,7 @@ class Comment {
                         modifier = Modifier.padding(10.dp).fillMaxWidth()
                             .clickable {
 //                                val user = homeViewModel.findUserById(news.posterId)
-//                                onNavigateToUserInfomation(user)
+//                                onNavigateToUserInformation(user)
                             }){
 
                         AsyncImage(

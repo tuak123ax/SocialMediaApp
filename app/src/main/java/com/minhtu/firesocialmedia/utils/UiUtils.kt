@@ -2,6 +2,7 @@ package com.minhtu.firesocialmedia.utils
 
 import android.content.Context
 import android.net.Uri
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -48,6 +49,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.minhtu.firesocialmedia.R
@@ -58,12 +60,14 @@ import com.minhtu.firesocialmedia.instance.UserInstance
 class UiUtils {
     companion object{
         @Composable
-        fun NewsCard(news: NewsInstance, context: Context, onNavigateToShowImageScreen: (image: String) -> Unit, onNavigateToUserInfomation: (user: UserInstance?) -> Unit, homeViewModel: HomeViewModel) {
+        fun NewsCard(news: NewsInstance, context: Context, onNavigateToShowImageScreen: (image: String) -> Unit, onNavigateToUserInformation: (user: UserInstance?) -> Unit, homeViewModel: HomeViewModel) {
             val likeStatus by homeViewModel.likedPosts.collectAsState()
             val isLiked = likeStatus.contains(news.id)
             LaunchedEffect(likeStatus) {
                 homeViewModel.updateLikeStatus()
             }
+            val likeCountList = homeViewModel.likeCountList.collectAsState()
+            val commentCountList = homeViewModel.commentCountList.collectAsState()
             Card(
                 modifier = Modifier
                     .padding(10.dp)
@@ -71,12 +75,13 @@ class UiUtils {
                     .border(3.dp, Color.Gray),
                 colors = CardDefaults.cardColors(containerColor = Color.White)
             ) {
-                Column(modifier = Modifier.fillMaxSize()) {
+                Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(1.dp)) {
                     Row(horizontalArrangement = Arrangement.Start,
                         modifier = Modifier.background(color = Color.Cyan).padding(10.dp).fillMaxWidth()
                             .clickable {
                                 val user = homeViewModel.findUserById(news.posterId)
-                                onNavigateToUserInfomation(user)
+                                Log.e("onNavigateToUserInformation", "user: $user")
+                                onNavigateToUserInformation(user)
                             }){
                         AsyncImage(
                             model = ImageRequest.Builder(context)
@@ -102,7 +107,6 @@ class UiUtils {
                         color = Color.Black,
                         modifier = Modifier.padding(10.dp) // Adds padding around text
                     )
-                    Spacer(modifier = Modifier.height(1.dp))
                     if(news.image.isNotEmpty()){
                         AsyncImage(
                             model = news.image,
@@ -111,13 +115,29 @@ class UiUtils {
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(250.dp)
-                                .padding(10.dp)
+                                .padding(5.dp)
                                 .clickable {
                                     onNavigateToShowImageScreen(news.image)
                                 }
                         )
                     }
-                    Row(modifier = Modifier.fillMaxWidth().padding(5.dp)) {
+                    Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp),
+                        horizontalArrangement = Arrangement.Start) {
+                        Text(
+                            text = "Like: ${likeCountList.value[news.id]}",
+                            fontSize = 12.sp,
+                            color = Color.Black,
+                            modifier = Modifier.padding(2.dp)
+                        )
+                        Spacer(modifier = Modifier.weight(1f))
+                        Text(
+                            text = "Comment: ${commentCountList.value[news.id]}",
+                            fontSize = 12.sp,
+                            color = Color.Black,
+                            modifier = Modifier.padding(2.dp)
+                        )
+                    }
+                    Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp)) {
                         Button(onClick = {
                             homeViewModel.clickLikeButton(news)
                         },

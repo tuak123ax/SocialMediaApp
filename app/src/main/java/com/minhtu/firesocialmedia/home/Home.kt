@@ -86,12 +86,11 @@ class Home {
             val showDialog = remember { mutableStateOf(false) }
             ShowAlertDialogToLogout(context, homeViewModel, onNavigateToSignIn, showDialog)
 
-            val listState = rememberLazyListState()
+            val listState = homeViewModel.listState
             var isAllUsersVisible by remember { mutableStateOf(true) }
 
             // LaunchedEffect to track the scroll state
-            LaunchedEffect(listState) {
-
+            LaunchedEffect(Unit) {
                 snapshotFlow { listState.firstVisibleItemIndex }
                     .distinctUntilChanged()
                     .collectLatest { index ->
@@ -226,6 +225,8 @@ class Home {
                     LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier
                         .fillMaxSize(), state = listState) {
                         items(newsList.value){news ->
+                            homeViewModel.addLikeCountData(news.id, news.likeCount)
+                            homeViewModel.addCommentCountData(news.id, news.commentCount)
                             UiUtils.NewsCard(news = news, context, onNavigateToShowImageScreen, onNavigateToUserInformation, homeViewModel)
                         }
                     }

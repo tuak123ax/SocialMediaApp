@@ -8,34 +8,40 @@ import androidx.security.crypto.MasterKeys
 import com.minhtu.firesocialmedia.constants.Constants
 import java.io.File
 import java.security.KeyStore
+import javax.crypto.AEADBadTagException
 import javax.crypto.Cipher
+import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
 import javax.crypto.spec.SecretKeySpec
 
 class CryptoHelper {
     companion object{
         fun getEncryptedSharedPreferences(context: Context): SharedPreferences {
-            if (!doesKeyExist("androidx.security.master_key_default")) {
-                Log.e("EncryptedPrefs", "Keystore key missing. Resetting preferences...")
+            if (!isKeyValid("androidx.security.master_key_default")) {
+                Log.e("EncryptedPrefs", "Keystore key missing or invalid. Resetting preferences...")
                 resetEncryptedPreferences(context)
+                MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC)
             }
 
             val prefs = try {
                 createEncryptedSharedPreferences(context)
+            } catch (e: AEADBadTagException) {
+                Log.e("EncryptedPrefs", "AEADBadTagException: Corrupted encrypted storage detected. Resetting...")
+                resetEncryptedPreferences(context)
+                createEncryptedSharedPreferences(context)
             } catch (e: Exception) {
-                Log.e("EncryptedPrefs", "Corrupted encrypted storage detected. Resetting...")
+                Log.e("EncryptedPrefs", "Unknown error in encrypted storage", e)
                 resetEncryptedPreferences(context)
                 createEncryptedSharedPreferences(context)
             }
 
-            // Ensure first-time write
             if (!prefs.contains("initialized")) {
-                Log.e("EncryptedPrefs", "Write first time")
                 prefs.edit().putBoolean("initialized", true).apply()
             }
 
             return prefs
         }
+
 
         private fun createEncryptedSharedPreferences(context: Context) : SharedPreferences{
             var sharedPrefs: SharedPreferences? = null
@@ -45,7 +51,7 @@ class CryptoHelper {
                 try {
                     val masterKeyAlias = MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC)
                     sharedPrefs = EncryptedSharedPreferences.create(
-                        "secure_prefs_file",
+                        "account_secure_prefs",
                         masterKeyAlias,
                         context,
                         EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
@@ -86,19 +92,40 @@ class CryptoHelper {
         }
 
         private fun resetEncryptedPreferences(context: Context) {
+            try {
+                val keyStore = KeyStore.getInstance("AndroidKeyStore").apply { load(null) }
+                keyStore.deleteEntry("androidx.security.master_key_default")
+            } catch (e: Exception) {
+                Log.e("EncryptedPrefs", "Failed to delete keystore entry", e)
+            }
+
             val sharedPrefsFile = File(context.filesDir, "shared_prefs/account_secure_prefs.xml")
             if (sharedPrefsFile.exists()) {
                 sharedPrefsFile.delete()
                 Log.e("EncryptedPrefs", "Deleted corrupted preferences file.")
             }
         }
-
-        // Checks if the Keystore key exists
-        fun doesKeyExist(alias: String): Boolean {
+        fun isKeyValid(alias: String): Boolean {
             return try {
                 val keyStore = KeyStore.getInstance("AndroidKeyStore").apply { load(null) }
-                keyStore.getKey(alias, null) != null
+                val key = keyStore.getKey(alias, null) as? SecretKey
+
+                if (key == null) {
+                    Log.e("EncryptedPrefs", "Keystore key is missing")
+                    false
+                } else {
+                    // Ensure the key works (only if it exists)
+                    try {
+                        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
+                        cipher.init(Cipher.ENCRYPT_MODE, key, GCMParameterSpec(GCM_TAG_SIZE, ByteArray(GCM_IV_SIZE)))
+                        true
+                    } catch (e: Exception) {
+                        Log.e("EncryptedPrefs", "Keystore key exists but is invalid", e)
+                        false
+                    }
+                }
             } catch (e: Exception) {
+                Log.e("EncryptedPrefs", "Keystore access failed", e)
                 false
             }
         }
