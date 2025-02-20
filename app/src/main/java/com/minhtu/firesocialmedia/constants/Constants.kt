@@ -2,6 +2,10 @@ package com.minhtu.firesocialmedia.constants
 
 class Constants {
     companion object{
+        const val USER_PATH = "users"
+        const val NEWS_PATH = "news"
+        const val COMMENT_PATH = "comments"
+        const val LIKED_POSTS_PATH = "likedPosts"
         const val CHANNEL_ID = "NotificationID"
         const val PASSWORD = "Password"
         const val CONFIRM_PASSWORD = "Confirm Password"

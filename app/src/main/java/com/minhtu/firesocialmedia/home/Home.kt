@@ -3,6 +3,7 @@ package com.minhtu.firesocialmedia.home
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -57,11 +58,14 @@ import coil.request.ImageRequest
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.firebase.auth.FirebaseAuth
 import com.minhtu.firesocialmedia.R
+import com.minhtu.firesocialmedia.instance.NewsInstance
 import com.minhtu.firesocialmedia.instance.UserInstance
 import com.minhtu.firesocialmedia.loading.Loading
 import com.minhtu.firesocialmedia.loading.LoadingViewModel
 import com.minhtu.firesocialmedia.utils.UiUtils
 import com.minhtu.firesocialmedia.utils.Utils
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
 
 class Home {
     companion object{
@@ -73,7 +77,8 @@ class Home {
                        onNavigateToShowImageScreen: (image : String) -> Unit,
                        onNavigateToSearch: () -> Unit,
                        onNavigateToSignIn: () -> Unit,
-                       onNavigateToUserInformation: (user: UserInstance?) -> Unit){
+                       onNavigateToUserInformation: (user: UserInstance?) -> Unit,
+                       onNavigateToCommentScreen: (selectedNew : NewsInstance) -> Unit){
             val context = LocalContext.current
             val lifecycleOwner = rememberUpdatedState(newValue = LocalLifecycleOwner.current)
             val isLoading by loadingViewModel.isLoading.collectAsState()
@@ -86,27 +91,12 @@ class Home {
 
             // LaunchedEffect to track the scroll state
             LaunchedEffect(listState) {
-                var previousIndex = listState.firstVisibleItemIndex
-                var previousScrollOffset = listState.firstVisibleItemScrollOffset
 
-                snapshotFlow {
-                    listState.firstVisibleItemIndex to listState.firstVisibleItemScrollOffset
-                }.collect { (index, offset) ->
-                    if (index > previousIndex || (index == previousIndex && offset > previousScrollOffset)) {
-                        // Scrolling down, hide bar
-                        if (isAllUsersVisible) {
-                            isAllUsersVisible = false
-                        }
-                    } else if (index < previousIndex || (index == previousIndex && offset < previousScrollOffset)) {
-                        // Scrolling up, show bar
-                        if (!isAllUsersVisible) {
-                            isAllUsersVisible = true
-                        }
+                snapshotFlow { listState.firstVisibleItemIndex }
+                    .distinctUntilChanged()
+                    .collectLatest { index ->
+                        isAllUsersVisible = index == 0  // Show only if scrolled to the top
                     }
-                    // Update previous values for next comparison
-                    previousIndex = index
-                    previousScrollOffset = offset
-                }
             }
 
             LaunchedEffect(lifecycleOwner.value) {
@@ -126,6 +116,13 @@ class Home {
                     if(homeViewModel.numberOfListNeedToLoad == 0) {
                         loadingViewModel.hideLoading()
                     }
+                }
+
+                homeViewModel.commentStatus.observe(lifecycleOwner.value) { selectedNew ->
+                    Log.e("HomeScreen", "selected new: $selectedNew")
+                    onNavigateToCommentScreen(selectedNew)
+                    homeViewModel.resetCommentStatus()
+                    homeViewModel.commentStatus.removeObservers(lifecycleOwner.value)
                 }
             }
 

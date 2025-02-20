@@ -8,7 +8,6 @@ import androidx.security.crypto.MasterKeys
 import com.minhtu.firesocialmedia.constants.Constants
 import java.io.File
 import java.security.KeyStore
-import javax.crypto.AEADBadTagException
 import javax.crypto.Cipher
 import javax.crypto.spec.GCMParameterSpec
 import javax.crypto.spec.SecretKeySpec

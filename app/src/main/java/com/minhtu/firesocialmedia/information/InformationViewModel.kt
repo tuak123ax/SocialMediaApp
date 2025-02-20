@@ -18,6 +18,7 @@ import com.minhtu.firesocialmedia.instance.UserInstance
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.util.HashMap
 
 class InformationViewModel : ViewModel() {
     private var userInstance : UserInstance? = null
@@ -55,7 +56,7 @@ class InformationViewModel : ViewModel() {
                 val databaseReference = FirebaseDatabase.getInstance().getReference()
                     .child("users").child(uid)
                 userInstance = UserInstance(email, avatar,username,"",
-                    secureSharedPreferences.getString(Constants.KEY_FCM_TOKEN, "")!!,uid)
+                    secureSharedPreferences.getString(Constants.KEY_FCM_TOKEN, "")!!,uid, HashMap())
                 if(avatar != Constants.DEFAULT_AVATAR_URL){
                     storageReference.putFile(Uri.parse(userInstance!!.image)).addOnCompleteListener{ putFileTask ->
                         if(putFileTask.isSuccessful){
