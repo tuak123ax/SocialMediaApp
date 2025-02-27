@@ -13,6 +13,8 @@ import com.minhtu.firesocialmedia.home.comment.CommentViewModel
 import com.minhtu.firesocialmedia.instance.CommentInstance
 import com.minhtu.firesocialmedia.instance.NewsInstance
 import com.minhtu.firesocialmedia.instance.UserInstance
+import java.text.SimpleDateFormat
+import java.util.Date
 import java.util.UUID
 
 class Utils {
@@ -81,6 +83,25 @@ class Utils {
 
         fun generateRandomId(): String {
             return UUID.randomUUID().toString()
+        }
+
+        fun findUserById(userId : String, listUsers : ArrayList<UserInstance>) : UserInstance?{
+            for(user in listUsers){
+                if(user.uid == userId) {
+                    return user
+                }
+            }
+            return null
+        }
+
+        fun getCurrentTime() : Long{
+            //Get current time in milliseconds
+            return System.currentTimeMillis()
+        }
+
+        fun convertTimeToDateString(time : Long) : String{
+            //Convert time in milliseconds to date string
+            return SimpleDateFormat("dd/MM/yyyy HH:mm").format(Date(time))
         }
     }
 }

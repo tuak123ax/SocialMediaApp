@@ -44,15 +44,6 @@ class HomeViewModel : ViewModel() {
         Log.e("HomeViewModel", "updateUsers")
     }
 
-    fun findUserById(userId : String) : UserInstance?{
-        for(user in listUsers){
-            if(user.uid == userId) {
-                return user
-            }
-        }
-        return null
-    }
-
     private  val _allNews : MutableLiveData<ArrayList<NewsInstance>> = MutableLiveData()
     val allNews  = _allNews
     fun updateNews(news: ArrayList<NewsInstance>) {
@@ -83,6 +74,7 @@ class HomeViewModel : ViewModel() {
             try{
                 val newsRandomId = Utils.generateRandomId()
                 val newsInstance = NewsInstance(newsRandomId,user.uid, user.name,user.image,message,image)
+                newsInstance.timePosted = Utils.getCurrentTime()
                 DatabaseHelper.saveInstanceToDatabase(newsRandomId,Constants.NEWS_PATH,newsInstance,_createPostStatus)
             } catch(e: Exception) {
                 Log.e("CreatePost", "Error saving post: ${e.message}")
