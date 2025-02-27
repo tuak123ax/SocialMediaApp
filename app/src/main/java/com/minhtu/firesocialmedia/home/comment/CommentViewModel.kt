@@ -44,6 +44,7 @@ class CommentViewModel : ViewModel() {
                 try{
                     val commentRandomId = Utils.generateRandomId()
                     val commentInstance = CommentInstance(commentRandomId,user.uid, user.name,user.image,message,image)
+                    commentInstance.timePosted = Utils.getCurrentTime()
                     listComments.add(commentInstance)
                     updateComments(listComments)
                     Log.d("CommentViewModel", "Comment added: $commentInstance")

@@ -119,6 +119,5 @@ dependencies {
     //Kotlin coroutines
     implementation ("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
     //Encrypt data before saving to local
-    implementation ("androidx.security:security-crypto:1.0.0")
-
+    implementation ("androidx.security:security-crypto:1.1.0-alpha06")
 }

@@ -25,8 +25,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.minhtu.firesocialmedia.constants.Constants
-import com.minhtu.firesocialmedia.crypto.CryptoHelper
 import com.minhtu.firesocialmedia.home.Home
 import com.minhtu.firesocialmedia.home.HomeViewModel
 import com.minhtu.firesocialmedia.home.comment.Comment
@@ -160,7 +158,8 @@ class MainActivity : ComponentActivity() {
             composable(route = ShowImage.getScreenName()) {
                 ShowImage.ShowImageScreen(selectedImage, modifier = Modifier
                     .fillMaxSize()
-                    .background(color = Color.Black)
+                    .background(color = Color.Black),
+                    onNavigateToHomeScreen = {navController.navigate(route = Home.getScreenName())}
                 )
             }
             composable(route = Search.getScreenName()) {
@@ -194,6 +193,7 @@ class MainActivity : ComponentActivity() {
                     .background(color = Color.White),
                     currentUser = homeViewModel.currentUser,
                     selectedNew = selectedNew,
+                    listUsers = homeViewModel.listUsers,
                     onNavigateToShowImageScreen = {image ->
                         selectedImage = image
                         navController.navigate(route = ShowImage.getScreenName())},

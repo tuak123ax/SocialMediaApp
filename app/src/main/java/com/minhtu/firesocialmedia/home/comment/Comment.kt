@@ -50,6 +50,7 @@ class Comment {
                           commentViewModel: CommentViewModel = viewModel(),
                           currentUser : UserInstance,
                           selectedNew : NewsInstance,
+                          listUsers : ArrayList<UserInstance>,
                           onNavigateToShowImageScreen: (image: String) -> Unit,
                           onNavigateToUserInformation: (user: UserInstance?) -> Unit,
                           onNavigateToHomeScreen: () -> Unit) {
@@ -111,8 +112,9 @@ class Comment {
                             .fillMaxWidth(),
                         verticalArrangement = Arrangement.spacedBy(5.dp) // Adds spacing between messages
                     ) {
-                        items(commentsList.value) { comment ->
-                            CommentCard(comment,context,onNavigateToShowImageScreen,onNavigateToUserInformation,commentViewModel)
+                        //Sort comments by timePosted in descending order
+                        items(commentsList.value.sortedByDescending { it.timePosted }) { comment ->
+                            CommentCard(comment,context,onNavigateToShowImageScreen,onNavigateToUserInformation, listUsers, currentUser)
                         }
                     }
 
@@ -153,7 +155,7 @@ class Comment {
         }
 
         @Composable
-        fun CommentCard(comment: CommentInstance, context: Context, onNavigateToShowImageScreen: (image: String) -> Unit, onNavigateToUserInfomation: (user: UserInstance?) -> Unit, commentViewModel: CommentViewModel) {
+        fun CommentCard(comment: CommentInstance, context: Context, onNavigateToShowImageScreen: (image: String) -> Unit, onNavigateToUserInformation: (user: UserInstance?) -> Unit, listUsers : ArrayList<UserInstance>, currentUser: UserInstance) {
             Card(
                 modifier = Modifier
                     .padding(10.dp)
@@ -165,8 +167,11 @@ class Comment {
                     Row(horizontalArrangement = Arrangement.Start,
                         modifier = Modifier.padding(10.dp).fillMaxWidth()
                             .clickable {
-//                                val user = homeViewModel.findUserById(news.posterId)
-//                                onNavigateToUserInformation(user)
+                                var user = Utils.findUserById(comment.posterId, listUsers)
+                                if(user == null) {
+                                    user = currentUser
+                                }
+                                onNavigateToUserInformation(user)
                             }){
 
                         AsyncImage(
@@ -183,11 +188,18 @@ class Comment {
 
                         Spacer(modifier = Modifier.width(5.dp))
 
-                        Text(
-                            text = comment.posterName,
-                            color = Color.Black,
-                            modifier = Modifier.padding(horizontal = 2.dp)
-                        )
+                        Column {
+                            Text(
+                                text = comment.posterName,
+                                color = Color.Black,
+                                modifier = Modifier.padding(horizontal = 2.dp)
+                            )
+                            Text(
+                                text = Utils.convertTimeToDateString(comment.timePosted),
+                                color = Color.Gray,
+                                modifier = Modifier.padding(horizontal = 2.dp)
+                            )
+                        }
                     }
 
                     Text(

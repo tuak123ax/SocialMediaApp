@@ -2,70 +2,90 @@ package com.minhtu.firesocialmedia.crypto
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.security.keystore.KeyGenParameterSpec
+import android.security.keystore.KeyProperties
 import android.util.Log
 import androidx.security.crypto.EncryptedSharedPreferences
-import androidx.security.crypto.MasterKeys
+import androidx.security.crypto.MasterKey
 import com.minhtu.firesocialmedia.constants.Constants
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.io.File
 import java.security.KeyStore
-import javax.crypto.AEADBadTagException
 import javax.crypto.Cipher
-import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
 import javax.crypto.spec.SecretKeySpec
 
 class CryptoHelper {
     companion object{
-        fun getEncryptedSharedPreferences(context: Context): SharedPreferences {
-            if (!isKeyValid("androidx.security.master_key_default")) {
-                Log.e("EncryptedPrefs", "Keystore key missing or invalid. Resetting preferences...")
-                resetEncryptedPreferences(context)
-                MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC)
-            }
-
-            val prefs = try {
-                createEncryptedSharedPreferences(context)
-            } catch (e: AEADBadTagException) {
-                Log.e("EncryptedPrefs", "AEADBadTagException: Corrupted encrypted storage detected. Resetting...")
-                resetEncryptedPreferences(context)
+        private const val MASTER_KEY_ALIAS = "_androidx_security_master_key_"
+        suspend fun getEncryptedSharedPreferences(context: Context): SharedPreferences {
+            return try {
                 createEncryptedSharedPreferences(context)
             } catch (e: Exception) {
-                Log.e("EncryptedPrefs", "Unknown error in encrypted storage", e)
+                Log.e("EncryptedPrefs", "Error in encrypted storage. Resetting...", e)
                 resetEncryptedPreferences(context)
+                delay(500) // Ensure reset is completed
                 createEncryptedSharedPreferences(context)
             }
-
-            if (!prefs.contains("initialized")) {
-                prefs.edit().putBoolean("initialized", true).apply()
-            }
-
-            return prefs
         }
 
+        @Throws(Exception::class)
+        private fun createEncryptedSharedPreferences(context: Context): SharedPreferences {
+            val keyStore = KeyStore.getInstance("AndroidKeyStore").apply { load(null) }
 
-        private fun createEncryptedSharedPreferences(context: Context) : SharedPreferences{
-            var sharedPrefs: SharedPreferences? = null
-            var attempts = 0
+            if (!keyStore.containsAlias(MASTER_KEY_ALIAS)) {
+                Log.e("EncryptedPrefs", "Master key missing. Recreating...")
+                resetEncryptedPreferences(context)
+            }
 
-            while (sharedPrefs == null && attempts < 3) {
-                try {
-                    val masterKeyAlias = MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC)
-                    sharedPrefs = EncryptedSharedPreferences.create(
-                        "account_secure_prefs",
-                        masterKeyAlias,
-                        context,
-                        EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-                        EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+            val masterKey = MasterKey.Builder(context)
+                .setKeyGenParameterSpec(
+                    KeyGenParameterSpec.Builder(
+                        MASTER_KEY_ALIAS,
+                        KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT
                     )
-                } catch (e: Exception) {
-                    Log.e("EncryptedPrefs", "Keystore error, retrying... Attempt: ${attempts + 1}")
-                    Thread.sleep(500) // Wait 500ms before retrying
-                    attempts++
+                        .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
+                        .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
+                        .setKeySize(256)
+                        .build()
+                )
+                .build()
+
+            return EncryptedSharedPreferences.create(
+                context,
+                "secure_prefs_file",
+                masterKey,
+                EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+                EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+            )
+        }
+
+        private fun resetEncryptedPreferences(context: Context) {
+            try {
+                val keyStore = KeyStore.getInstance("AndroidKeyStore").apply { load(null) }
+                if (keyStore.containsAlias(MASTER_KEY_ALIAS)) {
+                    keyStore.deleteEntry(MASTER_KEY_ALIAS)
+                    Log.e("EncryptedPrefs", "Keystore key deleted")
+                }
+            } catch (e: Exception) {
+                Log.e("EncryptedPrefs", "Failed to delete keystore entry", e)
+            }
+
+            // Delete EncryptedSharedPreferences files
+            val prefsDir = File(context.dataDir, "shared_prefs")
+            val filesToDelete = prefsDir.listFiles()?.filter { it.name.contains("secure_prefs_file") } ?: emptyList()
+
+            for (file in filesToDelete) {
+                if (file.exists()) {
+                    file.delete()
+                    Log.e("EncryptedPrefs", "Deleted corrupted preferences file: ${file.name}")
                 }
             }
-
-            return sharedPrefs ?: throw RuntimeException("Failed to create EncryptedSharedPreferences after multiple attempts")
         }
+
         const val GCM_IV_SIZE = 12   // IV size in bytes (96 bits)
         const val GCM_TAG_SIZE = 128 // Authentication tag size in bits
 
@@ -91,54 +111,19 @@ class CryptoHelper {
             return cipher.doFinal(cipherText)
         }
 
-        private fun resetEncryptedPreferences(context: Context) {
-            try {
-                val keyStore = KeyStore.getInstance("AndroidKeyStore").apply { load(null) }
-                keyStore.deleteEntry("androidx.security.master_key_default")
-            } catch (e: Exception) {
-                Log.e("EncryptedPrefs", "Failed to delete keystore entry", e)
-            }
-
-            val sharedPrefsFile = File(context.filesDir, "shared_prefs/account_secure_prefs.xml")
-            if (sharedPrefsFile.exists()) {
-                sharedPrefsFile.delete()
-                Log.e("EncryptedPrefs", "Deleted corrupted preferences file.")
-            }
-        }
-        fun isKeyValid(alias: String): Boolean {
-            return try {
-                val keyStore = KeyStore.getInstance("AndroidKeyStore").apply { load(null) }
-                val key = keyStore.getKey(alias, null) as? SecretKey
-
-                if (key == null) {
-                    Log.e("EncryptedPrefs", "Keystore key is missing")
-                    false
-                } else {
-                    // Ensure the key works (only if it exists)
-                    try {
-                        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-                        cipher.init(Cipher.ENCRYPT_MODE, key, GCMParameterSpec(GCM_TAG_SIZE, ByteArray(GCM_IV_SIZE)))
-                        true
-                    } catch (e: Exception) {
-                        Log.e("EncryptedPrefs", "Keystore key exists but is invalid", e)
-                        false
-                    }
-                }
-            } catch (e: Exception) {
-                Log.e("EncryptedPrefs", "Keystore access failed", e)
-                false
-            }
-        }
-
         fun saveAccount(context: Context, email: String, password: String){
-            val secureSharedPreferences: SharedPreferences = getEncryptedSharedPreferences(context)
-            secureSharedPreferences.edit().putString(Constants.KEY_EMAIL, email).apply()
-            secureSharedPreferences.edit().putString(Constants.KEY_PASSWORD, password).apply()
+            CoroutineScope(Dispatchers.IO).launch {
+                val secureSharedPreferences: SharedPreferences = getEncryptedSharedPreferences(context)
+                secureSharedPreferences.edit().putString(Constants.KEY_EMAIL, email).apply()
+                secureSharedPreferences.edit().putString(Constants.KEY_PASSWORD, password).apply()
+            }
         }
 
         fun clearAccount(context: Context){
-            val secureSharedPreferences: SharedPreferences = getEncryptedSharedPreferences(context)
-            secureSharedPreferences.edit().clear().apply()
+            CoroutineScope(Dispatchers.IO).launch {
+                val secureSharedPreferences: SharedPreferences = getEncryptedSharedPreferences(context)
+                secureSharedPreferences.edit().clear().apply()
+            }
         }
     }
 }

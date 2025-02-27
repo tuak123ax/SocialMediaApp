@@ -79,8 +79,10 @@ class UiUtils {
                     Row(horizontalArrangement = Arrangement.Start,
                         modifier = Modifier.background(color = Color.Cyan).padding(10.dp).fillMaxWidth()
                             .clickable {
-                                val user = homeViewModel.findUserById(news.posterId)
-                                Log.e("onNavigateToUserInformation", "user: $user")
+                                var user = Utils.findUserById(news.posterId, homeViewModel.listUsers)
+                                if(user == null) {
+                                    user = homeViewModel.currentUser
+                                }
                                 onNavigateToUserInformation(user)
                             }){
                         AsyncImage(
@@ -95,11 +97,18 @@ class UiUtils {
                                 .clip(CircleShape)
                         )
                         Spacer(modifier = Modifier.width(10.dp))
-                        Text(
-                            text = news.posterName,
-                            color = Color.Black,
-                            modifier = Modifier.padding(horizontal = 2.dp)
-                        )
+                        Column {
+                            Text(
+                                text = news.posterName,
+                                color = Color.Black,
+                                modifier = Modifier.padding(horizontal = 2.dp)
+                            )
+                            Text(
+                                text = Utils.convertTimeToDateString(news.timePosted),
+                                color = Color.Gray,
+                                modifier = Modifier.padding(horizontal = 2.dp)
+                            )
+                        }
                     }
                     Spacer(modifier = Modifier.height(1.dp))
                     Text(

@@ -224,7 +224,8 @@ class Home {
 
                     LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier
                         .fillMaxSize(), state = listState) {
-                        items(newsList.value){news ->
+                        //Sort news by timePosted in descending order
+                        items(newsList.value.sortedByDescending { it.timePosted }){news ->
                             homeViewModel.addLikeCountData(news.id, news.likeCount)
                             homeViewModel.addCommentCountData(news.id, news.commentCount)
                             UiUtils.NewsCard(news = news, context, onNavigateToShowImageScreen, onNavigateToUserInformation, homeViewModel)
