@@ -61,18 +61,26 @@ class HomeViewModel : ViewModel() {
 
     private var _createPostStatus = MutableLiveData<Boolean>()
     var createPostStatus = _createPostStatus
+    private var _postError = MutableLiveData<String>()
+    var postError = _postError
+
+    fun resetPostError(){
+        _postError = MutableLiveData<String>()
+        postError = _postError
+    }
 
     fun createPost(user : UserInstance){
         viewModelScope.launch(Dispatchers.IO) {
-            try{
-                val newsRandomId = Utils.generateRandomId()
+            val newsRandomId = Utils.generateRandomId()
+            if(message.isNotEmpty() || image.isNotEmpty()) {
+                Log.e("createPost", "Success")
                 val newsInstance = NewsInstance(newsRandomId,user.uid, user.name,user.image,message,image)
                 newsInstance.timePosted = Utils.getCurrentTime()
                 DatabaseHelper.saveInstanceToDatabase(newsRandomId,
                     Constants.NEWS_PATH,newsInstance,_createPostStatus)
-            } catch(e: Exception) {
-                Log.e("CreatePost", "Error saving post: ${e.message}")
-                _createPostStatus.postValue(false)
+            } else {
+                Log.e("createPost", "POST_NEWS_EMPTY_ERROR")
+                _postError.postValue(Constants.POST_NEWS_EMPTY_ERROR)
             }
         }
     }

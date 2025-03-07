@@ -8,6 +8,7 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,6 +25,7 @@ import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
@@ -37,6 +39,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -66,7 +69,8 @@ class SignIn{
             modifier: Modifier,
             onNavigateToSignUpScreen:() -> Unit,
             onNavigateToHomeScreen:()-> Unit,
-            onNavigateToInformationScreen:() -> Unit) {
+            onNavigateToInformationScreen:() -> Unit,
+            onNavigateToForgotPasswordScreen:() -> Unit) {
             val isLoading by loadingViewModel.isLoading.collectAsState()
             val context = LocalContext.current
             val resultLauncher = rememberLauncherForActivityResult(
@@ -130,6 +134,30 @@ class SignIn{
                     )
                     //Password textfield
                     PasswordTextField(Constants.PASSWORD, signInViewModel)
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        //Forgot password
+                        Text(
+                            text = "Forgot password?",
+                            color = Color.Blue,
+                            fontSize = 15.sp,
+                            textAlign = TextAlign.Start,
+                            modifier = Modifier
+                                .clickable {
+                                    onNavigateToForgotPasswordScreen()
+                                }
+                        )
+                        Spacer(modifier = Modifier.weight(1f))
+                        //Remember password
+                        MyCheckbox(signInViewModel)
+
+                    }
                     //Row contains buttons
                     Row(
                         modifier = Modifier
@@ -225,6 +253,24 @@ class SignIn{
                     }
                 }
             )
+        }
+
+        @Composable
+        fun MyCheckbox(signInViewModel: SignInViewModel
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Checkbox(
+                    checked = signInViewModel.rememberPassword,
+                    onCheckedChange = { signInViewModel.updateRememberPassword(it)}
+                )
+                Text(
+                    text = "Remember password",
+                    fontSize = 10.sp,
+                    modifier = Modifier.padding(start = 5.dp)
+                )
+            }
         }
 
         fun getScreenName(): String{
