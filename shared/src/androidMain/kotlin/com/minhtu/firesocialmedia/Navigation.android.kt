@@ -18,6 +18,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.firebase.auth.FirebaseAuth
+import com.minhtu.firesocialmedia.forgotpassword.ForgotPassword
 import com.minhtu.firesocialmedia.home.Home
 import com.minhtu.firesocialmedia.home.HomeViewModel
 import com.minhtu.firesocialmedia.home.comment.Comment
@@ -76,7 +77,8 @@ fun SetUpNavigation(context: Any) {
                         ),
                     onNavigateToSignUpScreen = {navController.navigate(route = SignUp.getScreenName())},
                     onNavigateToHomeScreen = {navController.navigate(route = Home.getScreenName())},
-                    onNavigateToInformationScreen = {navController.navigate(route = Information.getScreenName())}
+                    onNavigateToInformationScreen = {navController.navigate(route = Information.getScreenName())},
+                    onNavigateToForgotPasswordScreen = {navController.navigate(route = ForgotPassword.getScreenName())}
                 )
             }
             composable(route = SignUp.getScreenName()){
@@ -179,6 +181,14 @@ fun SetUpNavigation(context: Any) {
                         navController.navigate(route = UserInformation.getScreenName())}) {
                     navController.navigate(route = Home.getScreenName())
                 }
+            }
+            composable(route = ForgotPassword.getScreenName()) {
+                ForgotPassword.ForgotPasswordScreen(modifier = Modifier
+                    .fillMaxSize()
+                    .paint(
+                    painter = painterResource(id = R.drawable.background),
+                    contentScale = ContentScale.FillBounds),
+                    onNavigateToSignInScreen = {navController.navigate(route = SignIn.getScreenName())})
             }
         }
     }
