@@ -4,15 +4,15 @@ plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.kotlinCocoapods)
     alias(libs.plugins.androidLibrary)
-    id("org.jetbrains.compose") version "1.7.3"
-//    id("com.google.dagger.hilt.android") // ✅ Added Hilt plugin
+    id("org.jetbrains.compose")
+//    id("com.google.dagger.hilt.android") //  Added Hilt plugin
 //    id("org.jetbrains.kotlin.kapt")
     id("org.jetbrains.kotlin.plugin.compose")
 }
 
 kotlin {
     androidTarget()
-    jvmToolchain(17)  // ✅ Use standard way to set Java 17
+    jvmToolchain(17)  //  Use standard way to set Java 17
 
     iosX64()
     iosArm64()
@@ -33,13 +33,11 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                implementation("org.jetbrains.compose.ui:ui:1.5.11")
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1")
-            }
-        }
-        val commonTest by getting {
-            dependencies {
-                implementation(libs.kotlin.test)
+                implementation(libs.ui)
+                implementation(libs.material3)
+                implementation(libs.foundation)
+                implementation(libs.runtime)
+                implementation(compose.components.resources)
             }
         }
     }
@@ -65,7 +63,7 @@ dependencies {
     implementation("androidx.navigation:navigation-compose:2.7.7")
     implementation(libs.androidx.foundation)
 
-    // ✅ Firebase BoM
+    //  Firebase BoM
     implementation(platform("com.google.firebase:firebase-bom:33.5.1"))
     implementation("com.google.firebase:firebase-analytics")
     implementation("com.google.firebase:firebase-crashlytics")
@@ -81,16 +79,16 @@ dependencies {
     implementation("androidx.compose.runtime:runtime-livedata")
     implementation("io.coil-kt:coil-compose:2.7.0")
 
-    // ✅ Kotlin Coroutines
+    //  Kotlin Coroutines
     implementation ("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
 
-    // ✅ Encrypt data
+    //  Encrypt data
     implementation ("androidx.security:security-crypto:1.1.0-alpha06")
 
-    // ✅ Hilt
-    implementation("androidx.hilt:hilt-navigation-compose:1.2.0") // ✅ Hilt for Jetpack Compose
-//    implementation("com.google.dagger:hilt-android:2.51.1") // ✅ Core Hilt
-//    kapt("com.google.dagger:hilt-compiler:2.51.1") // ✅ Hilt Annotation Processor
+    //  Hilt
+    implementation("androidx.hilt:hilt-navigation-compose:1.2.0") //  Hilt for Jetpack Compose
+//    implementation("com.google.dagger:hilt-android:2.51.1") //  Core Hilt
+//    kapt("com.google.dagger:hilt-compiler:2.51.1") // Hilt Annotation Processor
 
     implementation("androidx.compose.runtime:runtime:1.6.0")
     implementation("androidx.compose.foundation:foundation:1.6.0")

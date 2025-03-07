@@ -38,6 +38,10 @@ class SignInViewModel : ViewModel() {
     private val _signInStatus = MutableLiveData<SignInState>()
     val signInState = _signInStatus
 
+    var rememberPassword by mutableStateOf(false)
+    fun updateRememberPassword(checked : Boolean){
+        rememberPassword = checked
+    }
     var email by mutableStateOf("")
     fun updateEmail(input : String){
         email = input
@@ -60,7 +64,9 @@ class SignInViewModel : ViewModel() {
                         .addOnCompleteListener{
                                 task->
                             if(task.isSuccessful){
-                                CryptoHelper.saveAccount(context, email, password)
+                                if(rememberPassword) {
+                                    CryptoHelper.saveAccount(context, email, password)
+                                }
                                 signInState.postValue(SignInState(true, ""))
                             } else{
                                 signInState.postValue(SignInState(false, Constants.LOGIN_ERROR))

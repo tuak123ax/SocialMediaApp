@@ -64,6 +64,12 @@ class UploadNewsfeed {
                          onNavigateToHomeScreen()
                      }
                 }
+                homeViewModel.postError.observe(lifecycleOwner){postError ->
+                    Log.e("postError", "Receive error")
+                    if(postError != null) {
+                        Toast.makeText(context, "Please input message or image!", Toast.LENGTH_SHORT).show()
+                    }
+                }
             }
             Column(verticalArrangement = Arrangement.Center, modifier = modifier) {
                 //Title
@@ -110,9 +116,18 @@ class UploadNewsfeed {
                 Spacer(modifier = Modifier.padding(bottom = 10.dp))
                 Row(horizontalArrangement = Arrangement.SpaceAround, modifier = Modifier.fillMaxWidth().padding(5.dp)){
                     Button(onClick = {
+                        homeViewModel.resetPostError()
+                        homeViewModel.postError.removeObservers(lifecycleOwner)
                         onNavigateToHomeScreen()
                     }) {
                         Text(text = "Back")
+                    }
+                    if(homeViewModel.image.isNotEmpty()) {
+                        Button(onClick = {
+                            homeViewModel.updateImage("")
+                        }) {
+                            Text(text = "Delete")
+                        }
                     }
                     Button(onClick = {
                         homeViewModel.createPost(homeViewModel.currentUser)
