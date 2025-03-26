@@ -1,4 +1,4 @@
-package com.minhtu.firesocialmedia.android.services.notification
+package com.minhtu.firesocialmedia.android
 
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -10,29 +10,39 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
-import com.minhtu.firesocialmedia.android.MainActivity
 import com.minhtu.firesocialmedia.R
 import com.minhtu.firesocialmedia.constants.Constants
-import com.minhtu.firesocialmedia.crypto.CryptoHelper
 import com.minhtu.firesocialmedia.instance.UserInstance
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import com.minhtu.firesocialmedia.utils.Utils
 import java.io.IOException
 import java.net.URL
-import java.util.HashMap
 
 class AppFirebaseNotificationService: FirebaseMessagingService() {
     override fun onMessageReceived(message: RemoteMessage) {
-        super.onMessageReceived(message)
-        val userId = message.getData()[Constants.KEY_USER_ID]
-        val name = message.getData()[Constants.KEY_NAME]
-        val avatar = message.getData()[Constants.KEY_AVATAR]
-        val fcm_token = message.getData()[Constants.KEY_FCM_TOKEN]
-        val email = message.getData()[Constants.KEY_EMAIL]
-        val notificationMessage = message.getData()[Constants.KEY_MESSAGE]
-        val user = UserInstance(email!!,avatar!!,name!!,"",fcm_token!!,userId!!, HashMap())
-        sendNotification(user, notificationMessage)
+        Log.d("FCM", "📩 Message received!")
+
+        // 🔹 Retrieve Data Payload
+        val user : UserInstance?
+        if (message.data.isNotEmpty()) {
+            val fcmToken = message.data[Constants.KEY_FCM_TOKEN]
+            val userId = message.data[Constants.KEY_USER_ID]
+            val avatar = message.data[Constants.KEY_AVATAR]
+            val email = message.data[Constants.KEY_EMAIL]
+
+            Log.d("FCM", "📊 Data Payload:")
+            Log.d("FCM", "🔹 fcm_token: $fcmToken")
+            Log.d("FCM", "🔹 user_id: $userId")
+            Log.d("FCM", "🔹 avatar: $avatar")
+            Log.d("FCM", "🔹 email: $email")
+
+            val title = message.data[Constants.REMOTE_MSG_TITLE]
+            val body = message.data[Constants.REMOTE_MSG_BODY]
+            Log.d("FCM", "🔹 title: $title")
+            Log.d("FCM", "🔹 body: $body")
+            user = UserInstance(email!!, avatar!!,title!!,"",fcmToken!!,userId!!, HashMap())
+            sendNotification(user, body)
+        }
+
     }
 
     private fun sendNotification(user: UserInstance, content: String?) {
@@ -65,14 +75,7 @@ class AppFirebaseNotificationService: FirebaseMessagingService() {
 
     override fun onNewToken(token: String) {
         Log.e("onNewToken", token)
-        updateToken(token)
+        Utils.updateTokenInStorage(token, applicationContext)
         super.onNewToken(token)
-    }
-
-    private fun updateToken(token: String) {
-        CoroutineScope(Dispatchers.IO).launch {
-            val secureSharedPreferences = CryptoHelper.getEncryptedSharedPreferences(applicationContext)
-            secureSharedPreferences.edit().putString(Constants.KEY_FCM_TOKEN, token).apply()
-        }
     }
 }

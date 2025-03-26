@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Intent
 import android.util.Log
 import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.border
@@ -19,6 +20,10 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -29,6 +34,8 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import coil.compose.AsyncImage
 import com.minhtu.firesocialmedia.home.HomeViewModel
+import com.minhtu.firesocialmedia.utils.UiUtils
+import com.minhtu.firesocialmedia.utils.Utils
 
 class UploadNewsfeed {
     companion object{
@@ -51,11 +58,19 @@ class UploadNewsfeed {
                     }
                 }
             }
+
             LaunchedEffect(lifecycleOwner) {
                  homeViewModel.createPostStatus.observe(lifecycleOwner){createPostStatus ->
                      if(createPostStatus != null) {
                          if(createPostStatus) {
                              Toast.makeText(context, "Create post successfully!", Toast.LENGTH_SHORT).show()
+                             if(homeViewModel.message.isNotEmpty()) {
+                                 Utils.sendMessageToServer(Utils.createMessageForServer(homeViewModel.message, Utils.getAllFCMTokens(homeViewModel), homeViewModel.currentUser!!))
+                             } else {
+                                 if(homeViewModel.image.isNotEmpty()) {
+                                     Utils.sendMessageToServer(Utils.createMessageForServer("Posted a picture!", Utils.getAllFCMTokens(homeViewModel), homeViewModel.currentUser!!))
+                                 }
+                             }
                          } else {
                              Toast.makeText(context, "Create post failed! Please try again!", Toast.LENGTH_SHORT).show()
                          }
@@ -70,6 +85,32 @@ class UploadNewsfeed {
                         Toast.makeText(context, "Please input message or image!", Toast.LENGTH_SHORT).show()
                     }
                 }
+            }
+
+            val clickBackButton by homeViewModel.clickBackButton.collectAsState()
+            val showDialog = remember { mutableStateOf(false) }
+
+            if (clickBackButton) {
+                showDialog.value = true
+                homeViewModel.resetBackValue() // Reset state to prevent re-triggering
+            }
+            BackHandler {
+                showDialog.value = true
+            }
+            if (showDialog.value) {
+                UiUtils.ShowAlertDialog(
+                    title = "Warning",
+                    message = "Are you sure you want to exit? All data will be lost!",
+                    resetAndBack = {
+                        homeViewModel.resetPostError()
+                        homeViewModel.postError.removeObservers(lifecycleOwner)
+                        homeViewModel.resetBackValue()
+                        homeViewModel.resetPostStatus()
+                        onNavigateToHomeScreen()
+                        showDialog.value = false // Close the dialog
+                    },
+                    showDialog = showDialog
+                )
             }
             Column(verticalArrangement = Arrangement.Center, modifier = modifier) {
                 //Title
@@ -116,9 +157,7 @@ class UploadNewsfeed {
                 Spacer(modifier = Modifier.padding(bottom = 10.dp))
                 Row(horizontalArrangement = Arrangement.SpaceAround, modifier = Modifier.fillMaxWidth().padding(5.dp)){
                     Button(onClick = {
-                        homeViewModel.resetPostError()
-                        homeViewModel.postError.removeObservers(lifecycleOwner)
-                        onNavigateToHomeScreen()
+                        homeViewModel.onClickBackButton()
                     }) {
                         Text(text = "Back")
                     }
@@ -130,13 +169,14 @@ class UploadNewsfeed {
                         }
                     }
                     Button(onClick = {
-                        homeViewModel.createPost(homeViewModel.currentUser)
+                        homeViewModel.createPost(homeViewModel.currentUser!!)
                     }) {
                         Text(text = "Post")
                     }
                 }
             }
         }
+
         fun getScreenName() : String{
             return "UploadNewsfeedScreen"
         }

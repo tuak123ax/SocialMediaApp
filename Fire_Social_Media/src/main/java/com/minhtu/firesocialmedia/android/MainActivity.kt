@@ -1,6 +1,7 @@
 package com.minhtu.firesocialmedia.android
 
 import android.Manifest
+import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
@@ -15,9 +16,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.content.ContextCompat
+import com.google.firebase.messaging.FirebaseMessaging
 import com.minhtu.firesocialmedia.MainApplication
 import com.minhtu.firesocialmedia.services.remoteconfig.FetchResultCallback
 import com.minhtu.firesocialmedia.services.remoteconfig.RemoteConfigHelper
+import com.minhtu.firesocialmedia.utils.Utils
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -42,10 +45,23 @@ class MainActivity : ComponentActivity() {
                         }
                     })
                     MainApplication.MainApp(this)
+                    checkFCMToken(applicationContext)
                     askNotificationPermission()
                 }
             }
         }
+    }
+
+    private fun checkFCMToken(context: Context) {
+        FirebaseMessaging.getInstance().token
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    // Get the new FCM token
+                    val token = task.result
+                    Log.d("FCM", "FCM Token: $token")
+                    Utils.updateTokenInStorage(token, context)
+                }
+            }
     }
 
     private val requestPermissionLauncher = registerForActivityResult(
