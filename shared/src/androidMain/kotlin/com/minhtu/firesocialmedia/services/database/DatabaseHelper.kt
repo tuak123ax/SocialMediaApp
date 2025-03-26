@@ -62,6 +62,22 @@ class DatabaseHelper {
             } else {
                 databaseReference.removeValue()
             }
+            Log.d("Task", "Finish saving Value To Database")
+        }
+
+        fun saveStringToDatabase(id : String,
+                                path : String,
+                                value : String,
+                                externalPath : String) {
+            Log.d("Task", "saveStringToDatabase")
+            var databaseReference = FirebaseDatabase.getInstance().getReference()
+                .child(path).child(id)
+            if(externalPath.isNotEmpty()) {
+                databaseReference = databaseReference.child(externalPath)
+            }
+            if(value.isNotEmpty()){
+                databaseReference.setValue(value)
+            }
         }
 
         fun updateCountValueInDatabase(id : String,
@@ -73,11 +89,13 @@ class DatabaseHelper {
             if(externalPath.isNotEmpty()) {
                 databaseReference = databaseReference.child(externalPath)
             }
+            if(value >= 0) {
+                databaseReference.setValue(value)
+            }
             databaseReference.addListenerForSingleValueEvent(object : ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
                     val count = snapshot.getValue(Int::class.java)
                     if(count != null){
-                        Log.d("Task", value.toString())
                         databaseReference.setValue(value)
                     }
                 }

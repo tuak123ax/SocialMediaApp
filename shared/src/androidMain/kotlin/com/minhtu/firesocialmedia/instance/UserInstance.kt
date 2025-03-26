@@ -7,6 +7,7 @@ data class UserInstance(var email: String = "", var image: String = "", var name
                         var likedPosts: HashMap<String,Boolean> = HashMap()
 ):Serializable
 {
+    val notifications : ArrayList<NotificationInstance> = ArrayList()
     fun updateImage(image: String){
         this.image = image
     }

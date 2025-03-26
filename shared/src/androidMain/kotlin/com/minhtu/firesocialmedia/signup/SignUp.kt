@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
@@ -31,6 +32,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -80,7 +82,7 @@ class SignUp {
                     //Title
                     Text(
                         text = "Sign Up",
-                        color = Color.Blue,
+                        color = Color.White,
                         fontSize = 30.sp,
                         textAlign = TextAlign.Center,
                         modifier = Modifier.fillMaxWidth()
@@ -89,12 +91,14 @@ class SignUp {
                     //Username textfield
                     OutlinedTextField(
                         value = signUpViewModel.email,
+                        textStyle = TextStyle(Color.White),
                         onValueChange = {
                                 email -> signUpViewModel.updateEmail(email)
                         }, modifier = Modifier
                             .fillMaxWidth()
                             .padding(20.dp),
                         label = { Text(text = "Username")},
+                        shape = RoundedCornerShape(30.dp),
                         singleLine = true
                     )
                     //Password textfield
@@ -137,6 +141,7 @@ class SignUp {
                     password -> if(label == Constants.PASSWORD) signUpViewModel.updatePassword(password)
                     else signUpViewModel.updateConfirmPassword(password)
                 },
+                textStyle = TextStyle(Color.White),
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(20.dp)
@@ -144,6 +149,7 @@ class SignUp {
                     .clearAndSetSemantics { },
                 label = { Text(text = label) },
                 singleLine = true,
+                shape = RoundedCornerShape(30.dp),
                 visualTransformation = if(passwordVisibility) VisualTransformation.None else PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                 trailingIcon = {

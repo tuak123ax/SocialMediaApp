@@ -8,6 +8,7 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -18,6 +19,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
@@ -45,6 +47,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -116,7 +119,7 @@ class SignIn{
                     //Title
                     Text(
                         text = "FireSocialMedia",
-                        color = Color.Blue,
+                        color = Color.Red,
                         fontSize = 30.sp,
                         textAlign = TextAlign.Center,
                         modifier = Modifier.fillMaxWidth()
@@ -129,8 +132,10 @@ class SignIn{
                         }, modifier = Modifier
                             .fillMaxWidth()
                             .padding(20.dp),
+                        shape = RoundedCornerShape(30.dp),
                         label = { Text(text = "Username")},
-                        singleLine = true
+                        singleLine = true,
+                        textStyle = TextStyle(Color.White)
                     )
                     //Password textfield
                     PasswordTextField(Constants.PASSWORD, signInViewModel)
@@ -145,7 +150,7 @@ class SignIn{
                         //Forgot password
                         Text(
                             text = "Forgot password?",
-                            color = Color.Blue,
+                            color = Color.White,
                             fontSize = 15.sp,
                             textAlign = TextAlign.Start,
                             modifier = Modifier
@@ -176,6 +181,12 @@ class SignIn{
                             Text(text = "Sign Up")
                         }
                     }
+                    Text(
+                        textAlign = TextAlign.Center,
+                        color = Color.White,
+                        text = "Or register with",
+                        modifier = Modifier.fillMaxWidth()
+                    )
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -184,7 +195,13 @@ class SignIn{
                         //Google button
                         Button(onClick = {
                             signInViewModel.signInWithGoogle(context, resultLauncher)
-                        }, colors = ButtonDefaults.buttonColors(Color.White)) {
+                        },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color.White.copy(alpha = 0.95f),
+                                contentColor = Color.Black
+                            ),
+                            modifier = Modifier.border(1.dp, Color.Black, RoundedCornerShape(30.dp))
+                        ) {
                             Image(
                                 painter = painterResource(id = R.drawable.google),
                                 contentDescription = "Google",
@@ -241,8 +258,10 @@ class SignIn{
                     .fillMaxWidth()
                     .padding(20.dp)
                     .clearAndSetSemantics { },
+                shape = RoundedCornerShape(30.dp),
                 label = { Text(text = label) },
                 singleLine = true,
+                textStyle = TextStyle(Color.White),
                 visualTransformation = if(passwordVisibility) VisualTransformation.None else PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                 trailingIcon = {
@@ -266,6 +285,7 @@ class SignIn{
                     onCheckedChange = { signInViewModel.updateRememberPassword(it)}
                 )
                 Text(
+                    color = Color.White,
                     text = "Remember password",
                     fontSize = 10.sp,
                     modifier = Modifier.padding(start = 5.dp)

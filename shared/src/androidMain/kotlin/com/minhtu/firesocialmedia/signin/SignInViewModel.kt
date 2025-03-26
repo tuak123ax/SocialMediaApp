@@ -29,7 +29,6 @@ import com.google.firebase.ktx.Firebase
 import com.minhtu.firesocialmedia.constants.Constants
 import com.minhtu.firesocialmedia.crypto.CryptoHelper
 import com.minhtu.firesocialmedia.instance.UserInstance
-import com.minhtu.firesocialmedia.signin.SignInState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext

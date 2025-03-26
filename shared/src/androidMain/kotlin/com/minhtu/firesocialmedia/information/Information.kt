@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -32,6 +33,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -89,33 +91,38 @@ class Information {
             Box(modifier = Modifier.fillMaxSize()) {
                 Column(modifier = modifier, verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally){
                     Text(text = "Please select your avatar",
-                        color = Color.Magenta,
-                        fontSize = 30.sp,
+                        color = Color.White,
+                        fontSize = 25.sp,
                         textAlign = TextAlign.Center,
-                        modifier = Modifier.fillMaxWidth())
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(20.dp))
                     Spacer(modifier = Modifier.padding(20.dp))
                     AsyncImage(model = informationViewModel.avatar,
                         contentDescription = "Avatar",
                         contentScale = ContentScale.Crop,
                         modifier = Modifier
-                            .size(140.dp)
+                            .size(160.dp)
                             .clip(CircleShape)
                             .border(1.dp, Color.Gray, CircleShape)
                             .clickable { getAvatarFromGalleryLauncher.launch(galleryIntent) })
                     Spacer(modifier = Modifier.padding(20.dp))
                     Text(text = "And input your name below",
-                        color = Color.Magenta,
+                        color = Color.White,
                         fontSize = 30.sp,
                         textAlign = TextAlign.Center,
                         modifier = Modifier.fillMaxWidth())
                     Spacer(modifier = Modifier.padding(20.dp))
                     OutlinedTextField(
-                        value = informationViewModel.username, onValueChange = {
+                        value = informationViewModel.username,
+                        shape = RoundedCornerShape(30.dp),
+                        textStyle = TextStyle(color = Color.White),
+                        onValueChange = {
                             informationViewModel.updateUsername(it)
                         }, modifier = Modifier
                             .fillMaxWidth()
                             .padding(20.dp),
-                        label = { Text(text = "Username")},
+                        label = { Text(text = "Name")},
                         singleLine = true
                     )
                     Spacer(modifier = Modifier.padding(20.dp))

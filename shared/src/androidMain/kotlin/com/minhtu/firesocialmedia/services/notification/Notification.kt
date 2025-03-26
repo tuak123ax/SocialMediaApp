@@ -1,4 +1,4 @@
-package com.minhtu.sharedmodule.services.notification
+package com.minhtu.firesocialmedia.services.notification
 
 import android.app.Application
 import android.app.NotificationChannel
