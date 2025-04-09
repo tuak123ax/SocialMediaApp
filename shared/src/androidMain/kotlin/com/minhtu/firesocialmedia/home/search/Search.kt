@@ -21,6 +21,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavHostController
 import com.minhtu.firesocialmedia.home.HomeViewModel
 import com.minhtu.firesocialmedia.instance.NewsInstance
 import com.minhtu.firesocialmedia.instance.UserInstance
@@ -32,9 +34,9 @@ class Search {
         fun SearchScreen(modifier: Modifier,
                          searchViewModel: SearchViewModel,
                          homeViewModel: HomeViewModel,
+                         navController: NavHostController,
                          onNavigateToUserInformation: (user : UserInstance) -> Unit,
                          onNavigateToShowImageScreen: (image : String) -> Unit,
-                         onNavigateToHomeScreen:() -> Unit,
                          onNavigateToCommentScreen: (selectedNew : NewsInstance) -> Unit){
             val lifecycleOwner = LocalLifecycleOwner.current
             val commentStatus by homeViewModel.commentStatus.collectAsStateWithLifecycle(
@@ -50,16 +52,16 @@ class Search {
             }
             Column(verticalArrangement = Arrangement.Top, modifier = modifier) {
                 val context = LocalContext.current
-                UiUtils.BackAndMoreOptionsRow(onNavigateToHomeScreen)
+                UiUtils.BackAndMoreOptionsRow(navController)
                 SearchBar(query = searchViewModel.query, onQueryChange = {
                     query -> searchViewModel.updateQuery(query) },
                     modifier = Modifier
                 )
 
                 UiUtils.TabLayout(listOf("People","Posts"),
-                    Search.getScreenName(),
                     homeViewModel,
                     searchViewModel,
+                    viewModel(),
                     context,
                     onNavigateToShowImageScreen,
                     onNavigateToUserInformation)

@@ -255,6 +255,7 @@ class Home {
                         .fillMaxSize().background(Color(0xFFE8E8E8)), state = listState) {
                         //Sort news by timePosted in descending order
                         items(newsList.value.sortedByDescending { it.timePosted }){news ->
+                            Log.e("HomeScreen", "news: ${news.id}")
                             UiUtils.NewsCard(news = news, context, onNavigateToShowImageScreen, onNavigateToUserInformation, homeViewModel)
                         }
                     }

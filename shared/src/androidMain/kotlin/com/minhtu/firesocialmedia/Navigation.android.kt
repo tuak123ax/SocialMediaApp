@@ -17,7 +17,7 @@ import com.minhtu.firesocialmedia.forgotpassword.ForgotPassword
 import com.minhtu.firesocialmedia.home.Home
 import com.minhtu.firesocialmedia.home.HomeViewModel
 import com.minhtu.firesocialmedia.home.comment.Comment
-import com.minhtu.firesocialmedia.home.navigationscreen.Friend
+import com.minhtu.firesocialmedia.home.navigationscreen.friend.Friend
 import com.minhtu.firesocialmedia.home.navigationscreen.Notification
 import com.minhtu.firesocialmedia.home.navigationscreen.Screen
 import com.minhtu.firesocialmedia.home.navigationscreen.Settings
@@ -49,7 +49,7 @@ fun SetUpNavigation(context: Any) {
         val signUpViewModel: SignUpViewModel = viewModel()
         //Define shared viewModel instance to use for Home and Search screens.
         val homeViewModel: HomeViewModel = viewModel()
-        val listScreenNeedBottomBar = listOf("HomeScreen", "FriendScreen", "NotificationScreen", "SettingsScreen", "UserInformationScreen")
+        val listScreenNeedBottomBar = listOf("HomeScreen", "FriendScreen", "NotificationScreen", "SettingsScreen")
         Scaffold(
             bottomBar = {
                 //Bottom navigation bar
@@ -147,10 +147,10 @@ fun SetUpNavigation(context: Any) {
                         .background(color = Color.White),
                         hiltViewModel(),
                         homeViewModel,
+                        navController,
                         onNavigateToUserInformation = {user ->
                             selectedUser = user
                             navController.navigate(route = UserInformation.getScreenName())},
-                        onNavigateToHomeScreen = {navController.navigate(Home.getScreenName())},
                         onNavigateToShowImageScreen = {image ->
                             selectedImage = image
                             navController.navigate(route = ShowImage.getScreenName())},
@@ -173,7 +173,7 @@ fun SetUpNavigation(context: Any) {
                         onNavigateToUserInformation = {user ->
                             selectedUser = user
                             navController.navigate(route = UserInformation.getScreenName())},
-                        onNavigateToHomeScreen = {navController.navigate(route = Home.getScreenName())}
+                        navController = navController
                     )
                 }
                 composable(route = Comment.getScreenName()) {

@@ -63,6 +63,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import coil.compose.AsyncImage
@@ -72,7 +73,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.minhtu.firesocialmedia.R
 import com.minhtu.firesocialmedia.home.HomeViewModel
 import com.minhtu.firesocialmedia.home.navigationscreen.Screen
-import com.minhtu.firesocialmedia.home.search.Search
+import com.minhtu.firesocialmedia.home.navigationscreen.friend.FriendViewModel
 import com.minhtu.firesocialmedia.home.search.SearchViewModel
 import com.minhtu.firesocialmedia.instance.NewsInstance
 import com.minhtu.firesocialmedia.instance.UserInstance
@@ -260,7 +261,10 @@ class UiUtils {
                             selected = currentRoute == screen.route,
                             onClick = {
                                 navController.navigate(screen.route) {
-                                    popUpTo(navController.graph.startDestinationId) { saveState = true }
+                                    popUpTo(navController.graph.startDestinationId) {
+                                        inclusive = true
+                                        saveState = true
+                                    }
                                     launchSingleTop = true
                                     restoreState = true
                                 }
@@ -297,10 +301,11 @@ class UiUtils {
             }
         }
         @Composable
-        fun BackAndMoreOptionsRow(onNavigateToPreviousScreen: () -> Unit){
+        fun BackAndMoreOptionsRow(navController : NavHostController) {
             Row(horizontalArrangement = Arrangement.Start, modifier = Modifier.fillMaxWidth().padding(10.dp)){
                 IconButton(onClick = {
-                    onNavigateToPreviousScreen()
+                    // Handle back button click
+                    navController.popBackStack()
                 }) {
                     Icon(imageVector = Icons.Default.ArrowBack,
                         contentDescription = "Back",
@@ -319,9 +324,9 @@ class UiUtils {
 
         @Composable
         fun TabLayout(tabTitles : List<String>,
-                      currentScreen : String,
                       homeViewModel: HomeViewModel,
                       searchViewModel: SearchViewModel,
+                      friendViewModel: FriendViewModel = viewModel(),
                       context: Context,
                       onNavigateToShowImageScreen: (image: String) -> Unit,
                       onNavigateToUserInformation: (user: UserInstance) -> Unit){
@@ -353,64 +358,39 @@ class UiUtils {
                         )
                     }
                 }
-                if(currentScreen == Search.getScreenName()){
-                    when(selectedTabIndex){
-                        0 -> {
-                            Log.d("selectedTabIndex", "People")
-                            // Filtered List
-                            LazyColumn {
-                                val filterList = homeViewModel.listUsers.filter { user ->
-                                    user.name.contains(searchViewModel.query, ignoreCase = true)
-                                }
-                                items(filterList){user ->
-                                    UserRow(user, context, onNavigateToUserInformation)
-                                }
+                when(selectedTabIndex){
+                    0 -> {
+                        Log.d("selectedTabIndex", "People")
+                        // Filtered List
+                        LazyColumn {
+                            val filterList = homeViewModel.listUsers.filter { user ->
+                                user.name.contains(searchViewModel.query, ignoreCase = true)
                             }
-                        }
-                        1 -> {
-                            Log.d("selectedTabIndex", "Posts")
-                            if(searchViewModel.query.isNotEmpty()) {
-                                LazyColumn {
-                                    val filterList = homeViewModel.listNews.filter { news ->
-                                        news.message.contains(searchViewModel.query, ignoreCase = true)
-                                    }
-                                    items(filterList){new ->
-                                        UiUtils.NewsCard(new, context, onNavigateToShowImageScreen, onNavigateToUserInformation, homeViewModel)
-                                    }
-                                }
-                            } else {
-                                Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center,
-                                    modifier = Modifier.fillMaxSize()){
-                                    Text(text = "Please input content you want to search",
-                                        textAlign = TextAlign.Center)
-                                }
+                            items(filterList){user ->
+                                UserRow(user, context, onNavigateToUserInformation)
                             }
                         }
                     }
-                } else {
-                    when(selectedTabIndex) {
-                        0 -> {
+                    1 -> {
+                        Log.d("selectedTabIndex", "Posts")
+                        if(searchViewModel.query.isNotEmpty()) {
                             LazyColumn {
-                                val filterList = homeViewModel.listUsers.filter { user ->
-                                    user.name.contains(searchViewModel.query, ignoreCase = true)
+                                val filterList = homeViewModel.listNews.filter { news ->
+                                    news.message.contains(searchViewModel.query, ignoreCase = true)
                                 }
-                                items(filterList){user ->
-                                    UserRow(user, context, onNavigateToUserInformation)
+                                items(filterList){new ->
+                                    NewsCard(new, context, onNavigateToShowImageScreen, onNavigateToUserInformation, homeViewModel)
                                 }
                             }
-                        }
-                        1 -> {
-                            LazyColumn {
-                                val filterList = homeViewModel.listUsers.filter { user ->
-                                    user.name.contains(searchViewModel.query, ignoreCase = true)
-                                }
-                                items(filterList){user ->
-                                    FriendRequest(user, context, onNavigateToUserInformation)
-                                }
+                        } else {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center,
+                                modifier = Modifier.fillMaxSize()){
+                                Text(text = "Please input content you want to search",
+                                    textAlign = TextAlign.Center)
                             }
                         }
                     }
-                 }
+                }
             }
         }
 
@@ -444,17 +424,17 @@ class UiUtils {
         }
 
         @Composable
-        private fun FriendRequest(user : UserInstance, context : Context, onNavigateToUserInformation: (user: UserInstance) -> Unit) {
+        fun FriendRequest(requester : UserInstance, currentUser : UserInstance, context : Context, onNavigateToUserInformation: (user: UserInstance) -> Unit, friendViewModel: FriendViewModel) {
             Row(horizontalArrangement = Arrangement.Start,
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable {
-                        onNavigateToUserInformation(user)
+                        onNavigateToUserInformation(requester)
                     }){
                 AsyncImage(
                     model = ImageRequest.Builder(context)
-                        .data(Uri.parse(user.image))
+                        .data(Uri.parse(requester.image))
                         .crossfade(true)
                         .build(),
                     contentDescription = "Avatar",
@@ -466,7 +446,7 @@ class UiUtils {
                 )
                 Column(modifier = Modifier.padding(end = 5.dp)) {
                     Text(
-                        text = user.name,
+                        text = requester.name,
                         color = Color.Black,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(5.dp)
@@ -474,7 +454,7 @@ class UiUtils {
                     Row(horizontalArrangement = Arrangement.Center,
                         modifier = Modifier.fillMaxWidth().padding(horizontal = 5.dp)){
                         Button(onClick = {
-
+                            friendViewModel.acceptFriendRequest(requester, currentUser)
                         },
                             elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp),
                             colors = ButtonDefaults.buttonColors(Color.Cyan),
@@ -483,7 +463,7 @@ class UiUtils {
                         }
                         Spacer(modifier = Modifier.width(10.dp))
                         Button(onClick = {
-
+                            friendViewModel.rejectFriendRequest(requester, currentUser)
                         },
                             elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp),
                             colors = ButtonDefaults.buttonColors(Color.White),

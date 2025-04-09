@@ -1,7 +1,6 @@
 package com.minhtu.firesocialmedia.home.userinformation
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,11 +23,18 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Message
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -42,12 +48,18 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.minhtu.firesocialmedia.R
 import com.minhtu.firesocialmedia.home.HomeViewModel
+import com.minhtu.firesocialmedia.home.navigationscreen.friend.FriendViewModel
 import com.minhtu.firesocialmedia.instance.UserInstance
 import com.minhtu.firesocialmedia.utils.UiUtils
+import com.minhtu.firesocialmedia.utils.Utils
 
 class UserInformation {
     companion object{
@@ -57,14 +69,31 @@ class UserInformation {
             paddingValues: PaddingValues,
             modifier: Modifier,
             homeViewModel : HomeViewModel,
+            friendViewModel: FriendViewModel = viewModel(),
+            userInformationViewModel: UserInformationViewModel = viewModel(),
             onNavigateToShowImageScreen : (image : String) -> Unit,
             onNavigateToUserInformation : (user : UserInstance?) -> Unit,
-            onNavigateToHomeScreen : () -> Unit
+            navController : NavHostController
         ){
+            val context = LocalContext.current
             val newsList = homeViewModel.allNews.observeAsState(initial = emptyList())
+            val lifecycleOwner = LocalLifecycleOwner.current
+            val addFriendStatus by userInformationViewModel.addFriendStatus.collectAsStateWithLifecycle(
+                initialValue = null,
+                lifecycleOwner = lifecycleOwner
+            )
+            LaunchedEffect(lifecycleOwner) {
+                val relationship = userInformationViewModel.checkRelationship(user!!, homeViewModel.currentUser!!)
+                userInformationViewModel.updateRelationship(relationship)
+            }
+
+            LaunchedEffect(lifecycleOwner) {
+                friendViewModel.updateFriendRequests(homeViewModel.currentUser!!.friendRequests)
+                friendViewModel.updateFriends(homeViewModel.currentUser!!.friends)
+            }
+
             Box(modifier = modifier.padding(paddingValues)) {
                 Column(verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.Start) {
-                    val context = LocalContext.current
                     //Cover photo
                     AsyncImage(model = ImageRequest.Builder(context)
                         .data(R.drawable.background)
@@ -85,7 +114,9 @@ class UserInformation {
                     ) {
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier.offset(y = (-50).dp) // Moves avatar & name up
+                            modifier = Modifier
+                                .weight(1f)
+                                .offset(y = (-50).dp) // Moves avatar & name up
                         ) {
                             // User avatar
                             AsyncImage(
@@ -100,7 +131,7 @@ class UserInformation {
                                     .clip(CircleShape) // Ensures circular shape
                                     .border(2.dp, Color.White, CircleShape) // Optional border for better appearance
                             )
-
+                            Spacer(modifier = Modifier.height(10.dp)) // Space between avatar and name
                             // User name with max width & ellipsis
                             Text(
                                 text = user!!.name,
@@ -144,17 +175,37 @@ class UserInformation {
                                             colors = listOf(Color.Red, Color.White)
                                         )
                                     )
-                                    .clickable { }
                             ) {
+                                var showMenu by remember { mutableStateOf(false) }
                                 Button(
-                                    onClick = {},
+                                    onClick = {
+                                        if(addFriendStatus != Relationship.WAITING_RESPONSE) {
+                                            val relationship = userInformationViewModel.checkRelationship(user!!, homeViewModel.currentUser!!)
+                                            userInformationViewModel.updateRelationship(relationship)
+                                            userInformationViewModel.clickAddFriendButton(
+                                                friend = user,
+                                                currentUser = homeViewModel.currentUser
+                                            )
+                                        } else {
+                                            showMenu = true
+                                        }
+                                    },
                                     modifier = Modifier
                                         .clip(RoundedCornerShape(20.dp)) // Ensures button shape
                                         .background(Color.Transparent), // Prevents default button background
                                     colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent) // Makes background follow Box
                                 ) {
-                                    Text("Add Friend", color = Color.Black, maxLines = 1)
+                                    Text(text = when(addFriendStatus){
+                                        Relationship.FRIEND -> "Unfriend"
+                                        Relationship.FRIEND_REQUEST -> "Cancel Request"
+                                        Relationship.NONE -> "Add Friend"
+                                        Relationship.WAITING_RESPONSE -> "Response"
+                                        else -> "Unknown"
+                                    },
+                                        color = Color.Black,
+                                        maxLines = 1)
                                 }
+                                DropdownMenuForResponse(showMenu, friendViewModel, userInformationViewModel, user!!, homeViewModel.currentUser!!,{showMenu = false} )
                             }
                         }
                     }
@@ -170,11 +221,51 @@ class UserInformation {
                         }
                     }
                 }
-                UiUtils.BackAndMoreOptionsRow(onNavigateToHomeScreen)
+                UiUtils.BackAndMoreOptionsRow(navController)
             }
         }
+
+        @Composable
+        fun DropdownMenuForResponse(expanded : Boolean, friendViewModel: FriendViewModel, userInformationViewModel: UserInformationViewModel, requester : UserInstance, currentUser : UserInstance, onDismissRequest: () -> Unit) {
+            DropdownMenu(
+                expanded = expanded,
+                onDismissRequest = onDismissRequest
+            ) {
+                DropdownMenuItem(
+                    text = { Text("Accept") },
+                    onClick = {
+                        // Handle Accept action
+                        friendViewModel.acceptFriendRequest(requester, currentUser)
+                        userInformationViewModel.updateRelationship(Relationship.FRIEND)
+                        onDismissRequest()
+                    }
+                )
+                DropdownMenuItem(
+                    text = { Text("Reject") },
+                    onClick = {
+                        // Handle Reject action
+                        friendViewModel.rejectFriendRequest(requester, currentUser)
+                        userInformationViewModel.updateRelationship(Relationship.NONE)
+                        onDismissRequest()
+                    }
+                )
+            }
+        }
+
         fun getScreenName() : String {
             return "UserInformationScreen"
+        }
+
+        private fun getAllFriendTokens(homeViewModel: HomeViewModel) : ArrayList<String> {
+            val friendTokens = ArrayList<String>()
+            val friendIds = homeViewModel.currentUser!!.friends
+            for(friendId in friendIds) {
+                val friend = Utils.findUserById(friendId, homeViewModel.listUsers)
+                if(friend != null) {
+                    friendTokens.add(friend.token)
+                }
+            }
+            return friendTokens
         }
     }
 }
