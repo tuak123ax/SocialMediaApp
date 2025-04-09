@@ -64,11 +64,12 @@ class UploadNewsfeed {
                      if(createPostStatus != null) {
                          if(createPostStatus) {
                              Toast.makeText(context, "Create post successfully!", Toast.LENGTH_SHORT).show()
+                             val friendTokens = homeViewModel.getFriendTokens()
                              if(homeViewModel.message.isNotEmpty()) {
-                                 Utils.sendMessageToServer(Utils.createMessageForServer(homeViewModel.message, Utils.getAllFCMTokens(homeViewModel), homeViewModel.currentUser!!))
+                                 Utils.sendMessageToServer(Utils.createMessageForServer(homeViewModel.message, friendTokens, homeViewModel.currentUser!!))
                              } else {
                                  if(homeViewModel.image.isNotEmpty()) {
-                                     Utils.sendMessageToServer(Utils.createMessageForServer("Posted a picture!", Utils.getAllFCMTokens(homeViewModel), homeViewModel.currentUser!!))
+                                     Utils.sendMessageToServer(Utils.createMessageForServer("Posted a picture!", friendTokens, homeViewModel.currentUser!!))
                                  }
                              }
                          } else {

@@ -42,7 +42,6 @@ class Utils {
                             if(user.uid != currentUserId) {
                                 homeViewModel.listUsers.add(user)
                             } else {
-                                Log.e("Home", "set current user: "+ user.name)
                                 homeViewModel.updateCurrentUser(user, context)
                             }
                         }
@@ -62,6 +61,7 @@ class Utils {
                     for (dataSnapshot in snapshot.getChildren()) {
                         val news: NewsInstance? = dataSnapshot.getValue(NewsInstance::class.java)
                         if (news != null) {
+                            Log.e("getAllNews", "news: ${news.id}")
                             homeViewModel.listNews.add(news)
                             homeViewModel.addLikeCountData(news.id, news.likeCount)
                             homeViewModel.addCommentCountData(news.id, news.commentCount)

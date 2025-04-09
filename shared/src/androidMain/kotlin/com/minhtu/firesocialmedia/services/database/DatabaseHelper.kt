@@ -9,6 +9,10 @@ import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.storage.FirebaseStorage
 import com.minhtu.firesocialmedia.instance.BaseNewsInstance
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class DatabaseHelper {
     companion object {
@@ -65,7 +69,23 @@ class DatabaseHelper {
             Log.d("Task", "Finish saving Value To Database")
         }
 
-        fun saveStringToDatabase(id : String,
+        suspend fun saveListToDatabase(id : String,
+                                path : String,
+                                value : ArrayList<String>,
+                                externalPath : String) {
+            Log.d("Task", "saveListToDatabase")
+            var databaseReference = FirebaseDatabase.getInstance().getReference()
+                .child(path).child(id)
+            if(externalPath.isNotEmpty()) {
+                databaseReference = databaseReference.child(externalPath)
+            }
+            withContext(Dispatchers.Main) {
+                databaseReference.setValue(value)
+            }
+            Log.d("Task", "Finish saving List To Database")
+        }
+
+        suspend fun saveStringToDatabase(id : String,
                                 path : String,
                                 value : String,
                                 externalPath : String) {
@@ -76,7 +96,9 @@ class DatabaseHelper {
                 databaseReference = databaseReference.child(externalPath)
             }
             if(value.isNotEmpty()){
-                databaseReference.setValue(value)
+                withContext(Dispatchers.Main) {
+                    databaseReference.setValue(value)
+                }
             }
         }
 

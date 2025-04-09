@@ -51,6 +51,17 @@ class HomeViewModel : ViewModel() {
         }
     }
 
+     fun getFriendTokens(): ArrayList<String> {
+        val friendTokens = ArrayList<String>()
+        for(friend in currentUser!!.friends) {
+            val user = Utils.findUserById(friend, listUsers)
+            if(user != null) {
+                friendTokens.add(user.token)
+            }
+        }
+        return friendTokens
+    }
+
     private val _allUsers : MutableLiveData<ArrayList<UserInstance>> = MutableLiveData()
     val allUsers = _allUsers
     fun updateUsers(users: ArrayList<UserInstance>) {
