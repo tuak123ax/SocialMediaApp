@@ -9,10 +9,16 @@ import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.storage.FirebaseStorage
 import com.minhtu.firesocialmedia.instance.BaseNewsInstance
+import com.minhtu.firesocialmedia.instance.NotificationInstance
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import androidx.core.net.toUri
+import com.google.firebase.database.GenericTypeIndicator
+import com.minhtu.firesocialmedia.constants.Constants
+import org.json.JSONArray
+import org.json.JSONObject
 
 class DatabaseHelper {
     companion object {
@@ -26,7 +32,7 @@ class DatabaseHelper {
             val databaseReference = FirebaseDatabase.getInstance().getReference()
                 .child(path).child(id)
             if(instance.image.isNotEmpty()){
-                storageReference.putFile(Uri.parse(instance.image)).addOnCompleteListener{ putFileTask ->
+                storageReference.putFile(instance.image.toUri()).addOnCompleteListener{ putFileTask ->
                     if(putFileTask.isSuccessful){
                         storageReference.downloadUrl.addOnSuccessListener { imageUrl ->
                             instance.updateImage(imageUrl.toString())
@@ -114,16 +120,32 @@ class DatabaseHelper {
             if(value >= 0) {
                 databaseReference.setValue(value)
             }
-            databaseReference.addListenerForSingleValueEvent(object : ValueEventListener {
-                override fun onDataChange(snapshot: DataSnapshot) {
-                    val count = snapshot.getValue(Int::class.java)
-                    if(count != null){
-                        databaseReference.setValue(value)
-                    }
-                }
-
-                override fun onCancelled(error: DatabaseError) {}
-            })
         }
-    }
+
+        fun saveNotificationToDatabase(id : String,
+                                   path : String,
+                                   instance : ArrayList<NotificationInstance>) {
+            Log.d("Task", "saveNotificationToDatabase")
+            val databaseReference = FirebaseDatabase.getInstance().getReference()
+                .child(path).child(id).child(Constants.NOTIFICATION_PATH)
+            databaseReference.setValue(instance)
+            }
+
+        fun deleteNotificationFromDatabase(id : String,
+                                           path : String,
+                                           notification: NotificationInstance) {
+            Log.d("Task", "deleteNotificationFromDatabase")
+            val databaseReference = FirebaseDatabase.getInstance().getReference()
+                .child(path).child(id).child(Constants.NOTIFICATION_PATH)
+            databaseReference.get().addOnSuccessListener { snapshot ->
+                //Get notification list from db
+                val list = snapshot.getValue(object : GenericTypeIndicator<List<NotificationInstance>>() {})?.toMutableList()
+                //Delete value in notification list and upload the list to db again
+                list?.let {
+                    it.remove(notification) // or any value
+                    databaseReference.setValue(it) // overwrite with updated list
+                }
+            }
+        }
+        }
 }

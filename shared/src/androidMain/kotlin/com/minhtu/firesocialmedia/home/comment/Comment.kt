@@ -146,7 +146,7 @@ class Comment {
                                 .size(50.dp)
                                 .padding(10.dp)
                                 .clickable {
-                                    commentViewModel.sendComment(currentUser, selectedNew)
+                                    commentViewModel.sendComment(currentUser, selectedNew, listUsers)
                                 }
                         )
                     }

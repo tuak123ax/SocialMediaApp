@@ -9,8 +9,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asFlow
 import androidx.lifecycle.viewModelScope
 import com.minhtu.firesocialmedia.constants.Constants
+import com.minhtu.firesocialmedia.home.navigationscreen.notification.Notification
 import com.minhtu.firesocialmedia.instance.CommentInstance
 import com.minhtu.firesocialmedia.instance.NewsInstance
+import com.minhtu.firesocialmedia.instance.NotificationInstance
+import com.minhtu.firesocialmedia.instance.NotificationType
 import com.minhtu.firesocialmedia.instance.UserInstance
 import com.minhtu.firesocialmedia.services.database.DatabaseHelper
 import com.minhtu.firesocialmedia.utils.Utils
@@ -61,9 +64,16 @@ class UserInformationViewModel : ViewModel() {
                             _addFriendStatus.value = Relationship.NONE
                         }
                         Relationship.NONE -> {
+                            //Save friend request to db
                             saveFriendRequest(friend, currentUser)
                             friend.addFriendRequest(currentUser.uid)
-                            Utils.sendMessageToServer(Utils.createMessageForServer("${currentUser.name} sent you a friend request!", tokenList , currentUser))
+
+                            val notiContent = "${currentUser.name} sent you a friend request!"
+                            val notification = NotificationInstance(Utils.getRandomIdForNotification(),
+                                notiContent,currentUser.image, currentUser.uid, Utils.getCurrentTime(),NotificationType.ADD_FRIEND)
+                            //Save notification to db
+                            Utils.saveNotification(notification, friend)
+                            Utils.sendMessageToServer(Utils.createMessageForServer(notiContent, tokenList , currentUser))
                             _addFriendStatus.value = Relationship.FRIEND_REQUEST
                         }
                         else -> {
