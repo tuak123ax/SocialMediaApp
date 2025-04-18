@@ -12,9 +12,12 @@ import com.minhtu.firesocialmedia.constants.Constants
 import com.minhtu.firesocialmedia.crypto.CryptoHelper
 import com.minhtu.firesocialmedia.home.HomeViewModel
 import com.minhtu.firesocialmedia.home.comment.CommentViewModel
+import com.minhtu.firesocialmedia.home.userinformation.Relationship
 import com.minhtu.firesocialmedia.instance.CommentInstance
 import com.minhtu.firesocialmedia.instance.NewsInstance
+import com.minhtu.firesocialmedia.instance.NotificationInstance
 import com.minhtu.firesocialmedia.instance.UserInstance
+import com.minhtu.firesocialmedia.services.database.DatabaseHelper
 import com.minhtu.firesocialmedia.services.notification.Client
 import com.minhtu.firesocialmedia.services.notification.NotificationApiService
 import com.minhtu.firesocialmedia.services.notification.NotificationRequest
@@ -43,6 +46,7 @@ class Utils {
                                 homeViewModel.listUsers.add(user)
                             } else {
                                 homeViewModel.updateCurrentUser(user, context)
+                                getAllNotificationsOfUser(homeViewModel)
                             }
                         }
                     }
@@ -61,7 +65,6 @@ class Utils {
                     for (dataSnapshot in snapshot.getChildren()) {
                         val news: NewsInstance? = dataSnapshot.getValue(NewsInstance::class.java)
                         if (news != null) {
-                            Log.e("getAllNews", "news: ${news.id}")
                             homeViewModel.listNews.add(news)
                             homeViewModel.addLikeCountData(news.id, news.likeCount)
                             homeViewModel.addCommentCountData(news.id, news.commentCount)
@@ -103,6 +106,27 @@ class Utils {
             }
             return tokenList
         }
+
+        fun getAllNotificationsOfUser(homeViewModel: HomeViewModel) {
+            val database = FirebaseDatabase.getInstance()
+            val databaseReference: DatabaseReference = database.getReference().child(Constants.USER_PATH)
+                .child(homeViewModel.currentUser!!.uid).child(Constants.NOTIFICATION_PATH)
+            databaseReference.addValueEventListener(object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    homeViewModel.listNotificationOfCurrentUser.clear()
+                    for (dataSnapshot in snapshot.getChildren()) {
+                        val notification = dataSnapshot.getValue(NotificationInstance::class.java)
+                        if (notification != null) {
+                            Log.e("onDataChange", "add noti: "+ notification.id)
+                            homeViewModel.listNotificationOfCurrentUser.add(notification)
+                        }
+                    }
+                    homeViewModel.updateNotifications(ArrayList(homeViewModel.listNotificationOfCurrentUser.toList()))
+                }
+
+                override fun onCancelled(error: DatabaseError) {}
+            })
+        }
         fun generateRandomId(): String {
             return UUID.randomUUID().toString()
         }
@@ -111,6 +135,15 @@ class Utils {
             for(user in listUsers){
                 if(user.uid == userId) {
                     return user
+                }
+            }
+            return null
+        }
+
+        fun findNewById(newId : String, listNews : ArrayList<NewsInstance>) : NewsInstance?{
+            for(new in listNews){
+                if(new.id == newId) {
+                    return new
                 }
             }
             return null
@@ -170,6 +203,31 @@ class Utils {
             CoroutineScope(Dispatchers.IO).launch {
                 val secureSharedPreferences = CryptoHelper.getEncryptedSharedPreferences(context)
                 secureSharedPreferences.edit().putString(Constants.KEY_FCM_TOKEN, token).apply()
+            }
+        }
+
+        fun getRandomIdForNotification() : String {
+            return "Noti-" + UUID.randomUUID().toString()
+        }
+
+        fun saveNotification(notification: NotificationInstance, friend : UserInstance) {
+            //Save notification to friend's notification list
+            try{
+                friend.addNotification(notification)
+                DatabaseHelper.saveNotificationToDatabase(friend.uid,
+                    Constants.USER_PATH, friend.notifications)
+            } catch(e: Exception) {
+                Log.e("saveNotification", "Error save notification to friend's notification list: ${e.message}")
+            }
+        }
+
+        fun deleteNotification(notification: NotificationInstance, currentUser: UserInstance) {
+            //Save notification to friend's notification list
+            try{
+                DatabaseHelper.deleteNotificationFromDatabase(currentUser.uid,
+                    Constants.USER_PATH, notification)
+            } catch(e: Exception) {
+                Log.e("saveNotification", "Error save notification to friend's notification list: ${e.message}")
             }
         }
     }

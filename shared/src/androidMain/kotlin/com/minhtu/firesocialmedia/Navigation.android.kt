@@ -18,7 +18,7 @@ import com.minhtu.firesocialmedia.home.Home
 import com.minhtu.firesocialmedia.home.HomeViewModel
 import com.minhtu.firesocialmedia.home.comment.Comment
 import com.minhtu.firesocialmedia.home.navigationscreen.friend.Friend
-import com.minhtu.firesocialmedia.home.navigationscreen.Notification
+import com.minhtu.firesocialmedia.home.navigationscreen.notification.Notification
 import com.minhtu.firesocialmedia.home.navigationscreen.Screen
 import com.minhtu.firesocialmedia.home.navigationscreen.Settings
 import com.minhtu.firesocialmedia.home.search.Search
@@ -55,7 +55,7 @@ fun SetUpNavigation(context: Any) {
                 //Bottom navigation bar
                 val currentDestination = navController.currentBackStackEntryAsState().value?.destination?.route
                 if(currentDestination in listScreenNeedBottomBar) {
-                    BottomNavigationBar(navController)
+                    BottomNavigationBar(navController, homeViewModel)
                 }
             }
         ) { paddingValues ->
@@ -225,17 +225,7 @@ fun SetUpNavigation(context: Any) {
                             .fillMaxSize()
                             .background(Color.White),
                         paddingValues = paddingValues,
-                        homeViewModel = homeViewModel,
-                        onNavigateToUserInformation = {
-                                user ->
-                            selectedUser = user
-                            navController.navigate(route = UserInformation.getScreenName())
-                        },
-                        onNavigateToShowImageScreen = {
-                                image ->
-                            selectedImage = image
-                            navController.navigate(route = ShowImage.getScreenName())
-                        }
+                        homeViewModel = homeViewModel
                     )
                 }
                 composable(route = Screen.Settings.route){

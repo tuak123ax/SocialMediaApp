@@ -1,5 +1,7 @@
 package com.minhtu.firesocialmedia.instance
 
+import com.minhtu.firesocialmedia.home.navigationscreen.notification.Notification
+import org.json.JSONArray
 import java.io.Serializable
 
 data class UserInstance(var email: String = "", var image: String = "", var name: String = "",
@@ -24,5 +26,11 @@ data class UserInstance(var email: String = "", var image: String = "", var name
     }
     fun updateImage(image: String){
         this.image = image
+    }
+    fun addNotification(notification: NotificationInstance) {
+        notifications.add(notification)
+    }
+    fun removeNotification(notification: NotificationInstance) {
+        notifications.remove(notification)
     }
 }

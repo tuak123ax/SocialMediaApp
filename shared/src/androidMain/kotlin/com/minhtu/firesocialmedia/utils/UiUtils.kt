@@ -28,6 +28,8 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.MoreHoriz
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -74,6 +76,7 @@ import com.minhtu.firesocialmedia.R
 import com.minhtu.firesocialmedia.home.HomeViewModel
 import com.minhtu.firesocialmedia.home.navigationscreen.Screen
 import com.minhtu.firesocialmedia.home.navigationscreen.friend.FriendViewModel
+import com.minhtu.firesocialmedia.home.navigationscreen.notification.Notification
 import com.minhtu.firesocialmedia.home.search.SearchViewModel
 import com.minhtu.firesocialmedia.instance.NewsInstance
 import com.minhtu.firesocialmedia.instance.UserInstance
@@ -239,7 +242,7 @@ class UiUtils {
         }
 
         @Composable
-        fun BottomNavigationBar(navController: NavHostController) {
+        fun BottomNavigationBar(navController: NavHostController, homeViewModel: HomeViewModel) {
             val items = listOf(
                 Screen.Home,
                 Screen.Friend,
@@ -256,8 +259,23 @@ class UiUtils {
                     val navBackStackEntry by navController.currentBackStackEntryAsState()
                     val currentRoute = navBackStackEntry?.destination?.route
                     items.forEach { screen ->
+                        val notificationCount = homeViewModel.listNotificationOfCurrentUser.size
+                        val showBadge = screen.route == Notification.getScreenName() && notificationCount > 0
                         NavigationBarItem(
-                            icon = { Icon(screen.icon, contentDescription = screen.title) },
+                            icon = {
+                                if(showBadge) {
+                                    BadgedBox(
+                                        badge = {
+                                            Badge{
+                                                Text(notificationCount.toString())
+                                            }
+                                        }
+                                    ) {
+                                        Icon(screen.icon, contentDescription = screen.title) }
+                                    }
+                                else {
+                                    Icon(screen.icon, contentDescription = screen.title) }
+                                },
                             selected = currentRoute == screen.route,
                             onClick = {
                                 navController.navigate(screen.route) {
