@@ -66,7 +66,7 @@ class SignInViewModel : ViewModel() {
                                 if(rememberPassword) {
                                     CryptoHelper.saveAccount(context, email, password)
                                 }
-                                signInState.postValue(SignInState(true, ""))
+                                emailExistedInDatabase(email)
                             } else{
                                 signInState.postValue(SignInState(false, Constants.LOGIN_ERROR))
                                 Log.e("SignInViewModel","signIn: LOGIN_ERROR")
