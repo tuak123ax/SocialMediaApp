@@ -45,8 +45,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -59,6 +59,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.android.gms.auth.api.identity.Identity
 import com.minhtu.firesocialmedia.R
 import com.minhtu.firesocialmedia.constants.Constants
+import com.minhtu.firesocialmedia.constants.TestTag
 import com.minhtu.firesocialmedia.loading.Loading
 import com.minhtu.firesocialmedia.loading.LoadingViewModel
 
@@ -131,14 +132,15 @@ class SignIn{
                             signInViewModel.updateEmail(it)
                         }, modifier = Modifier
                             .fillMaxWidth()
-                            .padding(20.dp),
+                            .padding(20.dp)
+                            .testTag(TestTag.TAG_USERNAME),
                         shape = RoundedCornerShape(30.dp),
                         label = { Text(text = "Username")},
                         singleLine = true,
                         textStyle = TextStyle(Color.White)
                     )
                     //Password textfield
-                    PasswordTextField(Constants.PASSWORD, signInViewModel)
+                    PasswordTextField(Constants.PASSWORD, signInViewModel, TestTag.TAG_PASSWORD)
 
                     Row(
                         modifier = Modifier
@@ -157,6 +159,7 @@ class SignIn{
                                 .clickable {
                                     onNavigateToForgotPasswordScreen()
                                 }
+                                .testTag(TestTag.TAG_FORGOTPASSWORD)
                         )
                         Spacer(modifier = Modifier.weight(1f))
                         //Remember password
@@ -172,12 +175,14 @@ class SignIn{
                         //SignIn button
                         Button(onClick = {
                             loadingViewModel.showLoading()
-                            signInViewModel.signIn(context) }) {
+                            signInViewModel.signIn(context)},
+                            modifier = Modifier.testTag(TestTag.TAG_BUTTON_SIGNIN)) {
                             Text(text = "Sign In")
                         }
                         Spacer(modifier = Modifier.padding(horizontal = 20.dp))
                         //SignUp button
-                        Button(onClick = {onNavigateToSignUpScreen()}) {
+                        Button(onClick = {onNavigateToSignUpScreen()},
+                                modifier = Modifier.testTag(TestTag.TAG_BUTTON_SIGNUP)) {
                             Text(text = "Sign Up")
                         }
                     }
@@ -200,7 +205,9 @@ class SignIn{
                                 containerColor = Color.White.copy(alpha = 0.95f),
                                 contentColor = Color.Black
                             ),
-                            modifier = Modifier.border(1.dp, Color.Black, RoundedCornerShape(30.dp))
+                            modifier = Modifier
+                                .border(1.dp, Color.Black, RoundedCornerShape(30.dp))
+                                .testTag(TestTag.TAG_BUTTON_SIGNINGOOGLE)
                         ) {
                             Image(
                                 painter = painterResource(id = R.drawable.google),
@@ -245,7 +252,7 @@ class SignIn{
         }
 
         @Composable
-        fun PasswordTextField(label : String, signInViewModel: SignInViewModel) {
+        fun PasswordTextField(label : String, signInViewModel: SignInViewModel, testTag: String) {
             var passwordVisibility by rememberSaveable {
                 mutableStateOf(false)
             }
@@ -257,7 +264,7 @@ class SignIn{
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(20.dp)
-                    .clearAndSetSemantics { },
+                    .testTag(testTag),
                 shape = RoundedCornerShape(30.dp),
                 label = { Text(text = label) },
                 singleLine = true,
@@ -278,7 +285,8 @@ class SignIn{
         fun MyCheckbox(signInViewModel: SignInViewModel
         ) {
             Row(
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.testTag(TestTag.TAG_REMEMBERPASSWORD)
             ) {
                 Checkbox(
                     checked = signInViewModel.rememberPassword,

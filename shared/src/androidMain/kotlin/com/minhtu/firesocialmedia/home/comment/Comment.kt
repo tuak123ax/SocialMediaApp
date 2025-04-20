@@ -32,12 +32,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.minhtu.firesocialmedia.R
+import com.minhtu.firesocialmedia.constants.TestTag
 import com.minhtu.firesocialmedia.instance.CommentInstance
 import com.minhtu.firesocialmedia.instance.NewsInstance
 import com.minhtu.firesocialmedia.instance.UserInstance
@@ -100,6 +102,7 @@ class Comment {
                                     commentViewModel.createCommentStatus.removeObservers(lifecycleOwner)
                                     onNavigateToHomeScreen()
                                 }
+                                .testTag(TestTag.TAG_BUTTON_BACK)
                         )
                     }
 
@@ -109,7 +112,8 @@ class Comment {
                     LazyColumn(
                         modifier = Modifier
                             .weight(1f) // Expands to take available space
-                            .fillMaxWidth(),
+                            .fillMaxWidth()
+                            .testTag(TestTag.TAG_COMMENTS_LIST),
                         verticalArrangement = Arrangement.spacedBy(5.dp) // Adds spacing between messages
                     ) {
                         //Sort comments by timePosted in descending order
@@ -130,7 +134,8 @@ class Comment {
                             onValueChange = { commentViewModel.updateMessage(it) },
                             modifier = Modifier
                                 .weight(1f) // Allow space for send button
-                                .padding(10.dp),
+                                .padding(10.dp)
+                                .testTag(TestTag.TAG_INPUT_COMMENT),
                             label = { Text(text = "Input your comment here") },
                             maxLines = 4
                         )
@@ -148,6 +153,7 @@ class Comment {
                                 .clickable {
                                     commentViewModel.sendComment(currentUser, selectedNew, listUsers)
                                 }
+                                .testTag(TestTag.TAG_BUTTON_SEND)
                         )
                     }
                 }
@@ -160,7 +166,8 @@ class Comment {
                 modifier = Modifier
                     .padding(10.dp)
                     .fillMaxWidth()
-                    .border(1.dp, Color.Black),
+                    .border(1.dp, Color.Black)
+                    .testTag(TestTag.COMMENT_CARD),
                 colors = CardDefaults.cardColors(containerColor = Color.White)
             ) {
                 Column(modifier = Modifier.fillMaxSize()) {

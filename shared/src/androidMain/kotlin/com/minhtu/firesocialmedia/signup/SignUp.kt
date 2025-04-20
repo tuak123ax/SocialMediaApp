@@ -31,7 +31,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -42,6 +42,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.minhtu.firesocialmedia.constants.Constants
+import com.minhtu.firesocialmedia.constants.TestTag
 import com.minhtu.firesocialmedia.loading.Loading
 import com.minhtu.firesocialmedia.loading.LoadingViewModel
 
@@ -96,15 +97,16 @@ class SignUp {
                                 email -> signUpViewModel.updateEmail(email)
                         }, modifier = Modifier
                             .fillMaxWidth()
-                            .padding(20.dp),
+                            .padding(20.dp)
+                            .testTag(TestTag.TAG_USERNAME),
                         label = { Text(text = "Username")},
                         shape = RoundedCornerShape(30.dp),
                         singleLine = true
                     )
                     //Password textfield
-                    PasswordTextField(Constants.PASSWORD, signUpViewModel)
+                    PasswordTextField(Constants.PASSWORD, signUpViewModel, TestTag.TAG_PASSWORD)
                     //Confirm password textfield
-                    PasswordTextField(Constants.CONFIRM_PASSWORD, signUpViewModel)
+                    PasswordTextField(Constants.CONFIRM_PASSWORD, signUpViewModel, TestTag.TAG_CONFIRMPASSWORD)
 
                     Row(
                         modifier = Modifier
@@ -112,14 +114,16 @@ class SignUp {
                             .padding(20.dp), horizontalArrangement = Arrangement.Center
                     ) {
                         //Back button
-                        Button(onClick = {onNavigateToSignInScreen()}) {
+                        Button(onClick = {onNavigateToSignInScreen()},
+                            modifier = Modifier.testTag(TestTag.TAG_BUTTON_BACK)) {
                             Text(text = "Back")
                         }
                         Spacer(modifier = Modifier.padding(horizontal = 20.dp))
                         //SignUp button
                         Button(onClick = {
                             loadingViewModel.showLoading()
-                            signUpViewModel.signUp() }) {
+                            signUpViewModel.signUp() },
+                            modifier = Modifier.testTag(TestTag.TAG_BUTTON_SIGNUP)) {
                             Text(text = "Sign Up")
                         }
                     }
@@ -131,7 +135,7 @@ class SignUp {
         }
 
         @Composable
-        fun PasswordTextField(label : String, signUpViewModel: SignUpViewModel) {
+        fun PasswordTextField(label : String, signUpViewModel: SignUpViewModel, testTag: String) {
             var passwordVisibility by rememberSaveable {
                 mutableStateOf(false)
             }
@@ -145,8 +149,7 @@ class SignUp {
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(20.dp)
-                    //Fix crash: java.lang.IllegalStateException: Already in the pool! when using visualTransformation
-                    .clearAndSetSemantics { },
+                    .testTag(testTag),
                 label = { Text(text = label) },
                 singleLine = true,
                 shape = RoundedCornerShape(30.dp),

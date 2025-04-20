@@ -33,6 +33,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -42,6 +43,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
+import com.minhtu.firesocialmedia.constants.TestTag
 import com.minhtu.firesocialmedia.loading.Loading
 import com.minhtu.firesocialmedia.loading.LoadingViewModel
 import com.minhtu.firesocialmedia.signup.SignUpViewModel
@@ -105,7 +107,8 @@ class Information {
                             .size(160.dp)
                             .clip(CircleShape)
                             .border(1.dp, Color.Gray, CircleShape)
-                            .clickable { getAvatarFromGalleryLauncher.launch(galleryIntent) })
+                            .clickable { getAvatarFromGalleryLauncher.launch(galleryIntent) }
+                            .testTag(TestTag.TAG_SELECT_AVATAR))
                     Spacer(modifier = Modifier.padding(20.dp))
                     Text(text = "And input your name below",
                         color = Color.White,
@@ -121,7 +124,8 @@ class Information {
                             informationViewModel.updateUsername(it)
                         }, modifier = Modifier
                             .fillMaxWidth()
-                            .padding(20.dp),
+                            .padding(20.dp)
+                            .testTag(TestTag.TAG_SELECT_NAME),
                         label = { Text(text = "Name")},
                         singleLine = true
                     )
@@ -129,7 +133,8 @@ class Information {
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center){
                         Button(onClick = {
                             loadingViewModel.showLoading()
-                            informationViewModel.finishSignUpStage(context)}){
+                            informationViewModel.finishSignUpStage(context)},
+                            modifier = Modifier.testTag(TestTag.TAG_BUTTON_NEXT)){
                             Text(text = "Next")
                         }
                     }

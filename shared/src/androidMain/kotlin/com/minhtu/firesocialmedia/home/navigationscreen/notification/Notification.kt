@@ -53,6 +53,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -63,6 +64,7 @@ import androidx.core.net.toUri
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.minhtu.firesocialmedia.constants.TestTag
 import com.minhtu.firesocialmedia.home.HomeViewModel
 import com.minhtu.firesocialmedia.home.search.SearchViewModel
 import com.minhtu.firesocialmedia.instance.NotificationInstance
@@ -91,7 +93,7 @@ class Notification {
                 val notificationList = remember(homeViewModel.listNotificationOfCurrentUser) {
                     homeViewModel.listNotificationOfCurrentUser.sortedByDescending { it.timeSend }
                 }
-                LazyColumn {
+                LazyColumn(modifier = Modifier.testTag(TestTag.TAG_NOTIFICATION_LIST)) {
                     items(notificationList, key = {it}){notification ->
                         //State to track visibility of a notification
                         var visible by remember { mutableStateOf(true) }
@@ -150,11 +152,13 @@ class Notification {
                             }
                         )
                     }
+                    .testTag(TestTag.TAG_NOTIFICATION)
             ) {
                 // Delete button background
                 Row(
                     modifier = Modifier
-                        .fillMaxSize(),
+                        .fillMaxSize()
+                        .testTag(TestTag.TAG_BUTTON_DELETE),
                     horizontalArrangement = Arrangement.End,
                     verticalAlignment = Alignment.CenterVertically
                 ) {

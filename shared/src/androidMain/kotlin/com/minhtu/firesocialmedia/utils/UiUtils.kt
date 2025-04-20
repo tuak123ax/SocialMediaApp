@@ -60,6 +60,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -73,6 +74,7 @@ import coil.request.ImageRequest
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.firebase.auth.FirebaseAuth
 import com.minhtu.firesocialmedia.R
+import com.minhtu.firesocialmedia.constants.TestTag
 import com.minhtu.firesocialmedia.home.HomeViewModel
 import com.minhtu.firesocialmedia.home.navigationscreen.Screen
 import com.minhtu.firesocialmedia.home.navigationscreen.friend.FriendViewModel
@@ -95,7 +97,8 @@ class UiUtils {
             Card(
                 modifier = Modifier
                     .padding(start = 10.dp, end = 10.dp, top = 5.dp)
-                    .fillMaxWidth(),
+                    .fillMaxWidth()
+                    .testTag(TestTag.TAG_POST_IN_COLUMN),
                 shape = RoundedCornerShape(20.dp),
                 colors = CardDefaults.cardColors(containerColor = Color.White)
             ) {
@@ -122,6 +125,7 @@ class UiUtils {
                             modifier = Modifier
                                 .size(40.dp)
                                 .clip(CircleShape)
+                                .testTag(TestTag.TAG_POSTER_AVATAR)
                         )
                         Spacer(modifier = Modifier.width(10.dp))
                         Column {
@@ -162,6 +166,7 @@ class UiUtils {
                                 .clickable {
                                     onNavigateToShowImageScreen(news.image)
                                 }
+                                .testTag(TestTag.TAG_POST_IMAGE)
                         )
                     }
                     Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp),
@@ -187,7 +192,7 @@ class UiUtils {
                             elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp),
                             colors = if(isLiked) ButtonDefaults.buttonColors(Color.Cyan)
                             else ButtonDefaults.buttonColors(Color.White),
-                            modifier = Modifier.height(35.dp).weight(1f)){
+                            modifier = Modifier.height(35.dp).weight(1f).testTag(TestTag.TAG_BUTTON_LIKE)){
                             Image(
                                 painter = painterResource(id = R.drawable.like),
                                 contentDescription = "Like",
@@ -203,7 +208,7 @@ class UiUtils {
                         },
                             elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp),
                             colors = ButtonDefaults.buttonColors(Color.White),
-                            modifier = Modifier.height(35.dp).weight(1f)){
+                            modifier = Modifier.height(35.dp).weight(1f).testTag(TestTag.TAG_BUTTON_COMMENT)){
                             Image(
                                 painter = painterResource(id = R.drawable.comment),
                                 contentDescription = "Comment",
@@ -226,14 +231,18 @@ class UiUtils {
                     title = { Text(title) },
                     text = { Text(message) },
                     confirmButton = {
-                        Button(onClick = {
+                        Button(
+                            onClick = {
                             resetAndBack()
-                        }) {
+                        },
+                            modifier = Modifier.testTag(TestTag.TAG_BUTTON_YES)
+                            ) {
                             Text("Yes")
                         }
                     },
                     dismissButton = {
-                        Button(onClick = { showDialog.value = false }) {
+                        Button(onClick = { showDialog.value = false },
+                            modifier = Modifier.testTag(TestTag.TAG_BUTTON_NO)) {
                             Text("No")
                         }
                     }
@@ -321,16 +330,22 @@ class UiUtils {
         @Composable
         fun BackAndMoreOptionsRow(navController : NavHostController) {
             Row(horizontalArrangement = Arrangement.Start, modifier = Modifier.fillMaxWidth().padding(10.dp)){
-                IconButton(onClick = {
+                IconButton(
+                    onClick = {
                     // Handle back button click
                     navController.popBackStack()
-                }) {
+                },
+                    modifier = Modifier.testTag(TestTag.TAG_BUTTON_BACK)
+                ) {
                     Icon(imageVector = Icons.Default.ArrowBack,
                         contentDescription = "Back",
                         tint = Color.Black)
                 }
                 Spacer(modifier = Modifier.weight(1f))
-                IconButton(onClick = { /* Handle click */ }) {
+                IconButton(
+                    onClick = { /* Handle click */ },
+                    modifier = Modifier.testTag(TestTag.TAG_BUTTON_MOREOPTIONS)
+                ) {
                     Icon(
                         imageVector = Icons.Default.MoreHoriz, //Horizontal three dots ⋯
                         contentDescription = "More Options",
@@ -420,7 +435,8 @@ class UiUtils {
                     .fillMaxWidth()
                     .clickable {
                         onNavigateToUserInformation(user)
-                    }){
+                    }
+                    .testTag(TestTag.TAG_FRIEND)){
                 AsyncImage(
                     model = ImageRequest.Builder(context)
                         .data(Uri.parse(user.image))
@@ -449,7 +465,8 @@ class UiUtils {
                     .fillMaxWidth()
                     .clickable {
                         onNavigateToUserInformation(requester)
-                    }){
+                    }
+                    .testTag(TestTag.TAG_FRIEND_REQUEST)){
                 AsyncImage(
                     model = ImageRequest.Builder(context)
                         .data(Uri.parse(requester.image))

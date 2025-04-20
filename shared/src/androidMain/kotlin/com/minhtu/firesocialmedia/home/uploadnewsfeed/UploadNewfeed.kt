@@ -28,11 +28,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import coil.compose.AsyncImage
+import com.minhtu.firesocialmedia.constants.TestTag
 import com.minhtu.firesocialmedia.home.HomeViewModel
 import com.minhtu.firesocialmedia.utils.UiUtils
 import com.minhtu.firesocialmedia.utils.Utils
@@ -123,11 +125,14 @@ class UploadNewsfeed {
                     maxLines = 4,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(20.dp),
+                        .padding(20.dp)
+                        .testTag(TestTag.TAG_POST_MESSAGE),
                     label = { Text(text = "Message") }
                 )
                 Spacer(modifier = Modifier.padding(bottom = 10.dp))
-                Row(horizontalArrangement = Arrangement.Center, modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp)) {
+                Row(horizontalArrangement = Arrangement.Center,
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp)
+                    .testTag(TestTag.TAG_BUTTON_SELECTIMAGE)) {
                     Button(onClick = {
                         getAvatarFromGalleryLauncher.launch(galleryIntent)
                     }) {
@@ -149,21 +154,29 @@ class UploadNewsfeed {
                 }
                 Spacer(modifier = Modifier.padding(bottom = 10.dp))
                 Row(horizontalArrangement = Arrangement.SpaceAround, modifier = Modifier.fillMaxWidth().padding(5.dp)){
-                    Button(onClick = {
+                    Button(
+                        onClick = {
                         homeViewModel.onClickBackButton()
-                    }) {
+                    },
+                        modifier = Modifier.testTag(TestTag.TAG_BUTTON_BACK)
+                        ) {
                         Text(text = "Back")
                     }
                     if(homeViewModel.image.isNotEmpty()) {
                         Button(onClick = {
                             homeViewModel.updateImage("")
-                        }) {
+                        },
+                            modifier = Modifier.testTag(TestTag.TAG_BUTTON_DELETE)
+                            ) {
                             Text(text = "Delete")
                         }
                     }
-                    Button(onClick = {
+                    Button(
+                        onClick = {
                         homeViewModel.createPost(homeViewModel.currentUser!!)
-                    }) {
+                    },
+                        modifier = Modifier.testTag(TestTag.TAG_BUTTON_POST)
+                        ) {
                         Text(text = "Post")
                     }
                 }
