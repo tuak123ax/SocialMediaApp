@@ -27,12 +27,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.minhtu.firesocialmedia.R
+import com.minhtu.firesocialmedia.constants.TestTag
 import com.minhtu.firesocialmedia.home.HomeViewModel
 import com.minhtu.firesocialmedia.utils.UiUtils
 
@@ -78,6 +80,7 @@ class Settings {
                         .padding(horizontal = 10.dp)
                         .border(1.dp, Color.Black, RoundedCornerShape(10.dp))
                         .fillMaxWidth()
+                        .testTag(TestTag.TAG_FIRECHAT_BUTTON)
                 ) {
                     Row(horizontalArrangement = Arrangement.Start,
                         verticalAlignment = Alignment.CenterVertically,
@@ -99,7 +102,11 @@ class Settings {
                     showDialog.value = true
                 },
                     shape = RoundedCornerShape(10.dp),
-                    modifier = Modifier.height(60.dp).fillMaxWidth().padding(10.dp),
+                    modifier = Modifier
+                        .height(60.dp)
+                        .fillMaxWidth()
+                        .padding(10.dp)
+                        .testTag(TestTag.TAG_BUTTON_LOGOUT),
                     elevation = ButtonDefaults.buttonElevation(
                         defaultElevation = 4.dp),
                     colors = ButtonDefaults.buttonColors(Color.Gray)

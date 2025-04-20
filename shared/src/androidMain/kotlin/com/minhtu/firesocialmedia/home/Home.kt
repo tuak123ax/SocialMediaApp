@@ -43,6 +43,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -53,6 +54,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.minhtu.firesocialmedia.R
+import com.minhtu.firesocialmedia.constants.TestTag
 import com.minhtu.firesocialmedia.instance.NewsInstance
 import com.minhtu.firesocialmedia.instance.UserInstance
 import com.minhtu.firesocialmedia.loading.Loading
@@ -167,6 +169,7 @@ class Home {
                                 modifier = Modifier
                                     .size(25.dp) // Reduce to prevent touching the border
                                     .padding(2.dp) // Ensures space between image and border
+                                    .testTag(TestTag.TAG_ICON_BUTTON_SEARCH)
                             )
                         }
 
@@ -192,6 +195,7 @@ class Home {
                                 modifier = Modifier
                                     .size(25.dp)
                                     .padding(2.dp) // Ensures space between image and border
+                                    .testTag(TestTag.TAG_ICON_BUTTON_LOGOUT)
                             )
                         }
                     }
@@ -222,6 +226,7 @@ class Home {
                                             .clickable {
                                                 onNavigateToUserInformation(homeViewModel.currentUser)
                                             }
+                                            .testTag(TestTag.TAG_CURRENT_USER)
                                     )
                                 }
 
@@ -233,7 +238,8 @@ class Home {
                                         .padding(10.dp)
                                         .clickable {
                                             onNavigateToUploadNews()
-                                        },
+                                        }
+                                        .testTag(TestTag.TAG_CREATE_POST),
                                     label = { Text(text = "What are you thinking?")},
                                     enabled = false,    // Disables the TextField
                                     singleLine = true,
@@ -242,7 +248,8 @@ class Home {
                             }
                             LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(10.dp)) {
+                                .padding(10.dp)
+                                .testTag(TestTag.TAG_USERS_ROW)) {
                                 items(usersList.value){user ->
                                     UserCard(user = user, context, onNavigateToUserInformation)
                                 }
@@ -252,7 +259,10 @@ class Home {
 
                     //Newsfeed
                     LazyColumn(modifier = Modifier
-                        .fillMaxSize().background(Color(0xFFE8E8E8)), state = listState) {
+                        .fillMaxSize()
+                        .background(Color(0xFFE8E8E8))
+                        .testTag(TestTag.TAG_POSTS_COLUMN),
+                        state = listState) {
                         //Sort news by timePosted in descending order
                         items(newsList.value.sortedByDescending { it.timePosted }){news ->
                             Log.e("HomeScreen", "news: ${news.id}")
@@ -269,7 +279,7 @@ class Home {
         @Composable
         private fun UserCard(user: UserInstance, context: Context, onNavigateToUserInformation: (user: UserInstance) -> Unit) {
             Card(
-                modifier = Modifier.size(70.dp, 90.dp),
+                modifier = Modifier.size(70.dp, 90.dp).testTag(TestTag.TAG_ITEM_IN_ROW),
                 colors = CardDefaults.cardColors(containerColor = Color.White)
             ) {
                 Column(verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxSize()) {

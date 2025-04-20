@@ -25,6 +25,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -32,6 +33,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.minhtu.firesocialmedia.constants.TestTag
 import com.minhtu.firesocialmedia.home.HomeViewModel
 import com.minhtu.firesocialmedia.home.search.Search.Companion.SearchBar
 import com.minhtu.firesocialmedia.home.search.SearchViewModel
@@ -69,7 +71,7 @@ class Friend {
                 SearchBar(query = searchViewModel.query,
                     onQueryChange = {
                         query -> searchViewModel.updateQuery(query) },
-                    modifier = Modifier.height(80.dp).padding(vertical = 10.dp)
+                    modifier = Modifier.height(80.dp).padding(vertical = 10.dp).testTag(TestTag.TAG_SEARCH_BAR)
                 )
                 Text(text = "Friends",
                     fontSize = 20.sp,
@@ -130,7 +132,7 @@ class Friend {
                 }
                 when(selectedTabIndex) {
                     0 -> {
-                        LazyColumn {
+                        LazyColumn(modifier = Modifier.testTag(TestTag.TAG_FRIEND_TAB_LIST)) {
                             val filterList = friendStatus.filter { userId ->
                                 val user = Utils.findUserById(userId, homeViewModel.listUsers)
                                 user!!.name.contains(searchViewModel.query, ignoreCase = true)
@@ -144,7 +146,7 @@ class Friend {
                         }
                     }
                     1 -> {
-                        LazyColumn {
+                        LazyColumn(modifier = Modifier.testTag(TestTag.TAG_FRIEND_REQUEST_TAB_LIST)) {
                             val filterList = friendRequestsStatus.filter { userId ->
                                 val user = Utils.findUserById(userId, homeViewModel.listUsers)
                                 user!!.name.contains(searchViewModel.query, ignoreCase = true)

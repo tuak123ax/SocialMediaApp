@@ -43,6 +43,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -55,6 +56,7 @@ import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.minhtu.firesocialmedia.R
+import com.minhtu.firesocialmedia.constants.TestTag
 import com.minhtu.firesocialmedia.home.HomeViewModel
 import com.minhtu.firesocialmedia.home.navigationscreen.friend.FriendViewModel
 import com.minhtu.firesocialmedia.instance.UserInstance
@@ -103,7 +105,9 @@ class UserInformation {
                         contentScale = ContentScale.FillBounds,
                         modifier = Modifier
                             .height(200.dp)
-                            .fillMaxWidth())
+                            .fillMaxWidth()
+                            .testTag(TestTag.TAG_COVER_PHOTO)
+                    )
                     //User avatar, name and button
                     Row(
                         modifier = Modifier
@@ -130,6 +134,7 @@ class UserInformation {
                                     .size(120.dp)
                                     .clip(CircleShape) // Ensures circular shape
                                     .border(2.dp, Color.White, CircleShape) // Optional border for better appearance
+                                    .testTag(TestTag.TAG_USER_AVATAR)
                             )
                             Spacer(modifier = Modifier.height(10.dp)) // Space between avatar and name
                             // User name with max width & ellipsis
@@ -192,7 +197,8 @@ class UserInformation {
                                     },
                                     modifier = Modifier
                                         .clip(RoundedCornerShape(20.dp)) // Ensures button shape
-                                        .background(Color.Transparent), // Prevents default button background
+                                        .background(Color.Transparent) // Prevents default button background
+                                        .testTag(TestTag.TAG_BUTTON_ADDFRIEND),
                                     colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent) // Makes background follow Box
                                 ) {
                                     Text(text = when(addFriendStatus){
@@ -212,7 +218,7 @@ class UserInformation {
 
 
                     LazyColumn(modifier = Modifier
-                        .fillMaxSize().background(Color(0xFFE8E8E8))) {
+                        .fillMaxSize().background(Color(0xFFE8E8E8)).testTag(TestTag.TAG_CURRENT_USER_POST)) {
                         val filterList = newsList.value.filter { news ->
                             (news.posterId == user!!.uid)
                         }
