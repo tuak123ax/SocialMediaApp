@@ -21,6 +21,7 @@ import com.minhtu.firesocialmedia.home.navigationscreen.friend.Friend
 import com.minhtu.firesocialmedia.home.navigationscreen.notification.Notification
 import com.minhtu.firesocialmedia.home.navigationscreen.Screen
 import com.minhtu.firesocialmedia.home.navigationscreen.Settings
+import com.minhtu.firesocialmedia.home.postinformation.PostInformation
 import com.minhtu.firesocialmedia.home.search.Search
 import com.minhtu.firesocialmedia.home.showimage.ShowImage
 import com.minhtu.firesocialmedia.home.uploadnewsfeed.UploadNewsfeed
@@ -49,6 +50,10 @@ fun SetUpNavigation(context: Any) {
         val signUpViewModel: SignUpViewModel = viewModel()
         //Define shared viewModel instance to use for Home and Search screens.
         val homeViewModel: HomeViewModel = viewModel()
+        //Shared instance used for uploadNewFeeds screen.
+        var updateNew : NewsInstance? = null
+        //Shared instance used for Notification and PostInformation screen.
+        var relatedNew : NewsInstance? = null
         val listScreenNeedBottomBar = listOf("HomeScreen", "FriendScreen", "NotificationScreen", "SettingsScreen")
         Scaffold(
             bottomBar = {
@@ -108,7 +113,9 @@ fun SetUpNavigation(context: Any) {
                         ,
                         homeViewModel,
                         paddingValues = paddingValues,
-                        onNavigateToUploadNews = {navController.navigate(route = UploadNewsfeed.getScreenName())},
+                        onNavigateToUploadNews = {new ->
+                            updateNew = new
+                            navController.navigate(route = UploadNewsfeed.getScreenName())},
                         onNavigateToShowImageScreen = {image ->
                             selectedImage = image
                             navController.navigate(route = ShowImage.getScreenName())},
@@ -131,6 +138,7 @@ fun SetUpNavigation(context: Any) {
 //                            contentScale = ContentScale.FillBounds)
                         ,
                         homeViewModel,
+                        updateNew = updateNew,
                         onNavigateToHomeScreen = {navController.navigate(route = Home.getScreenName())}
                     )
                 }
@@ -157,6 +165,9 @@ fun SetUpNavigation(context: Any) {
                         onNavigateToCommentScreen = { new ->
                             selectedNew = new
                             navController.navigate(route = Comment.getScreenName())
+                        },
+                        onNavigateToUploadNewsFeed = { new ->
+                            navController.navigate(route = UploadNewsfeed.getScreenName())
                         }
                     )
                 }
@@ -173,13 +184,18 @@ fun SetUpNavigation(context: Any) {
                         onNavigateToUserInformation = {user ->
                             selectedUser = user
                             navController.navigate(route = UserInformation.getScreenName())},
-                        navController = navController
+                        navController = navController,
+                        onNavigateToUploadNewsfeed = { new ->
+                            updateNew = new
+                            navController.navigate(route = UploadNewsfeed.getScreenName())
+                        }
                     )
                 }
                 composable(route = Comment.getScreenName()) {
                     Comment.CommentScreen(modifier = Modifier
                         .fillMaxSize()
                         .background(color = Color.White),
+                        showCloseIcon = true,
                         currentUser = homeViewModel.currentUser!!,
                         selectedNew = selectedNew,
                         listUsers = homeViewModel.listUsers,
@@ -225,7 +241,17 @@ fun SetUpNavigation(context: Any) {
                             .fillMaxSize()
                             .background(Color.White),
                         paddingValues = paddingValues,
-                        homeViewModel = homeViewModel
+                        homeViewModel = homeViewModel,
+                        onNavigateToPostInformation = {
+                            new ->
+                            relatedNew = new
+                            navController.navigate(route = PostInformation.getScreenName())
+                        },
+                        onNavigateToUserInformation = {
+                                user ->
+                            selectedUser = user
+                            navController.navigate(route = UserInformation.getScreenName())
+                        }
                     )
                 }
                 composable(route = Screen.Settings.route){
@@ -238,6 +264,24 @@ fun SetUpNavigation(context: Any) {
                         onNavigateToSignIn = {
                             navController.navigate(route = SignIn.getScreenName())
                         }
+                    )
+                }
+                composable(route = PostInformation.getScreenName()) {
+                    PostInformation.PostInformationScreen(
+                        relatedNew!!,
+                        onNavigateToShowImageScreen = {
+                                image ->
+                            selectedImage = image
+                            navController.navigate(route = ShowImage.getScreenName())
+                        },
+                        onNavigateToUserInformation = {
+                                user ->
+                            selectedUser = user
+                            navController.navigate(route = UserInformation.getScreenName())
+                        },
+                        onNavigateToHomeScreen = {navController.navigate(route = Home.getScreenName())},
+                        homeViewModel,
+                        navController
                     )
                 }
             }

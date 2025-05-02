@@ -1,12 +1,10 @@
 package com.minhtu.firesocialmedia.home.navigationscreen.notification
 
 import android.content.Context
-import android.util.Log
+import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -33,6 +31,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.ModeComment
 import androidx.compose.material.icons.filled.PersonAddAlt1
+import androidx.compose.material.icons.filled.PostAdd
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -44,7 +43,6 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -67,6 +65,7 @@ import coil.request.ImageRequest
 import com.minhtu.firesocialmedia.constants.TestTag
 import com.minhtu.firesocialmedia.home.HomeViewModel
 import com.minhtu.firesocialmedia.home.search.SearchViewModel
+import com.minhtu.firesocialmedia.instance.NewsInstance
 import com.minhtu.firesocialmedia.instance.NotificationInstance
 import com.minhtu.firesocialmedia.instance.NotificationType
 import com.minhtu.firesocialmedia.instance.UserInstance
@@ -78,9 +77,11 @@ class Notification {
     companion object{
         @Composable
         fun NotificationScreen(modifier: Modifier,
-                         paddingValues: PaddingValues,
-                         searchViewModel: SearchViewModel = viewModel(),
-                         homeViewModel: HomeViewModel){
+                               paddingValues: PaddingValues,
+                               searchViewModel: SearchViewModel = viewModel(),
+                               homeViewModel: HomeViewModel,
+                               onNavigateToPostInformation: (new : NewsInstance?) -> Unit,
+                               onNavigateToUserInformation: (user : UserInstance?) -> Unit){
             Column(verticalArrangement = Arrangement.Top,horizontalAlignment = Alignment.CenterHorizontally, modifier = modifier.padding(paddingValues)) {
                 val context = LocalContext.current
                 Text(text = "Notifications",
@@ -116,11 +117,14 @@ class Notification {
                                     animationSpec = tween(durationMillis = 200)
                                 )
                             ) {
-                                NotificationHasSwipeToDelete(notification, user, context,
+                                NotificationHasSwipeToDelete(notification, user, context, homeViewModel,
                                     onDelete = {
                                         visible = false
                                         pendingDelete = true
-                                    })
+                                    },
+                                    onNavigateToPostInformation,
+                                    onNavigateToUserInformation
+                                )
                             }
                         }
                     }
@@ -129,7 +133,12 @@ class Notification {
         }
 
         @Composable
-        fun NotificationHasSwipeToDelete(notification: NotificationInstance, user: UserInstance, context : Context, onDelete: () -> Unit) {
+        fun NotificationHasSwipeToDelete(notification: NotificationInstance,
+                                         user: UserInstance, context : Context,
+                                         homeViewModel: HomeViewModel,
+                                         onDelete: () -> Unit,
+                                         onNavigateToPostInformation: (new : NewsInstance?) -> Unit,
+                                         onNavigateToUserInformation: (user : UserInstance?) -> Unit) {
             val swipeDistancePx = with(LocalDensity.current) { 70.dp.toPx() }
             var offsetX by remember { mutableFloatStateOf(0f) }
             val animatedOffsetX by animateFloatAsState(targetValue = offsetX)
@@ -139,25 +148,12 @@ class Notification {
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(IntrinsicSize.Min)
-                    .background(Color.Transparent)
-                    .pointerInput(notification.id) {
-                        detectHorizontalDragGestures(
-                            onHorizontalDrag = { _, dragAmount ->
-                                val newOffset = (offsetX + dragAmount).coerceIn(-swipeDistancePx, 0f)
-                                offsetX = newOffset
-                            },
-                            onDragEnd = {
-                                // snap to open or closed
-                                offsetX = if (offsetX < swipeThreshold) -swipeDistancePx else 0f
-                            }
-                        )
-                    }
-                    .testTag(TestTag.TAG_NOTIFICATION)
             ) {
-                // Delete button background
+                //Row contains delete button
                 Row(
                     modifier = Modifier
                         .fillMaxSize()
+                        .background(Color.White)
                         .testTag(TestTag.TAG_BUTTON_DELETE),
                     horizontalArrangement = Arrangement.End,
                     verticalAlignment = Alignment.CenterVertically
@@ -167,8 +163,8 @@ class Notification {
                             .padding(end = 16.dp)
                             .size(48.dp)
                             .clip(CircleShape)
-                            .background(Color.Red) // background now follows the size of the icon
-                            .clickable(onClick = onDelete),
+                            .background(Color.Red)
+                            .clickable { onDelete() },
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
@@ -179,16 +175,46 @@ class Notification {
                         )
                     }
                 }
-                // Slideable content
+
+                // Foreground content (slidable)
                 Box(
                     modifier = Modifier
                         .offset { IntOffset(animatedOffsetX.roundToInt(), 0) }
                         .fillMaxWidth()
                         .background(Color.White)
+                        .pointerInput(notification.id) {
+                            detectHorizontalDragGestures(
+                                onHorizontalDrag = { _, dragAmount ->
+                                    val newOffset = (offsetX + dragAmount).coerceIn(-swipeDistancePx, 0f)
+                                    offsetX = newOffset
+                                },
+                                onDragEnd = {
+                                    offsetX = if (offsetX < swipeThreshold) -swipeDistancePx else 0f
+                                }
+                            )
+                        }
+                        .clickable {
+                            if (notification.relatedInfo.isNotEmpty()) {
+                                if(notification.type == NotificationType.LIKE ||
+                                    notification.type == NotificationType.COMMENT ||
+                                    notification.type == NotificationType.UPLOAD_NEW) {
+                                    onNavigateToPostInformation(Utils.findNewById(notification.relatedInfo, homeViewModel.listNews))
+                                } else {
+                                    if(notification.type == NotificationType.ADD_FRIEND) {
+                                        onNavigateToUserInformation(Utils.findUserById(notification.relatedInfo, homeViewModel.listUsers))
+                                    }
+                                }
+                            } else {
+                                Toast.makeText(context,
+                                    "This notification is from old version, cannot navigate to other screen!",
+                                    Toast.LENGTH_SHORT).show()
+                            }
+                        }
                 ) {
                     NotificationRow(notification, user, context)
                 }
             }
+
         }
         @Composable
         fun NotificationRow(notification: NotificationInstance, user: UserInstance, context : Context) {
@@ -197,7 +223,6 @@ class Notification {
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable { /* Handle click */ }
                     .padding(horizontal = 10.dp, vertical = 8.dp)
             ) {
                 AsyncImage(
@@ -206,7 +231,7 @@ class Notification {
                         .crossfade(true)
                         .build(),
                     contentDescription = "Avatar",
-                    contentScale = ContentScale.FillBounds,
+                    contentScale = ContentScale.Crop,
                     modifier = Modifier
                         .size(60.dp)
                         .clip(CircleShape)
@@ -232,6 +257,7 @@ class Notification {
                             NotificationType.LIKE -> "liked your post!"
                             NotificationType.COMMENT -> "commented in your post!"
                             NotificationType.ADD_FRIEND -> "sent you a friend request!"
+                            NotificationType.UPLOAD_NEW -> "uploaded a new post!"
                         },
                         color = Color.Gray,
                         maxLines = 1,
@@ -275,6 +301,16 @@ class Notification {
                             imageVector = Icons.Filled.PersonAddAlt1,
                             contentDescription = "Add friend",
                             tint = Color.Blue
+                        )
+                    }
+                }
+
+                NotificationType.UPLOAD_NEW -> {
+                    IconButton(onClick = { /* Handle click */ }) {
+                        Icon(
+                            imageVector = Icons.Filled.PostAdd,
+                            contentDescription = "Upload new",
+                            tint = Color.Green
                         )
                     }
                 }

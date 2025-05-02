@@ -1,6 +1,9 @@
 package com.minhtu.firesocialmedia.services.database
 
+import android.app.DownloadManager
+import android.content.Context
 import android.net.Uri
+import android.os.Environment
 import android.util.Log
 import androidx.lifecycle.MutableLiveData
 import com.google.firebase.database.DataSnapshot
@@ -17,6 +20,7 @@ import kotlinx.coroutines.withContext
 import androidx.core.net.toUri
 import com.google.firebase.database.GenericTypeIndicator
 import com.minhtu.firesocialmedia.constants.Constants
+import com.minhtu.firesocialmedia.instance.NewsInstance
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -147,5 +151,84 @@ class DatabaseHelper {
                 }
             }
         }
+
+        fun deleteNewsFromDatabase(path : String,
+                                   new: NewsInstance) {
+            Log.d("Task", "deleteNewsFromDatabase")
+            //Delete data in realtime database
+            FirebaseDatabase.getInstance().getReference()
+                .child(path).child(new.id).removeValue()
+            //Delete data in firebase storage
+            if(new.image.isNotEmpty()) {
+                FirebaseStorage.getInstance().getReference()
+                    .child(path).child(new.id).delete()
+            }
         }
+
+        fun updateNewsFromDatabase(path : String,
+                                   newContent : String,
+                                   newImage : String,
+                                   new: NewsInstance,
+                                   status: MutableLiveData<Boolean>) {
+            Log.d("Task", "updateNewsFromDatabase")
+            val storageReference = FirebaseStorage.getInstance().getReference()
+                .child(path).child(new.id)
+            if(newImage.isNotEmpty()){
+                if(newImage != new.image) {
+                    storageReference.putFile(newImage.toUri()).addOnCompleteListener{ putFileTask ->
+                        if(putFileTask.isSuccessful){
+                            storageReference.downloadUrl.addOnSuccessListener { imageUrl ->
+                                val updates = mapOf<String, Any>(
+                                    "message" to newContent,
+                                    "image" to imageUrl.toString()
+                                )
+                                updateDataInDatabase(path, new.id, updates, status)
+                            }
+                        }
+                    }
+                } else {
+                    val updates = mapOf<String, Any>(
+                        "message" to newContent,
+                        "image" to newImage
+                    )
+                    updateDataInDatabase(path, new.id, updates, status)
+                }
+            } else {
+                val updates = mapOf<String, Any>(
+                    "message" to newContent,
+                    "image" to ""
+                )
+                if(new.image.isNotEmpty()) {
+                    FirebaseStorage.getInstance().getReference()
+                        .child(path).child(new.id).delete()
+                }
+                updateDataInDatabase(path, new.id, updates, status)
+            }
+        }
+
+        private fun updateDataInDatabase(path : String, id : String, updates : Map<String, Any>, status: MutableLiveData<Boolean>) {
+            FirebaseDatabase.getInstance().getReference()
+                .child(path).child(id).updateChildren(updates).addOnCompleteListener {
+                        task ->
+                    if(task.isSuccessful) {
+                        status.postValue(true)
+                    } else {
+                        status.postValue(false)
+                    }
+                }
+        }
+
+        fun downloadImage(context : Context, image: String, fileName : String){
+            val request = DownloadManager.Request(image.toUri())
+                .setTitle("Download Image")
+                .setDescription("Downloading $fileName")
+                .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+                .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName)
+                .setAllowedOverMetered(true)
+                .setAllowedOverRoaming(true)
+
+            val downloadManager = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+            downloadManager.enqueue(request)
+        }
+    }
 }
