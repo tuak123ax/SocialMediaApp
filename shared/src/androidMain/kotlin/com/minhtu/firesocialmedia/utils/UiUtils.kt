@@ -72,6 +72,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -118,7 +120,10 @@ class UiUtils {
                 modifier = Modifier
                     .padding(start = 10.dp, end = 10.dp, top = 5.dp)
                     .fillMaxWidth()
-                    .testTag(TestTag.TAG_POST_IN_COLUMN),
+                    .testTag(TestTag.TAG_POST_IN_COLUMN)
+                    .semantics{
+                        contentDescription = TestTag.TAG_POST_IN_COLUMN
+                    },
                 shape = RoundedCornerShape(20.dp),
                 colors = CardDefaults.cardColors(containerColor = Color.White)
             ) {
@@ -146,6 +151,9 @@ class UiUtils {
                                 .size(40.dp)
                                 .clip(CircleShape)
                                 .testTag(TestTag.TAG_POSTER_AVATAR)
+                                .semantics{
+                                    contentDescription = TestTag.TAG_POSTER_AVATAR
+                                }
                         )
                         Spacer(modifier = Modifier.width(10.dp))
                         Column {
@@ -190,6 +198,9 @@ class UiUtils {
                                     onNavigateToShowImageScreen(news.image)
                                 }
                                 .testTag(TestTag.TAG_POST_IMAGE)
+                                .semantics{
+                                    contentDescription = TestTag.TAG_POST_IMAGE
+                                }
                         )
                     }
                     Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp),
@@ -215,7 +226,11 @@ class UiUtils {
                             elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp),
                             colors = if(isLiked) ButtonDefaults.buttonColors(Color.Cyan)
                             else ButtonDefaults.buttonColors(Color.White),
-                            modifier = Modifier.height(35.dp).weight(1f).testTag(TestTag.TAG_BUTTON_LIKE)){
+                            modifier = Modifier.height(35.dp).weight(1f)
+                                .testTag(TestTag.TAG_BUTTON_LIKE)
+                                .semantics{
+                                    contentDescription = TestTag.TAG_BUTTON_LIKE
+                                }){
                             Image(
                                 painter = painterResource(id = R.drawable.like),
                                 contentDescription = "Like",
@@ -661,7 +676,8 @@ class UiUtils {
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color(0xFFE8E8E8)),
+                    .background(Color(0xFFE8E8E8))
+                    .testTag(TestTag.TAG_POSTS_COLUMN),
                 state = homeViewModel.listState
             ) {
                 items(

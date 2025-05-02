@@ -26,6 +26,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -71,7 +73,11 @@ class Friend {
                 SearchBar(query = searchViewModel.query,
                     onQueryChange = {
                         query -> searchViewModel.updateQuery(query) },
-                    modifier = Modifier.height(80.dp).padding(vertical = 10.dp).testTag(TestTag.TAG_SEARCH_BAR)
+                    modifier = Modifier.height(80.dp).padding(vertical = 10.dp)
+                        .testTag(TestTag.TAG_SEARCH_BAR)
+                        .semantics{
+                            contentDescription = TestTag.TAG_SEARCH_BAR
+                        }
                 )
                 Text(text = "Friends",
                     fontSize = 20.sp,
@@ -132,7 +138,11 @@ class Friend {
                 }
                 when(selectedTabIndex) {
                     0 -> {
-                        LazyColumn(modifier = Modifier.testTag(TestTag.TAG_FRIEND_TAB_LIST)) {
+                        LazyColumn(modifier = Modifier
+                            .testTag(TestTag.TAG_FRIEND_TAB_LIST)
+                            .semantics{
+                                contentDescription = TestTag.TAG_FRIEND_TAB_LIST
+                            }) {
                             val filterList = friendStatus.filter { userId ->
                                 val user = Utils.findUserById(userId, homeViewModel.listUsers)
                                 user!!.name.contains(searchViewModel.query, ignoreCase = true)
@@ -146,7 +156,11 @@ class Friend {
                         }
                     }
                     1 -> {
-                        LazyColumn(modifier = Modifier.testTag(TestTag.TAG_FRIEND_REQUEST_TAB_LIST)) {
+                        LazyColumn(modifier = Modifier
+                            .testTag(TestTag.TAG_FRIEND_REQUEST_TAB_LIST)
+                            .semantics{
+                                contentDescription = TestTag.TAG_FRIEND_REQUEST_TAB_LIST
+                            }) {
                             val filterList = friendRequestsStatus.filter { userId ->
                                 val user = Utils.findUserById(userId, homeViewModel.listUsers)
                                 user!!.name.contains(searchViewModel.query, ignoreCase = true)

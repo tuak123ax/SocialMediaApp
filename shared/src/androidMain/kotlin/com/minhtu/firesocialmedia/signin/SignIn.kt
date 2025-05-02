@@ -165,6 +165,9 @@ class SignIn{
                                     onNavigateToForgotPasswordScreen()
                                 }
                                 .testTag(TestTag.TAG_FORGOTPASSWORD)
+                                .semantics{
+                                    contentDescription = TestTag.TAG_FORGOTPASSWORD
+                                }
                         )
                         Spacer(modifier = Modifier.weight(1f))
                         //Remember password
@@ -181,7 +184,10 @@ class SignIn{
                         Button(onClick = {
                             loadingViewModel.showLoading()
                             signInViewModel.signIn(context)},
-                            modifier = Modifier.testTag(TestTag.TAG_BUTTON_SIGNIN)) {
+                            modifier = Modifier.testTag(TestTag.TAG_BUTTON_SIGNIN)
+                                .semantics{
+                                    contentDescription = TestTag.TAG_BUTTON_SIGNIN
+                                }) {
                             Text(text = "Sign In")
                         }
                         Spacer(modifier = Modifier.padding(horizontal = 20.dp))
@@ -269,7 +275,10 @@ class SignIn{
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(20.dp)
-                    .testTag(testTag),
+                    .testTag(testTag)
+                    .semantics{
+                        contentDescription = testTag
+                    },
                 shape = RoundedCornerShape(30.dp),
                 label = { Text(text = label) },
                 singleLine = true,

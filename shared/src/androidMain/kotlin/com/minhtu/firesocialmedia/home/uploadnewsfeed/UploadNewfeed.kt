@@ -32,6 +32,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -155,13 +157,19 @@ class UploadNewsfeed {
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(20.dp)
-                            .testTag(TestTag.TAG_POST_MESSAGE),
+                            .testTag(TestTag.TAG_POST_MESSAGE)
+                            .semantics{
+                                contentDescription = TestTag.TAG_POST_MESSAGE
+                            },
                         label = { Text(text = "Message") }
                     )
                     Spacer(modifier = Modifier.padding(bottom = 10.dp))
                     Row(horizontalArrangement = Arrangement.Center,
                         modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp)
-                            .testTag(TestTag.TAG_BUTTON_SELECTIMAGE)) {
+                            .testTag(TestTag.TAG_BUTTON_SELECTIMAGE)
+                            .semantics{
+                                contentDescription = TestTag.TAG_BUTTON_SELECTIMAGE
+                            }) {
                         Button(onClick = {
                             getAvatarFromGalleryLauncher.launch(galleryIntent)
                         }) {
@@ -194,6 +202,10 @@ class UploadNewsfeed {
                                 uploadNewsfeedViewModel.onClickBackButton()
                             },
                             modifier = Modifier.testTag(TestTag.TAG_BUTTON_BACK)
+                                .semantics{
+                                    contentDescription = TestTag.TAG_BUTTON_BACK
+                                }
+
                         ) {
                             Text(text = "Back")
                         }
@@ -202,6 +214,9 @@ class UploadNewsfeed {
                                 uploadNewsfeedViewModel.updateImage("")
                             },
                                 modifier = Modifier.testTag(TestTag.TAG_BUTTON_DELETE)
+                                    .semantics{
+                                        contentDescription = TestTag.TAG_BUTTON_DELETE
+                                    }
                             ) {
                                 Text(text = "Delete")
                             }
@@ -213,6 +228,9 @@ class UploadNewsfeed {
                                 else uploadNewsfeedViewModel.createPost(uploadNewsfeedViewModel.currentUser!!)
                             },
                             modifier = Modifier.testTag(TestTag.TAG_BUTTON_POST)
+                                .semantics{
+                                    contentDescription = TestTag.TAG_BUTTON_POST
+                                }
                         ) {
                             Text(text = if(isUpdated) "Update" else "Post")
                         }

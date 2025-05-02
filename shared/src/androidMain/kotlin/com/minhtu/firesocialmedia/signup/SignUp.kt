@@ -32,6 +32,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -98,7 +100,10 @@ class SignUp {
                         }, modifier = Modifier
                             .fillMaxWidth()
                             .padding(20.dp)
-                            .testTag(TestTag.TAG_USERNAME),
+                            .testTag(TestTag.TAG_USERNAME)
+                            .semantics{
+                                contentDescription = TestTag.TAG_USERNAME
+                            },
                         label = { Text(text = "Username")},
                         shape = RoundedCornerShape(30.dp),
                         singleLine = true
@@ -115,7 +120,10 @@ class SignUp {
                     ) {
                         //Back button
                         Button(onClick = {onNavigateToSignInScreen()},
-                            modifier = Modifier.testTag(TestTag.TAG_BUTTON_BACK)) {
+                            modifier = Modifier.testTag(TestTag.TAG_BUTTON_BACK)
+                                .semantics{
+                                    contentDescription = TestTag.TAG_BUTTON_BACK
+                                }) {
                             Text(text = "Back")
                         }
                         Spacer(modifier = Modifier.padding(horizontal = 20.dp))
@@ -149,7 +157,10 @@ class SignUp {
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(20.dp)
-                    .testTag(testTag),
+                    .testTag(testTag)
+                    .semantics{
+                        contentDescription = testTag
+                    },
                 label = { Text(text = label) },
                 singleLine = true,
                 shape = RoundedCornerShape(30.dp),

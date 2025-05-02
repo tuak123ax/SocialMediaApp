@@ -41,6 +41,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -106,6 +108,9 @@ class UserInformation {
                             .height(200.dp)
                             .fillMaxWidth()
                             .testTag(TestTag.TAG_COVER_PHOTO)
+                            .semantics{
+                                contentDescription = TestTag.TAG_COVER_PHOTO
+                            }
                     )
                     //User avatar, name and button
                     Row(
@@ -134,6 +139,9 @@ class UserInformation {
                                     .clip(CircleShape) // Ensures circular shape
                                     .border(2.dp, Color.White, CircleShape) // Optional border for better appearance
                                     .testTag(TestTag.TAG_USER_AVATAR)
+                                    .semantics{
+                                        contentDescription = TestTag.TAG_USER_AVATAR
+                                    }
                             )
                             Spacer(modifier = Modifier.height(10.dp)) // Space between avatar and name
                             // User name with max width & ellipsis
@@ -197,7 +205,10 @@ class UserInformation {
                                     modifier = Modifier
                                         .clip(RoundedCornerShape(20.dp)) // Ensures button shape
                                         .background(Color.Transparent) // Prevents default button background
-                                        .testTag(TestTag.TAG_BUTTON_ADDFRIEND),
+                                        .testTag(TestTag.TAG_BUTTON_ADDFRIEND)
+                                        .semantics{
+                                            contentDescription = TestTag.TAG_BUTTON_ADDFRIEND
+                                        },
                                     colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent) // Makes background follow Box
                                 ) {
                                     Text(text = when(addFriendStatus){

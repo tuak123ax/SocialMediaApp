@@ -29,6 +29,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
@@ -86,6 +88,9 @@ class PostInformation {
                             .size(40.dp)
                             .clip(CircleShape)
                             .testTag(TestTag.TAG_POSTER_AVATAR)
+                            .semantics{
+                                contentDescription = TestTag.TAG_POSTER_AVATAR
+                            }
                     )
                     Spacer(modifier = Modifier.width(10.dp))
                     Column {
