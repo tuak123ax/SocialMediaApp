@@ -35,9 +35,10 @@ class Search {
                          searchViewModel: SearchViewModel,
                          homeViewModel: HomeViewModel,
                          navController: NavHostController,
-                         onNavigateToUserInformation: (user : UserInstance) -> Unit,
+                         onNavigateToUserInformation: (user : UserInstance?) -> Unit,
                          onNavigateToShowImageScreen: (image : String) -> Unit,
-                         onNavigateToCommentScreen: (selectedNew : NewsInstance) -> Unit){
+                         onNavigateToCommentScreen: (selectedNew : NewsInstance) -> Unit,
+                         onNavigateToUploadNewsFeed : (updateNew : NewsInstance?) -> Unit){
             val lifecycleOwner = LocalLifecycleOwner.current
             val commentStatus by homeViewModel.commentStatus.collectAsStateWithLifecycle(
                 initialValue = null,
@@ -64,7 +65,8 @@ class Search {
                     viewModel(),
                     context,
                     onNavigateToShowImageScreen,
-                    onNavigateToUserInformation)
+                    onNavigateToUserInformation,
+                    onNavigateToUploadNewsFeed)
             }
         }
 

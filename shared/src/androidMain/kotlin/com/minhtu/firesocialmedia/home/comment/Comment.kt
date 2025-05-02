@@ -49,6 +49,7 @@ class Comment {
     companion object{
         @Composable
         fun CommentScreen(modifier: Modifier,
+                          showCloseIcon : Boolean,
                           commentViewModel: CommentViewModel = viewModel(),
                           currentUser : UserInstance,
                           selectedNew : NewsInstance,
@@ -85,25 +86,27 @@ class Comment {
                         .fillMaxSize()
                 ) {
                     // Close Button Row
-                    Row(
-                        horizontalArrangement = Arrangement.End,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        AsyncImage(
-                            model = ImageRequest.Builder(context)
-                                .data(R.drawable.close)
-                                .crossfade(true)
-                                .build(),
-                            contentDescription = "Close Icon",
-                            contentScale = ContentScale.Fit,
-                            modifier = Modifier
-                                .size(30.dp)
-                                .clickable {
-                                    commentViewModel.createCommentStatus.removeObservers(lifecycleOwner)
-                                    onNavigateToHomeScreen()
-                                }
-                                .testTag(TestTag.TAG_BUTTON_BACK)
-                        )
+                    if(showCloseIcon) {
+                        Row(
+                            horizontalArrangement = Arrangement.End,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            AsyncImage(
+                                model = ImageRequest.Builder(context)
+                                    .data(R.drawable.close)
+                                    .crossfade(true)
+                                    .build(),
+                                contentDescription = "Close Icon",
+                                contentScale = ContentScale.Fit,
+                                modifier = Modifier
+                                    .size(30.dp)
+                                    .clickable {
+                                        commentViewModel.createCommentStatus.removeObservers(lifecycleOwner)
+                                        onNavigateToHomeScreen()
+                                    }
+                                    .testTag(TestTag.TAG_BUTTON_BACK)
+                            )
+                        }
                     }
 
                     Spacer(modifier = Modifier.height(8.dp))
@@ -187,7 +190,7 @@ class Comment {
                                 .crossfade(true)
                                 .build(),
                             contentDescription = "Poster Avatar",
-                            contentScale = ContentScale.FillBounds,
+                            contentScale = ContentScale.Crop,
                             modifier = Modifier
                                 .size(40.dp)
                                 .clip(CircleShape)

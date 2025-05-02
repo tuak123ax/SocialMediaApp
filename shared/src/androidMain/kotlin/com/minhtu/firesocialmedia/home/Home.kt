@@ -4,6 +4,8 @@ import android.content.Context
 import android.net.Uri
 import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -20,21 +22,26 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -55,14 +62,22 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.minhtu.firesocialmedia.R
 import com.minhtu.firesocialmedia.constants.TestTag
+import com.minhtu.firesocialmedia.home.navigationscreen.friend.FriendViewModel
+import com.minhtu.firesocialmedia.home.navigationscreen.notification.Notification.Companion.NotificationHasSwipeToDelete
+import com.minhtu.firesocialmedia.home.userinformation.Relationship
+import com.minhtu.firesocialmedia.home.userinformation.UserInformationViewModel
 import com.minhtu.firesocialmedia.instance.NewsInstance
 import com.minhtu.firesocialmedia.instance.UserInstance
 import com.minhtu.firesocialmedia.loading.Loading
 import com.minhtu.firesocialmedia.loading.LoadingViewModel
 import com.minhtu.firesocialmedia.utils.UiUtils
 import com.minhtu.firesocialmedia.utils.Utils
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.launch
 
 class Home {
     companion object{
@@ -71,7 +86,7 @@ class Home {
                        homeViewModel: HomeViewModel,
                        loadingViewModel: LoadingViewModel = viewModel(),
                        paddingValues: PaddingValues,
-                       onNavigateToUploadNews: () -> Unit,
+                       onNavigateToUploadNews: (updateNew : NewsInstance?) -> Unit,
                        onNavigateToShowImageScreen: (image : String) -> Unit,
                        onNavigateToSearch: () -> Unit,
                        onNavigateToSignIn: () -> Unit,
@@ -88,17 +103,15 @@ class Home {
             val showDialog = remember { mutableStateOf(false) }
             UiUtils.ShowAlertDialogToLogout(context, homeViewModel, onNavigateToSignIn, showDialog)
 
-            val listState = homeViewModel.listState
-            var isAllUsersVisible by remember { mutableStateOf(true) }
 
-            // LaunchedEffect to track the scroll state
-            LaunchedEffect(Unit) {
-                snapshotFlow { listState.firstVisibleItemIndex }
-                    .distinctUntilChanged()
-                    .collectLatest { index ->
-                        isAllUsersVisible = index == 0  // Show only if scrolled to the top
-                    }
-            }
+            //Observe Live Data as State
+            val usersList =  homeViewModel.allUsers.observeAsState(initial = emptyList())
+
+            val newsList = homeViewModel.allNews
+
+            val currentUserState = homeViewModel.currentUserState
+
+            var isAllUsersVisible by remember { mutableStateOf(true) }
 
             LaunchedEffect(lifecycleOwner) {
                 loadingViewModel.showLoading()
@@ -112,9 +125,11 @@ class Home {
                         loadingViewModel.hideLoading()
                     }
                 }
-                homeViewModel.allNews.observe(lifecycleOwner){ _ ->
+            }
+            LaunchedEffect(newsList.size) {
+                if (newsList.isNotEmpty()) {
                     homeViewModel.decreaseNumberOfListNeedToLoad(1)
-                    if(homeViewModel.numberOfListNeedToLoad == 0) {
+                    if (homeViewModel.numberOfListNeedToLoad == 0) {
                         loadingViewModel.hideLoading()
                     }
                 }
@@ -126,13 +141,6 @@ class Home {
                     homeViewModel.resetCommentStatus()
                 }
             }
-
-            //Observe Live Data as State
-            val usersList =  homeViewModel.allUsers.observeAsState(initial = emptyList())
-
-            val newsList = homeViewModel.allNews.observeAsState(initial = emptyList())
-
-            val currentUserState = homeViewModel.currentUserState
 
             Box(modifier = Modifier.fillMaxSize()) {
                 Column(verticalArrangement = Arrangement.Top, modifier = modifier.padding(paddingValues)) {
@@ -218,7 +226,7 @@ class Home {
                                             .crossfade(true)
                                             .build(),
                                         contentDescription = "Poster Avatar",
-                                        contentScale = ContentScale.FillBounds,
+                                        contentScale = ContentScale.Crop,
                                         modifier = Modifier
                                             .size(60.dp)
                                             .padding(top = 10.dp, start = 10.dp)
@@ -237,7 +245,7 @@ class Home {
                                         .fillMaxWidth()
                                         .padding(10.dp)
                                         .clickable {
-                                            onNavigateToUploadNews()
+                                            onNavigateToUploadNews(null)
                                         }
                                         .testTag(TestTag.TAG_CREATE_POST),
                                     label = { Text(text = "What are you thinking?")},
@@ -257,18 +265,28 @@ class Home {
                         }
                     }
 
+                    val listState = homeViewModel.listState
+                    // LaunchedEffect to track the scroll state
+                    LaunchedEffect(Unit) {
+                        snapshotFlow { listState.firstVisibleItemIndex}
+                            .distinctUntilChanged()
+                            .collectLatest { index ->
+                                isAllUsersVisible = index == 0  // Show only if scrolled to the top
+                            }
+                    }
                     //Newsfeed
-                    LazyColumn(modifier = Modifier
-                        .fillMaxSize()
-                        .background(Color(0xFFE8E8E8))
-                        .testTag(TestTag.TAG_POSTS_COLUMN),
-                        state = listState) {
-                        //Sort news by timePosted in descending order
-                        items(newsList.value.sortedByDescending { it.timePosted }){news ->
-                            Log.e("HomeScreen", "news: ${news.id}")
-                            UiUtils.NewsCard(news = news, context, onNavigateToShowImageScreen, onNavigateToUserInformation, homeViewModel)
+                    val sortedNewsList by remember {
+                        derivedStateOf {
+                            homeViewModel.allNews.sortedByDescending { it.timePosted }
                         }
                     }
+
+                    UiUtils.LazyColumnOfNewsWithSlideOutAnimation(context,
+                        homeViewModel,
+                        sortedNewsList,
+                        onNavigateToUploadNews,
+                        onNavigateToShowImageScreen,
+                        onNavigateToUserInformation)
                 }
                 if(isLoading){
                     Loading.LoadingScreen()
@@ -289,7 +307,7 @@ class Home {
                             .crossfade(true)
                             .build(),
                         contentDescription = "User Avatar",
-                        contentScale = ContentScale.FillBounds,
+                        contentScale = ContentScale.Crop,
                         modifier = Modifier
                             .weight(1f) // Allocates equal space to the image and text
                             .clip(CircleShape)
@@ -315,4 +333,5 @@ class Home {
             return "HomeScreen"
         }
     }
+
 }

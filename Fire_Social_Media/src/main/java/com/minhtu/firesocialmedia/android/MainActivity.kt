@@ -1,11 +1,16 @@
 package com.minhtu.firesocialmedia.android
 
 import android.Manifest
+import android.app.DownloadManager
+import android.content.BroadcastReceiver
 import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
@@ -16,8 +21,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.content.ContextCompat
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.google.firebase.messaging.FirebaseMessaging
 import com.minhtu.firesocialmedia.MainApplication
+import com.minhtu.firesocialmedia.services.database.DatabaseHelper
 import com.minhtu.firesocialmedia.services.remoteconfig.FetchResultCallback
 import com.minhtu.firesocialmedia.services.remoteconfig.RemoteConfigHelper
 import com.minhtu.firesocialmedia.utils.Utils
@@ -25,6 +32,7 @@ import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+    private var downloadReceiver: BroadcastReceiver? = null
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -47,7 +55,43 @@ class MainActivity : ComponentActivity() {
                     MainApplication.MainApp(this)
                     checkFCMToken(applicationContext)
                     askNotificationPermission()
+                    //Listen download event here to show toast on all screens
+                    listenDownloadImageEvent()
                 }
+            }
+        }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        unregisterReceiver(downloadReceiver)
+    }
+
+    private fun listenDownloadImageEvent() {
+        if(downloadReceiver == null) {
+            downloadReceiver = object : BroadcastReceiver() {
+                override fun onReceive(
+                    context: Context?,
+                    intent: Intent?
+                ) {
+                    if(intent != null && intent.action == DownloadManager.ACTION_DOWNLOAD_COMPLETE) {
+                        val downloadId = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1)
+                        if(downloadId > -1) {
+                            Toast.makeText(this@MainActivity, "Download image successfully!", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                }
+
+            }
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                registerReceiver(
+                    downloadReceiver,
+                    IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE),
+                    RECEIVER_EXPORTED
+                )
+            } else {
+                registerReceiver(downloadReceiver, IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE))
             }
         }
     }

@@ -2,8 +2,11 @@ package com.minhtu.firesocialmedia.utils
 
 import android.content.Context
 import android.net.Uri
-import android.util.Log
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -20,6 +23,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -34,10 +38,13 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Tab
@@ -49,9 +56,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -64,6 +74,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -82,11 +93,20 @@ import com.minhtu.firesocialmedia.home.navigationscreen.notification.Notificatio
 import com.minhtu.firesocialmedia.home.search.SearchViewModel
 import com.minhtu.firesocialmedia.instance.NewsInstance
 import com.minhtu.firesocialmedia.instance.UserInstance
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 class UiUtils {
     companion object{
         @Composable
-        fun NewsCard(news: NewsInstance, context: Context, onNavigateToShowImageScreen: (image: String) -> Unit, onNavigateToUserInformation: (user: UserInstance) -> Unit, homeViewModel: HomeViewModel) {
+        fun NewsCard(news: NewsInstance,
+                     context: Context,
+                     onNavigateToShowImageScreen: (image: String) -> Unit,
+                     onNavigateToUserInformation: (user: UserInstance) -> Unit,
+                     homeViewModel: HomeViewModel,
+                     listState : LazyListState,
+                     onDelete: (action : String, new : NewsInstance) -> Unit,
+                     onNavigateToCreatePost : (updateNew : NewsInstance) -> Unit) {
             val likeStatus by homeViewModel.likedPosts.collectAsState()
             val isLiked = likeStatus.contains(news.id)
             LaunchedEffect(likeStatus) {
@@ -121,7 +141,7 @@ class UiUtils {
                                 .crossfade(true)
                                 .build(),
                             contentDescription = "Poster Avatar",
-                            contentScale = ContentScale.FillBounds,
+                            contentScale = ContentScale.Crop,
                             modifier = Modifier
                                 .size(40.dp)
                                 .clip(CircleShape)
@@ -141,19 +161,22 @@ class UiUtils {
                             )
                         }
                         Spacer(modifier = Modifier.weight(1f))
-                        IconButton(onClick = { /* Handle click */ }) {
-                            Icon(
-                                imageVector = Icons.Default.MoreHoriz, //Horizontal three dots ⋯
-                                contentDescription = "More Options",
-                                tint = Color.Gray
-                            )
+                        //Box to add three dot icon and dropdownMenu when clicking the icon
+                        Box{
+                            var showMenu by remember { mutableStateOf(false) }
+                            IconButton(onClick = {
+                                showMenu = true
+                            }) {
+                                Icon(
+                                    imageVector = Icons.Default.MoreHoriz, //Horizontal three dots ⋯
+                                    contentDescription = "More Options",
+                                    tint = Color.Gray
+                                )
+                            }
+                            DropdownMenuForResponse(showMenu, homeViewModel, news,{showMenu = false}, listState , onDelete, onNavigateToCreatePost)
                         }
                     }
-                    Text(
-                        text = news.message,
-                        color = Color.Black,
-                        modifier = Modifier.padding(horizontal = 10.dp)
-                    )
+                    ExpandableText(news.message)
                     if(news.image.isNotEmpty()){
                         AsyncImage(
                             model = news.image,
@@ -329,7 +352,11 @@ class UiUtils {
         }
         @Composable
         fun BackAndMoreOptionsRow(navController : NavHostController) {
-            Row(horizontalArrangement = Arrangement.Start, modifier = Modifier.fillMaxWidth().padding(10.dp)){
+            Row(horizontalArrangement = Arrangement.Start,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color.White)
+                    .padding(10.dp)){
                 IconButton(
                     onClick = {
                     // Handle back button click
@@ -362,7 +389,9 @@ class UiUtils {
                       friendViewModel: FriendViewModel = viewModel(),
                       context: Context,
                       onNavigateToShowImageScreen: (image: String) -> Unit,
-                      onNavigateToUserInformation: (user: UserInstance) -> Unit){
+                      onNavigateToUserInformation: (user: UserInstance?) -> Unit,
+                      onNavigateToUploadNewsfeed : (updateNew : NewsInstance?) -> Unit){
+            val listState = LazyListState()
             var selectedTabIndex by remember { mutableIntStateOf(0) }
 
             Column(modifier = Modifier.fillMaxSize()){
@@ -393,7 +422,6 @@ class UiUtils {
                 }
                 when(selectedTabIndex){
                     0 -> {
-                        Log.d("selectedTabIndex", "People")
                         // Filtered List
                         LazyColumn {
                             val filterList = homeViewModel.listUsers.filter { user ->
@@ -405,16 +433,20 @@ class UiUtils {
                         }
                     }
                     1 -> {
-                        Log.d("selectedTabIndex", "Posts")
                         if(searchViewModel.query.isNotEmpty()) {
-                            LazyColumn {
-                                val filterList = homeViewModel.listNews.filter { news ->
-                                    news.message.contains(searchViewModel.query, ignoreCase = true)
-                                }
-                                items(filterList){new ->
-                                    NewsCard(new, context, onNavigateToShowImageScreen, onNavigateToUserInformation, homeViewModel)
+                            val filterList by remember {
+                                derivedStateOf {
+                                    homeViewModel.listNews.filter { news ->
+                                        news.message.contains(searchViewModel.query, ignoreCase = true)
+                                    }
                                 }
                             }
+                            UiUtils.LazyColumnOfNewsWithSlideOutAnimation(context,
+                                homeViewModel,
+                                filterList,
+                                onNavigateToUploadNewsfeed,
+                                onNavigateToShowImageScreen,
+                                onNavigateToUserInformation)
                         } else {
                             Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center,
                                 modifier = Modifier.fillMaxSize()){
@@ -443,7 +475,7 @@ class UiUtils {
                         .crossfade(true)
                         .build(),
                     contentDescription = "Avatar",
-                    contentScale = ContentScale.FillBounds,
+                    contentScale = ContentScale.Crop,
                     modifier = Modifier
                         .size(60.dp)
                         .padding(10.dp)
@@ -452,7 +484,8 @@ class UiUtils {
                 Text(
                     text = user.name,
                     color = Color.Black,
-                    modifier = Modifier.padding(end = 5.dp) // Adds padding around text
+                    modifier = Modifier.padding(end = 5.dp), // Adds padding around text
+                    maxLines = 2
                 )
             }
         }
@@ -473,7 +506,7 @@ class UiUtils {
                         .crossfade(true)
                         .build(),
                     contentDescription = "Avatar",
-                    contentScale = ContentScale.FillBounds,
+                    contentScale = ContentScale.Crop,
                     modifier = Modifier
                         .size(100.dp)
                         .padding(10.dp)
@@ -538,6 +571,130 @@ class UiUtils {
                         }
                     }
                 )
+            }
+        }
+
+        @Composable
+        fun ExpandableText(
+            text: String,
+            collapsedMaxLines: Int = 3
+        ) {
+            var isExpanded by remember { mutableStateOf(false) }
+            var isOverflowing by remember { mutableStateOf(false) }
+
+            Box(modifier = Modifier.padding(horizontal = 10.dp)) {
+                Column {
+                    Text(
+                        text = text,
+                        color = Color.Black,
+                        maxLines = if (isExpanded) Int.MAX_VALUE else collapsedMaxLines,
+                        overflow = TextOverflow.Ellipsis,
+                        onTextLayout = { textLayoutResult ->
+                            isOverflowing = textLayoutResult.hasVisualOverflow
+                        },
+                        modifier = Modifier.animateContentSize()
+                    )
+
+                    if (isOverflowing || isExpanded) {
+                        Text(
+                            text = if (isExpanded) "See less" else "See more",
+                            color = MaterialTheme.colorScheme.primary,
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier
+                                .padding(top = 4.dp)
+                                .clickable { isExpanded = !isExpanded }
+                        )
+                    }
+                }
+            }
+        }
+
+        @Composable
+        fun DropdownMenuForResponse(expanded : Boolean,
+                                    homeViewModel: HomeViewModel,
+                                    selectedNew : NewsInstance,
+                                    onDismissRequest: () -> Unit,
+                                    listState : LazyListState,
+                                    onDelete: (action : String, new : NewsInstance) -> Unit?,
+                                    onNavigateToCreatePost : (updateNew : NewsInstance) -> Unit) {
+            DropdownMenu(
+                expanded = expanded,
+                onDismissRequest = onDismissRequest
+            ) {
+                var buttonText = "Hide"
+                if(selectedNew.posterId == homeViewModel.currentUser!!.uid) {
+                    buttonText = "Delete"
+                    DropdownMenuItem(
+                        text = { Text("Update") },
+                        onClick = {
+                            onNavigateToCreatePost(selectedNew)
+                            onDismissRequest()
+                        }
+                    )
+                }
+                val scope = rememberCoroutineScope()
+                DropdownMenuItem(
+                    text = { Text(buttonText) },
+                    onClick = {
+                        scope.launch {
+                            val index = listState.firstVisibleItemIndex
+                            val offset = listState.firstVisibleItemScrollOffset
+                            //Dismiss the menu
+                            onDismissRequest()
+                            onDelete(buttonText, selectedNew)
+                            // Scroll back to where we were
+                            listState.scrollToItem(index, offset)
+                        }
+                    }
+                )
+            }
+        }
+
+        @Composable
+        fun LazyColumnOfNewsWithSlideOutAnimation(context : Context,
+                                                  homeViewModel: HomeViewModel,
+                                                  list : List<NewsInstance>,
+                                                  onNavigateToUploadNews: (updateNew : NewsInstance?) -> Unit,
+                                                  onNavigateToShowImageScreen: (image : String) -> Unit,
+                                                  onNavigateToUserInformation: (user: UserInstance?) -> Unit) {
+            val coroutineScope = rememberCoroutineScope()
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color(0xFFE8E8E8)),
+                state = homeViewModel.listState
+            ) {
+                items(
+                    items = list,
+                    key = { it.id }
+                ) { news ->
+                    var isVisible by remember(news.id) { mutableStateOf(true) }
+
+                    AnimatedVisibility(
+                        visible = isVisible,
+                        exit = slideOutHorizontally(
+                            targetOffsetX = { fullWidth -> fullWidth },
+                            animationSpec = tween(durationMillis = 200)
+                        )
+                    ) {
+                        NewsCard(
+                            news = news,
+                            context = context,
+                            onNavigateToShowImageScreen = onNavigateToShowImageScreen,
+                            onNavigateToUserInformation = onNavigateToUserInformation,
+                            homeViewModel = homeViewModel,
+                            listState = homeViewModel.listState,
+                            onDelete = { action, deletedNews ->
+                                isVisible = false
+                                coroutineScope.launch {
+                                    delay(250)
+                                    homeViewModel.deleteOrHideNew(action, deletedNews)
+                                }
+                            },
+                            onNavigateToUploadNews
+                        )
+                    }
+                }
             }
         }
     }

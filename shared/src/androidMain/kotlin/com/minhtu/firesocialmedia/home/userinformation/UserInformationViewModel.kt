@@ -1,17 +1,8 @@
 package com.minhtu.firesocialmedia.home.userinformation
 
 import android.util.Log
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.asFlow
-import androidx.lifecycle.viewModelScope
 import com.minhtu.firesocialmedia.constants.Constants
-import com.minhtu.firesocialmedia.home.navigationscreen.notification.Notification
-import com.minhtu.firesocialmedia.instance.CommentInstance
-import com.minhtu.firesocialmedia.instance.NewsInstance
 import com.minhtu.firesocialmedia.instance.NotificationInstance
 import com.minhtu.firesocialmedia.instance.NotificationType
 import com.minhtu.firesocialmedia.instance.UserInstance
@@ -22,9 +13,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import org.json.JSONArray
 
 enum class Relationship{
     FRIEND,
@@ -70,7 +59,12 @@ class UserInformationViewModel : ViewModel() {
 
                             val notiContent = "${currentUser.name} sent you a friend request!"
                             val notification = NotificationInstance(Utils.getRandomIdForNotification(),
-                                notiContent,currentUser.image, currentUser.uid, Utils.getCurrentTime(),NotificationType.ADD_FRIEND)
+                                notiContent,
+                                currentUser.image,
+                                currentUser.uid,
+                                Utils.getCurrentTime(),
+                                NotificationType.ADD_FRIEND,
+                                currentUser.uid)
                             //Save notification to db
                             Utils.saveNotification(notification, friend)
                             Utils.sendMessageToServer(Utils.createMessageForServer(notiContent, tokenList , currentUser))

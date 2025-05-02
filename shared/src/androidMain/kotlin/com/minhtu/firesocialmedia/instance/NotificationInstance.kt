@@ -6,7 +6,8 @@ enum class NotificationType{
     NONE,
     COMMENT,
     LIKE,
-    ADD_FRIEND
+    ADD_FRIEND,
+    UPLOAD_NEW
 }
 data class NotificationInstance(
     val id : String = "",
@@ -14,9 +15,13 @@ data class NotificationInstance(
     val avatar : String ="",
     val sender : String = "",
     val timeSend : Long = 0,
-    val type : NotificationType = NotificationType.NONE
+    val type : NotificationType = NotificationType.NONE,
+    var relatedInfo : String = ""
 ):Serializable{
     fun updateContent(content : String) {
         this.content = content
+    }
+    fun updateRelatedInfo(info : String) {
+        relatedInfo = info
     }
 }

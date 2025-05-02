@@ -1,5 +1,6 @@
 package com.minhtu.firesocialmedia.home.showimage
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -10,20 +11,31 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Download
+import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.minhtu.firesocialmedia.R
+import com.minhtu.firesocialmedia.constants.TestTag
 
 class ShowImage {
     companion object {
         @Composable
-        fun ShowImageScreen(image: String, modifier: Modifier, onNavigateToHomeScreen: () -> Unit) {
+        fun ShowImageScreen(image: String,
+                            showImageViewModel: ShowImageViewModel = viewModel(),
+                            modifier: Modifier,
+                            onNavigateToHomeScreen: () -> Unit) {
             val context = LocalContext.current
             Box(
                 modifier = modifier
@@ -42,6 +54,18 @@ class ShowImage {
                             .fillMaxWidth()
                             .padding(top = 8.dp) // Adjust padding if needed
                     ) {
+                        Icon(
+                            imageVector = Icons.Default.Download,
+                            contentDescription = "Download Icon",
+                            tint = Color.White,
+                            modifier = Modifier
+                                .size(30.dp)
+                                .clickable {
+                                    showImageViewModel.downloadImage(context, image, generateRandomImageName(16))
+                                }
+                                .testTag(TestTag.TAG_BUTTON_DOWNLOAD)
+                        )
+                        Spacer(modifier = Modifier.width(10.dp))
                         AsyncImage(
                             model = ImageRequest.Builder(context)
                                 .data(R.drawable.white_close)
@@ -54,6 +78,7 @@ class ShowImage {
                                 .clickable {
                                     onNavigateToHomeScreen()
                                 }
+                                .testTag(TestTag.TAG_BUTTON_CLOSE)
                         )
                     }
 
@@ -77,6 +102,12 @@ class ShowImage {
             }
         }
 
+        fun generateRandomImageName(length: Int = 16): String {
+            val chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+            return (1..length)
+                .map { chars.random() }
+                .joinToString("") + ".jpg"
+        }
         fun getScreenName(): String {
             return "ShowImageScreen"
         }

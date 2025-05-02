@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
@@ -15,8 +14,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -30,8 +27,8 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -59,6 +56,7 @@ import com.minhtu.firesocialmedia.R
 import com.minhtu.firesocialmedia.constants.TestTag
 import com.minhtu.firesocialmedia.home.HomeViewModel
 import com.minhtu.firesocialmedia.home.navigationscreen.friend.FriendViewModel
+import com.minhtu.firesocialmedia.instance.NewsInstance
 import com.minhtu.firesocialmedia.instance.UserInstance
 import com.minhtu.firesocialmedia.utils.UiUtils
 import com.minhtu.firesocialmedia.utils.Utils
@@ -75,10 +73,11 @@ class UserInformation {
             userInformationViewModel: UserInformationViewModel = viewModel(),
             onNavigateToShowImageScreen : (image : String) -> Unit,
             onNavigateToUserInformation : (user : UserInstance?) -> Unit,
-            navController : NavHostController
+            navController : NavHostController,
+            onNavigateToUploadNewsfeed: (updateNew : NewsInstance?) -> Unit
         ){
             val context = LocalContext.current
-            val newsList = homeViewModel.allNews.observeAsState(initial = emptyList())
+            val newsList = homeViewModel.allNews
             val lifecycleOwner = LocalLifecycleOwner.current
             val addFriendStatus by userInformationViewModel.addFriendStatus.collectAsStateWithLifecycle(
                 initialValue = null,
@@ -129,7 +128,7 @@ class UserInformation {
                                     .crossfade(true)
                                     .build(),
                                 contentDescription = "Avatar",
-                                contentScale = ContentScale.FillBounds,
+                                contentScale = ContentScale.Crop,
                                 modifier = Modifier
                                     .size(120.dp)
                                     .clip(CircleShape) // Ensures circular shape
@@ -216,16 +215,19 @@ class UserInformation {
                         }
                     }
 
-
-                    LazyColumn(modifier = Modifier
-                        .fillMaxSize().background(Color(0xFFE8E8E8)).testTag(TestTag.TAG_CURRENT_USER_POST)) {
-                        val filterList = newsList.value.filter { news ->
-                            (news.posterId == user!!.uid)
-                        }
-                        items(filterList){news ->
-                            UiUtils.NewsCard(news = news, context, onNavigateToShowImageScreen, onNavigateToUserInformation, homeViewModel)
+                    val filterList by remember {
+                        derivedStateOf {
+                            newsList.filter { news ->
+                                (news.posterId == user!!.uid)
+                            }
                         }
                     }
+                    UiUtils.LazyColumnOfNewsWithSlideOutAnimation(context,
+                        homeViewModel,
+                        filterList,
+                        onNavigateToUploadNewsfeed,
+                        onNavigateToShowImageScreen,
+                        onNavigateToUserInformation)
                 }
                 UiUtils.BackAndMoreOptionsRow(navController)
             }

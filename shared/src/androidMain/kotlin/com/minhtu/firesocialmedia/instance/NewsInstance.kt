@@ -7,7 +7,8 @@ data class NewsInstance(override var id: String = "",
                         override var posterName: String = "",
                         override var avatar: String = "",
                         override var message: String = "",
-                        override var image: String = ""): Serializable, BaseNewsInstance,
+                        override var image: String = "",
+                        var isVisible: Boolean = true): Serializable, BaseNewsInstance,
     CountInterface {
     fun updateNews(id: String, posterId: String, posterName: String, avatar: String,
                    message: String, image: String){

@@ -18,6 +18,7 @@ class Constants {
         const val DATA_EMPTY = "DATA_EMPTY"
         const val POST_NEWS_SERVER_ERROR = "POST_AVATAR_SERVER_ERROR"
         const val POST_NEWS_EMPTY_ERROR = "POST_NEWS_EMPTY_ERROR"
+        const val UPDATE_NEWS_EMPTY_ERROR = "UPDATE_NEWS_EMPTY_ERROR"
         const val PASSWORD_MISMATCH = "PASSWORD_MISMATCH"
         const val PASSWORD_SHORT = "PASSWORD_SHORT"
         const val ACCOUNT_EXISTED = "ACCOUNT_EXISTED"

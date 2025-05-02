@@ -49,4 +49,6 @@ public class TestTag {
     public static final String TAG_NOTIFICATION_LIST = "TAG_NOTIFICATION_LIST";
     public static final String TAG_NOTIFICATION = "TAG_NOTIFICATION";
     public static final String TAG_FIRECHAT_BUTTON = "TAG_FIRECHAT_BUTTON";
+    public static final String TAG_BUTTON_CLOSE = "TAG_BUTTON_CLOSE";
+    public static final String TAG_BUTTON_DOWNLOAD = "TAG_BUTTON_DOWNLOAD";
 }

@@ -47,6 +47,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -93,7 +95,7 @@ class SignIn{
             val lifecycleOwner = rememberUpdatedState(LocalLifecycleOwner.current)
             LaunchedEffect(lifecycleOwner.value) {
                 //Check login information in storage
-                signInViewModel.checkAccountInLocalStorage(context)
+                signInViewModel.checkAccountInLocalStorage(context, loadingViewModel)
                 signInViewModel.signInState.observe(lifecycleOwner.value){signInState ->
                     loadingViewModel.hideLoading()
                     if(signInState.signInStatus){
@@ -133,7 +135,10 @@ class SignIn{
                         }, modifier = Modifier
                             .fillMaxWidth()
                             .padding(20.dp)
-                            .testTag(TestTag.TAG_USERNAME),
+                            .testTag(TestTag.TAG_USERNAME)
+                            .semantics{
+                                contentDescription = TestTag.TAG_USERNAME
+                            },
                         shape = RoundedCornerShape(30.dp),
                         label = { Text(text = "Username")},
                         singleLine = true,
