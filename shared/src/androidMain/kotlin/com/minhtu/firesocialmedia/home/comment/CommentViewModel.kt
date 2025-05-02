@@ -69,7 +69,12 @@ class CommentViewModel : ViewModel() {
     private fun saveAndSendNotification(currentUser : UserInstance, selectedNew : NewsInstance, listUsers : ArrayList<UserInstance>) {
         val notiContent = "${currentUser.name} commented in your post!"
         val notification = NotificationInstance(Utils.getRandomIdForNotification(),
-            notiContent,currentUser.image, currentUser.uid, Utils.getCurrentTime(), NotificationType.COMMENT)
+            notiContent,
+            currentUser.image,
+            currentUser.uid,
+            Utils.getCurrentTime(),
+            NotificationType.COMMENT,
+            selectedNew.id)
         //Save notification to db
         val poster = Utils.findUserById(selectedNew.posterId, listUsers)
         Utils.saveNotification(notification, poster!!)

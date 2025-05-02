@@ -29,6 +29,7 @@ import com.google.firebase.ktx.Firebase
 import com.minhtu.firesocialmedia.constants.Constants
 import com.minhtu.firesocialmedia.crypto.CryptoHelper
 import com.minhtu.firesocialmedia.instance.UserInstance
+import com.minhtu.firesocialmedia.loading.LoadingViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -58,6 +59,7 @@ class SignInViewModel : ViewModel() {
                 signInState.postValue(SignInState(false, Constants.DATA_EMPTY))
                 Log.e("SignInViewModel","signIn: DATA_EMPTY")
             }else{
+                email = email.lowercase()
                 withContext(Dispatchers.IO){
                     FirebaseAuth.getInstance().signInWithEmailAndPassword(email,password)
                         .addOnCompleteListener{
@@ -174,7 +176,7 @@ class SignInViewModel : ViewModel() {
         }
     }
 
-    fun checkAccountInLocalStorage(context: Context){
+    fun checkAccountInLocalStorage(context: Context, loadingViewModel: LoadingViewModel){
         viewModelScope.launch{
             withContext(Dispatchers.IO) {
                 val secureSharedPreferences: SharedPreferences = CryptoHelper.getEncryptedSharedPreferences(context)
@@ -184,6 +186,7 @@ class SignInViewModel : ViewModel() {
                     if(email.isNotEmpty() && password.isNotEmpty()){
                         updateEmail(email)
                         updatePassword(password)
+                        loadingViewModel.showLoading()
                         signIn(context)
                     }
                 }
