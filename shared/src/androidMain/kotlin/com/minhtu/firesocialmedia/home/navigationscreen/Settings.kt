@@ -29,6 +29,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -81,6 +83,9 @@ class Settings {
                         .border(1.dp, Color.Black, RoundedCornerShape(10.dp))
                         .fillMaxWidth()
                         .testTag(TestTag.TAG_FIRECHAT_BUTTON)
+                        .semantics{
+                            contentDescription = TestTag.TAG_FIRECHAT_BUTTON
+                        }
                 ) {
                     Row(horizontalArrangement = Arrangement.Start,
                         verticalAlignment = Alignment.CenterVertically,
@@ -106,7 +111,10 @@ class Settings {
                         .height(60.dp)
                         .fillMaxWidth()
                         .padding(10.dp)
-                        .testTag(TestTag.TAG_BUTTON_LOGOUT),
+                        .testTag(TestTag.TAG_BUTTON_LOGOUT)
+                        .semantics{
+                            contentDescription = TestTag.TAG_BUTTON_LOGOUT
+                        },
                     elevation = ButtonDefaults.buttonElevation(
                         defaultElevation = 4.dp),
                     colors = ButtonDefaults.buttonColors(Color.Gray)

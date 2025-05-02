@@ -52,6 +52,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -94,7 +96,11 @@ class Notification {
                 val notificationList = remember(homeViewModel.listNotificationOfCurrentUser) {
                     homeViewModel.listNotificationOfCurrentUser.sortedByDescending { it.timeSend }
                 }
-                LazyColumn(modifier = Modifier.testTag(TestTag.TAG_NOTIFICATION_LIST)) {
+                LazyColumn(modifier = Modifier
+                    .testTag(TestTag.TAG_NOTIFICATION_LIST)
+                    .semantics{
+                        contentDescription = TestTag.TAG_NOTIFICATION_LIST
+                    }) {
                     items(notificationList, key = {it}){notification ->
                         //State to track visibility of a notification
                         var visible by remember { mutableStateOf(true) }
@@ -148,13 +154,20 @@ class Notification {
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(IntrinsicSize.Min)
+                    .testTag(TestTag.TAG_NOTIFICATION)
+                    .semantics{
+                        contentDescription = TestTag.TAG_NOTIFICATION
+                    }
             ) {
                 //Row contains delete button
                 Row(
                     modifier = Modifier
                         .fillMaxSize()
                         .background(Color.White)
-                        .testTag(TestTag.TAG_BUTTON_DELETE),
+                        .testTag(TestTag.TAG_BUTTON_DELETE)
+                        .semantics{
+                            contentDescription = TestTag.TAG_BUTTON_DELETE
+                        },
                     horizontalArrangement = Arrangement.End,
                     verticalAlignment = Alignment.CenterVertically
                 ) {

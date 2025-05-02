@@ -34,6 +34,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -108,7 +110,11 @@ class Information {
                             .clip(CircleShape)
                             .border(1.dp, Color.Gray, CircleShape)
                             .clickable { getAvatarFromGalleryLauncher.launch(galleryIntent) }
-                            .testTag(TestTag.TAG_SELECT_AVATAR))
+                            .testTag(TestTag.TAG_SELECT_AVATAR)
+                            .semantics{
+                                contentDescription = TestTag.TAG_SELECT_AVATAR
+                            })
+
                     Spacer(modifier = Modifier.padding(20.dp))
                     Text(text = "And input your name below",
                         color = Color.White,
@@ -125,7 +131,10 @@ class Information {
                         }, modifier = Modifier
                             .fillMaxWidth()
                             .padding(20.dp)
-                            .testTag(TestTag.TAG_SELECT_NAME),
+                            .testTag(TestTag.TAG_SELECT_NAME)
+                            .semantics{
+                                contentDescription = TestTag.TAG_SELECT_NAME
+                            },
                         label = { Text(text = "Name")},
                         singleLine = true
                     )
@@ -134,7 +143,10 @@ class Information {
                         Button(onClick = {
                             loadingViewModel.showLoading()
                             informationViewModel.finishSignUpStage(context)},
-                            modifier = Modifier.testTag(TestTag.TAG_BUTTON_NEXT)){
+                            modifier = Modifier.testTag(TestTag.TAG_BUTTON_NEXT)
+                                .semantics{
+                                    contentDescription = TestTag.TAG_BUTTON_NEXT
+                                }){
                             Text(text = "Next")
                         }
                     }

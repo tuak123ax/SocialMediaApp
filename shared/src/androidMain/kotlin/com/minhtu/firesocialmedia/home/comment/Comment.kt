@@ -33,6 +33,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -105,6 +107,9 @@ class Comment {
                                         onNavigateToHomeScreen()
                                     }
                                     .testTag(TestTag.TAG_BUTTON_BACK)
+                                    .semantics{
+                                        contentDescription = TestTag.TAG_BUTTON_BACK
+                                    }
                             )
                         }
                     }
@@ -116,7 +121,10 @@ class Comment {
                         modifier = Modifier
                             .weight(1f) // Expands to take available space
                             .fillMaxWidth()
-                            .testTag(TestTag.TAG_COMMENTS_LIST),
+                            .testTag(TestTag.TAG_COMMENTS_LIST)
+                            .semantics{
+                                contentDescription = TestTag.TAG_COMMENTS_LIST
+                            },
                         verticalArrangement = Arrangement.spacedBy(5.dp) // Adds spacing between messages
                     ) {
                         //Sort comments by timePosted in descending order
@@ -138,7 +146,10 @@ class Comment {
                             modifier = Modifier
                                 .weight(1f) // Allow space for send button
                                 .padding(10.dp)
-                                .testTag(TestTag.TAG_INPUT_COMMENT),
+                                .testTag(TestTag.TAG_INPUT_COMMENT)
+                                .semantics{
+                                    contentDescription = TestTag.TAG_INPUT_COMMENT
+                                },
                             label = { Text(text = "Input your comment here") },
                             maxLines = 4
                         )
@@ -157,6 +168,9 @@ class Comment {
                                     commentViewModel.sendComment(currentUser, selectedNew, listUsers)
                                 }
                                 .testTag(TestTag.TAG_BUTTON_SEND)
+                                .semantics{
+                                    contentDescription = TestTag.TAG_BUTTON_SEND
+                                }
                         )
                     }
                 }

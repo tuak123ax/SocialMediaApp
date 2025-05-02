@@ -22,6 +22,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
@@ -64,6 +66,9 @@ class ShowImage {
                                     showImageViewModel.downloadImage(context, image, generateRandomImageName(16))
                                 }
                                 .testTag(TestTag.TAG_BUTTON_DOWNLOAD)
+                                .semantics{
+                                    contentDescription = TestTag.TAG_BUTTON_DOWNLOAD
+                                }
                         )
                         Spacer(modifier = Modifier.width(10.dp))
                         AsyncImage(
@@ -79,6 +84,9 @@ class ShowImage {
                                     onNavigateToHomeScreen()
                                 }
                                 .testTag(TestTag.TAG_BUTTON_CLOSE)
+                                .semantics{
+                                    contentDescription = TestTag.TAG_BUTTON_CLOSE
+                                }
                         )
                     }
 
