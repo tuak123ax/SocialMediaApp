@@ -246,7 +246,11 @@ class UiUtils {
                         },
                             elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp),
                             colors = ButtonDefaults.buttonColors(Color.White),
-                            modifier = Modifier.height(35.dp).weight(1f).testTag(TestTag.TAG_BUTTON_COMMENT)){
+                            modifier = Modifier.height(35.dp).weight(1f)
+                                .testTag(TestTag.TAG_BUTTON_COMMENT)
+                                .semantics{
+                                    contentDescription = TestTag.TAG_BUTTON_COMMENT
+                                }){
                             Image(
                                 painter = painterResource(id = R.drawable.comment),
                                 contentDescription = "Comment",
@@ -273,14 +277,21 @@ class UiUtils {
                             onClick = {
                             resetAndBack()
                         },
-                            modifier = Modifier.testTag(TestTag.TAG_BUTTON_YES)
+                            modifier = Modifier
+                                .testTag(TestTag.TAG_BUTTON_YES)
+                                .semantics{
+                                    contentDescription = TestTag.TAG_BUTTON_YES
+                                }
                             ) {
                             Text("Yes")
                         }
                     },
                     dismissButton = {
                         Button(onClick = { showDialog.value = false },
-                            modifier = Modifier.testTag(TestTag.TAG_BUTTON_NO)) {
+                            modifier = Modifier.testTag(TestTag.TAG_BUTTON_NO)
+                                .semantics{
+                                    contentDescription = TestTag.TAG_BUTTON_NO
+                                }) {
                             Text("No")
                         }
                     }
@@ -377,7 +388,11 @@ class UiUtils {
                     // Handle back button click
                     navController.popBackStack()
                 },
-                    modifier = Modifier.testTag(TestTag.TAG_BUTTON_BACK)
+                    modifier = Modifier
+                        .testTag(TestTag.TAG_BUTTON_BACK)
+                        .semantics{
+                            contentDescription = TestTag.TAG_BUTTON_BACK
+                        }
                 ) {
                     Icon(imageVector = Icons.Default.ArrowBack,
                         contentDescription = "Back",
@@ -386,7 +401,11 @@ class UiUtils {
                 Spacer(modifier = Modifier.weight(1f))
                 IconButton(
                     onClick = { /* Handle click */ },
-                    modifier = Modifier.testTag(TestTag.TAG_BUTTON_MOREOPTIONS)
+                    modifier = Modifier
+                        .testTag(TestTag.TAG_BUTTON_MOREOPTIONS)
+                        .semantics{
+                            contentDescription = TestTag.TAG_BUTTON_MOREOPTIONS
+                        }
                 ) {
                     Icon(
                         imageVector = Icons.Default.MoreHoriz, //Horizontal three dots ⋯
@@ -483,7 +502,10 @@ class UiUtils {
                     .clickable {
                         onNavigateToUserInformation(user)
                     }
-                    .testTag(TestTag.TAG_FRIEND)){
+                    .testTag(TestTag.TAG_FRIEND)
+                    .semantics{
+                        contentDescription = TestTag.TAG_FRIEND
+                    }){
                 AsyncImage(
                     model = ImageRequest.Builder(context)
                         .data(Uri.parse(user.image))
@@ -514,7 +536,10 @@ class UiUtils {
                     .clickable {
                         onNavigateToUserInformation(requester)
                     }
-                    .testTag(TestTag.TAG_FRIEND_REQUEST)){
+                    .testTag(TestTag.TAG_FRIEND_REQUEST)
+                    .semantics{
+                        contentDescription = TestTag.TAG_FRIEND_REQUEST
+                    }){
                 AsyncImage(
                     model = ImageRequest.Builder(context)
                         .data(Uri.parse(requester.image))
@@ -677,7 +702,10 @@ class UiUtils {
                 modifier = Modifier
                     .fillMaxSize()
                     .background(Color(0xFFE8E8E8))
-                    .testTag(TestTag.TAG_POSTS_COLUMN),
+                    .testTag(TestTag.TAG_POSTS_COLUMN)
+                    .semantics{
+                        contentDescription = TestTag.TAG_POSTS_COLUMN
+                    },
                 state = homeViewModel.listState
             ) {
                 items(

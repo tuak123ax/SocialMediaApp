@@ -193,7 +193,11 @@ class SignIn{
                         Spacer(modifier = Modifier.padding(horizontal = 20.dp))
                         //SignUp button
                         Button(onClick = {onNavigateToSignUpScreen()},
-                                modifier = Modifier.testTag(TestTag.TAG_BUTTON_SIGNUP)) {
+                                modifier = Modifier
+                                    .testTag(TestTag.TAG_BUTTON_SIGNUP)
+                                    .semantics{
+                                        contentDescription = TestTag.TAG_BUTTON_SIGNUP
+                                    }) {
                             Text(text = "Sign Up")
                         }
                     }
@@ -219,6 +223,9 @@ class SignIn{
                             modifier = Modifier
                                 .border(1.dp, Color.Black, RoundedCornerShape(30.dp))
                                 .testTag(TestTag.TAG_BUTTON_SIGNINGOOGLE)
+                                .semantics{
+                                    contentDescription = TestTag.TAG_BUTTON_SIGNINGOOGLE
+                                }
                         ) {
                             Image(
                                 painter = painterResource(id = R.drawable.google),
@@ -299,12 +306,16 @@ class SignIn{
         fun MyCheckbox(signInViewModel: SignInViewModel
         ) {
             Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.testTag(TestTag.TAG_REMEMBERPASSWORD)
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Checkbox(
                     checked = signInViewModel.rememberPassword,
-                    onCheckedChange = { signInViewModel.updateRememberPassword(it)}
+                    onCheckedChange = { signInViewModel.updateRememberPassword(it)},
+                    modifier = Modifier
+                        .testTag(TestTag.TAG_REMEMBERPASSWORD)
+                        .semantics{
+                            contentDescription = TestTag.TAG_REMEMBERPASSWORD
+                        }
                 )
                 Text(
                     color = Color.White,

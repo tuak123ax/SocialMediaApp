@@ -184,7 +184,10 @@ class Comment {
                     .padding(10.dp)
                     .fillMaxWidth()
                     .border(1.dp, Color.Black)
-                    .testTag(TestTag.COMMENT_CARD),
+                    .testTag(TestTag.COMMENT_CARD)
+                    .semantics{
+                        contentDescription = TestTag.COMMENT_CARD
+                    },
                 colors = CardDefaults.cardColors(containerColor = Color.White)
             ) {
                 Column(modifier = Modifier.fillMaxSize()) {
