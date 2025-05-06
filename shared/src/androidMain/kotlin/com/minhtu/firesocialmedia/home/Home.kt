@@ -228,6 +228,9 @@ class Home {
                                                 onNavigateToUserInformation(homeViewModel.currentUser)
                                             }
                                             .testTag(TestTag.TAG_CURRENT_USER)
+                                            .semantics{
+                                                contentDescription = TestTag.TAG_CURRENT_USER
+                                            }
                                     )
                                 }
 
@@ -240,7 +243,10 @@ class Home {
                                         .clickable {
                                             onNavigateToUploadNews(null)
                                         }
-                                        .testTag(TestTag.TAG_CREATE_POST),
+                                        .testTag(TestTag.TAG_CREATE_POST)
+                                        .semantics{
+                                            contentDescription = TestTag.TAG_CREATE_POST
+                                        },
                                     label = { Text(text = "What are you thinking?")},
                                     enabled = false,    // Disables the TextField
                                     singleLine = true,
@@ -250,7 +256,10 @@ class Home {
                             LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(10.dp)
-                                .testTag(TestTag.TAG_USERS_ROW)) {
+                                .testTag(TestTag.TAG_USERS_ROW)
+                                .semantics{
+                                    contentDescription = TestTag.TAG_USERS_ROW
+                                }) {
                                 items(usersList.value){user ->
                                     UserCard(user = user, context, onNavigateToUserInformation)
                                 }
@@ -290,7 +299,11 @@ class Home {
         @Composable
         private fun UserCard(user: UserInstance, context: Context, onNavigateToUserInformation: (user: UserInstance) -> Unit) {
             Card(
-                modifier = Modifier.size(70.dp, 90.dp).testTag(TestTag.TAG_ITEM_IN_ROW),
+                modifier = Modifier.size(70.dp, 90.dp)
+                    .testTag(TestTag.TAG_ITEM_IN_ROW)
+                    .semantics{
+                        contentDescription = TestTag.TAG_ITEM_IN_ROW
+                    },
                 colors = CardDefaults.cardColors(containerColor = Color.White)
             ) {
                 Column(verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxSize()) {

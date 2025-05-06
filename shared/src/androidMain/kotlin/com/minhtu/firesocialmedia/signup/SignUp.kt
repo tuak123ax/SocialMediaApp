@@ -131,7 +131,11 @@ class SignUp {
                         Button(onClick = {
                             loadingViewModel.showLoading()
                             signUpViewModel.signUp() },
-                            modifier = Modifier.testTag(TestTag.TAG_BUTTON_SIGNUP)) {
+                            modifier = Modifier
+                                .testTag(TestTag.TAG_BUTTON_SIGNUP)
+                                .semantics{
+                                    contentDescription = TestTag.TAG_BUTTON_SIGNUP
+                                }) {
                             Text(text = "Sign Up")
                         }
                     }

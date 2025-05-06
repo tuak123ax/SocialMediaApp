@@ -121,6 +121,9 @@ class PostInformation {
                                 onNavigateToShowImageScreen(news.image)
                             }
                             .testTag(TestTag.TAG_POST_IMAGE)
+                            .semantics{
+                                contentDescription = TestTag.TAG_POST_IMAGE
+                            }
                     )
                 }
                 Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp),
@@ -146,7 +149,11 @@ class PostInformation {
                         elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp),
                         colors = if(isLiked) ButtonDefaults.buttonColors(Color.Cyan)
                         else ButtonDefaults.buttonColors(Color.White),
-                        modifier = Modifier.height(35.dp).weight(1f).testTag(TestTag.TAG_BUTTON_LIKE)){
+                        modifier = Modifier.height(35.dp).weight(1f)
+                            .testTag(TestTag.TAG_BUTTON_LIKE)
+                            .semantics{
+                                contentDescription = TestTag.TAG_BUTTON_LIKE
+                            }){
                         Image(
                             painter = painterResource(id = R.drawable.like),
                             contentDescription = "Like",
@@ -162,7 +169,11 @@ class PostInformation {
                     },
                         elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp),
                         colors = ButtonDefaults.buttonColors(Color.White),
-                        modifier = Modifier.height(35.dp).weight(1f).testTag(TestTag.TAG_BUTTON_COMMENT)){
+                        modifier = Modifier.height(35.dp).weight(1f)
+                            .testTag(TestTag.TAG_BUTTON_COMMENT)
+                            .semantics{
+                                contentDescription = TestTag.TAG_BUTTON_COMMENT
+                            }){
                         Image(
                             painter = painterResource(id = R.drawable.comment),
                             contentDescription = "Comment",
