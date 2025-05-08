@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -32,6 +33,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -40,6 +45,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
+import com.minhtu.firesocialmedia.constants.TestTag
 import com.minhtu.firesocialmedia.loading.Loading
 import com.minhtu.firesocialmedia.loading.LoadingViewModel
 import com.minhtu.firesocialmedia.signup.SignUpViewModel
@@ -89,40 +95,58 @@ class Information {
             Box(modifier = Modifier.fillMaxSize()) {
                 Column(modifier = modifier, verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally){
                     Text(text = "Please select your avatar",
-                        color = Color.Magenta,
-                        fontSize = 30.sp,
+                        color = Color.White,
+                        fontSize = 25.sp,
                         textAlign = TextAlign.Center,
-                        modifier = Modifier.fillMaxWidth())
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(20.dp))
                     Spacer(modifier = Modifier.padding(20.dp))
                     AsyncImage(model = informationViewModel.avatar,
                         contentDescription = "Avatar",
                         contentScale = ContentScale.Crop,
                         modifier = Modifier
-                            .size(140.dp)
+                            .size(160.dp)
                             .clip(CircleShape)
                             .border(1.dp, Color.Gray, CircleShape)
-                            .clickable { getAvatarFromGalleryLauncher.launch(galleryIntent) })
+                            .clickable { getAvatarFromGalleryLauncher.launch(galleryIntent) }
+                            .testTag(TestTag.TAG_SELECT_AVATAR)
+                            .semantics{
+                                contentDescription = TestTag.TAG_SELECT_AVATAR
+                            })
+
                     Spacer(modifier = Modifier.padding(20.dp))
                     Text(text = "And input your name below",
-                        color = Color.Magenta,
+                        color = Color.White,
                         fontSize = 30.sp,
                         textAlign = TextAlign.Center,
                         modifier = Modifier.fillMaxWidth())
                     Spacer(modifier = Modifier.padding(20.dp))
                     OutlinedTextField(
-                        value = informationViewModel.username, onValueChange = {
+                        value = informationViewModel.username,
+                        shape = RoundedCornerShape(30.dp),
+                        textStyle = TextStyle(color = Color.White),
+                        onValueChange = {
                             informationViewModel.updateUsername(it)
                         }, modifier = Modifier
                             .fillMaxWidth()
-                            .padding(20.dp),
-                        label = { Text(text = "Username")},
+                            .padding(20.dp)
+                            .testTag(TestTag.TAG_SELECT_NAME)
+                            .semantics{
+                                contentDescription = TestTag.TAG_SELECT_NAME
+                            },
+                        label = { Text(text = "Name")},
                         singleLine = true
                     )
                     Spacer(modifier = Modifier.padding(20.dp))
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center){
                         Button(onClick = {
                             loadingViewModel.showLoading()
-                            informationViewModel.finishSignUpStage(context)}){
+                            informationViewModel.finishSignUpStage(context)},
+                            modifier = Modifier.testTag(TestTag.TAG_BUTTON_NEXT)
+                                .semantics{
+                                    contentDescription = TestTag.TAG_BUTTON_NEXT
+                                }){
                             Text(text = "Next")
                         }
                     }

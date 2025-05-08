@@ -29,7 +29,7 @@ import com.google.firebase.ktx.Firebase
 import com.minhtu.firesocialmedia.constants.Constants
 import com.minhtu.firesocialmedia.crypto.CryptoHelper
 import com.minhtu.firesocialmedia.instance.UserInstance
-import com.minhtu.firesocialmedia.signin.SignInState
+import com.minhtu.firesocialmedia.loading.LoadingViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -38,6 +38,10 @@ class SignInViewModel : ViewModel() {
     private val _signInStatus = MutableLiveData<SignInState>()
     val signInState = _signInStatus
 
+    var rememberPassword by mutableStateOf(false)
+    fun updateRememberPassword(checked : Boolean){
+        rememberPassword = checked
+    }
     var email by mutableStateOf("")
     fun updateEmail(input : String){
         email = input
@@ -55,13 +59,16 @@ class SignInViewModel : ViewModel() {
                 signInState.postValue(SignInState(false, Constants.DATA_EMPTY))
                 Log.e("SignInViewModel","signIn: DATA_EMPTY")
             }else{
+                email = email.lowercase()
                 withContext(Dispatchers.IO){
                     FirebaseAuth.getInstance().signInWithEmailAndPassword(email,password)
                         .addOnCompleteListener{
                                 task->
                             if(task.isSuccessful){
-                                CryptoHelper.saveAccount(context, email, password)
-                                signInState.postValue(SignInState(true, ""))
+                                if(rememberPassword) {
+                                    CryptoHelper.saveAccount(context, email, password)
+                                }
+                                emailExistedInDatabase(email)
                             } else{
                                 signInState.postValue(SignInState(false, Constants.LOGIN_ERROR))
                                 Log.e("SignInViewModel","signIn: LOGIN_ERROR")
@@ -169,7 +176,7 @@ class SignInViewModel : ViewModel() {
         }
     }
 
-    fun checkAccountInLocalStorage(context: Context){
+    fun checkAccountInLocalStorage(context: Context, loadingViewModel: LoadingViewModel){
         viewModelScope.launch{
             withContext(Dispatchers.IO) {
                 val secureSharedPreferences: SharedPreferences = CryptoHelper.getEncryptedSharedPreferences(context)
@@ -179,6 +186,7 @@ class SignInViewModel : ViewModel() {
                     if(email.isNotEmpty() && password.isNotEmpty()){
                         updateEmail(email)
                         updatePassword(password)
+                        loadingViewModel.showLoading()
                         signIn(context)
                     }
                 }

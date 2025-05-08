@@ -8,6 +8,8 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,6 +19,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
@@ -24,6 +27,7 @@ import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
@@ -37,11 +41,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -53,6 +61,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.android.gms.auth.api.identity.Identity
 import com.minhtu.firesocialmedia.R
 import com.minhtu.firesocialmedia.constants.Constants
+import com.minhtu.firesocialmedia.constants.TestTag
 import com.minhtu.firesocialmedia.loading.Loading
 import com.minhtu.firesocialmedia.loading.LoadingViewModel
 
@@ -66,7 +75,8 @@ class SignIn{
             modifier: Modifier,
             onNavigateToSignUpScreen:() -> Unit,
             onNavigateToHomeScreen:()-> Unit,
-            onNavigateToInformationScreen:() -> Unit) {
+            onNavigateToInformationScreen:() -> Unit,
+            onNavigateToForgotPasswordScreen:() -> Unit) {
             val isLoading by loadingViewModel.isLoading.collectAsState()
             val context = LocalContext.current
             val resultLauncher = rememberLauncherForActivityResult(
@@ -85,7 +95,7 @@ class SignIn{
             val lifecycleOwner = rememberUpdatedState(LocalLifecycleOwner.current)
             LaunchedEffect(lifecycleOwner.value) {
                 //Check login information in storage
-                signInViewModel.checkAccountInLocalStorage(context)
+                signInViewModel.checkAccountInLocalStorage(context, loadingViewModel)
                 signInViewModel.signInState.observe(lifecycleOwner.value){signInState ->
                     loadingViewModel.hideLoading()
                     if(signInState.signInStatus){
@@ -112,7 +122,7 @@ class SignIn{
                     //Title
                     Text(
                         text = "FireSocialMedia",
-                        color = Color.Blue,
+                        color = Color.Red,
                         fontSize = 30.sp,
                         textAlign = TextAlign.Center,
                         modifier = Modifier.fillMaxWidth()
@@ -124,12 +134,46 @@ class SignIn{
                             signInViewModel.updateEmail(it)
                         }, modifier = Modifier
                             .fillMaxWidth()
-                            .padding(20.dp),
+                            .padding(20.dp)
+                            .testTag(TestTag.TAG_USERNAME)
+                            .semantics{
+                                contentDescription = TestTag.TAG_USERNAME
+                            },
+                        shape = RoundedCornerShape(30.dp),
                         label = { Text(text = "Username")},
-                        singleLine = true
+                        singleLine = true,
+                        textStyle = TextStyle(Color.White)
                     )
                     //Password textfield
-                    PasswordTextField(Constants.PASSWORD, signInViewModel)
+                    PasswordTextField(Constants.PASSWORD, signInViewModel, TestTag.TAG_PASSWORD)
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        //Forgot password
+                        Text(
+                            text = "Forgot password?",
+                            color = Color.White,
+                            fontSize = 15.sp,
+                            textAlign = TextAlign.Start,
+                            modifier = Modifier
+                                .clickable {
+                                    onNavigateToForgotPasswordScreen()
+                                }
+                                .testTag(TestTag.TAG_FORGOTPASSWORD)
+                                .semantics{
+                                    contentDescription = TestTag.TAG_FORGOTPASSWORD
+                                }
+                        )
+                        Spacer(modifier = Modifier.weight(1f))
+                        //Remember password
+                        MyCheckbox(signInViewModel)
+
+                    }
                     //Row contains buttons
                     Row(
                         modifier = Modifier
@@ -139,15 +183,30 @@ class SignIn{
                         //SignIn button
                         Button(onClick = {
                             loadingViewModel.showLoading()
-                            signInViewModel.signIn(context) }) {
+                            signInViewModel.signIn(context)},
+                            modifier = Modifier.testTag(TestTag.TAG_BUTTON_SIGNIN)
+                                .semantics{
+                                    contentDescription = TestTag.TAG_BUTTON_SIGNIN
+                                }) {
                             Text(text = "Sign In")
                         }
                         Spacer(modifier = Modifier.padding(horizontal = 20.dp))
                         //SignUp button
-                        Button(onClick = {onNavigateToSignUpScreen()}) {
+                        Button(onClick = {onNavigateToSignUpScreen()},
+                                modifier = Modifier
+                                    .testTag(TestTag.TAG_BUTTON_SIGNUP)
+                                    .semantics{
+                                        contentDescription = TestTag.TAG_BUTTON_SIGNUP
+                                    }) {
                             Text(text = "Sign Up")
                         }
                     }
+                    Text(
+                        textAlign = TextAlign.Center,
+                        color = Color.White,
+                        text = "Or register with",
+                        modifier = Modifier.fillMaxWidth()
+                    )
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -156,7 +215,18 @@ class SignIn{
                         //Google button
                         Button(onClick = {
                             signInViewModel.signInWithGoogle(context, resultLauncher)
-                        }, colors = ButtonDefaults.buttonColors(Color.White)) {
+                        },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color.White.copy(alpha = 0.95f),
+                                contentColor = Color.Black
+                            ),
+                            modifier = Modifier
+                                .border(1.dp, Color.Black, RoundedCornerShape(30.dp))
+                                .testTag(TestTag.TAG_BUTTON_SIGNINGOOGLE)
+                                .semantics{
+                                    contentDescription = TestTag.TAG_BUTTON_SIGNINGOOGLE
+                                }
+                        ) {
                             Image(
                                 painter = painterResource(id = R.drawable.google),
                                 contentDescription = "Google",
@@ -200,7 +270,7 @@ class SignIn{
         }
 
         @Composable
-        fun PasswordTextField(label : String, signInViewModel: SignInViewModel) {
+        fun PasswordTextField(label : String, signInViewModel: SignInViewModel, testTag: String) {
             var passwordVisibility by rememberSaveable {
                 mutableStateOf(false)
             }
@@ -212,9 +282,14 @@ class SignIn{
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(20.dp)
-                    .clearAndSetSemantics { },
+                    .testTag(testTag)
+                    .semantics{
+                        contentDescription = testTag
+                    },
+                shape = RoundedCornerShape(30.dp),
                 label = { Text(text = label) },
                 singleLine = true,
+                textStyle = TextStyle(Color.White),
                 visualTransformation = if(passwordVisibility) VisualTransformation.None else PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                 trailingIcon = {
@@ -225,6 +300,30 @@ class SignIn{
                     }
                 }
             )
+        }
+
+        @Composable
+        fun MyCheckbox(signInViewModel: SignInViewModel
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Checkbox(
+                    checked = signInViewModel.rememberPassword,
+                    onCheckedChange = { signInViewModel.updateRememberPassword(it)},
+                    modifier = Modifier
+                        .testTag(TestTag.TAG_REMEMBERPASSWORD)
+                        .semantics{
+                            contentDescription = TestTag.TAG_REMEMBERPASSWORD
+                        }
+                )
+                Text(
+                    color = Color.White,
+                    text = "Remember password",
+                    fontSize = 10.sp,
+                    modifier = Modifier.padding(start = 5.dp)
+                )
+            }
         }
 
         fun getScreenName(): String{
