@@ -1,6 +1,0 @@
-framework module Pods_Fire_Social_Media {
-  umbrella header "Pods-Fire_Social_Media-umbrella.h"
-
-  export *
-  module * { export * }
-}

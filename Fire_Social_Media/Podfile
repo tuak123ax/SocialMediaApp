@@ -1,5 +1,8 @@
 target 'Fire_Social_Media' do
   use_frameworks!
   platform :ios, '16.0'
+  pod 'Firebase/Auth'
+  pod 'Firebase/Database'
+  pod 'Firebase/Storage'
   pod 'shared', :path => '../shared'
 end

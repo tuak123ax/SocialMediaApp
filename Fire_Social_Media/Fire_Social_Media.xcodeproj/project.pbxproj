@@ -3,27 +3,39 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 50;
+	objectVersion = 54;
 	objects = {
 
 /* Begin PBXBuildFile section */
 		058557BB273AAA24004C7B11 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 058557BA273AAA24004C7B11 /* Assets.xcassets */; };
 		058557D9273AAEEB004C7B11 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 058557D8273AAEEB004C7B11 /* Preview Assets.xcassets */; };
+		08B07FD62DDC8F1000BD60BC /* FirebaseAuth.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 08B07FD02DDC8CE000BD60BC /* FirebaseAuth.framework */; };
+		08B07FD92DDC8F1100BD60BC /* FirebaseDatabase.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 08B07FD22DDC8CE600BD60BC /* FirebaseDatabase.framework */; };
+		08B07FDB2DDC8F1300BD60BC /* FirebaseStorage.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 08B07FD42DDC8CEE00BD60BC /* FirebaseStorage.framework */; };
+		08B07FE02DDCCD1C00BD60BC /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 08B07FDF2DDCCD1C00BD60BC /* GoogleService-Info.plist */; };
+		08B07FE22DDED31500BD60BC /* PushNotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08B07FE12DDED31200BD60BC /* PushNotificationManager.swift */; };
+		08E8C5962DD9EDCE001AAA39 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08E8C5952DD9EDCE001AAA39 /* AppDelegate.swift */; };
 		2152FB042600AC8F00CF470E /* iOSApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2152FB032600AC8F00CF470E /* iOSApp.swift */; };
+		5C1990853BF0A8E8855993C8 /* Pods_Fire_Social_Media.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 27F358DFF878D64B67E1BFB8 /* Pods_Fire_Social_Media.framework */; };
 		7555FF83242A565900829871 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7555FF82242A565900829871 /* ContentView.swift */; };
-		D2AF084DDA1B1C72970942C2 /* Pods_Fire_Social_Media.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2291EF0153BADE1625EE35F8 /* Pods_Fire_Social_Media.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		058557BA273AAA24004C7B11 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		058557D8273AAEEB004C7B11 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
+		08B07FD02DDC8CE000BD60BC /* FirebaseAuth.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = FirebaseAuth.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		08B07FD22DDC8CE600BD60BC /* FirebaseDatabase.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = FirebaseDatabase.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		08B07FD42DDC8CEE00BD60BC /* FirebaseStorage.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = FirebaseStorage.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		08B07FDF2DDCCD1C00BD60BC /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
+		08B07FE12DDED31200BD60BC /* PushNotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushNotificationManager.swift; sourceTree = "<group>"; };
+		08E8C5952DD9EDCE001AAA39 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		2152FB032600AC8F00CF470E /* iOSApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iOSApp.swift; sourceTree = "<group>"; };
-		2291EF0153BADE1625EE35F8 /* Pods_Fire_Social_Media.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Fire_Social_Media.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		3927BE55F57F611F9DCC58AF /* Pods-Fire_Social_Media.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Fire_Social_Media.release.xcconfig"; path = "Target Support Files/Pods-Fire_Social_Media/Pods-Fire_Social_Media.release.xcconfig"; sourceTree = "<group>"; };
+		27F358DFF878D64B67E1BFB8 /* Pods_Fire_Social_Media.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Fire_Social_Media.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		324B6593AA5547960FB9733E /* Pods-Fire_Social_Media.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Fire_Social_Media.release.xcconfig"; path = "Target Support Files/Pods-Fire_Social_Media/Pods-Fire_Social_Media.release.xcconfig"; sourceTree = "<group>"; };
 		7555FF7B242A565900829871 /* Fire_Social_Media.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Fire_Social_Media.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7555FF82242A565900829871 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		7555FF8C242A565B00829871 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		B16E1AF20E84BB292C44B159 /* Pods-Fire_Social_Media.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Fire_Social_Media.debug.xcconfig"; path = "Target Support Files/Pods-Fire_Social_Media/Pods-Fire_Social_Media.debug.xcconfig"; sourceTree = "<group>"; };
+		F8FA6D4B27B822596F22CE4E /* Pods-Fire_Social_Media.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Fire_Social_Media.debug.xcconfig"; path = "Target Support Files/Pods-Fire_Social_Media/Pods-Fire_Social_Media.debug.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -31,7 +43,10 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				D2AF084DDA1B1C72970942C2 /* Pods_Fire_Social_Media.framework in Frameworks */,
+				08B07FD92DDC8F1100BD60BC /* FirebaseDatabase.framework in Frameworks */,
+				08B07FD62DDC8F1000BD60BC /* FirebaseAuth.framework in Frameworks */,
+				08B07FDB2DDC8F1300BD60BC /* FirebaseStorage.framework in Frameworks */,
+				5C1990853BF0A8E8855993C8 /* Pods_Fire_Social_Media.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -49,10 +64,9 @@
 		71031A8D07D30AA75EF23E58 /* Pods */ = {
 			isa = PBXGroup;
 			children = (
-				B16E1AF20E84BB292C44B159 /* Pods-Fire_Social_Media.debug.xcconfig */,
-				3927BE55F57F611F9DCC58AF /* Pods-Fire_Social_Media.release.xcconfig */,
+				F8FA6D4B27B822596F22CE4E /* Pods-Fire_Social_Media.debug.xcconfig */,
+				324B6593AA5547960FB9733E /* Pods-Fire_Social_Media.release.xcconfig */,
 			);
-			name = Pods;
 			path = Pods;
 			sourceTree = "<group>";
 		};
@@ -63,6 +77,7 @@
 				7555FF7C242A565900829871 /* Products */,
 				71031A8D07D30AA75EF23E58 /* Pods */,
 				A3F1157FF6D2B71FC2E22DFF /* Frameworks */,
+				08B07FDF2DDCCD1C00BD60BC /* GoogleService-Info.plist */,
 			);
 			sourceTree = "<group>";
 		};
@@ -77,11 +92,13 @@
 		7555FF7D242A565900829871 /* Fire_Social_Media */ = {
 			isa = PBXGroup;
 			children = (
+				08B07FE12DDED31200BD60BC /* PushNotificationManager.swift */,
 				058557BA273AAA24004C7B11 /* Assets.xcassets */,
 				7555FF82242A565900829871 /* ContentView.swift */,
 				7555FF8C242A565B00829871 /* Info.plist */,
 				2152FB032600AC8F00CF470E /* iOSApp.swift */,
 				058557D7273AAEEB004C7B11 /* Preview Content */,
+				08E8C5952DD9EDCE001AAA39 /* AppDelegate.swift */,
 			);
 			path = Fire_Social_Media;
 			sourceTree = "<group>";
@@ -89,7 +106,10 @@
 		A3F1157FF6D2B71FC2E22DFF /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				2291EF0153BADE1625EE35F8 /* Pods_Fire_Social_Media.framework */,
+				08B07FD42DDC8CEE00BD60BC /* FirebaseStorage.framework */,
+				08B07FD22DDC8CE600BD60BC /* FirebaseDatabase.framework */,
+				08B07FD02DDC8CE000BD60BC /* FirebaseAuth.framework */,
+				27F358DFF878D64B67E1BFB8 /* Pods_Fire_Social_Media.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -101,11 +121,12 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 7555FFA5242A565B00829871 /* Build configuration list for PBXNativeTarget "Fire_Social_Media" */;
 			buildPhases = (
-				5B1D0022C9BE47C58D6FBCFE /* [CP] Check Pods Manifest.lock */,
+				4DB539FCAF27C439A568C2D4 /* [CP] Check Pods Manifest.lock */,
 				7555FF77242A565900829871 /* Sources */,
 				7555FF79242A565900829871 /* Resources */,
 				83D5CB99295C25689B1A4AD9 /* Frameworks */,
-				8431675E6DEAAD30E0F6C8AD /* [CP] Copy Pods Resources */,
+				7C2E11E6EEAD336248F0432D /* [CP] Embed Pods Frameworks */,
+				7003ADD88D45979C92027907 /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -156,13 +177,14 @@
 			files = (
 				058557D9273AAEEB004C7B11 /* Preview Assets.xcassets in Resources */,
 				058557BB273AAA24004C7B11 /* Assets.xcassets in Resources */,
+				08B07FE02DDCCD1C00BD60BC /* GoogleService-Info.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
-		5B1D0022C9BE47C58D6FBCFE /* [CP] Check Pods Manifest.lock */ = {
+		4DB539FCAF27C439A568C2D4 /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -184,7 +206,7 @@
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
-		8431675E6DEAAD30E0F6C8AD /* [CP] Copy Pods Resources */ = {
+		7003ADD88D45979C92027907 /* [CP] Copy Pods Resources */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -201,6 +223,23 @@
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Fire_Social_Media/Pods-Fire_Social_Media-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
+		7C2E11E6EEAD336248F0432D /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-Fire_Social_Media/Pods-Fire_Social_Media-frameworks-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-Fire_Social_Media/Pods-Fire_Social_Media-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Fire_Social_Media/Pods-Fire_Social_Media-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -208,7 +247,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				08E8C5962DD9EDCE001AAA39 /* AppDelegate.swift in Sources */,
 				2152FB042600AC8F00CF470E /* iOSApp.swift in Sources */,
+				08B07FE22DDED31500BD60BC /* PushNotificationManager.swift in Sources */,
 				7555FF83242A565900829871 /* ContentView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -334,19 +375,42 @@
 		};
 		7555FFA6242A565B00829871 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = B16E1AF20E84BB292C44B159 /* Pods-Fire_Social_Media.debug.xcconfig */;
+			baseConfigurationReference = F8FA6D4B27B822596F22CE4E /* Pods-Fire_Social_Media.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_ASSET_PATHS = "\"Fire_Social_Media/Preview Content\"";
+				DEVELOPMENT_TEAM = XZBA6PR227;
 				ENABLE_PREVIEWS = YES;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"${PODS_CONFIGURATION_BUILD_DIR}/FirebaseAppCheckInterop\"",
+					"\"${PODS_CONFIGURATION_BUILD_DIR}/FirebaseAuth\"",
+					"\"${PODS_CONFIGURATION_BUILD_DIR}/FirebaseAuthInterop\"",
+					"\"${PODS_CONFIGURATION_BUILD_DIR}/FirebaseCore\"",
+					"\"${PODS_CONFIGURATION_BUILD_DIR}/FirebaseCoreExtension\"",
+					"\"${PODS_CONFIGURATION_BUILD_DIR}/FirebaseCoreInternal\"",
+					"\"${PODS_CONFIGURATION_BUILD_DIR}/FirebaseDatabase\"",
+					"\"${PODS_CONFIGURATION_BUILD_DIR}/FirebaseSharedSwift\"",
+					"\"${PODS_CONFIGURATION_BUILD_DIR}/FirebaseStorage\"",
+					"\"${PODS_CONFIGURATION_BUILD_DIR}/GTMSessionFetcher\"",
+					"\"${PODS_CONFIGURATION_BUILD_DIR}/GoogleUtilities\"",
+					"\"${PODS_CONFIGURATION_BUILD_DIR}/RecaptchaInterop\"",
+					"\"${PODS_CONFIGURATION_BUILD_DIR}/leveldb-library\"",
+					"\"${PODS_ROOT}/../../shared/build/cocoapods/framework\"",
+					"$(PROJECT_DIR)/../shared/build/cocoapods/framework/**",
+					"$(PROJECT_DIR)/Pods/FirebaseStorage/**",
+					"$(PROJECT_DIR)/Pods/FirebaseDatabase/**",
+					"$(PROJECT_DIR)/Pods/FirebaseAuth/**",
+					"$(inherited)/**",
+				);
 				INFOPLIST_FILE = Fire_Social_Media/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = orgIdentifier.Fire_Social_Media;
+				PRODUCT_BUNDLE_IDENTIFIER = com.minhtu.firesocialmedia;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -355,19 +419,42 @@
 		};
 		7555FFA7242A565B00829871 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 3927BE55F57F611F9DCC58AF /* Pods-Fire_Social_Media.release.xcconfig */;
+			baseConfigurationReference = 324B6593AA5547960FB9733E /* Pods-Fire_Social_Media.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_ASSET_PATHS = "\"Fire_Social_Media/Preview Content\"";
+				DEVELOPMENT_TEAM = XZBA6PR227;
 				ENABLE_PREVIEWS = YES;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"${PODS_CONFIGURATION_BUILD_DIR}/FirebaseAppCheckInterop\"",
+					"\"${PODS_CONFIGURATION_BUILD_DIR}/FirebaseAuth\"",
+					"\"${PODS_CONFIGURATION_BUILD_DIR}/FirebaseAuthInterop\"",
+					"\"${PODS_CONFIGURATION_BUILD_DIR}/FirebaseCore\"",
+					"\"${PODS_CONFIGURATION_BUILD_DIR}/FirebaseCoreExtension\"",
+					"\"${PODS_CONFIGURATION_BUILD_DIR}/FirebaseCoreInternal\"",
+					"\"${PODS_CONFIGURATION_BUILD_DIR}/FirebaseDatabase\"",
+					"\"${PODS_CONFIGURATION_BUILD_DIR}/FirebaseSharedSwift\"",
+					"\"${PODS_CONFIGURATION_BUILD_DIR}/FirebaseStorage\"",
+					"\"${PODS_CONFIGURATION_BUILD_DIR}/GTMSessionFetcher\"",
+					"\"${PODS_CONFIGURATION_BUILD_DIR}/GoogleUtilities\"",
+					"\"${PODS_CONFIGURATION_BUILD_DIR}/RecaptchaInterop\"",
+					"\"${PODS_CONFIGURATION_BUILD_DIR}/leveldb-library\"",
+					"\"${PODS_ROOT}/../../shared/build/cocoapods/framework\"",
+					"$(PROJECT_DIR)/../shared/build/cocoapods/framework/**",
+					"$(PROJECT_DIR)/Pods/FirebaseStorage/**",
+					"$(PROJECT_DIR)/Pods/FirebaseDatabase/**",
+					"$(PROJECT_DIR)/Pods/FirebaseAuth/**",
+					"$(inherited)/**",
+				);
 				INFOPLIST_FILE = Fire_Social_Media/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = orgIdentifier.Fire_Social_Media;
+				PRODUCT_BUNDLE_IDENTIFIER = com.minhtu.firesocialmedia;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";

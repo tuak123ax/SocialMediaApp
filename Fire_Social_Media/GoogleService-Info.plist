@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CLIENT_ID</key>
+	<string>744458948813-5jpjfv5tgdrb0j2a8l2ohe2uq1kv3lsa.apps.googleusercontent.com</string>
+	<key>REVERSED_CLIENT_ID</key>
+	<string>com.googleusercontent.apps.744458948813-5jpjfv5tgdrb0j2a8l2ohe2uq1kv3lsa</string>
+	<key>ANDROID_CLIENT_ID</key>
+	<string>744458948813-ijrsm8k433heb4tnhghujlmlnjsgiu8b.apps.googleusercontent.com</string>
+	<key>API_KEY</key>
+	<string>AIzaSyCkuGZZ0WtYxeJsgk_0qhoj9MHQIqSstOY</string>
+	<key>GCM_SENDER_ID</key>
+	<string>744458948813</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>com.minhtu.firesocialmedia</string>
+	<key>PROJECT_ID</key>
+	<string>firechat-aa433</string>
+	<key>STORAGE_BUCKET</key>
+	<string>firechat-aa433.appspot.com</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:744458948813:ios:03e657165c893833f8d984</string>
+	<key>DATABASE_URL</key>
+	<string>https://firechat-aa433-default-rtdb.firebaseio.com</string>
+</dict>
+</plist>
