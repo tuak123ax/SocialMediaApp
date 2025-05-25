@@ -2,12 +2,10 @@ package com.minhtu.firesocialmedia
 
 import androidx.compose.runtime.Composable
 
-class MainApplication {
-    companion object {
-        @Composable
-        fun MainApp(context : Any){
-            SetUpNavigation(context)
-        }
+actual object MainApplication {
+    @Composable
+    actual fun MainApp(context : Any){
+        SetUpNavigation(context)
     }
 }
 

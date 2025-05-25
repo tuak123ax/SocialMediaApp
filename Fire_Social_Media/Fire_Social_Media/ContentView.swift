@@ -1,16 +1,10 @@
 import SwiftUI
 import shared
 
-struct ContentView: View {
-	let greet = Greeting().greet()
+struct ContentView: UIViewControllerRepresentable {
+    func makeUIViewController(context: Context) -> some UIViewController {
+        MainApplicationKt.MainApplicationMainAppViewController(context: "iOS" as NSString)
+    }
 
-	var body: some View {
-		Text(greet)
-	}
-}
-
-struct ContentView_Previews: PreviewProvider {
-	static var previews: some View {
-		ContentView()
-	}
+    func updateUIViewController(_ uiViewController: UIViewControllerType, context: Context) {}
 }

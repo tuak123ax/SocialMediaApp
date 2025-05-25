@@ -21,16 +21,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.content.ContextCompat
-import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.google.firebase.messaging.FirebaseMessaging
 import com.minhtu.firesocialmedia.MainApplication
-import com.minhtu.firesocialmedia.services.database.DatabaseHelper
+import com.minhtu.firesocialmedia.TokenStorage.updateTokenInStorage
 import com.minhtu.firesocialmedia.services.remoteconfig.FetchResultCallback
 import com.minhtu.firesocialmedia.services.remoteconfig.RemoteConfigHelper
-import com.minhtu.firesocialmedia.utils.Utils
-import dagger.hilt.android.AndroidEntryPoint
 
-@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     private var downloadReceiver: BroadcastReceiver? = null
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -53,7 +49,7 @@ class MainActivity : ComponentActivity() {
                         }
                     })
                     MainApplication.MainApp(this)
-                    checkFCMToken(applicationContext)
+                    checkFCMToken()
                     askNotificationPermission()
                     //Listen download event here to show toast on all screens
                     listenDownloadImageEvent()
@@ -96,14 +92,14 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun checkFCMToken(context: Context) {
+    private fun checkFCMToken() {
         FirebaseMessaging.getInstance().token
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
                     // Get the new FCM token
                     val token = task.result
                     Log.d("FCM", "FCM Token: $token")
-                    Utils.updateTokenInStorage(token, context)
+                    updateTokenInStorage(token)
                 }
             }
     }

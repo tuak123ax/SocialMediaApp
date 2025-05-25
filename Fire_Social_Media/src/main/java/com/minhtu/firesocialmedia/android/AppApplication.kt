@@ -5,12 +5,12 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.os.Build
 import com.minhtu.firesocialmedia.constants.Constants
-import dagger.hilt.android.HiltAndroidApp
+import com.minhtu.firesocialmedia.initPlatformContext
 
-@HiltAndroidApp
 class AppApplication : Application() {
     override fun onCreate() {
         super.onCreate()
+        initPlatformContext(this)
         createChannelNotification()
     }
     private fun createChannelNotification() {
