@@ -10,10 +10,11 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
+import com.google.gson.Gson
 import com.minhtu.firesocialmedia.R
+import com.minhtu.firesocialmedia.TokenStorage.updateTokenInStorage
 import com.minhtu.firesocialmedia.constants.Constants
 import com.minhtu.firesocialmedia.instance.UserInstance
-import com.minhtu.firesocialmedia.utils.Utils
 import java.io.IOException
 import java.net.URL
 
@@ -54,8 +55,10 @@ class AppFirebaseNotificationService: FirebaseMessagingService() {
             e.printStackTrace()
         }
         val intent = Intent(this, MainActivity::class.java)
+        val gson = Gson()
+        val jsonUser = gson.toJson(user)
         val receiverData = Bundle()
-        receiverData.putSerializable("receiverUser", user)
+        receiverData.putSerializable("receiverUser", jsonUser)
         intent.putExtras(receiverData)
         val pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_IMMUTABLE)
         val builder: NotificationCompat.Builder =
@@ -75,7 +78,7 @@ class AppFirebaseNotificationService: FirebaseMessagingService() {
 
     override fun onNewToken(token: String) {
         Log.e("onNewToken", token)
-        Utils.updateTokenInStorage(token, applicationContext)
+        updateTokenInStorage(token)
         super.onNewToken(token)
     }
 }

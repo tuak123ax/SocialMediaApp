@@ -7,7 +7,7 @@ plugins {
 
     id ("kotlin-android")
     id ("kotlin-kapt")
-    id ("dagger.hilt.android.plugin")
+//    id ("dagger.hilt.android.plugin")
     // Add the Crashlytics Gradle plugin
     id("com.google.firebase.crashlytics")
 }
@@ -20,7 +20,7 @@ android {
         minSdk = 24
         targetSdk = 35
         versionCode = 1
-        versionName = "3.0.0"
+        versionName = "4.0.0"
 
         signingConfig = signingConfigs.getByName("debug")
     }
@@ -99,4 +99,5 @@ dependencies {
     implementation ("androidx.hilt:hilt-navigation-compose:1.2.0")
     implementation ("com.google.dagger:hilt-android:2.51.1")
     kapt("com.google.dagger:hilt-compiler:2.51.1")
+    implementation("com.google.code.gson:gson:2.10.1")
 }

@@ -1,5 +1,4 @@
 plugins {
-    //trick: for the same plugin versions in all sub-modules
     alias(libs.plugins.androidApplication).apply(false)
     alias(libs.plugins.androidLibrary).apply(false)
     alias(libs.plugins.kotlinAndroid).apply(false)
@@ -14,4 +13,6 @@ plugins {
     // Add the dependency for the Crashlytics Gradle plugin
     id("com.google.firebase.crashlytics") version "3.0.2" apply false
     id("org.jetbrains.compose") version "1.7.3" apply false
+    id("com.rickclephas.kmp.nativecoroutines") version "1.0.0-ALPHA-42"
+    kotlin("plugin.serialization") version "1.8.22"
 }
