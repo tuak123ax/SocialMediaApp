@@ -34,7 +34,7 @@ class AndroidDatabaseService(private val context: Context) : DatabaseService{
     override suspend fun saveValueToDatabase(
         id: String,
         path: String,
-        value: HashMap<String, Boolean>,
+        value: HashMap<String, Int>,
         externalPath: String
     ) {
         AndroidDatabaseHelper.saveValueToDatabase(id,

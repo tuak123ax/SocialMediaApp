@@ -5,7 +5,6 @@ import cocoapods.FirebaseDatabase.FIRDatabaseReference
 import cocoapods.FirebaseStorage.FIRStorage
 import cocoapods.FirebaseStorage.FIRStorageReference
 import com.minhtu.firesocialmedia.constants.Constants
-import com.minhtu.firesocialmedia.instance.BaseNewsInstance
 import com.minhtu.firesocialmedia.instance.NewsInstance
 import com.minhtu.firesocialmedia.instance.NotificationInstance
 import com.minhtu.firesocialmedia.instance.fromMap
@@ -22,6 +21,7 @@ import cocoapods.FirebaseStorage.FIRStorageTaskStatusSuccess
 import com.minhtu.firesocialmedia.instance.CommentInstance
 import com.minhtu.firesocialmedia.logMessage
 import com.minhtu.firesocialmedia.toNSData
+import kotlinx.cinterop.BetaInteropApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import platform.UIKit.UIImage
 import platform.UIKit.UIImageWriteToSavedPhotosAlbum
@@ -101,7 +101,7 @@ class IosDatabaseHelper {
         suspend fun saveValueToDatabase(
             id: String,
             path: String,
-            value: Map<String, Boolean>,
+            value: Map<String, Int>,
             externalPath: String
         ) {
             try{
@@ -255,11 +255,45 @@ class IosDatabaseHelper {
 
         private suspend fun setValue(ref: FIRDatabaseReference, value: Any): Boolean =
             suspendCancellableCoroutine { cont ->
-                ref.setValue(value) { error, _ ->
+                val preparedValue = prepareValueForFirebase(value)
+                ref.setValue(preparedValue) { error, _ ->
                     if (error == null) cont.resume(true)
                     else cont.resumeWithException(Throwable(error.localizedDescription))
                 }
             }
+
+        @OptIn(BetaInteropApi::class)
+        private fun prepareValueForFirebase(value: Any): Any {
+            return when (value) {
+                is Map<*, *> -> {
+                    val dict = NSMutableDictionary()
+                    value.forEach { (key, v) ->
+                        if (key is String && v != null) {
+                            dict.setObject(prepareValueForFirebase(v), key.toNSString())
+                        }
+                    }
+                    dict
+                }
+                is List<*> -> {
+                    val array = NSMutableArray()
+                    value.forEach { item ->
+                        if (item != null) {
+                            array.addObject(prepareValueForFirebase(item))
+                        }
+                    }
+                    array
+                }
+                is Boolean -> NSNumber.numberWithBool(value)
+                is Int -> NSNumber.numberWithInt(value)
+                is Double -> NSNumber.numberWithDouble(value)
+                is Float -> NSNumber.numberWithFloat(value)
+                is String -> NSString.create(string = value)
+                else -> value
+            }
+        }
+
+        @OptIn(BetaInteropApi::class)
+        fun String.toNSString(): NSString = NSString.create(string = this)
 
         private suspend fun removeValue(ref: FIRDatabaseReference): Boolean =
             suspendCancellableCoroutine { cont ->

@@ -56,7 +56,7 @@ class AndroidDatabaseHelper {
 
         fun saveValueToDatabase(id : String,
                                 path : String,
-                                value : HashMap<String, Boolean>,
+                                value : HashMap<String, Int>,
                                 externalPath : String) {
             Log.d("Task", "saveValueToDatabase")
             var databaseReference = FirebaseDatabase.getInstance().getReference()
@@ -207,10 +207,8 @@ class AndroidDatabaseHelper {
                 .child(path).child(id).updateChildren(updates).addOnCompleteListener {
                         task ->
                     if(task.isSuccessful) {
-                        logMessage("updateDataInDatabase", "true")
                         status.value = true
                     } else {
-                        logMessage("updateDataInDatabase", "false")
                         status.value = false
                     }
                 }

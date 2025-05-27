@@ -2,9 +2,7 @@ package com.minhtu.firesocialmedia
 
 import android.app.Activity
 import android.content.Context
-import android.content.Context.MODE_PRIVATE
 import android.content.Intent
-import android.content.SharedPreferences
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.ImageDecoder
@@ -39,7 +37,6 @@ import com.minhtu.firesocialmedia.services.notification.Client
 import com.minhtu.firesocialmedia.services.notification.NotificationApiService
 import com.minhtu.firesocialmedia.utils.NavigationHandler
 import com.russhwolf.settings.Settings
-import com.russhwolf.settings.SharedPreferencesSettings
 import com.seiko.imageloader.ImageLoader
 import com.seiko.imageloader.cache.memory.maxSizePercent
 import com.seiko.imageloader.component.setupDefaultComponents

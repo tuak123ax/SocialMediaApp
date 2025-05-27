@@ -534,7 +534,6 @@ fun getBottomSafeAreaInset(): Dp {
         ?.firstOrNull { (it as? UIWindow)?.isKeyWindow() == true } as? UIWindow
 
     val bottomInset = keyWindow?.safeAreaInsets?.useContents { bottom } ?: 0.0
-    logMessage("getBottomSafeAreaInset", bottomInset.dp.toString())
     return bottomInset.dp
 }
 
