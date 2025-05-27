@@ -74,7 +74,7 @@ actual fun SetUpNavigation(context: Any) {
         IosScreen.SettingsScreen)
     val currentScreen = remember { mutableStateOf<IosScreen>(IosScreen.SignInScreen) }
     val iosNavigationHandler = IOSNavigationHandlerWithStack(currentScreen)
-    val bottomInset = getBottomSafeAreaInset() + 20.dp
+    val bottomInset = getBottomSafeAreaInset()
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         bottomBar = {

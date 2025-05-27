@@ -6,7 +6,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
-import com.minhtu.firesocialmedia.instance.BaseNewsInstance
 import com.minhtu.firesocialmedia.instance.NewsInstance
 import com.minhtu.firesocialmedia.instance.NotificationInstance
 import com.minhtu.firesocialmedia.instance.UserInstance
@@ -58,7 +57,7 @@ interface DatabaseService {
     suspend fun saveValueToDatabase(
         id : String,
         path : String,
-        value : HashMap<String, Boolean>,
+        value : HashMap<String, Int>,
         externalPath : String
     )
 

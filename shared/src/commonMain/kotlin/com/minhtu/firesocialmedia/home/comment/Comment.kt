@@ -68,7 +68,6 @@ class Comment {
                 Utils.getAllCommentsOfNew(commentViewModel, selectedNew.id, platform)
             }
             LaunchedEffect(commentStatus.value) {
-                logMessage("commentStatus", commentStatus.value.toString())
                 if(commentStatus.value != null) {
                     if(commentStatus.value!!) {
                         showToast("Comment successfully!")

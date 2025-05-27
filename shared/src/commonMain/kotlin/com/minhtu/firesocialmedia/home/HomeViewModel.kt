@@ -38,7 +38,6 @@ class HomeViewModel : ViewModel() {
     var currentUser : UserInstance? = null
     var currentUserState by mutableStateOf(currentUser)
     fun updateCurrentUser(user: UserInstance, platform: PlatformContext) {
-        logMessage("updateCurrentUser", "likedPosts: "+ user.likedPosts.size)
         currentUser = user
         currentUserState = currentUser
         updateFCMTokenForCurrentUser(user, platform)
@@ -86,9 +85,9 @@ class HomeViewModel : ViewModel() {
 
     //-----------------------------Like and comment function-----------------------------//
     // StateFlow to update UI in Compose
-    private var _likedPosts = MutableStateFlow<HashMap<String,Boolean>>(HashMap())
+    private var _likedPosts = MutableStateFlow<HashMap<String,Int>>(HashMap())
     val likedPosts = _likedPosts.asStateFlow()
-    private var likeCache : HashMap<String,Boolean> = HashMap()
+    private var likeCache : HashMap<String,Int> = HashMap()
     private var unlikeCache : ArrayList<String> = ArrayList()
     private var updateLikeJob : Job? = null
     private var _likeCountList = MutableStateFlow<HashMap<String,Int>>(HashMap())
@@ -97,7 +96,7 @@ class HomeViewModel : ViewModel() {
         _likeCountList.value[newsId] = likeCount
     }
     fun clickLikeButton(news : NewsInstance, platform: PlatformContext) {
-        val isLiked = likeCache[news.id] == true
+        val isLiked = likeCache[news.id] == 1
         if (isLiked) {
             likeCache.remove(news.id) // Unlike
             unlikeCache.add(news.id)
@@ -105,7 +104,7 @@ class HomeViewModel : ViewModel() {
                 _likeCountList.value[news.id] = _likeCountList.value[news.id]!! - 1
             }
         } else {
-            likeCache[news.id] = true // Like
+            likeCache[news.id] = 1 // Like
             unlikeCache.remove(news.id)
             if(_likeCountList.value[news.id] != null) {
                 _likeCountList.value[news.id] = _likeCountList.value[news.id]!! + 1

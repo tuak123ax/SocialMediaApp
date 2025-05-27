@@ -4,7 +4,6 @@ import com.minhtu.firesocialmedia.FirebaseService
 import com.minhtu.firesocialmedia.constants.Constants
 import com.minhtu.firesocialmedia.signin.SignInState
 import cocoapods.FirebaseDatabase.*
-import com.minhtu.firesocialmedia.logMessage
 import com.minhtu.firesocialmedia.utils.IosUtils.Companion.toUserInstance
 
 class IosFirebaseService : FirebaseService {
@@ -16,7 +15,6 @@ class IosFirebaseService : FirebaseService {
             FIRDataEventType.FIRDataEventTypeValue,
             withBlock = { snapshot: FIRDataSnapshot? ->
                 if (snapshot == null || !snapshot.exists()) {
-                    logMessage("checkUserExists", "ACCOUNT_NOT_EXISTED_1")
                     callback(SignInState(true, Constants.ACCOUNT_NOT_EXISTED))
                     return@observeEventType
                 }
@@ -31,7 +29,6 @@ class IosFirebaseService : FirebaseService {
                     try {
                         val user = value.toUserInstance()
                         if (user.email == email) {
-                            logMessage("checkUserExists", "ACCOUNT_EXISTED")
                             callback.invoke(SignInState(true, Constants.ACCOUNT_EXISTED))
                             existed = true
                             break
@@ -43,12 +40,10 @@ class IosFirebaseService : FirebaseService {
                 }
 
                 if (!existed) {
-                    logMessage("checkUserExists", "ACCOUNT_NOT_EXISTED_2")
                     callback.invoke(SignInState(true, Constants.ACCOUNT_NOT_EXISTED))
                 }
             },
             withCancelBlock = { error ->
-                logMessage("checkUserExists", "LOGIN_ERROR")
                 callback.invoke(SignInState(false, Constants.LOGIN_ERROR))
             }
         )

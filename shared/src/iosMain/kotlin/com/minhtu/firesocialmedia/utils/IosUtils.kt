@@ -6,14 +6,14 @@ import com.minhtu.firesocialmedia.instance.NotificationInstance
 import com.minhtu.firesocialmedia.instance.UserInstance
 import com.minhtu.firesocialmedia.instance.fromMap
 
+
 class IosUtils {
     companion object{
         fun Map<*, *>.toUserInstance(): UserInstance {
             val likedPosts = (this["likedPosts"] as? Map<*, *>)?.mapNotNull { entry ->
                 val key = entry.key as? String
                 val value = when (val rawValue = entry.value) {
-                    is Boolean -> rawValue
-                    is Number -> rawValue.toInt() != 0
+                    is Number -> rawValue.toInt()
                     else -> null
                 }
                 if (key != null && value != null) key to value else null

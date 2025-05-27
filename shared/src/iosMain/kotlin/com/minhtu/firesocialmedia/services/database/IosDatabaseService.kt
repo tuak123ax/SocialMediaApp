@@ -9,7 +9,6 @@ import cocoapods.FirebaseStorage.FIRStorageReference
 import cocoapods.FirebaseStorage.FIRStorageMetadata
 import com.minhtu.firesocialmedia.DatabaseService
 import com.minhtu.firesocialmedia.constants.Constants
-import com.minhtu.firesocialmedia.instance.BaseNewsInstance
 import com.minhtu.firesocialmedia.instance.CommentInstance
 import com.minhtu.firesocialmedia.instance.NewsInstance
 import com.minhtu.firesocialmedia.instance.NotificationInstance
@@ -44,7 +43,7 @@ class IosDatabaseService() : DatabaseService{
     override suspend fun saveValueToDatabase(
         id: String,
         path: String,
-        value: HashMap<String, Boolean>,
+        value: HashMap<String, Int>,
         externalPath: String
     ) {
         IosDatabaseHelper.saveValueToDatabase(id,

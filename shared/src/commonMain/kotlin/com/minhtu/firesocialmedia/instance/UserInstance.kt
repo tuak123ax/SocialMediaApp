@@ -5,7 +5,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class UserInstance(var email: String = "", var image: String = "", var name: String = "",
                         var status: String = "", var token: String = "", var uid: String = "",
-                        var likedPosts: HashMap<String,Boolean> = HashMap(),
+                        var likedPosts: HashMap<String,Int> = HashMap(),
                         var friendRequests : ArrayList<String> = ArrayList(),
                         var notifications : ArrayList<NotificationInstance> = ArrayList(),
                         var friends : ArrayList<String> = ArrayList()
@@ -41,7 +41,7 @@ fun UserInstance.toMap(): Map<String, Any?> = mapOf(
     "status" to status,
     "token" to token,
     "uid" to uid,
-    "likedPosts" to likedPosts, // Firebase supports maps of simple types
+    "likedPosts" to likedPosts,
     "friendRequests" to friendRequests,
     "friends" to friends,
     "notifications" to notifications.map { it.toMap() }
