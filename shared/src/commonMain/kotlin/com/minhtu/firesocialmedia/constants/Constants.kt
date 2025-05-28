@@ -43,6 +43,7 @@ class Constants {
         const val FCM_URL = "https://fcm.googleapis.com/"
 
         const val APP_SCRIPT_URL = "https://script.google.com/macros/s/"
+        const val APP_SCRIPT_ENDPOINT = "AKfycbw4JXnBNCl-hoHi2l0_l-Ugp-9icTBWPJVR5PyKqe5o7-JJ-p26yFVpBO8kUZhxtUSzWA/exec"
 
         const val KEY_FCM_TOKEN = "fcm_token"
         const val PRIVATE_KEY = "PRIVATE_KEY"

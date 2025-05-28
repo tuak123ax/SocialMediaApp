@@ -263,10 +263,11 @@ class IosDatabaseService() : DatabaseService{
         path: String,
         newContent: String,
         newImage: String,
+        newVideo : String,
         new: NewsInstance,
         status: MutableStateFlow<Boolean?>
     ) {
-        IosDatabaseHelper.updateNewsFromDatabase(path,newContent,newImage,new,status)
+        IosDatabaseHelper.updateNewsFromDatabase(path,newContent,newImage, newVideo,new,status)
     }
 
     @OptIn(ExperimentalEncodingApi::class)

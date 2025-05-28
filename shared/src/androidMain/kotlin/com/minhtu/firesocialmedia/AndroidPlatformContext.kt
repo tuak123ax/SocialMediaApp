@@ -16,14 +16,20 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.net.toUri
+import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.ui.PlayerView
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.minhtu.firesocialmedia.constants.Constants
@@ -55,6 +61,8 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.UUID
 import androidx.activity.compose.BackHandler as AndroidBackHandler
+import androidx.media3.common.MediaItem
+import androidx.core.content.edit
 
 actual class PlatformContext(
     context: Context
@@ -156,7 +164,7 @@ actual object TokenStorage {
     actual fun updateTokenInStorage(token: String?) {
         CoroutineScope(Dispatchers.IO).launch {
             val secureSharedPreferences = AndroidCryptoHelper.getEncryptedSharedPreferences(appContext)
-            secureSharedPreferences.edit().putString(Constants.KEY_FCM_TOKEN, token).apply()
+            secureSharedPreferences.edit() { putString(Constants.KEY_FCM_TOKEN, token) }
         }
     }
 }
@@ -194,8 +202,11 @@ actual suspend fun getImageBytesFromDrawable(name: String): ByteArray?{
 }
 
 class AndroidImagePicker(
-    private val onImagePicked: (String) -> Unit
+    private val onImagePicked: (String) -> Unit,
+    private val onVideoPicked: (String) -> Unit
 ) : ImagePicker {
+    enum class PickType { IMAGE, VIDEO }
+    var currentPickType: PickType? = null
     private lateinit var launcher: ActivityResultLauncher<Intent>
     @Composable
     override fun RegisterLauncher(hideLoading : () -> Unit) {
@@ -204,15 +215,20 @@ class AndroidImagePicker(
                 result ->
             if(result.resultCode == Activity.RESULT_OK){
                 Log.e("getAvatarFromGalleryLauncher", "RESULT_OK")
-                val imageUrl = result.data?.data
-                if(imageUrl != null){
-                    Log.e("getAvatarFromGalleryLauncher", imageUrl.toString())
-                    onImagePicked(imageUrl.toString())
+                val dataUrl = result.data?.data
+                if(dataUrl != null){
+                    Log.e("getAvatarFromGalleryLauncher", dataUrl.toString())
+                    if(currentPickType == PickType.IMAGE){
+                        onImagePicked(dataUrl.toString())
+                    } else {
+                        onVideoPicked(dataUrl.toString())
+                    }
                     hideLoading()
                 }
             } else {
                 if(result.resultCode == Activity.RESULT_CANCELED)
                 {
+                    currentPickType = null
                     hideLoading()
                 }
             }
@@ -220,8 +236,17 @@ class AndroidImagePicker(
     }
 
     override fun pickImage() {
+        currentPickType = PickType.IMAGE
         val intent = Intent()
         intent.setType("image/*")
+        intent.setAction(Intent.ACTION_GET_CONTENT)
+        launcher.launch(intent)
+    }
+
+    override fun pickVideo() {
+        currentPickType = PickType.VIDEO
+        val intent = Intent()
+        intent.setType("video/*")
         intent.setAction(Intent.ACTION_GET_CONTENT)
         launcher.launch(intent)
     }
@@ -323,3 +348,33 @@ actual fun onPushNotificationReceived(data: Map<String, Any?>) {
 }
 
 actual val settings: Settings? = null
+
+@Composable
+actual fun VideoPlayer(uri: String, modifier: Modifier) {
+    val context = LocalContext.current
+    val player = remember {
+        ExoPlayer.Builder(context).build()
+    }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            player.release()
+        }
+    }
+
+    LaunchedEffect(uri) {
+        val mediaItem = MediaItem.fromUri(uri)
+        player.setMediaItem(mediaItem)
+        player.prepare()
+        player.playWhenReady = true
+    }
+
+    AndroidView(
+        modifier = modifier,
+        factory = {
+            PlayerView(it).apply {
+                this.player = player
+            }
+        }
+    )
+}

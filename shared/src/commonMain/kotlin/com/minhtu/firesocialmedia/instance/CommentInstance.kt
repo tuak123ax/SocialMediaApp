@@ -4,11 +4,12 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class CommentInstance(override var id: String = "",
-                        override var posterId : String = "",
-                        override var posterName: String = "",
-                        override var avatar: String = "",
-                        override var message: String = "",
-                        override var image: String = ""): BaseNewsInstance,
+                           override var posterId : String = "",
+                           override var posterName: String = "",
+                           override var avatar: String = "",
+                           override var message: String = "",
+                           override var video: String = "",
+                           override var image: String = ""): BaseNewsInstance,
     CountInterface {
     fun updateComments(id: String, posterId: String, posterName: String, avatar: String,
                    message: String, image: String){
@@ -21,6 +22,10 @@ data class CommentInstance(override var id: String = "",
     }
     override fun updateImage(image: String) {
         this.image = image
+    }
+
+    override fun updateVideo(video: String) {
+
     }
 
     override var likeCount: Int = 0
@@ -50,6 +55,7 @@ data class CommentInstance(override var id: String = "",
         "avatar" to avatar,
         "message" to message,
         "image" to image,
+        "video" to video,
         "likeCount" to likeCount,
         "commentCount" to commentCount,
         "timePosted" to timePosted

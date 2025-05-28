@@ -12,6 +12,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -51,6 +52,7 @@ import kotlinx.cinterop.ByteVar
 import kotlinx.cinterop.addressOf
 import kotlinx.cinterop.get
 import kotlinx.cinterop.memScoped
+import kotlinx.cinterop.readValue
 import kotlinx.cinterop.refTo
 import kotlinx.cinterop.reinterpret
 import kotlinx.cinterop.useContents
@@ -67,12 +69,21 @@ import kotlinx.serialization.json.putJsonArray
 import kotlinx.serialization.json.putJsonObject
 import okio.Path.Companion.toPath
 import org.jetbrains.skia.Image
+import platform.AVFoundation.AVPlayer
+import platform.AVFoundation.AVPlayerItem
+import platform.AVFoundation.AVPlayerLayer
+import platform.AVFoundation.asset
+import platform.AVFoundation.currentItem
+import platform.AVFoundation.play
+import platform.AVFoundation.replaceCurrentItemWithPlayerItem
+import platform.CoreGraphics.CGRectZero
 import platform.Foundation.NSCachesDirectory
 import platform.Foundation.NSData
 import platform.Foundation.NSDate
 import platform.Foundation.NSDateFormatter
 import platform.Foundation.NSLog
 import platform.Foundation.NSSearchPathForDirectoriesInDomains
+import platform.Foundation.NSURL
 import platform.Foundation.NSUUID
 import platform.Foundation.NSUserDomainMask
 import platform.Foundation.dataWithBytes
@@ -85,12 +96,17 @@ import platform.UIKit.UIImage
 import platform.UIKit.UIImagePNGRepresentation
 import platform.UIKit.UIImagePickerController
 import platform.UIKit.UIImagePickerControllerDelegateProtocol
+import platform.UIKit.UIImagePickerControllerMediaType
+import platform.UIKit.UIImagePickerControllerMediaURL
 import platform.UIKit.UIImagePickerControllerOriginalImage
 import platform.UIKit.UIImagePickerControllerSourceType
 import platform.UIKit.UIImageRenderingMode
 import platform.UIKit.UIImageView
 import platform.UIKit.UINavigationControllerDelegateProtocol
+import platform.UIKit.UIView
 import platform.UIKit.UIViewContentMode
+import platform.UIKit.UIWindow
+import platform.UIKit.UIWindowScene
 import platform.UserNotifications.UNMutableNotificationContent
 import platform.UserNotifications.UNNotificationRequest
 import platform.UserNotifications.UNNotificationSound
@@ -98,8 +114,6 @@ import platform.UserNotifications.UNUserNotificationCenter
 import platform.darwin.NSObject
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
-import platform.UIKit.safeAreaInsets
-import platform.UIKit.*
 
 object ToastController {
     val toastMessage = mutableStateOf<String?>(null)
@@ -254,7 +268,7 @@ actual fun sendMessageToServer(request: String) {
     logMessage("sendMessageToServer", "request: $request")
     CoroutineScope(Dispatchers.Default).launch {
         try {
-            val response = KtorProvider.client.post(Constants.APP_SCRIPT_URL + "AKfycbw4JXnBNCl-hoHi2l0_l-Ugp-9icTBWPJVR5PyKqe5o7-JJ-p26yFVpBO8kUZhxtUSzWA/exec"){
+            val response = KtorProvider.client.post(Constants.APP_SCRIPT_URL + Constants.APP_SCRIPT_ENDPOINT){
                 contentType(ContentType.Application.Json)
                 setBody(request)
             }
@@ -357,12 +371,23 @@ actual fun generateImageLoader(): ImageLoader {
 }
 
 class IosImagePicker(
-    private val onImagePicked: (String) -> Unit
+    private val onImagePicked: (String) -> Unit,
+    private val onVideoPicked: (String) -> Unit
 ) : NSObject(), UIImagePickerControllerDelegateProtocol, UINavigationControllerDelegateProtocol {
     val imagePicker = object : ImagePicker{
         override fun pickImage() {
             val picker = UIImagePickerController().apply {
                 sourceType = UIImagePickerControllerSourceType.UIImagePickerControllerSourceTypePhotoLibrary
+                delegate = this@IosImagePicker
+            }
+            val rootController = UIApplication.sharedApplication.keyWindow?.rootViewController
+            rootController?.presentViewController(picker, animated = true, completion = null)
+        }
+
+        override fun pickVideo() {
+            val picker = UIImagePickerController().apply {
+                sourceType = UIImagePickerControllerSourceType.UIImagePickerControllerSourceTypePhotoLibrary
+                mediaTypes = listOf("public.movie", "public.video")
                 delegate = this@IosImagePicker
             }
             val rootController = UIApplication.sharedApplication.keyWindow?.rootViewController
@@ -411,17 +436,29 @@ class IosImagePicker(
         picker: UIImagePickerController,
         didFinishPickingMediaWithInfo: Map<Any?, *>
     ) {
-        val image = didFinishPickingMediaWithInfo[UIImagePickerControllerOriginalImage] as? UIImage
-        picker.dismissViewControllerAnimated(true, completion = null)
-
-        if (image != null) {
-            mainScope.launch {
-                val byteArray = withContext(Dispatchers.Default) { image.toByteArray() }
-                if(byteArray != null) {
-                    onImagePicked(byteArray.toBase64String())
+        val mediaType = didFinishPickingMediaWithInfo[UIImagePickerControllerMediaType] as? String
+        if (mediaType == "public.image") {
+            val image = didFinishPickingMediaWithInfo[UIImagePickerControllerOriginalImage] as? UIImage
+            // Handle picked image
+            if (image != null) {
+                mainScope.launch {
+                    val byteArray = withContext(Dispatchers.Default) { image.toByteArray() }
+                    if(byteArray != null) {
+                        onImagePicked(byteArray.toBase64String())
+                    }
+                }
+            }
+        } else if (mediaType == "public.movie" || mediaType == "public.video") {
+            val videoUrl = didFinishPickingMediaWithInfo[UIImagePickerControllerMediaURL] as? NSURL
+            // Handle picked video URL
+            if (videoUrl != null) {
+                val videoUriString: String = videoUrl.absoluteString ?: ""
+                mainScope.launch {
+                    onVideoPicked(videoUriString)
                 }
             }
         }
+        picker.dismissViewControllerAnimated(true, completion = null)
     }
 
     // Convert UIImage to ByteArray (PNG representation)
@@ -540,3 +577,30 @@ fun getBottomSafeAreaInset(): Dp {
 const val serviceName: String = "iosLocalStorage"
 @OptIn(ExperimentalSettingsImplementation::class)
 actual val settings: Settings? = KeychainSettings(serviceName)
+
+@Composable
+actual fun VideoPlayer(uri: String, modifier: Modifier) {
+    var player: AVPlayer? = remember { null }
+
+    UIKitView(
+        factory = {
+            val view = UIView(frame = CGRectZero.readValue())
+            val url = NSURL(string = uri)
+            player = AVPlayer.playerWithURL(url)
+            val layer = AVPlayerLayer.playerLayerWithPlayer(player)
+            layer.frame = view.bounds
+            view.layer.addSublayer(layer)
+            player.play()
+            view
+        },
+        update = {
+            val currentUrl = NSURL(string = uri)
+            val currentItem = AVPlayerItem(currentUrl)
+            if (player?.currentItem?.asset?.isEqual(currentItem.asset) == false) {
+                player.replaceCurrentItemWithPlayerItem(currentItem)
+                player.play()
+            }
+        },
+        modifier = modifier
+    )
+}

@@ -8,6 +8,8 @@ interface BaseNewsInstance {
     val message: String
     val image: String
     fun updateImage(image : String)
+    val video : String
+    fun updateVideo(video : String)
 }
 
 fun BaseNewsInstance.toMap(): Map<String, Any> = mapOf(
@@ -16,5 +18,6 @@ fun BaseNewsInstance.toMap(): Map<String, Any> = mapOf(
     "posterName" to posterName,
     "avatar" to avatar,
     "message" to message,
-    "image" to image
+    "image" to image,
+    "video" to video
 )
