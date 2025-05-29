@@ -196,17 +196,10 @@ class CommentViewModel : ViewModel() {
         platform.database.saveValueToDatabase(currentUser.uid,
             Constants.USER_PATH, likeCache, Constants.LIKED_COMMENT_PATH)
         val listCommentId = listComments.map { it.id}
-        for(comment in listCommentId){
-            logMessage("parent comment", comment)
-        }
-        for(comment in mapSubComments.keys){
-            logMessage("child comment", comment)
-        }
         for(likedComment in likeCache.keys) {
             logMessage("likedComment", likedComment)
             if(likeCountList[likedComment] != null) {
                 if(listCommentId.contains(likedComment)) {
-                    logMessage("sendLikeUpdatesToFirebase", "parent comment")
                     platform.database.updateCountValueInDatabase(selectedNew.id,
                                 Constants.NEWS_PATH,
                                 Constants.COMMENT_PATH + "/" +
@@ -214,7 +207,6 @@ class CommentViewModel : ViewModel() {
                                 Constants.LIKED_COUNT_PATH, likeCountList[likedComment]!!)
                 }
                 if(mapSubComments.keys.contains(likedComment)) {
-                    logMessage("sendLikeUpdatesToFirebase", "child comment")
                     platform.database.updateCountValueInDatabase(selectedNew.id,
                                 Constants.NEWS_PATH,
                                 Constants.COMMENT_PATH + "/" +
@@ -257,5 +249,30 @@ class CommentViewModel : ViewModel() {
 
     fun updateLikeCommentOfCurrentUser(currentUser: UserInstance) {
         likeCache = currentUser.likedComments
+    }
+
+    fun onDeleteComment(selectedNew : NewsInstance, comment : CommentInstance, platform : PlatformContext) {
+        val backgroundScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+        backgroundScope.launch {
+            val listCommentId = listComments.map { it.id}
+            if(listCommentId.contains(comment.id)){
+                platform.database.deleteCommentFromDatabase(
+                            Constants.NEWS_PATH + "/" +
+                            selectedNew.id + "/" +
+                            Constants.COMMENT_PATH,
+                            comment
+                )
+            }
+            if(mapSubComments.keys.contains(comment.id)) {
+                platform.database.deleteCommentFromDatabase(
+                    Constants.NEWS_PATH + "/" +
+                            selectedNew.id + "/" +
+                            Constants.COMMENT_PATH + "/" +
+                            findParentCommentId(comment.id) + "/" +
+                            Constants.LIST_REPLIES_PATH,
+                    comment
+                )
+            }
+        }
     }
 }

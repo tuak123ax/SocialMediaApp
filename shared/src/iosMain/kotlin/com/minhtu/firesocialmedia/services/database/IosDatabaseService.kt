@@ -69,6 +69,13 @@ class IosDatabaseService() : DatabaseService{
         IosDatabaseHelper.deleteNewsFromDatabase(path, new)
     }
 
+    override suspend fun deleteCommentFromDatabase(
+        path: String,
+        comment: CommentInstance
+    ) {
+        IosDatabaseHelper.deleteCommentFromDatabase(path, comment)
+    }
+
     override suspend fun saveInstanceToDatabase(
         id: String,
         path: String,

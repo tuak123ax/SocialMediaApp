@@ -219,6 +219,15 @@ class IosDatabaseHelper {
             }
         }
 
+        suspend fun deleteCommentFromDatabase(path: String, comment: CommentInstance) {
+            try {
+                val dbRef = database.child(path).child(comment.id)
+                removeValue(dbRef)
+            } catch (e : Exception) {
+                e.printStackTrace()
+            }
+        }
+
         @OptIn(ExperimentalEncodingApi::class)
         suspend fun updateNewsFromDatabase(
             path: String,
