@@ -72,6 +72,9 @@ interface DatabaseService {
     suspend fun deleteNewsFromDatabase(path : String,
                                new: NewsInstance)
 
+    suspend fun deleteCommentFromDatabase(path : String,
+                                       comment: CommentInstance)
+
     suspend fun saveInstanceToDatabase(
         id : String,
         path : String,

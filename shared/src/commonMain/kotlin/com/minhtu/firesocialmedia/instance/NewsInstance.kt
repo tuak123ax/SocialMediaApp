@@ -10,7 +10,10 @@ data class NewsInstance(override var id: String = "",
                         override var message: String = "",
                         override var image: String = "",
                         override var video: String = "",
-                        var isVisible: Boolean = true): BaseNewsInstance,
+                        var isVisible: Boolean = true,
+                        override var likeCount: Int = 0,
+                        override var commentCount: Int = 0,
+                        override var timePosted: Long = 0): BaseNewsInstance,
     CountInterface {
     fun updateNews(id: String, posterId: String, posterName: String, avatar: String,
                    message: String, image: String, video : String){
@@ -29,10 +32,6 @@ data class NewsInstance(override var id: String = "",
     override fun updateVideo(video: String) {
         this.video = video
     }
-
-    override var likeCount: Int = 0
-    override var commentCount: Int = 0
-    override var timePosted: Long = 0
 
     override fun increaseLikeCount() {
         likeCount++

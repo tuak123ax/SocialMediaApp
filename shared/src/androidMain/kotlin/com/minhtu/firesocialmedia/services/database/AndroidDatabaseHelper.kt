@@ -10,6 +10,7 @@ import com.google.firebase.database.GenericTypeIndicator
 import com.google.firebase.storage.FirebaseStorage
 import com.minhtu.firesocialmedia.constants.Constants
 import com.minhtu.firesocialmedia.instance.BaseNewsInstance
+import com.minhtu.firesocialmedia.instance.CommentInstance
 import com.minhtu.firesocialmedia.instance.NewsInstance
 import com.minhtu.firesocialmedia.instance.NotificationInstance
 import kotlinx.coroutines.Dispatchers
@@ -160,6 +161,14 @@ class AndroidDatabaseHelper {
                 FirebaseStorage.getInstance().getReference()
                     .child(path).child(new.id).delete()
             }
+        }
+
+        fun deleteCommentFromDatabase(path : String,
+                                   comment: CommentInstance) {
+            Log.d("Task", "deleteNewsFromDatabase")
+            //Delete data in realtime database
+            FirebaseDatabase.getInstance().getReference()
+                .child(path).child(comment.id).removeValue()
         }
 
         fun updateNewsFromDatabase(path : String,

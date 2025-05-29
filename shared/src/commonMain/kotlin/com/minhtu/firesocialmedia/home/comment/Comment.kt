@@ -167,6 +167,9 @@ class Comment {
                                     commentViewModel.updateCommentBeReplied(comment)
                                     focusRequester.requestFocus()
                                     keyboardController?.show()
+                                },
+                                onDeleteComment = {
+                                    commentViewModel.onDeleteComment(selectedNew, comment, platform)
                                 })
                         }
                     }
@@ -239,7 +242,8 @@ class Comment {
                         listUsers : ArrayList<UserInstance>,
                         onCopyComment: () -> Unit,
                         onLikeComment: () -> Unit,
-                        onReplyComment: () -> Unit) {
+                        onReplyComment: () -> Unit,
+                        onDeleteComment: () -> Unit) {
             val likeStatus by commentViewModel.likedComments.collectAsState()
             val isLiked = likeStatus.contains(comment.id)
             LaunchedEffect(Unit) {
@@ -388,6 +392,7 @@ class Comment {
                     DropdownMenuForComment(
                         showMenu,
                         isMainComment,
+                        comment.posterId == currentUser.uid,
                         onCopyComment = {
                             onCopyComment()
                         },
@@ -396,6 +401,9 @@ class Comment {
                         },
                         onReplyComment = {
                             onReplyComment()
+                        },
+                        onDeleteComment = {
+                            onDeleteComment()
                         },
                         onDismissRequest = {showMenu = false}
                     )
@@ -439,7 +447,10 @@ class Comment {
                                     onLikeComment = {
                                         commentViewModel.onLikeComment(selectedNew, currentUser, reply, platform)
                                     },
-                                    onReplyComment = {}
+                                    onReplyComment = {},
+                                    onDeleteComment = {
+                                        commentViewModel.onDeleteComment(selectedNew,reply,platform)
+                                    }
                                 )
                             }
                     }
@@ -455,9 +466,11 @@ class Comment {
         @Composable
         fun DropdownMenuForComment(expanded : Boolean,
                                    isMainComment : Boolean,
+                                   isYourComment : Boolean,
                                    onCopyComment : () -> Unit,
                                    onLikeComment : () -> Unit,
                                    onReplyComment : () -> Unit,
+                                   onDeleteComment : () -> Unit,
                                    onDismissRequest: () -> Unit) {
             DropdownMenu(
                 expanded = expanded,
@@ -495,6 +508,19 @@ class Comment {
                         modifier = Modifier.testTag(TestTag.TAG_BUTTON_REPLY)
                             .semantics{
                                 contentDescription = TestTag.TAG_BUTTON_REPLY
+                            }
+                    )
+                }
+                if(isYourComment) {
+                    DropdownMenuItem(
+                        text = { Text("Delete") },
+                        onClick = {
+                            onDeleteComment()
+                            onDismissRequest()
+                        },
+                        modifier = Modifier.testTag(TestTag.TAG_BUTTON_DELETE)
+                            .semantics{
+                                contentDescription = TestTag.TAG_BUTTON_DELETE
                             }
                     )
                 }
