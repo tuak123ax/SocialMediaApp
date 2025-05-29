@@ -11,6 +11,10 @@ data class CommentInstance(override var id: String = "",
                            override var video: String = "",
                            override var image: String = ""): BaseNewsInstance,
     CountInterface {
+        var listReplies : HashMap<String, CommentInstance> = HashMap()
+    fun updateListReplies(list : HashMap<String, CommentInstance>) {
+        listReplies = list
+    }
     fun updateComments(id: String, posterId: String, posterName: String, avatar: String,
                    message: String, image: String){
         this.id = id
@@ -58,6 +62,7 @@ data class CommentInstance(override var id: String = "",
         "video" to video,
         "likeCount" to likeCount,
         "commentCount" to commentCount,
-        "timePosted" to timePosted
+        "timePosted" to timePosted,
+        "listReplies" to listReplies
     )
 }

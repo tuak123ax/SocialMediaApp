@@ -63,6 +63,7 @@ import java.util.UUID
 import androidx.activity.compose.BackHandler as AndroidBackHandler
 import androidx.media3.common.MediaItem
 import androidx.core.content.edit
+import com.minhtu.firesocialmedia.services.clipboard.AndroidClipboardService
 
 actual class PlatformContext(
     context: Context
@@ -71,6 +72,7 @@ actual class PlatformContext(
     actual val firebase: FirebaseService = AndroidFirebaseService()
     actual val crypto: CryptoService = AndroidCryptoService(context)
     actual val database: DatabaseService = AndroidDatabaseService(context)
+    actual val clipboard : ClipboardService = AndroidClipboardService(context)
 }
 
 private lateinit var appContext: Context

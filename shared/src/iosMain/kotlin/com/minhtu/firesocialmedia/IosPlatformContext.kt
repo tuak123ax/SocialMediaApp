@@ -27,6 +27,7 @@ import androidx.compose.ui.viewinterop.UIKitView
 import com.minhtu.firesocialmedia.constants.Constants
 import com.minhtu.firesocialmedia.instance.UserInstance
 import com.minhtu.firesocialmedia.services.auth.IosAuthService
+import com.minhtu.firesocialmedia.services.clipboard.IosClipboardService
 import com.minhtu.firesocialmedia.services.crypto.IosCryptoHelper
 import com.minhtu.firesocialmedia.services.crypto.IosCryptoService
 import com.minhtu.firesocialmedia.services.database.IosDatabaseService
@@ -162,6 +163,7 @@ actual class PlatformContext(
     actual val firebase: FirebaseService = IosFirebaseService()
     actual val crypto: CryptoService = IosCryptoService()
     actual val database: DatabaseService = IosDatabaseService()
+    actual val clipboard : ClipboardService = IosClipboardService()
 }
 
 @Composable

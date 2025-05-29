@@ -47,7 +47,7 @@ class IosDatabaseService() : DatabaseService{
         externalPath: String
     ) {
         IosDatabaseHelper.saveValueToDatabase(id,
-            path, value, Constants.LIKED_POSTS_PATH)
+            path, value, externalPath)
     }
 
     override suspend fun updateCountValueInDatabase(

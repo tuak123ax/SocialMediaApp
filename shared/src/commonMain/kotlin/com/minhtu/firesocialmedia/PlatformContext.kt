@@ -24,6 +24,7 @@ expect class PlatformContext {
     val firebase: FirebaseService
     val crypto: CryptoService
     val database : DatabaseService
+    val clipboard : ClipboardService
 }
 
 interface AuthService {
@@ -225,3 +226,7 @@ expect val settings: Settings?
 
 @Composable
 expect fun VideoPlayer(uri: String, modifier: Modifier = Modifier)
+
+interface ClipboardService {
+    fun copy(text: String)
+}

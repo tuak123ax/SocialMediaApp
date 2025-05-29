@@ -37,7 +37,7 @@ class AndroidDatabaseService(private val context: Context) : DatabaseService{
         externalPath: String
     ) {
         AndroidDatabaseHelper.saveValueToDatabase(id,
-            path, value, Constants.LIKED_POSTS_PATH)
+            path, value, externalPath)
     }
 
     override suspend fun updateCountValueInDatabase(

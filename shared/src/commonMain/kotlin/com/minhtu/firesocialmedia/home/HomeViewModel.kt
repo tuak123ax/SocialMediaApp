@@ -113,14 +113,13 @@ class HomeViewModel : ViewModel() {
         }
 
         _likedPosts.value = HashMap(likeCache)
-        val tempLikeCountList = HashMap(_likeCountList.value)
 
         updateLikeJob?.cancel()
         //Use background scope instead of viewModelScope here to prevent job cancellation
         // when navigating to other screen.
         val backgroundScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
         updateLikeJob = backgroundScope.launch {
-            sendLikeUpdatesToFirebase(tempLikeCountList, platform)
+            sendLikeUpdatesToFirebase(HashMap(_likeCountList.value), platform)
         }
     }
 
