@@ -190,9 +190,13 @@ actual fun SetUpNavigation(context: Any) {
                         ,
                         platformContext,
                         remember {
-                            AndroidImagePicker { imageUri ->
-                                informationViewModel.updateAvatar(imageUri)
-                            }
+                            AndroidImagePicker(
+                                onImagePicked = { imageUri ->
+                                    informationViewModel.updateAvatar(imageUri)
+                                },
+                                onVideoPicked = {
+                                }
+                            )
                         },
                         signUpViewModel,
                         informationViewModel,
@@ -240,9 +244,14 @@ actual fun SetUpNavigation(context: Any) {
                         ,
                         platformContext,
                         remember {
-                            AndroidImagePicker { imageUri ->
-                                uploadNewsfeedViewModel.updateImage(imageUri)
-                            }
+                            AndroidImagePicker(
+                                onImagePicked = { imageUri ->
+                                    uploadNewsfeedViewModel.updateImage(imageUri)
+                                },
+                                onVideoPicked = { videoUri ->
+                                    uploadNewsfeedViewModel.updateVideo(videoUri)
+                                }
+                            )
                         },
                         homeViewModel,
                         uploadNewsfeedViewModel,
@@ -289,9 +298,13 @@ actual fun SetUpNavigation(context: Any) {
                     UserInformation.UserInformationScreen(
                         platformContext,
                         remember {
-                            AndroidImagePicker { imageUri ->
-                                uploadNewsfeedViewModel.updateImage(imageUri)
-                            }
+                            AndroidImagePicker(
+                                onImagePicked = { imageUri ->
+                                    userInformationViewModel.updateCover(imageUri)
+                                },
+                                onVideoPicked = {
+                                }
+                            )
                         },
                         selectedUser,
                         selectedUser == homeViewModel.currentUser,

@@ -8,7 +8,8 @@ data class UserInstance(var email: String = "", var image: String = "", var name
                         var likedPosts: HashMap<String,Int> = HashMap(),
                         var friendRequests : ArrayList<String> = ArrayList(),
                         var notifications : ArrayList<NotificationInstance> = ArrayList(),
-                        var friends : ArrayList<String> = ArrayList()
+                        var friends : ArrayList<String> = ArrayList(),
+                        var likedComments : HashMap<String,Int> = HashMap()
 )
 {
     fun addFriend(friend: String){
@@ -42,6 +43,7 @@ fun UserInstance.toMap(): Map<String, Any?> = mapOf(
     "token" to token,
     "uid" to uid,
     "likedPosts" to likedPosts,
+    "likedComments" to likedComments,
     "friendRequests" to friendRequests,
     "friends" to friends,
     "notifications" to notifications.map { it.toMap() }

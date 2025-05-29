@@ -53,6 +53,17 @@ class IosDatabaseHelper {
                     val imageUrl = uploadAndGetRemoteURL(storageReference, nsDataImage, metadata)
                     logMessage("saveInstanceToDatabase", imageUrl)
                     instance.updateImage(imageUrl)
+                } else {
+                    if(instance.video.isNotEmpty()) {
+                        val nsDataVideo = Base64.decode(instance.video).toNSData()
+                        val metadata = FIRStorageMetadata().apply {
+                            setContentType("video/mp4")
+                        }
+
+                        val videoUrl = uploadAndGetRemoteURL(storageReference, nsDataVideo, metadata)
+                        logMessage("saveInstanceToDatabase", videoUrl)
+                        instance.updateVideo(videoUrl)
+                    }
                 }
                 // Convert instance to Firebase-compatible Map
                 val newMap = instance.toMap() as NSDictionary
@@ -213,6 +224,7 @@ class IosDatabaseHelper {
             path: String,
             newContent: String,
             newImage: String,
+            newVideo : String,
             news: NewsInstance,
             stateFlow : MutableStateFlow<Boolean?>
         ) {
@@ -237,12 +249,31 @@ class IosDatabaseHelper {
                         )
                     }
                 } else {
-                    updates = mutableMapOf<String, Any>(
-                        "message" to newContent,
-                        "image" to ""
-                    )
-                    if(news.image.isNotEmpty()) {
-                        delete(storageReference)
+                    if(newVideo.isNotEmpty()) {
+                        if(newVideo != news.video) {
+                            val nsDataVideo = Base64.decode(newVideo).toNSData()
+                            val metadata = FIRStorageMetadata().apply {
+                                setContentType("video/mp4")
+                            }
+
+                            val videoUrl = uploadAndGetRemoteURL(storageReference, nsDataVideo, metadata)
+                            logMessage("updateNewsFromDatabase", videoUrl)
+                            updates["video"] = videoUrl
+                        } else {
+                            updates = mutableMapOf<String, Any>(
+                                "message" to newContent,
+                                "video" to newVideo
+                            )
+                        }
+                    } else {
+                        updates = mutableMapOf<String, Any>(
+                            "message" to newContent,
+                            "image" to "",
+                            "video" to ""
+                        )
+                        if(news.image.isNotEmpty() || news.video.isNotEmpty()) {
+                            delete(storageReference)
+                        }
                     }
                 }
                 updateChildren(database.child(path).child(news.id), updates)
@@ -403,6 +434,7 @@ class IosDatabaseHelper {
                     }
                 }
             } catch(e : Exception) {
+                e.printStackTrace()
                 return ""
             }
         }

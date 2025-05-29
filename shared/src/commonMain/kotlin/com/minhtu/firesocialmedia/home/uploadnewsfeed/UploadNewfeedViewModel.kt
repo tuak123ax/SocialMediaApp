@@ -43,6 +43,13 @@ class UploadNewfeedViewModel : ViewModel() {
     var image by mutableStateOf("")
     fun updateImage(input:String){
         image = input
+        video = ""
+    }
+
+    var video by mutableStateOf("")
+    fun updateVideo(input : String) {
+        video = input
+        image = ""
     }
 
     private var _createPostStatus = MutableStateFlow<Boolean?>(null)
@@ -68,9 +75,9 @@ class UploadNewfeedViewModel : ViewModel() {
     fun createPost(user : UserInstance, platform: PlatformContext){
         viewModelScope.launch(Dispatchers.IO) {
             val newsRandomId = generateRandomId()
-            if(message.isNotEmpty() || image.isNotEmpty()) {
+            if(message.isNotEmpty() || image.isNotEmpty() || video.isNotEmpty()) {
                 //Save post to db
-                val newsInstance = NewsInstance(newsRandomId,user.uid, user.name,user.image,message,image)
+                val newsInstance = NewsInstance(newsRandomId,user.uid, user.name,user.image,message,image,video)
                 newsInstance.timePosted = getCurrentTime()
                 platform.database.saveInstanceToDatabase(newsRandomId,
                     Constants.NEWS_PATH,newsInstance,_createPostStatus)
@@ -93,6 +100,12 @@ class UploadNewfeedViewModel : ViewModel() {
                             val content = "Posted a picture!"
                             notification.updateContent(content)
                             sendMessageToServer(createMessageForServer(content, friendTokens, currentUser!!))
+                        } else {
+                            if(video.isNotEmpty()) {
+                                val content = "Posted a video!"
+                                notification.updateContent(content)
+                                sendMessageToServer(createMessageForServer(content, friendTokens, currentUser!!))
+                            }
                         }
                     }
                 }
@@ -129,9 +142,8 @@ class UploadNewfeedViewModel : ViewModel() {
     fun updateNewInformation(new: NewsInstance, platform: PlatformContext) {
         val backgroundScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
         backgroundScope.launch {
-            if(message.isNotEmpty() || image.isNotEmpty()) {
-                logMessage("updateNewInformation", image)
-                platform.database.updateNewsFromDatabase(Constants.NEWS_PATH, message, image ,new, _updatePostStatus)
+            if(message.isNotEmpty() || image.isNotEmpty() || video.isNotEmpty()) {
+                platform.database.updateNewsFromDatabase(Constants.NEWS_PATH,message,image, video,new,_updatePostStatus)
             } else {
                 _postError.value = Constants.POST_NEWS_EMPTY_ERROR
             }

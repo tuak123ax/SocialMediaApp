@@ -10,7 +10,6 @@ import com.google.firebase.database.ValueEventListener
 import com.google.firebase.storage.FirebaseStorage
 import com.minhtu.firesocialmedia.DatabaseService
 import com.minhtu.firesocialmedia.constants.Constants
-import com.minhtu.firesocialmedia.instance.BaseNewsInstance
 import com.minhtu.firesocialmedia.instance.CommentInstance
 import com.minhtu.firesocialmedia.instance.NewsInstance
 import com.minhtu.firesocialmedia.instance.NotificationInstance
@@ -38,7 +37,7 @@ class AndroidDatabaseService(private val context: Context) : DatabaseService{
         externalPath: String
     ) {
         AndroidDatabaseHelper.saveValueToDatabase(id,
-            path, value, Constants.LIKED_POSTS_PATH)
+            path, value, externalPath)
     }
 
     override suspend fun updateCountValueInDatabase(
@@ -206,10 +205,11 @@ class AndroidDatabaseService(private val context: Context) : DatabaseService{
         path: String,
         newContent: String,
         newImage: String,
+        newVideo : String,
         new: NewsInstance,
         status: MutableStateFlow<Boolean?>
     ) {
-        AndroidDatabaseHelper.updateNewsFromDatabase(path,newContent,newImage,new,status)
+        AndroidDatabaseHelper.updateNewsFromDatabase(path,newContent,newImage,newVideo,new,status)
     }
 
     override suspend fun saveSignUpInformation(user : UserInstance,

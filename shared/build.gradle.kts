@@ -144,6 +144,9 @@ kotlin {
             implementation("com.squareup.retrofit2:converter-scalars:2.9.0")
 
             implementation("io.ktor:ktor-client-okhttp:$ktorVersion")
+
+            implementation("androidx.media3:media3-exoplayer:1.7.1")
+            implementation("androidx.media3:media3-ui:1.7.1")
         }
         iosMain.dependencies {
             api(compose.runtime)

@@ -12,7 +12,6 @@ import com.minhtu.firesocialmedia.constants.Constants
 import com.minhtu.firesocialmedia.instance.BaseNewsInstance
 import com.minhtu.firesocialmedia.instance.NewsInstance
 import com.minhtu.firesocialmedia.instance.NotificationInstance
-import com.minhtu.firesocialmedia.logMessage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.withContext
@@ -31,24 +30,29 @@ class AndroidDatabaseHelper {
             if(instance.image.isNotEmpty()){
                 storageReference.putFile(instance.image.toUri()).addOnCompleteListener{ putFileTask ->
                     if(putFileTask.isSuccessful){
-                        storageReference.downloadUrl.addOnSuccessListener { imageUrl ->
-                            instance.updateImage(imageUrl.toString())
+                        storageReference.downloadUrl.addOnSuccessListener { dataUrl ->
+                            instance.updateImage(dataUrl.toString())
                             databaseReference.setValue(instance).addOnCompleteListener{addUserTask ->
-                                if(addUserTask.isSuccessful){
-                                    stateFlow.value = true
-                                } else {
-                                    stateFlow.value = false
-                                }
+                                stateFlow.value = addUserTask.isSuccessful
                             }
                         }
                     }
                 }
             } else {
-                databaseReference.setValue(instance).addOnCompleteListener{addNewsTask ->
-                    if(addNewsTask.isSuccessful){
-                        stateFlow.value = true
-                    } else {
-                        stateFlow.value = false
+                if(instance.video.isNotEmpty()) {
+                    storageReference.putFile(instance.video.toUri()).addOnCompleteListener{ putFileTask ->
+                        if(putFileTask.isSuccessful){
+                            storageReference.downloadUrl.addOnSuccessListener { dataUrl ->
+                                instance.updateVideo(dataUrl.toString())
+                                databaseReference.setValue(instance).addOnCompleteListener{addUserTask ->
+                                    stateFlow.value = addUserTask.isSuccessful
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    databaseReference.setValue(instance).addOnCompleteListener{addNewsTask ->
+                        stateFlow.value = addNewsTask.isSuccessful
                     }
                 }
             }
@@ -152,7 +156,7 @@ class AndroidDatabaseHelper {
             FirebaseDatabase.getInstance().getReference()
                 .child(path).child(new.id).removeValue()
             //Delete data in firebase storage
-            if(new.image.isNotEmpty()) {
+            if(new.image.isNotEmpty() || new.video.isNotEmpty()) {
                 FirebaseStorage.getInstance().getReference()
                     .child(path).child(new.id).delete()
             }
@@ -161,6 +165,7 @@ class AndroidDatabaseHelper {
         fun updateNewsFromDatabase(path : String,
                                    newContent : String,
                                    newImage : String,
+                                   newVideo : String,
                                    new: NewsInstance,
                                    status: MutableStateFlow<Boolean?>) {
             Log.d("Task", "updateNewsFromDatabase")
@@ -187,15 +192,38 @@ class AndroidDatabaseHelper {
                     updateDataInDatabase(path, new.id, updates, status)
                 }
             } else {
-                val updates = mapOf<String, Any>(
-                    "message" to newContent,
-                    "image" to ""
-                )
-                if(new.image.isNotEmpty()) {
-                    FirebaseStorage.getInstance().getReference()
-                        .child(path).child(new.id).delete()
+                if(newVideo.isNotEmpty()) {
+                    if(newVideo != new.video) {
+                        storageReference.putFile(newVideo.toUri()).addOnCompleteListener{ putFileTask ->
+                            if(putFileTask.isSuccessful){
+                                storageReference.downloadUrl.addOnSuccessListener { videoUrl ->
+                                    val updates = mapOf<String, Any>(
+                                        "message" to newContent,
+                                        "video" to videoUrl.toString()
+                                    )
+                                    updateDataInDatabase(path, new.id, updates, status)
+                                }
+                            }
+                        }
+                    } else {
+                        val updates = mapOf<String, Any>(
+                            "message" to newContent,
+                            "video" to newVideo
+                        )
+                        updateDataInDatabase(path, new.id, updates, status)
+                    }
+                } else {
+                    val updates = mapOf<String, Any>(
+                        "message" to newContent,
+                        "image" to "",
+                        "video" to ""
+                    )
+                    if(new.image.isNotEmpty() || new.video.isNotEmpty()) {
+                        FirebaseStorage.getInstance().getReference()
+                            .child(path).child(new.id).delete()
+                    }
+                    updateDataInDatabase(path, new.id, updates, status)
                 }
-                updateDataInDatabase(path, new.id, updates, status)
             }
         }
 

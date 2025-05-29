@@ -15,7 +15,6 @@ import com.minhtu.firesocialmedia.instance.NewsInstance
 import com.minhtu.firesocialmedia.instance.NotificationInstance
 import com.minhtu.firesocialmedia.instance.NotificationType
 import com.minhtu.firesocialmedia.instance.UserInstance
-import com.minhtu.firesocialmedia.logMessage
 import com.minhtu.firesocialmedia.sendMessageToServer
 import com.minhtu.firesocialmedia.utils.Utils
 import com.rickclephas.kmp.observableviewmodel.ViewModel
@@ -114,14 +113,13 @@ class HomeViewModel : ViewModel() {
         }
 
         _likedPosts.value = HashMap(likeCache)
-        val tempLikeCountList = HashMap(_likeCountList.value)
 
         updateLikeJob?.cancel()
         //Use background scope instead of viewModelScope here to prevent job cancellation
         // when navigating to other screen.
         val backgroundScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
         updateLikeJob = backgroundScope.launch {
-            sendLikeUpdatesToFirebase(tempLikeCountList, platform)
+            sendLikeUpdatesToFirebase(HashMap(_likeCountList.value), platform)
         }
     }
 

@@ -24,6 +24,7 @@ expect class PlatformContext {
     val firebase: FirebaseService
     val crypto: CryptoService
     val database : DatabaseService
+    val clipboard : ClipboardService
 }
 
 interface AuthService {
@@ -101,6 +102,7 @@ interface DatabaseService {
         path : String,
         newContent : String,
         newImage : String,
+        newVideo : String,
         new: NewsInstance,
         status: MutableStateFlow<Boolean?>
     )
@@ -192,6 +194,7 @@ interface ImagePicker {
     @Composable
     fun RegisterLauncher(hideLoading : () -> Unit)
     fun pickImage()
+    fun pickVideo()
     suspend fun loadImageBytes(uri: String): ByteArray?
     @Composable
     fun ByteArrayImage(byteArray: ByteArray?, modifier: Modifier)
@@ -220,3 +223,10 @@ object SharedPushHandler {
 expect fun onPushNotificationReceived(data: Map<String, Any?>)
 
 expect val settings: Settings?
+
+@Composable
+expect fun VideoPlayer(uri: String, modifier: Modifier = Modifier)
+
+interface ClipboardService {
+    fun copy(text: String)
+}

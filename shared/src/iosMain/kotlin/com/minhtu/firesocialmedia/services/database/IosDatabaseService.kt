@@ -47,7 +47,7 @@ class IosDatabaseService() : DatabaseService{
         externalPath: String
     ) {
         IosDatabaseHelper.saveValueToDatabase(id,
-            path, value, Constants.LIKED_POSTS_PATH)
+            path, value, externalPath)
     }
 
     override suspend fun updateCountValueInDatabase(
@@ -263,10 +263,11 @@ class IosDatabaseService() : DatabaseService{
         path: String,
         newContent: String,
         newImage: String,
+        newVideo : String,
         new: NewsInstance,
         status: MutableStateFlow<Boolean?>
     ) {
-        IosDatabaseHelper.updateNewsFromDatabase(path,newContent,newImage,new,status)
+        IosDatabaseHelper.updateNewsFromDatabase(path,newContent,newImage, newVideo,new,status)
     }
 
     @OptIn(ExperimentalEncodingApi::class)

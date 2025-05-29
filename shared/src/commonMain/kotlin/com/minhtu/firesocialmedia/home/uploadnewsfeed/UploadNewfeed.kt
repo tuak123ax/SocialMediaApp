@@ -11,6 +11,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
@@ -22,6 +24,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
@@ -33,11 +36,13 @@ import androidx.compose.ui.unit.sp
 import com.minhtu.firesocialmedia.CommonBackHandler
 import com.minhtu.firesocialmedia.ImagePicker
 import com.minhtu.firesocialmedia.PlatformContext
+import com.minhtu.firesocialmedia.VideoPlayer
 import com.minhtu.firesocialmedia.constants.TestTag
 import com.minhtu.firesocialmedia.home.HomeViewModel
 import com.minhtu.firesocialmedia.instance.NewsInstance
 import com.minhtu.firesocialmedia.loading.Loading
 import com.minhtu.firesocialmedia.loading.LoadingViewModel
+import com.minhtu.firesocialmedia.logMessage
 import com.minhtu.firesocialmedia.showToast
 import com.minhtu.firesocialmedia.utils.UiUtils
 
@@ -66,6 +71,7 @@ class UploadNewsfeed {
                     isUpdated = true
                     uploadNewsfeedViewModel.updateMessage(updateNew.message)
                     uploadNewsfeedViewModel.updateImage(updateNew.image)
+                    uploadNewsfeedViewModel.updateVideo(updateNew.video)
                 }
             }
 
@@ -159,15 +165,30 @@ class UploadNewsfeed {
                     Spacer(modifier = Modifier.padding(bottom = 10.dp))
                     Row(horizontalArrangement = Arrangement.Center,
                         modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp)
-                            .testTag(TestTag.TAG_BUTTON_SELECTIMAGE)
-                            .semantics{
-                                contentDescription = TestTag.TAG_BUTTON_SELECTIMAGE
-                            }) {
-                        Button(onClick = {
-                            imagePicker.pickImage()
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            var showMenu by remember { mutableStateOf(false) }
+                            Button(onClick = {
+                                showMenu = true
+                            },
+                                modifier = Modifier.testTag(TestTag.TAG_BUTTON_UPLOAD)
+                                    .semantics{
+                                        contentDescription = TestTag.TAG_BUTTON_UPLOAD
+                                    }
+                                ) {
+                                Text(text = "Upload")
+                            }
+                            DropdownMenuForUpload(
+                                showMenu,
+                                onUploadImage = {
+                                    imagePicker.pickImage()
 //                            loadingViewModel.showLoading()
-                        }) {
-                            Text(text = "Select image")
+                                },
+                                onUploadVideo = {
+                                    imagePicker.pickVideo()
+                                },
+                                onDismissRequest = {showMenu = false}
+                            )
                         }
                     }
                     Spacer(modifier = Modifier.padding(bottom = 10.dp))
@@ -190,6 +211,25 @@ class UploadNewsfeed {
                                         .border(1.dp, Color.Gray))
                             }
                         }
+                    } else {
+                        if(uploadNewsfeedViewModel.video.isNotEmpty()) {
+                            Row(
+                                horizontalArrangement = Arrangement.Center,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 10.dp)
+                            ) {
+                                val video = uploadNewsfeedViewModel.video
+                                if(video.isNotEmpty()) {
+                                    logMessage("VideoPlayer", video)
+                                    VideoPlayer(video,
+                                        modifier = Modifier
+                                            .height(300.dp)
+                                            .fillMaxWidth()
+                                            .padding(20.dp))
+                                }
+                            }
+                        }
                     }
                     Spacer(modifier = Modifier.padding(bottom = 10.dp))
                     Row(horizontalArrangement = Arrangement.SpaceAround, modifier = Modifier.fillMaxWidth().padding(5.dp)){
@@ -205,9 +245,10 @@ class UploadNewsfeed {
                         ) {
                             Text(text = "Back")
                         }
-                        if(uploadNewsfeedViewModel.image.isNotEmpty()) {
+                        if(uploadNewsfeedViewModel.image.isNotEmpty() || uploadNewsfeedViewModel.video.isNotEmpty()) {
                             Button(onClick = {
                                 uploadNewsfeedViewModel.updateImage("")
+                                uploadNewsfeedViewModel.updateVideo("")
                             },
                                 modifier = Modifier.testTag(TestTag.TAG_BUTTON_DELETE)
                                     .semantics{
@@ -240,6 +281,40 @@ class UploadNewsfeed {
 
         fun getScreenName() : String{
             return "UploadNewsfeedScreen"
+        }
+
+        @Composable
+        fun DropdownMenuForUpload(expanded : Boolean,
+                                  onUploadImage : () -> Unit,
+                                  onUploadVideo : () -> Unit,
+                                  onDismissRequest: () -> Unit) {
+            DropdownMenu(
+                expanded = expanded,
+                onDismissRequest = onDismissRequest
+            ) {
+                DropdownMenuItem(
+                    text = { Text("Upload Image") },
+                    onClick = {
+                        onUploadImage()
+                        onDismissRequest()
+                    },
+                    modifier = Modifier.testTag(TestTag.TAG_BUTTON_SELECTIMAGE)
+                        .semantics{
+                            contentDescription = TestTag.TAG_BUTTON_SELECTIMAGE
+                        }
+                )
+                DropdownMenuItem(
+                    text = { Text("Upload Video") },
+                    onClick = {
+                        onUploadVideo()
+                        onDismissRequest()
+                    },
+                    modifier = Modifier.testTag(TestTag.TAG_BUTTON_SELECTVIDEO)
+                        .semantics{
+                            contentDescription = TestTag.TAG_BUTTON_SELECTVIDEO
+                        }
+                )
+            }
         }
     }
 }

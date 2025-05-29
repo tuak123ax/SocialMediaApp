@@ -1,5 +1,6 @@
 package com.minhtu.firesocialmedia.utils
 
+import androidx.compose.ui.graphics.Color
 import com.minhtu.firesocialmedia.PlatformContext
 import com.minhtu.firesocialmedia.constants.Constants
 import com.minhtu.firesocialmedia.home.HomeViewModel
@@ -62,6 +63,12 @@ class Utils {
                         commentViewModel.listComments.clear()
                         commentViewModel.updateComments(ArrayList(comments))
                         commentViewModel.listComments.addAll(comments)
+                        for(comment in commentViewModel.listComments) {
+                            commentViewModel.addLikeCountData(comment.id, comment.likeCount)
+                            if(comment.listReplies.isNotEmpty()){
+                                commentViewModel.mapSubComments.putAll(comment.listReplies)
+                            }
+                        }
                     }
 
                     override fun onFailure() {
@@ -157,6 +164,16 @@ class Utils {
         interface SignInGoogleCallback{
             fun onSuccess(email : String)
             fun onFailure()
+        }
+
+        fun hexToColor(hex: String): Color {
+            val cleanHex = hex.removePrefix("#")
+            val colorLong = when (cleanHex.length) {
+                6 -> "FF$cleanHex".toLong(16) // Add alpha if missing
+                8 -> cleanHex.toLong(16)
+                else -> throw IllegalArgumentException("Invalid hex color: $hex")
+            }
+            return Color(colorLong)
         }
     }
 }

@@ -76,6 +76,7 @@ import androidx.compose.ui.unit.sp
 import com.minhtu.firesocialmedia.CommonBackHandler
 import com.minhtu.firesocialmedia.CrossPlatformIcon
 import com.minhtu.firesocialmedia.PlatformContext
+import com.minhtu.firesocialmedia.VideoPlayer
 import com.minhtu.firesocialmedia.constants.TestTag
 import com.minhtu.firesocialmedia.convertTimeToDateString
 import com.minhtu.firesocialmedia.generateImageLoader
@@ -207,6 +208,21 @@ class UiUtils {
                                         contentDescription = TestTag.TAG_POST_IMAGE
                                     }
                             )
+                        }
+                    } else {
+                        if(news.video.isNotEmpty()) {
+                            VideoPlayer(news.video,
+                                Modifier
+                                    .fillMaxWidth()
+                                    .height(300.dp)
+                                    .padding(5.dp)
+                                    .clickable {
+                                        onNavigateToShowImageScreen(news.image)
+                                    }
+                                    .testTag(TestTag.TAG_POST_VIDEO)
+                                    .semantics{
+                                        contentDescription = TestTag.TAG_POST_VIDEO
+                                    })
                         }
                     }
                     Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp),

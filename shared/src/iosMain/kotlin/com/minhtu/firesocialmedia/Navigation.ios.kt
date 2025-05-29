@@ -190,9 +190,12 @@ actual fun SetUpNavigation(context: Any) {
                 ,
                 platformContext,
                 remember {
-                    val iosImagePicker = IosImagePicker { imageUri ->
-                        informationViewModel.updateAvatar(imageUri)
-                    }
+                    val iosImagePicker = IosImagePicker(
+                        onImagePicked = { imageUri ->
+                            informationViewModel.updateAvatar(imageUri)
+                        },
+                        onVideoPicked = {}
+                    )
                     iosImagePicker.imagePicker
                 },
                 signUpViewModel,
@@ -334,9 +337,14 @@ actual fun SetUpNavigation(context: Any) {
                 ,
                 platformContext,
                 remember {
-                    val iosImagePicker = IosImagePicker { imageUri ->
-                        uploadNewsfeedViewModel.updateImage(imageUri)
-                    }
+                    val iosImagePicker = IosImagePicker(
+                        onImagePicked = { imageUri ->
+                            uploadNewsfeedViewModel.updateImage(imageUri)
+                        },
+                        onVideoPicked = { videoUri ->
+                            uploadNewsfeedViewModel.updateVideo(videoUri)
+                        }
+                    )
                     iosImagePicker.imagePicker
                 },
                 homeViewModel,
@@ -350,9 +358,12 @@ actual fun SetUpNavigation(context: Any) {
             IosScreen.UserInformationScreen -> UserInformation.UserInformationScreen(
                 platformContext,
                 remember {
-                    val iosImagePicker = IosImagePicker { imageUri ->
-                        informationViewModel.updateAvatar(imageUri)
-                    }
+                    val iosImagePicker = IosImagePicker (
+                        onImagePicked = { imageUri ->
+                            userInformationViewModel.updateCover(imageUri)
+                        },
+                        onVideoPicked = {}
+                    )
                     iosImagePicker.imagePicker
                 },
                 selectedUser,
