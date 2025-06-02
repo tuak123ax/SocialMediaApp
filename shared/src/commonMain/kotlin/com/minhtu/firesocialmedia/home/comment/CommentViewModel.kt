@@ -197,7 +197,6 @@ class CommentViewModel : ViewModel() {
             Constants.USER_PATH, likeCache, Constants.LIKED_COMMENT_PATH)
         val listCommentId = listComments.map { it.id}
         for(likedComment in likeCache.keys) {
-            logMessage("likedComment", likedComment)
             if(likeCountList[likedComment] != null) {
                 if(listCommentId.contains(likedComment)) {
                     platform.database.updateCountValueInDatabase(selectedNew.id,

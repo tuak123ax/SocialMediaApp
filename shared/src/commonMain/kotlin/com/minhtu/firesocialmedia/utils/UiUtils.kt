@@ -216,9 +216,6 @@ class UiUtils {
                                     .fillMaxWidth()
                                     .height(300.dp)
                                     .padding(5.dp)
-                                    .clickable {
-                                        onNavigateToShowImageScreen(news.image)
-                                    }
                                     .testTag(TestTag.TAG_POST_VIDEO)
                                     .semantics{
                                         contentDescription = TestTag.TAG_POST_VIDEO
@@ -511,7 +508,11 @@ class UiUtils {
                 when(selectedTabIndex){
                     0 -> {
                         // Filtered List
-                        LazyColumn {
+                        LazyColumn(modifier = Modifier
+                            .testTag(TestTag.TAG_PEOPLE_COLUMN)
+                            .semantics {
+                                contentDescription = TestTag.TAG_PEOPLE_COLUMN
+                            }) {
                             val filterList = homeViewModel.listUsers.filter { user ->
                                 user.name.contains(searchViewModel.query, ignoreCase = true)
                             }

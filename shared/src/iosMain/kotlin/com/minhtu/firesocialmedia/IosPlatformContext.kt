@@ -49,7 +49,9 @@ import io.ktor.client.statement.readBytes
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
+import kotlinx.cinterop.BetaInteropApi
 import kotlinx.cinterop.ByteVar
+import kotlinx.cinterop.ObjCAction
 import kotlinx.cinterop.addressOf
 import kotlinx.cinterop.get
 import kotlinx.cinterop.memScoped
@@ -75,7 +77,6 @@ import platform.AVFoundation.AVPlayerItem
 import platform.AVFoundation.AVPlayerLayer
 import platform.AVFoundation.asset
 import platform.AVFoundation.currentItem
-import platform.AVFoundation.play
 import platform.AVFoundation.replaceCurrentItemWithPlayerItem
 import platform.CoreGraphics.CGRectZero
 import platform.Foundation.NSCachesDirectory
@@ -84,6 +85,7 @@ import platform.Foundation.NSDate
 import platform.Foundation.NSDateFormatter
 import platform.Foundation.NSLog
 import platform.Foundation.NSSearchPathForDirectoriesInDomains
+import platform.Foundation.NSSelectorFromString
 import platform.Foundation.NSURL
 import platform.Foundation.NSUUID
 import platform.Foundation.NSUserDomainMask
@@ -104,6 +106,7 @@ import platform.UIKit.UIImagePickerControllerSourceType
 import platform.UIKit.UIImageRenderingMode
 import platform.UIKit.UIImageView
 import platform.UIKit.UINavigationControllerDelegateProtocol
+import platform.UIKit.UITapGestureRecognizer
 import platform.UIKit.UIView
 import platform.UIKit.UIViewContentMode
 import platform.UIKit.UIWindow
@@ -115,6 +118,14 @@ import platform.UserNotifications.UNUserNotificationCenter
 import platform.darwin.NSObject
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
+import platform.UIKit.UIButton
+import platform.UIKit.UIButtonTypeSystem
+import platform.UIKit.UIControlStateNormal
+import platform.UIKit.UIFont
+import platform.UIKit.UIControlEventTouchUpInside
+import platform.CoreGraphics.CGSizeMake
+import platform.CoreGraphics.CGRectMake
+import platform.Foundation.NSTimer
 
 object ToastController {
     val toastMessage = mutableStateOf<String?>(null)
@@ -172,27 +183,30 @@ actual fun getIconPainter(icon: String): Painter? {
 }
 
 @Composable
-actual fun getIconComposable(icon: String, color : String, modifier : Modifier): (@Composable () -> Unit)? {
+actual fun getIconComposable(icon: String, color : String, tint : String?, modifier : Modifier): (@Composable () -> Unit)? {
     val uiImage = UIImage.imageNamed(icon)
     return {
         if(uiImage != null) {
+            val renderUiImage = uiImage.imageWithRenderingMode(UIImageRenderingMode.UIImageRenderingModeAlwaysTemplate)
             Box(
-                modifier = modifier
+                modifier = modifier.then(Modifier.size(20.dp))
             ) {
                 UIKitView(
                     modifier = Modifier.fillMaxSize(),
                     factory = {
                         UIImageView().apply {
-                            image = uiImage.imageWithRenderingMode(UIImageRenderingMode.UIImageRenderingModeAlwaysOriginal)
-                            backgroundColor = UIColor.fromHex(color)
+                            image = renderUiImage
+                            backgroundColor = if(tint != null) UIColor.fromHex("#FFFFFF") else UIColor.fromHex(color)
+                            tintColor = if(tint != null) UIColor.fromHex(tint) else UIColor.blackColor
                             opaque = false
                             clipsToBounds = true
                             contentMode = UIViewContentMode.UIViewContentModeScaleAspectFit
                         }
                     },
                     update = { imageView ->
-                        imageView.image = uiImage.imageWithRenderingMode(UIImageRenderingMode.UIImageRenderingModeAlwaysOriginal)
-                        imageView.backgroundColor = UIColor.fromHex(color)
+                        imageView.image = renderUiImage
+                        imageView.backgroundColor = if(tint != null) UIColor.fromHex("#FFFFFF") else UIColor.fromHex(color)
+                        imageView.tintColor = if(tint != null) UIColor.fromHex(tint) else UIColor.blackColor
                         imageView.opaque = false
                         imageView.contentMode = UIViewContentMode.UIViewContentModeScaleAspectFit
                         imageView.clipsToBounds = true
@@ -580,29 +594,124 @@ const val serviceName: String = "iosLocalStorage"
 @OptIn(ExperimentalSettingsImplementation::class)
 actual val settings: Settings? = KeychainSettings(serviceName)
 
+private fun AVPlayer.play() {
+    this.performSelector(NSSelectorFromString("play"))
+}
+
+private fun AVPlayer.pause() {
+    this.performSelector(NSSelectorFromString("pause"))
+}
+
+@OptIn(BetaInteropApi::class)
 @Composable
 actual fun VideoPlayer(uri: String, modifier: Modifier) {
     var player: AVPlayer? = remember { null }
 
-    UIKitView(
-        factory = {
-            val view = UIView(frame = CGRectZero.readValue())
-            val url = NSURL(string = uri)
+    class VideoPlayerView(val uri: String) : UIView(CGRectZero.readValue()) {
+        private val playerLayer = AVPlayerLayer()
+        private val url = NSURL(string = uri)
+        private var isPlaying = false
+        private val playPauseButton = UIButton.buttonWithType(UIButtonTypeSystem)
+
+        init {
             player = AVPlayer.playerWithURL(url)
-            val layer = AVPlayerLayer.playerLayerWithPlayer(player)
-            layer.frame = view.bounds
-            view.layer.addSublayer(layer)
-            player.play()
-            view
-        },
-        update = {
-            val currentUrl = NSURL(string = uri)
-            val currentItem = AVPlayerItem(currentUrl)
-            if (player?.currentItem?.asset?.isEqual(currentItem.asset) == false) {
-                player.replaceCurrentItemWithPlayerItem(currentItem)
-                player.play()
+            playerLayer.player = player
+            layer.addSublayer(playerLayer)
+
+            setupPlayPauseButton()
+
+            val tapGesture = UITapGestureRecognizer(target = this, action = NSSelectorFromString("togglePlayPause"))
+            addGestureRecognizer(tapGesture)
+            userInteractionEnabled = true
+        }
+
+        private fun setupPlayPauseButton() {
+            playPauseButton.setTitle("▶️", forState = UIControlStateNormal)
+            playPauseButton.backgroundColor = UIColor.clearColor
+            playPauseButton.titleLabel?.font = UIFont.systemFontOfSize(40.0)
+            playPauseButton.setTitleColor(UIColor.whiteColor, forState = UIControlStateNormal)
+            playPauseButton.addTarget(
+                target = this,
+                action = NSSelectorFromString("togglePlayPause"),
+                forControlEvents = UIControlEventTouchUpInside
+            )
+            addSubview(playPauseButton)
+        }
+
+        override fun layoutSubviews() {
+            super.layoutSubviews()
+            playerLayer.frame = bounds
+
+            // Define your button size (width and height)
+            val buttonSize = CGSizeMake(60.0, 60.0)
+            var buttonWidth = 0.0
+            var buttonHeight = 0.0
+            buttonSize.useContents {
+                buttonWidth = width
+                buttonHeight = height
             }
-        },
+
+            // Get the width and height of the view bounds directly
+            val (width, height) = bounds.useContents {
+                this.size.width to this.size.height
+            }
+
+            // Calculate the button's top-left position to center it
+            val centerX = (width - buttonWidth) / 2
+            val centerY = (height - buttonHeight) / 2
+
+            // Set the playPauseButton's frame to center it
+            playPauseButton.setFrame(CGRectMake(centerX, centerY, buttonWidth, buttonHeight))
+        }
+
+        fun updateVideo(newUri: String) {
+            val newUrl = NSURL(string = newUri)
+            val newItem = AVPlayerItem(newUrl)
+            if (player?.currentItem?.asset?.isEqual(newItem.asset) == false) {
+                player.replaceCurrentItemWithPlayerItem(newItem)
+                isPlaying = false
+            }
+        }
+
+        private var hideButtonTimer: NSTimer? = null
+
+        private fun showPlayPauseButtonTemporarily() {
+            playPauseButton.hidden = false
+
+            // Invalidate any existing timer so it restarts countdown
+            hideButtonTimer?.invalidate()
+
+            // Schedule to hide the button after 3 seconds
+            hideButtonTimer = NSTimer.scheduledTimerWithTimeInterval(
+                3.0,
+                repeats = false
+            ) {
+                playPauseButton.hidden = true
+            }
+        }
+
+        @ObjCAction
+        fun togglePlayPause() {
+            player?.let {
+                if (isPlaying) {
+                    it.pause() // pause is resolved by default now
+                    playPauseButton.setTitle("▶️", forState = UIControlStateNormal)
+                } else {
+                    it.play()
+                    playPauseButton.setTitle("⏸", forState = UIControlStateNormal)
+                }
+                isPlaying = !isPlaying
+
+                // Show button again and restart hide timer on every toggle
+                showPlayPauseButtonTemporarily()
+            }
+        }
+    }
+
+    UIKitView(
+        factory = { VideoPlayerView(uri) },
+        update = { view -> view.updateVideo(uri) },
         modifier = modifier
     )
 }
+

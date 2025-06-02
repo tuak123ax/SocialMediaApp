@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.ui.unit.dp
 import com.minhtu.firesocialmedia.instance.CommentInstance
 import com.russhwolf.settings.Settings
+import kotlin.math.roundToInt
 
 expect class PlatformContext {
     val auth: AuthService
@@ -131,7 +132,7 @@ expect fun showToast(message: String)
 expect fun getIconPainter(icon : String): Painter?
 
 @Composable
-expect fun getIconComposable(icon: String, color : String, modifier: Modifier): (@Composable () -> Unit)?
+expect fun getIconComposable(icon: String, color : String, tint : String?, modifier: Modifier): (@Composable () -> Unit)?
 
 @Composable
 fun CrossPlatformIcon(
@@ -156,12 +157,31 @@ fun CrossPlatformIcon(
             )
         } else {
             // iOS (or platforms using composable fallback)
-            val iconComposable = getIconComposable(icon, color, modifier)
+            val iconComposable = getIconComposable(
+                icon,
+                color,
+                if(tint != Color.Unspecified) tint.toHex() else null,
+                modifier)
             if (iconComposable != null) {
                 iconComposable()
             }
         }
     }
+}
+
+fun Color.toHex(): String {
+    if (this == Color.Unspecified) return "#FFFFFFFF" // fallback
+
+    val alpha = (alpha * 255).roundToInt().coerceIn(0, 255)
+    val red = (red * 255).roundToInt().coerceIn(0, 255)
+    val green = (green * 255).roundToInt().coerceIn(0, 255)
+    val blue = (blue * 255).roundToInt().coerceIn(0, 255)
+
+    return "#" +
+            alpha.toString(16).padStart(2, '0').uppercase() +
+            red.toString(16).padStart(2, '0').uppercase() +
+            green.toString(16).padStart(2, '0').uppercase() +
+            blue.toString(16).padStart(2, '0').uppercase()
 }
 
 

@@ -105,7 +105,7 @@ actual fun getIconPainter(icon : String): Painter? {
 }
 
 @Composable
-actual fun getIconComposable(icon: String, color : String, modifier : Modifier): (@Composable () -> Unit)? = null
+actual fun getIconComposable(icon: String, color : String, tint : String?, modifier : Modifier): (@Composable () -> Unit)? = null
 
 @Composable
 actual fun CommonBackHandler(enabled: Boolean, onBack: () -> Unit) {
@@ -368,7 +368,7 @@ actual fun VideoPlayer(uri: String, modifier: Modifier) {
         val mediaItem = MediaItem.fromUri(uri)
         player.setMediaItem(mediaItem)
         player.prepare()
-        player.playWhenReady = true
+        player.playWhenReady = false
     }
 
     AndroidView(

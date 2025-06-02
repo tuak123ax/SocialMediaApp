@@ -57,5 +57,6 @@ class TestTag {
         const val TAG_FIRECHAT_BUTTON: String = "TAG_FIRECHAT_BUTTON"
         const val TAG_BUTTON_CLOSE: String = "TAG_BUTTON_CLOSE"
         const val TAG_BUTTON_DOWNLOAD: String = "TAG_BUTTON_DOWNLOAD"
+        const val TAG_PEOPLE_COLUMN : String = "TAG_PEOPLE_COLUMN"
     }
 }

@@ -201,6 +201,7 @@ class IosDatabaseService() : DatabaseService{
 
                         try {
                             val comment = value.toCommentInstance()
+                            logMessage("allComment", comment.id + ": "+ comment.listReplies.size)
                             result.add(comment)
                         } catch (e: Exception) {
                             e.printStackTrace()
