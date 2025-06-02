@@ -32,6 +32,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.minhtu.firesocialmedia.CrossPlatformIcon
 import com.minhtu.firesocialmedia.PlatformContext
 import com.minhtu.firesocialmedia.constants.TestTag
 import com.minhtu.firesocialmedia.convertTimeToDateString
@@ -163,8 +164,9 @@ class PostInformation {
                             .semantics{
                                 contentDescription = TestTag.TAG_BUTTON_LIKE
                             }){
-                        Image(
-                            painter = getIconPainter("like")!!,
+                        CrossPlatformIcon(
+                            icon = "like",
+                            color = if(isLiked) "#00FFFF" else "#FFFFFFFF",
                             contentDescription = "Like",
                             modifier = Modifier
                                 .size(25.dp)
@@ -183,8 +185,9 @@ class PostInformation {
                             .semantics{
                                 contentDescription = TestTag.TAG_BUTTON_COMMENT
                             }){
-                        Image(
-                            painter = getIconPainter("comment")!!,
+                        CrossPlatformIcon(
+                            icon = "comment",
+                            color = "#FFFFFFFF",
                             contentDescription = "Comment",
                             modifier = Modifier
                                 .size(25.dp)

@@ -67,6 +67,7 @@ import com.minhtu.firesocialmedia.instance.NewsInstance
 import com.minhtu.firesocialmedia.instance.NotificationInstance
 import com.minhtu.firesocialmedia.instance.NotificationType
 import com.minhtu.firesocialmedia.instance.UserInstance
+import com.minhtu.firesocialmedia.logMessage
 import com.minhtu.firesocialmedia.showToast
 import com.minhtu.firesocialmedia.utils.Utils
 import com.seiko.imageloader.LocalImageLoader
@@ -210,7 +211,13 @@ class Notification {
                                 if(notification.type == NotificationType.LIKE ||
                                     notification.type == NotificationType.COMMENT ||
                                     notification.type == NotificationType.UPLOAD_NEW) {
-                                    onNavigateToPostInformation(Utils.findNewById(notification.relatedInfo, homeViewModel.listNews))
+                                    logMessage("onNavigateToPostInformation", notification.relatedInfo)
+                                    val relatedNew = Utils.findNewById(notification.relatedInfo, homeViewModel.listNews)
+                                    if(relatedNew != null) {
+                                        onNavigateToPostInformation(relatedNew)
+                                    } else {
+                                        showToast("Cannot find the related post!")
+                                    }
                                 } else {
                                     if(notification.type == NotificationType.ADD_FRIEND) {
                                         onNavigateToUserInformation(Utils.findUserById(notification.relatedInfo, homeViewModel.listUsers))

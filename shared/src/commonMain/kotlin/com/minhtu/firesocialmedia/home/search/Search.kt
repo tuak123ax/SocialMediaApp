@@ -17,8 +17,12 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.minhtu.firesocialmedia.PlatformContext
+import com.minhtu.firesocialmedia.constants.TestTag
 import com.minhtu.firesocialmedia.home.HomeViewModel
 import com.minhtu.firesocialmedia.instance.NewsInstance
 import com.minhtu.firesocialmedia.instance.UserInstance
@@ -49,6 +53,10 @@ class Search {
                 SearchBar(query = searchViewModel.query, onQueryChange = {
                     query -> searchViewModel.updateQuery(query) },
                     modifier = Modifier
+                        .testTag(TestTag.TAG_SEARCH_BAR)
+                        .semantics{
+                            contentDescription = TestTag.TAG_SEARCH_BAR
+                        }
                 )
 
                 UiUtils.TabLayout(
