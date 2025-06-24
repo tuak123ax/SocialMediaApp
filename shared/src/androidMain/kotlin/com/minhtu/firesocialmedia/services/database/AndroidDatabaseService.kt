@@ -8,12 +8,12 @@ import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.storage.FirebaseStorage
-import com.minhtu.firesocialmedia.DatabaseService
 import com.minhtu.firesocialmedia.constants.Constants
-import com.minhtu.firesocialmedia.instance.CommentInstance
-import com.minhtu.firesocialmedia.instance.NewsInstance
-import com.minhtu.firesocialmedia.instance.NotificationInstance
-import com.minhtu.firesocialmedia.instance.UserInstance
+import com.minhtu.firesocialmedia.data.model.CommentInstance
+import com.minhtu.firesocialmedia.data.model.NewsInstance
+import com.minhtu.firesocialmedia.data.model.NotificationInstance
+import com.minhtu.firesocialmedia.data.model.UserInstance
+import com.minhtu.firesocialmedia.di.DatabaseService
 import com.minhtu.firesocialmedia.services.crypto.AndroidCryptoHelper
 import com.minhtu.firesocialmedia.utils.Utils
 import kotlinx.coroutines.flow.MutableStateFlow

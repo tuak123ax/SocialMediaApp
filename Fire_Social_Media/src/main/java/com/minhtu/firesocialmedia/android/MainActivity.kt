@@ -22,8 +22,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.content.ContextCompat
 import com.google.firebase.messaging.FirebaseMessaging
-import com.minhtu.firesocialmedia.MainApplication
-import com.minhtu.firesocialmedia.TokenStorage.updateTokenInStorage
+import com.minhtu.firesocialmedia.platform.MainApplication
+import com.minhtu.firesocialmedia.platform.TokenStorage.updateTokenInStorage
 import com.minhtu.firesocialmedia.services.remoteconfig.FetchResultCallback
 import com.minhtu.firesocialmedia.services.remoteconfig.RemoteConfigHelper
 

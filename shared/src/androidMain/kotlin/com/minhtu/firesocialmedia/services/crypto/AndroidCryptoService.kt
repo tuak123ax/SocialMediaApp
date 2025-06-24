@@ -1,9 +1,9 @@
 package com.minhtu.firesocialmedia.services.crypto
 
 import android.content.Context
-import com.minhtu.firesocialmedia.Credentials
-import com.minhtu.firesocialmedia.CryptoService
 import com.minhtu.firesocialmedia.constants.Constants
+import com.minhtu.firesocialmedia.di.Credentials
+import com.minhtu.firesocialmedia.di.CryptoService
 
 class AndroidCryptoService(private val context: Context) : CryptoService{
     override fun saveAccount(email: String, password: String) {

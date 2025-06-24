@@ -1,6 +1,6 @@
 package com.minhtu.firesocialmedia.services.crypto
 
-import com.minhtu.firesocialmedia.settings
+import com.minhtu.firesocialmedia.platform.settings
 import kotlinx.cinterop.BetaInteropApi
 
 object IosCryptoHelper {
