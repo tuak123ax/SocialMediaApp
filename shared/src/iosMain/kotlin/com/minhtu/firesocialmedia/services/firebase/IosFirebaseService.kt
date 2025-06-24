@@ -1,9 +1,9 @@
 package com.minhtu.firesocialmedia.services.firebase
 
-import com.minhtu.firesocialmedia.FirebaseService
-import com.minhtu.firesocialmedia.constants.Constants
-import com.minhtu.firesocialmedia.signin.SignInState
 import cocoapods.FirebaseDatabase.*
+import com.minhtu.firesocialmedia.constants.Constants
+import com.minhtu.firesocialmedia.di.FirebaseService
+import com.minhtu.firesocialmedia.presentation.signin.SignInState
 import com.minhtu.firesocialmedia.utils.IosUtils.Companion.toUserInstance
 
 class IosFirebaseService : FirebaseService {
