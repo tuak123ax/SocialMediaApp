@@ -56,33 +56,33 @@ class AndroidAuthService(var context: Context) : AuthService{
 
     override fun fetchSignInMethodsForEmail(
         email: String,
-        stateFlow: MutableStateFlow<Pair<Boolean, String>?>
+        callback: Utils.Companion.FetchSignInMethodCallback
     ) {
         FirebaseAuth.getInstance().fetchSignInMethodsForEmail(email)
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
                     val signInMethods = task.result?.signInMethods
                     if (signInMethods.isNullOrEmpty()) {
-                        stateFlow.value = Pair(false, Constants.EMAIL_NOT_EXISTED)
+                        callback.onFailure(Pair(false, Constants.EMAIL_NOT_EXISTED))
                     } else {
-                        stateFlow.value = Pair(true, Constants.EMAIL_EXISTED)
+                        callback.onSuccess(Pair(true, Constants.EMAIL_EXISTED))
                     }
                 } else {
-                    stateFlow.value = Pair(false, Constants.EMAIL_SERVER_ERROR)
+                    callback.onFailure(Pair(false, Constants.EMAIL_SERVER_ERROR))
                 }
             }
     }
 
     override fun sendPasswordResetEmail(
         email: String,
-        stateFlow: MutableStateFlow<Boolean?>
+        callback: Utils.Companion.SendPasswordResetEmailCallback
     ) {
         FirebaseAuth.getInstance().sendPasswordResetEmail(email)
             .addOnCompleteListener{ task ->
                 if(task.isSuccessful) {
-                    stateFlow.value = true
+                    callback.onSuccess()
                 } else {
-                    stateFlow.value = false
+                    callback.onFailure()
                 }
             }
     }

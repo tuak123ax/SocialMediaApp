@@ -59,7 +59,7 @@ import com.minhtu.firesocialmedia.utils.UiUtils.Companion.BottomNavigationBar
 @Composable
 actual fun SetUpNavigation(context: Any) {
     if(context is Activity) {
-        val platformContext = PlatformContext(context)
+        val platformContext = AndroidPlatformContext(context)
         val navController = rememberNavController()
         val androidNavigationHandler = remember { AndroidNavigationHandler(navController) }
         androidNavigationHandler.ObserveCurrentRoute()

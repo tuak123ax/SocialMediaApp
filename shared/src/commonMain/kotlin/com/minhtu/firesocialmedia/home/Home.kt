@@ -97,11 +97,12 @@ class Home {
 
             var isAllUsersVisible by remember { mutableStateOf(true) }
 
-            LaunchedEffect(usersList) {
+            LaunchedEffect(Unit) {
                 loadingViewModel.showLoading()
                 //Load users list and news list.
-                Utils.getAllUsers(homeViewModel, platform)
-                Utils.getAllNews(homeViewModel, platform)
+                homeViewModel.getAllUsers(platform)
+                homeViewModel.getAllNews(platform)
+                homeViewModel.getAllNotificationsOfUser(platform)
                 homeViewModel.decreaseNumberOfListNeedToLoad(1)
                 if(numberOfLists == 0) {
                     loadingViewModel.hideLoading()

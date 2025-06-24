@@ -80,8 +80,11 @@ import com.minhtu.firesocialmedia.VideoPlayer
 import com.minhtu.firesocialmedia.constants.TestTag
 import com.minhtu.firesocialmedia.convertTimeToDateString
 import com.minhtu.firesocialmedia.generateImageLoader
+import com.minhtu.firesocialmedia.home.Home
 import com.minhtu.firesocialmedia.home.HomeViewModel
 import com.minhtu.firesocialmedia.home.navigationscreen.Screen
+import com.minhtu.firesocialmedia.home.navigationscreen.Settings
+import com.minhtu.firesocialmedia.home.navigationscreen.friend.Friend
 import com.minhtu.firesocialmedia.home.navigationscreen.friend.FriendViewModel
 import com.minhtu.firesocialmedia.home.navigationscreen.notification.Notification
 import com.minhtu.firesocialmedia.home.search.SearchViewModel
@@ -372,10 +375,18 @@ class UiUtils {
             ){
                 NavigationBar(containerColor = Color.White) {
                     val currentRoute = navHandler.getCurrentRoute()
-                    logMessage("currentRoute", currentRoute.toString())
                     items.forEach { screen ->
                         val notificationCount = homeViewModel.listNotificationOfCurrentUser.size
+
                         val showBadge = screen.route == Notification.getScreenName() && notificationCount > 0
+                        val testTag = when(screen.route) {
+                            Notification.getScreenName() -> TestTag.TAG_NOTIFICATION_BOTTOM
+                            Home.getScreenName() -> TestTag.TAG_HOME_BOTTOM
+                            Friend.getScreenName() -> TestTag.TAG_FRIEND_BOTTOM
+                            Settings.getScreenName() -> TestTag.TAG_SETTING_BOTTOM
+                            else -> ""
+                        }
+                        logMessage("testTag", testTag)
                         NavigationBarItem(
                             icon = {
                                 if(showBadge) {
@@ -394,7 +405,12 @@ class UiUtils {
                             selected = currentRoute == screen.route,
                             onClick = {
                                 navHandler.navigateTo(screen.route)
-                            }
+                            },
+                            modifier = Modifier
+                                .testTag(testTag)
+                                .semantics {
+                                    contentDescription = testTag
+                                }
                         )
                     }
                 }

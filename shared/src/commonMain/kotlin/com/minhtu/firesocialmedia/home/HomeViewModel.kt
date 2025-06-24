@@ -15,9 +15,16 @@ import com.minhtu.firesocialmedia.instance.NewsInstance
 import com.minhtu.firesocialmedia.instance.NotificationInstance
 import com.minhtu.firesocialmedia.instance.NotificationType
 import com.minhtu.firesocialmedia.instance.UserInstance
+import com.minhtu.firesocialmedia.logMessage
 import com.minhtu.firesocialmedia.sendMessageToServer
 import com.minhtu.firesocialmedia.utils.Utils
+import com.minhtu.firesocialmedia.utils.Utils.Companion.GetNewCallback
+import com.minhtu.firesocialmedia.utils.Utils.Companion.GetNotificationCallback
+import com.minhtu.firesocialmedia.utils.Utils.Companion.GetUserCallback
+import com.minhtu.firesocialmedia.utils.Utils.Companion.findUserById
 import com.rickclephas.kmp.observableviewmodel.ViewModel
+import com.rickclephas.kmp.observableviewmodel.launch
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -29,7 +36,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-class HomeViewModel : ViewModel() {
+class HomeViewModel(
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
+) : ViewModel() {
     val listState = LazyListState()
     var listUsers: ArrayList<UserInstance> = ArrayList()
     var listNews: ArrayList<NewsInstance> = ArrayList()
@@ -42,12 +51,89 @@ class HomeViewModel : ViewModel() {
         updateFCMTokenForCurrentUser(user, platform)
     }
 
+    val _getAllUsersStatus = mutableStateOf(false)
+    val getAllUsersStatus = _getAllUsersStatus
+    fun getAllUsers(platform: PlatformContext) {
+        viewModelScope.launch {
+            withContext(ioDispatcher) {
+                val currentUserId = platform.auth.getCurrentUserUid()
+                platform.database.getAllUsers(Constants.USER_PATH, object : GetUserCallback{
+                    override fun onSuccess(users: List<UserInstance>) {
+                        val currentUser = findUserById(currentUserId!!, users)
+                        updateCurrentUser(currentUser!!, platform)
+                        val listAllUsers = ArrayList(users)
+                        listAllUsers.remove(currentUser)
+                        updateUsers(listAllUsers)
+                        listUsers.clear()
+                        listUsers.addAll(listAllUsers)
+                        _getAllUsersStatus.value = true
+                    }
+
+                    override fun onFailure() {
+                        _getAllUsersStatus.value = false
+                    }
+                })
+            }
+        }
+    }
+
+    val _getAllNewsStatus = mutableStateOf(false)
+    val getAllNewsStatus = _getAllNewsStatus
+    fun getAllNews(platform: PlatformContext) {
+        viewModelScope.launch {
+            withContext(ioDispatcher) {
+                platform.database.getAllNews(Constants.NEWS_PATH, object : GetNewCallback{
+                    override fun onSuccess(news: List<NewsInstance>) {
+                        updateNews(ArrayList(news))
+                        listNews.clear()
+                        for(new in news) {
+                            listNews.add(new)
+                            addLikeCountData(new.id, new.likeCount)
+                            addCommentCountData(new.id, new.commentCount)
+                        }
+                        _getAllNewsStatus.value = true
+                    }
+
+                    override fun onFailure() {
+                        _getAllNewsStatus.value = false
+                    }
+
+                })
+            }
+        }
+    }
+
+    val _getAllNotificationsOfCurrentUser = mutableStateOf(false)
+    val getAllNotificationsOfCurrentUser = _getAllNotificationsOfCurrentUser
+    fun getAllNotificationsOfUser(platform: PlatformContext) {
+        viewModelScope.launch {
+            withContext(ioDispatcher) {
+                val currentUserId = platform.auth.getCurrentUserUid()
+                platform.database.getAllNotificationsOfUser(Constants.NOTIFICATION_PATH, currentUserId!!, object : GetNotificationCallback{
+                    override fun onSuccess(notifications: List<NotificationInstance>) {
+                        listNotificationOfCurrentUser.clear()
+                        listNotificationOfCurrentUser.addAll(notifications)
+                        updateNotifications(ArrayList(listNotificationOfCurrentUser.toList()))
+                        _getAllNotificationsOfCurrentUser.value = true
+                    }
+
+                    override fun onFailure() {
+                        _getAllNotificationsOfCurrentUser.value = false
+                    }
+
+                })
+            }
+        }
+    }
+
     fun removeNotificationInList(notification: NotificationInstance) {
         listNotificationOfCurrentUser.remove(notification)
     }
     private fun updateFCMTokenForCurrentUser(user: UserInstance, platform: PlatformContext) {
-        CoroutineScope(Dispatchers.IO).launch {
-            platform.database.updateFCMTokenForCurrentUser(user)
+        viewModelScope.launch {
+            withContext(ioDispatcher) {
+                platform.database.updateFCMTokenForCurrentUser(user)
+            }
         }
     }
 
@@ -79,7 +165,11 @@ class HomeViewModel : ViewModel() {
     }
 
     fun clearAccountInStorage(platform: PlatformContext){
-        platform.crypto.clearAccount()
+        viewModelScope.launch {
+            withContext(ioDispatcher) {
+                platform.crypto.clearAccount()
+            }
+        }
     }
 
     //-----------------------------Like and comment function-----------------------------//
@@ -117,37 +207,54 @@ class HomeViewModel : ViewModel() {
         updateLikeJob?.cancel()
         //Use background scope instead of viewModelScope here to prevent job cancellation
         // when navigating to other screen.
-        val backgroundScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+        val backgroundScope = CoroutineScope(SupervisorJob() + ioDispatcher)
         updateLikeJob = backgroundScope.launch {
             sendLikeUpdatesToFirebase(HashMap(_likeCountList.value), platform)
         }
     }
 
+    val saveLikeDataStatus = mutableStateOf(false)
+    val updateCountAndSendNotiStatus = mutableStateOf(false)
     private suspend fun sendLikeUpdatesToFirebase(likeCountList : HashMap<String,Int>, platform: PlatformContext) {
         currentUser!!.likedPosts = likeCache
         platform.database.saveValueToDatabase(currentUser!!.uid,
-            Constants.USER_PATH, likeCache, Constants.LIKED_POSTS_PATH)
-        for(likedNew in likeCache.keys) {
-            if(likeCountList[likedNew] != null) {
-                platform.database.updateCountValueInDatabase(likedNew,
-                    Constants.NEWS_PATH,
-                    Constants.LIKED_COUNT_PATH, likeCountList[likedNew]!!)
-                try{
+            Constants.USER_PATH,
+            likeCache,
+            Constants.LIKED_POSTS_PATH,
+            object : Utils.Companion.BasicCallBack{
+                override fun onSuccess() {
+                    saveLikeDataStatus.value = true
+                }
+
+                override fun onFailure() {
+                    saveLikeDataStatus.value = false
+                }
+
+            })
+        try{
+            for(likedNew in likeCache.keys) {
+                if(likeCountList[likedNew] != null) {
+                    platform.database.updateCountValueInDatabase(likedNew,
+                        Constants.NEWS_PATH,
+                        Constants.LIKED_COUNT_PATH, likeCountList[likedNew]!!)
                     val new = Utils.findNewById(likedNew, listNews)
                     //Save and send notification
                     if(new != null) {
                         saveAndSendNotification(currentUser!!, new, listUsers, platform)
                     }
-                } catch(e: Exception) {
                 }
             }
-        }
-        for(unlikedNew in unlikeCache) {
-            if(likeCountList[unlikedNew] != null) {
-                platform.database.updateCountValueInDatabase(unlikedNew,
-                    Constants.NEWS_PATH,
-                    Constants.LIKED_COUNT_PATH, likeCountList[unlikedNew]!!)
+            for(unlikedNew in unlikeCache) {
+                if(likeCountList[unlikedNew] != null) {
+                    platform.database.updateCountValueInDatabase(unlikedNew,
+                        Constants.NEWS_PATH,
+                        Constants.LIKED_COUNT_PATH, likeCountList[unlikedNew]!!)
+                }
             }
+            updateCountAndSendNotiStatus.value = true
+        } catch(e : Exception) {
+            logMessage("sendLikeUpdatesToFirebase", e.message.toString())
+            updateCountAndSendNotiStatus.value = false
         }
     }
 
@@ -197,7 +304,7 @@ class HomeViewModel : ViewModel() {
     }
 
     fun deleteOrHideNew(action : String, new: NewsInstance, platform: PlatformContext) {
-        val backgroundScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+        val backgroundScope = CoroutineScope(SupervisorJob() + ioDispatcher)
         backgroundScope.launch {
             if(action == "Delete") {
                 platform.database.deleteNewsFromDatabase(Constants.NEWS_PATH, new)

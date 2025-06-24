@@ -281,7 +281,7 @@ class IosDatabaseService() : DatabaseService{
     @OptIn(ExperimentalEncodingApi::class)
     override suspend fun saveSignUpInformation(
         user: UserInstance,
-        addInformationStatus: MutableStateFlow<Boolean?>
+        callBack: Utils.Companion.SaveSignUpInformationCallBack
     ) {
         val storageReference: FIRStorageReference = FIRStorage.storage().reference().child("avatar").child(user.uid)
         val databaseReference: FIRDatabaseReference = FIRDatabase.database().reference().child("users").child(user.uid)
@@ -312,10 +312,10 @@ class IosDatabaseService() : DatabaseService{
                 }
             }
 
-            addInformationStatus.value = true
+            callBack.onSuccess()
         } catch (e: Exception) {
             e.printStackTrace()
-            addInformationStatus.value = false
+            callBack.onFailure()
         }
     }
 

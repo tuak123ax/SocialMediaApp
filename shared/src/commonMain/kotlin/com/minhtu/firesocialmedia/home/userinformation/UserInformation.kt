@@ -288,7 +288,12 @@ class UserInformation {
                         friendViewModel.acceptFriendRequest(requester, currentUser, platform)
                         userInformationViewModel.updateRelationship(Relationship.FRIEND)
                         onDismissRequest()
-                    }
+                    },
+                    modifier = Modifier
+                        .testTag(TestTag.TAG_ACCEPT_BUTTON)
+                        .semantics {
+                            contentDescription = TestTag.TAG_ACCEPT_BUTTON
+                        }
                 )
                 DropdownMenuItem(
                     text = { Text("Reject") },
@@ -297,7 +302,12 @@ class UserInformation {
                         friendViewModel.rejectFriendRequest(requester, currentUser, platform)
                         userInformationViewModel.updateRelationship(Relationship.NONE)
                         onDismissRequest()
-                    }
+                    },
+                    modifier = Modifier
+                        .testTag(TestTag.TAG_REJECT_BUTTON)
+                        .semantics {
+                            contentDescription = TestTag.TAG_REJECT_BUTTON
+                        }
                 )
             }
         }

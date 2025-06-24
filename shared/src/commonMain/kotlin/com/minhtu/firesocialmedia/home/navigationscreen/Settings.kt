@@ -119,14 +119,5 @@ class Settings {
         fun getScreenName() : String {
             return "SettingsScreen"
         }
-
-//        private fun getChatAppIntent(context: Context): Intent? {
-//            val packageName = "com.example.firechat"
-//            val intent = context.packageManager.getLaunchIntentForPackage(packageName)
-//            if(intent != null) {
-//                return intent
-//            }
-//            return null
-//        }
     }
 }

@@ -5,12 +5,16 @@ import com.rickclephas.kmp.observableviewmodel.ViewModel
 import com.minhtu.firesocialmedia.constants.Constants
 import com.minhtu.firesocialmedia.instance.UserInstance
 import com.rickclephas.kmp.observableviewmodel.launch
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.withContext
 
-class FriendViewModel : ViewModel() {
+class FriendViewModel(
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
+) : ViewModel() {
     private val friendRequestsList = MutableStateFlow<ArrayList<String>>(ArrayList())
     private val friendList = MutableStateFlow<ArrayList<String>>(ArrayList())
     val friendRequestsStatus = friendRequestsList.asStateFlow()
@@ -25,40 +29,44 @@ class FriendViewModel : ViewModel() {
         friendList.value = ArrayList(friends)
     }
     fun acceptFriendRequest(requester: UserInstance, currentUser: UserInstance, platform: PlatformContext) {
-        viewModelScope.launch(Dispatchers.IO) {
-            currentUser.friendRequests.remove(requester.uid)
-            currentUser.friends.add(requester.uid)
+        viewModelScope.launch {
+            withContext(ioDispatcher) {
+                currentUser.friendRequests.remove(requester.uid)
+                currentUser.friends.add(requester.uid)
 
-            platform.database.saveListToDatabase(currentUser.uid,
-                Constants.USER_PATH,
-                currentUser.friendRequests,
-                Constants.FRIEND_REQUESTS_PATH)
-            platform.database.saveListToDatabase(currentUser.uid,
-                Constants.USER_PATH,
-                currentUser.friends,
-                Constants.FRIENDS_PATH)
-            requester.friends.add(currentUser.uid)
-            platform.database.saveListToDatabase(requester.uid,
-                Constants.USER_PATH,
-                requester.friends,
-                Constants.FRIENDS_PATH)
+                platform.database.saveListToDatabase(currentUser.uid,
+                    Constants.USER_PATH,
+                    currentUser.friendRequests,
+                    Constants.FRIEND_REQUESTS_PATH)
+                platform.database.saveListToDatabase(currentUser.uid,
+                    Constants.USER_PATH,
+                    currentUser.friends,
+                    Constants.FRIENDS_PATH)
+                requester.friends.add(currentUser.uid)
+                platform.database.saveListToDatabase(requester.uid,
+                    Constants.USER_PATH,
+                    requester.friends,
+                    Constants.FRIENDS_PATH)
 
-            //Update value to notify UI
-            friendRequestsList.value = ArrayList(currentUser.friendRequests)
-            friendList.value = ArrayList(currentUser.friends)
+                //Update value to notify UI
+                friendRequestsList.value = ArrayList(currentUser.friendRequests)
+                friendList.value = ArrayList(currentUser.friends)
+            }
         }
     }
     fun rejectFriendRequest(requester: UserInstance, currentUser: UserInstance, platform : PlatformContext) {
-        viewModelScope.launch(Dispatchers.IO) {
-            currentUser.friendRequests.remove(requester.uid)
+        viewModelScope.launch {
+            withContext(ioDispatcher) {
+                currentUser.friendRequests.remove(requester.uid)
 
-            platform.database.saveListToDatabase(currentUser.uid,
-                Constants.USER_PATH,
-                currentUser.friendRequests,
-                Constants.FRIEND_REQUESTS_PATH)
+                platform.database.saveListToDatabase(currentUser.uid,
+                    Constants.USER_PATH,
+                    currentUser.friendRequests,
+                    Constants.FRIEND_REQUESTS_PATH)
 
-            //Update value to notify UI
-            friendRequestsList.value = ArrayList(currentUser.friendRequests)
+                //Update value to notify UI
+                friendRequestsList.value = ArrayList(currentUser.friendRequests)
+            }
         }
     }
 }

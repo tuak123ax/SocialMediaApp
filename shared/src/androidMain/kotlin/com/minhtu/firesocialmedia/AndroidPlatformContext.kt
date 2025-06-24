@@ -65,14 +65,14 @@ import androidx.media3.common.MediaItem
 import androidx.core.content.edit
 import com.minhtu.firesocialmedia.services.clipboard.AndroidClipboardService
 
-actual class PlatformContext(
+class AndroidPlatformContext(
     context: Context
-) {
-    actual val auth: AuthService = AndroidAuthService(context)
-    actual val firebase: FirebaseService = AndroidFirebaseService()
-    actual val crypto: CryptoService = AndroidCryptoService(context)
-    actual val database: DatabaseService = AndroidDatabaseService(context)
-    actual val clipboard : ClipboardService = AndroidClipboardService(context)
+) : PlatformContext {
+    override val auth: AuthService = AndroidAuthService(context)
+    override val firebase: FirebaseService = AndroidFirebaseService()
+    override val crypto: CryptoService = AndroidCryptoService(context)
+    override val database: DatabaseService = AndroidDatabaseService(context)
+    override val clipboard : ClipboardService = AndroidClipboardService(context)
 }
 
 private lateinit var appContext: Context

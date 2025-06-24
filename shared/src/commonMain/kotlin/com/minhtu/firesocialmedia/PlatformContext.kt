@@ -18,9 +18,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.ui.unit.dp
 import com.minhtu.firesocialmedia.instance.CommentInstance
 import com.russhwolf.settings.Settings
+import io.mockative.Mockable
 import kotlin.math.roundToInt
 
-expect class PlatformContext {
+@Mockable
+interface PlatformContext {
     val auth: AuthService
     val firebase: FirebaseService
     val crypto: CryptoService
@@ -28,25 +30,28 @@ expect class PlatformContext {
     val clipboard : ClipboardService
 }
 
+@Mockable
 interface AuthService {
     suspend fun signInWithEmailAndPassword(email: String, password: String): Result<Unit>
     suspend fun signUpWithEmailAndPassword(email: String, password: String) : Result<Unit>
     fun getCurrentUserUid() : String?
     fun getCurrentUserEmail() : String?
-    fun fetchSignInMethodsForEmail(email: String, stateFlow: MutableStateFlow<Pair<Boolean, String>?>)
-    fun sendPasswordResetEmail(email: String, stateFlow: MutableStateFlow<Boolean?>)
+    fun fetchSignInMethodsForEmail(email: String, callback: Utils.Companion.FetchSignInMethodCallback)
+    fun sendPasswordResetEmail(email: String, callback: Utils.Companion.SendPasswordResetEmailCallback)
     fun handleSignInGoogleResult(
         credentials: Any,
         callback: Utils.Companion.SignInGoogleCallback
     )
 }
 
+@Mockable
 interface FirebaseService {
     fun checkUserExists(email: String, callback: (result : SignInState) -> Unit)
 }
 
 data class Credentials(val email: String, val password: String)
 
+@Mockable
 interface CryptoService {
     fun saveAccount(email: String, password: String)
     suspend fun loadAccount(): Credentials?
@@ -54,13 +59,15 @@ interface CryptoService {
     suspend fun getFCMToken() : String
 }
 
+@Mockable
 interface DatabaseService {
     suspend fun updateFCMTokenForCurrentUser(currentUser : UserInstance)
     suspend fun saveValueToDatabase(
         id : String,
         path : String,
         value : HashMap<String, Int>,
-        externalPath : String
+        externalPath : String,
+        callback : Utils.Companion.BasicCallBack
     )
 
     suspend fun updateCountValueInDatabase(
@@ -112,7 +119,7 @@ interface DatabaseService {
     )
 
     suspend fun saveSignUpInformation(user : UserInstance,
-                              addInformationStatus : MutableStateFlow<Boolean?>)
+                              callBack: Utils.Companion.SaveSignUpInformationCallBack)
     suspend fun saveNotificationToDatabase(
         id : String,
         path : String,
@@ -233,6 +240,7 @@ expect object MainApplication {
 @Composable
 expect fun SetUpNavigation(context : Any)
 
+@Mockable
 interface SignInLauncher {
     fun launchGoogleSignIn()
 }

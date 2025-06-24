@@ -34,10 +34,14 @@ class AndroidDatabaseService(private val context: Context) : DatabaseService{
         id: String,
         path: String,
         value: HashMap<String, Int>,
-        externalPath: String
+        externalPath: String,
+        callback : Utils.Companion.BasicCallBack
     ) {
         AndroidDatabaseHelper.saveValueToDatabase(id,
-            path, value, externalPath)
+            path,
+            value,
+            externalPath,
+            callback)
     }
 
     override suspend fun updateCountValueInDatabase(
@@ -220,7 +224,7 @@ class AndroidDatabaseService(private val context: Context) : DatabaseService{
     }
 
     override suspend fun saveSignUpInformation(user : UserInstance,
-                                       addInformationStatus : MutableStateFlow<Boolean?>) {
+                                               callBack: Utils.Companion.SaveSignUpInformationCallBack) {
         val storageReference = FirebaseStorage.getInstance().getReference()
             .child("avatar").child(user.uid)
         val databaseReference = FirebaseDatabase.getInstance().getReference()
@@ -233,9 +237,9 @@ class AndroidDatabaseService(private val context: Context) : DatabaseService{
                         user.updateImage(avatarUrl.toString())
                         databaseReference.setValue(user).addOnCompleteListener{addUserTask ->
                             if(addUserTask.isSuccessful){
-                                addInformationStatus.value = true
+                                callBack.onSuccess()
                             } else {
-                                addInformationStatus.value = false
+                                callBack.onFailure()
                             }
                         }
                     }
@@ -244,9 +248,9 @@ class AndroidDatabaseService(private val context: Context) : DatabaseService{
         } else {
             databaseReference.setValue(user).addOnCompleteListener{addUserTask ->
                 if(addUserTask.isSuccessful){
-                    addInformationStatus.value = true
+                    callBack.onSuccess()
                 } else {
-                    addInformationStatus.value = false
+                    callBack.onFailure()
                 }
             }
         }

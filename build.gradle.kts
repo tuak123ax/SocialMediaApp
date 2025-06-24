@@ -15,4 +15,8 @@ plugins {
     id("org.jetbrains.compose") version "1.7.3" apply false
     id("com.rickclephas.kmp.nativecoroutines") version "1.0.0-ALPHA-42"
     kotlin("plugin.serialization") version "1.8.22"
+
+    //Code coverage tool
+    id("org.jetbrains.kotlinx.kover") version "0.9.1"
+    id("com.google.devtools.ksp") version "1.9.23-1.0.20"
 }

@@ -53,16 +53,16 @@ class IosAuthService() : AuthService{
 
     override fun fetchSignInMethodsForEmail(
         email: String,
-        stateFlow: MutableStateFlow<Pair<Boolean, String>?>
+        callback : Utils.Companion.FetchSignInMethodCallback
     ) {
         FIRAuth.auth().fetchSignInMethodsForEmail(email) { result, error ->
             if (error != null || result == null) {
-                stateFlow.value = Pair(false, Constants.EMAIL_SERVER_ERROR)
+                callback.onFailure(Pair(false, Constants.EMAIL_SERVER_ERROR))
             } else {
                 if (result.isNotEmpty()) {
-                    stateFlow.value = Pair(true, Constants.EMAIL_EXISTED)
+                    callback.onSuccess(Pair(true, Constants.EMAIL_EXISTED))
                 } else {
-                    stateFlow.value = Pair(false, Constants.EMAIL_NOT_EXISTED)
+                    callback.onFailure(Pair(false, Constants.EMAIL_NOT_EXISTED))
                 }
             }
         }
@@ -70,10 +70,14 @@ class IosAuthService() : AuthService{
 
     override fun sendPasswordResetEmail(
         email: String,
-        stateFlow: MutableStateFlow<Boolean?>
+        callback: Utils.Companion.SendPasswordResetEmailCallback
     ) {
         FIRAuth.auth().sendPasswordResetWithEmail(email) { error ->
-            stateFlow.value = (error == null)
+            if(error == null) {
+                callback.onSuccess()
+            } else {
+                callback.onFailure()
+            }
         }
     }
 

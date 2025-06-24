@@ -8,14 +8,18 @@ import com.minhtu.firesocialmedia.PlatformContext
 import com.minhtu.firesocialmedia.constants.Constants
 import com.minhtu.firesocialmedia.instance.UserInstance
 import com.minhtu.firesocialmedia.logMessage
+import com.minhtu.firesocialmedia.utils.Utils
 import com.rickclephas.kmp.observableviewmodel.launch
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.withContext
 
-class InformationViewModel : ViewModel() {
+class InformationViewModel(
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
+) : ViewModel() {
     private val _addInformationStatus = MutableStateFlow<Boolean?>(null)
     val addInformationStatus = _addInformationStatus.asStateFlow()
 
@@ -41,14 +45,23 @@ class InformationViewModel : ViewModel() {
 
     fun finishSignUpStage(platform: PlatformContext){
         viewModelScope.launch {
-            withContext(Dispatchers.IO) {
+            withContext(ioDispatcher) {
                 if(username.isEmpty()) {
                     _addInformationStatus.value = false
                 } else {
                     val uid = platform.auth.getCurrentUserUid()
                     val userInstance = UserInstance(email, avatar,username,"",
                         platform.crypto.getFCMToken(),uid!!, HashMap())
-                    platform.database.saveSignUpInformation(userInstance, _addInformationStatus)
+                    platform.database.saveSignUpInformation(userInstance,
+                        object : Utils.Companion.SaveSignUpInformationCallBack{
+                            override fun onSuccess() {
+                                _addInformationStatus.value = true
+                            }
+
+                            override fun onFailure() {
+                                _addInformationStatus.value = false
+                            }
+                        })
                 }
             }
         }

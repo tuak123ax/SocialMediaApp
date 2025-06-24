@@ -16,46 +16,6 @@ import kotlinx.coroutines.launch
 
 class Utils {
     companion object{
-         fun getAllUsers(homeViewModel: HomeViewModel, platform: PlatformContext) {
-             val currentUserId = platform.auth.getCurrentUserUid()
-             CoroutineScope(Dispatchers.IO).launch {
-                 platform.database.getAllUsers(Constants.USER_PATH, object : GetUserCallback{
-                     override fun onSuccess(users: List<UserInstance>) {
-                         val currentUser = findUserById(currentUserId!!, users)
-                         homeViewModel.updateCurrentUser(currentUser!!, platform)
-                         val listAllUsers = ArrayList(users)
-                         listAllUsers.remove(currentUser)
-                         homeViewModel.updateUsers(listAllUsers)
-                         homeViewModel.listUsers.clear()
-                         homeViewModel.listUsers.addAll(listAllUsers)
-                         getAllNotificationsOfUser(homeViewModel, platform)
-                     }
-
-                     override fun onFailure() {
-                     }
-                 })
-             }
-        }
-        fun getAllNews(homeViewModel: HomeViewModel, platform: PlatformContext) {
-            CoroutineScope(Dispatchers.IO).launch{
-                platform.database.getAllNews(Constants.NEWS_PATH, object : GetNewCallback{
-                    override fun onSuccess(news: List<NewsInstance>) {
-                        homeViewModel.updateNews(ArrayList(news))
-                        homeViewModel.listNews.clear()
-                        for(new in news) {
-                            homeViewModel.listNews.add(new)
-                            homeViewModel.addLikeCountData(new.id, new.likeCount)
-                            homeViewModel.addCommentCountData(new.id, new.commentCount)
-                        }
-                    }
-
-                    override fun onFailure() {
-                    }
-
-                })
-            }
-        }
-
         fun getAllCommentsOfNew(commentViewModel: CommentViewModel, newsId : String, platform: PlatformContext) {
             CoroutineScope(Dispatchers.IO).launch {
                 platform.database.getAllComments(Constants.COMMENT_PATH, newsId, object : GetCommentCallback{
@@ -88,21 +48,14 @@ class Utils {
             return tokenList
         }
 
-        fun getAllNotificationsOfUser(homeViewModel: HomeViewModel, platform: PlatformContext) {
-            val currentUserId = platform.auth.getCurrentUserUid()
-            CoroutineScope(Dispatchers.IO).launch{
-                platform.database.getAllNotificationsOfUser(Constants.NOTIFICATION_PATH, currentUserId!!, object : GetNotificationCallback{
-                    override fun onSuccess(notifications: List<NotificationInstance>) {
-                        homeViewModel.listNotificationOfCurrentUser.clear()
-                        homeViewModel.listNotificationOfCurrentUser.addAll(notifications)
-                        homeViewModel.updateNotifications(ArrayList(homeViewModel.listNotificationOfCurrentUser.toList()))
-                    }
-
-                    override fun onFailure() {
-                    }
-
-                })
+        fun hexToColor(hex: String): Color {
+            val cleanHex = hex.removePrefix("#")
+            val colorLong = when (cleanHex.length) {
+                6 -> "FF$cleanHex".toLong(16) // Add alpha if missing
+                8 -> cleanHex.toLong(16)
+                else -> throw IllegalArgumentException("Invalid hex color: $hex")
             }
+            return Color(colorLong)
         }
 
         fun findUserById(userId : String, listUsers : List<UserInstance>) : UserInstance?{
@@ -166,14 +119,24 @@ class Utils {
             fun onFailure()
         }
 
-        fun hexToColor(hex: String): Color {
-            val cleanHex = hex.removePrefix("#")
-            val colorLong = when (cleanHex.length) {
-                6 -> "FF$cleanHex".toLong(16) // Add alpha if missing
-                8 -> cleanHex.toLong(16)
-                else -> throw IllegalArgumentException("Invalid hex color: $hex")
-            }
-            return Color(colorLong)
+        interface FetchSignInMethodCallback{
+            fun onSuccess(result : Pair<Boolean, String>)
+            fun onFailure(result : Pair<Boolean, String>)
+        }
+
+        interface SendPasswordResetEmailCallback{
+            fun onSuccess()
+            fun onFailure()
+        }
+
+        interface SaveSignUpInformationCallBack{
+            fun onSuccess()
+            fun onFailure()
+        }
+
+        interface BasicCallBack{
+            fun onSuccess()
+            fun onFailure()
         }
     }
 }
