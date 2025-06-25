@@ -6,12 +6,12 @@ import com.minhtu.firesocialmedia.services.crypto.IosCryptoService
 import com.minhtu.firesocialmedia.services.database.IosDatabaseService
 import com.minhtu.firesocialmedia.services.firebase.IosFirebaseService
 
-actual class PlatformContext(
-) {
-    actual val auth: AuthService = IosAuthService()
-    actual val firebase: FirebaseService = IosFirebaseService()
-    actual val crypto: CryptoService = IosCryptoService()
-    actual val database: DatabaseService = IosDatabaseService()
-    actual val clipboard : ClipboardService = IosClipboardService()
+open class IosPlatformContext(
+) : PlatformContext {
+    override val auth: AuthService = IosAuthService()
+    override val firebase: FirebaseService = IosFirebaseService()
+    override val crypto: CryptoService = IosCryptoService()
+    override val database: DatabaseService = IosDatabaseService()
+    override val clipboard : ClipboardService = IosClipboardService()
 }
 

@@ -58,5 +58,11 @@ class TestTag {
         const val TAG_BUTTON_CLOSE: String = "TAG_BUTTON_CLOSE"
         const val TAG_BUTTON_DOWNLOAD: String = "TAG_BUTTON_DOWNLOAD"
         const val TAG_PEOPLE_COLUMN : String = "TAG_PEOPLE_COLUMN"
+        const val TAG_HOME_BOTTOM : String = "TAG_HOME_BOTTOM"
+        const val TAG_FRIEND_BOTTOM : String = "TAG_FRIEND_BOTTOM"
+        const val TAG_NOTIFICATION_BOTTOM : String = "TAG_NOTIFICATION_BOTTOM"
+        const val TAG_SETTING_BOTTOM : String = "TAG_SETTING_BOTTOM"
+        const val TAG_ACCEPT_BUTTON : String = "TAG_ACCEPT_BUTTON"
+        const val TAG_REJECT_BUTTON : String = "TAG_REJECT_BUTTON"
     }
 }

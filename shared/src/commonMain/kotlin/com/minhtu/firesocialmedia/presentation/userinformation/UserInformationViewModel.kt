@@ -14,6 +14,8 @@ import com.minhtu.firesocialmedia.platform.getRandomIdForNotification
 import com.minhtu.firesocialmedia.platform.sendMessageToServer
 import com.minhtu.firesocialmedia.utils.Utils
 import com.rickclephas.kmp.observableviewmodel.ViewModel
+import com.rickclephas.kmp.observableviewmodel.launch
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -22,6 +24,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 enum class Relationship{
     FRIEND,
@@ -29,7 +32,9 @@ enum class Relationship{
     WAITING_RESPONSE,
     NONE
 }
-class UserInformationViewModel : ViewModel() {
+class UserInformationViewModel(
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
+) : ViewModel() {
     // StateFlow to update UI in Compose
     var coverPhoto by mutableStateOf(Constants.DEFAULT_AVATAR_URL)
     fun updateCover(input:String){
@@ -42,50 +47,54 @@ class UserInformationViewModel : ViewModel() {
     var currentRelationship : Relationship = Relationship.NONE
     private var updateFriendRequestJob : Job? = null
     fun clickAddFriendButton(friend : UserInstance?, currentUser : UserInstance?, platform : PlatformContext) {
-        if(friend != null && currentUser != null){
-            val tokenList = ArrayList<String>()
-            tokenList.add(friend.token)
-            updateFriendRequestJob?.cancel()
-            //Use background scope instead of viewModelScope here to prevent job cancellation
-            // when navigating to other screen.
-            val backgroundScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-            updateFriendRequestJob = backgroundScope.launch {
-                try{
-                    when(currentRelationship) {
-                        Relationship.FRIEND -> {
-                            friend.removeFriend(currentUser.uid)
-                            currentUser.removeFriend(friend.uid)
-                            removeFriend(friend, currentUser, platform)
-                            _addFriendStatus.value = Relationship.NONE
-                        }
-                        Relationship.FRIEND_REQUEST -> {
-                            removeFriendRequest(friend, currentUser, platform)
-                            friend.removeFriendRequest(currentUser.uid)
-                            _addFriendStatus.value = Relationship.NONE
-                        }
-                        Relationship.NONE -> {
-                            //Save friend request to db
-                            saveFriendRequest(friend, currentUser, platform)
-                            friend.addFriendRequest(currentUser.uid)
+        viewModelScope.launch {
+            withContext(ioDispatcher) {
+                if(friend != null && currentUser != null){
+                    val tokenList = ArrayList<String>()
+                    tokenList.add(friend.token)
+                    updateFriendRequestJob?.cancel()
+                    //Use background scope instead of viewModelScope here to prevent job cancellation
+                    // when navigating to other screen.
+                    val backgroundScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+                    updateFriendRequestJob = backgroundScope.launch {
+                        try{
+                            when(currentRelationship) {
+                                Relationship.FRIEND -> {
+                                    friend.removeFriend(currentUser.uid)
+                                    currentUser.removeFriend(friend.uid)
+                                    removeFriend(friend, currentUser, platform)
+                                    _addFriendStatus.value = Relationship.NONE
+                                }
+                                Relationship.FRIEND_REQUEST -> {
+                                    removeFriendRequest(friend, currentUser, platform)
+                                    friend.removeFriendRequest(currentUser.uid)
+                                    _addFriendStatus.value = Relationship.NONE
+                                }
+                                Relationship.NONE -> {
+                                    //Save friend request to db
+                                    saveFriendRequest(friend, currentUser, platform)
+                                    friend.addFriendRequest(currentUser.uid)
 
-                            val notiContent = "${currentUser.name} sent you a friend request!"
-                            val notification = NotificationInstance(getRandomIdForNotification(),
-                                notiContent,
-                                currentUser.image,
-                                currentUser.uid,
-                                getCurrentTime(),
-                                NotificationType.ADD_FRIEND,
-                                currentUser.uid)
-                            //Save notification to db
-                            Utils.saveNotification(notification, friend, platform)
-                            sendMessageToServer(createMessageForServer(notiContent, tokenList , currentUser))
-                            _addFriendStatus.value = Relationship.FRIEND_REQUEST
-                        }
-                        else -> {
+                                    val notiContent = "${currentUser.name} sent you a friend request!"
+                                    val notification = NotificationInstance(getRandomIdForNotification(),
+                                        notiContent,
+                                        currentUser.image,
+                                        currentUser.uid,
+                                        getCurrentTime(),
+                                        NotificationType.ADD_FRIEND,
+                                        currentUser.uid)
+                                    //Save notification to db
+                                    Utils.saveNotification(notification, friend, platform)
+                                    sendMessageToServer(createMessageForServer(notiContent, tokenList , currentUser))
+                                    _addFriendStatus.value = Relationship.FRIEND_REQUEST
+                                }
+                                else -> {
 
+                                }
+                            }
+                        } catch(e: Exception) {
                         }
                     }
-                } catch(e: Exception) {
                 }
             }
         }

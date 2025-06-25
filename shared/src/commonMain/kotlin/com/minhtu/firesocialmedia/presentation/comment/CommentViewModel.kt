@@ -19,6 +19,7 @@ import com.minhtu.firesocialmedia.platform.sendMessageToServer
 import com.minhtu.firesocialmedia.utils.Utils
 import com.rickclephas.kmp.observableviewmodel.ViewModel
 import com.rickclephas.kmp.observableviewmodel.launch
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -27,8 +28,11 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
-class CommentViewModel : ViewModel() {
+class CommentViewModel(
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
+) : ViewModel() {
     var listComments : ArrayList<CommentInstance> = ArrayList()
     var mapSubComments : HashMap<String, CommentInstance> = HashMap()
     private val _allComments : MutableStateFlow<ArrayList<CommentInstance>> = MutableStateFlow(ArrayList())
@@ -51,36 +55,40 @@ class CommentViewModel : ViewModel() {
     private var _createCommentStatus : MutableStateFlow<Boolean?> = MutableStateFlow<Boolean?>(null)
     var createCommentStatus = _createCommentStatus.asStateFlow()
     fun sendComment(currentUser : UserInstance, selectedNew : NewsInstance, listUsers : ArrayList<UserInstance>, platform: PlatformContext) {
-        if(_commentBeReplied.value == null) {
-            if(message.isNotEmpty()) {
-                viewModelScope.launch(Dispatchers.IO) {
-                    try{
-                        val commentRandomId = generateRandomId()
-                        val commentInstance = CommentInstance(commentRandomId,currentUser.uid, currentUser.name,currentUser.image,message,image)
-                        commentInstance.timePosted = getCurrentTime()
-                        listComments.add(commentInstance)
-                        updateComments(listComments)
-                        platform.database.saveInstanceToDatabase(commentRandomId,
-                            Constants.NEWS_PATH+"/"+selectedNew.id+"/"+ Constants.COMMENT_PATH,commentInstance,_createCommentStatus)
+        viewModelScope.launch {
+            withContext(ioDispatcher) {
+                if(_commentBeReplied.value == null) {
+                    if(message.isNotEmpty()) {
+                        viewModelScope.launch(Dispatchers.IO) {
+                            try{
+                                val commentRandomId = generateRandomId()
+                                val commentInstance = CommentInstance(commentRandomId,currentUser.uid, currentUser.name,currentUser.image,message,image)
+                                commentInstance.timePosted = getCurrentTime()
+                                listComments.add(commentInstance)
+                                updateComments(listComments)
+                                platform.database.saveInstanceToDatabase(commentRandomId,
+                                    Constants.NEWS_PATH+"/"+selectedNew.id+"/"+ Constants.COMMENT_PATH,commentInstance,_createCommentStatus)
 
-                        logMessage("updateCountValueInDatabase", listComments.size.toString())
-                        platform.database.updateCountValueInDatabase(selectedNew.id,
-                            Constants.NEWS_PATH,
-                            Constants.COMMENT_COUNT_PATH, listComments.size)
-                        updateMessage("")
+                                logMessage("updateCountValueInDatabase", listComments.size.toString())
+                                platform.database.updateCountValueInDatabase(selectedNew.id,
+                                    Constants.NEWS_PATH,
+                                    Constants.COMMENT_COUNT_PATH, listComments.size)
+                                updateMessage("")
 
-                        //Save and send notification
-                        saveAndSendNotification(currentUser, selectedNew, listUsers, platform)
-                    } catch(e: Exception) {
+                                //Save and send notification
+                                saveAndSendNotification(currentUser, selectedNew, listUsers, platform)
+                            } catch(e: Exception) {
+                            }
+                        }
                     }
+                } else {
+                    //Handle reply comment
+                    if(message.isNotEmpty()) {
+                        onReplyComment(_commentBeReplied.value!!, currentUser, selectedNew, platform)
+                    }
+                    updateCommentBeReplied(null)
                 }
             }
-        } else {
-            //Handle reply comment
-            if(message.isNotEmpty()) {
-                onReplyComment(_commentBeReplied.value!!, currentUser, selectedNew, platform)
-            }
-            updateCommentBeReplied(null)
         }
     }
 
@@ -107,7 +115,7 @@ class CommentViewModel : ViewModel() {
     }
 
     fun copyToClipboard(text : String,platform: PlatformContext) {
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch(ioDispatcher) {
             platform.clipboard.copy(text)
         }
     }
@@ -120,32 +128,34 @@ class CommentViewModel : ViewModel() {
         _commentBeReplied.value = value
     }
     fun onReplyComment(currentComment: CommentInstance, currentUser : UserInstance, selectedNew : NewsInstance, platform: PlatformContext) {
-        viewModelScope.launch(Dispatchers.IO) {
-            try{
-                val commentRandomId = generateRandomId()
-                val commentInstance = CommentInstance(commentRandomId,currentUser.uid, currentUser.name,currentUser.image,message,image)
-                commentInstance.timePosted = getCurrentTime()
+        viewModelScope.launch {
+            withContext(ioDispatcher) {
+                try{
+                    val commentRandomId = generateRandomId()
+                    val commentInstance = CommentInstance(commentRandomId,currentUser.uid, currentUser.name,currentUser.image,message,image)
+                    commentInstance.timePosted = getCurrentTime()
 
-                listComments.remove(currentComment)
-                currentComment.listReplies.put(commentInstance.id, commentInstance)
-                listComments.add(currentComment)
-                updateComments(listComments)
-                platform.database.saveInstanceToDatabase(commentRandomId,
-                    Constants.NEWS_PATH+"/"+selectedNew.id+"/"+ Constants.COMMENT_PATH+"/"+currentComment.id+"/"+ Constants.LIST_REPLIES_PATH,
-                    commentInstance,_createCommentStatus)
+                    listComments.remove(currentComment)
+                    currentComment.listReplies.put(commentInstance.id, commentInstance)
+                    listComments.add(currentComment)
+                    updateComments(listComments)
+                    platform.database.saveInstanceToDatabase(commentRandomId,
+                        Constants.NEWS_PATH+"/"+selectedNew.id+"/"+ Constants.COMMENT_PATH+"/"+currentComment.id+"/"+ Constants.LIST_REPLIES_PATH,
+                        commentInstance,_createCommentStatus)
 
-                logMessage("updateCountValueInDatabase", listComments.size.toString())
-                platform.database.updateCountValueInDatabase(selectedNew.id,
-                    Constants.NEWS_PATH,
-                    Constants.COMMENT_PATH + "/" + currentComment.id +"/"
-                            +Constants.COMMENT_COUNT_PATH,
-                    currentComment.listReplies.size)
-                updateMessage("")
-                updateCommentBeReplied(null)
+                    logMessage("updateCountValueInDatabase", listComments.size.toString())
+                    platform.database.updateCountValueInDatabase(selectedNew.id,
+                        Constants.NEWS_PATH,
+                        Constants.COMMENT_PATH + "/" + currentComment.id +"/"
+                                +Constants.COMMENT_COUNT_PATH,
+                        currentComment.listReplies.size)
+                    updateMessage("")
+                    updateCommentBeReplied(null)
 
-                //Save and send notification
+                    //Save and send notification
 //                saveAndSendNotification(currentUser, selectedNew, listUsers, platform)
-            } catch(e: Exception) {
+                } catch(e: Exception) {
+                }
             }
         }
     }
@@ -185,16 +195,30 @@ class CommentViewModel : ViewModel() {
         updateLikeJob?.cancel()
         //Use background scope instead of viewModelScope here to prevent job cancellation
         // when navigating to other screen.
-        val backgroundScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+        val backgroundScope = CoroutineScope(SupervisorJob() + ioDispatcher)
         updateLikeJob = backgroundScope.launch {
             sendLikeUpdatesToFirebase(HashMap(_likeCountList.value), selectedNew, currentUser, platform)
         }
     }
 
+    val sendLikeDataStatus = mutableStateOf(false)
     private suspend fun sendLikeUpdatesToFirebase(likeCountList : HashMap<String,Int>, selectedNew : NewsInstance, currentUser : UserInstance, platform: PlatformContext) {
         currentUser.likedComments = likeCache
-        platform.database.saveValueToDatabase(currentUser.uid,
-            Constants.USER_PATH, likeCache, Constants.LIKED_COMMENT_PATH)
+        platform.database.saveValueToDatabase(
+            currentUser.uid,
+            Constants.USER_PATH,
+            likeCache,
+            Constants.LIKED_COMMENT_PATH,
+            object : Utils.Companion.BasicCallBack{
+                override fun onSuccess() {
+                    sendLikeDataStatus.value = true
+                }
+
+                override fun onFailure() {
+                    sendLikeDataStatus.value = false
+                }
+            }
+            )
         val listCommentId = listComments.map { it.id}
         for(likedComment in likeCache.keys) {
             if(likeCountList[likedComment] != null) {
@@ -251,7 +275,7 @@ class CommentViewModel : ViewModel() {
     }
 
     fun onDeleteComment(selectedNew : NewsInstance, comment : CommentInstance, platform : PlatformContext) {
-        val backgroundScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+        val backgroundScope = CoroutineScope(SupervisorJob() + ioDispatcher)
         backgroundScope.launch {
             val listCommentId = listComments.map { it.id}
             if(listCommentId.contains(comment.id)){

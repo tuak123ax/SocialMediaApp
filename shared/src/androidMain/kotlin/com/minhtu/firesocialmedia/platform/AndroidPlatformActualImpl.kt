@@ -61,7 +61,6 @@ import java.util.Date
 import java.util.UUID
 import androidx.activity.compose.BackHandler as AndroidBackHandler
 
-
 private lateinit var appContext: Context
 fun initPlatformContext(context: Context) {
     appContext = context.applicationContext

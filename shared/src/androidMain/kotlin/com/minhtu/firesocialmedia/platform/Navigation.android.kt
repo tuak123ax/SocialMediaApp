@@ -26,6 +26,7 @@ import com.google.android.gms.auth.api.identity.Identity
 import com.minhtu.firesocialmedia.constants.Constants
 import com.minhtu.firesocialmedia.data.model.NewsInstance
 import com.minhtu.firesocialmedia.data.model.UserInstance
+import com.minhtu.firesocialmedia.di.AndroidPlatformContext
 import com.minhtu.firesocialmedia.di.PlatformContext
 import com.minhtu.firesocialmedia.presentation.comment.CommentViewModel
 import com.minhtu.firesocialmedia.presentation.forgotpassword.ForgotPasswordViewModel
@@ -60,7 +61,7 @@ import com.minhtu.firesocialmedia.utils.UiUtils.Companion.BottomNavigationBar
 @Composable
 actual fun SetUpNavigation(context: Any) {
     if(context is Activity) {
-        val platformContext = PlatformContext(context)
+        val platformContext = AndroidPlatformContext(context)
         val navController = rememberNavController()
         val androidNavigationHandler = remember { AndroidNavigationHandler(navController) }
         androidNavigationHandler.ObserveCurrentRoute()

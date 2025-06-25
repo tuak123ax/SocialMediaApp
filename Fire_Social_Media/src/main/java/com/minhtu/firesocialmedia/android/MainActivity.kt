@@ -1,6 +1,7 @@
 package com.minhtu.firesocialmedia.android
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.DownloadManager
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -63,6 +64,7 @@ class MainActivity : ComponentActivity() {
         unregisterReceiver(downloadReceiver)
     }
 
+    @SuppressLint("UnspecifiedRegisterReceiverFlag")
     private fun listenDownloadImageEvent() {
         if(downloadReceiver == null) {
             downloadReceiver = object : BroadcastReceiver() {

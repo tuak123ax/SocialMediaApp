@@ -12,6 +12,7 @@ import androidx.compose.ui.unit.dp
 import com.minhtu.firesocialmedia.data.model.UserInstance
 import com.russhwolf.settings.Settings
 import com.seiko.imageloader.ImageLoader
+import io.mockative.Mockable
 import kotlin.math.roundToInt
 
 expect fun showToast(message: String)
@@ -121,6 +122,7 @@ expect object MainApplication {
 @Composable
 expect fun SetUpNavigation(context : Any)
 
+@Mockable
 interface SignInLauncher {
     fun launchGoogleSignIn()
 }

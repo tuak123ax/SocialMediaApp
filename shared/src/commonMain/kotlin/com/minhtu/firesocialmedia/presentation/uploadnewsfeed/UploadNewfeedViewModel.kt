@@ -17,6 +17,7 @@ import com.minhtu.firesocialmedia.platform.sendMessageToServer
 import com.minhtu.firesocialmedia.utils.Utils
 import com.rickclephas.kmp.observableviewmodel.ViewModel
 import com.rickclephas.kmp.observableviewmodel.launch
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -24,8 +25,11 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
-class UploadNewfeedViewModel : ViewModel() {
+class UploadNewfeedViewModel(
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
+) : ViewModel() {
     var listUsers: ArrayList<UserInstance> = ArrayList()
     var currentUser : UserInstance? = null
     fun updateCurrentUser(user: UserInstance) {
@@ -72,50 +76,52 @@ class UploadNewfeedViewModel : ViewModel() {
     }
 
     fun createPost(user : UserInstance, platform: PlatformContext){
-        viewModelScope.launch(Dispatchers.IO) {
-            val newsRandomId = generateRandomId()
-            if(message.isNotEmpty() || image.isNotEmpty() || video.isNotEmpty()) {
-                //Save post to db
-                val newsInstance = NewsInstance(newsRandomId,user.uid, user.name,user.image,message,image,video)
-                newsInstance.timePosted = getCurrentTime()
-                platform.database.saveInstanceToDatabase(newsRandomId,
-                    Constants.NEWS_PATH,newsInstance,_createPostStatus)
+        viewModelScope.launch {
+            withContext(ioDispatcher) {
+                val newsRandomId = generateRandomId()
+                if(message.isNotEmpty() || image.isNotEmpty() || video.isNotEmpty()) {
+                    //Save post to db
+                    val newsInstance = NewsInstance(newsRandomId,user.uid, user.name,user.image,message,image,video)
+                    newsInstance.timePosted = getCurrentTime()
+                    platform.database.saveInstanceToDatabase(newsRandomId,
+                        Constants.NEWS_PATH,newsInstance,_createPostStatus)
 
-                //Create noti object
-                val notiContent = message
-                val notification = NotificationInstance(getRandomIdForNotification(),
-                    notiContent,currentUser!!.image,
-                    currentUser!!.uid,
-                    getCurrentTime(),
-                    NotificationType.UPLOAD_NEW,
-                    newsInstance.id)
-                //Send Notification
-                val friendTokens = getFriendTokens()
-                if(friendTokens.isNotEmpty()){
-                    if(notification.content.isNotEmpty()) {
-                        sendMessageToServer(createMessageForServer(notification.content, friendTokens, currentUser!!))
-                    } else {
-                        if(image.isNotEmpty()) {
-                            val content = "Posted a picture!"
-                            notification.updateContent(content)
-                            sendMessageToServer(createMessageForServer(content, friendTokens, currentUser!!))
+                    //Create noti object
+                    val notiContent = message
+                    val notification = NotificationInstance(getRandomIdForNotification(),
+                        notiContent,currentUser!!.image,
+                        currentUser!!.uid,
+                        getCurrentTime(),
+                        NotificationType.UPLOAD_NEW,
+                        newsInstance.id)
+                    //Send Notification
+                    val friendTokens = getFriendTokens()
+                    if(friendTokens.isNotEmpty()){
+                        if(notification.content.isNotEmpty()) {
+                            sendMessageToServer(createMessageForServer(notification.content, friendTokens, currentUser!!))
                         } else {
-                            if(video.isNotEmpty()) {
-                                val content = "Posted a video!"
+                            if(image.isNotEmpty()) {
+                                val content = "Posted a picture!"
                                 notification.updateContent(content)
                                 sendMessageToServer(createMessageForServer(content, friendTokens, currentUser!!))
+                            } else {
+                                if(video.isNotEmpty()) {
+                                    val content = "Posted a video!"
+                                    notification.updateContent(content)
+                                    sendMessageToServer(createMessageForServer(content, friendTokens, currentUser!!))
+                                }
                             }
                         }
                     }
-                }
 
-                //Save notification to db
-                for(friend in currentUser!!.friends) {
-                    val friendsOfCurrentUser = Utils.findUserById(friend, listUsers)
-                    Utils.saveNotification(notification, friendsOfCurrentUser!!, platform)
+                    //Save notification to db
+                    for(friend in currentUser!!.friends) {
+                        val friendsOfCurrentUser = Utils.findUserById(friend, listUsers)
+                        Utils.saveNotification(notification, friendsOfCurrentUser!!, platform)
+                    }
+                } else {
+                    _postError.value = Constants.POST_NEWS_EMPTY_ERROR
                 }
-            } else {
-                _postError.value = Constants.POST_NEWS_EMPTY_ERROR
             }
         }
     }
@@ -139,7 +145,7 @@ class UploadNewfeedViewModel : ViewModel() {
     }
 
     fun updateNewInformation(new: NewsInstance, platform: PlatformContext) {
-        val backgroundScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+        val backgroundScope = CoroutineScope(SupervisorJob() + ioDispatcher)
         backgroundScope.launch {
             if(message.isNotEmpty() || image.isNotEmpty() || video.isNotEmpty()) {
                 platform.database.updateNewsFromDatabase(Constants.NEWS_PATH,message,image, video,new,_updatePostStatus)

@@ -83,11 +83,14 @@ import com.minhtu.firesocialmedia.platform.VideoPlayer
 import com.minhtu.firesocialmedia.platform.convertTimeToDateString
 import com.minhtu.firesocialmedia.platform.generateImageLoader
 import com.minhtu.firesocialmedia.platform.logMessage
+import com.minhtu.firesocialmedia.presentation.home.Home
 import com.minhtu.firesocialmedia.presentation.home.HomeViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.friend.FriendViewModel
 import com.minhtu.firesocialmedia.presentation.search.SearchViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.Screen
+import com.minhtu.firesocialmedia.presentation.navigationscreen.friend.Friend
 import com.minhtu.firesocialmedia.presentation.navigationscreen.notification.Notification
+import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.Settings
 import com.seiko.imageloader.LocalImageLoader
 import com.seiko.imageloader.ui.AutoSizeImage
 import kotlinx.coroutines.delay
@@ -372,10 +375,18 @@ class UiUtils {
             ){
                 NavigationBar(containerColor = Color.White) {
                     val currentRoute = navHandler.getCurrentRoute()
-                    logMessage("currentRoute", currentRoute.toString())
                     items.forEach { screen ->
                         val notificationCount = homeViewModel.listNotificationOfCurrentUser.size
+
                         val showBadge = screen.route == Notification.getScreenName() && notificationCount > 0
+                        val testTag = when(screen.route) {
+                            Notification.getScreenName() -> TestTag.TAG_NOTIFICATION_BOTTOM
+                            Home.getScreenName() -> TestTag.TAG_HOME_BOTTOM
+                            Friend.getScreenName() -> TestTag.TAG_FRIEND_BOTTOM
+                            Settings.getScreenName() -> TestTag.TAG_SETTING_BOTTOM
+                            else -> ""
+                        }
+                        logMessage("testTag", testTag)
                         NavigationBarItem(
                             icon = {
                                 if(showBadge) {
@@ -394,7 +405,12 @@ class UiUtils {
                             selected = currentRoute == screen.route,
                             onClick = {
                                 navHandler.navigateTo(screen.route)
-                            }
+                            },
+                            modifier = Modifier
+                                .testTag(testTag)
+                                .semantics {
+                                    contentDescription = testTag
+                                }
                         )
                     }
                 }

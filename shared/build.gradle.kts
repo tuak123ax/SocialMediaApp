@@ -8,11 +8,15 @@ plugins {
 //    id("com.google.dagger.hilt.android") //  Added Hilt plugin
 //    id("org.jetbrains.kotlin.kapt")
     id("org.jetbrains.kotlin.plugin.compose")
+
+    id("org.jetbrains.kotlinx.kover")
+    id("io.mockative") version "3.0.1"
+    id("com.google.devtools.ksp") version "1.9.23-1.0.20"
 }
 
 kotlin {
     androidTarget()
-    jvmToolchain(17)  //  Use standard way to set Java 17
+    jvmToolchain(21)
 
     val iosX64 = iosX64()
     val iosArm64 = iosArm64()
@@ -65,7 +69,6 @@ kotlin {
         framework {
             baseName = "shared"
             isStatic = false
-//            export("org.jetbrains.compose.runtime:runtime:1.7.3")
         }
     }
 
@@ -95,6 +98,16 @@ kotlin {
 
             implementation("org.jetbrains.compose.material:material-icons-extended:1.5.10")
             implementation("com.russhwolf:multiplatform-settings:1.3.0")
+
+            implementation("org.javassist:javassist:3.29.2-GA")
+            implementation("org.objenesis:objenesis:3.3")
+        }
+        commonTest {
+            dependencies{
+                implementation(kotlin("test"))
+                implementation("io.mockative:mockative:3.0.1")
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
+            }
         }
         androidMain.dependencies {
             implementation(libs.compose.ui)
@@ -148,6 +161,13 @@ kotlin {
             implementation("androidx.media3:media3-exoplayer:1.7.1")
             implementation("androidx.media3:media3-ui:1.7.1")
         }
+
+        androidUnitTest.dependencies {
+            implementation("io.mockk:mockk:1.14.2")
+            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
+            implementation("junit:junit:4.13.2")
+        }
+
         iosMain.dependencies {
             api(compose.runtime)
             implementation(compose.foundation)
@@ -162,6 +182,14 @@ kotlin {
             implementation("io.ktor:ktor-client-logging:$ktorVersion") // Optional for logs
         }
     }
+}
+
+ksp {
+    arg("mockative.generateMocksForDefaultArguments", "true")
+}
+
+dependencies {
+    add("kspCommonMainMetadata", "io.mockative:mockative-processor:3.0.1")
 }
 
 android {

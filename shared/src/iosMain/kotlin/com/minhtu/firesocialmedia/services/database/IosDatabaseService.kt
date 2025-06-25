@@ -12,8 +12,9 @@ import com.minhtu.firesocialmedia.data.model.CommentInstance
 import com.minhtu.firesocialmedia.data.model.NewsInstance
 import com.minhtu.firesocialmedia.data.model.NotificationInstance
 import com.minhtu.firesocialmedia.data.model.UserInstance
+import com.minhtu.firesocialmedia.data.model.fromMap
+import com.minhtu.firesocialmedia.data.model.toMap
 import com.minhtu.firesocialmedia.di.DatabaseService
-import com.minhtu.firesocialmedia.instance.fromMap
 import com.minhtu.firesocialmedia.platform.logMessage
 import com.minhtu.firesocialmedia.platform.toNSData
 import com.minhtu.firesocialmedia.services.crypto.IosCryptoHelper
@@ -43,7 +44,8 @@ class IosDatabaseService() : DatabaseService{
         id: String,
         path: String,
         value: HashMap<String, Int>,
-        externalPath: String
+        externalPath: String,
+        callback : Utils.Companion.BasicCallBack
     ) {
         IosDatabaseHelper.saveValueToDatabase(id,
             path, value, externalPath)
@@ -280,7 +282,7 @@ class IosDatabaseService() : DatabaseService{
     @OptIn(ExperimentalEncodingApi::class)
     override suspend fun saveSignUpInformation(
         user: UserInstance,
-        addInformationStatus: MutableStateFlow<Boolean?>
+        callBack: Utils.Companion.SaveSignUpInformationCallBack
     ) {
         val storageReference: FIRStorageReference = FIRStorage.storage().reference().child("avatar").child(user.uid)
         val databaseReference: FIRDatabaseReference = FIRDatabase.database().reference().child("users").child(user.uid)
@@ -311,10 +313,10 @@ class IosDatabaseService() : DatabaseService{
                 }
             }
 
-            addInformationStatus.value = true
+            callBack.onSuccess()
         } catch (e: Exception) {
             e.printStackTrace()
-            addInformationStatus.value = false
+            callBack.onFailure()
         }
     }
 

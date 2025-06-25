@@ -7,17 +7,12 @@ import com.minhtu.firesocialmedia.services.crypto.AndroidCryptoService
 import com.minhtu.firesocialmedia.services.database.AndroidDatabaseService
 import com.minhtu.firesocialmedia.services.firebase.AndroidFirebaseService
 
-actual class PlatformContext(
-    context: Context
-) {
-    actual val auth: AuthService = AndroidAuthService(context)
-    actual val firebase: FirebaseService = AndroidFirebaseService()
-    actual val crypto: CryptoService = AndroidCryptoService(context)
-    actual val database: DatabaseService = AndroidDatabaseService(context)
-    actual val clipboard : ClipboardService = AndroidClipboardService(context)
-}
-
-private lateinit var appContext: Context
-fun initPlatformContext(context: Context) {
-    appContext = context.applicationContext
+class AndroidPlatformContext(
+    context : Context
+) : PlatformContext {
+    override val auth: AuthService = AndroidAuthService(context)
+    override val firebase: FirebaseService = AndroidFirebaseService()
+    override val crypto: CryptoService = AndroidCryptoService(context)
+    override val database: DatabaseService = AndroidDatabaseService(context)
+    override val clipboard : ClipboardService = AndroidClipboardService(context)
 }

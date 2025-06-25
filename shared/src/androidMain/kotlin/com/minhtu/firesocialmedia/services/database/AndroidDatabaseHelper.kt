@@ -13,6 +13,7 @@ import com.minhtu.firesocialmedia.data.model.BaseNewsInstance
 import com.minhtu.firesocialmedia.data.model.CommentInstance
 import com.minhtu.firesocialmedia.data.model.NewsInstance
 import com.minhtu.firesocialmedia.data.model.NotificationInstance
+import com.minhtu.firesocialmedia.utils.Utils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.withContext
@@ -62,7 +63,8 @@ class AndroidDatabaseHelper {
         fun saveValueToDatabase(id : String,
                                 path : String,
                                 value : HashMap<String, Int>,
-                                externalPath : String) {
+                                externalPath : String,
+                                callback : Utils.Companion.BasicCallBack) {
             Log.d("Task", "saveValueToDatabase")
             var databaseReference = FirebaseDatabase.getInstance().getReference()
                 .child(path).child(id)
@@ -70,9 +72,21 @@ class AndroidDatabaseHelper {
                 databaseReference = databaseReference.child(externalPath)
             }
             if(value.isNotEmpty()){
-                databaseReference.setValue(value)
+                databaseReference.setValue(value).addOnCompleteListener { task ->
+                    if(task.isSuccessful) {
+                        callback.onSuccess()
+                    } else {
+                        callback.onFailure()
+                    }
+                }
             } else {
-                databaseReference.removeValue()
+                databaseReference.removeValue().addOnCompleteListener { task ->
+                    if(task.isSuccessful) {
+                        callback.onSuccess()
+                    } else {
+                        callback.onFailure()
+                    }
+                }
             }
             Log.d("Task", "Finish saving Value To Database")
         }
@@ -111,9 +125,9 @@ class AndroidDatabaseHelper {
         }
 
         fun updateCountValueInDatabase(id : String,
-                                path : String,
-                                externalPath : String, value : Int) {
-            Log.d("Task", "updateCountValueInDatabase:" + value)
+                                       path : String,
+                                       externalPath : String, value : Int) {
+            Log.d("Task", "updateCountValueInDatabase:$value")
             var databaseReference = FirebaseDatabase.getInstance().getReference()
                 .child(path).child(id)
             if(externalPath.isNotEmpty()) {
