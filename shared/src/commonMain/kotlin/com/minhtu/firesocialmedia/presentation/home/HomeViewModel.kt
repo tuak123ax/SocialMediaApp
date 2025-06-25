@@ -15,6 +15,7 @@ import com.minhtu.firesocialmedia.di.PlatformContext
 import com.minhtu.firesocialmedia.platform.createMessageForServer
 import com.minhtu.firesocialmedia.platform.getCurrentTime
 import com.minhtu.firesocialmedia.platform.getRandomIdForNotification
+import com.minhtu.firesocialmedia.platform.logMessage
 import com.minhtu.firesocialmedia.platform.sendMessageToServer
 import com.minhtu.firesocialmedia.utils.Utils
 import com.minhtu.firesocialmedia.utils.Utils.Companion.GetNewCallback
@@ -228,7 +229,6 @@ class HomeViewModel(
                 override fun onFailure() {
                     saveLikeDataStatus.value = false
                 }
-
             })
         try{
             for(likedNew in likeCache.keys) {

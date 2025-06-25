@@ -1,7 +1,9 @@
 package com.minhtu.firesocialmedia
 
 import com.minhtu.firesocialmedia.constants.Constants
-import com.minhtu.firesocialmedia.forgotpassword.ForgotPasswordViewModel
+import com.minhtu.firesocialmedia.di.AuthServiceMock
+import com.minhtu.firesocialmedia.di.PlatformContextMock
+import com.minhtu.firesocialmedia.presentation.forgotpassword.ForgotPasswordViewModel
 import com.minhtu.firesocialmedia.utils.Utils
 import io.mockative.any
 import io.mockative.eq

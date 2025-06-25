@@ -1,10 +1,13 @@
 package com.minhtu.firesocialmedia
 
 import com.minhtu.firesocialmedia.constants.Constants
-import com.minhtu.firesocialmedia.home.HomeViewModel
-import com.minhtu.firesocialmedia.instance.NewsInstance
-import com.minhtu.firesocialmedia.instance.NotificationInstance
-import com.minhtu.firesocialmedia.instance.UserInstance
+import com.minhtu.firesocialmedia.data.model.NewsInstance
+import com.minhtu.firesocialmedia.data.model.NotificationInstance
+import com.minhtu.firesocialmedia.data.model.UserInstance
+import com.minhtu.firesocialmedia.di.AuthServiceMock
+import com.minhtu.firesocialmedia.di.DatabaseServiceMock
+import com.minhtu.firesocialmedia.di.PlatformContextMock
+import com.minhtu.firesocialmedia.presentation.home.HomeViewModel
 import com.minhtu.firesocialmedia.utils.Utils.Companion.GetNewCallback
 import com.minhtu.firesocialmedia.utils.Utils.Companion.GetNotificationCallback
 import com.minhtu.firesocialmedia.utils.Utils.Companion.GetUserCallback
@@ -187,7 +190,4 @@ class HomeViewModelTest {
         val getAllNotifications = homeViewModel.getAllNotificationsOfCurrentUser.value
         assertEquals(false, getAllNotifications)
     }
-
-    @Test
-    fun `test click like button`
 }

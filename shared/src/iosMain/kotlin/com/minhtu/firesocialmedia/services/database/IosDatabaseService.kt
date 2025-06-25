@@ -12,8 +12,9 @@ import com.minhtu.firesocialmedia.data.model.CommentInstance
 import com.minhtu.firesocialmedia.data.model.NewsInstance
 import com.minhtu.firesocialmedia.data.model.NotificationInstance
 import com.minhtu.firesocialmedia.data.model.UserInstance
+import com.minhtu.firesocialmedia.data.model.fromMap
+import com.minhtu.firesocialmedia.data.model.toMap
 import com.minhtu.firesocialmedia.di.DatabaseService
-import com.minhtu.firesocialmedia.instance.fromMap
 import com.minhtu.firesocialmedia.platform.logMessage
 import com.minhtu.firesocialmedia.platform.toNSData
 import com.minhtu.firesocialmedia.services.crypto.IosCryptoHelper
@@ -43,7 +44,8 @@ class IosDatabaseService() : DatabaseService{
         id: String,
         path: String,
         value: HashMap<String, Int>,
-        externalPath: String
+        externalPath: String,
+        callback : Utils.Companion.BasicCallBack
     ) {
         IosDatabaseHelper.saveValueToDatabase(id,
             path, value, externalPath)

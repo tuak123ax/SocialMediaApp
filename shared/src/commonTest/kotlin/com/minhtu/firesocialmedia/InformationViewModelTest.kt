@@ -1,22 +1,27 @@
 package com.minhtu.firesocialmedia
 
-import com.minhtu.firesocialmedia.information.InformationViewModel
-import com.minhtu.firesocialmedia.instance.UserInstance
+import com.minhtu.firesocialmedia.data.model.UserInstance
+import com.minhtu.firesocialmedia.di.AuthServiceMock
+import com.minhtu.firesocialmedia.di.CryptoServiceMock
+import com.minhtu.firesocialmedia.di.DatabaseServiceMock
+import com.minhtu.firesocialmedia.di.FirebaseServiceMock
+import com.minhtu.firesocialmedia.di.PlatformContextMock
+import com.minhtu.firesocialmedia.presentation.information.InformationViewModel
 import com.minhtu.firesocialmedia.utils.Utils
+import io.mockative.any
 import io.mockative.coEvery
 import io.mockative.eq
 import io.mockative.every
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
-import io.mockative.any
-import kotlinx.coroutines.test.advanceUntilIdle
 import kotlin.test.assertEquals
 
 @OptIn(ExperimentalCoroutinesApi::class)

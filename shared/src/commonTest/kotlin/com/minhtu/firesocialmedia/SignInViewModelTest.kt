@@ -1,21 +1,33 @@
 package com.minhtu.firesocialmedia
 
 import com.minhtu.firesocialmedia.constants.Constants
-import com.minhtu.firesocialmedia.signin.SignInState
-import com.minhtu.firesocialmedia.signin.SignInViewModel
+import com.minhtu.firesocialmedia.di.AuthServiceMock
+import com.minhtu.firesocialmedia.di.Credentials
+import com.minhtu.firesocialmedia.di.CryptoServiceMock
+import com.minhtu.firesocialmedia.di.DatabaseServiceMock
+import com.minhtu.firesocialmedia.di.FirebaseServiceMock
+import com.minhtu.firesocialmedia.di.PlatformContextMock
+import com.minhtu.firesocialmedia.platform.SignInLauncherMock
+import com.minhtu.firesocialmedia.presentation.signin.SignInState
+import com.minhtu.firesocialmedia.presentation.signin.SignInViewModel
 import com.minhtu.firesocialmedia.utils.Utils
+import io.mockative.any
 import io.mockative.coEvery
+import io.mockative.eq
 import io.mockative.every
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.test.*
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import io.mockative.any
-import io.mockative.eq
 
+@Suppress("UNCHECKED_CAST")
 @OptIn(ExperimentalCoroutinesApi::class)
 class SignInViewModelTest {
 

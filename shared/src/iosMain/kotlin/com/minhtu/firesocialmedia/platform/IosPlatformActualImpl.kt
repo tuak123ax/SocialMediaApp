@@ -163,14 +163,6 @@ actual fun showToast(message: String) {
     ToastController.show(message)
 }
 
-open class IosPlatformContext(
-) : PlatformContext {
-    override val auth: AuthService = IosAuthService()
-    override val firebase: FirebaseService = IosFirebaseService()
-    override val crypto: CryptoService = IosCryptoService()
-    override val database: DatabaseService = IosDatabaseService()
-    override val clipboard : ClipboardService = IosClipboardService()
-}
 @Composable
 actual fun getIconPainter(icon: String): Painter? {
     return null // iOS will use the composable fallback instead

@@ -61,16 +61,6 @@ import java.util.Date
 import java.util.UUID
 import androidx.activity.compose.BackHandler as AndroidBackHandler
 
-class AndroidPlatformContext(
-    context: Context
-) : PlatformContext {
-    override val auth: AuthService = AndroidAuthService(context)
-    override val firebase: FirebaseService = AndroidFirebaseService()
-    override val crypto: CryptoService = AndroidCryptoService(context)
-    override val database: DatabaseService = AndroidDatabaseService(context)
-    override val clipboard : ClipboardService = AndroidClipboardService(context)
-}
-
 private lateinit var appContext: Context
 fun initPlatformContext(context: Context) {
     appContext = context.applicationContext

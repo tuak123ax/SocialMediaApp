@@ -26,6 +26,7 @@ import com.google.android.gms.auth.api.identity.Identity
 import com.minhtu.firesocialmedia.constants.Constants
 import com.minhtu.firesocialmedia.data.model.NewsInstance
 import com.minhtu.firesocialmedia.data.model.UserInstance
+import com.minhtu.firesocialmedia.di.AndroidPlatformContext
 import com.minhtu.firesocialmedia.di.PlatformContext
 import com.minhtu.firesocialmedia.presentation.comment.CommentViewModel
 import com.minhtu.firesocialmedia.presentation.forgotpassword.ForgotPasswordViewModel

@@ -1,7 +1,9 @@
 package com.minhtu.firesocialmedia
 
 import com.minhtu.firesocialmedia.constants.Constants
-import com.minhtu.firesocialmedia.signup.SignUpViewModel
+import com.minhtu.firesocialmedia.di.AuthServiceMock
+import com.minhtu.firesocialmedia.di.PlatformContextMock
+import com.minhtu.firesocialmedia.presentation.signup.SignUpViewModel
 import io.mockative.coEvery
 import io.mockative.every
 import kotlinx.coroutines.Dispatchers

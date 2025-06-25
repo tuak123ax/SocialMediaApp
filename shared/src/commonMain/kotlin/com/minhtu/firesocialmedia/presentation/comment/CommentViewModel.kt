@@ -201,10 +201,24 @@ class CommentViewModel(
         }
     }
 
+    val sendLikeDataStatus = mutableStateOf(false)
     private suspend fun sendLikeUpdatesToFirebase(likeCountList : HashMap<String,Int>, selectedNew : NewsInstance, currentUser : UserInstance, platform: PlatformContext) {
         currentUser.likedComments = likeCache
-        platform.database.saveValueToDatabase(currentUser.uid,
-            Constants.USER_PATH, likeCache, Constants.LIKED_COMMENT_PATH)
+        platform.database.saveValueToDatabase(
+            currentUser.uid,
+            Constants.USER_PATH,
+            likeCache,
+            Constants.LIKED_COMMENT_PATH,
+            object : Utils.Companion.BasicCallBack{
+                override fun onSuccess() {
+                    sendLikeDataStatus.value = true
+                }
+
+                override fun onFailure() {
+                    sendLikeDataStatus.value = false
+                }
+            }
+            )
         val listCommentId = listComments.map { it.id}
         for(likedComment in likeCache.keys) {
             if(likeCountList[likedComment] != null) {

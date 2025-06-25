@@ -16,7 +16,7 @@ plugins {
 
 kotlin {
     androidTarget()
-    jvmToolchain(21)  //  Use standard way to set Java 17
+    jvmToolchain(21)
 
     val iosX64 = iosX64()
     val iosArm64 = iosArm64()
@@ -103,7 +103,6 @@ kotlin {
             implementation("org.objenesis:objenesis:3.3")
         }
         commonTest {
-            kotlin.srcDir("build/generated/ksp/metadata/commonMain/kotlin")
             dependencies{
                 implementation(kotlin("test"))
                 implementation("io.mockative:mockative:3.0.1")
