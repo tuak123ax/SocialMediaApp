@@ -9,11 +9,10 @@ import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.GenericTypeIndicator
 import com.google.firebase.storage.FirebaseStorage
 import com.minhtu.firesocialmedia.constants.Constants
-import com.minhtu.firesocialmedia.instance.BaseNewsInstance
-import com.minhtu.firesocialmedia.instance.CommentInstance
-import com.minhtu.firesocialmedia.instance.NewsInstance
-import com.minhtu.firesocialmedia.instance.NotificationInstance
-import com.minhtu.firesocialmedia.utils.Utils
+import com.minhtu.firesocialmedia.data.model.BaseNewsInstance
+import com.minhtu.firesocialmedia.data.model.CommentInstance
+import com.minhtu.firesocialmedia.data.model.NewsInstance
+import com.minhtu.firesocialmedia.data.model.NotificationInstance
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.withContext

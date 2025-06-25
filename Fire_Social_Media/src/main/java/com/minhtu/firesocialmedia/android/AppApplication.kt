@@ -5,7 +5,7 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.os.Build
 import com.minhtu.firesocialmedia.constants.Constants
-import com.minhtu.firesocialmedia.initPlatformContext
+import com.minhtu.firesocialmedia.platform.initPlatformContext
 
 class AppApplication : Application() {
     override fun onCreate() {

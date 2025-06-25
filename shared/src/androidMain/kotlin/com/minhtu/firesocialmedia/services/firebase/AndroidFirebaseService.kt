@@ -6,10 +6,10 @@ import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
-import com.minhtu.firesocialmedia.FirebaseService
 import com.minhtu.firesocialmedia.constants.Constants
-import com.minhtu.firesocialmedia.instance.UserInstance
-import com.minhtu.firesocialmedia.signin.SignInState
+import com.minhtu.firesocialmedia.data.model.UserInstance
+import com.minhtu.firesocialmedia.di.FirebaseService
+import com.minhtu.firesocialmedia.presentation.signin.SignInState
 
 class AndroidFirebaseService : FirebaseService {
     override fun checkUserExists(email: String, callback: (SignInState) -> Unit) {

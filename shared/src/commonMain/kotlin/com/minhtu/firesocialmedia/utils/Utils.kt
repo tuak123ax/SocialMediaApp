@@ -1,14 +1,14 @@
 package com.minhtu.firesocialmedia.utils
 
 import androidx.compose.ui.graphics.Color
-import com.minhtu.firesocialmedia.PlatformContext
 import com.minhtu.firesocialmedia.constants.Constants
-import com.minhtu.firesocialmedia.home.HomeViewModel
-import com.minhtu.firesocialmedia.home.comment.CommentViewModel
-import com.minhtu.firesocialmedia.instance.CommentInstance
-import com.minhtu.firesocialmedia.instance.NewsInstance
-import com.minhtu.firesocialmedia.instance.NotificationInstance
-import com.minhtu.firesocialmedia.instance.UserInstance
+import com.minhtu.firesocialmedia.data.model.CommentInstance
+import com.minhtu.firesocialmedia.data.model.NewsInstance
+import com.minhtu.firesocialmedia.data.model.NotificationInstance
+import com.minhtu.firesocialmedia.data.model.UserInstance
+import com.minhtu.firesocialmedia.di.PlatformContext
+import com.minhtu.firesocialmedia.presentation.comment.CommentViewModel
+import com.minhtu.firesocialmedia.presentation.home.HomeViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO

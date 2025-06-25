@@ -5,4 +5,4 @@
 # For more details, see
 #   http://developer.android.com/guide/developing/tools/proguard.html
 
--keep class com.minhtu.firesocialmedia.instance.** { *; }
+-keep class com.minhtu.firesocialmedia.data.model.** { *; }

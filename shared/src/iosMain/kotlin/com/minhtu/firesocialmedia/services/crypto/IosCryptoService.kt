@@ -1,8 +1,8 @@
 package com.minhtu.firesocialmedia.services.crypto
 
-import com.minhtu.firesocialmedia.Credentials
-import com.minhtu.firesocialmedia.CryptoService
 import com.minhtu.firesocialmedia.constants.Constants
+import com.minhtu.firesocialmedia.di.Credentials
+import com.minhtu.firesocialmedia.di.CryptoService
 
 class IosCryptoService() : CryptoService{
     override fun saveAccount(email: String, password: String) {

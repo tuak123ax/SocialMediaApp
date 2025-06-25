@@ -12,9 +12,9 @@ import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import com.google.gson.Gson
 import com.minhtu.firesocialmedia.R
-import com.minhtu.firesocialmedia.TokenStorage.updateTokenInStorage
+import com.minhtu.firesocialmedia.platform.TokenStorage.updateTokenInStorage
 import com.minhtu.firesocialmedia.constants.Constants
-import com.minhtu.firesocialmedia.instance.UserInstance
+import com.minhtu.firesocialmedia.data.model.UserInstance
 import java.io.IOException
 import java.net.URL
 

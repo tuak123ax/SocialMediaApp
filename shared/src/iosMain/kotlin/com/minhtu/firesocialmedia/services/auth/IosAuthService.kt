@@ -1,11 +1,11 @@
 package com.minhtu.firesocialmedia.services.auth
 
-import com.minhtu.firesocialmedia.AuthService
-import com.minhtu.firesocialmedia.constants.Constants
-import com.minhtu.firesocialmedia.error.SignInError
-import kotlinx.coroutines.flow.MutableStateFlow
 import cocoapods.FirebaseAuth.FIRAuth
+import com.minhtu.firesocialmedia.constants.Constants
+import com.minhtu.firesocialmedia.di.AuthService
+import com.minhtu.firesocialmedia.presentation.signin.SignInError
 import com.minhtu.firesocialmedia.utils.Utils
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.suspendCancellableCoroutine
 
 class IosAuthService() : AuthService{
