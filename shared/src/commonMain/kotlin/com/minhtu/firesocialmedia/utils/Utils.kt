@@ -7,11 +7,14 @@ import com.minhtu.firesocialmedia.data.model.NewsInstance
 import com.minhtu.firesocialmedia.data.model.NotificationInstance
 import com.minhtu.firesocialmedia.data.model.UserInstance
 import com.minhtu.firesocialmedia.di.PlatformContext
+import com.minhtu.firesocialmedia.presentation.calling.audiocall.CallType
+import com.minhtu.firesocialmedia.presentation.calling.audiocall.CallingViewModel
 import com.minhtu.firesocialmedia.presentation.comment.CommentViewModel
 import com.minhtu.firesocialmedia.presentation.home.HomeViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class Utils {
@@ -94,6 +97,30 @@ class Utils {
             } catch(e: Exception) {
             }
         }
+
+        fun getCallTypeFromSdp(sdp: String?): CallType {
+            return when {
+                sdp == null -> CallType.UNKNOWN
+                sdp.contains("m=video") -> CallType.VIDEO
+                sdp.contains("m=audio") -> CallType.AUDIO
+                else -> CallType.UNKNOWN
+            }
+        }
+
+        fun stopCallAction(callingViewModel: CallingViewModel,
+                           coroutineScope : CoroutineScope,
+                           navHandler : NavigationHandler,
+                           onStopCall : () -> Unit,
+                           platform : PlatformContext
+        ) {
+            callingViewModel.stopCall(platform)
+            coroutineScope.launch {
+                delay(2000L)
+                navHandler.navigateBack()
+                onStopCall()
+            }
+        }
+
         interface GetUserCallback{
             fun onSuccess(users : List<UserInstance>)
             fun onFailure()

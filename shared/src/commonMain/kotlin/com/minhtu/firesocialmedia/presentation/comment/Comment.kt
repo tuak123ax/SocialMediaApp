@@ -371,6 +371,7 @@ class Comment {
                                 color = if (isLiked) "#00FFFF" else "#FFFFFF",
                                 contentDescription = TestTag.Companion.TAG_BUTTON_LIKE,
                                 modifier = Modifier.Companion
+                                    .size(20.dp)
                                     .testTag(TestTag.Companion.TAG_BUTTON_LIKE)
                                     .semantics {
                                         contentDescription = TestTag.Companion.TAG_BUTTON_LIKE
@@ -393,6 +394,7 @@ class Comment {
                                     color = "#FFFFFF",
                                     contentDescription = TestTag.Companion.TAG_BUTTON_COMMENT,
                                     modifier = Modifier.Companion
+                                        .size(20.dp)
                                         .testTag(TestTag.Companion.TAG_BUTTON_COMMENT)
                                         .semantics {
                                             contentDescription =

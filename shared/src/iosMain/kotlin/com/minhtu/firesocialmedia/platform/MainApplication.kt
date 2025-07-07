@@ -7,6 +7,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.window.ComposeUIViewController
+import com.minhtu.firesocialmedia.di.IosPlatformContext
+import com.minhtu.firesocialmedia.di.PlatformContext
 import kotlinx.cinterop.BetaInteropApi
 import kotlinx.cinterop.ExportObjCClass
 import kotlinx.cinterop.useContents
@@ -31,7 +33,7 @@ import platform.UIKit.*
 
 actual object MainApplication {
     @Composable
-    actual fun MainApp(context: Any) {
+    actual fun MainApp(context: Any, platformContext : PlatformContext) {
         val controller = context as? UIViewController
 
         Box(
@@ -47,7 +49,7 @@ actual object MainApplication {
                     } else Modifier
                 )
         ) {
-            SetUpNavigation(context)
+            SetUpNavigation(context, platformContext)
             ToastHost()
         }
     }
@@ -78,7 +80,7 @@ class MainAppViewController(val context: Any) : UIViewController(nibName = null,
         }
 
         val composeVC = ComposeUIViewController {
-            MainApplication.MainApp(this@MainAppViewController)
+            MainApplication.MainApp(this@MainAppViewController, IosPlatformContext())
         }
 
         addChildViewController(composeVC)

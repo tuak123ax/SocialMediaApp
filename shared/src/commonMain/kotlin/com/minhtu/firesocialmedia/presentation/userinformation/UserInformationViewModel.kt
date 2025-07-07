@@ -159,4 +159,14 @@ class UserInformationViewModel(
             Relationship.WAITING_RESPONSE -> "Waiting Response"
         }
     }
+
+    fun checkCalleeAvailable(callee : UserInstance, platform: PlatformContext, onResult: (Boolean) -> Unit){
+        viewModelScope.launch {
+            withContext(ioDispatcher) {
+                platform.database.isCalleeInActiveCall(callee.uid,
+                    Constants.CALL_PATH,
+                    onResult)
+            }
+        }
+    }
 }

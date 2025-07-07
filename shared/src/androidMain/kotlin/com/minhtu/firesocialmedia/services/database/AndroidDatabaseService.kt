@@ -13,6 +13,9 @@ import com.minhtu.firesocialmedia.data.model.CommentInstance
 import com.minhtu.firesocialmedia.data.model.NewsInstance
 import com.minhtu.firesocialmedia.data.model.NotificationInstance
 import com.minhtu.firesocialmedia.data.model.UserInstance
+import com.minhtu.firesocialmedia.data.model.call.AudioCallSession
+import com.minhtu.firesocialmedia.data.model.call.IceCandidateData
+import com.minhtu.firesocialmedia.data.model.call.OfferAnswer
 import com.minhtu.firesocialmedia.di.DatabaseService
 import com.minhtu.firesocialmedia.services.crypto.AndroidCryptoHelper
 import com.minhtu.firesocialmedia.utils.Utils
@@ -272,5 +275,136 @@ class AndroidDatabaseService(private val context: Context) : DatabaseService{
         AndroidDatabaseHelper.deleteNotificationFromDatabase(id, path, notification)
     }
 
+    override fun sendOfferToFireBase(
+        sessionId : String,
+        offer : OfferAnswer,
+        callPath : String,
+        sendOfferCallBack : Utils.Companion.BasicCallBack) {
+        AndroidDatabaseHelper.sendOfferToFireBase(
+            sessionId,
+            offer,
+            callPath,
+            sendOfferCallBack
+        )
+    }
 
+    override fun sendIceCandidateToFireBase(
+        sessionId : String,
+        iceCandidate: IceCandidateData,
+        whichCandidate : String,
+        callPath : String,
+        sendIceCandidateCallBack : Utils.Companion.BasicCallBack) {
+        AndroidDatabaseHelper.sendIceCandidateToFireBase(
+            sessionId,
+            iceCandidate,
+            whichCandidate,
+            callPath,
+            sendIceCandidateCallBack)
+    }
+
+    override fun sendCallSessionToFirebase(session: AudioCallSession,
+                                           callPath : String,
+                                           sendCallSessionCallBack : Utils.Companion.BasicCallBack) {
+        AndroidDatabaseHelper.sendCallSessionToFirebase(session, callPath, sendCallSessionCallBack)
+    }
+
+    override fun deleteCallSession(
+        sessionId: String,
+        callPath: String,
+        deleteCallBack: Utils.Companion.BasicCallBack
+    ) {
+        AndroidDatabaseHelper.deleteCallSession(sessionId, callPath, deleteCallBack)
+    }
+
+    override fun observePhoneCall(
+        isInCall : MutableStateFlow<Boolean>,
+        currentUserId: String,
+        callPath: String,
+        phoneCallCallBack : (String, String, String, OfferAnswer) -> Unit,
+        endCallSession: (Boolean) -> Unit,
+        iceCandidateCallBack : (iceCandidates : Map<String, IceCandidateData>?) -> Unit) {
+        AndroidDatabaseHelper.observePhoneCall(
+            isInCall,
+            currentUserId,
+            callPath,
+            phoneCallCallBack,
+            endCallSession,
+            iceCandidateCallBack)
+    }
+
+    override fun sendAnswerToFirebase(
+        sessionId: String,
+        answer: OfferAnswer,
+        callPath: String,
+        sendAnswerCallBack: Utils.Companion.BasicCallBack
+    ) {
+        AndroidDatabaseHelper.sendAnswerToFireBase(
+            sessionId,
+            answer,
+            callPath,
+            sendAnswerCallBack
+        )
+    }
+
+    override fun isCalleeInActiveCall(
+        calleeId: String,
+        callPath: String,
+        onResult: (Boolean) -> Unit
+    ) {
+        val ref = FirebaseDatabase.getInstance().getReference(callPath)
+
+        ref.get().addOnSuccessListener { snapshot ->
+            var isBusy = false
+            for (session in snapshot.children) {
+                val sessionCalleeId = session.child("calleeId").getValue(String::class.java)
+                val sessionCallerId = session.child("callerId").getValue(String::class.java)
+                if (sessionCalleeId == calleeId || sessionCallerId == calleeId) {
+                    isBusy = true
+                    break
+                }
+            }
+            onResult(isBusy)
+        }.addOnFailureListener {
+            onResult(false)
+        }
+    }
+
+    override fun observeAnswerFromCallee(
+        sessionId: String,
+        callPath: String,
+        answerCallBack: (answer : OfferAnswer) -> Unit
+    ) {
+        AndroidDatabaseHelper.observeAnswerFromCallee(
+            sessionId,
+            callPath,
+            answerCallBack)
+    }
+
+    override fun cancelObserveAnswerFromCallee(sessionId: String, callPath: String) {
+        AndroidDatabaseHelper.cancelObserveAnswerFromCallee(
+            sessionId,
+            callPath)
+    }
+
+    override fun observeIceCandidatesFromCallee(
+        sessionId: String,
+        callPath: String,
+        iceCandidateCallBack: (iceCandidate : IceCandidateData) -> Unit
+    ) {
+        AndroidDatabaseHelper.observeIceCandidatesFromCallee(
+            sessionId,
+            callPath,
+            iceCandidateCallBack)
+    }
+
+    override fun observeVideoCall(
+        sessionId: String,
+        callPath: String,
+        videoCallCallBack: (offer : OfferAnswer) -> Unit
+    ) {
+        AndroidDatabaseHelper.observeVideoCall(
+            sessionId,
+            callPath,
+            videoCallCallBack)
+    }
 }

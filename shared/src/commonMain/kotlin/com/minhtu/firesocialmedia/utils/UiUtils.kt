@@ -361,6 +361,43 @@ class UiUtils {
             }
         }
 
+        @Composable
+        fun ShowBasicAlertDialog(
+            title : String,
+            text : String,
+            onClickConfirm: () -> Unit,
+            onClickReject: () -> Unit,
+            showDialog: MutableState<Boolean>
+        ) {
+            CommonBackHandler {
+                showDialog.value = true
+            }
+
+            if (showDialog.value) {
+                AlertDialog(
+                    onDismissRequest = { showDialog.value = false },
+                    title = { Text(title) },
+                    text = { Text(text) },
+                    confirmButton = {
+                        Button(onClick = {
+                            onClickConfirm()
+                            showDialog.value = false
+                        }) {
+                            Text("Yes")
+                        }
+                    },
+                    dismissButton = {
+                        Button(onClick = {
+                            showDialog.value = false
+                            onClickReject()
+                        }) {
+                            Text("No")
+                        }
+                    }
+                )
+            }
+        }
+
 
         @Composable
         fun BottomNavigationBar(navHandler: NavigationHandler, homeViewModel: HomeViewModel, onNavigateToUploadNews: () -> Unit, modifier: Modifier) {
@@ -386,7 +423,6 @@ class UiUtils {
                             Settings.getScreenName() -> TestTag.TAG_SETTING_BOTTOM
                             else -> ""
                         }
-                        logMessage("testTag", testTag)
                         NavigationBarItem(
                             icon = {
                                 if(showBadge) {

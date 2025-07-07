@@ -59,6 +59,9 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import com.minhtu.firesocialmedia.data.model.call.OfferAnswer
+import com.minhtu.firesocialmedia.platform.logMessage
+import com.minhtu.firesocialmedia.utils.NavigationHandler
 
 class Home {
     companion object{
@@ -73,7 +76,9 @@ class Home {
                        onNavigateToSearch: () -> Unit,
                        onNavigateToSignIn: () -> Unit,
                        onNavigateToUserInformation: (user: UserInstance?) -> Unit,
-                       onNavigateToCommentScreen: (selectedNew : NewsInstance) -> Unit){
+                       onNavigateToCommentScreen: (selectedNew : NewsInstance) -> Unit,
+                       onNavigateToCallingScreen : (sessionId : String, caller : String, callee : String, offer: OfferAnswer, ) -> Unit,
+                       navHandler : NavigationHandler){
             val isLoading by loadingViewModel.isLoading.collectAsState()
             val commentStatus by homeViewModel.commentStatus.collectAsState()
 
@@ -119,6 +124,19 @@ class Home {
                 commentStatus?.let { selectedNew ->
                     onNavigateToCommentScreen(selectedNew)
                     homeViewModel.resetCommentStatus()
+                }
+            }
+
+            val getAllUserStatus by homeViewModel.getAllUsersStatus
+            LaunchedEffect(getAllUserStatus) {
+                if(getAllUserStatus) {
+                    logMessage("observePhoneCall", "start observe phone call")
+                    homeViewModel.observePhoneCall(
+                        platform,
+                        onNavigateToCallingScreen,
+                        onNavigateBack = {
+                            navHandler.navigateBack()
+                        })
                 }
             }
 

@@ -19,7 +19,7 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Message
+import androidx.compose.material.icons.filled.Call
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenu
@@ -67,6 +67,7 @@ import com.seiko.imageloader.LocalImageLoader
 import com.seiko.imageloader.ui.AutoSizeImage
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import com.minhtu.firesocialmedia.platform.showToast
 
 class UserInformation {
     companion object{
@@ -84,7 +85,8 @@ class UserInformation {
             onNavigateToShowImageScreen : (image : String) -> Unit,
             onNavigateToUserInformation : (user : UserInstance?) -> Unit,
             navController : NavigationHandler,
-            onNavigateToUploadNewsfeed: (updateNew : NewsInstance?) -> Unit
+            onNavigateToUploadNewsfeed: (updateNew : NewsInstance?) -> Unit,
+            onNavigateToCallingScreen : (user : UserInstance?) -> Unit
         ){
             val newsList = homeViewModel.allNews.collectAsState()
             val addFriendStatus by userInformationViewModel.addFriendStatus.collectAsState()
@@ -197,8 +199,35 @@ class UserInformation {
                             modifier = Modifier.Companion.offset(y = (-20).dp) // Moves buttons up
                         ) {
                             // Chat button
+//                            IconButton(
+//                                onClick = { /* Handle click */ },
+//                                modifier = Modifier.Companion.border(
+//                                    1.dp,
+//                                    Color.Companion.Black,
+//                                    CircleShape
+//                                )
+//                            ) {
+//                                Icon(
+//                                    imageVector = Icons.Default.Message,
+//                                    contentDescription = "Chat",
+//                                    tint = Color.Companion.Gray
+//                                )
+//                            }
+
+                            //Call button
                             IconButton(
-                                onClick = { /* Handle click */ },
+                                onClick = {
+                                    if(user != null) {
+                                        userInformationViewModel.checkCalleeAvailable(user, platform,
+                                            onResult = { available ->
+                                                if(available) {
+                                                    onNavigateToCallingScreen(user)
+                                                } else {
+                                                    showToast("This user is having another call! Please recall after a few minutes.")
+                                                }
+                                            })
+                                    }
+                                },
                                 modifier = Modifier.Companion.border(
                                     1.dp,
                                     Color.Companion.Black,
@@ -206,8 +235,8 @@ class UserInformation {
                                 )
                             ) {
                                 Icon(
-                                    imageVector = Icons.Default.Message,
-                                    contentDescription = "Chat",
+                                    imageVector = Icons.Default.Call,
+                                    contentDescription = "Call",
                                     tint = Color.Companion.Gray
                                 )
                             }

@@ -160,6 +160,9 @@ kotlin {
 
             implementation("androidx.media3:media3-exoplayer:1.7.1")
             implementation("androidx.media3:media3-ui:1.7.1")
+
+            //webRTC
+            implementation("io.getstream:stream-webrtc-android:1.3.8")
         }
 
         androidUnitTest.dependencies {

@@ -10,6 +10,7 @@ import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import com.minhtu.firesocialmedia.data.model.UserInstance
+import com.minhtu.firesocialmedia.di.PlatformContext
 import com.russhwolf.settings.Settings
 import com.seiko.imageloader.ImageLoader
 import io.mockative.Mockable
@@ -40,7 +41,7 @@ fun CrossPlatformIcon(
             Image(
                 painter = iconPainter,
                 contentDescription = contentDescription,
-                modifier = modifier.size(20.dp),
+                modifier = modifier,
                 contentScale = contentScale,
                 colorFilter = if (tint != Color.Unspecified) ColorFilter.tint(tint) else null
             )
@@ -116,11 +117,11 @@ expect fun generateImageLoader(): ImageLoader
 
 expect object MainApplication {
     @Composable
-    fun MainApp(context: Any)
+    fun MainApp(context: Any, platformContext: PlatformContext)
 }
 
 @Composable
-expect fun SetUpNavigation(context : Any)
+expect fun SetUpNavigation(context : Any, platformContext: PlatformContext)
 
 @Mockable
 interface SignInLauncher {
@@ -139,3 +140,18 @@ expect val settings: Settings?
 
 @Composable
 expect fun VideoPlayer(uri: String, modifier: Modifier = Modifier)
+
+expect class WebRTCVideoTrack
+
+@Composable
+expect fun WebRTCVideoView(
+    localTrack: WebRTCVideoTrack?,
+    remoteTrack: WebRTCVideoTrack?,
+    onStopCall : () -> Unit,
+    modifier: Modifier
+)
+
+interface PermissionManager {
+    suspend fun requestCameraAndAudioPermissions(): Boolean
+    suspend fun requestAudioPermission(): Boolean
+}

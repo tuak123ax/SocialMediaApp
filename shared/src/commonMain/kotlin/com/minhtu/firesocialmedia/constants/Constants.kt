@@ -6,6 +6,7 @@ class Constants {
         const val USER_PATH = "users"
         const val NEWS_PATH = "news"
         const val COMMENT_PATH = "comments"
+        const val CALL_PATH = "calls"
         const val LIST_REPLIES_PATH = "listReplies"
         const val LIKED_POSTS_PATH = "likedPosts"
         const val LIKED_COMMENT_PATH = "likedComments"

@@ -45,8 +45,7 @@ import com.minhtu.firesocialmedia.di.PlatformContext
 import com.minhtu.firesocialmedia.utils.UiUtils.Companion.BottomNavigationBar
 
 @Composable
-actual fun SetUpNavigation(context: Any) {
-    val platformContext = IosPlatformContext()
+actual fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
     var selectedImage = ""
     var selectedUser: UserInstance? = null
     lateinit var selectedNew : NewsInstance

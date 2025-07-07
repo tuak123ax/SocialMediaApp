@@ -5,14 +5,21 @@ import android.content.Context
 import android.os.Environment
 import android.util.Log
 import androidx.core.net.toUri
+import com.google.firebase.database.ChildEventListener
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.GenericTypeIndicator
+import com.google.firebase.database.ValueEventListener
 import com.google.firebase.storage.FirebaseStorage
 import com.minhtu.firesocialmedia.constants.Constants
 import com.minhtu.firesocialmedia.data.model.BaseNewsInstance
 import com.minhtu.firesocialmedia.data.model.CommentInstance
 import com.minhtu.firesocialmedia.data.model.NewsInstance
 import com.minhtu.firesocialmedia.data.model.NotificationInstance
+import com.minhtu.firesocialmedia.data.model.call.AudioCallSession
+import com.minhtu.firesocialmedia.data.model.call.IceCandidateData
+import com.minhtu.firesocialmedia.data.model.call.OfferAnswer
 import com.minhtu.firesocialmedia.utils.Utils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -277,5 +284,278 @@ class AndroidDatabaseHelper {
             val downloadManager = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
             downloadManager.enqueue(request)
         }
+
+        fun sendOfferToFireBase(sessionId : String,
+                                offer : OfferAnswer,
+                                callPath : String,
+                                sendOfferCallBack : Utils.Companion.BasicCallBack) {
+            Log.d("Task", "sendOfferToFireBase")
+            val offerMap = mapOf(
+                "sdp" to offer.sdp,
+                "type" to offer.type,
+                "initiator" to offer.initiator
+            )
+
+            val updates = mutableMapOf<String, Any?>()
+            updates["offer"] = offerMap
+
+            val database = FirebaseDatabase.getInstance().getReference(callPath).child(sessionId)
+            database.updateChildren(updates).addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    sendOfferCallBack.onSuccess()
+                } else {
+                    sendOfferCallBack.onFailure()
+                }
+            }
+        }
+
+        fun sendAnswerToFireBase(
+            sessionId : String,
+            answer : OfferAnswer,
+            callPath : String,
+            sendAnswerCallBack : Utils.Companion.BasicCallBack
+        ) {
+            Log.d("Task", "sendAnswerToFireBase")
+            val answerMap = mapOf(
+                "sdp" to answer.sdp,
+                "type" to answer.type
+            )
+
+            val updates = mutableMapOf<String, Any?>()
+            updates["answer"] = answerMap
+
+            val database = FirebaseDatabase.getInstance().getReference(callPath).child(sessionId)
+            database.updateChildren(updates).addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    sendAnswerCallBack.onSuccess()
+                } else {
+                    sendAnswerCallBack.onFailure()
+                }
+            }
+        }
+
+        fun sendIceCandidateToFireBase(
+            sessionId : String,
+            iceCandidate: IceCandidateData,
+            whichCandidate : String,
+            callPath : String,
+            sendIceCandidateCallBack : Utils.Companion.BasicCallBack) {
+            Log.d("Task", "sendIceCandidateToFireBase")
+            val database = FirebaseDatabase.getInstance().getReference(callPath).child(sessionId).child(whichCandidate)
+            database.push().setValue(iceCandidate).addOnCompleteListener { task ->
+                if(task.isSuccessful) {
+                    sendIceCandidateCallBack.onSuccess()
+                } else {
+                    sendIceCandidateCallBack.onFailure()
+                }
+            }
+        }
+
+        fun sendCallSessionToFirebase(session: AudioCallSession,
+                                      callPath : String,
+                                      sendCallSessionCallBack : Utils.Companion.BasicCallBack) {
+            Log.d("Task", "sendCallSessionToFirebase")
+            val database = FirebaseDatabase.getInstance().getReference(callPath).child(session.sessionId)
+            database.setValue(session).addOnCompleteListener { task ->
+                if(task.isSuccessful) {
+                    sendCallSessionCallBack.onSuccess()
+                } else {
+                    sendCallSessionCallBack.onFailure()
+                }
+            }
+        }
+
+        fun deleteCallSession(
+            sessionId: String,
+            callPath: String,
+            deleteCallBack: Utils.Companion.BasicCallBack
+        ) {
+            Log.d("Task", "deleteCallSession: $sessionId")
+            val database = FirebaseDatabase.getInstance().getReference(callPath).child(sessionId)
+            database.removeValue().addOnCompleteListener { task ->
+                if(task.isSuccessful) {
+                    deleteCallBack.onSuccess()
+                } else {
+                    deleteCallBack.onFailure()
+                }
+            }
+        }
+
+        fun observePhoneCall(
+            isInCall : MutableStateFlow<Boolean>,
+            currentUserId: String,
+            callPath: String,
+            phoneCallCallBack : (String, String, String, OfferAnswer) -> Unit,
+            endCallSession: (Boolean) -> Unit,
+            iceCandidateCallBack : (iceCandidates : Map<String, IceCandidateData>?) -> Unit) {
+            val firebaseDatabase = FirebaseDatabase.getInstance().getReference(callPath)
+            firebaseDatabase.addChildEventListener(object : ChildEventListener {
+                override fun onChildAdded(snapshot: DataSnapshot, previousChildName: String?) {
+                    Log.e("CallObserver", "onChildAdded")
+                    if (isInCall.value) return
+
+                    val offerSnapshot = snapshot.child("offer")
+                    val sdp = offerSnapshot.child("sdp").getValue(String::class.java)
+                    val type = offerSnapshot.child("type").getValue(String::class.java)
+
+                    val offer = if (sdp != null && type != null) {
+                        OfferAnswer(sdp, type)
+                    } else null
+
+                    Log.e("CallObserver", "Offer = $offer")
+
+                    if(offer != null) {
+                        val audioCallSession = snapshot.getValue(AudioCallSession::class.java) ?: return
+                        handleOffer(
+                            audioCallSession,
+                            offer, 
+                            isInCall,
+                            currentUserId, 
+                            phoneCallCallBack, 
+                            iceCandidateCallBack)
+                    } else {
+                        snapshot.ref.addValueEventListener(object : ValueEventListener {
+                            override fun onDataChange(updatedSnapshot: DataSnapshot) {
+                                val updatedSession = updatedSnapshot.getValue(AudioCallSession::class.java)
+                                if (updatedSession?.offer != null) {
+                                    handleOffer(
+                                        updatedSession,
+                                        updatedSession.offer!!,
+                                        isInCall,
+                                        currentUserId,
+                                        phoneCallCallBack,
+                                        iceCandidateCallBack)
+                                    snapshot.ref.removeEventListener(this) // Detach after use
+                                }
+                            }
+
+                            override fun onCancelled(error: DatabaseError) {}
+                        })
+                    }
+                }
+
+                override fun onChildChanged(snapshot: DataSnapshot, previousChildName: String?) {}
+                override fun onChildRemoved(snapshot: DataSnapshot) {
+                    val session = snapshot.getValue(AudioCallSession::class.java) ?: return
+                    if (session.calleeId == currentUserId || session.callerId == currentUserId) {
+                        // Navigate out of call screen, show message, etc.
+                        Log.d("CallObserver", "Call ended by caller or callee")
+                        endCallSession(true)
+                    }
+                }
+                override fun onChildMoved(snapshot: DataSnapshot, previousChildName: String?) {}
+                override fun onCancelled(error: DatabaseError) {
+                    Log.e("CallObserver", "Failed to observe call", error.toException())
+                }
+            })
+        }
+
+        fun handleOffer(session : AudioCallSession?,
+                        offer : OfferAnswer,
+                        isInCall : MutableStateFlow<Boolean>,
+                        currentUserId: String,
+                        phoneCallCallBack : (String, String, String, OfferAnswer) -> Unit,
+                        iceCandidateCallBack : (iceCandidates : Map<String, IceCandidateData>?) -> Unit) {
+            val sessionId = session?.sessionId
+            val callerId = session?.callerId
+            val calleeId = session?.calleeId
+            val callerCandidate = session?.callerCandidates
+            
+            Log.e("CallObserver", sessionId.toString())
+            Log.e("CallObserver", callerId.toString())
+            Log.e("CallObserver", calleeId.toString())
+
+
+            // Only proceed if this user is the callee
+            if (calleeId == currentUserId) {
+                val status = session.status
+                isInCall.value = true // Lock state to prevent multiple calls
+                phoneCallCallBack(sessionId.toString(), callerId.toString(), calleeId, offer)
+                iceCandidateCallBack(callerCandidate)
+            }
+        }
+
+        private var valueEventListener : ValueEventListener? = null
+        fun observeAnswerFromCallee(
+            sessionId : String,
+            callPath: String,
+            answerCallBack : (answer : OfferAnswer) -> Unit
+        ) {
+            val firebaseDatabase = FirebaseDatabase.getInstance().getReference(callPath).child(sessionId).child("answer")
+            valueEventListener = object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    val answer = snapshot.getValue(OfferAnswer::class.java) ?: return
+                    val sdp = answer.sdp
+                    val type = answer.type
+                    if (!sdp.isNullOrEmpty()) {
+                        Log.e("CallObserver", "Answer received: sdp=$sdp, type=$type")
+                        answerCallBack(answer)
+                    }
+                }
+
+                override fun onCancelled(error: DatabaseError) {
+                    Log.e("CallObserver", "Failed to observe answer", error.toException())
+                }
+            }
+            firebaseDatabase.addValueEventListener(valueEventListener!!)
+        }
+
+        fun cancelObserveAnswerFromCallee(
+            sessionId : String,
+            callPath: String
+        ) {
+            val firebaseDatabase = FirebaseDatabase.getInstance().getReference(callPath).child(sessionId).child("answer")
+            if(valueEventListener != null) {
+                firebaseDatabase.removeEventListener(valueEventListener!!)
+            }
+        }
+
+        fun observeIceCandidatesFromCallee(
+            sessionId: String,
+            callPath: String,
+            iceCandidateCallBack: (iceCandidate: IceCandidateData) -> Unit
+        ) {
+            val firebaseDatabase = FirebaseDatabase.getInstance()
+                .getReference(callPath)
+                .child(sessionId)
+                .child("calleeCandidates")
+
+            firebaseDatabase.addChildEventListener(object : ChildEventListener {
+                override fun onChildAdded(snapshot: DataSnapshot, previousChildName: String?) {
+                    val iceCandidate = snapshot.getValue(IceCandidateData::class.java) ?: return
+                    iceCandidateCallBack(iceCandidate)
+                }
+
+                override fun onCancelled(error: DatabaseError) {
+                    Log.e("observeIceCandidatesFromCallee", "Failed to observe", error.toException())
+                }
+
+                override fun onChildChanged(snapshot: DataSnapshot, previousChildName: String?) {}
+                override fun onChildRemoved(snapshot: DataSnapshot) {}
+                override fun onChildMoved(snapshot: DataSnapshot, previousChildName: String?) {}
+            })
+        }
+
+        fun observeVideoCall(sessionId: String,
+                             callPath: String,
+                             videoCallCallBack: (offer : OfferAnswer) -> Unit) {
+            val firebaseDatabase = FirebaseDatabase.getInstance().getReference(callPath).child(sessionId).child("offer")
+            firebaseDatabase.addValueEventListener(object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    val offer = snapshot.getValue(OfferAnswer::class.java) ?: return
+                    val sdp = offer.sdp
+                    val type = offer.type
+                    if (!sdp.isNullOrEmpty() && sdp.contains("video")) {
+                        Log.e("CallObserver", "Video offer received: sdp=$sdp, type=$type")
+                        videoCallCallBack(offer)
+                    }
+                }
+
+                override fun onCancelled(error: DatabaseError) {
+                    Log.e("CallObserver", "Failed to observe offer", error.toException())
+                }
+            })
+        }
+
     }
 }

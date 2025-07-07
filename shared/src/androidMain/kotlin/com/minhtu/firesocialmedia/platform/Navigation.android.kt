@@ -26,8 +26,12 @@ import com.google.android.gms.auth.api.identity.Identity
 import com.minhtu.firesocialmedia.constants.Constants
 import com.minhtu.firesocialmedia.data.model.NewsInstance
 import com.minhtu.firesocialmedia.data.model.UserInstance
-import com.minhtu.firesocialmedia.di.AndroidPlatformContext
+import com.minhtu.firesocialmedia.data.model.call.OfferAnswer
 import com.minhtu.firesocialmedia.di.PlatformContext
+import com.minhtu.firesocialmedia.presentation.calling.audiocall.Calling
+import com.minhtu.firesocialmedia.presentation.calling.audiocall.CallingViewModel
+import com.minhtu.firesocialmedia.presentation.calling.videocall.VideoCall
+import com.minhtu.firesocialmedia.presentation.calling.videocall.VideoCallViewModel
 import com.minhtu.firesocialmedia.presentation.comment.CommentViewModel
 import com.minhtu.firesocialmedia.presentation.forgotpassword.ForgotPasswordViewModel
 import com.minhtu.firesocialmedia.presentation.home.HomeViewModel
@@ -57,11 +61,11 @@ import com.minhtu.firesocialmedia.presentation.signup.SignUp
 import com.minhtu.firesocialmedia.presentation.uploadnewsfeed.UploadNewsfeed
 import com.minhtu.firesocialmedia.presentation.userinformation.UserInformation
 import com.minhtu.firesocialmedia.utils.UiUtils.Companion.BottomNavigationBar
+import com.minhtu.firesocialmedia.utils.Utils
 
 @Composable
-actual fun SetUpNavigation(context: Any) {
+actual fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
     if(context is Activity) {
-        val platformContext = AndroidPlatformContext(context)
         val navController = rememberNavController()
         val androidNavigationHandler = remember { AndroidNavigationHandler(navController) }
         androidNavigationHandler.ObserveCurrentRoute()
@@ -88,6 +92,14 @@ actual fun SetUpNavigation(context: Any) {
         var updateNew : NewsInstance? = null
         //Shared instance used for Notification and PostInformation screen.
         var relatedNew : NewsInstance? = null
+        //Instance to store user to be called by current user.
+        var callee : UserInstance? = null
+        var caller : UserInstance? = null
+        var sessionId = ""
+        var remoteOffer : OfferAnswer? = null
+        var remoteVideoOffer : OfferAnswer? = null
+        val callingViewModel : CallingViewModel = viewModel()
+        val videoCallViewModel : VideoCallViewModel = viewModel()
 
         val signInGoogleResultLauncher = rememberLauncherForActivityResult(
             contract = ActivityResultContracts.StartIntentSenderForResult(),
@@ -239,7 +251,15 @@ actual fun SetUpNavigation(context: Any) {
                         onNavigateToCommentScreen = { new ->
                             selectedNew = new
                             navController.navigate(route = Comment.getScreenName())
-                        }
+                        },
+                        onNavigateToCallingScreen = { sessionID, callerId, calleeId, offer ->
+                            sessionId = sessionID
+                            remoteOffer = offer
+                            caller = if(callerId == homeViewModel.currentUser?.uid) homeViewModel.currentUser else Utils.findUserById(callerId, homeViewModel.listUsers)
+                            callee = if(calleeId == homeViewModel.currentUser?.uid) homeViewModel.currentUser else Utils.findUserById(calleeId, homeViewModel.listUsers)
+                            navController.navigate(route = Calling.getScreenName())
+                        },
+                        androidNavigationHandler
                     )
                 }
                 composable(route = UploadNewsfeed.getScreenName()){
@@ -333,6 +353,13 @@ actual fun SetUpNavigation(context: Any) {
                         onNavigateToUploadNewsfeed = { new ->
                             updateNew = new
                             navController.navigate(route = UploadNewsfeed.getScreenName())
+                        },
+                        onNavigateToCallingScreen = { user ->
+                            if(user != null) {
+                                caller = homeViewModel.currentUser
+                                callee = user
+                                navController.navigate(route = Calling.getScreenName())
+                            }
                         }
                     )
                 }
@@ -442,6 +469,48 @@ actual fun SetUpNavigation(context: Any) {
                         homeViewModel,
                         commentViewModel,
                         androidNavigationHandler
+                    )
+                }
+
+                composable(route = Calling.getScreenName()) {
+                    logMessage("Caller", caller!!.name)
+                    logMessage("Callee", callee!!.name)
+                    homeViewModel.updateIsInCall(true)
+                    Calling.CallingScreen(
+                        platformContext,
+                        sessionId,
+                        callee,
+                        caller,
+                        homeViewModel.currentUser,
+                        remoteOffer,
+                        callingViewModel,
+                        androidNavigationHandler,
+                        onStopCall = {
+                            homeViewModel.updateIsInCall(false)
+                        },
+                        onNavigateToVideoCall = { sessionID, videoOffer ->
+                            sessionId = sessionID
+                            remoteVideoOffer = videoOffer
+                            navController.navigate(route = VideoCall.getScreenName())
+                        },
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Color.White)
+                    )
+                }
+
+                composable(route = VideoCall.getScreenName()) {
+                    VideoCall.VideoCallScreen(
+                        sessionId,
+                        homeViewModel.currentUser?.uid,
+                        remoteVideoOffer,
+                        platformContext,
+                        callingViewModel,
+                        videoCallViewModel,
+                        androidNavigationHandler,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Color.White)
                     )
                 }
             }

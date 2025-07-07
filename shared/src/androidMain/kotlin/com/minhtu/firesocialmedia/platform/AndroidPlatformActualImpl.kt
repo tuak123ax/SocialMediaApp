@@ -1,8 +1,10 @@
 package com.minhtu.firesocialmedia.platform
 
+import android.Manifest
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.ImageDecoder
@@ -15,18 +17,40 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CallEnd
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.FloatingActionButtonDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.app.ActivityCompat
 import androidx.core.content.edit
 import androidx.core.net.toUri
 import androidx.media3.common.MediaItem
@@ -36,6 +60,7 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.minhtu.firesocialmedia.R
 import com.minhtu.firesocialmedia.constants.Constants
+import com.minhtu.firesocialmedia.constants.TestTag
 import com.minhtu.firesocialmedia.data.model.UserInstance
 import com.minhtu.firesocialmedia.services.crypto.AndroidCryptoHelper
 import com.minhtu.firesocialmedia.services.notification.Client
@@ -49,12 +74,17 @@ import com.seiko.imageloader.intercept.bitmapMemoryCacheConfig
 import com.seiko.imageloader.intercept.imageMemoryCacheConfig
 import com.seiko.imageloader.intercept.painterMemoryCacheConfig
 import com.seiko.imageloader.option.androidContext
+import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
 import okio.Path.Companion.toOkioPath
 import org.json.JSONArray
 import org.json.JSONObject
+import org.webrtc.EglBase
+import org.webrtc.SurfaceViewRenderer
+import org.webrtc.VideoTrack
 import java.io.ByteArrayOutputStream
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -106,7 +136,7 @@ actual fun PasswordVisibilityIcon(passwordVisibility : Boolean) {
         icon = icon,
         color = "#00FFFFFF",
         contentDescription = descriptionOfIcon,
-        modifier = Modifier
+        modifier = Modifier.size(20.dp)
     )
 }
 
@@ -371,3 +401,137 @@ actual fun VideoPlayer(uri: String, modifier: Modifier) {
         }
     )
 }
+
+actual class WebRTCVideoTrack(val track: VideoTrack?)
+
+@Composable
+actual fun WebRTCVideoView(
+    localTrack: WebRTCVideoTrack?,
+    remoteTrack: WebRTCVideoTrack?,
+    onStopCall : () -> Unit,
+    modifier: Modifier
+) {
+    val eglBase = remember { EglBase.create() }
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        remoteTrack?.track?.let {
+            RemoteVideoView(
+                eglBaseContext = eglBase.eglBaseContext,
+                videoTrack = it,
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+
+        localTrack?.track?.let {
+            LocalVideoView(
+                eglBaseContext = eglBase.eglBaseContext,
+                videoTrack = it,
+                modifier = Modifier
+                    .size(120.dp)
+                    .align(Alignment.BottomEnd)
+                    .padding(16.dp)
+            )
+        }
+
+        var backgroundButton by remember {mutableStateOf(Color.Red)}
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier
+                .size(56.dp)
+                .shadow(8.dp, CircleShape) // Shadow before clipping
+                .clip(CircleShape)
+                .background(backgroundButton)
+                .testTag(TestTag.TAG_REJECT_CALL_BUTTON)
+                .semantics {
+                    contentDescription = TestTag.TAG_REJECT_CALL_BUTTON
+                }
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 20.dp)
+        ) {
+            FloatingActionButton(
+                onClick = {
+                    backgroundButton = Color.Gray
+                    onStopCall()
+                },
+                shape = CircleShape,
+                containerColor = Color.Transparent, // Transparent to let gradient show
+                elevation = FloatingActionButtonDefaults.elevation(0.dp)
+            ) {
+                Icon(Icons.Default.CallEnd, contentDescription = "Stop Call", tint = Color.Black)
+            }
+        }
+    }
+}
+
+@Composable
+fun LocalVideoView(
+    eglBaseContext: EglBase.Context,
+    videoTrack: VideoTrack,
+    modifier: Modifier = Modifier
+) {
+    AndroidView(
+        factory = {
+            SurfaceViewRenderer(it).apply {
+                init(eglBaseContext, null)
+                setMirror(true)
+                videoTrack.addSink(this)
+            }
+        },
+        modifier = modifier
+    )
+}
+
+@Composable
+fun RemoteVideoView(
+    eglBaseContext: EglBase.Context,
+    videoTrack: VideoTrack,
+    modifier: Modifier = Modifier
+) {
+    AndroidView(
+        factory = {
+            SurfaceViewRenderer(it).apply {
+                init(eglBaseContext, null)
+                setMirror(false)
+                videoTrack.addSink(this)
+            }
+        },
+        modifier = modifier
+    )
+}
+
+class AndroidPermissionManager(private val activity: Activity) : PermissionManager {
+
+    private var continuation: CancellableContinuation<Boolean>? = null
+
+    override suspend fun requestCameraAndAudioPermissions(): Boolean {
+        return requestPermissions(
+            arrayOf(
+                Manifest.permission.CAMERA,
+                Manifest.permission.RECORD_AUDIO
+            )
+        )
+    }
+
+    override suspend fun requestAudioPermission(): Boolean {
+        return requestPermissions(arrayOf(Manifest.permission.RECORD_AUDIO))
+    }
+
+    private suspend fun requestPermissions(permissions: Array<String>): Boolean {
+        return suspendCancellableCoroutine { cont ->
+            continuation = cont
+            ActivityCompat.requestPermissions(activity, permissions, REQUEST_CODE)
+        }
+    }
+
+    fun onRequestPermissionsResult(requestCode: Int, grantResults: IntArray) {
+        if (requestCode != REQUEST_CODE) return
+        val granted = grantResults.all { it == PackageManager.PERMISSION_GRANTED }
+        continuation?.resume(granted, onCancellation = {})
+        continuation = null
+    }
+
+    companion object {
+        private const val REQUEST_CODE = 100
+    }
+}
+

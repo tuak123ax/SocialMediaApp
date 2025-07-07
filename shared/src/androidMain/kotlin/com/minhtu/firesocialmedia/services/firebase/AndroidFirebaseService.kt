@@ -23,7 +23,6 @@ class AndroidFirebaseService : FirebaseService {
                     if (user != null) {
                         if(user.email == email){
                             callback.invoke(SignInState(true, Constants.ACCOUNT_EXISTED))
-                            Log.e("SignInViewModel","signIn: ACCOUNT_EXISTED")
                             existed = true
                         }
                     }

@@ -4,6 +4,11 @@ import com.minhtu.firesocialmedia.data.model.CommentInstance
 import com.minhtu.firesocialmedia.data.model.NewsInstance
 import com.minhtu.firesocialmedia.data.model.NotificationInstance
 import com.minhtu.firesocialmedia.data.model.UserInstance
+import com.minhtu.firesocialmedia.data.model.call.AudioCallSession
+import com.minhtu.firesocialmedia.data.model.call.IceCandidateData
+import com.minhtu.firesocialmedia.data.model.call.OfferAnswer
+import com.minhtu.firesocialmedia.platform.PermissionManager
+import com.minhtu.firesocialmedia.platform.WebRTCVideoTrack
 import com.minhtu.firesocialmedia.presentation.signin.SignInState
 import com.minhtu.firesocialmedia.utils.Utils
 import io.mockative.Mockable
@@ -16,6 +21,8 @@ interface PlatformContext {
     val crypto: CryptoService
     val database : DatabaseService
     val clipboard : ClipboardService
+    val audioCall : AudioCallService
+    val permissionManager : PermissionManager
 }
 
 @Mockable
@@ -119,9 +126,87 @@ interface DatabaseService {
         path : String,
         notification: NotificationInstance
     )
+
+    fun sendOfferToFireBase(
+        sessionId : String,
+        offer: OfferAnswer,
+        callPath : String,
+        sendIceCandidateCallBack : Utils.Companion.BasicCallBack
+    )
+
+    fun sendIceCandidateToFireBase(sessionId : String,
+                                   iceCandidate: IceCandidateData,
+                                   whichCandidate : String,
+                                   callPath : String,
+                                   sendIceCandidateCallBack : Utils.Companion.BasicCallBack)
+    fun sendCallSessionToFirebase(session: AudioCallSession,
+                                  callPath : String,
+                                  sendCallSessionCallBack : Utils.Companion.BasicCallBack)
+
+    fun deleteCallSession(
+        sessionId: String,
+        callPath: String,
+        deleteCallBack : Utils.Companion.BasicCallBack
+    )
+
+    fun observePhoneCall(
+        isInCall : MutableStateFlow<Boolean>,
+        currentUserId : String,
+        callPath : String,
+        phoneCallCallBack : (String,String, String, OfferAnswer) -> Unit,
+        endCallSession: (Boolean) -> Unit,
+        iceCandidateCallBack : (iceCandidates : Map<String, IceCandidateData>?) -> Unit)
+    fun sendAnswerToFirebase(
+        sessionId : String,
+        answer: OfferAnswer,
+        callPath : String,
+        sendIceCandidateCallBack : Utils.Companion.BasicCallBack
+    )
+
+    fun isCalleeInActiveCall(
+        calleeId: String,
+        callPath: String,
+        onResult: (Boolean) -> Unit
+    )
+
+    fun observeAnswerFromCallee(
+        sessionId : String,
+        callPath : String,
+        answerCallBack : (answer : OfferAnswer) -> Unit
+    )
+
+    fun cancelObserveAnswerFromCallee(
+        sessionId : String,
+        callPath : String
+    )
+
+    fun observeIceCandidatesFromCallee(
+        sessionId : String,
+        callPath : String,
+        iceCandidateCallBack: (iceCandidate : IceCandidateData) -> Unit
+    )
+
+    fun observeVideoCall(
+        sessionId: String,
+        callPath : String,
+        videoCallCallBack: (offer : OfferAnswer) -> Unit
+    )
 }
 
 @Mockable
 interface ClipboardService {
     fun copy(text: String)
+}
+
+interface AudioCallService{
+    fun createOffer(onOfferCreated : (offer : OfferAnswer) -> Unit)
+    fun createVideoOffer(onOfferCreated : (offer : OfferAnswer) -> Unit)
+    fun createAnswer(videoSupport : Boolean, onAnswerCreated : (answer : OfferAnswer) -> Unit)
+    fun setRemoteDescription(remoteOffer : OfferAnswer)
+    fun addIceCandidate(sdp: String, sdpMid: String, sdpMLineIndex: Int)
+    fun startCall()
+    fun stopCall()
+    fun initialize(onIceCandidateCreated : (iceCandidateData : IceCandidateData) -> Unit,
+                   onRemoteVideoTrackReceived: (remoteVideoTrack :WebRTCVideoTrack) -> Unit)
+    fun startVideoCall(onStartVideoCall : (videoTrack : WebRTCVideoTrack) -> Unit)
 }
