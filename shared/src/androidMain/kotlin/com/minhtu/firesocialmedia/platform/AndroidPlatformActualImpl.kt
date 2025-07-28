@@ -1,10 +1,8 @@
 package com.minhtu.firesocialmedia.platform
 
-import android.Manifest
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.ImageDecoder
@@ -17,40 +15,24 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CallEnd
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.FloatingActionButtonDefaults
-import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.core.app.ActivityCompat
 import androidx.core.content.edit
 import androidx.core.net.toUri
 import androidx.media3.common.MediaItem
@@ -60,12 +42,14 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.minhtu.firesocialmedia.R
 import com.minhtu.firesocialmedia.constants.Constants
-import com.minhtu.firesocialmedia.constants.TestTag
-import com.minhtu.firesocialmedia.data.model.UserInstance
-import com.minhtu.firesocialmedia.services.crypto.AndroidCryptoHelper
-import com.minhtu.firesocialmedia.services.notification.Client
-import com.minhtu.firesocialmedia.services.notification.NotificationApiService
+import com.minhtu.firesocialmedia.data.model.user.UserInstance
+import com.minhtu.firesocialmedia.domain.ImagePicker
+import com.minhtu.firesocialmedia.domain.call.WebRTCManager
+import com.minhtu.firesocialmedia.domain.crypto.AndroidCryptoHelper
+import com.minhtu.firesocialmedia.domain.notification.Client
+import com.minhtu.firesocialmedia.domain.notification.NotificationApiService
 import com.minhtu.firesocialmedia.utils.NavigationHandler
+import com.russhwolf.settings.BuildConfig
 import com.russhwolf.settings.Settings
 import com.seiko.imageloader.ImageLoader
 import com.seiko.imageloader.cache.memory.maxSizePercent
@@ -74,11 +58,9 @@ import com.seiko.imageloader.intercept.bitmapMemoryCacheConfig
 import com.seiko.imageloader.intercept.imageMemoryCacheConfig
 import com.seiko.imageloader.intercept.painterMemoryCacheConfig
 import com.seiko.imageloader.option.androidContext
-import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.suspendCancellableCoroutine
 import okio.Path.Companion.toOkioPath
 import org.json.JSONArray
 import org.json.JSONObject
@@ -144,7 +126,7 @@ actual fun exitApp() {
     (appContext as Activity).finish()
 }
 
-actual fun createMessageForServer(message: String, tokenList : ArrayList<String>, sender : UserInstance): String {
+actual fun createMessageForServer(message: String, tokenList : ArrayList<String>, sender : UserInstance, type : String): String {
     val body = JSONObject()
     try {
         val tokens = JSONArray()
@@ -158,9 +140,37 @@ actual fun createMessageForServer(message: String, tokenList : ArrayList<String>
         data.put(Constants.KEY_EMAIL, sender.email)
         data.put(Constants.REMOTE_MSG_TITLE, sender.name)
         data.put(Constants.REMOTE_MSG_BODY, message)
+        data.put(Constants.REMOTE_MSG_TYPE, type)
 
         body.put(Constants.REMOTE_MSG_DATA, data)
         body.put(Constants.REMOTE_MSG_TOKENS, tokens)
+    } catch (e: Exception) {
+        e.printStackTrace()
+    }
+    return body.toString()
+}
+
+actual fun createCallMessage(message: String, tokenList : ArrayList<String>, sessionId : String, sender : UserInstance, receiver : UserInstance, type : String): String {
+    val body = JSONObject()
+    try {
+        val tokens = JSONArray()
+        for(token in tokenList) {
+            tokens.put(token)
+        }
+        val data = JSONObject()
+        data.put(Constants.KEY_SESSION_ID, sessionId)
+        data.put(Constants.KEY_CALLER_ID, sender.uid)
+        data.put(Constants.KEY_CALLER_NAME, sender.name)
+        data.put(Constants.KEY_CALLER_AVATAR, sender.image)
+        data.put(Constants.KEY_CALLEE_ID, receiver.uid)
+        data.put(Constants.KEY_CALLEE_NAME, receiver.name)
+        data.put(Constants.KEY_CALLEE_AVATAR, receiver.image)
+        data.put(Constants.REMOTE_MSG_BODY, message)
+        data.put(Constants.REMOTE_MSG_TYPE, type)
+
+        body.put(Constants.REMOTE_MSG_DATA, data)
+        body.put(Constants.REMOTE_MSG_TOKENS, tokens)
+        body.put(Constants.KEY_FCM_PRIORITY, "high")
     } catch (e: Exception) {
         e.printStackTrace()
     }
@@ -192,8 +202,10 @@ actual object TokenStorage {
     }
 }
 
-actual fun logMessage(tag: String, message :String) {
-    Log.e(tag, message)
+actual inline fun logMessage(tag: String, message: () -> String) {
+    if (BuildConfig.DEBUG) {
+        Log.e(tag, message())
+    }
 }
 
 actual fun generateRandomId(): String {
@@ -358,7 +370,7 @@ class AndroidNavigationHandler(
         navController.navigate(route)
     }
 
-    override fun navigateBack() {
+    override fun navigateBack(){
         navController.popBackStack()
     }
 
@@ -408,15 +420,12 @@ actual class WebRTCVideoTrack(val track: VideoTrack?)
 actual fun WebRTCVideoView(
     localTrack: WebRTCVideoTrack?,
     remoteTrack: WebRTCVideoTrack?,
-    onStopCall : () -> Unit,
     modifier: Modifier
 ) {
-    val eglBase = remember { EglBase.create() }
-
     Box(modifier = Modifier.fillMaxSize()) {
         remoteTrack?.track?.let {
             RemoteVideoView(
-                eglBaseContext = eglBase.eglBaseContext,
+                eglBaseContext = WebRTCManager.eglBase.eglBaseContext,
                 videoTrack = it,
                 modifier = Modifier.fillMaxSize()
             )
@@ -424,41 +433,13 @@ actual fun WebRTCVideoView(
 
         localTrack?.track?.let {
             LocalVideoView(
-                eglBaseContext = eglBase.eglBaseContext,
+                eglBaseContext = WebRTCManager.eglBase.eglBaseContext,
                 videoTrack = it,
                 modifier = Modifier
-                    .size(120.dp)
+                    .size(150.dp)
                     .align(Alignment.BottomEnd)
                     .padding(16.dp)
             )
-        }
-
-        var backgroundButton by remember {mutableStateOf(Color.Red)}
-        Box(
-            contentAlignment = Alignment.Center,
-            modifier = Modifier
-                .size(56.dp)
-                .shadow(8.dp, CircleShape) // Shadow before clipping
-                .clip(CircleShape)
-                .background(backgroundButton)
-                .testTag(TestTag.TAG_REJECT_CALL_BUTTON)
-                .semantics {
-                    contentDescription = TestTag.TAG_REJECT_CALL_BUTTON
-                }
-                .align(Alignment.BottomCenter)
-                .padding(bottom = 20.dp)
-        ) {
-            FloatingActionButton(
-                onClick = {
-                    backgroundButton = Color.Gray
-                    onStopCall()
-                },
-                shape = CircleShape,
-                containerColor = Color.Transparent, // Transparent to let gradient show
-                elevation = FloatingActionButtonDefaults.elevation(0.dp)
-            ) {
-                Icon(Icons.Default.CallEnd, contentDescription = "Stop Call", tint = Color.Black)
-            }
         }
     }
 }
@@ -469,17 +450,38 @@ fun LocalVideoView(
     videoTrack: VideoTrack,
     modifier: Modifier = Modifier
 ) {
-    AndroidView(
-        factory = {
-            SurfaceViewRenderer(it).apply {
-                init(eglBaseContext, null)
-                setMirror(true)
-                videoTrack.addSink(this)
+    val context = LocalContext.current
+
+    val renderer = remember {
+        SurfaceViewRenderer(context).apply {
+            init(eglBaseContext, null)
+            setZOrderMediaOverlay(true)
+            setMirror(true)
+            setEnableHardwareScaler(true)
+        }
+    }
+
+    DisposableEffect(videoTrack) {
+        videoTrack.addSink(renderer)
+
+        onDispose {
+            runCatching {
+                videoTrack.removeSink(renderer)
+            }.onFailure {
+                Log.e("LocalVideoView", "Failed to remove sink", it)
             }
-        },
-        modifier = modifier
-    )
+
+            runCatching {
+                renderer.release()
+            }.onFailure {
+                Log.e("LocalVideoView", "Failed to release renderer", it)
+            }
+        }
+    }
+
+    AndroidView(factory = { renderer }, modifier = modifier)
 }
+
 
 @Composable
 fun RemoteVideoView(
@@ -487,51 +489,34 @@ fun RemoteVideoView(
     videoTrack: VideoTrack,
     modifier: Modifier = Modifier
 ) {
-    AndroidView(
-        factory = {
-            SurfaceViewRenderer(it).apply {
-                init(eglBaseContext, null)
-                setMirror(false)
-                videoTrack.addSink(this)
-            }
-        },
-        modifier = modifier
-    )
-}
+    val context = LocalContext.current
 
-class AndroidPermissionManager(private val activity: Activity) : PermissionManager {
-
-    private var continuation: CancellableContinuation<Boolean>? = null
-
-    override suspend fun requestCameraAndAudioPermissions(): Boolean {
-        return requestPermissions(
-            arrayOf(
-                Manifest.permission.CAMERA,
-                Manifest.permission.RECORD_AUDIO
-            )
-        )
-    }
-
-    override suspend fun requestAudioPermission(): Boolean {
-        return requestPermissions(arrayOf(Manifest.permission.RECORD_AUDIO))
-    }
-
-    private suspend fun requestPermissions(permissions: Array<String>): Boolean {
-        return suspendCancellableCoroutine { cont ->
-            continuation = cont
-            ActivityCompat.requestPermissions(activity, permissions, REQUEST_CODE)
+    val renderer = remember {
+        SurfaceViewRenderer(context).apply {
+            init(eglBaseContext, null)
+            setMirror(false)
+            setEnableHardwareScaler(true)
         }
     }
 
-    fun onRequestPermissionsResult(requestCode: Int, grantResults: IntArray) {
-        if (requestCode != REQUEST_CODE) return
-        val granted = grantResults.all { it == PackageManager.PERMISSION_GRANTED }
-        continuation?.resume(granted, onCancellation = {})
-        continuation = null
+    DisposableEffect(videoTrack) {
+        videoTrack.addSink(renderer)
+
+        onDispose {
+            runCatching {
+                videoTrack.removeSink(renderer)
+            }.onFailure {
+                Log.e("RemoteVideoView", "Failed to remove sink", it)
+            }
+
+            runCatching {
+                renderer.release()
+            }.onFailure {
+                Log.e("RemoteVideoView", "Failed to release renderer", it)
+            }
+        }
     }
 
-    companion object {
-        private const val REQUEST_CODE = 100
-    }
+    AndroidView(factory = { renderer }, modifier = modifier)
 }
 

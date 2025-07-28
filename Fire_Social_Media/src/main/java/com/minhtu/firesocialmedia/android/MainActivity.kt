@@ -23,18 +23,21 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.content.ContextCompat
 import com.google.firebase.messaging.FirebaseMessaging
+import com.minhtu.firesocialmedia.constants.Constants
 import com.minhtu.firesocialmedia.di.AndroidPlatformContext
-import com.minhtu.firesocialmedia.platform.AndroidPermissionManager
+import com.minhtu.firesocialmedia.domain.permission.AndroidPermissionManager
 import com.minhtu.firesocialmedia.platform.MainApplication
 import com.minhtu.firesocialmedia.platform.TokenStorage.updateTokenInStorage
-import com.minhtu.firesocialmedia.services.remoteconfig.FetchResultCallback
-import com.minhtu.firesocialmedia.services.remoteconfig.RemoteConfigHelper
+import com.minhtu.firesocialmedia.domain.remoteconfig.FetchResultCallback
+import com.minhtu.firesocialmedia.domain.remoteconfig.RemoteConfigHelper
 
 class MainActivity : ComponentActivity() {
     private var downloadReceiver: BroadcastReceiver? = null
     private lateinit var permissionManager: AndroidPermissionManager
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        //Check if activity is started from notification
+        val fromNotification = intent.getBooleanExtra(Constants.FROM_NOTIFICATION, false)
         permissionManager = AndroidPermissionManager(this)
         setContent {
             MyApplicationTheme{
@@ -53,7 +56,20 @@ class MainActivity : ComponentActivity() {
                             Log.e("Fetch", "Fetch fail")
                         }
                     })
-                    MainApplication.MainApp(this, AndroidPlatformContext(this, permissionManager))
+                    if(fromNotification) {
+                        val sessionId = intent.getStringExtra("sessionId")
+                        val callerId = intent.getStringExtra("callerId")
+                        val calleeId = intent.getStringExtra("calleeId")
+                        MainApplication.MainAppFromNotification(
+                            this,
+                            AndroidPlatformContext(this, permissionManager),
+                            sessionId,
+                            callerId,
+                            calleeId
+                        )
+                    } else {
+                        MainApplication.MainApp(this, AndroidPlatformContext(this, permissionManager))
+                    }
                     checkFCMToken()
                     askNotificationPermission()
                     //Listen download event here to show toast on all screens

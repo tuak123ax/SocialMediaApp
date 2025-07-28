@@ -43,6 +43,7 @@ android {
     buildTypes {
         debug {
             signingConfig = signingConfigs.getByName("debug")
+            isDebuggable = true
         }
         release {
             isMinifyEnabled = true
@@ -51,6 +52,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            isDebuggable = false
         }
     }
     compileOptions {
@@ -100,4 +102,7 @@ dependencies {
     implementation ("com.google.dagger:hilt-android:2.51.1")
     kapt("com.google.dagger:hilt-compiler:2.51.1")
     implementation("com.google.code.gson:gson:2.10.1")
+
+    //Monitor memory leak
+    debugImplementation("com.squareup.leakcanary:leakcanary-android:2.13")
 }

@@ -2,12 +2,15 @@ package com.minhtu.firesocialmedia.utils
 
 import androidx.compose.ui.graphics.Color
 import com.minhtu.firesocialmedia.constants.Constants
-import com.minhtu.firesocialmedia.data.model.CommentInstance
-import com.minhtu.firesocialmedia.data.model.NewsInstance
-import com.minhtu.firesocialmedia.data.model.NotificationInstance
-import com.minhtu.firesocialmedia.data.model.UserInstance
+import com.minhtu.firesocialmedia.data.model.news.CommentInstance
+import com.minhtu.firesocialmedia.data.model.news.NewsInstance
+import com.minhtu.firesocialmedia.data.model.notification.NotificationInstance
+import com.minhtu.firesocialmedia.data.model.user.UserInstance
+import com.minhtu.firesocialmedia.data.model.call.CallStatus
+import com.minhtu.firesocialmedia.data.model.call.CallType
 import com.minhtu.firesocialmedia.di.PlatformContext
-import com.minhtu.firesocialmedia.presentation.calling.audiocall.CallType
+import com.minhtu.firesocialmedia.platform.createCallMessage
+import com.minhtu.firesocialmedia.platform.sendMessageToServer
 import com.minhtu.firesocialmedia.presentation.calling.audiocall.CallingViewModel
 import com.minhtu.firesocialmedia.presentation.comment.CommentViewModel
 import com.minhtu.firesocialmedia.presentation.home.HomeViewModel
@@ -107,18 +110,34 @@ class Utils {
             }
         }
 
-        fun stopCallAction(callingViewModel: CallingViewModel,
-                           coroutineScope : CoroutineScope,
-                           navHandler : NavigationHandler,
-                           onStopCall : () -> Unit,
-                           platform : PlatformContext
+        fun stopCallAction(
+            callingViewModel: CallingViewModel,
+            coroutineScope: CoroutineScope,
+            onStopCall: () -> Unit,
+            platform: PlatformContext,
+            navHandler: NavigationHandler
         ) {
-            callingViewModel.stopCall(platform)
             coroutineScope.launch {
                 delay(2000L)
-                navHandler.navigateBack()
+                callingViewModel.stopCall(platform)
                 onStopCall()
             }
+        }
+
+        fun sendNotification(notiContent : String,
+                             sessionId : String,
+                             currentUser : UserInstance,
+                             receiver : UserInstance,
+                             action : String) {
+            val tokenList = ArrayList<String>()
+            tokenList.add(receiver.token)
+            sendMessageToServer(createCallMessage(
+                notiContent,
+                tokenList,
+                sessionId,
+                currentUser,
+                receiver,
+                action))
         }
 
         interface GetUserCallback{
@@ -163,6 +182,11 @@ class Utils {
 
         interface BasicCallBack{
             fun onSuccess()
+            fun onFailure()
+        }
+
+        interface CallStatusCallBack{
+            fun onSuccess(status : CallStatus)
             fun onFailure()
         }
     }

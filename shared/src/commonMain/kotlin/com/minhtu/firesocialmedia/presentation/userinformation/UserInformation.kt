@@ -52,10 +52,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.minhtu.firesocialmedia.constants.Constants
 import com.minhtu.firesocialmedia.constants.TestTag
-import com.minhtu.firesocialmedia.data.model.NewsInstance
-import com.minhtu.firesocialmedia.data.model.UserInstance
+import com.minhtu.firesocialmedia.data.model.news.NewsInstance
+import com.minhtu.firesocialmedia.data.model.user.UserInstance
 import com.minhtu.firesocialmedia.di.PlatformContext
-import com.minhtu.firesocialmedia.platform.ImagePicker
 import com.minhtu.firesocialmedia.platform.generateImageLoader
 import com.minhtu.firesocialmedia.platform.getImageBytesFromDrawable
 import com.minhtu.firesocialmedia.presentation.home.HomeViewModel
@@ -67,6 +66,7 @@ import com.seiko.imageloader.LocalImageLoader
 import com.seiko.imageloader.ui.AutoSizeImage
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import com.minhtu.firesocialmedia.domain.ImagePicker
 import com.minhtu.firesocialmedia.platform.showToast
 
 class UserInformation {
@@ -221,7 +221,11 @@ class UserInformation {
                                         userInformationViewModel.checkCalleeAvailable(user, platform,
                                             onResult = { available ->
                                                 if(available) {
-                                                    onNavigateToCallingScreen(user)
+                                                    if(isCurrentUser) {
+                                                        showToast("Cannot call for yourself.")
+                                                    } else {
+                                                        onNavigateToCallingScreen(user)
+                                                    }
                                                 } else {
                                                     showToast("This user is having another call! Please recall after a few minutes.")
                                                 }

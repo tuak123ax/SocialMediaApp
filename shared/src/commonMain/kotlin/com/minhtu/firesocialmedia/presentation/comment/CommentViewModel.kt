@@ -4,11 +4,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.minhtu.firesocialmedia.constants.Constants
-import com.minhtu.firesocialmedia.data.model.CommentInstance
-import com.minhtu.firesocialmedia.data.model.NewsInstance
-import com.minhtu.firesocialmedia.data.model.NotificationInstance
-import com.minhtu.firesocialmedia.data.model.NotificationType
-import com.minhtu.firesocialmedia.data.model.UserInstance
+import com.minhtu.firesocialmedia.data.model.news.CommentInstance
+import com.minhtu.firesocialmedia.data.model.news.NewsInstance
+import com.minhtu.firesocialmedia.data.model.notification.NotificationInstance
+import com.minhtu.firesocialmedia.data.model.notification.NotificationType
+import com.minhtu.firesocialmedia.data.model.user.UserInstance
 import com.minhtu.firesocialmedia.di.PlatformContext
 import com.minhtu.firesocialmedia.platform.createMessageForServer
 import com.minhtu.firesocialmedia.platform.generateRandomId
@@ -69,7 +69,8 @@ class CommentViewModel(
                                 platform.database.saveInstanceToDatabase(commentRandomId,
                                     Constants.NEWS_PATH+"/"+selectedNew.id+"/"+ Constants.COMMENT_PATH,commentInstance,_createCommentStatus)
 
-                                logMessage("updateCountValueInDatabase", listComments.size.toString())
+                                logMessage("updateCountValueInDatabase",
+                                    { listComments.size.toString() })
                                 platform.database.updateCountValueInDatabase(selectedNew.id,
                                     Constants.NEWS_PATH,
                                     Constants.COMMENT_COUNT_PATH, listComments.size)
@@ -111,7 +112,7 @@ class CommentViewModel(
         //Send notification to poster
         val tokenList = ArrayList<String>()
         tokenList.add(poster.token)
-        sendMessageToServer(createMessageForServer(notiContent, tokenList, currentUser))
+        sendMessageToServer(createMessageForServer(notiContent, tokenList, currentUser, "BASIC"))
     }
 
     fun copyToClipboard(text : String,platform: PlatformContext) {
@@ -143,7 +144,7 @@ class CommentViewModel(
                         Constants.NEWS_PATH+"/"+selectedNew.id+"/"+ Constants.COMMENT_PATH+"/"+currentComment.id+"/"+ Constants.LIST_REPLIES_PATH,
                         commentInstance,_createCommentStatus)
 
-                    logMessage("updateCountValueInDatabase", listComments.size.toString())
+                    logMessage("updateCountValueInDatabase", { listComments.size.toString() })
                     platform.database.updateCountValueInDatabase(selectedNew.id,
                         Constants.NEWS_PATH,
                         Constants.COMMENT_PATH + "/" + currentComment.id +"/"
@@ -172,7 +173,7 @@ class CommentViewModel(
         _likeCountList.value[commentId] = likeCount
     }
     fun onLikeComment(selectedNew : NewsInstance, currentUser : UserInstance, comment : CommentInstance, platform : PlatformContext) {
-        logMessage("onLikeComment", comment.id)
+        logMessage("onLikeComment", { comment.id })
         val isLiked = likeCache[comment.id] == 1
         if (isLiked) {
             likeCache.remove(comment.id) // Unlike

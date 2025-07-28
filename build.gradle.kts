@@ -14,7 +14,7 @@ plugins {
     id("com.google.firebase.crashlytics") version "3.0.2" apply false
     id("org.jetbrains.compose") version "1.7.3" apply false
     id("com.rickclephas.kmp.nativecoroutines") version "1.0.0-ALPHA-42"
-    kotlin("plugin.serialization") version "1.8.22"
+    kotlin("plugin.serialization") version "2.1.10"
 
     //Code coverage tool
     id("org.jetbrains.kotlinx.kover") version "0.9.1"

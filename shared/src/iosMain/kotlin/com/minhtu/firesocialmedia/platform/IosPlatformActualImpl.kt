@@ -25,9 +25,10 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.UIKitView
 import com.minhtu.firesocialmedia.constants.Constants
-import com.minhtu.firesocialmedia.data.model.UserInstance
-import com.minhtu.firesocialmedia.services.crypto.IosCryptoHelper
-import com.minhtu.firesocialmedia.services.notification.KtorProvider
+import com.minhtu.firesocialmedia.data.model.user.UserInstance
+import com.minhtu.firesocialmedia.domain.ImagePicker
+import com.minhtu.firesocialmedia.domain.crypto.IosCryptoHelper
+import com.minhtu.firesocialmedia.domain.notification.KtorProvider
 import com.minhtu.firesocialmedia.utils.NavigationHandler
 import com.russhwolf.settings.ExperimentalSettingsImplementation
 import com.russhwolf.settings.KeychainSettings
@@ -247,7 +248,7 @@ actual fun exitApp() {
 
 }
 
-actual fun createMessageForServer(message: String, tokenList : ArrayList<String>, sender : UserInstance): String {
+actual fun createMessageForServer(message: String, tokenList : ArrayList<String>, sender : UserInstance, type : String): String {
     try {
         val body = buildJsonObject {
             putJsonObject(Constants.REMOTE_MSG_DATA) {
@@ -257,6 +258,7 @@ actual fun createMessageForServer(message: String, tokenList : ArrayList<String>
                 put(Constants.KEY_EMAIL, JsonPrimitive(sender.email))
                 put(Constants.REMOTE_MSG_TITLE, JsonPrimitive(sender.name))
                 put(Constants.REMOTE_MSG_BODY, JsonPrimitive(message))
+                put(Constants.REMOTE_MSG_TYPE, JsonPrimitive(type))
             }
             putJsonArray(Constants.REMOTE_MSG_TOKENS) {
                 for(token in tokenList) {
@@ -272,7 +274,7 @@ actual fun createMessageForServer(message: String, tokenList : ArrayList<String>
 }
 
 actual fun sendMessageToServer(request: String) {
-    logMessage("sendMessageToServer", "request: $request")
+    logMessage("sendMessageToServer", { "request: $request" })
     CoroutineScope(Dispatchers.Default).launch {
         try {
             val response = KtorProvider.client.post(Constants.APP_SCRIPT_URL + Constants.APP_SCRIPT_ENDPOINT){
@@ -280,12 +282,13 @@ actual fun sendMessageToServer(request: String) {
                 setBody(request)
             }
             if (response.status.isSuccess()) {
-                logMessage("sendMessageToServer", "Notification sent successfully")
+                logMessage("sendMessageToServer", { "Notification sent successfully" })
             } else {
-                logMessage("sendMessageToServer", "Failed to send notification: ${response.status}")
+                logMessage("sendMessageToServer",
+                    { "Failed to send notification: ${response.status}" })
             }
         } catch (e: Exception) {
-            logMessage("sendMessageToServer", e.message.toString())
+            logMessage("sendMessageToServer", { e.message.toString() })
         }
     }
 }
@@ -300,8 +303,8 @@ actual object TokenStorage {
     }
 }
 
-actual fun logMessage(tag: String, message: String) {
-    NSLog("[$tag] $message")
+actual inline fun logMessage(tag: String, message: () -> String) {
+    NSLog("[$tag] ${message()}")
 }
 
 actual fun generateRandomId(): String {
@@ -540,7 +543,7 @@ fun ByteArray.toNSData(): NSData {
 }
 
 actual fun onPushNotificationReceived(data: Map<String, Any?>) {
-    logMessage("onPushNotificationReceived", data.toString())
+    logMessage("onPushNotificationReceived", { data.toString() })
 
     val fcmToken = data[Constants.KEY_FCM_TOKEN] as? String
     val userId = data[Constants.KEY_USER_ID] as? String
@@ -563,9 +566,9 @@ actual fun onPushNotificationReceived(data: Map<String, Any?>) {
 
     UNUserNotificationCenter.currentNotificationCenter().addNotificationRequest(request) { error ->
         if (error != null) {
-            logMessage("iOS Notification", "Failed to schedule notification: $error")
+            logMessage("iOS Notification", { "Failed to schedule notification: $error" })
         } else {
-            logMessage("iOS Notification", "Notification scheduled")
+            logMessage("iOS Notification", { "Notification scheduled" })
         }
     }
 }

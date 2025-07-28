@@ -44,15 +44,14 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.minhtu.firesocialmedia.constants.TestTag
-import com.minhtu.firesocialmedia.data.model.NewsInstance
-import com.minhtu.firesocialmedia.data.model.UserInstance
+import com.minhtu.firesocialmedia.data.model.news.NewsInstance
+import com.minhtu.firesocialmedia.data.model.user.UserInstance
 import com.minhtu.firesocialmedia.di.PlatformContext
 import com.minhtu.firesocialmedia.platform.CrossPlatformIcon
 import com.minhtu.firesocialmedia.platform.generateImageLoader
 import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
 import com.minhtu.firesocialmedia.presentation.loading.Loading
 import com.minhtu.firesocialmedia.utils.UiUtils
-import com.minhtu.firesocialmedia.utils.Utils
 import com.seiko.imageloader.LocalImageLoader
 import com.seiko.imageloader.ui.AutoSizeImage
 import kotlinx.coroutines.flow.collectLatest
@@ -70,6 +69,7 @@ class Home {
                        platform : PlatformContext,
                        homeViewModel: HomeViewModel,
                        loadingViewModel: LoadingViewModel,
+                       navigateToCallingScreen : Boolean,
                        paddingValues: PaddingValues,
                        onNavigateToUploadNews: (updateNew : NewsInstance?) -> Unit,
                        onNavigateToShowImageScreen: (image : String) -> Unit,
@@ -78,6 +78,7 @@ class Home {
                        onNavigateToUserInformation: (user: UserInstance?) -> Unit,
                        onNavigateToCommentScreen: (selectedNew : NewsInstance) -> Unit,
                        onNavigateToCallingScreen : (sessionId : String, caller : String, callee : String, offer: OfferAnswer, ) -> Unit,
+                       onNavigateToCallingScreenWithUI : () -> Unit,
                        navHandler : NavigationHandler){
             val isLoading by loadingViewModel.isLoading.collectAsState()
             val commentStatus by homeViewModel.commentStatus.collectAsState()
@@ -130,13 +131,20 @@ class Home {
             val getAllUserStatus by homeViewModel.getAllUsersStatus
             LaunchedEffect(getAllUserStatus) {
                 if(getAllUserStatus) {
-                    logMessage("observePhoneCall", "start observe phone call")
+                    logMessage("observePhoneCall", { "start observe phone call" })
                     homeViewModel.observePhoneCall(
                         platform,
                         onNavigateToCallingScreen,
                         onNavigateBack = {
+                            logMessage("NavStack",
+                                { "Current destination: ${navHandler.getCurrentRoute()}" })
+                            logMessage("observePhoneCall", { "onNavigateBack" })
                             navHandler.navigateBack()
                         })
+                    if(navigateToCallingScreen) {
+                        logMessage("navigateToCallingScreen", { "onNavigateToCallingScreenWithUI" })
+                        onNavigateToCallingScreenWithUI()
+                    }
                 }
             }
 

@@ -1,7 +1,7 @@
 package com.minhtu.firesocialmedia.data.model.call
 
 enum class CallStatus {
-    RINGING, ACCEPTED, ENDED
+    RINGING, ACCEPTED, ENDED, VIDEO
 }
 data class AudioCallSession(
     var sessionId: String = "",

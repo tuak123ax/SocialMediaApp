@@ -1,10 +1,10 @@
 package com.minhtu.firesocialmedia.utils
 
-import com.minhtu.firesocialmedia.data.model.CommentInstance
-import com.minhtu.firesocialmedia.data.model.NewsInstance
-import com.minhtu.firesocialmedia.data.model.NotificationInstance
-import com.minhtu.firesocialmedia.data.model.UserInstance
-import com.minhtu.firesocialmedia.data.model.fromMap
+import com.minhtu.firesocialmedia.data.model.news.CommentInstance
+import com.minhtu.firesocialmedia.data.model.news.NewsInstance
+import com.minhtu.firesocialmedia.data.model.notification.NotificationInstance
+import com.minhtu.firesocialmedia.data.model.user.UserInstance
+import com.minhtu.firesocialmedia.data.model.notification.fromMap
 
 
 class IosUtils {

@@ -29,6 +29,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -45,7 +46,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.minhtu.firesocialmedia.constants.TestTag
-import com.minhtu.firesocialmedia.data.model.UserInstance
+import com.minhtu.firesocialmedia.data.model.user.UserInstance
+import com.minhtu.firesocialmedia.data.model.call.CallEvent
+import com.minhtu.firesocialmedia.data.model.call.CallEventFlow
 import com.minhtu.firesocialmedia.data.model.call.OfferAnswer
 import com.minhtu.firesocialmedia.di.PlatformContext
 import com.minhtu.firesocialmedia.platform.generateImageLoader
@@ -53,6 +56,7 @@ import com.minhtu.firesocialmedia.platform.logMessage
 import com.minhtu.firesocialmedia.platform.showToast
 import com.minhtu.firesocialmedia.utils.NavigationHandler
 import com.minhtu.firesocialmedia.utils.UiUtils
+import com.minhtu.firesocialmedia.utils.Utils.Companion.sendNotification
 import com.minhtu.firesocialmedia.utils.Utils.Companion.stopCallAction
 import com.seiko.imageloader.LocalImageLoader
 import com.seiko.imageloader.ui.AutoSizeImage
@@ -73,6 +77,7 @@ class Calling {
             caller : UserInstance?,
             currentUser : UserInstance?,
             remoteOffer : OfferAnswer?,
+            navigateToCallingScreenFromNotification : Boolean,
             callingViewModel: CallingViewModel,
             navHandler : NavigationHandler,
             onStopCall : () -> Unit,
@@ -80,9 +85,15 @@ class Calling {
             modifier: Modifier){
             val coroutineScope = rememberCoroutineScope()
             val isCalling = (currentUser == caller)
-            var startCount by remember { mutableStateOf(false) }
-            var isRunning by remember { mutableStateOf(false) }
-            var acceptCall by remember { mutableStateOf(false) }
+            //Start count up timer and show video call button
+            var startCount by rememberSaveable { mutableStateOf(false) }
+            //Start/stop count up timer
+            var isRunning by rememberSaveable { mutableStateOf(false) }
+            //Check accept call to update UI
+            var acceptCall by rememberSaveable { mutableStateOf(false) }
+            //Show dialog to accept video call
+            val showDialog = remember { mutableStateOf(false) }
+            var videoOffer : OfferAnswer? = null
 
             LaunchedEffect(Unit) {
 //                countDownTimer(onTimeOver = {
@@ -97,58 +108,120 @@ class Calling {
                 callingViewModel.requestPermissionAndStartAudioCall(
                     platform,
                     onGranted = {
-                        logMessage("grantPermission","Granted")
+                        logMessage("grantPermission", { "Granted" })
+                        callingViewModel.updateSessionId(sessionId)
                         if(caller != null && callee != null) {
-                            callingViewModel.updateSessionId(sessionId)
+                            logMessage("grantPermission", { "caller and callee not null" })
                             if(currentUser == caller) {
-                                callingViewModel.startCall(caller.uid, callee.uid, platform)
-                                callingViewModel.observeIceCandidateFromCallee(platform)
-                                callingViewModel.observeAnswerFromCallee(
-                                    platform,
-                                    onGetAnswerFromCallee = {
-                                        startCount = true
-                                        isRunning = true
-                                        acceptCall = true
-                                        callingViewModel.observeVideoCall(
-                                            callingViewModel.getSessionId(sessionId),
-                                            currentUser.uid,
-                                            platform
-                                        )
-                                    })
+                                if(!navigateToCallingScreenFromNotification){
+                                    callingViewModel.startCall(caller, callee, platform)
+                                } else {
+                                    logMessage("navigateToCallingScreenFromNotification",
+                                        { "caller start timer" })
+                                    startCount = true
+                                    isRunning = true
+                                    acceptCall = true
+                                }
+                            } else {
+                                if(currentUser == callee && navigateToCallingScreenFromNotification) {
+                                    logMessage("navigateToCallingScreenFromNotification",
+                                        { "callee start timer" })
+                                    startCount = true
+                                    isRunning = true
+                                    acceptCall = true
+                                }
                             }
                         }
                     },
                     onDenied = {
-                        logMessage("grantPermission","not Granted")
+                        logMessage("grantPermission", { "not Granted" })
                         showToast("Permission is denied! Return to previous screen.")
                         navHandler.navigateBack()
                     }
                 )
             }
 
-            val showDialog = remember { mutableStateOf(false) }
-            val videoCallState by callingViewModel.videoCallState.collectAsState()
-            LaunchedEffect(videoCallState) {
-                if(videoCallState != null) {
-                    showDialog.value = true
+            LaunchedEffect(Unit) {
+                //Observe answer
+                CallEventFlow.events.collect { event ->
+                    when(event) {
+                        CallEvent.AnswerReceived -> {
+                            if(currentUser?.uid != callee?.uid) {
+                                showToast(callee?.name + " accepted your call!")
+                            }
+                            startCount = true
+                            isRunning = true
+                            acceptCall = true
+                        }
+
+                         CallEvent.CallEnded -> {
+                             if(currentUser?.uid != callee?.uid) {
+                                 showToast(callee?.name + " stopped your call!")
+                             }
+                             isRunning = false
+                             stopCallAction(
+                                 callingViewModel,
+                                 coroutineScope,
+                                 onStopCall,
+                                 platform,
+                                 navHandler
+                             )
+                         }
+
+                        CallEvent.StopCalling -> {
+                            logMessage("CallEvent", { "StopCalling" })
+                            showToast("You stopped the call!")
+//                            isRunning = false
+//                            stopCallAction(
+//                                callingViewModel,
+//                                coroutineScope,
+//                                onStopCall,
+//                                platform,
+//                                navHandler
+//                            )
+                        }
+                    }
                 }
             }
+
+            //Observe video call request
+            val videoCallState by CallEventFlow.videoCallState.collectAsState()
+
+            LaunchedEffect(videoCallState) {
+                if (videoCallState != null) {
+                    //Received video call request, show dialog.
+                    logMessage("videoCallState", { "videoOffer not null" })
+                    logMessage("videoCallState", { videoCallState!!.initiator })
+                    showDialog.value = true
+                    videoOffer = videoCallState
+                } else {
+                    //No video call request
+                    logMessage("videoCallState", { "videoOffer null" })
+                    showDialog.value = false
+                }
+            }
+
+            //Dialog to accept/reject video call
             UiUtils.ShowBasicAlertDialog(
                 "Video Call",
                 "Other person want to make a video call. Do you want to join?",
                 onClickConfirm = {
-                    logMessage("onClickConfirm", "Confirm")
-                    if(videoCallState != null) {
-                        logMessage("onClickConfirm", callingViewModel.getSessionId(sessionId))
-                        onNavigateToVideoCall(callingViewModel.getSessionId(sessionId), videoCallState)
+                    logMessage("onClickConfirm", { "Confirm" })
+                    if(videoOffer != null) {
+                        onNavigateToVideoCall(callingViewModel.getSessionId(sessionId), videoOffer)
                     }
+                    callingViewModel.updateVideoState()
                 },
-                onClickReject = {},
+                onClickReject = {
+                    callingViewModel.rejectVideoCall(platform)
+                    callingViewModel.updateVideoState()
+                },
                 showDialog
             )
             Column(modifier = modifier.padding(vertical = 40.dp),
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally) {
+                //Avatar
                 CompositionLocalProvider(
                     LocalImageLoader provides remember { generateImageLoader() },
                 ) {
@@ -192,8 +265,10 @@ class Calling {
                     textAlign = TextAlign.Companion.Center,
                     modifier = Modifier.Companion.fillMaxWidth() // Restrict width to avoid touching buttons
                 )
+                //Audio call is happening, start count-up timer
                 if(startCount) {
                     Spacer(modifier = Modifier.Companion.height(20.dp))
+                    //Count-up timer
                     CountUpTimer(onTick = {},
                         isRunning)
                     Spacer(modifier = Modifier.height(20.dp))
@@ -213,10 +288,10 @@ class Calling {
                         FloatingActionButton(
                             onClick = {
                                 onNavigateToVideoCall(callingViewModel.sessionId, null)
-                                callingViewModel.observeAnswerFromCallee(
-                                    platform,
-                                    onGetAnswerFromCallee = {
-                                    })
+//                                callingViewModel.observeAnswerFromCallee(
+//                                    platform,
+//                                    onGetAnswerFromCallee = {
+//                                    })
                             },
                             shape = CircleShape,
                             containerColor = Color.Transparent, // Transparent to let gradient show
@@ -229,47 +304,49 @@ class Calling {
 
                 Spacer(modifier = Modifier.weight(1f))
 
+                //Accept and Reject button
                 Row(horizontalArrangement = Arrangement.Center,
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.padding(start = 40.dp, end = 40.dp)) {
                     if(!isCalling) {
                         if(!acceptCall) {
-                            Box(
-                                contentAlignment = Alignment.Center,
-                                modifier = Modifier
-                                    .size(56.dp)
-                                    .shadow(8.dp, CircleShape) // Shadow before clipping
-                                    .clip(CircleShape)
-                                    .background(Color.Green)
-                                    .testTag(TestTag.TAG_ACCEPT_CALL_BUTTON)
-                                    .semantics {
-                                        contentDescription = TestTag.TAG_ACCEPT_CALL_BUTTON
-                                    }
-                            ) {
-                                FloatingActionButton(
-                                    onClick = {
-                                        startCount = true
-                                        isRunning = true
-                                        acceptCall = true
-                                        callingViewModel.observeVideoCall(
-                                            sessionId,
-                                            currentUser?.uid,
-                                            platform
-                                        )
-                                        if(currentUser == callee) {
-                                            if(remoteOffer != null) {
-                                                callingViewModel.sendCalleeData(sessionId, remoteOffer, platform)
-                                            }
+                            if(!navigateToCallingScreenFromNotification) {
+                                Box(
+                                    contentAlignment = Alignment.Center,
+                                    modifier = Modifier
+                                        .size(56.dp)
+                                        .shadow(8.dp, CircleShape) // Shadow before clipping
+                                        .clip(CircleShape)
+                                        .background(Color.Green)
+                                        .testTag(TestTag.TAG_ACCEPT_CALL_BUTTON)
+                                        .semantics {
+                                            contentDescription = TestTag.TAG_ACCEPT_CALL_BUTTON
                                         }
-                                    },
-                                    shape = CircleShape,
-                                    containerColor = Color.Transparent, // Transparent to let gradient show
-                                    elevation = FloatingActionButtonDefaults.elevation(0.dp)
                                 ) {
-                                    Icon(Icons.Default.Call, contentDescription = "Call", tint = Color.Black)
+                                    FloatingActionButton(
+                                        onClick = {
+                                            startCount = true
+                                            isRunning = true
+                                            acceptCall = true
+                                            if(currentUser == callee) {
+                                                if(remoteOffer != null) {
+                                                    callingViewModel.acceptCall(
+                                                        sessionId,
+                                                        callee,
+                                                        platform
+                                                    )
+                                                }
+                                            }
+                                        },
+                                        shape = CircleShape,
+                                        containerColor = Color.Transparent, // Transparent to let gradient show
+                                        elevation = FloatingActionButtonDefaults.elevation(0.dp)
+                                    ) {
+                                        Icon(Icons.Default.Call, contentDescription = "Accept Call", tint = Color.Black)
+                                    }
                                 }
+                                Spacer(modifier = Modifier.weight(1f))
                             }
-                            Spacer(modifier = Modifier.weight(1f))
                         }
                     }
                     var backgroundButton by remember {mutableStateOf(Color.Red)}
@@ -292,16 +369,19 @@ class Calling {
                                 stopCallAction(
                                     callingViewModel,
                                     coroutineScope,
-                                    navHandler,
                                     onStopCall,
-                                    platform
+                                    platform,
+                                    navHandler
                                 )
+                                if(caller != null && callee != null) {
+                                    sendNotification("", sessionId, caller, callee, "STOP_CALL")
+                                }
                             },
                             shape = CircleShape,
                             containerColor = Color.Transparent, // Transparent to let gradient show
                             elevation = FloatingActionButtonDefaults.elevation(0.dp)
                         ) {
-                            Icon(Icons.Default.CallEnd, contentDescription = "Call", tint = Color.Black)
+                            Icon(Icons.Default.CallEnd, contentDescription = "Reject Call", tint = Color.Black)
                         }
                     }
                 }

@@ -7,10 +7,10 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.minhtu.firesocialmedia.constants.Constants
-import com.minhtu.firesocialmedia.data.model.NewsInstance
-import com.minhtu.firesocialmedia.data.model.NotificationInstance
-import com.minhtu.firesocialmedia.data.model.NotificationType
-import com.minhtu.firesocialmedia.data.model.UserInstance
+import com.minhtu.firesocialmedia.data.model.news.NewsInstance
+import com.minhtu.firesocialmedia.data.model.notification.NotificationInstance
+import com.minhtu.firesocialmedia.data.model.notification.NotificationType
+import com.minhtu.firesocialmedia.data.model.user.UserInstance
 import com.minhtu.firesocialmedia.data.model.call.OfferAnswer
 import com.minhtu.firesocialmedia.di.PlatformContext
 import com.minhtu.firesocialmedia.platform.createMessageForServer
@@ -31,7 +31,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -267,7 +266,7 @@ class HomeViewModel(
             }
             updateCountAndSendNotiStatus.value = true
         } catch (e: Exception) {
-            logMessage("sendLikeUpdatesToFirebase", e.message.toString())
+            logMessage("sendLikeUpdatesToFirebase", { e.message.toString() })
             updateCountAndSendNotiStatus.value = false
         }
     }
@@ -310,12 +309,12 @@ class HomeViewModel(
             selectedNew.id
         )
         //Save notification to db
-        val poster = Utils.findUserById(selectedNew.posterId, listUsers)
+        val poster = findUserById(selectedNew.posterId, listUsers)
         Utils.saveNotification(notification, poster!!, platform)
         //Send notification to poster
         val tokenList = ArrayList<String>()
         tokenList.add(poster.token)
-        sendMessageToServer(createMessageForServer(notiContent, tokenList, currentUser))
+        sendMessageToServer(createMessageForServer(notiContent, tokenList, currentUser, "BASIC"))
     }
 
     suspend fun deleteNotification(notification: NotificationInstance, platform: PlatformContext) {
@@ -367,13 +366,15 @@ class HomeViewModel(
                             if(iceCandidates != null) {
                                 for(candidate in iceCandidates.values) {
                                     if(candidate.candidate != null && candidate.sdpMid != null && candidate.sdpMLineIndex != null) {
-                                        platform.audioCall.addIceCandidate(candidate.candidate!!, candidate.sdpMid!!, candidate.sdpMLineIndex!!)
+                                        viewModelScope.launch(ioDispatcher) {
+                                            platform.audioCall.addIceCandidate(candidate.candidate!!, candidate.sdpMid!!, candidate.sdpMLineIndex!!)
+                                        }
                                     }
                                 }
                             }
                         })
                 } catch(e : Exception){
-                    logMessage("observePhoneCall Exception", e.message.toString())
+                    logMessage("observePhoneCall Exception", { e.message.toString() })
                 }
             }
         }

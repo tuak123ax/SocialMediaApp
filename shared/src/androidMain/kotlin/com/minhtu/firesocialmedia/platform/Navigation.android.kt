@@ -24,42 +24,44 @@ import androidx.navigation.compose.rememberNavController
 import com.google.android.gms.auth.api.identity.BeginSignInRequest
 import com.google.android.gms.auth.api.identity.Identity
 import com.minhtu.firesocialmedia.constants.Constants
-import com.minhtu.firesocialmedia.data.model.NewsInstance
-import com.minhtu.firesocialmedia.data.model.UserInstance
 import com.minhtu.firesocialmedia.data.model.call.OfferAnswer
+import com.minhtu.firesocialmedia.data.model.call.SharedCallData
+import com.minhtu.firesocialmedia.data.model.news.NewsInstance
+import com.minhtu.firesocialmedia.data.model.signin.SignInState
+import com.minhtu.firesocialmedia.data.model.user.UserInstance
 import com.minhtu.firesocialmedia.di.PlatformContext
+import com.minhtu.firesocialmedia.domain.SignInLauncher
 import com.minhtu.firesocialmedia.presentation.calling.audiocall.Calling
 import com.minhtu.firesocialmedia.presentation.calling.audiocall.CallingViewModel
 import com.minhtu.firesocialmedia.presentation.calling.videocall.VideoCall
 import com.minhtu.firesocialmedia.presentation.calling.videocall.VideoCallViewModel
+import com.minhtu.firesocialmedia.presentation.comment.Comment
 import com.minhtu.firesocialmedia.presentation.comment.CommentViewModel
+import com.minhtu.firesocialmedia.presentation.forgotpassword.ForgotPassword
 import com.minhtu.firesocialmedia.presentation.forgotpassword.ForgotPasswordViewModel
+import com.minhtu.firesocialmedia.presentation.home.Home
 import com.minhtu.firesocialmedia.presentation.home.HomeViewModel
+import com.minhtu.firesocialmedia.presentation.information.Information
 import com.minhtu.firesocialmedia.presentation.information.InformationViewModel
 import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
-import com.minhtu.firesocialmedia.presentation.navigationscreen.friend.FriendViewModel
-import com.minhtu.firesocialmedia.presentation.search.SearchViewModel
-import com.minhtu.firesocialmedia.presentation.showimage.ShowImageViewModel
-import com.minhtu.firesocialmedia.presentation.signin.SignInState
-import com.minhtu.firesocialmedia.presentation.signin.SignInViewModel
-import com.minhtu.firesocialmedia.presentation.signup.SignUpViewModel
-import com.minhtu.firesocialmedia.presentation.uploadnewsfeed.UploadNewfeedViewModel
-import com.minhtu.firesocialmedia.presentation.userinformation.UserInformationViewModel
-import com.minhtu.firesocialmedia.presentation.comment.Comment
-import com.minhtu.firesocialmedia.presentation.forgotpassword.ForgotPassword
-import com.minhtu.firesocialmedia.presentation.home.Home
-import com.minhtu.firesocialmedia.presentation.information.Information
 import com.minhtu.firesocialmedia.presentation.navigationscreen.Screen
 import com.minhtu.firesocialmedia.presentation.navigationscreen.friend.Friend
+import com.minhtu.firesocialmedia.presentation.navigationscreen.friend.FriendViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.notification.Notification
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.Settings
 import com.minhtu.firesocialmedia.presentation.postinformation.PostInformation
 import com.minhtu.firesocialmedia.presentation.search.Search
+import com.minhtu.firesocialmedia.presentation.search.SearchViewModel
 import com.minhtu.firesocialmedia.presentation.showimage.ShowImage
+import com.minhtu.firesocialmedia.presentation.showimage.ShowImageViewModel
 import com.minhtu.firesocialmedia.presentation.signin.SignIn
+import com.minhtu.firesocialmedia.presentation.signin.SignInViewModel
 import com.minhtu.firesocialmedia.presentation.signup.SignUp
+import com.minhtu.firesocialmedia.presentation.signup.SignUpViewModel
+import com.minhtu.firesocialmedia.presentation.uploadnewsfeed.UploadNewfeedViewModel
 import com.minhtu.firesocialmedia.presentation.uploadnewsfeed.UploadNewsfeed
 import com.minhtu.firesocialmedia.presentation.userinformation.UserInformation
+import com.minhtu.firesocialmedia.presentation.userinformation.UserInformationViewModel
 import com.minhtu.firesocialmedia.utils.UiUtils.Companion.BottomNavigationBar
 import com.minhtu.firesocialmedia.utils.Utils
 
@@ -109,7 +111,7 @@ actual fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                     val task = Identity.getSignInClient(context).getSignInCredentialFromIntent(result.data)
                     signInViewModel.handleSignInResult(task, platformContext)
                 } catch(e : Exception){
-                    logMessage("SignIn", "Exception: ${e.message}")
+                    logMessage("SignIn", { "Exception: ${e.message}" })
                     signInViewModel.updateSignInStatus(SignInState(false, Constants.LOGIN_ERROR))
                 }
             }
@@ -135,14 +137,14 @@ actual fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                         } catch (e: IntentSender.SendIntentException) {
                             logMessage(
                                 "OneTapSignIn",
-                                "Error launching intent: ${e.localizedMessage}"
+                                { "Error launching intent: ${e.localizedMessage}" }
                             )
                         }
                     }
                         .addOnFailureListener { exception ->
                             logMessage(
                                 "OneTapSignIn",
-                                "Sign-in failed: ${exception.localizedMessage}"
+                                { "Sign-in failed: ${exception.localizedMessage}" }
                             )
                         }
                 }
@@ -236,6 +238,7 @@ actual fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                         platformContext,
                         homeViewModel,
                         loadingViewModel,
+                        SharedCallData.navigateToCallingScreenFromNotification,
                         paddingValues = paddingValues,
                         onNavigateToUploadNews = {new ->
                             updateNew = new
@@ -257,6 +260,12 @@ actual fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                             remoteOffer = offer
                             caller = if(callerId == homeViewModel.currentUser?.uid) homeViewModel.currentUser else Utils.findUserById(callerId, homeViewModel.listUsers)
                             callee = if(calleeId == homeViewModel.currentUser?.uid) homeViewModel.currentUser else Utils.findUserById(calleeId, homeViewModel.listUsers)
+                            navController.navigate(route = Calling.getScreenName())
+                        },
+                        onNavigateToCallingScreenWithUI = {
+                            sessionId = SharedCallData.sessionId
+                            caller = if(SharedCallData.callerId == homeViewModel.currentUser?.uid) homeViewModel.currentUser else Utils.findUserById(SharedCallData.callerId, homeViewModel.listUsers)
+                            callee = if(SharedCallData.calleeId == homeViewModel.currentUser?.uid) homeViewModel.currentUser else Utils.findUserById(SharedCallData.calleeId, homeViewModel.listUsers)
                             navController.navigate(route = Calling.getScreenName())
                         },
                         androidNavigationHandler
@@ -473,8 +482,6 @@ actual fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                 }
 
                 composable(route = Calling.getScreenName()) {
-                    logMessage("Caller", caller!!.name)
-                    logMessage("Callee", callee!!.name)
                     homeViewModel.updateIsInCall(true)
                     Calling.CallingScreen(
                         platformContext,
@@ -483,6 +490,7 @@ actual fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                         caller,
                         homeViewModel.currentUser,
                         remoteOffer,
+                        SharedCallData.navigateToCallingScreenFromNotification,
                         callingViewModel,
                         androidNavigationHandler,
                         onStopCall = {
@@ -502,11 +510,13 @@ actual fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                 composable(route = VideoCall.getScreenName()) {
                     VideoCall.VideoCallScreen(
                         sessionId,
+                        caller,
+                        callee,
                         homeViewModel.currentUser?.uid,
                         remoteVideoOffer,
                         platformContext,
-                        callingViewModel,
                         videoCallViewModel,
+                        loadingViewModel,
                         androidNavigationHandler,
                         modifier = Modifier
                             .fillMaxSize()
@@ -516,4 +526,19 @@ actual fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
             }
         }
     }
+}
+
+@Composable
+actual fun SetUpNavigation(context : Any,
+                           platformContext: PlatformContext,
+                           sessionId : String?,
+                           callerId : String?,
+                           calleeId : String?) {
+    if(sessionId != null && callerId != null && calleeId != null) {
+        SharedCallData.sessionId = sessionId
+        SharedCallData.callerId = callerId
+        SharedCallData.calleeId = calleeId
+        SharedCallData.navigateToCallingScreenFromNotification = true
+    }
+    SetUpNavigation(context, platformContext)
 }

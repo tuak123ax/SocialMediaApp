@@ -1,6 +1,6 @@
 package com.minhtu.firesocialmedia
 
-import com.minhtu.firesocialmedia.data.model.UserInstance
+import com.minhtu.firesocialmedia.data.model.user.UserInstance
 import com.minhtu.firesocialmedia.di.AuthServiceMock
 import com.minhtu.firesocialmedia.di.CryptoServiceMock
 import com.minhtu.firesocialmedia.di.DatabaseServiceMock
@@ -8,7 +8,6 @@ import com.minhtu.firesocialmedia.di.FirebaseServiceMock
 import com.minhtu.firesocialmedia.di.PlatformContextMock
 import com.minhtu.firesocialmedia.presentation.information.InformationViewModel
 import com.minhtu.firesocialmedia.utils.Utils
-import io.mockative.any
 import io.mockative.coEvery
 import io.mockative.eq
 import io.mockative.every
