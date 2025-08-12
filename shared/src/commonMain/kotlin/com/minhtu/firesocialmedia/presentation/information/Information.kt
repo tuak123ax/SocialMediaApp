@@ -34,13 +34,13 @@ import androidx.compose.ui.unit.sp
 import com.minhtu.firesocialmedia.constants.Constants
 import com.minhtu.firesocialmedia.constants.TestTag
 import com.minhtu.firesocialmedia.di.PlatformContext
-import com.minhtu.firesocialmedia.platform.ImagePicker
 import com.minhtu.firesocialmedia.platform.getImageBytesFromDrawable
 import com.minhtu.firesocialmedia.platform.showToast
 import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
 import com.minhtu.firesocialmedia.presentation.signup.SignUpViewModel
 import com.minhtu.firesocialmedia.presentation.loading.Loading
 import androidx.compose.runtime.getValue
+import com.minhtu.firesocialmedia.domain.serviceimpl.imagepicker.ImagePicker
 
 class Information {
     companion object{

@@ -12,6 +12,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
                      didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
 
         // Configure Firebase
+        FirebaseConfiguration.shared.setLoggerLevel(.debug)
         FirebaseApp.configure()
 
         // Set Messaging delegate

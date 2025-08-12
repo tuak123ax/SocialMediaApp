@@ -1,7 +1,7 @@
 package com.minhtu.firesocialmedia.presentation.navigationscreen.friend
 
 import com.minhtu.firesocialmedia.constants.Constants
-import com.minhtu.firesocialmedia.data.model.UserInstance
+import com.minhtu.firesocialmedia.data.model.user.UserInstance
 import com.minhtu.firesocialmedia.di.PlatformContext
 import com.rickclephas.kmp.observableviewmodel.ViewModel
 import com.rickclephas.kmp.observableviewmodel.launch

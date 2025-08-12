@@ -70,7 +70,7 @@ class SignIn{
 
             LaunchedEffect(Unit) {
                 //Check login information in storage
-                signInViewModel.checkLocalAccount(platform, { loadingViewModel.showLoading() })
+                signInViewModel.checkLocalAccount(platform) { loadingViewModel.showLoading() }
             }
             val signInStatus = signInViewModel.signInState.collectAsState()
             LaunchedEffect(signInStatus.value) {

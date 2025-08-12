@@ -1,20 +1,24 @@
 package com.minhtu.firesocialmedia.platform
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.minhtu.firesocialmedia.data.model.NewsInstance
-import com.minhtu.firesocialmedia.data.model.UserInstance
-import com.minhtu.firesocialmedia.di.IosPlatformContext
+import com.minhtu.firesocialmedia.data.model.news.NewsInstance
+import com.minhtu.firesocialmedia.data.model.user.UserInstance
 import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
 import com.minhtu.firesocialmedia.presentation.signin.SignInViewModel
 import com.minhtu.firesocialmedia.presentation.signup.SignUpViewModel
@@ -43,10 +47,13 @@ import com.minhtu.firesocialmedia.presentation.navigationscreen.notification.Not
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.Settings
 import com.minhtu.firesocialmedia.di.PlatformContext
 import com.minhtu.firesocialmedia.utils.UiUtils.Companion.BottomNavigationBar
+import com.minhtu.firesocialmedia.platform.IosImagePicker
+import com.minhtu.firesocialmedia.platform.IosNavigationHandler
+import com.minhtu.firesocialmedia.platform.IosScreen
+import com.minhtu.firesocialmedia.platform.ToastHost
 
 @Composable
-actual fun SetUpNavigation(context: Any) {
-    val platformContext = IosPlatformContext()
+actual fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
     var selectedImage = ""
     var selectedUser: UserInstance? = null
     lateinit var selectedNew : NewsInstance
@@ -98,7 +105,7 @@ actual fun SetUpNavigation(context: Any) {
         }
     ){
         paddingValues ->
-        logMessage("Navigation", currentScreen.value.toString())
+        logMessage("Navigation") { currentScreen.value.toString() }
         when (currentScreen.value) {
             IosScreen.CommentScreen -> Comment.CommentScreen(modifier = Modifier
                 .fillMaxSize()
@@ -162,6 +169,7 @@ actual fun SetUpNavigation(context: Any) {
                 platformContext,
                 homeViewModel,
                 loadingViewModel,
+                navigateToCallingScreen = false, // iOS implementation will be added later
                 paddingValues = paddingValues,
                 onNavigateToUploadNews = {new ->
                     updateNew = new
@@ -183,7 +191,16 @@ actual fun SetUpNavigation(context: Any) {
                 onNavigateToCommentScreen = { new ->
                     selectedNew = new
                     iosNavigationHandler.navigateTo(IosScreen.CommentScreen.toString())
-                }
+                },
+                onNavigateToCallingScreen = { sessionId, caller, callee, offer ->
+                    // iOS calling implementation will be added later
+                    // iosNavigationHandler.navigateTo(IosScreen.CallingScreen.toString())
+                },
+                onNavigateToCallingScreenWithUI = {
+                    // iOS calling with UI implementation will be added later
+                    // iosNavigationHandler.navigateTo(IosScreen.CallingScreen.toString())
+                },
+                navHandler = iosNavigationHandler
             )
             IosScreen.InformationScreen -> Information.InformationScreen(
                 modifier = Modifier
@@ -208,6 +225,29 @@ actual fun SetUpNavigation(context: Any) {
                 }
             )
             IosScreen.LoadingScreen -> {}
+            // Temporarily removed calling screens to get basic build working
+            // IosScreen.CallingScreen -> {
+            //     // Placeholder for calling screen - will be implemented later
+            //     Box(
+            //         modifier = Modifier
+            //             .fillMaxSize()
+            //             .background(Color.White),
+            //         contentAlignment = Alignment.Center
+            //     ) {
+            //         Text("Calling Screen - iOS implementation coming soon")
+            //     }
+            // }
+            // IosScreen.VideoCallScreen -> {
+            //     // Placeholder for video call screen - will be implemented later
+            //     Box(
+            //         modifier = Modifier
+            //             .fillMaxSize()
+            //             .background(Color.White),
+            //         contentAlignment = Alignment.Center
+            //     ) {
+            //         Text("Video Call Screen - iOS implementation coming soon")
+            //     }
+            // }
             IosScreen.NotificationScreen -> Notification.NotificationScreen(
                 modifier = Modifier
                     .fillMaxSize()
@@ -389,8 +429,23 @@ actual fun SetUpNavigation(context: Any) {
                 onNavigateToUploadNewsfeed = { new ->
                     updateNew = new
                     iosNavigationHandler.navigateTo(IosScreen.UploadNewsScreen.toString())
+                },
+                onNavigateToCallingScreen = { user ->
+                    // iOS calling implementation will be added later
+                    // iosNavigationHandler.navigateTo(IosScreen.CallingScreen.toString())
                 }
             )
         }
     }
+}
+
+@Composable
+actual fun SetUpNavigation(context: Any,
+                           platformContext: PlatformContext,
+                           sessionId: String?,
+                           callerId: String?,
+                           calleeId: String?) {
+    // iOS implementation for notification handling
+    // This will be implemented when notification handling is needed
+    SetUpNavigation(context, platformContext)
 }

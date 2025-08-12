@@ -4,10 +4,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.minhtu.firesocialmedia.constants.Constants
-import com.minhtu.firesocialmedia.data.model.NewsInstance
-import com.minhtu.firesocialmedia.data.model.NotificationInstance
-import com.minhtu.firesocialmedia.data.model.NotificationType
-import com.minhtu.firesocialmedia.data.model.UserInstance
+import com.minhtu.firesocialmedia.data.model.news.NewsInstance
+import com.minhtu.firesocialmedia.data.model.notification.NotificationInstance
+import com.minhtu.firesocialmedia.data.model.notification.NotificationType
+import com.minhtu.firesocialmedia.data.model.user.UserInstance
 import com.minhtu.firesocialmedia.di.PlatformContext
 import com.minhtu.firesocialmedia.platform.createMessageForServer
 import com.minhtu.firesocialmedia.platform.generateRandomId
@@ -98,17 +98,17 @@ class UploadNewfeedViewModel(
                     val friendTokens = getFriendTokens()
                     if(friendTokens.isNotEmpty()){
                         if(notification.content.isNotEmpty()) {
-                            sendMessageToServer(createMessageForServer(notification.content, friendTokens, currentUser!!))
+                            sendMessageToServer(createMessageForServer(notification.content, friendTokens, currentUser!!, "BASIC"))
                         } else {
                             if(image.isNotEmpty()) {
                                 val content = "Posted a picture!"
                                 notification.updateContent(content)
-                                sendMessageToServer(createMessageForServer(content, friendTokens, currentUser!!))
+                                sendMessageToServer(createMessageForServer(content, friendTokens, currentUser!!, "BASIC"))
                             } else {
                                 if(video.isNotEmpty()) {
                                     val content = "Posted a video!"
                                     notification.updateContent(content)
-                                    sendMessageToServer(createMessageForServer(content, friendTokens, currentUser!!))
+                                    sendMessageToServer(createMessageForServer(content, friendTokens, currentUser!!, "BASIC"))
                                 }
                             }
                         }

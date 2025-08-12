@@ -51,9 +51,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.minhtu.firesocialmedia.constants.TestTag
-import com.minhtu.firesocialmedia.data.model.CommentInstance
-import com.minhtu.firesocialmedia.data.model.NewsInstance
-import com.minhtu.firesocialmedia.data.model.UserInstance
+import com.minhtu.firesocialmedia.data.model.news.CommentInstance
+import com.minhtu.firesocialmedia.data.model.news.NewsInstance
+import com.minhtu.firesocialmedia.data.model.user.UserInstance
 import com.minhtu.firesocialmedia.di.PlatformContext
 import com.minhtu.firesocialmedia.platform.CrossPlatformIcon
 import com.minhtu.firesocialmedia.platform.convertTimeToDateString
@@ -371,6 +371,7 @@ class Comment {
                                 color = if (isLiked) "#00FFFF" else "#FFFFFF",
                                 contentDescription = TestTag.Companion.TAG_BUTTON_LIKE,
                                 modifier = Modifier.Companion
+                                    .size(20.dp)
                                     .testTag(TestTag.Companion.TAG_BUTTON_LIKE)
                                     .semantics {
                                         contentDescription = TestTag.Companion.TAG_BUTTON_LIKE
@@ -393,6 +394,7 @@ class Comment {
                                     color = "#FFFFFF",
                                     contentDescription = TestTag.Companion.TAG_BUTTON_COMMENT,
                                     modifier = Modifier.Companion
+                                        .size(20.dp)
                                         .testTag(TestTag.Companion.TAG_BUTTON_COMMENT)
                                         .semantics {
                                             contentDescription =
@@ -442,13 +444,13 @@ class Comment {
                             .padding(horizontal = 30.dp)
                             .clickable {
                                 showReplies = !showReplies
-                                logMessage("showReplies", showReplies.toString())
+                                logMessage("showReplies", { showReplies.toString() })
                             }
                     )
                 }
 
                 if (showReplies) {
-                    logMessage("numberReplies", comment.listReplies.values.size.toString())
+                    logMessage("numberReplies", { comment.listReplies.values.size.toString() })
                     Column(
                         modifier = Modifier.Companion.padding(start = 40.dp)
                     ) {

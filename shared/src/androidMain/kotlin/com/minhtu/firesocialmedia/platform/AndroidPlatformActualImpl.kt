@@ -2,33 +2,27 @@ package com.minhtu.firesocialmedia.platform
 
 import android.app.Activity
 import android.content.Context
-import android.content.Intent
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.graphics.ImageDecoder
 import android.graphics.drawable.BitmapDrawable
-import android.os.Build
-import android.provider.MediaStore
 import android.util.Log
 import android.widget.Toast
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.ActivityResultLauncher
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.edit
-import androidx.core.net.toUri
 import androidx.media3.common.MediaItem
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
@@ -36,11 +30,13 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.minhtu.firesocialmedia.R
 import com.minhtu.firesocialmedia.constants.Constants
-import com.minhtu.firesocialmedia.data.model.UserInstance
-import com.minhtu.firesocialmedia.services.crypto.AndroidCryptoHelper
-import com.minhtu.firesocialmedia.services.notification.Client
-import com.minhtu.firesocialmedia.services.notification.NotificationApiService
+import com.minhtu.firesocialmedia.data.model.user.UserInstance
+import com.minhtu.firesocialmedia.domain.serviceimpl.call.WebRTCManager
+import com.minhtu.firesocialmedia.domain.serviceimpl.crypto.AndroidCryptoHelper
+import com.minhtu.firesocialmedia.domain.serviceimpl.notification.Client
+import com.minhtu.firesocialmedia.domain.serviceimpl.notification.NotificationApiService
 import com.minhtu.firesocialmedia.utils.NavigationHandler
+import com.russhwolf.settings.BuildConfig
 import com.russhwolf.settings.Settings
 import com.seiko.imageloader.ImageLoader
 import com.seiko.imageloader.cache.memory.maxSizePercent
@@ -55,6 +51,9 @@ import kotlinx.coroutines.launch
 import okio.Path.Companion.toOkioPath
 import org.json.JSONArray
 import org.json.JSONObject
+import org.webrtc.EglBase
+import org.webrtc.SurfaceViewRenderer
+import org.webrtc.VideoTrack
 import java.io.ByteArrayOutputStream
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -106,7 +105,7 @@ actual fun PasswordVisibilityIcon(passwordVisibility : Boolean) {
         icon = icon,
         color = "#00FFFFFF",
         contentDescription = descriptionOfIcon,
-        modifier = Modifier
+        modifier = Modifier.size(20.dp)
     )
 }
 
@@ -114,7 +113,7 @@ actual fun exitApp() {
     (appContext as Activity).finish()
 }
 
-actual fun createMessageForServer(message: String, tokenList : ArrayList<String>, sender : UserInstance): String {
+actual fun createMessageForServer(message: String, tokenList : ArrayList<String>, sender : UserInstance, type : String): String {
     val body = JSONObject()
     try {
         val tokens = JSONArray()
@@ -128,9 +127,37 @@ actual fun createMessageForServer(message: String, tokenList : ArrayList<String>
         data.put(Constants.KEY_EMAIL, sender.email)
         data.put(Constants.REMOTE_MSG_TITLE, sender.name)
         data.put(Constants.REMOTE_MSG_BODY, message)
+        data.put(Constants.REMOTE_MSG_TYPE, type)
 
         body.put(Constants.REMOTE_MSG_DATA, data)
         body.put(Constants.REMOTE_MSG_TOKENS, tokens)
+    } catch (e: Exception) {
+        e.printStackTrace()
+    }
+    return body.toString()
+}
+
+actual fun createCallMessage(message: String, tokenList : ArrayList<String>, sessionId : String, sender : UserInstance, receiver : UserInstance, type : String): String {
+    val body = JSONObject()
+    try {
+        val tokens = JSONArray()
+        for(token in tokenList) {
+            tokens.put(token)
+        }
+        val data = JSONObject()
+        data.put(Constants.KEY_SESSION_ID, sessionId)
+        data.put(Constants.KEY_CALLER_ID, sender.uid)
+        data.put(Constants.KEY_CALLER_NAME, sender.name)
+        data.put(Constants.KEY_CALLER_AVATAR, sender.image)
+        data.put(Constants.KEY_CALLEE_ID, receiver.uid)
+        data.put(Constants.KEY_CALLEE_NAME, receiver.name)
+        data.put(Constants.KEY_CALLEE_AVATAR, receiver.image)
+        data.put(Constants.REMOTE_MSG_BODY, message)
+        data.put(Constants.REMOTE_MSG_TYPE, type)
+
+        body.put(Constants.REMOTE_MSG_DATA, data)
+        body.put(Constants.REMOTE_MSG_TOKENS, tokens)
+        body.put(Constants.KEY_FCM_PRIORITY, "high")
     } catch (e: Exception) {
         e.printStackTrace()
     }
@@ -162,8 +189,10 @@ actual object TokenStorage {
     }
 }
 
-actual fun logMessage(tag: String, message :String) {
-    Log.e(tag, message)
+actual inline fun logMessage(tag: String, message: () -> String) {
+    if (BuildConfig.DEBUG) {
+        Log.e(tag, message())
+    }
 }
 
 actual fun generateRandomId(): String {
@@ -192,96 +221,6 @@ actual suspend fun getImageBytesFromDrawable(name: String): ByteArray?{
     val stream = ByteArrayOutputStream()
     bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)
     return stream.toByteArray()
-}
-
-class AndroidImagePicker(
-    private val onImagePicked: (String) -> Unit,
-    private val onVideoPicked: (String) -> Unit
-) : ImagePicker {
-    enum class PickType { IMAGE, VIDEO }
-    var currentPickType: PickType? = null
-    private lateinit var launcher: ActivityResultLauncher<Intent>
-    @Composable
-    override fun RegisterLauncher(hideLoading : () -> Unit) {
-        launcher = rememberLauncherForActivityResult(
-            ActivityResultContracts.StartActivityForResult()){
-                result ->
-            if(result.resultCode == Activity.RESULT_OK){
-                Log.e("getAvatarFromGalleryLauncher", "RESULT_OK")
-                val dataUrl = result.data?.data
-                if(dataUrl != null){
-                    Log.e("getAvatarFromGalleryLauncher", dataUrl.toString())
-                    if(currentPickType == PickType.IMAGE){
-                        onImagePicked(dataUrl.toString())
-                    } else {
-                        onVideoPicked(dataUrl.toString())
-                    }
-                    hideLoading()
-                }
-            } else {
-                if(result.resultCode == Activity.RESULT_CANCELED)
-                {
-                    currentPickType = null
-                    hideLoading()
-                }
-            }
-        }
-    }
-
-    override fun pickImage() {
-        currentPickType = PickType.IMAGE
-        val intent = Intent()
-        intent.setType("image/*")
-        intent.setAction(Intent.ACTION_GET_CONTENT)
-        launcher.launch(intent)
-    }
-
-    override fun pickVideo() {
-        currentPickType = PickType.VIDEO
-        val intent = Intent()
-        intent.setType("video/*")
-        intent.setAction(Intent.ACTION_GET_CONTENT)
-        launcher.launch(intent)
-    }
-
-    override suspend fun loadImageBytes(uri: String): ByteArray? {
-         return try {
-            val parsedUri = uri.toUri()
-            val bitmap = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                val source = ImageDecoder.createSource(appContext.contentResolver, parsedUri)
-                ImageDecoder.decodeBitmap(source)
-            } else {
-                MediaStore.Images.Media.getBitmap(appContext.contentResolver, parsedUri)
-            }
-
-            val stream = ByteArrayOutputStream()
-            bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)
-            stream.toByteArray()
-        } catch (e: Exception) {
-            e.printStackTrace()
-            null
-        }
-    }
-
-    @Composable
-    override fun ByteArrayImage(byteArray: ByteArray?, modifier: Modifier) {
-        if(byteArray != null) {
-            val bitmap = remember(byteArray) { byteArray.toBitmap() }
-
-            bitmap?.let {
-                Image(
-                    bitmap = it.asImageBitmap(),
-                    contentDescription = "Image",
-                    contentScale = ContentScale.Crop,
-                    modifier = modifier
-                )
-            }
-        }
-    }
-
-    fun ByteArray.toBitmap(): Bitmap? {
-        return BitmapFactory.decodeByteArray(this, 0, size)
-    }
 }
 
 actual fun generateImageLoader(): ImageLoader {
@@ -328,7 +267,7 @@ class AndroidNavigationHandler(
         navController.navigate(route)
     }
 
-    override fun navigateBack() {
+    override fun navigateBack(){
         navController.popBackStack()
     }
 
@@ -371,3 +310,110 @@ actual fun VideoPlayer(uri: String, modifier: Modifier) {
         }
     )
 }
+
+actual class WebRTCVideoTrack(val track: VideoTrack?)
+
+@Composable
+actual fun WebRTCVideoView(
+    localTrack: WebRTCVideoTrack?,
+    remoteTrack: WebRTCVideoTrack?,
+    modifier: Modifier
+) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        remoteTrack?.track?.let {
+            RemoteVideoView(
+                eglBaseContext = WebRTCManager.eglBase.eglBaseContext,
+                videoTrack = it,
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+
+        localTrack?.track?.let {
+            LocalVideoView(
+                eglBaseContext = WebRTCManager.eglBase.eglBaseContext,
+                videoTrack = it,
+                modifier = Modifier
+                    .size(150.dp)
+                    .align(Alignment.BottomEnd)
+                    .padding(16.dp)
+            )
+        }
+    }
+}
+
+@Composable
+fun LocalVideoView(
+    eglBaseContext: EglBase.Context,
+    videoTrack: VideoTrack,
+    modifier: Modifier = Modifier
+) {
+    val context = LocalContext.current
+
+    val renderer = remember {
+        SurfaceViewRenderer(context).apply {
+            init(eglBaseContext, null)
+            setZOrderMediaOverlay(true)
+            setMirror(true)
+            setEnableHardwareScaler(true)
+        }
+    }
+
+    DisposableEffect(videoTrack) {
+        videoTrack.addSink(renderer)
+
+        onDispose {
+            runCatching {
+                videoTrack.removeSink(renderer)
+            }.onFailure {
+                Log.e("LocalVideoView", "Failed to remove sink", it)
+            }
+
+            runCatching {
+                renderer.release()
+            }.onFailure {
+                Log.e("LocalVideoView", "Failed to release renderer", it)
+            }
+        }
+    }
+
+    AndroidView(factory = { renderer }, modifier = modifier)
+}
+
+
+@Composable
+fun RemoteVideoView(
+    eglBaseContext: EglBase.Context,
+    videoTrack: VideoTrack,
+    modifier: Modifier = Modifier
+) {
+    val context = LocalContext.current
+
+    val renderer = remember {
+        SurfaceViewRenderer(context).apply {
+            init(eglBaseContext, null)
+            setMirror(false)
+            setEnableHardwareScaler(true)
+        }
+    }
+
+    DisposableEffect(videoTrack) {
+        videoTrack.addSink(renderer)
+
+        onDispose {
+            runCatching {
+                videoTrack.removeSink(renderer)
+            }.onFailure {
+                Log.e("RemoteVideoView", "Failed to remove sink", it)
+            }
+
+            runCatching {
+                renderer.release()
+            }.onFailure {
+                Log.e("RemoteVideoView", "Failed to release renderer", it)
+            }
+        }
+    }
+
+    AndroidView(factory = { renderer }, modifier = modifier)
+}
+

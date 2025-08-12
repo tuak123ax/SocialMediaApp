@@ -74,15 +74,14 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.minhtu.firesocialmedia.constants.TestTag
-import com.minhtu.firesocialmedia.data.model.NewsInstance
-import com.minhtu.firesocialmedia.data.model.UserInstance
+import com.minhtu.firesocialmedia.data.model.news.NewsInstance
+import com.minhtu.firesocialmedia.data.model.user.UserInstance
 import com.minhtu.firesocialmedia.di.PlatformContext
 import com.minhtu.firesocialmedia.platform.CommonBackHandler
 import com.minhtu.firesocialmedia.platform.CrossPlatformIcon
 import com.minhtu.firesocialmedia.platform.VideoPlayer
 import com.minhtu.firesocialmedia.platform.convertTimeToDateString
 import com.minhtu.firesocialmedia.platform.generateImageLoader
-import com.minhtu.firesocialmedia.platform.logMessage
 import com.minhtu.firesocialmedia.presentation.home.Home
 import com.minhtu.firesocialmedia.presentation.home.HomeViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.friend.FriendViewModel
@@ -361,6 +360,43 @@ class UiUtils {
             }
         }
 
+        @Composable
+        fun ShowBasicAlertDialog(
+            title : String,
+            text : String,
+            onClickConfirm: () -> Unit,
+            onClickReject: () -> Unit,
+            showDialog: MutableState<Boolean>
+        ) {
+            CommonBackHandler {
+                showDialog.value = true
+            }
+
+            if (showDialog.value) {
+                AlertDialog(
+                    onDismissRequest = { showDialog.value = false },
+                    title = { Text(title) },
+                    text = { Text(text) },
+                    confirmButton = {
+                        Button(onClick = {
+                            onClickConfirm()
+                            showDialog.value = false
+                        }) {
+                            Text("Yes")
+                        }
+                    },
+                    dismissButton = {
+                        Button(onClick = {
+                            showDialog.value = false
+                            onClickReject()
+                        }) {
+                            Text("No")
+                        }
+                    }
+                )
+            }
+        }
+
 
         @Composable
         fun BottomNavigationBar(navHandler: NavigationHandler, homeViewModel: HomeViewModel, onNavigateToUploadNews: () -> Unit, modifier: Modifier) {
@@ -386,7 +422,6 @@ class UiUtils {
                             Settings.getScreenName() -> TestTag.TAG_SETTING_BOTTOM
                             else -> ""
                         }
-                        logMessage("testTag", testTag)
                         NavigationBarItem(
                             icon = {
                                 if(showBadge) {

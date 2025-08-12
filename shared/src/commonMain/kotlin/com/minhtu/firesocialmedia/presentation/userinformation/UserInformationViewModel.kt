@@ -4,9 +4,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.minhtu.firesocialmedia.constants.Constants
-import com.minhtu.firesocialmedia.data.model.NotificationInstance
-import com.minhtu.firesocialmedia.data.model.NotificationType
-import com.minhtu.firesocialmedia.data.model.UserInstance
+import com.minhtu.firesocialmedia.data.model.notification.NotificationInstance
+import com.minhtu.firesocialmedia.data.model.notification.NotificationType
+import com.minhtu.firesocialmedia.data.model.user.UserInstance
 import com.minhtu.firesocialmedia.di.PlatformContext
 import com.minhtu.firesocialmedia.platform.createMessageForServer
 import com.minhtu.firesocialmedia.platform.getCurrentTime
@@ -85,7 +85,7 @@ class UserInformationViewModel(
                                         currentUser.uid)
                                     //Save notification to db
                                     Utils.saveNotification(notification, friend, platform)
-                                    sendMessageToServer(createMessageForServer(notiContent, tokenList , currentUser))
+                                    sendMessageToServer(createMessageForServer(notiContent, tokenList , currentUser, "BASIC"))
                                     _addFriendStatus.value = Relationship.FRIEND_REQUEST
                                 }
                                 else -> {
@@ -157,6 +157,16 @@ class UserInformationViewModel(
             Relationship.FRIEND_REQUEST -> "Friend Request"
             Relationship.NONE -> "None"
             Relationship.WAITING_RESPONSE -> "Waiting Response"
+        }
+    }
+
+    fun checkCalleeAvailable(callee : UserInstance, platform: PlatformContext, onResult: (Boolean) -> Unit){
+        viewModelScope.launch {
+            withContext(ioDispatcher) {
+                platform.database.isCalleeInActiveCall(callee.uid,
+                    Constants.CALL_PATH,
+                    onResult)
+            }
         }
     }
 }

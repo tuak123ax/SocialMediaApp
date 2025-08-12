@@ -1,8 +1,9 @@
 package com.minhtu.firesocialmedia.presentation.signin
 
 import com.minhtu.firesocialmedia.constants.Constants
+import com.minhtu.firesocialmedia.data.model.signin.SignInState
 import com.minhtu.firesocialmedia.di.PlatformContext
-import com.minhtu.firesocialmedia.platform.SignInLauncher
+import com.minhtu.firesocialmedia.domain.serviceimpl.signinlauncher.SignInLauncher
 import com.minhtu.firesocialmedia.utils.Utils
 import com.rickclephas.kmp.observableviewmodel.ViewModel
 import com.rickclephas.kmp.observableviewmodel.launch
@@ -71,7 +72,7 @@ class SignInViewModel(
     private fun checkEmailInDatabase(email: String, platform: PlatformContext) {
         viewModelScope.launch {
             withContext(ioDispatcher) {
-                platform.firebase.checkUserExists(email) { result ->
+                platform.database.checkUserExists(email) { result ->
                     _signInStatus.value = result
                 }
             }

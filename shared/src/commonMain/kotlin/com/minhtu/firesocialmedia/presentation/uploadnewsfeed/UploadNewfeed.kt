@@ -34,10 +34,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.minhtu.firesocialmedia.constants.TestTag
-import com.minhtu.firesocialmedia.data.model.NewsInstance
+import com.minhtu.firesocialmedia.data.model.news.NewsInstance
 import com.minhtu.firesocialmedia.di.PlatformContext
+import com.minhtu.firesocialmedia.domain.serviceimpl.imagepicker.ImagePicker
 import com.minhtu.firesocialmedia.platform.CommonBackHandler
-import com.minhtu.firesocialmedia.platform.ImagePicker
 import com.minhtu.firesocialmedia.platform.VideoPlayer
 import com.minhtu.firesocialmedia.platform.logMessage
 import com.minhtu.firesocialmedia.platform.showToast
@@ -221,7 +221,7 @@ class UploadNewsfeed {
                             ) {
                                 val video = uploadNewsfeedViewModel.video
                                 if(video.isNotEmpty()) {
-                                    logMessage("VideoPlayer", video)
+                                    logMessage("VideoPlayer", { video })
                                     VideoPlayer(video,
                                         modifier = Modifier
                                             .height(300.dp)

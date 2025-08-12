@@ -1,15 +1,14 @@
 package com.minhtu.firesocialmedia.platform
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.unit.dp
-import com.minhtu.firesocialmedia.data.model.UserInstance
+import com.minhtu.firesocialmedia.data.model.user.UserInstance
+import com.minhtu.firesocialmedia.di.PlatformContext
 import com.russhwolf.settings.Settings
 import com.seiko.imageloader.ImageLoader
 import io.mockative.Mockable
@@ -40,7 +39,7 @@ fun CrossPlatformIcon(
             Image(
                 painter = iconPainter,
                 contentDescription = contentDescription,
-                modifier = modifier.size(20.dp),
+                modifier = modifier,
                 contentScale = contentScale,
                 colorFilter = if (tint != Color.Unspecified) ColorFilter.tint(tint) else null
             )
@@ -82,7 +81,9 @@ expect fun PasswordVisibilityIcon(passwordVisibility : Boolean)
 
 expect fun exitApp()
 
-expect fun createMessageForServer(message: String, tokenList : ArrayList<String>, sender : UserInstance): String
+expect fun createMessageForServer(message: String, tokenList : ArrayList<String>, sender : UserInstance, type : String): String
+
+expect fun createCallMessage(message: String, tokenList : ArrayList<String>, sessionId : String, sender : UserInstance, receiver : UserInstance, type : String) : String
 
 expect fun sendMessageToServer(request: String)
 
@@ -90,7 +91,7 @@ expect object TokenStorage {
     fun updateTokenInStorage(token: String?)
 }
 
-expect fun logMessage(tag: String, message :String)
+expect inline fun logMessage(tag: String, message: () -> String)
 
 expect fun generateRandomId(): String
 
@@ -102,30 +103,30 @@ expect fun getRandomIdForNotification() : String
 
 expect suspend fun getImageBytesFromDrawable(name: String): ByteArray?
 
-interface ImagePicker {
-    @Composable
-    fun RegisterLauncher(hideLoading : () -> Unit)
-    fun pickImage()
-    fun pickVideo()
-    suspend fun loadImageBytes(uri: String): ByteArray?
-    @Composable
-    fun ByteArrayImage(byteArray: ByteArray?, modifier: Modifier)
-}
-
 expect fun generateImageLoader(): ImageLoader
 
 expect object MainApplication {
     @Composable
-    fun MainApp(context: Any)
+    fun MainApp(context: Any, platformContext: PlatformContext)
+
+    @Composable
+    fun MainAppFromNotification(context: Any,
+                                platformContext: PlatformContext,
+                                sessionId : String?,
+                                callerId : String?,
+                                calleeId : String?)
 }
 
 @Composable
-expect fun SetUpNavigation(context : Any)
+expect fun SetUpNavigation(context : Any,
+                           platformContext: PlatformContext)
 
-@Mockable
-interface SignInLauncher {
-    fun launchGoogleSignIn()
-}
+@Composable
+expect fun SetUpNavigation(context : Any,
+                           platformContext: PlatformContext,
+                           sessionId : String?,
+                           callerId : String?,
+                           calleeId : String?)
 
 object SharedPushHandler {
     fun handlePushNotification(payload: Map<String, Any?>) {
@@ -139,3 +140,12 @@ expect val settings: Settings?
 
 @Composable
 expect fun VideoPlayer(uri: String, modifier: Modifier = Modifier)
+
+expect class WebRTCVideoTrack
+
+@Composable
+expect fun WebRTCVideoView(
+    localTrack: WebRTCVideoTrack?,
+    remoteTrack: WebRTCVideoTrack?,
+    modifier: Modifier
+)

@@ -6,6 +6,7 @@ class Constants {
         const val USER_PATH = "users"
         const val NEWS_PATH = "news"
         const val COMMENT_PATH = "comments"
+        const val CALL_PATH = "calls"
         const val LIST_REPLIES_PATH = "listReplies"
         const val LIKED_POSTS_PATH = "likedPosts"
         const val LIKED_COMMENT_PATH = "likedComments"
@@ -38,9 +39,11 @@ class Constants {
         const val REMOTE_MSG_NOTIFICATION = "notification"
 
         const val REMOTE_MSG_TOKENS = "tokens"
+        const val REMOTE_MSG_TYPE = "type"
         const val REMOTE_MSG_DATA = "data"
         const val REMOTE_MSG_TITLE = "title"
         const val REMOTE_MSG_BODY = "body"
+        const val KEY_FCM_PRIORITY = "priority"
 
         const val FCM_URL = "https://fcm.googleapis.com/"
 
@@ -64,5 +67,14 @@ class Constants {
             remoteMsgHeaders[REMOTE_MSG_CONTENT_TYPE] = "application/json"
             return remoteMsgHeaders
         }
+
+        const val KEY_SESSION_ID = "session_id"
+        const val KEY_CALLER_NAME = "caller_name"
+        const val KEY_CALLER_ID = "caller_id"
+        const val KEY_CALLER_AVATAR = "caller_avatar"
+        const val KEY_CALLEE_NAME = "callee_name"
+        const val KEY_CALLEE_ID = "callee_id"
+        const val KEY_CALLEE_AVATAR = "callee_avatar"
+        const val FROM_NOTIFICATION = "FROM_NOTIFICATION"
     }
 }

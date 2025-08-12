@@ -12,6 +12,7 @@ plugins {
     id("org.jetbrains.kotlinx.kover")
     id("io.mockative") version "3.0.1"
     id("com.google.devtools.ksp") version "1.9.23-1.0.20"
+    id("kotlinx-serialization")
 }
 
 kotlin {
@@ -52,23 +53,24 @@ kotlin {
         summary = "Shared module for iOS and Android"
         homepage = "https://github.com/tuak123ax/SocialMediaApp"
         version = "2.0"
-        ios.deploymentTarget = "13.0"
+        ios.deploymentTarget = "16.0"
         podfile = project.file("../Fire_Social_Media/Podfile")
-        pod("FirebaseAuth"){
+        // Use direct pod names to generate correct cinterop modules
+        pod("FirebaseAuth") {
             extraOpts += listOf("-compiler-option", "-fmodules")
         }
-        pod("FirebaseDatabase"){
+        pod("FirebaseDatabase") {
             extraOpts += listOf("-compiler-option", "-fmodules")
         }
-        pod("FirebaseStorage"){
+        pod("FirebaseStorage") {
             extraOpts += listOf("-compiler-option", "-fmodules")
         }
-        pod("FirebaseMessaging"){
+        pod("FirebaseMessaging") {
             extraOpts += listOf("-compiler-option", "-fmodules")
         }
         framework {
             baseName = "shared"
-            isStatic = false
+            isStatic = true
         }
     }
 
@@ -160,6 +162,9 @@ kotlin {
 
             implementation("androidx.media3:media3-exoplayer:1.7.1")
             implementation("androidx.media3:media3-ui:1.7.1")
+
+            //webRTC
+            implementation("io.getstream:stream-webrtc-android:1.3.8")
         }
 
         androidUnitTest.dependencies {
@@ -197,5 +202,22 @@ android {
     compileSdk = 35
     defaultConfig {
         minSdk = 24
+    }
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
+    }
+}
+
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(21))
+    }
+}
+
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
+    kotlinOptions {
+        jvmTarget = "21"
     }
 }

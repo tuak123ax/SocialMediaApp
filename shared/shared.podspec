@@ -8,7 +8,7 @@ Pod::Spec.new do |spec|
     spec.summary                  = 'Shared module for iOS and Android'
     spec.vendored_frameworks      = 'build/cocoapods/framework/shared.framework'
     spec.libraries                = 'c++'
-    spec.ios.deployment_target    = '13.0'
+    spec.ios.deployment_target    = '16.0'
     spec.dependency 'FirebaseAuth'
     spec.dependency 'FirebaseDatabase'
     spec.dependency 'FirebaseMessaging'
