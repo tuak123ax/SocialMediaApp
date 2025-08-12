@@ -30,7 +30,8 @@ import com.minhtu.firesocialmedia.data.model.news.NewsInstance
 import com.minhtu.firesocialmedia.data.model.signin.SignInState
 import com.minhtu.firesocialmedia.data.model.user.UserInstance
 import com.minhtu.firesocialmedia.di.PlatformContext
-import com.minhtu.firesocialmedia.domain.SignInLauncher
+import com.minhtu.firesocialmedia.domain.serviceimpl.imagepicker.AndroidImagePicker
+import com.minhtu.firesocialmedia.domain.serviceimpl.signinlauncher.SignInLauncher
 import com.minhtu.firesocialmedia.presentation.calling.audiocall.Calling
 import com.minhtu.firesocialmedia.presentation.calling.audiocall.CallingViewModel
 import com.minhtu.firesocialmedia.presentation.calling.videocall.VideoCall
@@ -213,6 +214,7 @@ actual fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                         platformContext,
                         remember {
                             AndroidImagePicker(
+                                context,
                                 onImagePicked = { imageUri ->
                                     informationViewModel.updateAvatar(imageUri)
                                 },
@@ -282,6 +284,7 @@ actual fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                         platformContext,
                         remember {
                             AndroidImagePicker(
+                                context,
                                 onImagePicked = { imageUri ->
                                     uploadNewsfeedViewModel.updateImage(imageUri)
                                 },
@@ -336,6 +339,7 @@ actual fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                         platformContext,
                         remember {
                             AndroidImagePicker(
+                                context,
                                 onImagePicked = { imageUri ->
                                     userInformationViewModel.updateCover(imageUri)
                                 },

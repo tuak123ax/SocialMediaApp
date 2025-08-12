@@ -1,11 +1,11 @@
 package com.minhtu.firesocialmedia.di
 
-import com.minhtu.firesocialmedia.domain.AudioCallService
-import com.minhtu.firesocialmedia.domain.AuthService
-import com.minhtu.firesocialmedia.domain.ClipboardService
-import com.minhtu.firesocialmedia.domain.CryptoService
-import com.minhtu.firesocialmedia.domain.DatabaseService
-import com.minhtu.firesocialmedia.domain.PermissionManager
+import com.minhtu.firesocialmedia.domain.serviceimpl.call.AudioCallService
+import com.minhtu.firesocialmedia.domain.serviceimpl.AuthService
+import com.minhtu.firesocialmedia.domain.serviceimpl.clipboard.ClipboardService
+import com.minhtu.firesocialmedia.domain.serviceimpl.crypto.CryptoService
+import com.minhtu.firesocialmedia.domain.serviceimpl.database.DatabaseService
+import com.minhtu.firesocialmedia.domain.serviceimpl.permission.PermissionManager
 import io.mockative.Mockable
 
 @Mockable

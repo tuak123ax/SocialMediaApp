@@ -25,11 +25,11 @@ import androidx.core.content.ContextCompat
 import com.google.firebase.messaging.FirebaseMessaging
 import com.minhtu.firesocialmedia.constants.Constants
 import com.minhtu.firesocialmedia.di.AndroidPlatformContext
-import com.minhtu.firesocialmedia.domain.permission.AndroidPermissionManager
+import com.minhtu.firesocialmedia.domain.serviceimpl.permission.AndroidPermissionManager
+import com.minhtu.firesocialmedia.domain.serviceimpl.remoteconfig.FetchResultCallback
+import com.minhtu.firesocialmedia.domain.serviceimpl.remoteconfig.RemoteConfigHelper
 import com.minhtu.firesocialmedia.platform.MainApplication
 import com.minhtu.firesocialmedia.platform.TokenStorage.updateTokenInStorage
-import com.minhtu.firesocialmedia.domain.remoteconfig.FetchResultCallback
-import com.minhtu.firesocialmedia.domain.remoteconfig.RemoteConfigHelper
 
 class MainActivity : ComponentActivity() {
     private var downloadReceiver: BroadcastReceiver? = null

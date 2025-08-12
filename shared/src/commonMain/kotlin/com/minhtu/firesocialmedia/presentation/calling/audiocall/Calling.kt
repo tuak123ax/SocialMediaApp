@@ -108,27 +108,29 @@ class Calling {
                 callingViewModel.requestPermissionAndStartAudioCall(
                     platform,
                     onGranted = {
-                        logMessage("grantPermission", { "Granted" })
-                        callingViewModel.updateSessionId(sessionId)
-                        if(caller != null && callee != null) {
-                            logMessage("grantPermission", { "caller and callee not null" })
-                            if(currentUser == caller) {
-                                if(!navigateToCallingScreenFromNotification){
-                                    callingViewModel.startCall(caller, callee, platform)
+                        if(!startCount) {
+                            logMessage("grantPermission", { "Granted" })
+                            callingViewModel.updateSessionId(sessionId)
+                            if(caller != null && callee != null) {
+                                logMessage("grantPermission", { "caller and callee not null" })
+                                if(currentUser == caller) {
+                                    if(!navigateToCallingScreenFromNotification){
+                                        callingViewModel.startCall(caller, callee, platform)
+                                    } else {
+                                        logMessage("navigateToCallingScreenFromNotification",
+                                            { "caller start timer" })
+                                        startCount = true
+                                        isRunning = true
+                                        acceptCall = true
+                                    }
                                 } else {
-                                    logMessage("navigateToCallingScreenFromNotification",
-                                        { "caller start timer" })
-                                    startCount = true
-                                    isRunning = true
-                                    acceptCall = true
-                                }
-                            } else {
-                                if(currentUser == callee && navigateToCallingScreenFromNotification) {
-                                    logMessage("navigateToCallingScreenFromNotification",
-                                        { "callee start timer" })
-                                    startCount = true
-                                    isRunning = true
-                                    acceptCall = true
+                                    if(currentUser == callee && navigateToCallingScreenFromNotification) {
+                                        logMessage("navigateToCallingScreenFromNotification",
+                                            { "callee start timer" })
+                                        startCount = true
+                                        isRunning = true
+                                        acceptCall = true
+                                    }
                                 }
                             }
                         }

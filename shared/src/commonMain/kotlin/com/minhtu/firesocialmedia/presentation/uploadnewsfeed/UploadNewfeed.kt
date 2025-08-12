@@ -36,7 +36,7 @@ import androidx.compose.ui.unit.sp
 import com.minhtu.firesocialmedia.constants.TestTag
 import com.minhtu.firesocialmedia.data.model.news.NewsInstance
 import com.minhtu.firesocialmedia.di.PlatformContext
-import com.minhtu.firesocialmedia.domain.ImagePicker
+import com.minhtu.firesocialmedia.domain.serviceimpl.imagepicker.ImagePicker
 import com.minhtu.firesocialmedia.platform.CommonBackHandler
 import com.minhtu.firesocialmedia.platform.VideoPlayer
 import com.minhtu.firesocialmedia.platform.logMessage

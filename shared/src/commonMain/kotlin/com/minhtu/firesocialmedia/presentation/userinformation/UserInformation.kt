@@ -66,7 +66,7 @@ import com.seiko.imageloader.LocalImageLoader
 import com.seiko.imageloader.ui.AutoSizeImage
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
-import com.minhtu.firesocialmedia.domain.ImagePicker
+import com.minhtu.firesocialmedia.domain.serviceimpl.imagepicker.ImagePicker
 import com.minhtu.firesocialmedia.platform.showToast
 
 class UserInformation {

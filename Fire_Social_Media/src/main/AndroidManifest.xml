@@ -52,12 +52,12 @@
             android:value="true" />
 
         <service
-            android:name="com.minhtu.firesocialmedia.domain.call.CallForegroundService"
+            android:name="com.minhtu.firesocialmedia.domain.serviceimpl.call.CallForegroundService"
             android:foregroundServiceType="microphone"
             android:exported="false"/>
 
         <receiver
-            android:name="com.minhtu.firesocialmedia.domain.call.CallActionBroadcastReceiver"
+            android:name="com.minhtu.firesocialmedia.domain.serviceimpl.call.CallActionBroadcastReceiver"
             android:exported="true" />
     </application>
     <queries>

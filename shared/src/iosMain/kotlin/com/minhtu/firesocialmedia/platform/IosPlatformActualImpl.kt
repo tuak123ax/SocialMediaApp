@@ -26,9 +26,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.UIKitView
 import com.minhtu.firesocialmedia.constants.Constants
 import com.minhtu.firesocialmedia.data.model.user.UserInstance
-import com.minhtu.firesocialmedia.domain.ImagePicker
-import com.minhtu.firesocialmedia.domain.crypto.IosCryptoHelper
-import com.minhtu.firesocialmedia.domain.notification.KtorProvider
+import com.minhtu.firesocialmedia.domain.serviceimpl.imagepicker.ImagePicker
+import com.minhtu.firesocialmedia.domain.serviceimpl.crypto.IosCryptoHelper
+import com.minhtu.firesocialmedia.domain.serviceimpl.notification.KtorProvider
 import com.minhtu.firesocialmedia.utils.NavigationHandler
 import com.russhwolf.settings.ExperimentalSettingsImplementation
 import com.russhwolf.settings.KeychainSettings
@@ -707,5 +707,24 @@ actual fun VideoPlayer(uri: String, modifier: Modifier) {
         update = { view -> view.updateVideo(uri) },
         modifier = modifier
     )
+}
+
+actual fun createCallMessage(message: String, tokenList: ArrayList<String>, sessionId: String, sender: UserInstance, receiver: UserInstance, type: String): String {
+    // iOS implementation will be added later
+    return ""
+}
+
+actual class WebRTCVideoTrack
+
+@Composable
+actual fun WebRTCVideoView(
+    localTrack: WebRTCVideoTrack?,
+    remoteTrack: WebRTCVideoTrack?,
+    modifier: Modifier
+) {
+    // iOS implementation will be added later
+    Box(modifier = modifier) {
+        Text("WebRTC Video View - iOS implementation coming soon")
+    }
 }
 

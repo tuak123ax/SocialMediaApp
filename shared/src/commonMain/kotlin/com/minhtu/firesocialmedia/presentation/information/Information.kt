@@ -40,7 +40,7 @@ import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
 import com.minhtu.firesocialmedia.presentation.signup.SignUpViewModel
 import com.minhtu.firesocialmedia.presentation.loading.Loading
 import androidx.compose.runtime.getValue
-import com.minhtu.firesocialmedia.domain.ImagePicker
+import com.minhtu.firesocialmedia.domain.serviceimpl.imagepicker.ImagePicker
 
 class Information {
     companion object{

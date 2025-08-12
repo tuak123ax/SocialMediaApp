@@ -53,23 +53,24 @@ kotlin {
         summary = "Shared module for iOS and Android"
         homepage = "https://github.com/tuak123ax/SocialMediaApp"
         version = "2.0"
-        ios.deploymentTarget = "13.0"
+        ios.deploymentTarget = "16.0"
         podfile = project.file("../Fire_Social_Media/Podfile")
-        pod("FirebaseAuth"){
+        // Use direct pod names to generate correct cinterop modules
+        pod("FirebaseAuth") {
             extraOpts += listOf("-compiler-option", "-fmodules")
         }
-        pod("FirebaseDatabase"){
+        pod("FirebaseDatabase") {
             extraOpts += listOf("-compiler-option", "-fmodules")
         }
-        pod("FirebaseStorage"){
+        pod("FirebaseStorage") {
             extraOpts += listOf("-compiler-option", "-fmodules")
         }
-        pod("FirebaseMessaging"){
+        pod("FirebaseMessaging") {
             extraOpts += listOf("-compiler-option", "-fmodules")
         }
         framework {
             baseName = "shared"
-            isStatic = false
+            isStatic = true
         }
     }
 
@@ -201,5 +202,22 @@ android {
     compileSdk = 35
     defaultConfig {
         minSdk = 24
+    }
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
+    }
+}
+
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(21))
+    }
+}
+
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
+    kotlinOptions {
+        jvmTarget = "21"
     }
 }

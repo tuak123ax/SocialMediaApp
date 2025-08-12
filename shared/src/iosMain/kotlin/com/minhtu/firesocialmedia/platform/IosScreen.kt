@@ -32,6 +32,9 @@ sealed class IosScreen {
     object ForgotPasswordScreen : IosScreen()
     object InformationScreen : IosScreen()
     object LoadingScreen : IosScreen()
+    // Temporarily removed calling screens to get basic build working
+    // object CallingScreen : IosScreen()
+    // object VideoCallScreen : IosScreen()
 
     override fun toString(): String = this::class.simpleName ?: super.toString()
 }
@@ -52,5 +55,8 @@ fun String.toIosScreen(): IosScreen = when (this) {
     "ForgotPasswordScreen" -> ForgotPasswordScreen
     "InformationScreen" -> InformationScreen
     "LoadingScreen" -> LoadingScreen
+    // Temporarily removed calling screens
+    // "CallingScreen" -> CallingScreen
+    // "VideoCallScreen" -> VideoCallScreen
     else -> SignInScreen // fallback/default
 }

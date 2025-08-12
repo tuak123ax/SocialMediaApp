@@ -2,19 +2,10 @@ package com.minhtu.firesocialmedia.platform
 
 import android.app.Activity
 import android.content.Context
-import android.content.Intent
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.graphics.ImageDecoder
 import android.graphics.drawable.BitmapDrawable
-import android.os.Build
-import android.provider.MediaStore
 import android.util.Log
 import android.widget.Toast
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.ActivityResultLauncher
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -26,15 +17,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.edit
-import androidx.core.net.toUri
 import androidx.media3.common.MediaItem
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
@@ -43,11 +31,10 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import com.minhtu.firesocialmedia.R
 import com.minhtu.firesocialmedia.constants.Constants
 import com.minhtu.firesocialmedia.data.model.user.UserInstance
-import com.minhtu.firesocialmedia.domain.ImagePicker
-import com.minhtu.firesocialmedia.domain.call.WebRTCManager
-import com.minhtu.firesocialmedia.domain.crypto.AndroidCryptoHelper
-import com.minhtu.firesocialmedia.domain.notification.Client
-import com.minhtu.firesocialmedia.domain.notification.NotificationApiService
+import com.minhtu.firesocialmedia.domain.serviceimpl.call.WebRTCManager
+import com.minhtu.firesocialmedia.domain.serviceimpl.crypto.AndroidCryptoHelper
+import com.minhtu.firesocialmedia.domain.serviceimpl.notification.Client
+import com.minhtu.firesocialmedia.domain.serviceimpl.notification.NotificationApiService
 import com.minhtu.firesocialmedia.utils.NavigationHandler
 import com.russhwolf.settings.BuildConfig
 import com.russhwolf.settings.Settings
@@ -234,96 +221,6 @@ actual suspend fun getImageBytesFromDrawable(name: String): ByteArray?{
     val stream = ByteArrayOutputStream()
     bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)
     return stream.toByteArray()
-}
-
-class AndroidImagePicker(
-    private val onImagePicked: (String) -> Unit,
-    private val onVideoPicked: (String) -> Unit
-) : ImagePicker {
-    enum class PickType { IMAGE, VIDEO }
-    var currentPickType: PickType? = null
-    private lateinit var launcher: ActivityResultLauncher<Intent>
-    @Composable
-    override fun RegisterLauncher(hideLoading : () -> Unit) {
-        launcher = rememberLauncherForActivityResult(
-            ActivityResultContracts.StartActivityForResult()){
-                result ->
-            if(result.resultCode == Activity.RESULT_OK){
-                Log.e("getAvatarFromGalleryLauncher", "RESULT_OK")
-                val dataUrl = result.data?.data
-                if(dataUrl != null){
-                    Log.e("getAvatarFromGalleryLauncher", dataUrl.toString())
-                    if(currentPickType == PickType.IMAGE){
-                        onImagePicked(dataUrl.toString())
-                    } else {
-                        onVideoPicked(dataUrl.toString())
-                    }
-                    hideLoading()
-                }
-            } else {
-                if(result.resultCode == Activity.RESULT_CANCELED)
-                {
-                    currentPickType = null
-                    hideLoading()
-                }
-            }
-        }
-    }
-
-    override fun pickImage() {
-        currentPickType = PickType.IMAGE
-        val intent = Intent()
-        intent.setType("image/*")
-        intent.setAction(Intent.ACTION_GET_CONTENT)
-        launcher.launch(intent)
-    }
-
-    override fun pickVideo() {
-        currentPickType = PickType.VIDEO
-        val intent = Intent()
-        intent.setType("video/*")
-        intent.setAction(Intent.ACTION_GET_CONTENT)
-        launcher.launch(intent)
-    }
-
-    override suspend fun loadImageBytes(uri: String): ByteArray? {
-         return try {
-            val parsedUri = uri.toUri()
-            val bitmap = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                val source = ImageDecoder.createSource(appContext.contentResolver, parsedUri)
-                ImageDecoder.decodeBitmap(source)
-            } else {
-                MediaStore.Images.Media.getBitmap(appContext.contentResolver, parsedUri)
-            }
-
-            val stream = ByteArrayOutputStream()
-            bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)
-            stream.toByteArray()
-        } catch (e: Exception) {
-            e.printStackTrace()
-            null
-        }
-    }
-
-    @Composable
-    override fun ByteArrayImage(byteArray: ByteArray?, modifier: Modifier) {
-        if(byteArray != null) {
-            val bitmap = remember(byteArray) { byteArray.toBitmap() }
-
-            bitmap?.let {
-                Image(
-                    bitmap = it.asImageBitmap(),
-                    contentDescription = "Image",
-                    contentScale = ContentScale.Crop,
-                    modifier = modifier
-                )
-            }
-        }
-    }
-
-    fun ByteArray.toBitmap(): Bitmap? {
-        return BitmapFactory.decodeByteArray(this, 0, size)
-    }
 }
 
 actual fun generateImageLoader(): ImageLoader {

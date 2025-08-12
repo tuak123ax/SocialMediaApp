@@ -53,6 +53,12 @@ actual object MainApplication {
             ToastHost()
         }
     }
+
+    @Composable
+    actual fun MainAppFromNotification(context: Any, platformContext: PlatformContext, sessionId: String?, callerId: String?, calleeId: String?) {
+        // iOS implementation for notification handling
+        // This will be implemented when notification handling is needed
+    }
 }
 
 
