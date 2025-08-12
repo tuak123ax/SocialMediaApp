@@ -15,7 +15,6 @@ import com.minhtu.firesocialmedia.data.model.news.NewsInstance
 import com.minhtu.firesocialmedia.data.model.notification.NotificationInstance
 import com.minhtu.firesocialmedia.data.model.notification.fromMap
 import com.minhtu.firesocialmedia.data.model.notification.toMap
-import com.minhtu.firesocialmedia.data.model.user.toMap
 import com.minhtu.firesocialmedia.platform.logMessage
 import com.minhtu.firesocialmedia.platform.toNSData
 import kotlinx.cinterop.BetaInteropApi

@@ -11,7 +11,6 @@ import com.minhtu.firesocialmedia.data.model.user.UserInstance
 import com.minhtu.firesocialmedia.di.PlatformContext
 import com.russhwolf.settings.Settings
 import com.seiko.imageloader.ImageLoader
-import io.mockative.Mockable
 import kotlin.math.roundToInt
 
 expect fun showToast(message: String)

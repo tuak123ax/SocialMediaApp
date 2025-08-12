@@ -7,11 +7,11 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.minhtu.firesocialmedia.constants.Constants
+import com.minhtu.firesocialmedia.data.model.call.OfferAnswer
 import com.minhtu.firesocialmedia.data.model.news.NewsInstance
 import com.minhtu.firesocialmedia.data.model.notification.NotificationInstance
 import com.minhtu.firesocialmedia.data.model.notification.NotificationType
 import com.minhtu.firesocialmedia.data.model.user.UserInstance
-import com.minhtu.firesocialmedia.data.model.call.OfferAnswer
 import com.minhtu.firesocialmedia.di.PlatformContext
 import com.minhtu.firesocialmedia.platform.createMessageForServer
 import com.minhtu.firesocialmedia.platform.getCurrentTime
@@ -80,26 +80,51 @@ class HomeViewModel(
 
     val _getAllNewsStatus = mutableStateOf(false)
     val getAllNewsStatus = _getAllNewsStatus
-    fun getAllNews(platform: PlatformContext) {
+    var isLoadingMore = mutableStateOf(false)
+    var hasMoreData = mutableStateOf(true)
+    private var lastTimePosted: Double? = null
+    private var lastKey: String? = null
+    fun getLatestNews(platform: PlatformContext) {
+        logMessage("getLatestNews", { "start get latest new" })
+        logMessage("lastTimePosted", { lastTimePosted.toString() })
+        logMessage("isLoadingMore", { isLoadingMore.value.toString() })
+        logMessage("hasMoreData", { hasMoreData.value.toString() })
         viewModelScope.launch {
             withContext(ioDispatcher) {
-                platform.database.getAllNews(Constants.NEWS_PATH, object : GetNewCallback {
-                    override fun onSuccess(news: List<NewsInstance>) {
-                        updateNews(ArrayList(news))
-                        listNews.clear()
-                        for (new in news) {
-                            listNews.add(new)
-                            addLikeCountData(new.id, new.likeCount)
-                            addCommentCountData(new.id, new.commentCount)
-                        }
-                        _getAllNewsStatus.value = true
-                    }
+                if (!isLoadingMore.value && hasMoreData.value) {
+                    isLoadingMore.value = true
+                    platform.database.getLatestNews(
+                        10,
+                        lastTimePosted,
+                        lastKey,
+                        Constants.NEWS_PATH,
+                        object : GetNewCallback {
+                            override fun onSuccess(
+                                news: List<NewsInstance>,
+                                lastTimePostedValue: Double?,
+                                lastKeyValue : String
+                            ) {
+                                updateNews(ArrayList(news))
+                                for (new in news) {
+                                    listNews.add(new)
+                                    addLikeCountData(new.id, new.likeCount)
+                                    addCommentCountData(new.id, new.commentCount)
+                                }
+                                _getAllNewsStatus.value = true
+                                isLoadingMore.value = false
+                                if(lastTimePostedValue == null) {
+                                    hasMoreData.value = false
+                                }
+                                lastTimePosted = lastTimePostedValue
+                                lastKey = lastKeyValue
+                            }
 
-                    override fun onFailure() {
-                        _getAllNewsStatus.value = false
-                    }
-
-                })
+                            override fun onFailure() {
+                                _getAllNewsStatus.value = false
+                                isLoadingMore.value = false
+                            }
+                        })
+                }
             }
         }
     }
@@ -149,11 +174,11 @@ class HomeViewModel(
         likeCache = currentUser!!.likedPosts
     }
 
-    private var _allNews = MutableStateFlow<ArrayList<NewsInstance>>(ArrayList())
+    private var _allNews = MutableStateFlow<MutableSet<NewsInstance>>(mutableSetOf())
     val allNews = _allNews.asStateFlow()
     fun updateNews(news: ArrayList<NewsInstance>) {
-        _allNews.value.clear()
-        _allNews.value = news
+        logMessage("updateNews", { news.size.toString() })
+        _allNews.value = (_allNews.value + news).toMutableSet()
     }
 
     private val _allNotifications = MutableStateFlow<List<NotificationInstance>>(emptyList())
@@ -335,6 +360,8 @@ class HomeViewModel(
         }
     }
 
+    //----------------------------CALL FEATURE-----------------------------------//
+
     var isInCall = MutableStateFlow<Boolean>(false)
 
     fun updateIsInCall(input : Boolean) {
@@ -377,6 +404,15 @@ class HomeViewModel(
                     logMessage("observePhoneCall Exception", { e.message.toString() })
                 }
             }
+        }
+    }
+    //---------------------------------------------------------------------------//
+
+    fun loadMoreNews(platform : PlatformContext) {
+        if(isLoadingMore.value) return
+        logMessage("loadMoreNews", { "start load more new" })
+        viewModelScope.launch(ioDispatcher) {
+            getLatestNews(platform)
         }
     }
 }

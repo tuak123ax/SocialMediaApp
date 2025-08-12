@@ -2,12 +2,12 @@ package com.minhtu.firesocialmedia.utils
 
 import androidx.compose.ui.graphics.Color
 import com.minhtu.firesocialmedia.constants.Constants
+import com.minhtu.firesocialmedia.data.model.call.CallStatus
+import com.minhtu.firesocialmedia.data.model.call.CallType
 import com.minhtu.firesocialmedia.data.model.news.CommentInstance
 import com.minhtu.firesocialmedia.data.model.news.NewsInstance
 import com.minhtu.firesocialmedia.data.model.notification.NotificationInstance
 import com.minhtu.firesocialmedia.data.model.user.UserInstance
-import com.minhtu.firesocialmedia.data.model.call.CallStatus
-import com.minhtu.firesocialmedia.data.model.call.CallType
 import com.minhtu.firesocialmedia.di.PlatformContext
 import com.minhtu.firesocialmedia.platform.createCallMessage
 import com.minhtu.firesocialmedia.platform.sendMessageToServer
@@ -146,7 +146,9 @@ class Utils {
         }
 
         interface GetNewCallback{
-            fun onSuccess(news : List<NewsInstance>)
+            fun onSuccess(news : List<NewsInstance>,
+                          lastTimePosted : Double?,
+                          lastKey : String)
             fun onFailure()
         }
 

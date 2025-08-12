@@ -2,8 +2,8 @@ package com.minhtu.firesocialmedia.domain.serviceimpl.auth
 
 import cocoapods.FirebaseAuth.FIRAuth
 import com.minhtu.firesocialmedia.constants.Constants
-import com.minhtu.firesocialmedia.domain.serviceimpl.AuthService
 import com.minhtu.firesocialmedia.data.model.signin.SignInError
+import com.minhtu.firesocialmedia.domain.serviceimpl.AuthService
 import com.minhtu.firesocialmedia.utils.Utils
 import kotlinx.coroutines.suspendCancellableCoroutine
 

@@ -3,9 +3,7 @@ package com.minhtu.firesocialmedia.presentation.calling.audiocall
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.minhtu.firesocialmedia.constants.Constants
-import com.minhtu.firesocialmedia.data.model.call.AudioCallSession
 import com.minhtu.firesocialmedia.data.model.call.CallEventFlow
-import com.minhtu.firesocialmedia.data.model.call.CallStatus
 import com.minhtu.firesocialmedia.data.model.user.UserInstance
 import com.minhtu.firesocialmedia.di.PlatformContext
 import com.minhtu.firesocialmedia.platform.logMessage

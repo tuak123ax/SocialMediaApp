@@ -16,19 +16,6 @@ import platform.Foundation.NSDictionary
 import platform.Foundation.NSNotificationCenter
 import platform.Foundation.NSOperationQueue
 import platform.Foundation.NSValue
-import platform.UIKit.CGRectValue
-import platform.UIKit.UIEdgeInsetsMake
-import platform.UIKit.UIKeyboardWillChangeFrameNotification
-import platform.UIKit.UIRectEdgeNone
-import platform.UIKit.UIScreen
-import platform.UIKit.UIScrollView
-import platform.UIKit.UIScrollViewKeyboardDismissMode
-import platform.UIKit.UIViewAutoresizingFlexibleHeight
-import platform.UIKit.UIViewAutoresizingFlexibleWidth
-import platform.UIKit.UIViewController
-import platform.UIKit.addChildViewController
-import platform.UIKit.didMoveToParentViewController
-import platform.UIKit.endEditing
 import platform.UIKit.*
 
 actual object MainApplication {

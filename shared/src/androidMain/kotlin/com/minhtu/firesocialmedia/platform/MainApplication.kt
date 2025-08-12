@@ -1,6 +1,5 @@
 package com.minhtu.firesocialmedia.platform
 
-import android.os.Bundle
 import androidx.compose.runtime.Composable
 import com.minhtu.firesocialmedia.di.PlatformContext
 

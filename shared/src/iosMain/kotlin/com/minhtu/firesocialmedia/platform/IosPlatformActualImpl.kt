@@ -26,8 +26,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.UIKitView
 import com.minhtu.firesocialmedia.constants.Constants
 import com.minhtu.firesocialmedia.data.model.user.UserInstance
-import com.minhtu.firesocialmedia.domain.serviceimpl.imagepicker.ImagePicker
 import com.minhtu.firesocialmedia.domain.serviceimpl.crypto.IosCryptoHelper
+import com.minhtu.firesocialmedia.domain.serviceimpl.imagepicker.ImagePicker
 import com.minhtu.firesocialmedia.domain.serviceimpl.notification.KtorProvider
 import com.minhtu.firesocialmedia.utils.NavigationHandler
 import com.russhwolf.settings.ExperimentalSettingsImplementation
@@ -38,7 +38,6 @@ import com.seiko.imageloader.component.setupDefaultComponents
 import com.seiko.imageloader.intercept.bitmapMemoryCacheConfig
 import com.seiko.imageloader.intercept.imageMemoryCacheConfig
 import com.seiko.imageloader.intercept.painterMemoryCacheConfig
-import io.ktor.client.request.get
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.readBytes

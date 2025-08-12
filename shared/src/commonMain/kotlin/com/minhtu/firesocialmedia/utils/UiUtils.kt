@@ -2,6 +2,11 @@ package com.minhtu.firesocialmedia.utils
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
@@ -61,6 +66,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -71,6 +77,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.minhtu.firesocialmedia.constants.TestTag
@@ -84,12 +91,12 @@ import com.minhtu.firesocialmedia.platform.convertTimeToDateString
 import com.minhtu.firesocialmedia.platform.generateImageLoader
 import com.minhtu.firesocialmedia.presentation.home.Home
 import com.minhtu.firesocialmedia.presentation.home.HomeViewModel
-import com.minhtu.firesocialmedia.presentation.navigationscreen.friend.FriendViewModel
-import com.minhtu.firesocialmedia.presentation.search.SearchViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.Screen
 import com.minhtu.firesocialmedia.presentation.navigationscreen.friend.Friend
+import com.minhtu.firesocialmedia.presentation.navigationscreen.friend.FriendViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.notification.Notification
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.Settings
+import com.minhtu.firesocialmedia.presentation.search.SearchViewModel
 import com.seiko.imageloader.LocalImageLoader
 import com.seiko.imageloader.ui.AutoSizeImage
 import kotlinx.coroutines.delay
@@ -581,7 +588,7 @@ class UiUtils {
                                     }
                                 }
                             }
-                            LazyColumnOfNewsWithSlideOutAnimation(
+                            LazyColumnOfNewsWithSlideOutAnimationAndLoadMore(
                                 platform,
                                 homeViewModel,
                                 filterList,
@@ -769,7 +776,7 @@ class UiUtils {
         }
 
         @Composable
-        fun LazyColumnOfNewsWithSlideOutAnimation(platform : PlatformContext,
+        fun LazyColumnOfNewsWithSlideOutAnimationAndLoadMore(platform : PlatformContext,
                                                   homeViewModel: HomeViewModel,
                                                   list : List<NewsInstance>,
                                                   onNavigateToUploadNews: (updateNew : NewsInstance?) -> Unit,
@@ -817,7 +824,68 @@ class UiUtils {
                         )
                     }
                 }
+
+                // Loading row at the bottom
+                if (homeViewModel.isLoadingMore.value) {
+                    item {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            ThreeDotsLoading(
+                                modifier = Modifier.padding(bottom = 10.dp),
+                                dotSize = 10.dp,
+                                dotColor = Color.Blue,
+                                spaceBetween = 5.dp
+                            )
+                        }
+                    }
+                }
             }
         }
+
+        @Composable
+        fun ThreeDotsLoading(
+            modifier: Modifier = Modifier,
+            dotSize: Dp = 8.dp,
+            dotColor: Color = MaterialTheme.colorScheme.primary,
+            spaceBetween: Dp = 4.dp,
+            animationDelay: Int = 200
+        ) {
+            val infiniteTransition = rememberInfiniteTransition(label = "dotsAnimation")
+            val delays = listOf(0, animationDelay, animationDelay * 2)
+
+            Row(
+                modifier = modifier,
+                horizontalArrangement = Arrangement.spacedBy(spaceBetween),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                delays.forEach { delayMs ->
+                    val scale by infiniteTransition.animateFloat(
+                        initialValue = 0.5f,
+                        targetValue = 1f,
+                        animationSpec = infiniteRepeatable(
+                            animation = tween(
+                                durationMillis = animationDelay * 2,
+                                delayMillis = delayMs,
+                                easing = LinearEasing
+                            ),
+                            repeatMode = RepeatMode.Reverse
+                        ),
+                        label = "dotScale"
+                    )
+
+                    Box(
+                        modifier = Modifier
+                            .size(dotSize)
+                            .scale(scale)
+                            .background(dotColor, CircleShape)
+                    )
+                }
+            }
+        }
+
     }
 }

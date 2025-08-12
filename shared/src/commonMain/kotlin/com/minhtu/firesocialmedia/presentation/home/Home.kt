@@ -28,8 +28,10 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -44,23 +46,21 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.minhtu.firesocialmedia.constants.TestTag
+import com.minhtu.firesocialmedia.data.model.call.OfferAnswer
 import com.minhtu.firesocialmedia.data.model.news.NewsInstance
 import com.minhtu.firesocialmedia.data.model.user.UserInstance
 import com.minhtu.firesocialmedia.di.PlatformContext
 import com.minhtu.firesocialmedia.platform.CrossPlatformIcon
 import com.minhtu.firesocialmedia.platform.generateImageLoader
-import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
+import com.minhtu.firesocialmedia.platform.logMessage
 import com.minhtu.firesocialmedia.presentation.loading.Loading
+import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
+import com.minhtu.firesocialmedia.utils.NavigationHandler
 import com.minhtu.firesocialmedia.utils.UiUtils
 import com.seiko.imageloader.LocalImageLoader
 import com.seiko.imageloader.ui.AutoSizeImage
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
-import com.minhtu.firesocialmedia.data.model.call.OfferAnswer
-import com.minhtu.firesocialmedia.platform.logMessage
-import com.minhtu.firesocialmedia.utils.NavigationHandler
 
 class Home {
     companion object{
@@ -108,7 +108,7 @@ class Home {
                 loadingViewModel.showLoading()
                 //Load users list and news list.
                 homeViewModel.getAllUsers(platform)
-                homeViewModel.getAllNews(platform)
+                homeViewModel.getLatestNews(platform)
                 homeViewModel.getAllNotificationsOfUser(platform)
                 homeViewModel.decreaseNumberOfListNeedToLoad(1)
                 if (numberOfLists == 0) {
@@ -299,24 +299,39 @@ class Home {
                     }
 
                     val listState = homeViewModel.listState
-                    // LaunchedEffect to track the scroll state
-                    LaunchedEffect(Unit) {
-                        snapshotFlow { listState.firstVisibleItemIndex }
+                    // LaunchedEffect to track the scroll state (hide top bar and show load more)
+                    LaunchedEffect(listState) {
+                        snapshotFlow {
+                            val layoutInfo = listState.layoutInfo
+                            val firstVisible = layoutInfo.visibleItemsInfo.firstOrNull()?.index ?: 0
+                            val lastVisible = layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
+                            val totalItems = layoutInfo.totalItemsCount
+
+                            Triple(firstVisible, lastVisible, totalItems)
+                        }
                             .distinctUntilChanged()
-                            .collectLatest { index ->
-                                isAllUsersVisible = index == 0  // Show only if scrolled to the top
+                            .collectLatest { (firstVisible, lastVisible, totalItems) ->
+                                // Show/hide top bar
+                                isAllUsersVisible = firstVisible == 0
+
+                                // Trigger load more when near bottom
+                                if (
+                                    firstVisible > 0 &&
+                                    lastVisible >= totalItems - 3 &&
+                                    !homeViewModel.isLoadingMore.value &&
+                                    homeViewModel.hasMoreData.value
+                                ) {
+                                    homeViewModel.loadMoreNews(platform)
+                                }
                             }
                     }
+
                     //Newsfeed
-                    val sortedNewsList by remember {
-                        derivedStateOf {
-                            newsList.value.sortedByDescending { it.timePosted }
-                        }
-                    }
-                    UiUtils.Companion.LazyColumnOfNewsWithSlideOutAnimation(
+                    logMessage("sortedNewsList", { newsList.value.size.toString() })
+                    UiUtils.Companion.LazyColumnOfNewsWithSlideOutAnimationAndLoadMore(
                         platform,
                         homeViewModel,
-                        sortedNewsList,
+                        newsList.value.toList(),
                         onNavigateToUploadNews,
                         onNavigateToShowImageScreen,
                         onNavigateToUserInformation

@@ -55,7 +55,11 @@ interface DatabaseService {
     )
 
     suspend fun getAllUsers(path: String, callback: Utils.Companion.GetUserCallback)
-    suspend fun getAllNews(path: String, callback: Utils.Companion.GetNewCallback)
+    suspend fun getLatestNews(number : Int,
+                              lastTimePosted : Double?,
+                              lastKey: String?,
+                              path: String,
+                              callback: Utils.Companion.GetNewCallback)
     suspend fun getAllComments(path: String, newsId: String, callback: Utils.Companion.GetCommentCallback)
     suspend fun getAllNotificationsOfUser(path: String, currentUserUid: String, callback: Utils.Companion.GetNotificationCallback)
     suspend fun saveListToDatabase(

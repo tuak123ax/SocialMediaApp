@@ -8,9 +8,9 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.auth
 import com.minhtu.firesocialmedia.constants.Constants
+import com.minhtu.firesocialmedia.data.model.signin.SignInError
 import com.minhtu.firesocialmedia.domain.serviceimpl.AuthService
 import com.minhtu.firesocialmedia.platform.logMessage
-import com.minhtu.firesocialmedia.data.model.signin.SignInError
 import com.minhtu.firesocialmedia.utils.Utils
 import kotlinx.coroutines.tasks.await
 
