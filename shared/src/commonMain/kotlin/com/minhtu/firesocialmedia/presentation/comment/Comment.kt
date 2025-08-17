@@ -62,9 +62,9 @@ import com.minhtu.firesocialmedia.platform.logMessage
 import com.minhtu.firesocialmedia.platform.showToast
 import com.minhtu.firesocialmedia.utils.UiUtils
 import com.minhtu.firesocialmedia.utils.Utils
+import com.rickclephas.kmp.observableviewmodel.launch
 import com.seiko.imageloader.LocalImageLoader
 import com.seiko.imageloader.ui.AutoSizeImage
-import kotlin.collections.contains
 
 class Comment {
     companion object{
@@ -75,7 +75,6 @@ class Comment {
                           commentViewModel: CommentViewModel,
                           currentUser : UserInstance,
                           selectedNew : NewsInstance,
-                          listUsers : ArrayList<UserInstance>,
                           onNavigateToShowImageScreen: (image: String) -> Unit,
                           onNavigateToUserInformation: (user: UserInstance?) -> Unit,
                           onNavigateToHomeScreen: () -> Unit) {
@@ -157,7 +156,6 @@ class Comment {
                                 true,
                                 onNavigateToShowImageScreen,
                                 onNavigateToUserInformation,
-                                listUsers,
                                 onCopyComment = {
                                     commentViewModel.copyToClipboard(comment.message, platform)
                                 },
@@ -229,7 +227,6 @@ class Comment {
                                     commentViewModel.sendComment(
                                         currentUser,
                                         selectedNew,
-                                        listUsers,
                                         platform
                                     )
                                 }
@@ -252,7 +249,6 @@ class Comment {
                         isMainComment : Boolean,
                         onNavigateToShowImageScreen: (image: String) -> Unit,
                         onNavigateToUserInformation: (user: UserInstance?) -> Unit,
-                        listUsers : ArrayList<UserInstance>,
                         onCopyComment: () -> Unit,
                         onLikeComment: () -> Unit,
                         onReplyComment: () -> Unit,
@@ -296,16 +292,11 @@ class Comment {
                                 horizontalArrangement = Arrangement.Start,
                                 modifier = Modifier.Companion.padding(10.dp).fillMaxWidth()
                                     .clickable {
-                                        var user = Utils.Companion.findUserById(
-                                            comment.posterId,
-                                            listUsers
-                                        )
-                                        if (user == null) {
-                                            user = currentUser
+                                        commentViewModel.viewModelScope.launch {
+                                            var user = commentViewModel.findUserById(comment.posterId, platform)
+                                            onNavigateToUserInformation(user)
                                         }
-                                        onNavigateToUserInformation(user)
                                     }) {
-
                                 CompositionLocalProvider(
                                     LocalImageLoader provides remember { generateImageLoader() },
                                 ) {
@@ -466,7 +457,6 @@ class Comment {
                                     false,
                                     onNavigateToShowImageScreen,
                                     onNavigateToUserInformation,
-                                    listUsers,
                                     onCopyComment = { onCopyComment() },
                                     onLikeComment = {
                                         commentViewModel.onLikeComment(

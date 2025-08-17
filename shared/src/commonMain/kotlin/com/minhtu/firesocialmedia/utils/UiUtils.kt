@@ -120,6 +120,12 @@ class UiUtils {
             }
             val likeCountList = homeViewModel.likeCountList.collectAsState()
             val commentCountList = homeViewModel.commentCountList.collectAsState()
+
+            var user by remember { mutableStateOf<UserInstance?>(null) }
+
+            LaunchedEffect(news.posterId) {
+                user = homeViewModel.findUserById(news.posterId, platform)
+            }
             Card(
                 modifier = Modifier
                     .padding(start = 10.dp, end = 10.dp, top = 5.dp)
@@ -135,13 +141,11 @@ class UiUtils {
                     Row(horizontalArrangement = Arrangement.Start,
                         modifier = Modifier.background(color = Color.White).padding(10.dp).fillMaxWidth()
                             .clickable {
-                                var user =
-                                    Utils.findUserById(news.posterId, homeViewModel.listUsers)
                                 if(user == null) {
                                     user = homeViewModel.currentUser
                                 }
                                 if(user != null) {
-                                    onNavigateToUserInformation(user)
+                                    onNavigateToUserInformation(user!!)
                                 }
                             }){
                         CompositionLocalProvider(
@@ -565,16 +569,17 @@ class UiUtils {
                 }
                 when(selectedTabIndex){
                     0 -> {
+                        var searchList by remember { mutableStateOf<List<UserInstance>>(emptyList()) }
                         // Filtered List
+                        LaunchedEffect(searchViewModel.query) {
+                            searchList = homeViewModel.searchUserByName(searchViewModel.query, platform)
+                        }
                         LazyColumn(modifier = Modifier
                             .testTag(TestTag.TAG_PEOPLE_COLUMN)
                             .semantics {
                                 contentDescription = TestTag.TAG_PEOPLE_COLUMN
                             }) {
-                            val filterList = homeViewModel.listUsers.filter { user ->
-                                user.name.contains(searchViewModel.query, ignoreCase = true)
-                            }
-                            items(filterList){user ->
+                            items(searchList){user ->
                                 UserRow(user, onNavigateToUserInformation)
                             }
                         }

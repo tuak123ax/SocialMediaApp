@@ -49,6 +49,7 @@ import com.minhtu.firesocialmedia.presentation.navigationscreen.Screen
 import com.minhtu.firesocialmedia.presentation.navigationscreen.friend.Friend
 import com.minhtu.firesocialmedia.presentation.navigationscreen.friend.FriendViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.notification.Notification
+import com.minhtu.firesocialmedia.presentation.navigationscreen.notification.NotificationViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.Settings
 import com.minhtu.firesocialmedia.presentation.postinformation.PostInformation
 import com.minhtu.firesocialmedia.presentation.search.Search
@@ -89,6 +90,7 @@ actual fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
         val friendViewModel : FriendViewModel = viewModel()
         val userInformationViewModel : UserInformationViewModel = viewModel()
         val showImageViewModel : ShowImageViewModel = viewModel()
+        val notificationViewModel : NotificationViewModel = viewModel()
         //Define shared viewModel instance to use for Home and Search screens.
         val homeViewModel: HomeViewModel = viewModel()
         //Shared instance used for uploadNewFeeds screen.
@@ -260,14 +262,14 @@ actual fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                         onNavigateToCallingScreen = { sessionID, callerId, calleeId, offer ->
                             sessionId = sessionID
                             remoteOffer = offer
-                            caller = if(callerId == homeViewModel.currentUser?.uid) homeViewModel.currentUser else Utils.findUserById(callerId, homeViewModel.listUsers)
-                            callee = if(calleeId == homeViewModel.currentUser?.uid) homeViewModel.currentUser else Utils.findUserById(calleeId, homeViewModel.listUsers)
+                            caller = if(callerId == homeViewModel.currentUser?.uid) homeViewModel.currentUser else platformContext.database.getUser(callerId)
+                            callee = if(calleeId == homeViewModel.currentUser?.uid) homeViewModel.currentUser else platformContext.database.getUser(calleeId)
                             navController.navigate(route = Calling.getScreenName())
                         },
                         onNavigateToCallingScreenWithUI = {
                             sessionId = SharedCallData.sessionId
-                            caller = if(SharedCallData.callerId == homeViewModel.currentUser?.uid) homeViewModel.currentUser else Utils.findUserById(SharedCallData.callerId, homeViewModel.listUsers)
-                            callee = if(SharedCallData.calleeId == homeViewModel.currentUser?.uid) homeViewModel.currentUser else Utils.findUserById(SharedCallData.calleeId, homeViewModel.listUsers)
+                            caller = if(SharedCallData.callerId == homeViewModel.currentUser?.uid) homeViewModel.currentUser else platformContext.database.getUser(SharedCallData.callerId)
+                            callee = if(SharedCallData.calleeId == homeViewModel.currentUser?.uid) homeViewModel.currentUser else platformContext.database.getUser(SharedCallData.calleeId)
                             navController.navigate(route = Calling.getScreenName())
                         },
                         androidNavigationHandler
@@ -385,7 +387,6 @@ actual fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                         commentViewModel,
                         currentUser = homeViewModel.currentUser!!,
                         selectedNew = selectedNew,
-                        listUsers = homeViewModel.listUsers,
                         onNavigateToShowImageScreen = {image ->
                             selectedImage = image
                             navController.navigate(route = ShowImage.getScreenName())},
@@ -439,6 +440,8 @@ actual fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                         paddingValues = paddingValues,
                         searchViewModel = searchViewModel,
                         homeViewModel = homeViewModel,
+                        notificationViewModel = notificationViewModel,
+                        loadingViewModel = loadingViewModel,
                         onNavigateToPostInformation = {
                                 new ->
                             relatedNew = new

@@ -19,6 +19,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -38,7 +39,9 @@ import com.minhtu.firesocialmedia.presentation.home.HomeViewModel
 import com.minhtu.firesocialmedia.presentation.search.Search
 import com.minhtu.firesocialmedia.presentation.search.SearchViewModel
 import com.minhtu.firesocialmedia.utils.UiUtils
-import com.minhtu.firesocialmedia.utils.Utils
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 
 class Friend {
     companion object{
@@ -103,7 +106,8 @@ class Friend {
                                      homeViewModel: HomeViewModel,
                                      searchViewModel: SearchViewModel,
                                      friendViewModel: FriendViewModel,
-                                     friendRequestsStatus: List<String>, friendStatus: List<String>,
+                                     friendRequestsStatus: List<String>,
+                                     friendStatus: List<String>,
                                      onNavigateToUserInformation: (user: UserInstance) -> Unit){
             var selectedTabIndex by remember { mutableIntStateOf(0) }
 
@@ -133,58 +137,57 @@ class Friend {
                 }
                 when (selectedTabIndex) {
                     0 -> {
-                        LazyColumn(
-                            modifier = Modifier.Companion
-                                .testTag(TestTag.Companion.TAG_FRIEND_TAB_LIST)
-                                .semantics {
-                                    contentDescription = TestTag.Companion.TAG_FRIEND_TAB_LIST
-                                }) {
-                            val filterList = friendStatus.filter { userId ->
-                                val user =
-                                    Utils.Companion.findUserById(userId, homeViewModel.listUsers)
-                                user?.name?.contains(
-                                    searchViewModel.query,
-                                    ignoreCase = true
-                                ) == true
+                        var filterList by remember { mutableStateOf<List<UserInstance>>(emptyList()) }
+                        // Run filtering when friend list or search query changes
+                        LaunchedEffect(friendStatus, searchViewModel.query) {
+                            filterList = coroutineScope {
+                                friendStatus.map { userId ->
+                                    async {
+                                        homeViewModel.findUserById(userId, platform)
+                                            ?.takeIf { it.name.contains(searchViewModel.query, ignoreCase = true) }
+                                    }
+                                }.awaitAll().filterNotNull()
                             }
-                            items(filterList) { userId ->
-                                val user =
-                                    Utils.Companion.findUserById(userId, homeViewModel.listUsers)
-                                if (user != null) {
-                                    UiUtils.Companion.UserRow(user, onNavigateToUserInformation)
-                                }
+                        }
+
+                        LazyColumn(
+                            modifier = Modifier
+                                .testTag(TestTag.TAG_FRIEND_TAB_LIST)
+                                .semantics { contentDescription = TestTag.TAG_FRIEND_TAB_LIST }
+                        ) {
+                            items(filterList) { user ->
+                                UiUtils.UserRow(user, onNavigateToUserInformation)
                             }
                         }
                     }
 
                     1 -> {
-                        LazyColumn(
-                            modifier = Modifier.Companion
-                                .testTag(TestTag.Companion.TAG_FRIEND_REQUEST_TAB_LIST)
-                                .semantics {
-                                    contentDescription =
-                                        TestTag.Companion.TAG_FRIEND_REQUEST_TAB_LIST
-                                }) {
-                            val filterList = friendRequestsStatus.filter { userId ->
-                                val user =
-                                    Utils.Companion.findUserById(userId, homeViewModel.listUsers)
-                                user?.name?.contains(
-                                    searchViewModel.query,
-                                    ignoreCase = true
-                                ) == true
+                        var filterList by remember { mutableStateOf<List<UserInstance>>(emptyList()) }
+                        // Run filtering when friend list or search query changes
+                        LaunchedEffect(friendRequestsStatus, searchViewModel.query) {
+                            filterList = coroutineScope {
+                                friendRequestsStatus.map { userId ->
+                                    async {
+                                        homeViewModel.findUserById(userId, platform)
+                                            ?.takeIf { it.name.contains(searchViewModel.query, ignoreCase = true) }
+                                    }
+                                }.awaitAll().filterNotNull()
                             }
-                            items(filterList) { userId ->
-                                val requester =
-                                    Utils.Companion.findUserById(userId, homeViewModel.listUsers)
-                                if (requester != null) {
-                                    UiUtils.Companion.FriendRequest(
-                                        platform,
-                                        requester,
-                                        homeViewModel.currentUser!!,
-                                        onNavigateToUserInformation,
-                                        friendViewModel
-                                    )
-                                }
+                        }
+
+                        LazyColumn(
+                            modifier = Modifier
+                                .testTag(TestTag.TAG_FRIEND_REQUEST_TAB_LIST)
+                                .semantics { contentDescription = TestTag.TAG_FRIEND_REQUEST_TAB_LIST }
+                        ) {
+                            items(filterList) { user ->
+                                UiUtils.Companion.FriendRequest(
+                                    platform,
+                                    user,
+                                    homeViewModel.currentUser!!,
+                                    onNavigateToUserInformation,
+                                    friendViewModel
+                                )
                             }
                         }
                     }

@@ -137,6 +137,75 @@ class IosDatabaseService() : DatabaseService{
         )
     }
 
+    override suspend fun getUser(userId: String): UserInstance? {
+        return suspendCancellableCoroutine { continuation ->
+            val database = FIRDatabase.database()
+            val databaseReference = database.reference()
+                .child(Constants.USER_PATH)
+                .child(userId)
+
+            databaseReference.observeSingleEventOfType(
+                FIRDataEventType.FIRDataEventTypeValue,
+                withBlock = { snapshot ->
+                    if (snapshot != null && snapshot.exists()) {
+                        val value = snapshot.value as? Map<*, *> ?: null
+                        if (value != null) {
+                            try {
+                                val user = value.toUserInstance()
+                                continuation.resume(user) {}
+                            } catch (e: Exception) {
+                                continuation.resume(null) {}
+                            }
+                        } else {
+                            continuation.resume(null) {}
+                        }
+                    } else {
+                        continuation.resume(null) {}
+                    }
+                }
+            ) { error ->
+                continuation.resume(null) {}
+            }
+        }
+    }
+
+    override suspend fun getNew(newId: String): NewsInstance? {
+        return suspendCancellableCoroutine { continuation ->
+            val database = FIRDatabase.database()
+            val databaseReference = database.reference()
+                .child(Constants.NEWS_PATH)
+                .child(newId)
+
+            databaseReference.observeSingleEventOfType(
+                FIRDataEventType.FIRDataEventTypeValue,
+                withBlock = { snapshot ->
+                    if (snapshot != null && snapshot.exists()) {
+                        val rawValue = snapshot.value as? Map<*, *> ?: null
+                        if (rawValue != null) {
+                            try {
+                                // Convert Map<*, *> to Map<String, Any?>
+                                val value = rawValue.entries.associate {
+                                    (it.key as? String) to it.value
+                                }.filterKeys { it != null } as Map<String, Any?>
+                                
+                                val news = value.toNewsInstance()
+                                continuation.resume(news) {}
+                            } catch (e: Exception) {
+                                continuation.resume(null) {}
+                            }
+                        } else {
+                            continuation.resume(null) {}
+                        }
+                    } else {
+                        continuation.resume(null) {}
+                    }
+                }
+            ) { error ->
+                continuation.resume(null) {}
+            }
+        }
+    }
+
     override suspend fun getLatestNews(
         number: Int,
         lastTimePosted: Double?,
@@ -254,7 +323,6 @@ class IosDatabaseService() : DatabaseService{
             withBlock = { snapshot ->
                 result.clear()
                 if (snapshot != null && snapshot.exists()) {
-                    result.clear()
                     val children = snapshot.children
                     while (true) {
                         val child = children.nextObject() as? FIRDataSnapshot ?: break
@@ -272,7 +340,11 @@ class IosDatabaseService() : DatabaseService{
                     callback.onFailure()
                 }
             }
-        )
+        ) { error ->
+            // Handle error case
+            logMessage("getAllNotificationsOfUser", { "Error: ${error?.localizedDescription}" })
+            callback.onFailure()
+        }
     }
 
 
@@ -498,6 +570,47 @@ class IosDatabaseService() : DatabaseService{
         videoCallCallBack: (OfferAnswer) -> Unit
     ) {
         // iOS implementation will be added later
+    }
+
+    override suspend fun searchUserByName(
+        name: String,
+        path: String
+    ): List<UserInstance>? {
+        return suspendCancellableCoroutine { continuation ->
+            val database = FIRDatabase.database()
+            val databaseReference = database.reference().child(Constants.USER_PATH)
+
+            databaseReference.observeSingleEventOfType(
+                FIRDataEventType.FIRDataEventTypeValue,
+                withBlock = { snapshot ->
+                    if (snapshot != null && snapshot.exists()) {
+                        val users = mutableListOf<UserInstance>()
+                        val children = snapshot.children
+                        
+                        while (true) {
+                            val child = children.nextObject() as? FIRDataSnapshot ?: break
+                            val value = child.value as? Map<*, *> ?: continue
+                            
+                            try {
+                                val user = value.toUserInstance()
+                                if (user.name.contains(name, ignoreCase = true)) {
+                                    users.add(user)
+                                    if (users.size >= 5) break // only return first 5 matches
+                                }
+                            } catch (e: Exception) {
+                                continue
+                            }
+                        }
+                        
+                        continuation.resume(users) {}
+                    } else {
+                        continuation.resume(emptyList<UserInstance>()) {}
+                    }
+                }
+            ) { error ->
+                continuation.resume(null) {}
+            }
+        }
     }
 
     override fun checkUserExists(email: String, callback: (SignInState) -> Unit) {

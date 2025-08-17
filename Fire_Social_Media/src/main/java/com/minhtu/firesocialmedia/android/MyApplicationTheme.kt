@@ -20,19 +20,51 @@ fun MyApplicationTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit
 ) {
-    val colors = if (darkTheme) {
-        darkColorScheme(
-            primary = Color(0xFFBB86FC),
-            secondary = Color(0xFF03DAC5),
-            tertiary = Color(0xFF3700B3)
-        )
-    } else {
-        lightColorScheme(
-            primary = Color(0xFF6200EE),
-            secondary = Color(0xFF03DAC5),
-            tertiary = Color(0xFF3700B3)
-        )
-    }
+    // Red palette and relatives
+    val primary = Color(0xFFD32F2F)   // Red 700
+    val onPrimary = Color(0xFFFFFFFF)
+    val primaryContainer = Color(0xFFFFCDD2) // Red 100
+    val onPrimaryContainer = Color(0xFF410002)
+
+    val secondary = Color(0xFFC62828) // Red 800
+    val onSecondary = Color(0xFFFFFFFF)
+    val secondaryContainer = Color(0xFFFFEBEE) // Red 50
+    val onSecondaryContainer = Color(0xFF410002)
+
+    val tertiary = Color(0xFFB71C1C) // Red 900
+    val onTertiary = Color(0xFFFFFFFF)
+    val tertiaryContainer = Color(0xFFFFEBEE)
+    val onTertiaryContainer = Color(0xFF410002)
+
+    val light = lightColorScheme(
+        primary = primary,
+        onPrimary = onPrimary,
+        primaryContainer = primaryContainer,
+        onPrimaryContainer = onPrimaryContainer,
+        secondary = secondary,
+        onSecondary = onSecondary,
+        secondaryContainer = secondaryContainer,
+        onSecondaryContainer = onSecondaryContainer,
+        tertiary = tertiary,
+        onTertiary = onTertiary,
+        tertiaryContainer = tertiaryContainer,
+        onTertiaryContainer = onTertiaryContainer
+    )
+    val dark = darkColorScheme(
+        primary = primary,
+        onPrimary = onPrimary,
+        primaryContainer = primaryContainer,
+        onPrimaryContainer = onPrimaryContainer,
+        secondary = secondary,
+        onSecondary = onSecondary,
+        secondaryContainer = secondaryContainer,
+        onSecondaryContainer = onSecondaryContainer,
+        tertiary = tertiary,
+        onTertiary = onTertiary,
+        tertiaryContainer = tertiaryContainer,
+        onTertiaryContainer = onTertiaryContainer
+    )
+    val colors = if (darkTheme) dark else light
     val typography = Typography(
         bodyMedium = TextStyle(
             fontFamily = FontFamily.Default,

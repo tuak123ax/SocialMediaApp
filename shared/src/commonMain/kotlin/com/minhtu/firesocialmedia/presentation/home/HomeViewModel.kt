@@ -21,8 +21,6 @@ import com.minhtu.firesocialmedia.platform.sendMessageToServer
 import com.minhtu.firesocialmedia.utils.Utils
 import com.minhtu.firesocialmedia.utils.Utils.Companion.GetNewCallback
 import com.minhtu.firesocialmedia.utils.Utils.Companion.GetNotificationCallback
-import com.minhtu.firesocialmedia.utils.Utils.Companion.GetUserCallback
-import com.minhtu.firesocialmedia.utils.Utils.Companion.findUserById
 import com.rickclephas.kmp.observableviewmodel.ViewModel
 import com.rickclephas.kmp.observableviewmodel.launch
 import kotlinx.coroutines.CoroutineDispatcher
@@ -31,6 +29,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -41,41 +41,76 @@ class HomeViewModel(
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : ViewModel() {
     val listState = LazyListState()
-    var listUsers: ArrayList<UserInstance> = ArrayList()
     var listNews: ArrayList<NewsInstance> = ArrayList()
     var listNotificationOfCurrentUser = mutableStateListOf<NotificationInstance>()
+    //Cache loaded users, only fetch new user if that user is not in this cache
+    var loadedUsersCache : MutableSet<UserInstance?> = mutableSetOf()
     var currentUser: UserInstance? = null
     var currentUserState by mutableStateOf(currentUser)
     fun updateCurrentUser(user: UserInstance, platform: PlatformContext) {
         currentUser = user
         currentUserState = currentUser
         updateFCMTokenForCurrentUser(user, platform)
+        likeCache = currentUser!!.likedPosts
     }
 
-    val _getAllUsersStatus = mutableStateOf(false)
-    val getAllUsersStatus = _getAllUsersStatus
-    fun getAllUsers(platform: PlatformContext) {
-        viewModelScope.launch {
-            withContext(ioDispatcher) {
+    val _getCurrentUserStatus = mutableStateOf(false)
+    val getCurrentUserStatus = _getCurrentUserStatus
+    fun getCurrentUserAndFriends(platform: PlatformContext) {
+        viewModelScope.launch(ioDispatcher) {
+            try{
                 val currentUserId = platform.auth.getCurrentUserUid()
-                platform.database.getAllUsers(Constants.USER_PATH, object : GetUserCallback {
-                    override fun onSuccess(users: List<UserInstance>) {
-                        val currentUser = findUserById(currentUserId!!, users)
-                        updateCurrentUser(currentUser!!, platform)
-                        val listAllUsers = ArrayList(users)
-                        listAllUsers.remove(currentUser)
-                        updateUsers(listAllUsers)
-                        listUsers.clear()
-                        listUsers.addAll(listAllUsers)
-                        _getAllUsersStatus.value = true
+                if(currentUserId != null) {
+                    val user = platform.database.getUser(
+                        currentUserId)
+                    if(user != null) {
+                        updateCurrentUser(user, platform)
+                        _getCurrentUserStatus.value = true
+                        getAllUserFriends(user, platform)
+                    } else {
+                        logMessage("getCurrentUser",
+                            { "Current user is null" })
+                        _getCurrentUserStatus.value = false
                     }
-
-                    override fun onFailure() {
-                        _getAllUsersStatus.value = false
-                    }
-                })
+                } else {
+                    logMessage("getCurrentUser",
+                        { "Current user id is null" })
+                    _getCurrentUserStatus.value = false
+                }
+            } catch (ex : Exception) {
+                logMessage("getCurrentUser",
+                    { "Cannot get current user: " + ex.message.toString() })
+                _getCurrentUserStatus.value = false
             }
         }
+    }
+
+     fun getAllUserFriends(user: UserInstance, platform: PlatformContext) {
+         viewModelScope.launch(ioDispatcher) {
+             val friendIds = user.friends
+             // Thresholds
+             val maxParallel = 20
+             val chunkSize = 10
+             val friends = if (friendIds.size <= maxParallel) {
+                 // Fetch all in parallel
+                 friendIds.map { friendId ->
+                     async {platform.database.getUser(friendId)}
+                 }.awaitAll()
+             } else {
+                 // Batch mode
+                 val resultList = mutableListOf<UserInstance>()
+                 val batches = friendIds.chunked(chunkSize)
+                 for (batch in batches) {
+                     val batchResults = batch.map { id ->
+                         async { platform.database.getUser(id) }
+                     }.awaitAll().filterNotNull()
+                     resultList.addAll(batchResults)
+                 }
+                 resultList
+             }
+
+             updateUserFriends(ArrayList(friends))
+         }
     }
 
     val _getAllNewsStatus = mutableStateOf(false)
@@ -85,10 +120,6 @@ class HomeViewModel(
     private var lastTimePosted: Double? = null
     private var lastKey: String? = null
     fun getLatestNews(platform: PlatformContext) {
-        logMessage("getLatestNews", { "start get latest new" })
-        logMessage("lastTimePosted", { lastTimePosted.toString() })
-        logMessage("isLoadingMore", { isLoadingMore.value.toString() })
-        logMessage("hasMoreData", { hasMoreData.value.toString() })
         viewModelScope.launch {
             withContext(ioDispatcher) {
                 if (!isLoadingMore.value && hasMoreData.value) {
@@ -117,6 +148,7 @@ class HomeViewModel(
                                 }
                                 lastTimePosted = lastTimePostedValue
                                 lastKey = lastKeyValue
+                                checkUsersInCacheAndGetMore(platform)
                             }
 
                             override fun onFailure() {
@@ -124,6 +156,30 @@ class HomeViewModel(
                                 isLoadingMore.value = false
                             }
                         })
+                }
+            }
+        }
+    }
+
+    fun checkUsersInCacheAndGetMore(
+        platform: PlatformContext
+    ) {
+        viewModelScope.launch(ioDispatcher) {
+            val allPosterIds = listNews.map { it.posterId }.distinct()
+            val missingPosterIds = allPosterIds.filterNot { posterId ->
+                loadedUsersCache.any( {it?.uid == posterId} )
+            }
+
+            if(missingPosterIds.isNotEmpty()) {
+                try{
+                    val newUsers = missingPosterIds.map { posterId ->
+                        async {findUserById(posterId, platform)}
+                    }.awaitAll().filterNotNull()
+                    // Add to the cache + global set
+                    loadedUsersCache.addAll(newUsers)
+                } catch (e : Exception) {
+                    logMessage("checkUsersInCacheAndGetMore",
+                        { "Exception when get more users: " + e.message.toString() })
                 }
             }
         }
@@ -149,7 +205,6 @@ class HomeViewModel(
                         override fun onFailure() {
                             _getAllNotificationsOfCurrentUser.value = false
                         }
-
                     })
             }
         }
@@ -167,17 +222,17 @@ class HomeViewModel(
         }
     }
 
-    private val _allUsers = MutableStateFlow<List<UserInstance>>(emptyList())
-    val allUsers = _allUsers.asStateFlow()
-    fun updateUsers(users: ArrayList<UserInstance>) {
-        _allUsers.value = users
-        likeCache = currentUser!!.likedPosts
+    private val _allUserFriends = MutableStateFlow<List<UserInstance?>>(emptyList())
+    val allUserFriends = _allUserFriends.asStateFlow()
+    fun updateUserFriends(users: ArrayList<UserInstance?>) {
+        _allUserFriends.value = users
+        //Add loaded user friends to cache
+        loadedUsersCache = (loadedUsersCache + users).toMutableSet()
     }
 
     private var _allNews = MutableStateFlow<MutableSet<NewsInstance>>(mutableSetOf())
     val allNews = _allNews.asStateFlow()
     fun updateNews(news: ArrayList<NewsInstance>) {
-        logMessage("updateNews", { news.size.toString() })
         _allNews.value = (_allNews.value + news).toMutableSet()
     }
 
@@ -276,7 +331,7 @@ class HomeViewModel(
                     val new = Utils.findNewById(likedNew, listNews)
                     //Save and send notification
                     if (new != null) {
-                        saveAndSendNotification(currentUser!!, new, listUsers, platform)
+                        saveAndSendNotification(currentUser!!, new, platform)
                     }
                 }
             }
@@ -320,7 +375,6 @@ class HomeViewModel(
     private suspend fun saveAndSendNotification(
         currentUser: UserInstance,
         selectedNew: NewsInstance,
-        listUsers: ArrayList<UserInstance>,
         platform: PlatformContext
     ) {
         val notiContent = "${currentUser.name} liked your post!"
@@ -334,12 +388,14 @@ class HomeViewModel(
             selectedNew.id
         )
         //Save notification to db
-        val poster = findUserById(selectedNew.posterId, listUsers)
-        Utils.saveNotification(notification, poster!!, platform)
-        //Send notification to poster
-        val tokenList = ArrayList<String>()
-        tokenList.add(poster.token)
-        sendMessageToServer(createMessageForServer(notiContent, tokenList, currentUser, "BASIC"))
+        val poster = platform.database.getUser(selectedNew.posterId)
+        if(poster != null) {
+            Utils.saveNotification(notification, poster, platform)
+            //Send notification to poster
+            val tokenList = ArrayList<String>()
+            tokenList.add(poster.token)
+            sendMessageToServer(createMessageForServer(notiContent, tokenList, currentUser, "BASIC"))
+        }
     }
 
     suspend fun deleteNotification(notification: NotificationInstance, platform: PlatformContext) {
@@ -369,7 +425,7 @@ class HomeViewModel(
     }
     fun observePhoneCall(
         platform: PlatformContext,
-        onNavigateToCallingScreen: (String, String, String, OfferAnswer) -> Unit,
+        onNavigateToCallingScreen: suspend (String, String, String, OfferAnswer) -> Unit,
         onNavigateBack: () -> Unit
     ) {
         viewModelScope.launch {
@@ -381,7 +437,9 @@ class HomeViewModel(
                         Constants.CALL_PATH,
                         phoneCallCallBack = { sessionId,callerId, calleeId, offer ->
                             if(calleeId == currentUser!!.uid) {
-                                onNavigateToCallingScreen(sessionId, callerId, calleeId, offer)
+                                viewModelScope.launch(ioDispatcher) {
+                                    onNavigateToCallingScreen(sessionId, callerId, calleeId, offer)
+                                }
                             }
                         },
                         endCallSession = { end ->
@@ -414,5 +472,19 @@ class HomeViewModel(
         viewModelScope.launch(ioDispatcher) {
             getLatestNews(platform)
         }
+    }
+
+    suspend fun findUserById(userId: String, platform: PlatformContext) : UserInstance? {
+        return platform.database.getUser(userId)
+    }
+
+    suspend fun searchUserByName(name: String, platform: PlatformContext) : List<UserInstance>{
+        if(name.isBlank()) return emptyList()
+        val resultList = platform.database.searchUserByName(
+            name,
+            Constants.USER_PATH
+        )
+        if(resultList == null) return emptyList()
+        else return resultList
     }
 }

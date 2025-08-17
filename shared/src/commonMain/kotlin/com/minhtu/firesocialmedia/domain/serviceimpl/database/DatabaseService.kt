@@ -55,6 +55,8 @@ interface DatabaseService {
     )
 
     suspend fun getAllUsers(path: String, callback: Utils.Companion.GetUserCallback)
+    suspend fun getUser(userId: String) : UserInstance?
+    suspend fun getNew(newId: String) : NewsInstance?
     suspend fun getLatestNews(number : Int,
                               lastTimePosted : Double?,
                               lastKey: String?,
@@ -193,4 +195,6 @@ interface DatabaseService {
         callPath : String,
         videoCallCallBack: (offer : OfferAnswer) -> Unit
     )
+
+    suspend fun searchUserByName(name: String, path: String) : List<UserInstance>?
 }

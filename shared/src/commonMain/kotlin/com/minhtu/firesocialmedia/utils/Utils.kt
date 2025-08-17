@@ -13,7 +13,6 @@ import com.minhtu.firesocialmedia.platform.createCallMessage
 import com.minhtu.firesocialmedia.platform.sendMessageToServer
 import com.minhtu.firesocialmedia.presentation.calling.audiocall.CallingViewModel
 import com.minhtu.firesocialmedia.presentation.comment.CommentViewModel
-import com.minhtu.firesocialmedia.presentation.home.HomeViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -42,16 +41,6 @@ class Utils {
 
                 })
             }
-        }
-
-        fun getAllFCMTokens(homeViewModel: HomeViewModel) : ArrayList<String>{
-            val tokenList = ArrayList<String>()
-            for(user in homeViewModel.listUsers) {
-                if(user.token != homeViewModel.currentUser!!.token) {
-                    tokenList.add(user.token)
-                }
-            }
-            return tokenList
         }
 
         fun hexToColor(hex: String): Color {

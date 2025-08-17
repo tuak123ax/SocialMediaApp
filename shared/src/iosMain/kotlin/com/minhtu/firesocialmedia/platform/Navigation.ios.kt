@@ -27,6 +27,7 @@ import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.friend.Friend
 import com.minhtu.firesocialmedia.presentation.navigationscreen.friend.FriendViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.notification.Notification
+import com.minhtu.firesocialmedia.presentation.navigationscreen.notification.NotificationViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.Settings
 import com.minhtu.firesocialmedia.presentation.postinformation.PostInformation
 import com.minhtu.firesocialmedia.presentation.search.Search
@@ -61,6 +62,7 @@ actual fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
     val friendViewModel by lazy { FriendViewModel() }
     val userInformationViewModel by lazy { UserInformationViewModel() }
     val showImageViewModel by lazy { ShowImageViewModel() }
+    val notificationViewModel by lazy { NotificationViewModel() }
     //Define shared viewModel instance to use for Home and Search screens.
     val homeViewModel by lazy { HomeViewModel() }
     //Shared instance used for uploadNewFeeds screen.
@@ -106,7 +108,6 @@ actual fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                 commentViewModel,
                 currentUser = homeViewModel.currentUser!!,
                 selectedNew = selectedNew,
-                listUsers = homeViewModel.listUsers,
                 onNavigateToShowImageScreen = {image ->
                     selectedImage = image
                     iosNavigationHandler.navigateTo(IosScreen.ShowImageScreen.toString()) },
@@ -247,6 +248,8 @@ actual fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                 paddingValues = paddingValues,
                 searchViewModel = searchViewModel,
                 homeViewModel = homeViewModel,
+                notificationViewModel = notificationViewModel,
+                loadingViewModel = loadingViewModel,
                 onNavigateToPostInformation = {
                         new ->
                     relatedNew = new

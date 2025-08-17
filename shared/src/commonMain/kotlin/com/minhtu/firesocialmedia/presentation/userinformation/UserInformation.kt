@@ -65,7 +65,6 @@ import com.minhtu.firesocialmedia.presentation.home.HomeViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.friend.FriendViewModel
 import com.minhtu.firesocialmedia.utils.NavigationHandler
 import com.minhtu.firesocialmedia.utils.UiUtils
-import com.minhtu.firesocialmedia.utils.Utils
 import com.seiko.imageloader.LocalImageLoader
 import com.seiko.imageloader.ui.AutoSizeImage
 
@@ -413,18 +412,6 @@ class UserInformation {
 //                    )
 //                }
             }
-        }
-
-        private fun getAllFriendTokens(homeViewModel: HomeViewModel) : ArrayList<String> {
-            val friendTokens = ArrayList<String>()
-            val friendIds = homeViewModel.currentUser!!.friends
-            for(friendId in friendIds) {
-                val friend = Utils.Companion.findUserById(friendId, homeViewModel.listUsers)
-                if(friend != null) {
-                    friendTokens.add(friend.token)
-                }
-            }
-            return friendTokens
         }
     }
 }

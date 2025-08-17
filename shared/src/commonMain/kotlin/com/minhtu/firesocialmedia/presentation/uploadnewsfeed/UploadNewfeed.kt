@@ -59,7 +59,6 @@ class UploadNewsfeed {
                                  onNavigateToHomeScreen: () -> Unit){
             val isLoading by loadingViewModel.isLoading.collectAsState()
             uploadNewsfeedViewModel.updateCurrentUser(homeViewModel.currentUser!!)
-            uploadNewsfeedViewModel.updateListUsers(homeViewModel.listUsers)
 
             imagePicker.RegisterLauncher({loadingViewModel.hideLoading()})
             val postStatus = uploadNewsfeedViewModel.createPostStatus.collectAsState()

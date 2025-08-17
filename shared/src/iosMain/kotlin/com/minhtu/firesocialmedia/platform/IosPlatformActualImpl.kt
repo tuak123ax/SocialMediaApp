@@ -40,8 +40,10 @@ import com.seiko.imageloader.intercept.imageMemoryCacheConfig
 import com.seiko.imageloader.intercept.painterMemoryCacheConfig
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
+import io.ktor.client.request.request
 import io.ktor.client.statement.readBytes
 import io.ktor.http.ContentType
+import io.ktor.http.HttpMethod
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import kotlinx.cinterop.BetaInteropApi
@@ -81,6 +83,7 @@ import platform.Foundation.NSData
 import platform.Foundation.NSDate
 import platform.Foundation.NSDateFormatter
 import platform.Foundation.NSLog
+import platform.Foundation.NSRange
 import platform.Foundation.NSSearchPathForDirectoriesInDomains
 import platform.Foundation.NSSelectorFromString
 import platform.Foundation.NSTimer
@@ -412,7 +415,9 @@ class IosImagePicker(
         }
 
         suspend fun downloadImageAsByteArray(url: String): ByteArray {
-            val response = KtorProvider.client.get(url)
+            val response = KtorProvider.client.request(url) {
+                method = HttpMethod.Get
+            }
             return response.readBytes()
         }
 
@@ -478,11 +483,11 @@ class IosImagePicker(
 
     fun NSData.toByteArray(): ByteArray {
         val length = this.length.toInt()
-        val bytesPointer = this.bytes?.reinterpret<ByteVar>() ?: return ByteArray(0)
-
-        return ByteArray(length) { index ->
-            bytesPointer[index]
+        val bytes = ByteArray(length)
+        bytes.usePinned { pinned ->
+            this.getBytes(pinned.addressOf(0))
         }
+        return bytes
     }
 
     // Convert ByteArray to Compose ImageBitmap
