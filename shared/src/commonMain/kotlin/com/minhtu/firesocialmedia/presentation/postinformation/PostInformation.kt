@@ -180,7 +180,7 @@ class PostInformation {
                             }) {
                         CrossPlatformIcon(
                             icon = "like",
-                            color = if (isLiked) "#00FFFF" else "#FFFFFFFF",
+                            backgroundColor = if (isLiked) "#00FFFF" else "#FFFFFFFF",
                             contentDescription = "Like",
                             modifier = Modifier.Companion
                                 .size(25.dp)
@@ -202,7 +202,7 @@ class PostInformation {
                             }) {
                         CrossPlatformIcon(
                             icon = "comment",
-                            color = "#FFFFFFFF",
+                            backgroundColor = "#FFFFFFFF",
                             contentDescription = "Comment",
                             modifier = Modifier.Companion
                                 .size(25.dp)

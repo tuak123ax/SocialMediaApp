@@ -172,7 +172,10 @@ actual fun getIconPainter(icon: String): Painter? {
 }
 
 @Composable
-actual fun getIconComposable(icon: String, color : String, tint : String?, modifier : Modifier): (@Composable () -> Unit)? {
+actual fun getIconComposable(icon: String,
+                             bgColor : String,
+                             tint : String?,
+                             modifier : Modifier): (@Composable () -> Unit)? {
     val uiImage = UIImage.imageNamed(icon)
     return {
         if(uiImage != null) {
@@ -184,23 +187,45 @@ actual fun getIconComposable(icon: String, color : String, tint : String?, modif
                     modifier = Modifier.fillMaxSize(),
                     factory = {
                         UIImageView().apply {
-                            image = renderUiImage
-                            backgroundColor = if(tint != null) UIColor.fromHex("#FFFFFF") else UIColor.fromHex(color)
-                            tintColor = if(tint != null) UIColor.fromHex(tint) else UIColor.blackColor
+                            val isTinted = tint != null
+
+                            image = if (isTinted)
+                                renderUiImage.imageWithRenderingMode(UIImageRenderingMode.UIImageRenderingModeAlwaysTemplate)
+                            else
+                                renderUiImage.imageWithRenderingMode(UIImageRenderingMode.UIImageRenderingModeAlwaysOriginal)
+
+                            backgroundColor = UIColor.fromHex(bgColor)
+
+                            if (isTinted) {
+                                tintColor = UIColor.fromHex(tint)
+                            }
+
                             opaque = false
                             clipsToBounds = true
                             contentMode = UIViewContentMode.UIViewContentModeScaleAspectFit
                         }
                     },
                     update = { imageView ->
-                        imageView.image = renderUiImage
-                        imageView.backgroundColor = if(tint != null) UIColor.fromHex("#FFFFFF") else UIColor.fromHex(color)
-                        imageView.tintColor = if(tint != null) UIColor.fromHex(tint) else UIColor.blackColor
+                        val isTinted = tint != null
+
+                        imageView.image = if (isTinted)
+                            renderUiImage.imageWithRenderingMode(UIImageRenderingMode.UIImageRenderingModeAlwaysTemplate)
+                        else
+                            renderUiImage.imageWithRenderingMode(UIImageRenderingMode.UIImageRenderingModeAlwaysOriginal)
+
+                        imageView.backgroundColor = UIColor.fromHex(bgColor)
+
+                        if (isTinted) {
+                            imageView.tintColor = UIColor.fromHex(tint)
+                        }
+                        // If tint becomes null later, we don't touch tintColor; renderingMode=Original keeps the original colors.
+
                         imageView.opaque = false
                         imageView.contentMode = UIViewContentMode.UIViewContentModeScaleAspectFit
                         imageView.clipsToBounds = true
                     }
                 )
+
             }
 
         }
@@ -240,7 +265,7 @@ actual fun PasswordVisibilityIcon(passwordVisibility: Boolean) {
     val descriptionOfIcon = if(passwordVisibility) "Hide password" else "Show password"
     CrossPlatformIcon(
         icon = iconName,
-        color = "#FF132026",
+        backgroundColor = "#FF132026",
         contentDescription = descriptionOfIcon,
         Modifier.size(24.dp)
     )
@@ -578,14 +603,19 @@ actual fun onPushNotificationReceived(data: Map<String, Any?>) {
 }
 
 fun getBottomSafeAreaInset(): Dp {
-    val keyWindow = UIApplication.sharedApplication.connectedScenes
-        .filterIsInstance<UIWindowScene>()
-        .firstOrNull()
-        ?.windows
-        ?.firstOrNull { (it as? UIWindow)?.isKeyWindow() == true } as? UIWindow
+	val candidateWindows: List<UIWindow> = UIApplication.sharedApplication.connectedScenes
+		.filterIsInstance<UIWindowScene>()
+		.flatMap { scene ->
+			(scene.windows as? List<UIWindow>) ?: emptyList()
+		}
 
-    val bottomInset = keyWindow?.safeAreaInsets?.useContents { bottom } ?: 0.0
-    return bottomInset.dp
+	// Prefer key window, else fall back to the first window
+	val window = candidateWindows.firstOrNull { it.isKeyWindow() } ?: candidateWindows.firstOrNull()
+
+	val bottomInsetPoints = window?.safeAreaInsets?.useContents { bottom } ?: 0.0
+	val insetDp = bottomInsetPoints.dp
+	// Typical iPhone home indicator inset is ~34pt; cap conservatively
+	return insetDp.coerceIn(0.dp, 36.dp)
 }
 
 const val serviceName: String = "iosLocalStorage"

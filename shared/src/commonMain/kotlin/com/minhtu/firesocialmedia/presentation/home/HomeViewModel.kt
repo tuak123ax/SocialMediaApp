@@ -468,7 +468,6 @@ class HomeViewModel(
 
     fun loadMoreNews(platform : PlatformContext) {
         if(isLoadingMore.value) return
-        logMessage("loadMoreNews", { "start load more new" })
         viewModelScope.launch(ioDispatcher) {
             getLatestNews(platform)
         }
@@ -484,7 +483,6 @@ class HomeViewModel(
             name,
             Constants.USER_PATH
         )
-        if(resultList == null) return emptyList()
-        else return resultList
+        return resultList ?: emptyList()
     }
 }

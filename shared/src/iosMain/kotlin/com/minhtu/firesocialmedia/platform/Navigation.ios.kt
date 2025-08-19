@@ -1,6 +1,8 @@
 package com.minhtu.firesocialmedia.platform
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -51,20 +53,20 @@ actual fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
     lateinit var selectedNew : NewsInstance
 
     //Define shared viewModel instance to use for signUp and information screens.
-    val signUpViewModel by lazy { SignUpViewModel() }
-    val signInViewModel by lazy { SignInViewModel() }
-    val loadingViewModel by lazy { LoadingViewModel() }
-    val forgotPasswordViewModel by lazy { ForgotPasswordViewModel() }
-    val commentViewModel by lazy { CommentViewModel() }
-    val searchViewModel by lazy { SearchViewModel() }
-    val uploadNewsfeedViewModel by lazy { UploadNewfeedViewModel() }
-    val informationViewModel by lazy { InformationViewModel() }
-    val friendViewModel by lazy { FriendViewModel() }
-    val userInformationViewModel by lazy { UserInformationViewModel() }
-    val showImageViewModel by lazy { ShowImageViewModel() }
-    val notificationViewModel by lazy { NotificationViewModel() }
+    val signUpViewModel = remember { SignUpViewModel() }
+    val signInViewModel = remember { SignInViewModel() }
+    val loadingViewModel = remember { LoadingViewModel() }
+    val forgotPasswordViewModel = remember { ForgotPasswordViewModel() }
+    val commentViewModel = remember { CommentViewModel() }
+    val searchViewModel = remember { SearchViewModel() }
+    val uploadNewsfeedViewModel = remember { UploadNewfeedViewModel() }
+    val informationViewModel = remember { InformationViewModel() }
+    val friendViewModel = remember { FriendViewModel() }
+    val userInformationViewModel = remember { UserInformationViewModel() }
+    val showImageViewModel = remember { ShowImageViewModel() }
+    val notificationViewModel = remember { NotificationViewModel() }
     //Define shared viewModel instance to use for Home and Search screens.
-    val homeViewModel by lazy { HomeViewModel() }
+    val homeViewModel = remember { HomeViewModel() }
     //Shared instance used for uploadNewFeeds screen.
     var updateNew : NewsInstance? = null
     //Shared instance used for Notification and PostInformation screen.
@@ -76,7 +78,6 @@ actual fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
         IosScreen.SettingsScreen)
     val currentScreen = remember { mutableStateOf<IosScreen>(IosScreen.SignInScreen) }
     val iosNavigationHandler = IOSNavigationHandlerWithStack(currentScreen)
-    val bottomInset = getBottomSafeAreaInset()
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         bottomBar = {
@@ -89,10 +90,9 @@ actual fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                     iosNavigationHandler.navigateTo(IosScreen.UploadNewsScreen.toString())
                 },
                     Modifier
-                        .fillMaxWidth()
-                        .height(60.dp + bottomInset) // Increase height
-                        .padding(bottom = bottomInset) // Push content up
-                        .background(Color.White)
+                        .fillMaxWidth(),
+                    useDefaultInsets = false,
+                    useCustomBar = true
                 )
             }
         }

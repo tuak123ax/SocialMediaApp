@@ -52,6 +52,7 @@ import com.minhtu.firesocialmedia.di.PlatformContext
 import com.minhtu.firesocialmedia.platform.CrossPlatformIcon
 import com.minhtu.firesocialmedia.platform.generateImageLoader
 import com.minhtu.firesocialmedia.platform.logMessage
+import com.minhtu.firesocialmedia.platform.toHex
 import com.minhtu.firesocialmedia.presentation.loading.Loading
 import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
 import com.minhtu.firesocialmedia.utils.NavigationHandler
@@ -179,7 +180,7 @@ class Home {
                         ) {
                             CrossPlatformIcon(
                                 icon = "search",
-                                color = "#FFFFFFFF",
+                                backgroundColor = MaterialTheme.colorScheme.primaryContainer.toHex(),
                                 contentDescription = "Search Icon",
                                 contentScale = ContentScale.Companion.Fit,
                                 modifier = Modifier.Companion
@@ -206,7 +207,7 @@ class Home {
                         ) {
                             CrossPlatformIcon(
                                 icon = "logout",
-                                color = "#FFFFFFFF",
+                                backgroundColor = MaterialTheme.colorScheme.errorContainer.toHex(),
                                 contentDescription = "Logout Icon",
                                 contentScale = ContentScale.Companion.Fit,
                                 modifier = Modifier.Companion

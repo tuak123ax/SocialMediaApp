@@ -98,9 +98,6 @@ class Notification {
                 if (!getAllNotificationsStatus) {
                     loadingViewModel.showLoading()
                 }
-                
-                //Pass list news from homeViewModel to NotificationViewModel
-                notificationViewModel.updateListNews(homeViewModel.listNews)
                 //Get more users to show notification information
                 notificationViewModel.checkUsersInCacheAndGetMore(
                     homeViewModel.loadedUsersCache,
@@ -164,6 +161,7 @@ class Notification {
                                     NotificationHasSwipeToDelete(
                                         notification,
                                         user,
+                                        homeViewModel,
                                         notificationViewModel,
                                         platform,
                                         onDelete = {
@@ -202,6 +200,7 @@ class Notification {
         @Composable
         fun NotificationHasSwipeToDelete(notification: NotificationInstance,
                                          user: UserInstance,
+                                         homeViewModel: HomeViewModel,
                                          notificationViewModel: NotificationViewModel,
                                          platform: PlatformContext,
                                          onDelete: () -> Unit,
@@ -281,6 +280,7 @@ class Notification {
                                     )
                                     notificationViewModel.onNotificationClick(
                                         notification,
+                                        homeViewModel.listNews,
                                         platform,
                                         onNavigateToPostInformation = { relatedNew ->
                                             onNavigateToPostInformation(relatedNew)

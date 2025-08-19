@@ -187,7 +187,7 @@ class UiUtils {
                             }) {
                                 CrossPlatformIcon(
                                     icon = "more_horiz",
-                                    color = "#FFFFFFFF",
+                                    backgroundColor = "#FFFFFFFF",
                                     contentDescription = "More Options",
                                     tint = Color.Gray,
                                     modifier = Modifier
@@ -265,7 +265,7 @@ class UiUtils {
                                 }){
                             CrossPlatformIcon(
                                 icon = "like",
-                                color = if(isLiked) "#00FFFF" else "#FFFFFFFF",
+                                backgroundColor = if(isLiked) "#00FFFF" else "#FFFFFFFF",
                                 contentDescription = "Like",
                                 modifier = Modifier
                                     .size(25.dp)
@@ -286,7 +286,7 @@ class UiUtils {
                                 }){
                             CrossPlatformIcon(
                                 icon = "comment",
-                                color = "#FFFFFFFF",
+                                backgroundColor = "#FFFFFFFF",
                                 contentDescription = "Comment",
                                 modifier = Modifier
                                     .size(25.dp)
@@ -410,17 +410,106 @@ class UiUtils {
 
 
         @Composable
-        fun BottomNavigationBar(navHandler: NavigationHandler, homeViewModel: HomeViewModel, onNavigateToUploadNews: () -> Unit, modifier: Modifier) {
+        fun BottomNavigationBar(
+            navHandler: NavigationHandler,
+            homeViewModel: HomeViewModel,
+            onNavigateToUploadNews: () -> Unit,
+            modifier: Modifier,
+            useDefaultInsets: Boolean = true,
+            useCustomBar: Boolean = false
+        ) {
             val items = listOf(
                 Screen.Home,
                 Screen.Friend,
                 Screen.Notification,
                 Screen.Settings
             )
-            Box(
-                modifier = modifier
-            ){
-                NavigationBar(containerColor = Color.White) {
+            if (useCustomBar) {
+                // Lightweight custom bar (fixed height) to match Android visual size
+                Box(modifier = modifier) {
+                    val currentRoute = navHandler.getCurrentRoute()
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(56.dp)
+                            .background(Color.White)
+                            .align(Alignment.BottomCenter),
+                        horizontalArrangement = Arrangement.SpaceAround,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        items.forEach { screen ->
+                            val notificationCount = homeViewModel.listNotificationOfCurrentUser.size
+                            val showBadge = screen.route == Notification.getScreenName() && notificationCount > 0
+                            val selected = currentRoute == screen.route
+                            val tint = if (selected) Color.Red else Color(0xFF666666)
+                            val testTag = when(screen.route) {
+                                Notification.getScreenName() -> TestTag.TAG_NOTIFICATION_BOTTOM
+                                Home.getScreenName() -> TestTag.TAG_HOME_BOTTOM
+                                Friend.getScreenName() -> TestTag.TAG_FRIEND_BOTTOM
+                                Settings.getScreenName() -> TestTag.TAG_SETTING_BOTTOM
+                                else -> ""
+                            }
+                            Box(
+                                modifier = Modifier
+                                    .size(56.dp)
+                                    .clip(CircleShape)
+                                    .testTag(testTag)
+                                    .semantics { contentDescription = testTag }
+                                    .clickable { navHandler.navigateTo(screen.route) },
+                                contentAlignment = Alignment.Center
+                            ) {
+                                if (showBadge) {
+                                    BadgedBox(badge = { Badge { Text(notificationCount.toString()) } }) {
+                                        Icon(
+                                            screen.icon,
+                                            contentDescription = screen.title,
+                                            tint = tint,
+                                            modifier = Modifier.size(28.dp)
+                                        )
+                                    }
+                                } else {
+                                    Icon(
+                                        screen.icon,
+                                        contentDescription = screen.title,
+                                        tint = tint,
+                                        modifier = Modifier.size(28.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    // Floating action button centered above the bar
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier
+                            .size(56.dp)
+                            .offset(y = (-30).dp)
+                            .shadow(8.dp, CircleShape)
+                            .clip(CircleShape)
+                            .background(
+                                Brush.linearGradient(colors = listOf(Color.Red, Color.White))
+                            )
+                            .align(Alignment.BottomCenter)
+                    ) {
+                        FloatingActionButton(
+                            onClick = { onNavigateToUploadNews() },
+                            shape = CircleShape,
+                            containerColor = Color.Transparent,
+                            elevation = FloatingActionButtonDefaults.elevation(0.dp)
+                        ) {
+                            Icon(Icons.Default.Add, contentDescription = "Add", tint = Color.Black)
+                        }
+                    }
+                }
+                return
+            }
+            Box(modifier = modifier){
+                val barInsets = if (useDefaultInsets) androidx.compose.material3.NavigationBarDefaults.windowInsets else androidx.compose.foundation.layout.WindowInsets(0)
+                NavigationBar(
+                    containerColor = Color.White,
+                    windowInsets = barInsets
+                ) {
                     val currentRoute = navHandler.getCurrentRoute()
                     items.forEach { screen ->
                         val notificationCount = homeViewModel.listNotificationOfCurrentUser.size
@@ -498,7 +587,7 @@ class UiUtils {
                     .padding(10.dp)){
                 CrossPlatformIcon(
                     icon = "arrow_back",
-                    color = "#FFFFFFFF",
+                    backgroundColor = "#FFFFFFFF",
                     contentDescription = "Back",
                     tint = Color.Black,
                     modifier = Modifier
@@ -515,7 +604,7 @@ class UiUtils {
                 Spacer(modifier = Modifier.weight(1f))
                 CrossPlatformIcon(
                     icon = "more_horiz",
-                    color = "#FFFFFFFF",
+                    backgroundColor = "#FFFFFFFF",
                     contentDescription = "More Options",
                     tint = Color.Black,
                     modifier = Modifier

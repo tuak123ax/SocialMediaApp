@@ -90,7 +90,7 @@ actual fun getIconPainter(icon : String): Painter? {
 }
 
 @Composable
-actual fun getIconComposable(icon: String, color : String, tint : String?, modifier : Modifier): (@Composable () -> Unit)? = null
+actual fun getIconComposable(icon: String, bgColor : String, tint : String?, modifier : Modifier): (@Composable () -> Unit)? = null
 
 @Composable
 actual fun CommonBackHandler(enabled: Boolean, onBack: () -> Unit) {
@@ -103,7 +103,7 @@ actual fun PasswordVisibilityIcon(passwordVisibility : Boolean) {
     val descriptionOfIcon = if(passwordVisibility) "Hide password" else "Show password"
     CrossPlatformIcon(
         icon = icon,
-        color = "#00FFFFFF",
+        backgroundColor = "#00FFFFFF",
         contentDescription = descriptionOfIcon,
         modifier = Modifier.size(20.dp)
     )

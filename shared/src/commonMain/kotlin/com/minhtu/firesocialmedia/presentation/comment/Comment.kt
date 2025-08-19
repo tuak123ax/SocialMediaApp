@@ -115,7 +115,7 @@ class Comment {
                         ) {
                             CrossPlatformIcon(
                                 icon = "close",
-                                color = "#FFFFFFFF",
+                                backgroundColor = "#FFFFFFFF",
                                 contentDescription = "Close Icon",
                                 contentScale = ContentScale.Companion.Fit,
                                 modifier = Modifier.Companion
@@ -217,7 +217,7 @@ class Comment {
 
                         CrossPlatformIcon(
                             icon = "send_message",
-                            color = "#FFFFFFFF",
+                            backgroundColor = "#FFFFFFFF",
                             contentDescription = "Send Icon",
                             contentScale = ContentScale.Companion.Fit,
                             modifier = Modifier.Companion
@@ -359,7 +359,7 @@ class Comment {
                         ) {
                             CrossPlatformIcon(
                                 icon = "like",
-                                color = if (isLiked) "#00FFFF" else "#FFFFFF",
+                                backgroundColor = if (isLiked) "#00FFFF" else "#FFFFFF",
                                 contentDescription = TestTag.Companion.TAG_BUTTON_LIKE,
                                 modifier = Modifier.Companion
                                     .size(20.dp)
@@ -382,7 +382,7 @@ class Comment {
                             if (isMainComment) {
                                 CrossPlatformIcon(
                                     icon = "comment",
-                                    color = "#FFFFFF",
+                                    backgroundColor = "#FFFFFF",
                                     contentDescription = TestTag.Companion.TAG_BUTTON_COMMENT,
                                     modifier = Modifier.Companion
                                         .size(20.dp)

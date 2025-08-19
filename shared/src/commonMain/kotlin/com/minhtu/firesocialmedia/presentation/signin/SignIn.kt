@@ -221,7 +221,7 @@ class SignIn{
                         ) {
                             CrossPlatformIcon(
                                 "google",
-                                color = "#FFFFFFFF",
+                                backgroundColor = "#FFFFFFFF",
                                 "Google",
                                 Modifier.Companion
                                     .size(25.dp)

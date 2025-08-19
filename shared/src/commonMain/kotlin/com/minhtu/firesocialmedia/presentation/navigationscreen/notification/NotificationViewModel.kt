@@ -20,10 +20,6 @@ import kotlinx.coroutines.withContext
 class NotificationViewModel (
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : ViewModel(){
-    var listNews: ArrayList<NewsInstance> = ArrayList()
-    fun updateListNews(news : ArrayList<NewsInstance>) {
-        listNews = news
-    }
     var allNeededUsers : MutableSet<UserInstance?> = mutableSetOf()
     val _getNeededUsersStatus = MutableStateFlow(false)
     val getNeededUsersStatus = _getNeededUsersStatus
@@ -73,6 +69,7 @@ class NotificationViewModel (
 
     fun onNotificationClick(
         notification: NotificationInstance,
+        listNews : ArrayList<NewsInstance>,
         platform: PlatformContext,
         onNavigateToPostInformation: (NewsInstance) -> Unit,
         onError: () -> Unit

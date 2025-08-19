@@ -19,12 +19,12 @@ expect fun showToast(message: String)
 expect fun getIconPainter(icon : String): Painter?
 
 @Composable
-expect fun getIconComposable(icon: String, color : String, tint : String?, modifier: Modifier): (@Composable () -> Unit)?
+expect fun getIconComposable(icon: String, bgColor : String, tint : String?, modifier: Modifier): (@Composable () -> Unit)?
 
 @Composable
 fun CrossPlatformIcon(
     icon: String?,
-    color : String,
+    backgroundColor : String,
     contentDescription: String? = null,
     modifier: Modifier,
     tint: Color = Color.Unspecified,
@@ -46,7 +46,7 @@ fun CrossPlatformIcon(
             // iOS (or platforms using composable fallback)
             val iconComposable = getIconComposable(
                 icon,
-                color,
+                backgroundColor,
                 if(tint != Color.Unspecified) tint.toHex() else null,
                 modifier)
             if (iconComposable != null) {

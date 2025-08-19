@@ -30,6 +30,7 @@ import com.minhtu.firesocialmedia.domain.serviceimpl.remoteconfig.FetchResultCal
 import com.minhtu.firesocialmedia.domain.serviceimpl.remoteconfig.RemoteConfigHelper
 import com.minhtu.firesocialmedia.platform.MainApplication
 import com.minhtu.firesocialmedia.platform.TokenStorage.updateTokenInStorage
+import com.minhtu.firesocialmedia.ui.theme.FireSocialMediaCommonTheme
 
 class MainActivity : ComponentActivity() {
     private var downloadReceiver: BroadcastReceiver? = null
@@ -40,7 +41,7 @@ class MainActivity : ComponentActivity() {
         val fromNotification = intent.getBooleanExtra(Constants.FROM_NOTIFICATION, false)
         permissionManager = AndroidPermissionManager(this)
         setContent {
-            MyApplicationTheme{
+            FireSocialMediaCommonTheme{
                 // A surface container using the 'background' color from the theme
                 Surface(
                     modifier = Modifier.fillMaxSize(),
