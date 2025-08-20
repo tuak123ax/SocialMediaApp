@@ -9,9 +9,10 @@ import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import com.minhtu.firesocialmedia.data.model.user.UserInstance
 import com.minhtu.firesocialmedia.di.PlatformContext
+import com.minhtu.firesocialmedia.domain.serviceimpl.imagepicker.ImagePicker
+import com.minhtu.firesocialmedia.presentation.signin.SignInViewModel
 import com.russhwolf.settings.Settings
 import com.seiko.imageloader.ImageLoader
-import io.mockative.Mockable
 import kotlin.math.roundToInt
 
 expect fun showToast(message: String)
@@ -20,12 +21,12 @@ expect fun showToast(message: String)
 expect fun getIconPainter(icon : String): Painter?
 
 @Composable
-expect fun getIconComposable(icon: String, color : String, tint : String?, modifier: Modifier): (@Composable () -> Unit)?
+expect fun getIconComposable(icon: String, bgColor : String, tint : String?, modifier: Modifier): (@Composable () -> Unit)?
 
 @Composable
 fun CrossPlatformIcon(
     icon: String?,
-    color : String,
+    backgroundColor : String,
     contentDescription: String? = null,
     modifier: Modifier,
     tint: Color = Color.Unspecified,
@@ -47,7 +48,7 @@ fun CrossPlatformIcon(
             // iOS (or platforms using composable fallback)
             val iconComposable = getIconComposable(
                 icon,
-                color,
+                backgroundColor,
                 if(tint != Color.Unspecified) tint.toHex() else null,
                 modifier)
             if (iconComposable != null) {
@@ -149,3 +150,24 @@ expect fun WebRTCVideoView(
     remoteTrack: WebRTCVideoTrack?,
     modifier: Modifier
 )
+
+// Platform helpers for common navigation
+@Composable
+expect fun rememberPlatformImagePicker(
+    context: Any?,
+    onImagePicked: (String) -> Unit,
+    onVideoPicked: (String) -> Unit
+): ImagePicker
+
+@Composable
+expect fun setupSignInLauncher(
+    context: Any?,
+    signInViewModel: SignInViewModel,
+    platformContext: PlatformContext
+)
+
+@Composable
+expect fun rememberNavigationHandler(navController: Any): com.minhtu.firesocialmedia.utils.NavigationHandler
+
+@Composable
+expect fun <T : Any> platformViewModel(key: String? = null, factory: () -> T): T

@@ -78,7 +78,7 @@ class ShowImage {
                         Spacer(modifier = Modifier.Companion.width(10.dp))
                         CrossPlatformIcon(
                             icon = "white_close",
-                            color = "#000000",
+                            backgroundColor = "#000000",
                             contentDescription = "Close Icon",
                             contentScale = ContentScale.Companion.Fit,
                             modifier = Modifier.Companion

@@ -94,7 +94,7 @@ class Settings {
                     ) {
                         CrossPlatformIcon(
                             icon = "fire_chat_icon",
-                            color = "#00FFFFFF",
+                            backgroundColor = "#00FFFFFF",
                             contentDescription = "FireChat",
                             modifier = Modifier.Companion
                                 .size(30.dp)

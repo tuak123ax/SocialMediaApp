@@ -2,7 +2,6 @@ package com.minhtu.firesocialmedia.presentation.home
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -21,6 +20,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -28,8 +28,10 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -42,25 +44,23 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.minhtu.firesocialmedia.constants.TestTag
+import com.minhtu.firesocialmedia.data.model.call.OfferAnswer
 import com.minhtu.firesocialmedia.data.model.news.NewsInstance
 import com.minhtu.firesocialmedia.data.model.user.UserInstance
 import com.minhtu.firesocialmedia.di.PlatformContext
 import com.minhtu.firesocialmedia.platform.CrossPlatformIcon
 import com.minhtu.firesocialmedia.platform.generateImageLoader
-import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
+import com.minhtu.firesocialmedia.platform.logMessage
+import com.minhtu.firesocialmedia.platform.toHex
 import com.minhtu.firesocialmedia.presentation.loading.Loading
+import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
+import com.minhtu.firesocialmedia.utils.NavigationHandler
 import com.minhtu.firesocialmedia.utils.UiUtils
 import com.seiko.imageloader.LocalImageLoader
 import com.seiko.imageloader.ui.AutoSizeImage
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
-import com.minhtu.firesocialmedia.data.model.call.OfferAnswer
-import com.minhtu.firesocialmedia.platform.logMessage
-import com.minhtu.firesocialmedia.utils.NavigationHandler
 
 class Home {
     companion object{
@@ -77,8 +77,8 @@ class Home {
                        onNavigateToSignIn: () -> Unit,
                        onNavigateToUserInformation: (user: UserInstance?) -> Unit,
                        onNavigateToCommentScreen: (selectedNew : NewsInstance) -> Unit,
-                       onNavigateToCallingScreen : (sessionId : String, caller : String, callee : String, offer: OfferAnswer, ) -> Unit,
-                       onNavigateToCallingScreenWithUI : () -> Unit,
+                       onNavigateToCallingScreen : suspend (sessionId : String, caller : String, callee : String, offer: OfferAnswer, ) -> Unit,
+                       onNavigateToCallingScreenWithUI : suspend () -> Unit,
                        navHandler : NavigationHandler){
             val isLoading by loadingViewModel.isLoading.collectAsState()
             val commentStatus by homeViewModel.commentStatus.collectAsState()
@@ -94,7 +94,7 @@ class Home {
 
 
             //Observe Live Data as State
-            val usersList by  homeViewModel.allUsers.collectAsState()
+            val usersList by  homeViewModel.allUserFriends.collectAsState()
 
             val numberOfLists by remember { derivedStateOf { homeViewModel.numberOfListNeedToLoad } }
 
@@ -107,8 +107,8 @@ class Home {
             LaunchedEffect(Unit) {
                 loadingViewModel.showLoading()
                 //Load users list and news list.
-                homeViewModel.getAllUsers(platform)
-                homeViewModel.getAllNews(platform)
+                homeViewModel.getCurrentUserAndFriends(platform)
+                homeViewModel.getLatestNews(platform)
                 homeViewModel.getAllNotificationsOfUser(platform)
                 homeViewModel.decreaseNumberOfListNeedToLoad(1)
                 if (numberOfLists == 0) {
@@ -128,9 +128,9 @@ class Home {
                 }
             }
 
-            val getAllUserStatus by homeViewModel.getAllUsersStatus
-            LaunchedEffect(getAllUserStatus) {
-                if(getAllUserStatus) {
+            val getCurrentUserStatus by homeViewModel.getCurrentUserStatus
+            LaunchedEffect(getCurrentUserStatus) {
+                if(getCurrentUserStatus) {
                     logMessage("observePhoneCall", { "start observe phone call" })
                     homeViewModel.observePhoneCall(
                         platform,
@@ -148,7 +148,9 @@ class Home {
                 }
             }
 
-            Box(modifier = Modifier.Companion.fillMaxSize()) {
+            Box(modifier = Modifier.Companion
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)) {
                 Column(
                     verticalArrangement = Arrangement.Top,
                     modifier = modifier.padding(paddingValues)
@@ -157,21 +159,20 @@ class Home {
                     Row(
                         horizontalArrangement = Arrangement.Start, modifier = Modifier.Companion
                             .fillMaxWidth()
-                            .padding(20.dp)
+                            .padding(horizontal = 16.dp, vertical = 12.dp)
                     ) {
                         Text(
                             text = "FireSocialMedia",
-                            color = Color.Companion.Red,
-                            fontSize = 25.sp,
+                            color = MaterialTheme.colorScheme.primary,
+                            style = MaterialTheme.typography.titleLarge,
                             textAlign = TextAlign.Companion.Center,
                         )
                         Spacer(modifier = Modifier.Companion.weight(1f))
                         Box(
                             modifier = Modifier.Companion
-                                .size(35.dp) // Outer box size
+                                .size(40.dp)
                                 .clip(CircleShape)
-                                .background(Color.Companion.White)
-                                .border(1.dp, Color.Companion.Black, CircleShape)
+                                .background(MaterialTheme.colorScheme.primaryContainer)
                                 .clickable {
                                     onNavigateToSearch()
                                 },
@@ -179,12 +180,11 @@ class Home {
                         ) {
                             CrossPlatformIcon(
                                 icon = "search",
-                                color = "#FFFFFFFF",
+                                backgroundColor = MaterialTheme.colorScheme.primaryContainer.toHex(),
                                 contentDescription = "Search Icon",
                                 contentScale = ContentScale.Companion.Fit,
                                 modifier = Modifier.Companion
-                                    .size(25.dp) // Reduce to prevent touching the border
-                                    .padding(2.dp) // Ensures space between image and border
+                                    .size(22.dp)
                                     .testTag(TestTag.Companion.TAG_ICON_BUTTON_SEARCH)
                                     .semantics {
                                         contentDescription =
@@ -198,22 +198,20 @@ class Home {
                         Box(
                             contentAlignment = Alignment.Companion.Center,
                             modifier = Modifier.Companion
-                                .size(35.dp) // Set exact size
+                                .size(40.dp)
                                 .clip(CircleShape)
-                                .background(Color.Companion.White)
-                                .border(1.dp, Color.Companion.Black, CircleShape)
+                                .background(MaterialTheme.colorScheme.errorContainer)
                                 .clickable {
                                     showDialog.value = true
                                 }
                         ) {
                             CrossPlatformIcon(
                                 icon = "logout",
-                                color = "#FFFFFFFF",
+                                backgroundColor = MaterialTheme.colorScheme.errorContainer.toHex(),
                                 contentDescription = "Logout Icon",
                                 contentScale = ContentScale.Companion.Fit,
                                 modifier = Modifier.Companion
-                                    .size(25.dp)
-                                    .padding(2.dp) // Ensures space between image and border
+                                    .size(22.dp)
                                     .testTag(TestTag.Companion.TAG_ICON_BUTTON_LOGOUT)
                                     .semantics {
                                         contentDescription =
@@ -244,7 +242,8 @@ class Home {
                                             contentScale = ContentScale.Companion.Crop,
                                             modifier = Modifier.Companion
                                                 .size(60.dp)
-                                                .padding(top = 10.dp, start = 10.dp)
+                                                .padding(vertical = 5.dp)
+                                                .padding(start = 10.dp)
                                                 .clip(CircleShape)
                                                 .clickable {
                                                     onNavigateToUserInformation(homeViewModel.currentUser)
@@ -260,21 +259,18 @@ class Home {
 
                                 //Create post
                                 OutlinedTextField(
-                                    value = "", onValueChange = {
-                                    }, modifier = Modifier.Companion
+                                    value = "",
+                                    onValueChange = { },
+                                    modifier = Modifier.Companion
                                         .fillMaxWidth()
-                                        .padding(10.dp)
-                                        .clickable {
-                                            onNavigateToUploadNews(null)
-                                        }
+                                        .padding(horizontal = 12.dp, vertical = 10.dp)
+                                        .clickable { onNavigateToUploadNews(null) }
                                         .testTag(TestTag.Companion.TAG_CREATE_POST)
-                                        .semantics {
-                                            contentDescription = TestTag.Companion.TAG_CREATE_POST
-                                        },
-                                    label = { Text(text = "What are you thinking?") },
+                                        .semantics { contentDescription = TestTag.Companion.TAG_CREATE_POST },
+                                    placeholder = { Text(text = "What are you thinking?", color = MaterialTheme.colorScheme.onSurfaceVariant) },
                                     enabled = false,    // Disables the TextField
                                     singleLine = true,
-                                    shape = RoundedCornerShape(30.dp)
+                                    shape = RoundedCornerShape(28.dp)
                                 )
                             }
                             LazyRow(
@@ -285,13 +281,16 @@ class Home {
                                     .testTag(TestTag.Companion.TAG_USERS_ROW)
                                     .semantics {
                                         contentDescription = TestTag.Companion.TAG_USERS_ROW
-                                    }) {
+                                    }
+                            ) {
                                 usersList.forEach { user ->
-                                    item {
-                                        UserCard(
-                                            user = user,
-                                            onNavigateToUserInformation = onNavigateToUserInformation
-                                        )
+                                    if(user != null) {
+                                        item {
+                                            UserCard(
+                                                user = user,
+                                                onNavigateToUserInformation = onNavigateToUserInformation
+                                            )
+                                        }
                                     }
                                 }
                             }
@@ -299,24 +298,38 @@ class Home {
                     }
 
                     val listState = homeViewModel.listState
-                    // LaunchedEffect to track the scroll state
-                    LaunchedEffect(Unit) {
-                        snapshotFlow { listState.firstVisibleItemIndex }
+                    // LaunchedEffect to track the scroll state (hide top bar and show load more)
+                    LaunchedEffect(listState) {
+                        snapshotFlow {
+                            val layoutInfo = listState.layoutInfo
+                            val firstVisible = layoutInfo.visibleItemsInfo.firstOrNull()?.index ?: 0
+                            val lastVisible = layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
+                            val totalItems = layoutInfo.totalItemsCount
+
+                            Triple(firstVisible, lastVisible, totalItems)
+                        }
                             .distinctUntilChanged()
-                            .collectLatest { index ->
-                                isAllUsersVisible = index == 0  // Show only if scrolled to the top
+                            .collectLatest { (firstVisible, lastVisible, totalItems) ->
+                                // Show/hide top bar
+                                isAllUsersVisible = firstVisible == 0
+
+                                // Trigger load more when near bottom
+                                if (
+                                    firstVisible > 0 &&
+                                    lastVisible >= totalItems - 3 &&
+                                    !homeViewModel.isLoadingMore.value &&
+                                    homeViewModel.hasMoreData.value
+                                ) {
+                                    homeViewModel.loadMoreNews(platform)
+                                }
                             }
                     }
+
                     //Newsfeed
-                    val sortedNewsList by remember {
-                        derivedStateOf {
-                            newsList.value.sortedByDescending { it.timePosted }
-                        }
-                    }
-                    UiUtils.Companion.LazyColumnOfNewsWithSlideOutAnimation(
+                    UiUtils.Companion.LazyColumnOfNewsWithSlideOutAnimationAndLoadMore(
                         platform,
                         homeViewModel,
-                        sortedNewsList,
+                        newsList.value.toList(),
                         onNavigateToUploadNews,
                         onNavigateToShowImageScreen,
                         onNavigateToUserInformation
@@ -336,7 +349,8 @@ class Home {
                     .semantics {
                         contentDescription = TestTag.Companion.TAG_ITEM_IN_ROW
                     },
-                colors = CardDefaults.cardColors(containerColor = Color.Companion.White)
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                shape = RoundedCornerShape(16.dp)
             ) {
                 Column(
                     verticalArrangement = Arrangement.Center,

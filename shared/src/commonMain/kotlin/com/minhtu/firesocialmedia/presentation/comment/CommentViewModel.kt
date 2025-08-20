@@ -54,7 +54,9 @@ class CommentViewModel(
 
     private var _createCommentStatus : MutableStateFlow<Boolean?> = MutableStateFlow<Boolean?>(null)
     var createCommentStatus = _createCommentStatus.asStateFlow()
-    fun sendComment(currentUser : UserInstance, selectedNew : NewsInstance, listUsers : ArrayList<UserInstance>, platform: PlatformContext) {
+    fun sendComment(currentUser : UserInstance,
+                    selectedNew : NewsInstance,
+                    platform: PlatformContext) {
         viewModelScope.launch {
             withContext(ioDispatcher) {
                 if(_commentBeReplied.value == null) {
@@ -77,7 +79,7 @@ class CommentViewModel(
                                 updateMessage("")
 
                                 //Save and send notification
-                                saveAndSendNotification(currentUser, selectedNew, listUsers, platform)
+                                saveAndSendNotification(currentUser, selectedNew, platform)
                             } catch(e: Exception) {
                             }
                         }
@@ -97,7 +99,7 @@ class CommentViewModel(
         _createCommentStatus.value = null
     }
 
-    private suspend fun saveAndSendNotification(currentUser : UserInstance, selectedNew : NewsInstance, listUsers : ArrayList<UserInstance>, platform : PlatformContext) {
+    private suspend fun saveAndSendNotification(currentUser : UserInstance, selectedNew : NewsInstance, platform : PlatformContext) {
         val notiContent = "${currentUser.name} commented in your post!"
         val notification = NotificationInstance(getRandomIdForNotification(),
             notiContent,
@@ -107,7 +109,7 @@ class CommentViewModel(
             NotificationType.COMMENT,
             selectedNew.id)
         //Save notification to db
-        val poster = Utils.findUserById(selectedNew.posterId, listUsers)
+        val poster = platform.database.getUser(selectedNew.posterId)
         Utils.saveNotification(notification, poster!!, platform)
         //Send notification to poster
         val tokenList = ArrayList<String>()
@@ -298,5 +300,9 @@ class CommentViewModel(
                 )
             }
         }
+    }
+
+    suspend fun findUserById(userId: String, platform: PlatformContext) : UserInstance?{
+        return platform.database.getUser(userId)
     }
 }

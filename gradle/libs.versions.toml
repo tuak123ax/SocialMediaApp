@@ -8,10 +8,11 @@ androidx-activityCompose = "1.8.0"
 material3 = "1.7.3"
 runtime = "1.7.3"
 ui = "1.7.3"
+lifecycle = "2.8.6"
 
 [libraries]
 androidx-foundation = { module = "androidx.compose.foundation:foundation" }
-androidx-lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-viewmodel-compose" }
+androidx-lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "lifecycle" }
 androidx-navigation-compose = { module = "androidx.navigation:navigation-compose" }
 foundation = { module = "org.jetbrains.compose.foundation:foundation", version.ref = "foundation" }
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }

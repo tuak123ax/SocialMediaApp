@@ -55,7 +55,13 @@ interface DatabaseService {
     )
 
     suspend fun getAllUsers(path: String, callback: Utils.Companion.GetUserCallback)
-    suspend fun getAllNews(path: String, callback: Utils.Companion.GetNewCallback)
+    suspend fun getUser(userId: String) : UserInstance?
+    suspend fun getNew(newId: String) : NewsInstance?
+    suspend fun getLatestNews(number : Int,
+                              lastTimePosted : Double?,
+                              lastKey: String?,
+                              path: String,
+                              callback: Utils.Companion.GetNewCallback)
     suspend fun getAllComments(path: String, newsId: String, callback: Utils.Companion.GetCommentCallback)
     suspend fun getAllNotificationsOfUser(path: String, currentUserUid: String, callback: Utils.Companion.GetNotificationCallback)
     suspend fun saveListToDatabase(
@@ -189,4 +195,6 @@ interface DatabaseService {
         callPath : String,
         videoCallCallBack: (offer : OfferAnswer) -> Unit
     )
+
+    suspend fun searchUserByName(name: String, path: String) : List<UserInstance>?
 }

@@ -20,7 +20,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -42,16 +45,14 @@ import com.minhtu.firesocialmedia.presentation.comment.CommentViewModel
 import com.minhtu.firesocialmedia.presentation.home.HomeViewModel
 import com.minhtu.firesocialmedia.utils.NavigationHandler
 import com.minhtu.firesocialmedia.utils.UiUtils
-import com.minhtu.firesocialmedia.utils.Utils
 import com.seiko.imageloader.LocalImageLoader
 import com.seiko.imageloader.ui.AutoSizeImage
-import kotlin.collections.contains
-import androidx.compose.runtime.getValue
 
 class PostInformation {
     companion object{
         @Composable
-        fun PostInformationScreen(platform : PlatformContext,
+        fun PostInformationScreen(modifier : Modifier,
+                                  platform : PlatformContext,
                                   news: NewsInstance,
                                   onNavigateToShowImageScreen: (image: String) -> Unit,
                                   onNavigateToUserInformation: (user: UserInstance?) -> Unit,
@@ -67,8 +68,14 @@ class PostInformation {
             }
             val likeCountList = homeViewModel.likeCountList.collectAsState()
             val commentCountList = homeViewModel.commentCountList.collectAsState()
+
+            var user by remember { mutableStateOf<UserInstance?>(null) }
+
+            LaunchedEffect(news.posterId) {
+                user = homeViewModel.findUserById(news.posterId, platform)
+            }
             Column(
-                modifier = Modifier.Companion.fillMaxSize().background(Color.Companion.White),
+                modifier = modifier,
                 verticalArrangement = Arrangement.spacedBy(1.dp)
             ) {
                 UiUtils.Companion.BackAndMoreOptionsRow(navController)
@@ -77,8 +84,6 @@ class PostInformation {
                     modifier = Modifier.Companion.background(color = Color.Companion.White)
                         .padding(10.dp).fillMaxWidth()
                         .clickable {
-                            var user =
-                                Utils.Companion.findUserById(news.posterId, homeViewModel.listUsers)
                             if (user == null) {
                                 user = homeViewModel.currentUser
                             }
@@ -176,7 +181,7 @@ class PostInformation {
                             }) {
                         CrossPlatformIcon(
                             icon = "like",
-                            color = if (isLiked) "#00FFFF" else "#FFFFFFFF",
+                            backgroundColor = if (isLiked) "#00FFFF" else "#FFFFFFFF",
                             contentDescription = "Like",
                             modifier = Modifier.Companion
                                 .size(25.dp)
@@ -198,7 +203,7 @@ class PostInformation {
                             }) {
                         CrossPlatformIcon(
                             icon = "comment",
-                            color = "#FFFFFFFF",
+                            backgroundColor = "#FFFFFFFF",
                             contentDescription = "Comment",
                             modifier = Modifier.Companion
                                 .size(25.dp)
@@ -218,7 +223,6 @@ class PostInformation {
                     commentViewModel = commentViewModel,
                     currentUser = homeViewModel.currentUser!!,
                     selectedNew = news,
-                    listUsers = homeViewModel.listUsers,
                     onNavigateToShowImageScreen = onNavigateToShowImageScreen,
                     onNavigateToUserInformation = onNavigateToUserInformation,
                     onNavigateToHomeScreen = onNavigateToHomeScreen

@@ -42,8 +42,8 @@ import com.minhtu.firesocialmedia.platform.VideoPlayer
 import com.minhtu.firesocialmedia.platform.logMessage
 import com.minhtu.firesocialmedia.platform.showToast
 import com.minhtu.firesocialmedia.presentation.home.HomeViewModel
-import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
 import com.minhtu.firesocialmedia.presentation.loading.Loading
+import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
 import com.minhtu.firesocialmedia.utils.UiUtils
 
 class UploadNewsfeed {
@@ -59,7 +59,6 @@ class UploadNewsfeed {
                                  onNavigateToHomeScreen: () -> Unit){
             val isLoading by loadingViewModel.isLoading.collectAsState()
             uploadNewsfeedViewModel.updateCurrentUser(homeViewModel.currentUser!!)
-            uploadNewsfeedViewModel.updateListUsers(homeViewModel.listUsers)
 
             imagePicker.RegisterLauncher({loadingViewModel.hideLoading()})
             val postStatus = uploadNewsfeedViewModel.createPostStatus.collectAsState()

@@ -3,8 +3,8 @@ package com.minhtu.firesocialmedia.utils
 import com.minhtu.firesocialmedia.data.model.news.CommentInstance
 import com.minhtu.firesocialmedia.data.model.news.NewsInstance
 import com.minhtu.firesocialmedia.data.model.notification.NotificationInstance
-import com.minhtu.firesocialmedia.data.model.user.UserInstance
 import com.minhtu.firesocialmedia.data.model.notification.fromMap
+import com.minhtu.firesocialmedia.data.model.user.UserInstance
 
 
 class IosUtils {

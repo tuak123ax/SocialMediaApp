@@ -13,19 +13,17 @@ import com.google.firebase.database.GenericTypeIndicator
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.storage.FirebaseStorage
 import com.minhtu.firesocialmedia.constants.Constants
-import com.minhtu.firesocialmedia.data.model.news.BaseNewsInstance
-import com.minhtu.firesocialmedia.data.model.news.CommentInstance
-import com.minhtu.firesocialmedia.data.model.news.NewsInstance
-import com.minhtu.firesocialmedia.data.model.notification.NotificationInstance
 import com.minhtu.firesocialmedia.data.model.call.AudioCallSession
 import com.minhtu.firesocialmedia.data.model.call.CallStatus
 import com.minhtu.firesocialmedia.data.model.call.IceCandidateData
 import com.minhtu.firesocialmedia.data.model.call.OfferAnswer
+import com.minhtu.firesocialmedia.data.model.news.BaseNewsInstance
+import com.minhtu.firesocialmedia.data.model.news.CommentInstance
+import com.minhtu.firesocialmedia.data.model.news.NewsInstance
+import com.minhtu.firesocialmedia.data.model.notification.NotificationInstance
 import com.minhtu.firesocialmedia.utils.Utils
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class AndroidDatabaseHelper {

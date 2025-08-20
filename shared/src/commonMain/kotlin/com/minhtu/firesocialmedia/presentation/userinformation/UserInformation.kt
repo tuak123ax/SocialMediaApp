@@ -32,9 +32,11 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -55,19 +57,16 @@ import com.minhtu.firesocialmedia.constants.TestTag
 import com.minhtu.firesocialmedia.data.model.news.NewsInstance
 import com.minhtu.firesocialmedia.data.model.user.UserInstance
 import com.minhtu.firesocialmedia.di.PlatformContext
+import com.minhtu.firesocialmedia.domain.serviceimpl.imagepicker.ImagePicker
 import com.minhtu.firesocialmedia.platform.generateImageLoader
 import com.minhtu.firesocialmedia.platform.getImageBytesFromDrawable
+import com.minhtu.firesocialmedia.platform.showToast
 import com.minhtu.firesocialmedia.presentation.home.HomeViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.friend.FriendViewModel
 import com.minhtu.firesocialmedia.utils.NavigationHandler
 import com.minhtu.firesocialmedia.utils.UiUtils
-import com.minhtu.firesocialmedia.utils.Utils
 import com.seiko.imageloader.LocalImageLoader
 import com.seiko.imageloader.ui.AutoSizeImage
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
-import com.minhtu.firesocialmedia.domain.serviceimpl.imagepicker.ImagePicker
-import com.minhtu.firesocialmedia.platform.showToast
 
 class UserInformation {
     companion object{
@@ -326,7 +325,7 @@ class UserInformation {
                             }
                         }
                     }
-                    UiUtils.Companion.LazyColumnOfNewsWithSlideOutAnimation(
+                    UiUtils.Companion.LazyColumnOfNewsWithSlideOutAnimationAndLoadMore(
                         platform,
                         homeViewModel,
                         filterList,
@@ -413,18 +412,6 @@ class UserInformation {
 //                    )
 //                }
             }
-        }
-
-        private fun getAllFriendTokens(homeViewModel: HomeViewModel) : ArrayList<String> {
-            val friendTokens = ArrayList<String>()
-            val friendIds = homeViewModel.currentUser!!.friends
-            for(friendId in friendIds) {
-                val friend = Utils.Companion.findUserById(friendId, homeViewModel.listUsers)
-                if(friend != null) {
-                    friendTokens.add(friend.token)
-                }
-            }
-            return friendTokens
         }
     }
 }

@@ -8,15 +8,21 @@ import cocoapods.FirebaseStorage.FIRStorage
 import cocoapods.FirebaseStorage.FIRStorageMetadata
 import cocoapods.FirebaseStorage.FIRStorageReference
 import com.minhtu.firesocialmedia.constants.Constants
+import com.minhtu.firesocialmedia.data.model.call.AudioCallSession
+import com.minhtu.firesocialmedia.data.model.call.CallStatus
+import com.minhtu.firesocialmedia.data.model.call.IceCandidateData
+import com.minhtu.firesocialmedia.data.model.call.OfferAnswer
 import com.minhtu.firesocialmedia.data.model.news.CommentInstance
 import com.minhtu.firesocialmedia.data.model.news.NewsInstance
 import com.minhtu.firesocialmedia.data.model.notification.NotificationInstance
-import com.minhtu.firesocialmedia.data.model.user.UserInstance
 import com.minhtu.firesocialmedia.data.model.notification.fromMap
+import com.minhtu.firesocialmedia.data.model.signin.SignInState
+import com.minhtu.firesocialmedia.data.model.user.UserInstance
 import com.minhtu.firesocialmedia.data.model.user.toMap
-import com.minhtu.firesocialmedia.platform.logMessage
-import com.minhtu.firesocialmedia.platform.toNSData
 import com.minhtu.firesocialmedia.domain.serviceimpl.crypto.IosCryptoHelper
+import com.minhtu.firesocialmedia.platform.logMessage
+import com.minhtu.firesocialmedia.platform.showToast
+import com.minhtu.firesocialmedia.platform.toNSData
 import com.minhtu.firesocialmedia.utils.IosUtils.Companion.toCommentInstance
 import com.minhtu.firesocialmedia.utils.IosUtils.Companion.toNewsInstance
 import com.minhtu.firesocialmedia.utils.IosUtils.Companion.toUserInstance
@@ -27,12 +33,6 @@ import platform.Foundation.NSDictionary
 import kotlin.coroutines.resumeWithException
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
-import com.minhtu.firesocialmedia.data.model.call.AudioCallSession
-import com.minhtu.firesocialmedia.data.model.call.CallStatus
-import com.minhtu.firesocialmedia.data.model.call.IceCandidateData
-import com.minhtu.firesocialmedia.data.model.call.OfferAnswer
-import com.minhtu.firesocialmedia.data.model.signin.SignInState
-import com.minhtu.firesocialmedia.platform.showToast
 
 class IosDatabaseService() : DatabaseService{
     override suspend fun updateFCMTokenForCurrentUser(currentUser : UserInstance) {
@@ -137,45 +137,126 @@ class IosDatabaseService() : DatabaseService{
         )
     }
 
+    override suspend fun getUser(userId: String): UserInstance? {
+        return suspendCancellableCoroutine { continuation ->
+            val database = FIRDatabase.database()
+            val databaseReference = database.reference()
+                .child(Constants.USER_PATH)
+                .child(userId)
 
-    override suspend fun getAllNews(
+            databaseReference.observeSingleEventOfType(
+                FIRDataEventType.FIRDataEventTypeValue,
+                withBlock = { snapshot ->
+                    if (snapshot != null && snapshot.exists()) {
+                        val value = snapshot.value as? Map<*, *> ?: null
+                        if (value != null) {
+                            try {
+                                val user = value.toUserInstance()
+                                continuation.resume(user) {}
+                            } catch (e: Exception) {
+                                continuation.resume(null) {}
+                            }
+                        } else {
+                            continuation.resume(null) {}
+                        }
+                    } else {
+                        continuation.resume(null) {}
+                    }
+                }
+            ) { error ->
+                continuation.resume(null) {}
+            }
+        }
+    }
+
+    override suspend fun getNew(newId: String): NewsInstance? {
+        return suspendCancellableCoroutine { continuation ->
+            val database = FIRDatabase.database()
+            val databaseReference = database.reference()
+                .child(Constants.NEWS_PATH)
+                .child(newId)
+
+            databaseReference.observeSingleEventOfType(
+                FIRDataEventType.FIRDataEventTypeValue,
+                withBlock = { snapshot ->
+                    if (snapshot != null && snapshot.exists()) {
+                        val rawValue = snapshot.value as? Map<*, *> ?: null
+                        if (rawValue != null) {
+                            try {
+                                // Convert Map<*, *> to Map<String, Any?>
+                                val value = rawValue.entries.associate {
+                                    (it.key as? String) to it.value
+                                }.filterKeys { it != null } as Map<String, Any?>
+                                
+                                val news = value.toNewsInstance()
+                                continuation.resume(news) {}
+                            } catch (e: Exception) {
+                                continuation.resume(null) {}
+                            }
+                        } else {
+                            continuation.resume(null) {}
+                        }
+                    } else {
+                        continuation.resume(null) {}
+                    }
+                }
+            ) { error ->
+                continuation.resume(null) {}
+            }
+        }
+    }
+
+    override suspend fun getLatestNews(
+        number: Int,
+        lastTimePosted: Double?,
+        lastKey: String?,
         path: String,
         callback: Utils.Companion.GetNewCallback
     ) {
-        val result = mutableListOf<NewsInstance>()
-        val databaseReference = FIRDatabase.database().reference().child(path)
+        val query = FIRDatabase.database()
+            .referenceWithPath(path)
+            .queryOrderedByChild("timePosted")
+            .let { base ->
+                if (lastTimePosted != null && lastKey != null) {
+                    base.queryEndingBeforeValue(lastTimePosted, childKey = lastKey)
+                } else base
+            }
+            .queryLimitedToLast(number.toULong())
 
-        databaseReference.observeSingleEventOfType(
+        query.observeSingleEventOfType(
             FIRDataEventType.FIRDataEventTypeValue,
             withBlock = { snapshot ->
-                if (snapshot != null && snapshot.exists()) {
-                    result.clear()
-                    val children = snapshot.children
+                val enumerator = snapshot?.children
+                val newsList = mutableListOf<NewsInstance>()
+                if (enumerator != null) {
                     while (true) {
-                        val child = children.nextObject() as? FIRDataSnapshot ?: break
-                        val rawValue = child.value as? Map<*, *> ?: continue
-
-                        // Cast Map<*, *> to Map<String, Any?>
-                        val value = rawValue.entries.associate {
-                            (it.key as? String) to it.value
-                        }.filterKeys { it != null } as Map<String, Any?>
-
+                        val child = enumerator.nextObject() as? FIRDataSnapshot ?: break
+                        val raw = child.value as? Map<*, *> ?: continue
+                        val value = raw.entries
+                            .associate { (k, v) -> (k as? String) to v }
+                            .filterKeys { it != null } as Map<String, Any?>
                         try {
-                            val news = value.toNewsInstance()
-                            result.add(news)
-                        } catch (e: Exception) {
-                            e.printStackTrace()
+                            newsList.add(value.toNewsInstance())
+                        } catch (_: Exception) {
                         }
                     }
-                    callback.onSuccess(result)
-                } else {
-                    callback.onFailure()
+                }
+
+                if (newsList.isNotEmpty()) {
+                    val sorted = newsList.sortedByDescending { it.timePosted }
+                    val oldest = sorted.last()
+
+                    callback.onSuccess(
+                        sorted,
+                        if (newsList.size < number) null else oldest.timePosted.toDouble(),
+                        oldest.id
+                    )
                 }
             }
-        )
+        ) { _ ->
+            callback.onFailure()
+        }
     }
-
-
 
     override suspend fun getAllComments(
         path: String,
@@ -238,7 +319,6 @@ class IosDatabaseService() : DatabaseService{
             withBlock = { snapshot ->
                 result.clear()
                 if (snapshot != null && snapshot.exists()) {
-                    result.clear()
                     val children = snapshot.children
                     while (true) {
                         val child = children.nextObject() as? FIRDataSnapshot ?: break
@@ -256,7 +336,11 @@ class IosDatabaseService() : DatabaseService{
                     callback.onFailure()
                 }
             }
-        )
+        ) { error ->
+            // Handle error case
+            logMessage("getAllNotificationsOfUser", { "Error: ${error?.localizedDescription}" })
+            callback.onFailure()
+        }
     }
 
 
@@ -482,6 +566,47 @@ class IosDatabaseService() : DatabaseService{
         videoCallCallBack: (OfferAnswer) -> Unit
     ) {
         // iOS implementation will be added later
+    }
+
+    override suspend fun searchUserByName(
+        name: String,
+        path: String
+    ): List<UserInstance>? {
+        return suspendCancellableCoroutine { continuation ->
+            val database = FIRDatabase.database()
+            val databaseReference = database.reference().child(Constants.USER_PATH)
+
+            databaseReference.observeSingleEventOfType(
+                FIRDataEventType.FIRDataEventTypeValue,
+                withBlock = { snapshot ->
+                    if (snapshot != null && snapshot.exists()) {
+                        val users = mutableListOf<UserInstance>()
+                        val children = snapshot.children
+                        
+                        while (true) {
+                            val child = children.nextObject() as? FIRDataSnapshot ?: break
+                            val value = child.value as? Map<*, *> ?: continue
+                            
+                            try {
+                                val user = value.toUserInstance()
+                                if (user.name.contains(name, ignoreCase = true)) {
+                                    users.add(user)
+                                    if (users.size >= 5) break // only return first 5 matches
+                                }
+                            } catch (e: Exception) {
+                                continue
+                            }
+                        }
+                        
+                        continuation.resume(users) {}
+                    } else {
+                        continuation.resume(emptyList<UserInstance>()) {}
+                    }
+                }
+            ) { error ->
+                continuation.resume(null) {}
+            }
+        }
     }
 
     override fun checkUserExists(email: String, callback: (SignInState) -> Unit) {

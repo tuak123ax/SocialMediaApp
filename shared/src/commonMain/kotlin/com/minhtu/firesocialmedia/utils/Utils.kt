@@ -2,18 +2,17 @@ package com.minhtu.firesocialmedia.utils
 
 import androidx.compose.ui.graphics.Color
 import com.minhtu.firesocialmedia.constants.Constants
+import com.minhtu.firesocialmedia.data.model.call.CallStatus
+import com.minhtu.firesocialmedia.data.model.call.CallType
 import com.minhtu.firesocialmedia.data.model.news.CommentInstance
 import com.minhtu.firesocialmedia.data.model.news.NewsInstance
 import com.minhtu.firesocialmedia.data.model.notification.NotificationInstance
 import com.minhtu.firesocialmedia.data.model.user.UserInstance
-import com.minhtu.firesocialmedia.data.model.call.CallStatus
-import com.minhtu.firesocialmedia.data.model.call.CallType
 import com.minhtu.firesocialmedia.di.PlatformContext
 import com.minhtu.firesocialmedia.platform.createCallMessage
 import com.minhtu.firesocialmedia.platform.sendMessageToServer
 import com.minhtu.firesocialmedia.presentation.calling.audiocall.CallingViewModel
 import com.minhtu.firesocialmedia.presentation.comment.CommentViewModel
-import com.minhtu.firesocialmedia.presentation.home.HomeViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -42,16 +41,6 @@ class Utils {
 
                 })
             }
-        }
-
-        fun getAllFCMTokens(homeViewModel: HomeViewModel) : ArrayList<String>{
-            val tokenList = ArrayList<String>()
-            for(user in homeViewModel.listUsers) {
-                if(user.token != homeViewModel.currentUser!!.token) {
-                    tokenList.add(user.token)
-                }
-            }
-            return tokenList
         }
 
         fun hexToColor(hex: String): Color {
@@ -146,7 +135,9 @@ class Utils {
         }
 
         interface GetNewCallback{
-            fun onSuccess(news : List<NewsInstance>)
+            fun onSuccess(news : List<NewsInstance>,
+                          lastTimePosted : Double?,
+                          lastKey : String)
             fun onFailure()
         }
 

@@ -62,9 +62,9 @@ import com.minhtu.firesocialmedia.platform.logMessage
 import com.minhtu.firesocialmedia.platform.showToast
 import com.minhtu.firesocialmedia.utils.UiUtils
 import com.minhtu.firesocialmedia.utils.Utils
+import com.rickclephas.kmp.observableviewmodel.launch
 import com.seiko.imageloader.LocalImageLoader
 import com.seiko.imageloader.ui.AutoSizeImage
-import kotlin.collections.contains
 
 class Comment {
     companion object{
@@ -75,7 +75,6 @@ class Comment {
                           commentViewModel: CommentViewModel,
                           currentUser : UserInstance,
                           selectedNew : NewsInstance,
-                          listUsers : ArrayList<UserInstance>,
                           onNavigateToShowImageScreen: (image: String) -> Unit,
                           onNavigateToUserInformation: (user: UserInstance?) -> Unit,
                           onNavigateToHomeScreen: () -> Unit) {
@@ -116,7 +115,7 @@ class Comment {
                         ) {
                             CrossPlatformIcon(
                                 icon = "close",
-                                color = "#FFFFFFFF",
+                                backgroundColor = "#FFFFFFFF",
                                 contentDescription = "Close Icon",
                                 contentScale = ContentScale.Companion.Fit,
                                 modifier = Modifier.Companion
@@ -157,7 +156,6 @@ class Comment {
                                 true,
                                 onNavigateToShowImageScreen,
                                 onNavigateToUserInformation,
-                                listUsers,
                                 onCopyComment = {
                                     commentViewModel.copyToClipboard(comment.message, platform)
                                 },
@@ -219,7 +217,7 @@ class Comment {
 
                         CrossPlatformIcon(
                             icon = "send_message",
-                            color = "#FFFFFFFF",
+                            backgroundColor = "#FFFFFFFF",
                             contentDescription = "Send Icon",
                             contentScale = ContentScale.Companion.Fit,
                             modifier = Modifier.Companion
@@ -229,7 +227,6 @@ class Comment {
                                     commentViewModel.sendComment(
                                         currentUser,
                                         selectedNew,
-                                        listUsers,
                                         platform
                                     )
                                 }
@@ -252,7 +249,6 @@ class Comment {
                         isMainComment : Boolean,
                         onNavigateToShowImageScreen: (image: String) -> Unit,
                         onNavigateToUserInformation: (user: UserInstance?) -> Unit,
-                        listUsers : ArrayList<UserInstance>,
                         onCopyComment: () -> Unit,
                         onLikeComment: () -> Unit,
                         onReplyComment: () -> Unit,
@@ -296,16 +292,11 @@ class Comment {
                                 horizontalArrangement = Arrangement.Start,
                                 modifier = Modifier.Companion.padding(10.dp).fillMaxWidth()
                                     .clickable {
-                                        var user = Utils.Companion.findUserById(
-                                            comment.posterId,
-                                            listUsers
-                                        )
-                                        if (user == null) {
-                                            user = currentUser
+                                        commentViewModel.viewModelScope.launch {
+                                            var user = commentViewModel.findUserById(comment.posterId, platform)
+                                            onNavigateToUserInformation(user)
                                         }
-                                        onNavigateToUserInformation(user)
                                     }) {
-
                                 CompositionLocalProvider(
                                     LocalImageLoader provides remember { generateImageLoader() },
                                 ) {
@@ -368,7 +359,7 @@ class Comment {
                         ) {
                             CrossPlatformIcon(
                                 icon = "like",
-                                color = if (isLiked) "#00FFFF" else "#FFFFFF",
+                                backgroundColor = if (isLiked) "#00FFFF" else "#FFFFFF",
                                 contentDescription = TestTag.Companion.TAG_BUTTON_LIKE,
                                 modifier = Modifier.Companion
                                     .size(20.dp)
@@ -391,7 +382,7 @@ class Comment {
                             if (isMainComment) {
                                 CrossPlatformIcon(
                                     icon = "comment",
-                                    color = "#FFFFFF",
+                                    backgroundColor = "#FFFFFF",
                                     contentDescription = TestTag.Companion.TAG_BUTTON_COMMENT,
                                     modifier = Modifier.Companion
                                         .size(20.dp)
@@ -466,7 +457,6 @@ class Comment {
                                     false,
                                     onNavigateToShowImageScreen,
                                     onNavigateToUserInformation,
-                                    listUsers,
                                     onCopyComment = { onCopyComment() },
                                     onLikeComment = {
                                         commentViewModel.onLikeComment(

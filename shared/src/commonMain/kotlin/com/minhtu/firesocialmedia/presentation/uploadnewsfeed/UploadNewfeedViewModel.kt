@@ -30,13 +30,9 @@ import kotlinx.coroutines.withContext
 class UploadNewfeedViewModel(
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : ViewModel() {
-    var listUsers: ArrayList<UserInstance> = ArrayList()
     var currentUser : UserInstance? = null
     fun updateCurrentUser(user: UserInstance) {
         currentUser = user
-    }
-    fun updateListUsers(users: ArrayList<UserInstance>) {
-        listUsers = users
     }
     var message by mutableStateOf("")
     fun updateMessage(input : String){
@@ -95,7 +91,7 @@ class UploadNewfeedViewModel(
                         NotificationType.UPLOAD_NEW,
                         newsInstance.id)
                     //Send Notification
-                    val friendTokens = getFriendTokens()
+                    val friendTokens = getFriendTokens(platform)
                     if(friendTokens.isNotEmpty()){
                         if(notification.content.isNotEmpty()) {
                             sendMessageToServer(createMessageForServer(notification.content, friendTokens, currentUser!!, "BASIC"))
@@ -116,7 +112,7 @@ class UploadNewfeedViewModel(
 
                     //Save notification to db
                     for(friend in currentUser!!.friends) {
-                        val friendsOfCurrentUser = Utils.findUserById(friend, listUsers)
+                        val friendsOfCurrentUser = findUserById(friend, platform)
                         Utils.saveNotification(notification, friendsOfCurrentUser!!, platform)
                     }
                 } else {
@@ -133,10 +129,10 @@ class UploadNewfeedViewModel(
         image = ""
     }
 
-    fun getFriendTokens(): ArrayList<String> {
+    suspend fun getFriendTokens(platform: PlatformContext): ArrayList<String> {
         val friendTokens = ArrayList<String>()
         for(friend in currentUser!!.friends) {
-            val user = Utils.findUserById(friend, listUsers)
+            val user = findUserById(friend, platform)
             if(user != null) {
                 friendTokens.add(user.token)
             }
@@ -153,5 +149,9 @@ class UploadNewfeedViewModel(
                 _postError.value = Constants.POST_NEWS_EMPTY_ERROR
             }
         }
+    }
+
+    suspend fun findUserById(userId: String, platform: PlatformContext) : UserInstance? {
+        return platform.database.getUser(userId)
     }
 }

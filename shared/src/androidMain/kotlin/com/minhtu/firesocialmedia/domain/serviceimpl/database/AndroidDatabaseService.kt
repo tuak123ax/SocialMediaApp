@@ -17,11 +17,14 @@ import com.minhtu.firesocialmedia.data.model.call.OfferAnswer
 import com.minhtu.firesocialmedia.data.model.news.CommentInstance
 import com.minhtu.firesocialmedia.data.model.news.NewsInstance
 import com.minhtu.firesocialmedia.data.model.notification.NotificationInstance
-import com.minhtu.firesocialmedia.data.model.user.UserInstance
 import com.minhtu.firesocialmedia.data.model.signin.SignInState
+import com.minhtu.firesocialmedia.data.model.user.UserInstance
 import com.minhtu.firesocialmedia.domain.serviceimpl.crypto.AndroidCryptoHelper
 import com.minhtu.firesocialmedia.utils.Utils
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.withTimeout
+import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
 
 class AndroidDatabaseService(private val context: Context) : DatabaseService{
     override suspend fun updateFCMTokenForCurrentUser(currentUser : UserInstance) {
@@ -151,23 +154,111 @@ class AndroidDatabaseService(private val context: Context) : DatabaseService{
         })
     }
 
-    override suspend fun getAllNews(
+    override suspend fun getUser(userId: String): UserInstance? =
+        withTimeout(5000) {
+            suspendCoroutine { continuation ->
+                val database = FirebaseDatabase.getInstance()
+                val databaseReference = database.getReference()
+                    .child(Constants.USER_PATH)
+                    .child(userId)
+
+                databaseReference.addListenerForSingleValueEvent(object : ValueEventListener {
+                    override fun onDataChange(snapshot: DataSnapshot) {
+                        val user = snapshot.getValue(UserInstance::class.java)
+                        if (user != null) {
+                            continuation.resume(user)
+                        } else {
+                            continuation.resume(null)
+                        }
+                    }
+
+                    override fun onCancelled(error: DatabaseError) {
+                        continuation.resume(null)
+                    }
+                })
+            }
+        }
+
+    override suspend fun getNew(newId: String): NewsInstance? = withTimeout(5000) {
+        suspendCoroutine { continuation ->
+            val database = FirebaseDatabase.getInstance()
+            val databaseReference = database.getReference()
+                .child(Constants.NEWS_PATH)
+                .child(newId)
+
+            databaseReference.addListenerForSingleValueEvent(object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    val new = snapshot.getValue(NewsInstance::class.java)
+                    if (new != null) {
+                        continuation.resume(new)
+                    } else {
+                        continuation.resume(null)
+                    }
+                }
+
+                override fun onCancelled(error: DatabaseError) {
+                    continuation.resume(null)
+                }
+            })
+        }
+    }
+
+    override suspend fun searchUserByName(name: String, path: String) : List<UserInstance>? =
+        withTimeout(5000) {
+            val database = FirebaseDatabase.getInstance()
+            val databaseReference = database.getReference(Constants.USER_PATH)
+
+            suspendCoroutine { continuation ->
+                databaseReference.addListenerForSingleValueEvent(object : ValueEventListener {
+                    override fun onDataChange(snapshot: DataSnapshot) {
+                        val users = snapshot.children
+                            .mapNotNull { it.getValue(UserInstance::class.java) }
+                            .filter { it.name.contains(name, ignoreCase = true) }
+                            .take(5) // only return first 5 matches
+
+                        continuation.resume(users)
+                    }
+
+                    override fun onCancelled(error: DatabaseError) {
+                        continuation.resume(null)
+                    }
+                })
+            }
+        }
+
+    override suspend fun getLatestNews(
+        number: Int,
+        lastTimePosted: Double?,
+        lastKey: String?,
         path: String,
         callback: Utils.Companion.GetNewCallback
     ) {
-        val result = ArrayList<NewsInstance>()
-        val database = FirebaseDatabase.getInstance()
-        val databaseReference: DatabaseReference = database.getReference().child(path)
-        databaseReference.addValueEventListener(object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                result.clear()
-                for (dataSnapshot in snapshot.getChildren()) {
-                    val news: NewsInstance? = dataSnapshot.getValue(NewsInstance::class.java)
-                    if (news != null) {
-                        result.add(news)
-                    }
+        val dbRef = FirebaseDatabase.getInstance()
+            .getReference(path)
+            .orderByChild("timePosted")
+            .let { query ->
+                if (lastTimePosted != null && lastKey != null) {
+                    query.endBefore(lastTimePosted, lastKey)
+                } else {
+                    query
                 }
-                callback.onSuccess(result)
+            }
+            .limitToLast(number)
+
+        dbRef.addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val newsList = snapshot.children.mapNotNull { it.getValue(NewsInstance::class.java) }
+
+                if (newsList.isNotEmpty()) {
+                    // Sort newest → oldest
+                    val sorted = newsList.sortedByDescending { it.timePosted }
+                    val oldest = sorted.last()
+                    callback.onSuccess(
+                        sorted,
+                        if(newsList.size < number) null else oldest.timePosted.toDouble(),
+                        oldest.id // Return both for next pagination
+                    )
+                }
             }
 
             override fun onCancelled(error: DatabaseError) {
@@ -175,6 +266,7 @@ class AndroidDatabaseService(private val context: Context) : DatabaseService{
             }
         })
     }
+
 
     override suspend fun getAllComments(
         path: String,
@@ -504,4 +596,5 @@ class AndroidDatabaseService(private val context: Context) : DatabaseService{
             callPath,
             videoCallCallBack)
     }
+
 }
