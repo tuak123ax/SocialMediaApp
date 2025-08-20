@@ -11,7 +11,7 @@ plugins {
 
     id("org.jetbrains.kotlinx.kover")
     id("io.mockative") version "3.0.1"
-    id("com.google.devtools.ksp") version "1.9.23-1.0.20"
+    id("com.google.devtools.ksp") version "2.1.10-1.0.29"
     id("kotlinx-serialization")
 }
 
@@ -85,6 +85,8 @@ kotlin {
             implementation(compose.runtime)
             implementation(compose.foundation)
             implementation(compose.material3)
+            implementation(compose.animation)
+            implementation("org.jetbrains.androidx.navigation:navigation-compose:2.8.0-alpha12")
             implementation("org.jetbrains.compose.components:components-resources:1.7.3")
             api("com.rickclephas.kmp:kmp-observableviewmodel-core:1.0.0-BETA-10")
             implementation("io.ktor:ktor-client-core:$ktorVersion")
@@ -98,7 +100,7 @@ kotlin {
             implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:1.5.1")
             implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.1")
 
-            implementation("org.jetbrains.compose.material:material-icons-extended:1.5.10")
+            implementation("org.jetbrains.compose.material:material-icons-extended:1.7.3")
             implementation("com.russhwolf:multiplatform-settings:1.3.0")
 
             implementation("org.javassist:javassist:3.29.2-GA")
@@ -112,15 +114,16 @@ kotlin {
             }
         }
         androidMain.dependencies {
-            implementation(libs.compose.ui)
-            implementation(libs.compose.ui.tooling.preview)
-            implementation(libs.compose.material3)
+            implementation(platform("androidx.compose:compose-bom:2025.02.00"))
+            implementation("androidx.compose.ui:ui")
+            implementation("androidx.compose.ui:ui-tooling-preview")
+            implementation("androidx.compose.material3:material3")
             implementation(libs.androidx.activity.compose)
             implementation("androidx.core:core-ktx:1.13.1")
             implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.6")
-            implementation(libs.androidx.lifecycle.viewmodel.compose)
-            implementation("androidx.navigation:navigation-compose:2.7.7")
-            implementation(libs.androidx.foundation)
+            implementation("androidx.lifecycle:lifecycle-process:2.9.0")
+            implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.6")
+            implementation("androidx.compose.foundation:foundation")
 
             //  Firebase BoM
             implementation(platform("com.google.firebase:firebase-bom:33.5.1"))
@@ -133,7 +136,6 @@ kotlin {
             implementation("com.google.firebase:firebase-config")
             implementation("com.google.android.gms:play-services-auth:21.2.0")
 
-            implementation(platform("androidx.compose:compose-bom:2025.02.00"))
             implementation("androidx.compose.material:material-icons-extended")
             implementation("androidx.compose.runtime:runtime-livedata")
             implementation("io.coil-kt.coil3:coil-compose:3.1.0")
@@ -150,9 +152,7 @@ kotlin {
 //    implementation("com.google.dagger:hilt-android:2.51.1") //  Core Hilt
 //    kapt("com.google.dagger:hilt-compiler:2.51.1") // Hilt Annotation Processor
 
-            implementation("androidx.compose.runtime:runtime:1.6.0")
-            implementation("androidx.compose.foundation:foundation:1.6.0")
-            implementation("androidx.compose.material3:material3:1.2.0")
+            // Use BOM-managed Compose versions
 
             implementation("com.squareup.retrofit2:retrofit:2.9.0")
             implementation("com.squareup.retrofit2:converter-gson:2.9.0")

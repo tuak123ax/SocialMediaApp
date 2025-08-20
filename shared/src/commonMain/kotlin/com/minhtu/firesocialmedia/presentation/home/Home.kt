@@ -281,7 +281,8 @@ class Home {
                                     .testTag(TestTag.Companion.TAG_USERS_ROW)
                                     .semantics {
                                         contentDescription = TestTag.Companion.TAG_USERS_ROW
-                                    }) {
+                                    }
+                            ) {
                                 usersList.forEach { user ->
                                     if(user != null) {
                                         item {

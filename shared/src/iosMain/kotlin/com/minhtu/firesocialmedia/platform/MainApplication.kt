@@ -1,11 +1,9 @@
 package com.minhtu.firesocialmedia.platform
 
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.window.ComposeUIViewController
 import com.minhtu.firesocialmedia.di.IosPlatformContext
 import com.minhtu.firesocialmedia.di.PlatformContext
@@ -28,15 +26,6 @@ actual object MainApplication {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .then(
-                        if (controller != null) {
-                            Modifier.pointerInput(Unit) {
-                                detectTapGestures(onTap = {
-                                    controller.view.endEditing(true)
-                                })
-                            }
-                        } else Modifier
-                    )
             ) {
                 SetUpNavigation(context, platformContext)
                 ToastHost()

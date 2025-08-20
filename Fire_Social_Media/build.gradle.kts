@@ -66,15 +66,16 @@ android {
 
 dependencies {
     implementation(projects.shared)
-    implementation(libs.compose.ui)
-    implementation(libs.compose.ui.tooling.preview)
-    implementation(libs.compose.material3)
+    implementation(platform("androidx.compose:compose-bom:2025.02.00"))
+    implementation("androidx.compose.ui:ui")
+    implementation("androidx.compose.ui:ui-tooling-preview")
+    implementation("androidx.compose.material3:material3")
     implementation(libs.androidx.activity.compose)
-    debugImplementation(libs.compose.ui.tooling)
+    debugImplementation("androidx.compose.ui:ui-tooling")
     implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.6")
     implementation(libs.androidx.lifecycle.viewmodel.compose)
-    implementation("androidx.navigation:navigation-compose:2.7.7")// Foundation library (for LazyRow, LazyColumn, etc.)
+    implementation("androidx.navigation:navigation-compose:2.7.7") // Foundation library (for LazyRow, LazyColumn, etc.)
     implementation (libs.androidx.foundation)
     // Import the Firebase BoM
     implementation(platform("com.google.firebase:firebase-bom:33.5.1"))
@@ -91,6 +92,11 @@ dependencies {
 
     implementation("androidx.compose.material:material-icons-extended")
     implementation("androidx.compose.runtime:runtime-livedata")
+
+    // Force consistent Lifecycle version across all configurations to avoid corrupt resolution
+    implementation("androidx.lifecycle:lifecycle-process:2.8.6")
+    androidTestImplementation("androidx.lifecycle:lifecycle-process:2.8.6")
+    // Not a valid configuration, ensure androidTest uses the pinned version
     implementation("io.coil-kt:coil-compose:2.7.0")
 
     //Kotlin coroutines

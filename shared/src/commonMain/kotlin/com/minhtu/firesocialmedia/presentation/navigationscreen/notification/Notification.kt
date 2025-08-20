@@ -132,7 +132,8 @@ class Notification {
                         .testTag(TestTag.Companion.TAG_NOTIFICATION_LIST)
                         .semantics {
                             contentDescription = TestTag.Companion.TAG_NOTIFICATION_LIST
-                        }) {
+                        }
+                ) {
                     if(getNeededUsersStatus && homeViewModel.listNotificationOfCurrentUser.isNotEmpty()) {
                         items(notificationList, key = { it.id }) { notification ->
                             //State to track visibility of a notification

@@ -411,7 +411,8 @@ class UiUtils {
 
         @Composable
         fun BottomNavigationBar(
-            navHandler: NavigationHandler,
+            currentRoute: String?,
+            onNavigate: (String) -> Unit,
             homeViewModel: HomeViewModel,
             onNavigateToUploadNews: () -> Unit,
             modifier: Modifier,
@@ -427,7 +428,7 @@ class UiUtils {
             if (useCustomBar) {
                 // Lightweight custom bar (fixed height) to match Android visual size
                 Box(modifier = modifier) {
-                    val currentRoute = navHandler.getCurrentRoute()
+                    val currentRoute = currentRoute
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -455,7 +456,7 @@ class UiUtils {
                                     .clip(CircleShape)
                                     .testTag(testTag)
                                     .semantics { contentDescription = testTag }
-                                    .clickable { navHandler.navigateTo(screen.route) },
+                                    .clickable { onNavigate(screen.route) },
                                 contentAlignment = Alignment.Center
                             ) {
                                 if (showBadge) {
@@ -510,7 +511,7 @@ class UiUtils {
                     containerColor = Color.White,
                     windowInsets = barInsets
                 ) {
-                    val currentRoute = navHandler.getCurrentRoute()
+                    val currentRoute = currentRoute
                     items.forEach { screen ->
                         val notificationCount = homeViewModel.listNotificationOfCurrentUser.size
 
@@ -538,9 +539,7 @@ class UiUtils {
                                     Icon(screen.icon, contentDescription = screen.title) }
                                 },
                             selected = currentRoute == screen.route,
-                            onClick = {
-                                navHandler.navigateTo(screen.route)
-                            },
+                            onClick = { onNavigate(screen.route) },
                             modifier = Modifier
                                 .testTag(testTag)
                                 .semantics {
@@ -667,7 +666,8 @@ class UiUtils {
                             .testTag(TestTag.TAG_PEOPLE_COLUMN)
                             .semantics {
                                 contentDescription = TestTag.TAG_PEOPLE_COLUMN
-                            }) {
+                            }
+                        ) {
                             items(searchList){user ->
                                 UserRow(user, onNavigateToUserInformation)
                             }

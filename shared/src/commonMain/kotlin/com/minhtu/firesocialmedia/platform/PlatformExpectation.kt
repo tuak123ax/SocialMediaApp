@@ -9,6 +9,8 @@ import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import com.minhtu.firesocialmedia.data.model.user.UserInstance
 import com.minhtu.firesocialmedia.di.PlatformContext
+import com.minhtu.firesocialmedia.domain.serviceimpl.imagepicker.ImagePicker
+import com.minhtu.firesocialmedia.presentation.signin.SignInViewModel
 import com.russhwolf.settings.Settings
 import com.seiko.imageloader.ImageLoader
 import kotlin.math.roundToInt
@@ -148,3 +150,24 @@ expect fun WebRTCVideoView(
     remoteTrack: WebRTCVideoTrack?,
     modifier: Modifier
 )
+
+// Platform helpers for common navigation
+@Composable
+expect fun rememberPlatformImagePicker(
+    context: Any?,
+    onImagePicked: (String) -> Unit,
+    onVideoPicked: (String) -> Unit
+): ImagePicker
+
+@Composable
+expect fun setupSignInLauncher(
+    context: Any?,
+    signInViewModel: SignInViewModel,
+    platformContext: PlatformContext
+)
+
+@Composable
+expect fun rememberNavigationHandler(navController: Any): com.minhtu.firesocialmedia.utils.NavigationHandler
+
+@Composable
+expect fun <T : Any> platformViewModel(key: String? = null, factory: () -> T): T

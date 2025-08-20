@@ -243,10 +243,6 @@ class IosDatabaseService() : DatabaseService{
                 }
 
                 if (newsList.isNotEmpty()) {
-                    newsList.forEach { new ->
-                        logMessage("newsList") { "${new.id} message: ${new.message}" }
-                    }
-
                     val sorted = newsList.sortedByDescending { it.timePosted }
                     val oldest = sorted.last()
 

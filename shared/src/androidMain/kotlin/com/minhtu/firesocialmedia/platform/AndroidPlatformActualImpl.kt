@@ -22,6 +22,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.IntentSenderRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.edit
 import androidx.media3.common.MediaItem
 import androidx.media3.exoplayer.ExoPlayer
@@ -31,10 +34,14 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import com.minhtu.firesocialmedia.R
 import com.minhtu.firesocialmedia.constants.Constants
 import com.minhtu.firesocialmedia.data.model.user.UserInstance
+import com.minhtu.firesocialmedia.di.PlatformContext
+import com.minhtu.firesocialmedia.domain.serviceimpl.imagepicker.AndroidImagePicker
 import com.minhtu.firesocialmedia.domain.serviceimpl.call.WebRTCManager
 import com.minhtu.firesocialmedia.domain.serviceimpl.crypto.AndroidCryptoHelper
 import com.minhtu.firesocialmedia.domain.serviceimpl.notification.Client
 import com.minhtu.firesocialmedia.domain.serviceimpl.notification.NotificationApiService
+import com.minhtu.firesocialmedia.domain.serviceimpl.signinlauncher.SignInLauncher
+import com.minhtu.firesocialmedia.presentation.signin.SignInViewModel
 import com.minhtu.firesocialmedia.utils.NavigationHandler
 import com.russhwolf.settings.BuildConfig
 import com.russhwolf.settings.Settings
@@ -58,6 +65,8 @@ import java.io.ByteArrayOutputStream
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.UUID
+import com.google.android.gms.auth.api.identity.BeginSignInRequest
+import com.google.android.gms.auth.api.identity.Identity
 import androidx.activity.compose.BackHandler as AndroidBackHandler
 
 private lateinit var appContext: Context
@@ -311,6 +320,7 @@ actual fun VideoPlayer(uri: String, modifier: Modifier) {
     )
 }
 
+
 actual class WebRTCVideoTrack(val track: VideoTrack?)
 
 @Composable
@@ -415,5 +425,86 @@ fun RemoteVideoView(
     }
 
     AndroidView(factory = { renderer }, modifier = modifier)
+}
+
+@Composable
+actual fun rememberNavigationHandler(navController: Any): NavigationHandler {
+    val controller = navController as NavController
+    val handler = remember(controller) { AndroidNavigationHandler(controller) }
+    // Keep handler's current route in sync with NavController
+    handler.ObserveCurrentRoute()
+    return handler
+}
+
+@Composable
+actual fun <T : Any> platformViewModel(key: String?, factory: () -> T): T {
+    // For KMP ViewModels (not AndroidX ViewModel), just remember per key/type
+    return remember(key) { factory() }
+}
+
+
+@Composable
+actual fun rememberPlatformImagePicker(
+    context: Any?,
+    onImagePicked: (String) -> Unit,
+    onVideoPicked: (String) -> Unit
+): com.minhtu.firesocialmedia.domain.serviceimpl.imagepicker.ImagePicker {
+    val ctx = when (context) {
+        is Activity -> context
+        is Context -> context
+        else -> LocalContext.current
+    }
+    return remember(ctx) { AndroidImagePicker(ctx, onImagePicked, onVideoPicked) }
+}
+
+@Composable
+actual fun setupSignInLauncher(
+    context: Any?,
+    signInViewModel: SignInViewModel,
+    platformContext: PlatformContext
+) {
+    val activity = when (context) {
+        is Activity -> context
+        is Context -> context
+        else -> LocalContext.current
+    }
+    val signInGoogleResultLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartIntentSenderForResult(),
+        onResult = { result ->
+            try {
+                val task = Identity.getSignInClient(activity).getSignInCredentialFromIntent(result.data)
+                signInViewModel.handleSignInResult(task, platformContext)
+            } catch (e: Exception) {
+                logMessage("SignIn") { "Exception: ${e.message}" }
+                signInViewModel.updateSignInStatus(com.minhtu.firesocialmedia.data.model.signin.SignInState(false, Constants.LOGIN_ERROR))
+            }
+        }
+    )
+    LaunchedEffect(Unit) {
+        signInViewModel.setSignInLauncher(object : SignInLauncher {
+            override fun launchGoogleSignIn() {
+                val signInRequest = BeginSignInRequest.builder()
+                    .setGoogleIdTokenRequestOptions(
+                        BeginSignInRequest.GoogleIdTokenRequestOptions.builder()
+                            .setSupported(true)
+                            .setServerClientId("744458948813-qktjfopd2cr9b1a87pbr3981ujllb3mt.apps.googleusercontent.com")
+                            .setFilterByAuthorizedAccounts(false)
+                            .build()
+                    )
+                    .build()
+                val googleSignInClient = Identity.getSignInClient(activity)
+                googleSignInClient.beginSignIn(signInRequest).addOnSuccessListener { result ->
+                    try {
+                        val intentSenderRequest = IntentSenderRequest.Builder(result.pendingIntent).build()
+                        signInGoogleResultLauncher.launch(intentSenderRequest)
+                    } catch (e: android.content.IntentSender.SendIntentException) {
+                        logMessage("OneTapSignIn") { "Error launching intent: ${e.localizedMessage}" }
+                    }
+                }.addOnFailureListener { exception ->
+                    logMessage("OneTapSignIn") { "Sign-in failed: ${exception.localizedMessage}" }
+                }
+            }
+        })
+    }
 }
 

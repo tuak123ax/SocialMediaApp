@@ -28,8 +28,12 @@ import com.minhtu.firesocialmedia.constants.Constants
 import com.minhtu.firesocialmedia.data.model.user.UserInstance
 import com.minhtu.firesocialmedia.domain.serviceimpl.crypto.IosCryptoHelper
 import com.minhtu.firesocialmedia.domain.serviceimpl.imagepicker.ImagePicker
-import com.minhtu.firesocialmedia.domain.serviceimpl.notification.KtorProvider
 import com.minhtu.firesocialmedia.utils.NavigationHandler
+import com.minhtu.firesocialmedia.domain.serviceimpl.notification.KtorProvider
+// removed duplicate import
+import com.minhtu.firesocialmedia.presentation.signin.SignInViewModel
+import com.minhtu.firesocialmedia.di.PlatformContext
+// removed duplicate import
 import com.russhwolf.settings.ExperimentalSettingsImplementation
 import com.russhwolf.settings.KeychainSettings
 import com.russhwolf.settings.Settings
@@ -69,6 +73,7 @@ import kotlinx.serialization.json.putJsonArray
 import kotlinx.serialization.json.putJsonObject
 import okio.Path.Companion.toPath
 import org.jetbrains.skia.Image
+import androidx.navigation.NavHostController
 import platform.AVFoundation.AVPlayer
 import platform.AVFoundation.AVPlayerItem
 import platform.AVFoundation.AVPlayerLayer
@@ -165,6 +170,7 @@ fun ToastHost() {
 actual fun showToast(message: String) {
     ToastController.show(message)
 }
+
 
 @Composable
 actual fun getIconPainter(icon: String): Painter? {
@@ -760,5 +766,47 @@ actual fun WebRTCVideoView(
     Box(modifier = modifier) {
         Text("WebRTC Video View - iOS implementation coming soon")
     }
+}
+
+@Composable
+actual fun rememberNavigationHandler(navController: Any): NavigationHandler {
+    val controller = navController as NavHostController
+    return remember(controller) {
+        object : NavigationHandler {
+            override fun navigateTo(route: String) {
+                controller.navigate(route)
+            }
+            override fun navigateBack() {
+                controller.popBackStack()
+            }
+            override fun getCurrentRoute(): String? {
+                return controller.currentBackStackEntry?.destination?.route
+            }
+        }
+    }
+}
+
+@Composable
+actual fun <T : Any> platformViewModel(key: String?, factory: () -> T): T {
+    // iOS: just remember an instance; there’s no default ViewModelStore
+    return remember(key) { factory() }
+}
+
+@Composable
+actual fun rememberPlatformImagePicker(
+    context: Any?,
+    onImagePicked: (String) -> Unit,
+    onVideoPicked: (String) -> Unit
+): ImagePicker {
+    return remember { IosImagePicker(onImagePicked, onVideoPicked).imagePicker }
+}
+
+@Composable
+actual fun setupSignInLauncher(
+    context: Any?,
+    signInViewModel: SignInViewModel,
+    platformContext: PlatformContext
+) {
+    // No-op on iOS for Google Sign-In in this project setup
 }
 
