@@ -51,7 +51,8 @@ import com.seiko.imageloader.ui.AutoSizeImage
 class PostInformation {
     companion object{
         @Composable
-        fun PostInformationScreen(platform : PlatformContext,
+        fun PostInformationScreen(modifier : Modifier,
+                                  platform : PlatformContext,
                                   news: NewsInstance,
                                   onNavigateToShowImageScreen: (image: String) -> Unit,
                                   onNavigateToUserInformation: (user: UserInstance?) -> Unit,
@@ -74,7 +75,7 @@ class PostInformation {
                 user = homeViewModel.findUserById(news.posterId, platform)
             }
             Column(
-                modifier = Modifier.Companion.fillMaxSize().background(Color.Companion.White),
+                modifier = modifier,
                 verticalArrangement = Arrangement.spacedBy(1.dp)
             ) {
                 UiUtils.Companion.BackAndMoreOptionsRow(navController)

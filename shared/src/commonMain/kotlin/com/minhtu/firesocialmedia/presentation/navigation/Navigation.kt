@@ -9,7 +9,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.minhtu.firesocialmedia.platform.platformViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -19,6 +18,7 @@ import com.minhtu.firesocialmedia.data.model.call.SharedCallData
 import com.minhtu.firesocialmedia.data.model.news.NewsInstance
 import com.minhtu.firesocialmedia.data.model.user.UserInstance
 import com.minhtu.firesocialmedia.di.PlatformContext
+import com.minhtu.firesocialmedia.platform.platformViewModel
 import com.minhtu.firesocialmedia.platform.rememberPlatformImagePicker
 import com.minhtu.firesocialmedia.platform.setupSignInLauncher
 import com.minhtu.firesocialmedia.presentation.calling.audiocall.Calling
@@ -95,6 +95,7 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
     val listScreenNeedBottomBar = listOf(Screen.Home.route, Screen.Friend.route, Screen.Notification.route, Screen.Settings.route)
 
     Scaffold(
+        containerColor = Color.White,
         bottomBar = {
             val currentDestination = navController.currentBackStackEntryAsState().value?.destination?.route
             if(currentDestination in listScreenNeedBottomBar) {
@@ -114,7 +115,12 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
         }
     ) { paddingValues ->
         NavHost(navController = navController, startDestination = startDestination){
-            composable(route = SignIn.getScreenName()){
+            composable(
+                route = SignIn.getScreenName(),
+                enterTransition = DefaultNavAnimations.enter,
+                popEnterTransition = DefaultNavAnimations.popEnter,
+                exitTransition = DefaultNavAnimations.exit,
+                popExitTransition = DefaultNavAnimations.popExit){
                 SignIn.SignInScreen(
                     platformContext,
                     signInViewModel,
@@ -128,7 +134,12 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                     onNavigateToForgotPasswordScreen = { navController.navigate(route = ForgotPassword.getScreenName()) }
                 )
             }
-            composable(route = SignUp.getScreenName()){
+            composable(
+                route = SignUp.getScreenName(),
+                enterTransition = DefaultNavAnimations.enter,
+                popEnterTransition = DefaultNavAnimations.popEnter,
+                exitTransition = DefaultNavAnimations.exit,
+                popExitTransition = DefaultNavAnimations.popExit){
                 SignUp.SignUpScreen(
                     platformContext,
                     signUpViewModel,
@@ -140,7 +151,12 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                     onNavigateToInformationScreen = { navController.navigate(route = Information.getScreenName()) }
                 )
             }
-            composable(route = Information.getScreenName()){
+            composable(
+                route = Information.getScreenName(),
+                enterTransition = DefaultNavAnimations.enter,
+                popEnterTransition = DefaultNavAnimations.popEnter,
+                exitTransition = DefaultNavAnimations.exit,
+                popExitTransition = DefaultNavAnimations.popExit){
                 val picker = rememberPlatformImagePicker(
                     context = context,
                     onImagePicked = { uri -> informationViewModel.updateAvatar(uri) },
@@ -158,7 +174,12 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                     onNavigateToHomeScreen = { navController.navigate(route = Home.getScreenName()) }
                 )
             }
-            composable(route = Home.getScreenName()){
+            composable(
+                route = Home.getScreenName(),
+                enterTransition = DefaultNavAnimations.enter,
+                popEnterTransition = DefaultNavAnimations.popEnter,
+                exitTransition = DefaultNavAnimations.exit,
+                popExitTransition = DefaultNavAnimations.popExit){
                 Home.HomeScreen(
                     modifier = Modifier
                         .fillMaxSize()
@@ -202,7 +223,12 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                     navigationHandler
                 )
             }
-            composable(route = UploadNewsfeed.getScreenName()){
+            composable(
+                route = UploadNewsfeed.getScreenName(),
+                enterTransition = DefaultNavAnimations.enter,
+                popEnterTransition = DefaultNavAnimations.popEnter,
+                exitTransition = DefaultNavAnimations.exit,
+                popExitTransition = DefaultNavAnimations.popExit){
                 val picker = rememberPlatformImagePicker(
                     context = context,
                     onImagePicked = { uri -> uploadNewsfeedViewModel.updateImage(uri) },
@@ -221,7 +247,12 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                     onNavigateToHomeScreen = { navController.navigate(route = Home.getScreenName()) }
                 )
             }
-            composable(route = ShowImage.getScreenName()) {
+            composable(
+                route = ShowImage.getScreenName(),
+                enterTransition = DefaultNavAnimations.enter,
+                popEnterTransition = DefaultNavAnimations.popEnter,
+                exitTransition = DefaultNavAnimations.exit,
+                popExitTransition = DefaultNavAnimations.popExit) {
                 ShowImage.ShowImageScreen(
                     platformContext,
                     selectedImage,
@@ -232,7 +263,12 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                     onNavigateToHomeScreen = { navController.navigate(route = Home.getScreenName()) }
                 )
             }
-            composable(route = Search.getScreenName()) {
+            composable(
+                route = Search.getScreenName(),
+                enterTransition = DefaultNavAnimations.enter,
+                popEnterTransition = DefaultNavAnimations.popEnter,
+                exitTransition = DefaultNavAnimations.exit,
+                popExitTransition = DefaultNavAnimations.popExit) {
                 Search.SearchScreen(
                     modifier = Modifier
                         .fillMaxSize()
@@ -258,7 +294,12 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                     }
                 )
             }
-            composable(route = UserInformation.getScreenName()){
+            composable(
+                route = UserInformation.getScreenName(),
+                enterTransition = DefaultNavAnimations.enter,
+                popEnterTransition = DefaultNavAnimations.popEnter,
+                exitTransition = DefaultNavAnimations.exit,
+                popExitTransition = DefaultNavAnimations.popExit){
                 val picker = rememberPlatformImagePicker(
                     context = context,
                     onImagePicked = { uri -> userInformationViewModel.updateCover(uri) },
@@ -298,7 +339,12 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                     }
                 )
             }
-            composable(route = Comment.getScreenName()) {
+            composable(
+                route = Comment.getScreenName(),
+                enterTransition = DefaultNavAnimations.enter,
+                popEnterTransition = DefaultNavAnimations.popEnter,
+                exitTransition = DefaultNavAnimations.exit,
+                popExitTransition = DefaultNavAnimations.popExit) {
                 Comment.CommentScreen(
                     modifier = Modifier
                         .fillMaxSize()
@@ -320,7 +366,12 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                     navController.navigate(route = Home.getScreenName())
                 }
             }
-            composable(route = ForgotPassword.getScreenName()) {
+            composable(
+                route = ForgotPassword.getScreenName(),
+                enterTransition = DefaultNavAnimations.enter,
+                popEnterTransition = DefaultNavAnimations.popEnter,
+                exitTransition = DefaultNavAnimations.exit,
+                popExitTransition = DefaultNavAnimations.popExit) {
                 ForgotPassword.ForgotPasswordScreen(
                     platformContext,
                     forgotPasswordViewModel,
@@ -331,7 +382,12 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                     onNavigateToSignInScreen = { navController.navigate(route = SignIn.getScreenName()) }
                 )
             }
-            composable(route = Screen.Friend.route){
+            composable(
+                route = Screen.Friend.route,
+                enterTransition = DefaultNavAnimations.enter,
+                popEnterTransition = DefaultNavAnimations.popEnter,
+                exitTransition = DefaultNavAnimations.exit,
+                popExitTransition = DefaultNavAnimations.popExit){
                 Friend.FriendScreen(
                     platformContext,
                     modifier = Modifier
@@ -351,7 +407,12 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                     }
                 )
             }
-            composable(route = Screen.Notification.route){
+            composable(
+                route = Screen.Notification.route,
+                enterTransition = DefaultNavAnimations.enter,
+                popEnterTransition = DefaultNavAnimations.popEnter,
+                exitTransition = DefaultNavAnimations.exit,
+                popExitTransition = DefaultNavAnimations.popExit){
                 Notification.NotificationScreen(
                     modifier = Modifier
                         .fillMaxSize()
@@ -372,7 +433,12 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                     }
                 )
             }
-            composable(route = Screen.Settings.route){
+            composable(
+                route = Screen.Settings.route,
+                enterTransition = DefaultNavAnimations.enter,
+                popEnterTransition = DefaultNavAnimations.popEnter,
+                exitTransition = DefaultNavAnimations.exit,
+                popExitTransition = DefaultNavAnimations.popExit){
                 Settings.SettingsScreen(
                     modifier = Modifier
                         .fillMaxSize()
@@ -385,8 +451,16 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                     }
                 )
             }
-            composable(route = PostInformation.getScreenName()) {
+            composable(
+                route = PostInformation.getScreenName(),
+                enterTransition = DefaultNavAnimations.enter,
+                popEnterTransition = DefaultNavAnimations.popEnter,
+                exitTransition = DefaultNavAnimations.exit,
+                popExitTransition = DefaultNavAnimations.popExit) {
                 PostInformation.PostInformationScreen(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.White),
                     platformContext,
                     relatedNew!!,
                     onNavigateToShowImageScreen = { image ->
@@ -403,7 +477,12 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                     navigationHandler
                 )
             }
-            composable(route = Calling.getScreenName()) {
+            composable(
+                route = Calling.getScreenName(),
+                enterTransition = DefaultNavAnimations.enter,
+                popEnterTransition = DefaultNavAnimations.popEnter,
+                exitTransition = DefaultNavAnimations.exit,
+                popExitTransition = DefaultNavAnimations.popExit) {
                 homeViewModel.updateIsInCall(true)
                 Calling.CallingScreen(
                     platformContext,
@@ -426,7 +505,12 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                         .background(Color.White)
                 )
             }
-            composable(route = VideoCall.getScreenName()) {
+            composable(
+                route = VideoCall.getScreenName(),
+                enterTransition = DefaultNavAnimations.enter,
+                popEnterTransition = DefaultNavAnimations.popEnter,
+                exitTransition = DefaultNavAnimations.exit,
+                popExitTransition = DefaultNavAnimations.popExit) {
                 VideoCall.VideoCallScreen(
                     sessionId,
                     caller,

@@ -24,16 +24,15 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.UIKitView
+import androidx.navigation.NavHostController
 import com.minhtu.firesocialmedia.constants.Constants
 import com.minhtu.firesocialmedia.data.model.user.UserInstance
+import com.minhtu.firesocialmedia.di.PlatformContext
 import com.minhtu.firesocialmedia.domain.serviceimpl.crypto.IosCryptoHelper
 import com.minhtu.firesocialmedia.domain.serviceimpl.imagepicker.ImagePicker
-import com.minhtu.firesocialmedia.utils.NavigationHandler
 import com.minhtu.firesocialmedia.domain.serviceimpl.notification.KtorProvider
-// removed duplicate import
 import com.minhtu.firesocialmedia.presentation.signin.SignInViewModel
-import com.minhtu.firesocialmedia.di.PlatformContext
-// removed duplicate import
+import com.minhtu.firesocialmedia.utils.NavigationHandler
 import com.russhwolf.settings.ExperimentalSettingsImplementation
 import com.russhwolf.settings.KeychainSettings
 import com.russhwolf.settings.Settings
@@ -43,22 +42,19 @@ import com.seiko.imageloader.intercept.bitmapMemoryCacheConfig
 import com.seiko.imageloader.intercept.imageMemoryCacheConfig
 import com.seiko.imageloader.intercept.painterMemoryCacheConfig
 import io.ktor.client.request.post
-import io.ktor.client.request.setBody
 import io.ktor.client.request.request
+import io.ktor.client.request.setBody
 import io.ktor.client.statement.readBytes
 import io.ktor.http.ContentType
 import io.ktor.http.HttpMethod
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import kotlinx.cinterop.BetaInteropApi
-import kotlinx.cinterop.ByteVar
 import kotlinx.cinterop.ObjCAction
 import kotlinx.cinterop.addressOf
-import kotlinx.cinterop.get
 import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.readValue
 import kotlinx.cinterop.refTo
-import kotlinx.cinterop.reinterpret
 import kotlinx.cinterop.useContents
 import kotlinx.cinterop.usePinned
 import kotlinx.coroutines.CoroutineScope
@@ -73,7 +69,6 @@ import kotlinx.serialization.json.putJsonArray
 import kotlinx.serialization.json.putJsonObject
 import okio.Path.Companion.toPath
 import org.jetbrains.skia.Image
-import androidx.navigation.NavHostController
 import platform.AVFoundation.AVPlayer
 import platform.AVFoundation.AVPlayerItem
 import platform.AVFoundation.AVPlayerLayer
@@ -88,7 +83,6 @@ import platform.Foundation.NSData
 import platform.Foundation.NSDate
 import platform.Foundation.NSDateFormatter
 import platform.Foundation.NSLog
-import platform.Foundation.NSRange
 import platform.Foundation.NSSearchPathForDirectoriesInDomains
 import platform.Foundation.NSSelectorFromString
 import platform.Foundation.NSTimer

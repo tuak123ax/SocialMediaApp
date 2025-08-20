@@ -1,7 +1,7 @@
 package com.minhtu.firesocialmedia.platform
 
-import com.minhtu.firesocialmedia.di.PlatformContext
 import androidx.compose.runtime.Composable
+import com.minhtu.firesocialmedia.di.PlatformContext
 import com.minhtu.firesocialmedia.presentation.navigation.SetUpNavigation as CommonSetUpNavigation
 
 @Composable

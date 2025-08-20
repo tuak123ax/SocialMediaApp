@@ -10,12 +10,13 @@ import com.minhtu.firesocialmedia.di.PlatformContext
 import com.minhtu.firesocialmedia.ui.theme.FireSocialMediaCommonTheme
 import kotlinx.cinterop.BetaInteropApi
 import kotlinx.cinterop.ExportObjCClass
-import kotlinx.cinterop.useContents
-import platform.Foundation.NSDictionary
-import platform.Foundation.NSNotificationCenter
-import platform.Foundation.NSOperationQueue
-import platform.Foundation.NSValue
-import platform.UIKit.*
+import platform.UIKit.UIColor
+import platform.UIKit.UIRectEdgeNone
+import platform.UIKit.UIViewAutoresizingFlexibleHeight
+import platform.UIKit.UIViewAutoresizingFlexibleWidth
+import platform.UIKit.UIViewController
+import platform.UIKit.addChildViewController
+import platform.UIKit.didMoveToParentViewController
 
 actual object MainApplication {
     @Composable
