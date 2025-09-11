@@ -1,19 +1,17 @@
 package com.minhtu.firesocialmedia.domain.usecases.call
 
 import com.minhtu.firesocialmedia.constants.Constants
-import com.minhtu.firesocialmedia.data.model.call.CallStatus
-import com.minhtu.firesocialmedia.domain.serviceimpl.call.AudioCallService
-import com.minhtu.firesocialmedia.domain.serviceimpl.database.DatabaseService
+import com.minhtu.firesocialmedia.domain.entity.call.CallStatus
+import com.minhtu.firesocialmedia.domain.service.call.AudioCallService
+import com.minhtu.firesocialmedia.domain.service.database.DatabaseService
 import com.minhtu.firesocialmedia.platform.logMessage
 import com.minhtu.firesocialmedia.utils.Utils
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resumeWithException
 
 class ManageCallStateUseCase(
     val audioCallService: AudioCallService,
-    val databaseService: DatabaseService,
-    val coroutineScope: CoroutineScope
+    val databaseService: DatabaseService
 ) {
     fun acceptCall(sessionId : String,
                            sendCallStatusCallBack : Utils.Companion.BasicCallBack) {
@@ -87,5 +85,17 @@ class ManageCallStateUseCase(
         } catch (e : Exception) {
             logMessage("Exception when handle end call", { e.message.toString() })
         }
+    }
+
+    suspend fun acceptCallFromApp(sessionId: String, calleeId: String?) {
+        audioCallService.acceptCallFromApp(sessionId, calleeId)
+    }
+
+    suspend fun endCallFromApp() {
+        audioCallService.endCallFromApp()
+    }
+
+    suspend fun rejectVideoCall() {
+        audioCallService.rejectVideoCall()
     }
 }

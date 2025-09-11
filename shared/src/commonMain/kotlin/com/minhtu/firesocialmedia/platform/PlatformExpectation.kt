@@ -7,9 +7,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
-import com.minhtu.firesocialmedia.data.model.user.UserInstance
 import com.minhtu.firesocialmedia.di.PlatformContext
-import com.minhtu.firesocialmedia.domain.serviceimpl.imagepicker.ImagePicker
+import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
+import com.minhtu.firesocialmedia.domain.service.imagepicker.ImagePicker
 import com.minhtu.firesocialmedia.presentation.signin.SignInViewModel
 import com.russhwolf.settings.Settings
 import com.seiko.imageloader.ImageLoader

@@ -8,10 +8,11 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.auth
 import com.minhtu.firesocialmedia.constants.Constants
-import com.minhtu.firesocialmedia.data.model.signin.SignInError
+import com.minhtu.firesocialmedia.data.dto.forgotpassword.EmailExistDTO
+import com.minhtu.firesocialmedia.domain.error.signin.SignInError
 import com.minhtu.firesocialmedia.domain.serviceimpl.AuthService
 import com.minhtu.firesocialmedia.platform.logMessage
-import com.minhtu.firesocialmedia.utils.Utils
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.tasks.await
 
 class AndroidAuthService(var context: Context) : AuthService{
@@ -45,76 +46,79 @@ class AndroidAuthService(var context: Context) : AuthService{
         }
     }
 
-    override fun getCurrentUserUid(): String? {
-        return FirebaseAuth.getInstance().uid
+    override suspend fun getCurrentUserUid(): String? = suspendCancellableCoroutine{ continuation ->
+        if(continuation.isActive) continuation.resume(FirebaseAuth.getInstance().uid, onCancellation = {})
     }
 
-    override fun getCurrentUserEmail(): String? {
-        return FirebaseAuth.getInstance().currentUser?.email.toString()
+    override suspend fun getCurrentUserEmail(): String? = suspendCancellableCoroutine{ continuation ->
+        if(continuation.isActive) continuation.resume(FirebaseAuth.getInstance().currentUser?.email.toString(), onCancellation = {})
     }
 
-    override fun fetchSignInMethodsForEmail(
-        email: String,
-        callback: Utils.Companion.FetchSignInMethodCallback
-    ) {
+    override suspend fun fetchSignInMethodsForEmail(email: String) : EmailExistDTO = suspendCancellableCoroutine{ continuation ->
         FirebaseAuth.getInstance().fetchSignInMethodsForEmail(email)
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
                     val signInMethods = task.result?.signInMethods
                     if (signInMethods.isNullOrEmpty()) {
-                        callback.onFailure(Pair(false, Constants.EMAIL_NOT_EXISTED))
+                        if(continuation.isActive)
+                            continuation.resume(EmailExistDTO(false, Constants.EMAIL_NOT_EXISTED),
+                                onCancellation = {})
                     } else {
-                        callback.onSuccess(Pair(true, Constants.EMAIL_EXISTED))
+                        continuation.resume(EmailExistDTO(true, Constants.EMAIL_EXISTED),
+                            onCancellation = {})
                     }
                 } else {
-                    callback.onFailure(Pair(false, Constants.EMAIL_SERVER_ERROR))
+                    continuation.resume(EmailExistDTO(false, Constants.EMAIL_SERVER_ERROR),
+                        onCancellation = {})
                 }
             }
     }
 
-    override fun sendPasswordResetEmail(
-        email: String,
-        callback: Utils.Companion.SendPasswordResetEmailCallback
-    ) {
+    override suspend fun sendPasswordResetEmail(email: String) : Boolean = suspendCancellableCoroutine { continuation ->
         FirebaseAuth.getInstance().sendPasswordResetEmail(email)
             .addOnCompleteListener{ task ->
                 if(task.isSuccessful) {
-                    callback.onSuccess()
+                    if(continuation.isActive) continuation.resume(true, onCancellation = {})
                 } else {
-                    callback.onFailure()
+                    continuation.resume(true, onCancellation = {})
                 }
             }
     }
 
-    override fun handleSignInGoogleResult(
-        credential: Any,
-        callback: Utils.Companion.SignInGoogleCallback
-    ) {
-        val idToken = (credential as SignInCredential).googleIdToken
-        when {
-            idToken != null -> {
-                // Got an ID token from Google. Use it to authenticate
-                // with Firebase.
-                val firebaseCredential = GoogleAuthProvider.getCredential(idToken, null)
-                Firebase.auth.signInWithCredential(firebaseCredential)
-                    .addOnCompleteListener(context as Activity) { task ->
-                        if (task.isSuccessful) {
-                            // Sign in success, update UI with the signed-in user's information
-                            logMessage("Signin", { "signInWithCredential:success" })
-                            val user = Firebase.auth.currentUser
-                            callback.onSuccess(user!!.email.toString())
-                        } else {
-                            // If sign in fails, display a message to the user.
-                            logMessage("SignInViewModel", { "signIn: LOGIN_ERROR" })
-                            callback.onFailure()
+    override suspend fun handleSignInGoogleResult(credential: Any) : String? =
+        suspendCancellableCoroutine{ continuation ->
+            val idToken = (credential as SignInCredential).googleIdToken
+            when {
+                idToken != null -> {
+                    // Got an ID token from Google. Use it to authenticate
+                    // with Firebase.
+                    val firebaseCredential = GoogleAuthProvider.getCredential(idToken, null)
+                    Firebase.auth.signInWithCredential(firebaseCredential)
+                        .addOnCompleteListener(context as Activity) { task ->
+                            if (task.isSuccessful) {
+                                val user = Firebase.auth.currentUser
+                                if(user != null && continuation.isActive) {
+                                    continuation.resume(
+                                        user.email,
+                                        onCancellation = {
+                                        })
+                                }
+                            } else {
+                                continuation.resume(
+                                    null,
+                                    onCancellation = {
+                                    })
+                            }
                         }
-                    }
-            }
-            else -> {
-                // Shouldn't happen.
-                logMessage("Signin", { "No ID token!" })
-                callback.onFailure()
+                }
+                else -> {
+                    // Shouldn't happen.
+                    logMessage("Signin", { "No ID token!" })
+                    continuation.resume(
+                        null,
+                        onCancellation = {
+                        })
+                }
             }
         }
-    }
 }

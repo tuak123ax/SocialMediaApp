@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
@@ -45,10 +46,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.minhtu.firesocialmedia.constants.TestTag
-import com.minhtu.firesocialmedia.data.model.call.OfferAnswer
-import com.minhtu.firesocialmedia.data.model.news.NewsInstance
-import com.minhtu.firesocialmedia.data.model.user.UserInstance
-import com.minhtu.firesocialmedia.di.PlatformContext
+import com.minhtu.firesocialmedia.data.dto.call.OfferAnswerDTO
+import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
+import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.platform.CrossPlatformIcon
 import com.minhtu.firesocialmedia.platform.generateImageLoader
 import com.minhtu.firesocialmedia.platform.logMessage
@@ -66,7 +66,6 @@ class Home {
     companion object{
         @Composable
         fun HomeScreen(modifier: Modifier,
-                       platform : PlatformContext,
                        homeViewModel: HomeViewModel,
                        loadingViewModel: LoadingViewModel,
                        navigateToCallingScreen : Boolean,
@@ -77,7 +76,7 @@ class Home {
                        onNavigateToSignIn: () -> Unit,
                        onNavigateToUserInformation: (user: UserInstance?) -> Unit,
                        onNavigateToCommentScreen: (selectedNew : NewsInstance) -> Unit,
-                       onNavigateToCallingScreen : suspend (sessionId : String, caller : String, callee : String, offer: OfferAnswer, ) -> Unit,
+                       onNavigateToCallingScreen : suspend (sessionId : String, caller : String, callee : String, offer: OfferAnswerDTO, ) -> Unit,
                        onNavigateToCallingScreenWithUI : suspend () -> Unit,
                        navHandler : NavigationHandler){
             val isLoading by loadingViewModel.isLoading.collectAsState()
@@ -86,7 +85,7 @@ class Home {
             val showDialog = remember { mutableStateOf(false) }
             UiUtils.Companion.ShowAlertDialogToLogout(
                 onClickConfirm = {
-                    homeViewModel.clearAccountInStorage(platform)
+                    homeViewModel.clearAccountInStorage()
                 },
                 onNavigateToSignIn,
                 showDialog
@@ -107,9 +106,9 @@ class Home {
             LaunchedEffect(Unit) {
                 loadingViewModel.showLoading()
                 //Load users list and news list.
-                homeViewModel.getCurrentUserAndFriends(platform)
-                homeViewModel.getLatestNews(platform)
-                homeViewModel.getAllNotificationsOfUser(platform)
+                homeViewModel.getCurrentUserAndFriends()
+                homeViewModel.getLatestNews()
+                homeViewModel.getAllNotificationsOfUser()
                 homeViewModel.decreaseNumberOfListNeedToLoad(1)
                 if (numberOfLists == 0) {
                     loadingViewModel.hideLoading()
@@ -133,7 +132,6 @@ class Home {
                 if(getCurrentUserStatus) {
                     logMessage("observePhoneCall", { "start observe phone call" })
                     homeViewModel.observePhoneCall(
-                        platform,
                         onNavigateToCallingScreen,
                         onNavigateBack = {
                             logMessage("NavStack",
@@ -297,7 +295,7 @@ class Home {
                         }
                     }
 
-                    val listState = homeViewModel.listState
+                    val listState = rememberLazyListState()
                     // LaunchedEffect to track the scroll state (hide top bar and show load more)
                     LaunchedEffect(listState) {
                         snapshotFlow {
@@ -320,14 +318,14 @@ class Home {
                                     !homeViewModel.isLoadingMore.value &&
                                     homeViewModel.hasMoreData.value
                                 ) {
-                                    homeViewModel.loadMoreNews(platform)
+                                    homeViewModel.loadMoreNews()
                                 }
                             }
                     }
 
                     //Newsfeed
                     UiUtils.Companion.LazyColumnOfNewsWithSlideOutAnimationAndLoadMore(
-                        platform,
+                        listState,
                         homeViewModel,
                         newsList.value.toList(),
                         onNavigateToUploadNews,

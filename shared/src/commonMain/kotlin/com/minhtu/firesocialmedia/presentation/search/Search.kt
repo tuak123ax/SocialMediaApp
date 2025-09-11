@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
@@ -22,9 +23,8 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.minhtu.firesocialmedia.constants.TestTag
-import com.minhtu.firesocialmedia.data.model.news.NewsInstance
-import com.minhtu.firesocialmedia.data.model.user.UserInstance
-import com.minhtu.firesocialmedia.di.PlatformContext
+import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
+import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.presentation.home.HomeViewModel
 import com.minhtu.firesocialmedia.utils.NavigationHandler
 import com.minhtu.firesocialmedia.utils.UiUtils
@@ -33,15 +33,15 @@ class Search {
     companion object{
         @Composable
         fun SearchScreen(modifier: Modifier,
-                         platform : PlatformContext,
                          searchViewModel: SearchViewModel,
                          homeViewModel: HomeViewModel,
-                         navController: NavigationHandler,
+                         onNavigateBack: () -> Unit,
                          onNavigateToUserInformation: (user : UserInstance?) -> Unit,
                          onNavigateToShowImageScreen: (image : String) -> Unit,
                          onNavigateToCommentScreen: (selectedNew : NewsInstance) -> Unit,
                          onNavigateToUploadNewsFeed : (updateNew : NewsInstance?) -> Unit){
             val commentStatus by homeViewModel.commentStatus.collectAsState()
+            val listState = rememberLazyListState()
             LaunchedEffect(commentStatus) {
                 commentStatus?.let { selectedNew ->
                     onNavigateToCommentScreen(selectedNew)
@@ -49,7 +49,7 @@ class Search {
                 }
             }
             Column(verticalArrangement = Arrangement.Top, modifier = modifier) {
-                UiUtils.Companion.BackAndMoreOptionsRow(navController)
+                UiUtils.Companion.BackAndMoreOptionsRow(onNavigateBack)
                 SearchBar(
                     query = searchViewModel.query,
                     onQueryChange = { query -> searchViewModel.updateQuery(query) },
@@ -61,7 +61,7 @@ class Search {
                 )
 
                 UiUtils.Companion.TabLayout(
-                    platform,
+                    listState,
                     listOf("People", "Posts"),
                     homeViewModel,
                     searchViewModel,

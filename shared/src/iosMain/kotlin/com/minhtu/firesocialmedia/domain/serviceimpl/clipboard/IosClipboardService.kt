@@ -1,5 +1,6 @@
 package com.minhtu.firesocialmedia.domain.serviceimpl.clipboard
 
+import com.minhtu.firesocialmedia.domain.service.clipboard.ClipboardService
 import platform.UIKit.UIPasteboard
 
 class IosClipboardService : ClipboardService {

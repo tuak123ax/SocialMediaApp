@@ -46,11 +46,11 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.minhtu.firesocialmedia.constants.TestTag
-import com.minhtu.firesocialmedia.data.model.call.CallEvent
-import com.minhtu.firesocialmedia.data.model.call.CallEventFlow
-import com.minhtu.firesocialmedia.data.model.call.OfferAnswer
-import com.minhtu.firesocialmedia.data.model.user.UserInstance
+import com.minhtu.firesocialmedia.domain.entity.call.CallEvent
+import com.minhtu.firesocialmedia.domain.entity.call.CallEventFlow
+import com.minhtu.firesocialmedia.data.dto.call.OfferAnswerDTO
 import com.minhtu.firesocialmedia.di.PlatformContext
+import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.platform.generateImageLoader
 import com.minhtu.firesocialmedia.platform.logMessage
 import com.minhtu.firesocialmedia.platform.showToast
@@ -76,12 +76,12 @@ class Calling {
             callee : UserInstance?,
             caller : UserInstance?,
             currentUser : UserInstance?,
-            remoteOffer : OfferAnswer?,
+            remoteOffer : OfferAnswerDTO?,
             navigateToCallingScreenFromNotification : Boolean,
             callingViewModel: CallingViewModel,
             navHandler : NavigationHandler,
             onStopCall : () -> Unit,
-            onNavigateToVideoCall : (sessionId : String, videoOffer : OfferAnswer?) -> Unit,
+            onNavigateToVideoCall : (sessionId : String, videoOffer : OfferAnswerDTO?) -> Unit,
             modifier: Modifier){
             val coroutineScope = rememberCoroutineScope()
             val isCalling = (currentUser == caller)
@@ -93,7 +93,7 @@ class Calling {
             var acceptCall by rememberSaveable { mutableStateOf(false) }
             //Show dialog to accept video call
             val showDialog = remember { mutableStateOf(false) }
-            var videoOffer : OfferAnswer? = null
+            var videoOffer : OfferAnswerDTO? = null
 
             LaunchedEffect(Unit) {
 //                countDownTimer(onTimeOver = {
@@ -106,7 +106,6 @@ class Calling {
 //                    )
 //                })
                 callingViewModel.requestPermissionAndStartAudioCall(
-                    platform,
                     onGranted = {
                         if(!startCount) {
                             logMessage("grantPermission", { "Granted" })
@@ -115,7 +114,7 @@ class Calling {
                                 logMessage("grantPermission", { "caller and callee not null" })
                                 if(currentUser == caller) {
                                     if(!navigateToCallingScreenFromNotification){
-                                        callingViewModel.startCall(caller, callee, platform)
+                                        callingViewModel.startCall(caller, callee)
                                     } else {
                                         logMessage("navigateToCallingScreenFromNotification",
                                             { "caller start timer" })
@@ -215,7 +214,7 @@ class Calling {
                     callingViewModel.updateVideoState()
                 },
                 onClickReject = {
-                    callingViewModel.rejectVideoCall(platform)
+                    callingViewModel.rejectVideoCall()
                     callingViewModel.updateVideoState()
                 },
                 showDialog
@@ -334,8 +333,7 @@ class Calling {
                                                 if(remoteOffer != null) {
                                                     callingViewModel.acceptCall(
                                                         sessionId,
-                                                        callee,
-                                                        platform
+                                                        callee
                                                     )
                                                 }
                                             }

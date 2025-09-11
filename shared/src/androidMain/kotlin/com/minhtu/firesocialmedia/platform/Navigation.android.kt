@@ -1,7 +1,7 @@
 package com.minhtu.firesocialmedia.platform
 
 import androidx.compose.runtime.Composable
-import com.minhtu.firesocialmedia.data.model.call.SharedCallData
+import com.minhtu.firesocialmedia.domain.entity.call.SharedCallData
 import com.minhtu.firesocialmedia.di.PlatformContext
 import com.minhtu.firesocialmedia.presentation.navigation.SetUpNavigation as CommonSetUpNavigation
 

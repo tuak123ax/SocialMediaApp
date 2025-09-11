@@ -11,18 +11,20 @@ import android.os.Build
 import android.os.IBinder
 import androidx.core.content.ContextCompat
 import com.minhtu.firesocialmedia.constants.Constants
-import com.minhtu.firesocialmedia.data.model.call.AudioCallSession
-import com.minhtu.firesocialmedia.data.model.call.CallAction
-import com.minhtu.firesocialmedia.data.model.call.CallEvent
-import com.minhtu.firesocialmedia.data.model.call.CallEventFlow
-import com.minhtu.firesocialmedia.data.model.call.CallStatus
-import com.minhtu.firesocialmedia.data.model.call.OfferAnswer
-import com.minhtu.firesocialmedia.data.model.user.UserInstance
-import com.minhtu.firesocialmedia.domain.coordinator.CalleeCoordinator
-import com.minhtu.firesocialmedia.domain.coordinator.CallerCoordinator
+import com.minhtu.firesocialmedia.data.dto.call.AudioCallSessionDTO
+import com.minhtu.firesocialmedia.domain.entity.call.CallAction
+import com.minhtu.firesocialmedia.domain.entity.call.CallEvent
+import com.minhtu.firesocialmedia.domain.entity.call.CallEventFlow
+import com.minhtu.firesocialmedia.data.dto.call.OfferAnswerDTO
+import com.minhtu.firesocialmedia.domain.coordinator.call.CalleeCoordinator
+import com.minhtu.firesocialmedia.domain.coordinator.call.CallerCoordinator
+import com.minhtu.firesocialmedia.domain.entity.call.AudioCallSession
+import com.minhtu.firesocialmedia.domain.entity.call.CallStatus
+import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
+import com.minhtu.firesocialmedia.domain.service.call.AudioCallService
 import com.minhtu.firesocialmedia.domain.serviceimpl.call.CallNotificationManager.Companion.NOTIF_ID
 import com.minhtu.firesocialmedia.domain.serviceimpl.database.AndroidDatabaseService
-import com.minhtu.firesocialmedia.domain.serviceimpl.database.DatabaseService
+import com.minhtu.firesocialmedia.domain.service.database.DatabaseService
 import com.minhtu.firesocialmedia.domain.usecases.call.AcceptCallUseCase
 import com.minhtu.firesocialmedia.domain.usecases.call.CalleeUseCases
 import com.minhtu.firesocialmedia.domain.usecases.call.CallerUseCases
@@ -60,7 +62,7 @@ class CallForegroundService : Service() {
     private lateinit var callNotificationManager: CallNotificationManager
 
     private var sessionId = ""
-    private var offer : OfferAnswer? = null
+    private var offer : OfferAnswerDTO? = null
     private var callerIdForCallee : String = ""
     private var calleeIdForCallee : String = ""
     private var callerFromApp : UserInstance? = null
@@ -90,7 +92,7 @@ class CallForegroundService : Service() {
         //Initialize use cases
         initializeCallUseCase = InitializeCallUseCase(callManager, databaseService, backgroundScope)
         sendSignalingDataUseCase = SendSignalingDataUseCase(callManager, databaseService, backgroundScope)
-        manageCallStateUseCase = ManageCallStateUseCase(callManager, databaseService, backgroundScope)
+        manageCallStateUseCase = ManageCallStateUseCase(callManager, databaseService)
         videoCallUseCase = VideoCallUseCase(callManager, databaseService, backgroundScope)
 
         //Initialize caller use cases
@@ -242,7 +244,7 @@ class CallForegroundService : Service() {
         logMessage("START_VIDEO_CALL", { "START_VIDEO_CALL" })
         backgroundScope.launch {
             val remoteVideoOfferJsonString = intent.getStringExtra("remoteVideoOffer")
-            val remoteVideoOffer = remoteVideoOfferJsonString?.let { Json.decodeFromString<OfferAnswer>(it) }
+            val remoteVideoOffer = remoteVideoOfferJsonString?.let { Json.decodeFromString<OfferAnswerDTO>(it) }
             val currentUserId = intent.getStringExtra("currentUserId")
             //Remote video offer is null means this is caller side.
             if(remoteVideoOffer == null) {
@@ -384,9 +386,9 @@ class CallForegroundService : Service() {
     }
 
     private suspend fun handleAcceptCall(sessionId : String,
-                                 offer : OfferAnswer,
-                                 callerId : String,
-                                 calleeId : String) {
+                                         offer : OfferAnswerDTO,
+                                         callerId : String,
+                                         calleeId : String) {
         logMessage("handleAcceptCall", { "handleAcceptCall" })
         try{
             calleeCoordinator.acceptCall(

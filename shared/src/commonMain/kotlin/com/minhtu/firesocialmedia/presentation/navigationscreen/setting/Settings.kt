@@ -37,7 +37,6 @@ class Settings {
     companion object{
         @Composable
         fun SettingsScreen(modifier: Modifier,
-                           platform : PlatformContext,
                            paddingValues: PaddingValues,
                            homeViewModel: HomeViewModel,
                            onNavigateToSignIn: () -> Unit){
@@ -57,7 +56,7 @@ class Settings {
 //                val openChatAppLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()){}
                 val showDialog = remember { mutableStateOf(false) }
                 UiUtils.Companion.ShowAlertDialogToLogout(onClickConfirm = {
-                    homeViewModel.clearAccountInStorage(platform)
+                    homeViewModel.clearAccountInStorage()
                 }, onNavigateToSignIn, showDialog)
                 //Fire chat button
                 Button(

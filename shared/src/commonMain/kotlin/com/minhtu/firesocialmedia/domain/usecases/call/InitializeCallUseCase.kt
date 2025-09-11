@@ -1,12 +1,12 @@
 package com.minhtu.firesocialmedia.domain.usecases.call
 
 import com.minhtu.firesocialmedia.constants.Constants
-import com.minhtu.firesocialmedia.data.model.call.CallEventFlow
-import com.minhtu.firesocialmedia.data.model.call.CallType
-import com.minhtu.firesocialmedia.data.model.call.IceCandidateData
-import com.minhtu.firesocialmedia.data.model.call.OfferAnswer
-import com.minhtu.firesocialmedia.domain.serviceimpl.call.AudioCallService
-import com.minhtu.firesocialmedia.domain.serviceimpl.database.DatabaseService
+import com.minhtu.firesocialmedia.data.dto.call.OfferAnswerDTO
+import com.minhtu.firesocialmedia.domain.entity.call.CallEventFlow
+import com.minhtu.firesocialmedia.domain.entity.call.CallType
+import com.minhtu.firesocialmedia.domain.entity.call.IceCandidateData
+import com.minhtu.firesocialmedia.domain.service.call.AudioCallService
+import com.minhtu.firesocialmedia.domain.service.database.DatabaseService
 import com.minhtu.firesocialmedia.utils.Utils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -39,7 +39,7 @@ class InitializeCallUseCase(
     }
 
     suspend fun createVideoOffer(currentUserId : String?,
-                                 videoOfferCreated : suspend (videoOffer : OfferAnswer) -> Unit) {
+                                 videoOfferCreated : suspend (videoOffer : OfferAnswerDTO) -> Unit) {
         audioCallService.createVideoOffer(
             onOfferCreated = { offer ->
                 coroutineScope.launch {
@@ -116,7 +116,7 @@ class InitializeCallUseCase(
         )
     }
 
-    suspend fun setRemoteDescription(offerAnswer : OfferAnswer) {
+    suspend fun setRemoteDescription(offerAnswer : OfferAnswerDTO) {
         audioCallService.setRemoteDescription(offerAnswer)
     }
 }

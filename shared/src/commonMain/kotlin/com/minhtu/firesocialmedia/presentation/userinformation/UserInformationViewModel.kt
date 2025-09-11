@@ -4,10 +4,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.minhtu.firesocialmedia.constants.Constants
-import com.minhtu.firesocialmedia.data.model.notification.NotificationInstance
-import com.minhtu.firesocialmedia.data.model.notification.NotificationType
-import com.minhtu.firesocialmedia.data.model.user.UserInstance
-import com.minhtu.firesocialmedia.di.PlatformContext
+import com.minhtu.firesocialmedia.domain.entity.notification.NotificationInstance
+import com.minhtu.firesocialmedia.domain.entity.notification.NotificationType
+import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
+import com.minhtu.firesocialmedia.domain.usecases.common.SaveListToDatabaseUseCase
+import com.minhtu.firesocialmedia.domain.usecases.common.SaveNotificationToDatabaseUseCase
+import com.minhtu.firesocialmedia.domain.usecases.information.CheckCalleeAvailableUseCase
 import com.minhtu.firesocialmedia.platform.createMessageForServer
 import com.minhtu.firesocialmedia.platform.getCurrentTime
 import com.minhtu.firesocialmedia.platform.getRandomIdForNotification
@@ -33,6 +35,9 @@ enum class Relationship{
     NONE
 }
 class UserInformationViewModel(
+    private val saveNotificationToDatabaseUseCase : SaveNotificationToDatabaseUseCase,
+    private val saveListToDatabaseUseCase: SaveListToDatabaseUseCase,
+    private val checkCalleeAvailableUseCase: CheckCalleeAvailableUseCase,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : ViewModel() {
     // StateFlow to update UI in Compose
@@ -46,7 +51,7 @@ class UserInformationViewModel(
     private var friendRequestList : ArrayList<String> = ArrayList()
     var currentRelationship : Relationship = Relationship.NONE
     private var updateFriendRequestJob : Job? = null
-    fun clickAddFriendButton(friend : UserInstance?, currentUser : UserInstance?, platform : PlatformContext) {
+    fun clickAddFriendButton(friend : UserInstance?, currentUser : UserInstance?) {
         viewModelScope.launch {
             withContext(ioDispatcher) {
                 if(friend != null && currentUser != null){
@@ -62,17 +67,17 @@ class UserInformationViewModel(
                                 Relationship.FRIEND -> {
                                     friend.removeFriend(currentUser.uid)
                                     currentUser.removeFriend(friend.uid)
-                                    removeFriend(friend, currentUser, platform)
+                                    removeFriend(friend, currentUser)
                                     _addFriendStatus.value = Relationship.NONE
                                 }
                                 Relationship.FRIEND_REQUEST -> {
-                                    removeFriendRequest(friend, currentUser, platform)
+                                    removeFriendRequest(friend, currentUser)
                                     friend.removeFriendRequest(currentUser.uid)
                                     _addFriendStatus.value = Relationship.NONE
                                 }
                                 Relationship.NONE -> {
                                     //Save friend request to db
-                                    saveFriendRequest(friend, currentUser, platform)
+                                    saveFriendRequest(friend, currentUser)
                                     friend.addFriendRequest(currentUser.uid)
 
                                     val notiContent = "${currentUser.name} sent you a friend request!"
@@ -84,7 +89,7 @@ class UserInformationViewModel(
                                         NotificationType.ADD_FRIEND,
                                         currentUser.uid)
                                     //Save notification to db
-                                    Utils.saveNotification(notification, friend, platform)
+                                    Utils.saveNotification(notification, friend, saveNotificationToDatabaseUseCase)
                                     sendMessageToServer(createMessageForServer(notiContent, tokenList , currentUser, "BASIC"))
                                     _addFriendStatus.value = Relationship.FRIEND_REQUEST
                                 }
@@ -92,7 +97,7 @@ class UserInformationViewModel(
 
                                 }
                             }
-                        } catch(e: Exception) {
+                        } catch(_: Exception) {
                         }
                     }
                 }
@@ -118,54 +123,63 @@ class UserInformationViewModel(
         _addFriendStatus.value = relationship
     }
 
-    private suspend fun saveFriendRequest(friend : UserInstance, currentUser: UserInstance, platform: PlatformContext) {
+    private suspend fun saveFriendRequest(friend : UserInstance, currentUser: UserInstance) {
         try{
             friendRequestList.add(currentUser.uid)
-            platform.database.saveListToDatabase(friend.uid,
-                Constants.USER_PATH, friendRequestList, Constants.FRIEND_REQUESTS_PATH)
+            saveListToDatabaseUseCase.invoke(
+                friend.uid,
+                Constants.USER_PATH,
+                friendRequestList,
+                Constants.FRIEND_REQUESTS_PATH
+            )
             _addFriendStatus.value = Relationship.FRIEND_REQUEST
-        } catch(e: Exception) {
+        } catch(_: Exception) {
         }
     }
-    private suspend fun removeFriendRequest(friend : UserInstance, currentUser : UserInstance, platform: PlatformContext) {
+    private suspend fun removeFriendRequest(friend : UserInstance, currentUser : UserInstance) {
         try{
             friendRequestList.remove(currentUser.uid)
-            platform.database.saveListToDatabase(friend.uid,
-                Constants.USER_PATH, friendRequestList, Constants.FRIEND_REQUESTS_PATH)
+            saveListToDatabaseUseCase.invoke(
+                friend.uid,
+                Constants.USER_PATH,
+                friendRequestList,
+                Constants.FRIEND_REQUESTS_PATH
+            )
             _addFriendStatus.value = Relationship.NONE
-        } catch(e: Exception) {
+        } catch(_: Exception) {
         }
     }
 
-    private suspend fun removeFriend(friend : UserInstance, currentUser : UserInstance, platform: PlatformContext) {
+    private suspend fun removeFriend(friend : UserInstance, currentUser : UserInstance) {
         try{
-            platform.database.saveListToDatabase(currentUser.uid,
-                Constants.USER_PATH, currentUser.friends, Constants.FRIENDS_PATH)
-        } catch(e: Exception) {
+            saveListToDatabaseUseCase.invoke(
+                currentUser.uid,
+                Constants.USER_PATH,
+                currentUser.friends,
+                Constants.FRIENDS_PATH
+            )
+        } catch(_: Exception) {
         }
         try {
-            platform.database.saveListToDatabase(friend.uid,
-                Constants.USER_PATH, friend.friends, Constants.FRIENDS_PATH)
-        } catch(e: Exception) {
+            saveListToDatabaseUseCase.invoke(
+                friend.uid,
+                Constants.USER_PATH,
+                friend.friends,
+                Constants.FRIENDS_PATH
+            )
+        } catch(_: Exception) {
         }
         _addFriendStatus.value = Relationship.NONE
     }
 
-    private fun convertRelationshipToString(relationship: Relationship) : String {
-        return when(relationship) {
-            Relationship.FRIEND -> "Friend"
-            Relationship.FRIEND_REQUEST -> "Friend Request"
-            Relationship.NONE -> "None"
-            Relationship.WAITING_RESPONSE -> "Waiting Response"
-        }
-    }
-
-    fun checkCalleeAvailable(callee : UserInstance, platform: PlatformContext, onResult: (Boolean) -> Unit){
+    fun checkCalleeAvailable(callee : UserInstance, onResult: (Boolean?) -> Unit){
         viewModelScope.launch {
             withContext(ioDispatcher) {
-                platform.database.isCalleeInActiveCall(callee.uid,
-                    Constants.CALL_PATH,
-                    onResult)
+                val result = checkCalleeAvailableUseCase.invoke(
+                    callee.uid,
+                    Constants.CALL_PATH
+                )
+                onResult(result)
             }
         }
     }

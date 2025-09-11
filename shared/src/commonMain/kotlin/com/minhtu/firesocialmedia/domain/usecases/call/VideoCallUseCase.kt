@@ -1,9 +1,9 @@
 package com.minhtu.firesocialmedia.domain.usecases.call
 
 import com.minhtu.firesocialmedia.constants.Constants
-import com.minhtu.firesocialmedia.data.model.call.OfferAnswer
-import com.minhtu.firesocialmedia.domain.serviceimpl.call.AudioCallService
-import com.minhtu.firesocialmedia.domain.serviceimpl.database.DatabaseService
+import com.minhtu.firesocialmedia.data.dto.call.OfferAnswerDTO
+import com.minhtu.firesocialmedia.domain.service.call.AudioCallService
+import com.minhtu.firesocialmedia.domain.service.database.DatabaseService
 import com.minhtu.firesocialmedia.platform.WebRTCVideoTrack
 import com.minhtu.firesocialmedia.platform.logMessage
 import kotlinx.coroutines.CoroutineScope
@@ -26,7 +26,7 @@ class VideoCallUseCase(
 
     suspend fun observeVideoCall(sessionId : String,
                                  callerId : String,
-                                 onReceivedVideoCall : suspend (videoOffer : OfferAnswer) -> Unit) {
+                                 onReceivedVideoCall : suspend (videoOffer : OfferAnswerDTO) -> Unit) {
         databaseService.observeVideoCall(
             sessionId,
             Constants.CALL_PATH,

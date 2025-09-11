@@ -19,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.core.net.toUri
+import com.minhtu.firesocialmedia.domain.service.imagepicker.ImagePicker
 import java.io.ByteArrayOutputStream
 
 class AndroidImagePicker(

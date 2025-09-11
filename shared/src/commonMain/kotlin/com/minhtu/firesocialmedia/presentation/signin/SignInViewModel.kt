@@ -1,10 +1,15 @@
 package com.minhtu.firesocialmedia.presentation.signin
 
+import androidx.compose.runtime.mutableStateOf
 import com.minhtu.firesocialmedia.constants.Constants
-import com.minhtu.firesocialmedia.data.model.signin.SignInState
-import com.minhtu.firesocialmedia.di.PlatformContext
-import com.minhtu.firesocialmedia.domain.serviceimpl.signinlauncher.SignInLauncher
-import com.minhtu.firesocialmedia.utils.Utils
+import com.minhtu.firesocialmedia.domain.entity.crypto.Credentials
+import com.minhtu.firesocialmedia.domain.entity.signin.SignInState
+import com.minhtu.firesocialmedia.domain.service.signinlauncher.SignInLauncher
+import com.minhtu.firesocialmedia.domain.usecases.signin.CheckLocalAccountUseCase
+import com.minhtu.firesocialmedia.domain.usecases.signin.CheckUserExistsUseCase
+import com.minhtu.firesocialmedia.domain.usecases.signin.HandleSignInGoogleResultUseCase
+import com.minhtu.firesocialmedia.domain.usecases.signin.RememberPasswordUseCase
+import com.minhtu.firesocialmedia.domain.usecases.signin.SignInUseCase
 import com.rickclephas.kmp.observableviewmodel.ViewModel
 import com.rickclephas.kmp.observableviewmodel.launch
 import kotlinx.coroutines.CoroutineDispatcher
@@ -15,6 +20,11 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.withContext
 
 class SignInViewModel(
+    private val signInUseCase : SignInUseCase,
+    private val rememberPasswordUseCase: RememberPasswordUseCase,
+    private val checkUserExistsUseCase: CheckUserExistsUseCase,
+    private val checkLocalAccountUseCase : CheckLocalAccountUseCase,
+    private val handleSignInGoogleResult: HandleSignInGoogleResultUseCase,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : ViewModel() {
     private var launcher: SignInLauncher? = null
@@ -47,7 +57,7 @@ class SignInViewModel(
         password.value =  input
     }
 
-    fun signIn(showLoading : () -> Unit, platform: PlatformContext) {
+    fun signIn(showLoading : () -> Unit) {
         viewModelScope.launch {
             withContext(ioDispatcher) {
                 if (email.value.isBlank() || password.value.isBlank()) {
@@ -55,12 +65,12 @@ class SignInViewModel(
                 } else {
                     showLoading()
                     email.value = email.value.lowercase()
-                    val result = platform.auth.signInWithEmailAndPassword(email.value, password.value)
+                    val result = signInUseCase.invoke(email.value, password.value)
                     if (result.isSuccess) {
                         if (rememberPassword.value) {
-                            platform.crypto.saveAccount(email.value, password.value)
+                            rememberPasswordUseCase.invoke(email.value, password.value)
                         }
-                        checkEmailInDatabase(email.value, platform)
+                        checkEmailInDatabase(email.value)
                     } else {
                         _signInStatus.value = SignInState(false, Constants.LOGIN_ERROR)
                     }
@@ -69,26 +79,17 @@ class SignInViewModel(
         }
     }
 
-    private fun checkEmailInDatabase(email: String, platform: PlatformContext) {
-        viewModelScope.launch {
-            withContext(ioDispatcher) {
-                platform.database.checkUserExists(email) { result ->
-                    _signInStatus.value = result
-                }
-            }
-        }
+    private suspend fun checkEmailInDatabase(email: String) {
+        val result = checkUserExistsUseCase.invoke(email)
+        _signInStatus.value = result
     }
 
-    fun checkLocalAccount(platform: PlatformContext, showLoading : () -> Unit) {
-        viewModelScope.launch {
-            withContext(ioDispatcher) {
-                val creds = platform.crypto.loadAccount()
-                if (creds != null) {
-                    updateEmail(creds.email)
-                    updatePassword(creds.password)
-                    signIn(showLoading, platform)
-                }
-            }
+    val localCredentials = mutableStateOf<Credentials?>(null)
+    suspend fun checkLocalAccount() {
+        localCredentials.value = checkLocalAccountUseCase.invoke()
+        if (localCredentials.value != null) {
+            updateEmail(localCredentials.value!!.email)
+            updatePassword(localCredentials.value!!.password)
         }
     }
 
@@ -101,19 +102,23 @@ class SignInViewModel(
         }
     }
 
-    fun handleSignInResult(credential : Any, platform: PlatformContext) {
+    fun handleSignInResult(credential : Any) {
         viewModelScope.launch {
             withContext(ioDispatcher) {
-                platform.auth.handleSignInGoogleResult(credential,
-                    object : Utils.Companion.SignInGoogleCallback{
-                        override fun onSuccess(email: String) {
-                            checkEmailInDatabase(email, platform)
-                        }
-                        override fun onFailure() {
-                            _signInStatus.value = SignInState(false, Constants.LOGIN_ERROR)
-                        }
-                    })
+                val result = handleSignInGoogleResult.invoke(credential)
+                if(!result.isNullOrEmpty()) {
+                    checkEmailInDatabase(result)
+                } else {
+                    _signInStatus.value = SignInState(false, Constants.LOGIN_ERROR)
+                }
             }
         }
+    }
+
+    fun reset() {
+        resetSignInStatus()
+        updateEmail("")
+        updatePassword("")
+        _rememberPassword.value = false
     }
 }

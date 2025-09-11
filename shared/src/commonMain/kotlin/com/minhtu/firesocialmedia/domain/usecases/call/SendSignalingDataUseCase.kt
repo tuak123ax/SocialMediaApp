@@ -1,21 +1,24 @@
 package com.minhtu.firesocialmedia.domain.usecases.call
 
 import com.minhtu.firesocialmedia.constants.Constants
-import com.minhtu.firesocialmedia.data.model.call.AudioCallSession
-import com.minhtu.firesocialmedia.data.model.call.CallStatus
-import com.minhtu.firesocialmedia.data.model.call.IceCandidateData
-import com.minhtu.firesocialmedia.data.model.call.OfferAnswer
-import com.minhtu.firesocialmedia.domain.serviceimpl.call.AudioCallService
-import com.minhtu.firesocialmedia.domain.serviceimpl.database.DatabaseService
+import com.minhtu.firesocialmedia.data.dto.call.OfferAnswerDTO
+import com.minhtu.firesocialmedia.domain.entity.call.AudioCallSession
+import com.minhtu.firesocialmedia.domain.entity.call.CallStatus
+import com.minhtu.firesocialmedia.domain.entity.call.IceCandidateData
+import com.minhtu.firesocialmedia.domain.service.call.AudioCallService
+import com.minhtu.firesocialmedia.domain.service.database.DatabaseService
 import com.minhtu.firesocialmedia.platform.logMessage
 import com.minhtu.firesocialmedia.utils.Utils
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 
 class SendSignalingDataUseCase(
     val audioCallService: AudioCallService,
     val databaseService: DatabaseService,
-    val coroutineScope: CoroutineScope
+    val coroutineScope: CoroutineScope = CoroutineScope(Dispatchers.IO)
 ) {
     suspend fun sendCallSessionToFirebase(audioCallSession : AudioCallSession,
                                   sendCallSessionCallBack : Utils.Companion.BasicCallBack){
@@ -120,7 +123,6 @@ class SendSignalingDataUseCase(
                         onEndCall()
                     }
                 }
-
             }
         )
     }
@@ -145,7 +147,7 @@ class SendSignalingDataUseCase(
         )
     }
 
-    suspend fun sendOfferToFireBase(sessionId : String, offer : OfferAnswer) {
+    suspend fun sendOfferToFireBase(sessionId : String, offer : OfferAnswerDTO) {
         databaseService.sendOfferToFireBase(
             sessionId,
             offer,
@@ -166,9 +168,9 @@ class SendSignalingDataUseCase(
     suspend fun observePhoneCallWithoutCheckingInCall(
         calleeIdFromFCM : String,
         onReceivePhoneCallRequest : suspend (sessionId : String,
-                                     offer : OfferAnswer,
-                                     callerId : String,
-                                     calleeId : String) -> Unit,
+                                             offer : OfferAnswerDTO,
+                                             callerId : String,
+                                             calleeId : String) -> Unit,
         onEndCall: suspend () -> Unit) {
         databaseService.observePhoneCallWithoutCheckingInCall(
             calleeIdFromFCM,
@@ -209,7 +211,47 @@ class SendSignalingDataUseCase(
             })
     }
 
-    suspend fun sendAnswerToFirebase(sessionId : String, answer: OfferAnswer) {
+    suspend fun observePhoneCallWithCheckingInCall(
+        isInCall :  MutableStateFlow<Boolean>,
+        currentUserId : String,
+        onReceivePhoneCallRequest : suspend (sessionId : String,
+                                             offer : OfferAnswerDTO,
+                                             callerId : String,
+                                             calleeId : String) -> Unit,
+        onEndCall: suspend () -> Unit) {
+        databaseService.observePhoneCall(
+            isInCall,
+            currentUserId,
+            Constants.CALL_PATH,
+            phoneCallCallBack = { sessionId,callerId, calleeId, offer ->
+                if(calleeId == currentUserId) {
+                    coroutineScope.launch {
+                        onReceivePhoneCallRequest(sessionId, offer, callerId, calleeId)
+                    }
+                }
+            },
+            endCallSession = { end ->
+                if(end) {
+                    //Handle end call.
+                    coroutineScope.launch {
+                        onEndCall()
+                    }
+                }
+            },
+            iceCandidateCallBack = { iceCandidates ->
+                if(iceCandidates != null) {
+                    for(candidate in iceCandidates.values) {
+                        if(candidate.candidate != null && candidate.sdpMid != null && candidate.sdpMLineIndex != null) {
+                            coroutineScope.launch {
+                                audioCallService.addIceCandidate(candidate.candidate!!, candidate.sdpMid!!, candidate.sdpMLineIndex!!)
+                            }
+                        }
+                    }
+                }
+            })
+    }
+
+    suspend fun sendAnswerToFirebase(sessionId : String, answer: OfferAnswerDTO) {
         databaseService.sendAnswerToFirebase(
             sessionId,
             answer,

@@ -34,9 +34,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.minhtu.firesocialmedia.constants.TestTag
-import com.minhtu.firesocialmedia.data.model.news.NewsInstance
-import com.minhtu.firesocialmedia.di.PlatformContext
-import com.minhtu.firesocialmedia.domain.serviceimpl.imagepicker.ImagePicker
+import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
+import com.minhtu.firesocialmedia.domain.service.imagepicker.ImagePicker
 import com.minhtu.firesocialmedia.platform.CommonBackHandler
 import com.minhtu.firesocialmedia.platform.VideoPlayer
 import com.minhtu.firesocialmedia.platform.logMessage
@@ -50,7 +49,6 @@ class UploadNewsfeed {
     companion object{
         @Composable
         fun UploadNewsfeedScreen(modifier: Modifier,
-                                 platform : PlatformContext,
                                  imagePicker: ImagePicker,
                                  homeViewModel: HomeViewModel,
                                  uploadNewsfeedViewModel: UploadNewfeedViewModel,
@@ -260,8 +258,8 @@ class UploadNewsfeed {
                         Button(
                             onClick = {
                                 loadingViewModel.showLoading()
-                                if(isUpdated) uploadNewsfeedViewModel.updateNewInformation(updateNew!!, platform)
-                                else uploadNewsfeedViewModel.createPost(uploadNewsfeedViewModel.currentUser!!, platform)
+                                if(isUpdated) uploadNewsfeedViewModel.updateNewInformation(updateNew!!)
+                                else uploadNewsfeedViewModel.createPost(uploadNewsfeedViewModel.currentUser!!)
                             },
                             modifier = Modifier.testTag(TestTag.TAG_BUTTON_POST)
                                 .semantics{

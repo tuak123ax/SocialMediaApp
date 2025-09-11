@@ -27,10 +27,9 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.minhtu.firesocialmedia.constants.TestTag
-import com.minhtu.firesocialmedia.data.model.call.CallEventFlow
-import com.minhtu.firesocialmedia.data.model.call.OfferAnswer
-import com.minhtu.firesocialmedia.data.model.user.UserInstance
-import com.minhtu.firesocialmedia.di.PlatformContext
+import com.minhtu.firesocialmedia.domain.entity.call.CallEventFlow
+import com.minhtu.firesocialmedia.data.dto.call.OfferAnswerDTO
+import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.platform.WebRTCVideoView
 import com.minhtu.firesocialmedia.platform.showToast
 import com.minhtu.firesocialmedia.presentation.loading.Loading
@@ -45,8 +44,7 @@ class VideoCall {
             caller : UserInstance?,
             callee : UserInstance?,
             currentUserId : String?,
-            remoteVideoOffer : OfferAnswer?,
-            platform : PlatformContext,
+            remoteVideoOffer : OfferAnswerDTO?,
             videoCallViewModel: VideoCallViewModel,
             loadingViewModel: LoadingViewModel,
             navHandler : NavigationHandler,
@@ -54,7 +52,7 @@ class VideoCall {
         ) {
             val isLoading by loadingViewModel.isLoading.collectAsState()
             LaunchedEffect(Unit) {
-                videoCallViewModel.requestPermissionsAndStartVideoCall(platform,
+                videoCallViewModel.requestPermissionsAndStartVideoCall(
                     onGranted = {
                         if(caller != null && callee != null) {
                             loadingViewModel.showLoading()
@@ -63,8 +61,7 @@ class VideoCall {
                                 caller,
                                 callee,
                                 currentUserId,
-                                sessionId,
-                                platform)
+                                sessionId)
                         } else {
                             showToast("Don't have information of caller and callee!")
                             navHandler.navigateBack()

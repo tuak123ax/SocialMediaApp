@@ -45,7 +45,6 @@ class SignUp {
     companion object{
         @Composable
         fun SignUpScreen(
-            platform : PlatformContext,
             signUpViewModel: SignUpViewModel,
             loadingViewModel: LoadingViewModel,
             modifier: Modifier,
@@ -74,7 +73,7 @@ class SignUp {
                     //Title
                     Text(
                         text = "Sign Up",
-                        color = Color.Companion.White,
+                        color = Color.Companion.Red,
                         fontSize = 30.sp,
                         textAlign = TextAlign.Companion.Center,
                         modifier = Modifier.Companion.fillMaxWidth()
@@ -129,7 +128,7 @@ class SignUp {
                         Button(
                             onClick = {
                                 loadingViewModel.showLoading()
-                                signUpViewModel.signUp(platform)
+                                signUpViewModel.signUp()
                             },
                             modifier = Modifier.Companion
                                 .testTag(TestTag.Companion.TAG_BUTTON_SIGNUP)

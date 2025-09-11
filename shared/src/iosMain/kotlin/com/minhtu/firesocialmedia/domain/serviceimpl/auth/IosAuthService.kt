@@ -2,9 +2,9 @@ package com.minhtu.firesocialmedia.domain.serviceimpl.auth
 
 import cocoapods.FirebaseAuth.FIRAuth
 import com.minhtu.firesocialmedia.constants.Constants
-import com.minhtu.firesocialmedia.data.model.signin.SignInError
+import com.minhtu.firesocialmedia.data.dto.forgotpassword.EmailExistDTO
+import com.minhtu.firesocialmedia.domain.error.signin.SignInError
 import com.minhtu.firesocialmedia.domain.serviceimpl.AuthService
-import com.minhtu.firesocialmedia.utils.Utils
 import kotlinx.coroutines.suspendCancellableCoroutine
 
 class IosAuthService() : AuthService{
@@ -42,50 +42,40 @@ class IosAuthService() : AuthService{
         }
     }
 
-    override fun getCurrentUserUid(): String? {
+    override suspend fun getCurrentUserUid(): String? {
         return FIRAuth.auth().currentUser()?.uid()
     }
 
-    override fun getCurrentUserEmail(): String? {
+    override suspend fun getCurrentUserEmail(): String? {
         return FIRAuth.auth().currentUser()?.email()
     }
 
-    override fun fetchSignInMethodsForEmail(
-        email: String,
-        callback : Utils.Companion.FetchSignInMethodCallback
-    ) {
+    override suspend fun fetchSignInMethodsForEmail(email: String): EmailExistDTO = suspendCancellableCoroutine { continuation ->
         FIRAuth.auth().fetchSignInMethodsForEmail(email) { result, error ->
             if (error != null || result == null) {
-                com.minhtu.firesocialmedia.platform.logMessage("iOSAuth") { "fetchSignInMethods error: ${error?.localizedDescription ?: "nil"}" }
-                callback.onFailure(Pair(false, Constants.EMAIL_SERVER_ERROR))
+                if(continuation.isActive) continuation.resume(EmailExistDTO(false, Constants.EMAIL_SERVER_ERROR), onCancellation = {})
             } else {
-                com.minhtu.firesocialmedia.platform.logMessage("iOSAuth") { "fetchSignInMethods: ${result.joinToString()}" }
                 if (result.isNotEmpty()) {
-                    callback.onSuccess(Pair(true, Constants.EMAIL_EXISTED))
+                    if(continuation.isActive) continuation.resume(EmailExistDTO(true, Constants.EMAIL_EXISTED), onCancellation = {})
                 } else {
-                    callback.onFailure(Pair(false, Constants.EMAIL_NOT_EXISTED))
+                    if(continuation.isActive) continuation.resume(EmailExistDTO(false, Constants.EMAIL_NOT_EXISTED), onCancellation = {})
                 }
             }
         }
     }
 
-    override fun sendPasswordResetEmail(
-        email: String,
-        callback: Utils.Companion.SendPasswordResetEmailCallback
-    ) {
+    override suspend fun sendPasswordResetEmail(email: String): Boolean = suspendCancellableCoroutine{ continuation ->
         FIRAuth.auth().sendPasswordResetWithEmail(email) { error ->
             if(error == null) {
-                callback.onSuccess()
+                if(continuation.isActive) continuation.resume(true, onCancellation = {})
             } else {
-                callback.onFailure()
+                if(continuation.isActive) continuation.resume(false, onCancellation = {})
             }
         }
     }
 
-    override fun handleSignInGoogleResult(
-        credentials: Any,
-        callback: Utils.Companion.SignInGoogleCallback
-    ) {
-
+    override suspend fun handleSignInGoogleResult(credentials: Any): String? {
+        //Not yet implemented
+        return ""
     }
 }

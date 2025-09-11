@@ -4,17 +4,19 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.minhtu.firesocialmedia.constants.Constants
-import com.minhtu.firesocialmedia.data.model.news.NewsInstance
-import com.minhtu.firesocialmedia.data.model.notification.NotificationInstance
-import com.minhtu.firesocialmedia.data.model.notification.NotificationType
-import com.minhtu.firesocialmedia.data.model.user.UserInstance
-import com.minhtu.firesocialmedia.di.PlatformContext
+import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
+import com.minhtu.firesocialmedia.domain.entity.notification.NotificationInstance
+import com.minhtu.firesocialmedia.domain.entity.notification.NotificationType
+import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
+import com.minhtu.firesocialmedia.domain.usecases.common.GetUserUseCase
+import com.minhtu.firesocialmedia.domain.usecases.common.SaveNotificationToDatabaseUseCase
+import com.minhtu.firesocialmedia.domain.usecases.newsfeed.SaveNewToDatabaseUseCase
+import com.minhtu.firesocialmedia.domain.usecases.newsfeed.UpdateNewsFromDatabaseUseCase
 import com.minhtu.firesocialmedia.platform.createMessageForServer
 import com.minhtu.firesocialmedia.platform.generateRandomId
 import com.minhtu.firesocialmedia.platform.getCurrentTime
 import com.minhtu.firesocialmedia.platform.getRandomIdForNotification
 import com.minhtu.firesocialmedia.platform.sendMessageToServer
-import com.minhtu.firesocialmedia.utils.Utils
 import com.rickclephas.kmp.observableviewmodel.ViewModel
 import com.rickclephas.kmp.observableviewmodel.launch
 import kotlinx.coroutines.CoroutineDispatcher
@@ -28,6 +30,10 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class UploadNewfeedViewModel(
+    private val getUserUseCase: GetUserUseCase,
+    private val saveNotificationToDatabaseUseCase: SaveNotificationToDatabaseUseCase,
+    private val saveNewToDatabase : SaveNewToDatabaseUseCase,
+    private val updateNewsFromDatabaseUseCase: UpdateNewsFromDatabaseUseCase,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : ViewModel() {
     var currentUser : UserInstance? = null
@@ -71,7 +77,7 @@ class UploadNewfeedViewModel(
         _clickBackButton.value = false
     }
 
-    fun createPost(user : UserInstance, platform: PlatformContext){
+    fun createPost(user : UserInstance){
         viewModelScope.launch {
             withContext(ioDispatcher) {
                 val newsRandomId = generateRandomId()
@@ -79,8 +85,10 @@ class UploadNewfeedViewModel(
                     //Save post to db
                     val newsInstance = NewsInstance(newsRandomId,user.uid, user.name,user.image,message,image,video)
                     newsInstance.timePosted = getCurrentTime()
-                    platform.database.saveInstanceToDatabase(newsRandomId,
-                        Constants.NEWS_PATH,newsInstance,_createPostStatus)
+                    _createPostStatus.value = saveNewToDatabase.invoke(
+                        newsRandomId,
+                        Constants.NEWS_PATH,newsInstance
+                    )
 
                     //Create noti object
                     val notiContent = message
@@ -91,7 +99,7 @@ class UploadNewfeedViewModel(
                         NotificationType.UPLOAD_NEW,
                         newsInstance.id)
                     //Send Notification
-                    val friendTokens = getFriendTokens(platform)
+                    val friendTokens = getFriendTokens()
                     if(friendTokens.isNotEmpty()){
                         if(notification.content.isNotEmpty()) {
                             sendMessageToServer(createMessageForServer(notification.content, friendTokens, currentUser!!, "BASIC"))
@@ -112,13 +120,31 @@ class UploadNewfeedViewModel(
 
                     //Save notification to db
                     for(friend in currentUser!!.friends) {
-                        val friendsOfCurrentUser = findUserById(friend, platform)
-                        Utils.saveNotification(notification, friendsOfCurrentUser!!, platform)
+                        val friendsOfCurrentUser = findUserById(friend)
+                        saveNotification(
+                            notification,
+                            friendsOfCurrentUser!!,
+                            saveNotificationToDatabaseUseCase)
                     }
                 } else {
                     _postError.value = Constants.POST_NEWS_EMPTY_ERROR
                 }
             }
+        }
+    }
+
+    suspend fun saveNotification(
+        notification: NotificationInstance,
+        friend : UserInstance,
+        saveNotificationToDatabaseUseCase: SaveNotificationToDatabaseUseCase) {
+        //Save notification to friend's notification list
+        try{
+            friend.addNotification(notification)
+            saveNotificationToDatabaseUseCase.invoke(
+                friend.uid,
+                Constants.USER_PATH,
+                friend.notifications)
+        } catch(_: Exception) {
         }
     }
 
@@ -129,10 +155,10 @@ class UploadNewfeedViewModel(
         image = ""
     }
 
-    suspend fun getFriendTokens(platform: PlatformContext): ArrayList<String> {
+    suspend fun getFriendTokens(): ArrayList<String> {
         val friendTokens = ArrayList<String>()
         for(friend in currentUser!!.friends) {
-            val user = findUserById(friend, platform)
+            val user = findUserById(friend)
             if(user != null) {
                 friendTokens.add(user.token)
             }
@@ -140,18 +166,24 @@ class UploadNewfeedViewModel(
         return friendTokens
     }
 
-    fun updateNewInformation(new: NewsInstance, platform: PlatformContext) {
+    fun updateNewInformation(new: NewsInstance) {
         val backgroundScope = CoroutineScope(SupervisorJob() + ioDispatcher)
         backgroundScope.launch {
             if(message.isNotEmpty() || image.isNotEmpty() || video.isNotEmpty()) {
-                platform.database.updateNewsFromDatabase(Constants.NEWS_PATH,message,image, video,new,_updatePostStatus)
+                _updatePostStatus.value = updateNewsFromDatabaseUseCase.invoke(
+                    Constants.NEWS_PATH,
+                    message,
+                    image,
+                    video,
+                    new
+                )
             } else {
                 _postError.value = Constants.POST_NEWS_EMPTY_ERROR
             }
         }
     }
 
-    suspend fun findUserById(userId: String, platform: PlatformContext) : UserInstance? {
-        return platform.database.getUser(userId)
+    suspend fun findUserById(userId: String) : UserInstance? {
+        return getUserUseCase.invoke(userId)
     }
 }

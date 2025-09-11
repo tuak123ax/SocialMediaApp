@@ -13,25 +13,25 @@ import com.google.firebase.database.GenericTypeIndicator
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.storage.FirebaseStorage
 import com.minhtu.firesocialmedia.constants.Constants
-import com.minhtu.firesocialmedia.data.model.call.AudioCallSession
-import com.minhtu.firesocialmedia.data.model.call.CallStatus
-import com.minhtu.firesocialmedia.data.model.call.IceCandidateData
-import com.minhtu.firesocialmedia.data.model.call.OfferAnswer
-import com.minhtu.firesocialmedia.data.model.news.BaseNewsInstance
-import com.minhtu.firesocialmedia.data.model.news.CommentInstance
-import com.minhtu.firesocialmedia.data.model.news.NewsInstance
-import com.minhtu.firesocialmedia.data.model.notification.NotificationInstance
+import com.minhtu.firesocialmedia.data.dto.call.OfferAnswerDTO
+import com.minhtu.firesocialmedia.domain.entity.base.BaseNewsInstance
+import com.minhtu.firesocialmedia.data.dto.call.AudioCallSessionDTO
+import com.minhtu.firesocialmedia.data.dto.call.IceCandidateDTO
+import com.minhtu.firesocialmedia.data.dto.news.NewsDTO
+import com.minhtu.firesocialmedia.data.dto.notification.NotificationDTO
+import com.minhtu.firesocialmedia.domain.entity.call.CallStatus
 import com.minhtu.firesocialmedia.utils.Utils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 
 class AndroidDatabaseHelper {
     companion object {
-        fun saveInstanceToDatabase(id : String,
+        suspend fun saveInstanceToDatabase(id : String,
                                    path : String,
-                                   instance : BaseNewsInstance,
-                                   stateFlow : MutableStateFlow<Boolean?>) {
+                                   instance : BaseNewsInstance) : Boolean = suspendCancellableCoroutine { continuation ->
             Log.d("Task", "saveInstanceToDatabase")
             val storageReference = FirebaseStorage.getInstance().getReference()
                 .child(path).child(id)
@@ -43,7 +43,7 @@ class AndroidDatabaseHelper {
                         storageReference.downloadUrl.addOnSuccessListener { dataUrl ->
                             instance.updateImage(dataUrl.toString())
                             databaseReference.setValue(instance).addOnCompleteListener{addUserTask ->
-                                stateFlow.value = addUserTask.isSuccessful
+                                if(continuation.isActive) continuation.resume(addUserTask.isSuccessful, onCancellation = {})
                             }
                         }
                     }
@@ -55,24 +55,23 @@ class AndroidDatabaseHelper {
                             storageReference.downloadUrl.addOnSuccessListener { dataUrl ->
                                 instance.updateVideo(dataUrl.toString())
                                 databaseReference.setValue(instance).addOnCompleteListener{addUserTask ->
-                                    stateFlow.value = addUserTask.isSuccessful
+                                    if(continuation.isActive) continuation.resume(addUserTask.isSuccessful, onCancellation = {})
                                 }
                             }
                         }
                     }
                 } else {
                     databaseReference.setValue(instance).addOnCompleteListener{addNewsTask ->
-                        stateFlow.value = addNewsTask.isSuccessful
+                        if(continuation.isActive) continuation.resume(addNewsTask.isSuccessful, onCancellation = {})
                     }
                 }
             }
         }
 
-        fun saveValueToDatabase(id : String,
+        suspend fun saveValueToDatabase(id : String,
                                 path : String,
                                 value : HashMap<String, Int>,
-                                externalPath : String,
-                                callback : Utils.Companion.BasicCallBack) {
+                                externalPath : String) : Boolean = suspendCancellableCoroutine{ continuation ->
             Log.d("Task", "saveValueToDatabase")
             var databaseReference = FirebaseDatabase.getInstance().getReference()
                 .child(path).child(id)
@@ -82,17 +81,17 @@ class AndroidDatabaseHelper {
             if(value.isNotEmpty()){
                 databaseReference.setValue(value).addOnCompleteListener { task ->
                     if(task.isSuccessful) {
-                        callback.onSuccess()
+                        if(continuation.isActive) continuation.resume(true, onCancellation = {})
                     } else {
-                        callback.onFailure()
+                        if(continuation.isActive) continuation.resume(false, onCancellation = {})
                     }
                 }
             } else {
                 databaseReference.removeValue().addOnCompleteListener { task ->
                     if(task.isSuccessful) {
-                        callback.onSuccess()
+                        if(continuation.isActive) continuation.resume(true, onCancellation = {})
                     } else {
-                        callback.onFailure()
+                        if(continuation.isActive) continuation.resume(false, onCancellation = {})
                     }
                 }
             }
@@ -148,7 +147,7 @@ class AndroidDatabaseHelper {
 
         fun saveNotificationToDatabase(id : String,
                                    path : String,
-                                   instance : ArrayList<NotificationInstance>) {
+                                   instance : ArrayList<NotificationDTO>) {
             Log.d("Task", "saveNotificationToDatabase")
             val databaseReference = FirebaseDatabase.getInstance().getReference()
                 .child(path).child(id).child(Constants.NOTIFICATION_PATH)
@@ -157,13 +156,13 @@ class AndroidDatabaseHelper {
 
         fun deleteNotificationFromDatabase(id : String,
                                            path : String,
-                                           notification: NotificationInstance) {
+                                           notification: NotificationDTO) {
             Log.d("Task", "deleteNotificationFromDatabase")
             val databaseReference = FirebaseDatabase.getInstance().getReference()
                 .child(path).child(id).child(Constants.NOTIFICATION_PATH)
             databaseReference.get().addOnSuccessListener { snapshot ->
                 //Get notification list from db
-                val list = snapshot.getValue(object : GenericTypeIndicator<List<NotificationInstance>>() {})?.toMutableList()
+                val list = snapshot.getValue(object : GenericTypeIndicator<List<NotificationDTO>>() {})?.toMutableList()
                 //Delete value in notification list and upload the list to db again
                 list?.let {
                     it.remove(notification) // or any value
@@ -172,108 +171,104 @@ class AndroidDatabaseHelper {
             }
         }
 
-        fun deleteNewsFromDatabase(path : String,
-                                   new: NewsInstance) {
+        suspend fun deleteNewsFromDatabase(path: String, new: NewsDTO) {
             Log.d("Task", "deleteNewsFromDatabase")
-            //Delete data in realtime database
-            FirebaseDatabase.getInstance().getReference()
-                .child(path).child(new.id).removeValue()
-            //Delete data in firebase storage
-            if(new.image.isNotEmpty() || new.video.isNotEmpty()) {
-                FirebaseStorage.getInstance().getReference()
-                    .child(path).child(new.id).delete()
+
+            FirebaseDatabase.getInstance()
+                .getReference()
+                .child(path)
+                .child(new.id)
+                .removeValue()
+                .await()
+
+            if (new.image.isNotEmpty() || new.video.isNotEmpty()) {
+                try {
+                    FirebaseStorage.getInstance()
+                        .getReference()
+                        .child(path)
+                        .child(new.id)
+                        .delete()
+                        .await()
+                } catch (e: Exception) {
+                    Log.w("Task", "Storage delete: ${e.message}")
+                }
             }
         }
 
-        fun deleteCommentFromDatabase(path : String,
-                                   comment: CommentInstance) {
+        suspend fun deleteCommentFromDatabase(path : String,
+                                   comment: BaseNewsInstance) {
             Log.d("Task", "deleteNewsFromDatabase")
             //Delete data in realtime database
             FirebaseDatabase.getInstance().getReference()
-                .child(path).child(comment.id).removeValue()
+                .child(path).child(comment.id).removeValue().await()
         }
 
-        fun updateNewsFromDatabase(path : String,
-                                   newContent : String,
-                                   newImage : String,
-                                   newVideo : String,
-                                   new: NewsInstance,
-                                   status: MutableStateFlow<Boolean?>) {
+        suspend fun updateNewsFromDatabase(
+            path: String,
+            newContent: String,
+            newImage: String,
+            newVideo: String,
+            new: NewsDTO
+        ): Boolean {
             Log.d("Task", "updateNewsFromDatabase")
-            val storageReference = FirebaseStorage.getInstance().getReference()
-                .child(path).child(new.id)
-            if(newImage.isNotEmpty()){
-                if(newImage != new.image) {
-                    storageReference.putFile(newImage.toUri()).addOnCompleteListener{ putFileTask ->
-                        if(putFileTask.isSuccessful){
-                            storageReference.downloadUrl.addOnSuccessListener { imageUrl ->
-                                val updates = mapOf<String, Any>(
-                                    "message" to newContent,
-                                    "image" to imageUrl.toString()
-                                )
-                                updateDataInDatabase(path, new.id, updates, status)
-                            }
+
+            val dbRef = FirebaseDatabase.getInstance()
+                .getReference(path)
+                .child(new.id)
+
+            val storageRef = FirebaseStorage.getInstance()
+                .getReference(path)
+                .child(new.id)
+
+            return try {
+                val updates = mutableMapOf<String, Any>("message" to newContent)
+
+                when {
+                    // Image branch
+                    newImage.isNotEmpty() -> {
+                        if (newImage != new.image) {
+                            storageRef.putFile(newImage.toUri()).await()
+                            val imageUrl = storageRef.downloadUrl.await().toString()
+                            updates["image"] = imageUrl
+                            updates["video"] = ""
+                        } else {
+                            updates["image"] = newImage
+                            updates["video"] = ""
                         }
                     }
-                } else {
-                    val updates = mapOf<String, Any>(
-                        "message" to newContent,
-                        "image" to newImage
-                    )
-                    updateDataInDatabase(path, new.id, updates, status)
-                }
-            } else {
-                if(newVideo.isNotEmpty()) {
-                    if(newVideo != new.video) {
-                        storageReference.putFile(newVideo.toUri()).addOnCompleteListener{ putFileTask ->
-                            if(putFileTask.isSuccessful){
-                                storageReference.downloadUrl.addOnSuccessListener { videoUrl ->
-                                    val updates = mapOf<String, Any>(
-                                        "message" to newContent,
-                                        "video" to videoUrl.toString()
-                                    )
-                                    updateDataInDatabase(path, new.id, updates, status)
-                                }
-                            }
+
+                    // Video branch
+                    newVideo.isNotEmpty() -> {
+                        if (newVideo != new.video) {
+                            storageRef.putFile(newVideo.toUri()).await()
+                            val videoUrl = storageRef.downloadUrl.await().toString()
+                            updates["video"] = videoUrl
+                            updates["image"] = ""
+                        } else {
+                            updates["video"] = newVideo
+                            updates["image"] = ""
                         }
-                    } else {
-                        val updates = mapOf<String, Any>(
-                            "message" to newContent,
-                            "video" to newVideo
-                        )
-                        updateDataInDatabase(path, new.id, updates, status)
                     }
-                } else {
-                    val updates = mapOf<String, Any>(
-                        "message" to newContent,
-                        "image" to "",
-                        "video" to ""
-                    )
-                    if(new.image.isNotEmpty() || new.video.isNotEmpty()) {
-                        FirebaseStorage.getInstance().getReference()
-                            .child(path).child(new.id).delete()
+
+                    // No media: clear both, delete old storage object if any
+                    else -> {
+                        updates["image"] = ""
+                        updates["video"] = ""
+                        if (new.image.isNotEmpty() || new.video.isNotEmpty()) {
+                            runCatching { storageRef.delete().await() }
+                        }
                     }
-                    updateDataInDatabase(path, new.id, updates, status)
                 }
+
+                dbRef.updateChildren(updates).await()
+                true
+            } catch (t: Throwable) {
+                Log.e("Task", "updateNewsFromDatabase failed", t)
+                false
             }
         }
 
-        private fun updateDataInDatabase(path : String,
-                                         id : String,
-                                         updates : Map<String, Any>,
-                                         status: MutableStateFlow<Boolean?>) {
-            FirebaseDatabase.getInstance().getReference()
-                .child(path).child(id).updateChildren(updates).addOnCompleteListener {
-                        task ->
-                    if(task.isSuccessful) {
-                        status.value = true
-                    } else {
-                        status.value = false
-                    }
-                }
-        }
-
-        fun downloadImage(context : Context, image: String, fileName : String, onComplete: (Boolean) -> Unit){
+        suspend fun downloadImage(context : Context, image: String, fileName : String) : Boolean = suspendCancellableCoroutine{ continuation ->
             val request = DownloadManager.Request(image.toUri())
                 .setTitle("Download Image")
                 .setDescription("Downloading $fileName")
@@ -283,11 +278,16 @@ class AndroidDatabaseHelper {
                 .setAllowedOverRoaming(true)
 
             val downloadManager = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
-            downloadManager.enqueue(request)
+            val result = downloadManager.enqueue(request)
+            if(result == -1L) {
+                if(continuation.isActive) continuation.resume(false, onCancellation = {})
+            } else {
+                if(continuation.isActive) continuation.resume(true, onCancellation = {})
+            }
         }
 
         fun sendOfferToFireBase(sessionId : String,
-                                offer : OfferAnswer,
+                                offer : OfferAnswerDTO,
                                 callPath : String,
                                 sendOfferCallBack : Utils.Companion.BasicCallBack) {
             Log.d("Task", "sendOfferToFireBase")
@@ -312,7 +312,7 @@ class AndroidDatabaseHelper {
 
         fun sendAnswerToFireBase(
             sessionId : String,
-            answer : OfferAnswer,
+            answer : OfferAnswerDTO,
             callPath : String,
             sendAnswerCallBack : Utils.Companion.BasicCallBack
         ) {
@@ -374,7 +374,7 @@ class AndroidDatabaseHelper {
 
         fun sendIceCandidateToFireBase(
             sessionId : String,
-            iceCandidate: IceCandidateData,
+            iceCandidate: IceCandidateDTO,
             whichCandidate : String,
             callPath : String,
             sendIceCandidateCallBack : Utils.Companion.BasicCallBack) {
@@ -389,7 +389,7 @@ class AndroidDatabaseHelper {
             }
         }
 
-        fun sendCallSessionToFirebase(session: AudioCallSession,
+        fun sendCallSessionToFirebase(session: AudioCallSessionDTO,
                                       callPath : String,
                                       sendCallSessionCallBack : Utils.Companion.BasicCallBack) {
             Log.d("Task", "sendCallSessionToFirebase")
@@ -439,9 +439,9 @@ class AndroidDatabaseHelper {
             isInCall : MutableStateFlow<Boolean>,
             currentUserId: String,
             callPath: String,
-            phoneCallCallBack : (String, String, String, OfferAnswer) -> Unit,
+            phoneCallCallBack : (String, String, String, OfferAnswerDTO) -> Unit,
             endCallSession: (Boolean) -> Unit,
-            iceCandidateCallBack : (iceCandidates : Map<String, IceCandidateData>?) -> Unit) {
+            iceCandidateCallBack : (iceCandidates : Map<String, IceCandidateDTO>?) -> Unit) {
             val firebaseDatabase = FirebaseDatabase.getInstance().getReference(callPath)
             firebaseDatabase.addChildEventListener(object : ChildEventListener {
                 override fun onChildAdded(snapshot: DataSnapshot, previousChildName: String?) {
@@ -453,13 +453,13 @@ class AndroidDatabaseHelper {
                     val type = offerSnapshot.child("type").getValue(String::class.java)
 
                     val offer = if (sdp != null && type != null) {
-                        OfferAnswer(sdp, type)
+                        OfferAnswerDTO(sdp, type)
                     } else null
 
                     Log.e("CallObserver", "Offer = $offer")
 
                     if(offer != null) {
-                        val audioCallSession = snapshot.getValue(AudioCallSession::class.java) ?: return
+                        val audioCallSession = snapshot.getValue(AudioCallSessionDTO::class.java) ?: return
                         handleOffer(
                             audioCallSession,
                             offer, 
@@ -471,7 +471,7 @@ class AndroidDatabaseHelper {
                     } else {
                         snapshot.ref.addValueEventListener(object : ValueEventListener {
                             override fun onDataChange(updatedSnapshot: DataSnapshot) {
-                                val updatedSession = updatedSnapshot.getValue(AudioCallSession::class.java)
+                                val updatedSession = updatedSnapshot.getValue(AudioCallSessionDTO::class.java)
                                 if (updatedSession?.offer != null) {
                                     handleOffer(
                                         updatedSession,
@@ -492,7 +492,7 @@ class AndroidDatabaseHelper {
 
                 override fun onChildChanged(snapshot: DataSnapshot, previousChildName: String?) {}
                 override fun onChildRemoved(snapshot: DataSnapshot) {
-                    val session = snapshot.getValue(AudioCallSession::class.java) ?: return
+                    val session = snapshot.getValue(AudioCallSessionDTO::class.java) ?: return
                     if (session.calleeId == currentUserId || session.callerId == currentUserId) {
                         // Navigate out of call screen, show message, etc.
                         Log.d("CallObserver", "Call ended by caller or callee")
@@ -509,9 +509,9 @@ class AndroidDatabaseHelper {
         fun observePhoneCallWithoutCheckingInCall(
             currentUserId: String,
             callPath: String,
-            phoneCallCallBack : (String, String, String, OfferAnswer) -> Unit,
+            phoneCallCallBack : (String, String, String, OfferAnswerDTO) -> Unit,
             endCallSession: (Boolean) -> Unit,
-            iceCandidateCallBack : (iceCandidates : Map<String, IceCandidateData>?) -> Unit) {
+            iceCandidateCallBack : (iceCandidates : Map<String, IceCandidateDTO>?) -> Unit) {
             val firebaseDatabase = FirebaseDatabase.getInstance().getReference(callPath)
             firebaseDatabase.addChildEventListener(object : ChildEventListener {
                 override fun onChildAdded(snapshot: DataSnapshot, previousChildName: String?) {
@@ -522,13 +522,13 @@ class AndroidDatabaseHelper {
                     val type = offerSnapshot.child("type").getValue(String::class.java)
 
                     val offer = if (sdp != null && type != null) {
-                        OfferAnswer(sdp, type)
+                        OfferAnswerDTO(sdp, type)
                     } else null
 
                     Log.e("observePhoneCallWithoutCheckingInCall", "Offer = $offer")
 
                     if(offer != null) {
-                        val audioCallSession = snapshot.getValue(AudioCallSession::class.java) ?: return
+                        val audioCallSession = snapshot.getValue(AudioCallSessionDTO::class.java) ?: return
                         handleOfferWithoutInCall(
                             audioCallSession,
                             offer,
@@ -539,7 +539,7 @@ class AndroidDatabaseHelper {
                     } else {
                         snapshot.ref.addValueEventListener(object : ValueEventListener {
                             override fun onDataChange(updatedSnapshot: DataSnapshot) {
-                                val updatedSession = updatedSnapshot.getValue(AudioCallSession::class.java)
+                                val updatedSession = updatedSnapshot.getValue(AudioCallSessionDTO::class.java)
                                 if (updatedSession?.offer != null) {
                                     handleOfferWithoutInCall(
                                         updatedSession,
@@ -559,7 +559,7 @@ class AndroidDatabaseHelper {
 
                 override fun onChildChanged(snapshot: DataSnapshot, previousChildName: String?) {}
                 override fun onChildRemoved(snapshot: DataSnapshot) {
-                    val session = snapshot.getValue(AudioCallSession::class.java)
+                    val session = snapshot.getValue(AudioCallSessionDTO::class.java)
                     if (session?.calleeId == currentUserId || session?.callerId == currentUserId) {
                         // Navigate out of call screen, show message, etc.
                         Log.d("observePhoneCallWithoutCheckingInCall", "Call ended by caller or callee")
@@ -573,13 +573,13 @@ class AndroidDatabaseHelper {
             })
         }
 
-        fun handleOffer(session : AudioCallSession?,
-                        offer : OfferAnswer,
+        fun handleOffer(session : AudioCallSessionDTO?,
+                        offer : OfferAnswerDTO,
                         isInCall : MutableStateFlow<Boolean>,
                         currentUserId: String,
                         endCallSession: (Boolean) -> Unit,
-                        phoneCallCallBack : (String, String, String, OfferAnswer) -> Unit,
-                        iceCandidateCallBack : (iceCandidates : Map<String, IceCandidateData>?) -> Unit) {
+                        phoneCallCallBack : (String, String, String, OfferAnswerDTO) -> Unit,
+                        iceCandidateCallBack : (iceCandidates : Map<String, IceCandidateDTO>?) -> Unit) {
             val sessionId = session?.sessionId
             val callerId = session?.callerId
             val calleeId = session?.calleeId
@@ -603,12 +603,12 @@ class AndroidDatabaseHelper {
             }
         }
 
-         fun handleOfferWithoutInCall(session : AudioCallSession?,
-                                      offer : OfferAnswer,
+         fun handleOfferWithoutInCall(session : AudioCallSessionDTO?,
+                                      offer : OfferAnswerDTO,
                                       currentUserId: String,
                                       endCallSession: (Boolean) -> Unit,
-                                      phoneCallCallBack : (String, String, String, OfferAnswer) -> Unit,
-                                      iceCandidateCallBack : (iceCandidates : Map<String, IceCandidateData>?) -> Unit) {
+                                      phoneCallCallBack : (String, String, String, OfferAnswerDTO) -> Unit,
+                                      iceCandidateCallBack : (iceCandidates : Map<String, IceCandidateDTO>?) -> Unit) {
              val sessionId = session?.sessionId
              val callerId = session?.callerId
              val calleeId = session?.calleeId
@@ -635,13 +635,13 @@ class AndroidDatabaseHelper {
         fun observeAnswerFromCallee(
             sessionId : String,
             callPath: String,
-            answerCallBack : (answer : OfferAnswer) -> Unit,
+            answerCallBack : (answer : OfferAnswerDTO) -> Unit,
             rejectCallBack : () -> Unit
         ) {
             val firebaseDatabase = FirebaseDatabase.getInstance().getReference(callPath).child(sessionId).child("answer")
             valueEventListener = object : ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
-                    val answer = snapshot.getValue(OfferAnswer::class.java) ?: return
+                    val answer = snapshot.getValue(OfferAnswerDTO::class.java) ?: return
                     val sdp = answer.sdp
                     val type = answer.type
                     val initiator = answer.initiator
@@ -706,7 +706,7 @@ class AndroidDatabaseHelper {
         fun observeIceCandidatesFromCallee(
             sessionId: String,
             callPath: String,
-            iceCandidateCallBack: (iceCandidate: IceCandidateData) -> Unit
+            iceCandidateCallBack: (iceCandidate: IceCandidateDTO) -> Unit
         ) {
             val firebaseDatabase = FirebaseDatabase.getInstance()
                 .getReference(callPath)
@@ -715,7 +715,7 @@ class AndroidDatabaseHelper {
 
             firebaseDatabase.addChildEventListener(object : ChildEventListener {
                 override fun onChildAdded(snapshot: DataSnapshot, previousChildName: String?) {
-                    val iceCandidate = snapshot.getValue(IceCandidateData::class.java) ?: return
+                    val iceCandidate = snapshot.getValue(IceCandidateDTO::class.java) ?: return
                     iceCandidateCallBack(iceCandidate)
                 }
 
@@ -731,11 +731,11 @@ class AndroidDatabaseHelper {
 
         fun observeVideoCall(sessionId: String,
                              callPath: String,
-                             videoCallCallBack: (offer : OfferAnswer) -> Unit) {
+                             videoCallCallBack: (offer : OfferAnswerDTO) -> Unit) {
             val firebaseDatabase = FirebaseDatabase.getInstance().getReference(callPath).child(sessionId).child("offer")
             firebaseDatabase.addValueEventListener(object : ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
-                    val offer = snapshot.getValue(OfferAnswer::class.java) ?: return
+                    val offer = snapshot.getValue(OfferAnswerDTO::class.java) ?: return
                     val sdp = offer.sdp
                     val type = offer.type
                     val initiator = offer.initiator

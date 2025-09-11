@@ -2,9 +2,10 @@ package com.minhtu.firesocialmedia.presentation.calling.videocall
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.minhtu.firesocialmedia.data.model.call.OfferAnswer
-import com.minhtu.firesocialmedia.data.model.user.UserInstance
-import com.minhtu.firesocialmedia.di.PlatformContext
+import com.minhtu.firesocialmedia.data.dto.call.OfferAnswerDTO
+import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
+import com.minhtu.firesocialmedia.domain.usecases.call.RequestCameraAndAudioPermissionsUseCase
+import com.minhtu.firesocialmedia.domain.usecases.call.StartVideoCallServiceUseCase
 import com.minhtu.firesocialmedia.platform.logMessage
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -13,21 +14,22 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class VideoCallViewModel(
+    val startVideoCallServiceUseCase: StartVideoCallServiceUseCase,
+    val requestCameraAndAudioPermissionsUseCase : RequestCameraAndAudioPermissionsUseCase,
     val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : ViewModel() {
     fun startVideoCall(
-        remoteVideoOffer : OfferAnswer?,
+        remoteVideoOffer : OfferAnswerDTO?,
         caller : UserInstance,
         callee : UserInstance,
         currentUserId : String?,
-        sessionId : String,
-        platform : PlatformContext) {
+        sessionId : String) {
         logMessage("startVideoCall", { sessionId })
         logMessage("startVideoCall", { "currentUserId: $currentUserId" })
         viewModelScope.launch {
             withContext(ioDispatcher) {
                 try {
-                    platform.audioCall.startVideoCallService(sessionId, caller, callee, currentUserId, remoteVideoOffer)
+                    startVideoCallServiceUseCase.invoke(sessionId, caller, callee, currentUserId, remoteVideoOffer)
                 } catch (e : Exception) {
                     logMessage("startVideoCall Exception", { e.message.toString() })
                 }
@@ -36,12 +38,11 @@ class VideoCallViewModel(
     }
 
     fun requestPermissionsAndStartVideoCall(
-        platform: PlatformContext,
         onGranted: () -> Unit,
         onDenied: () -> Unit) {
         viewModelScope.launch {
             val granted = withContext(Dispatchers.IO) {
-                platform.permissionManager.requestCameraAndAudioPermissions()
+                requestCameraAndAudioPermissionsUseCase.invoke()
             }
             if (granted) {
                 onGranted()

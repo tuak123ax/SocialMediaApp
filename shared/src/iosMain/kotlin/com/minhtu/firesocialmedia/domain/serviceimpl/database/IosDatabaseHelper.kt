@@ -10,15 +10,14 @@ import cocoapods.FirebaseStorage.FIRStorageReference
 import cocoapods.FirebaseStorage.FIRStorageTaskStatusFailure
 import cocoapods.FirebaseStorage.FIRStorageTaskStatusSuccess
 import com.minhtu.firesocialmedia.constants.Constants
-import com.minhtu.firesocialmedia.data.model.news.CommentInstance
-import com.minhtu.firesocialmedia.data.model.news.NewsInstance
-import com.minhtu.firesocialmedia.data.model.notification.NotificationInstance
-import com.minhtu.firesocialmedia.data.model.notification.fromMap
-import com.minhtu.firesocialmedia.data.model.notification.toMap
+import com.minhtu.firesocialmedia.data.dto.news.NewsDTO
+import com.minhtu.firesocialmedia.data.dto.notification.NotificationDTO
+import com.minhtu.firesocialmedia.data.dto.notification.fromMap
+import com.minhtu.firesocialmedia.data.dto.notification.toMap
+import com.minhtu.firesocialmedia.domain.entity.base.BaseNewsInstance
 import com.minhtu.firesocialmedia.platform.logMessage
 import com.minhtu.firesocialmedia.platform.toNSData
 import kotlinx.cinterop.BetaInteropApi
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.suspendCancellableCoroutine
 import platform.Foundation.NSData
 import platform.Foundation.NSDictionary
@@ -54,85 +53,133 @@ class IosDatabaseHelper {
         suspend fun saveInstanceToDatabase(
             id: String,
             path: String,
-            instance: NewsInstance,
-            stateFlow : MutableStateFlow<Boolean?>
-        ) {
-            val storageReference = storage.child(path).child(id)
-            val databaseReference = database.child(path).child(id)
+            instance: BaseNewsInstance
+        ): Boolean {
+            val storageRef = storage.child(path).child(id)
+            val dbRef = database.child(path).child(id)
 
-            try {
-                if (instance.image.isNotEmpty()) {
-                    val nsDataImage = Base64.decode(instance.image).toNSData()
-                    val metadata = FIRStorageMetadata().apply {
-                        setContentType("image/jpeg")
+            return try {
+                when {
+                    instance.image.isNotEmpty() -> {
+                        // Upload image, set URL back
+                        val data = Base64.decode(instance.image).toNSData()
+                        val metadata = FIRStorageMetadata().apply { setContentType("image/jpeg") }
+                        val imageUrl = uploadAndGetRemoteURL(storageRef, data, metadata)
+                        logMessage("saveInstanceToDatabase") { "imageUrl=$imageUrl" }
+                        instance.updateImage(imageUrl)
+
+                        val map = instance.toMap() as NSDictionary
+                        setValue(dbRef, map)  // suspend, should throw on failure
+                        true
                     }
 
-                    val imageUrl = uploadAndGetRemoteURL(storageReference, nsDataImage, metadata)
-                    logMessage("saveInstanceToDatabase") { imageUrl }
-                    instance.updateImage(imageUrl)
-                } else {
-                    if(instance.video.isNotEmpty()) {
-                        val nsDataVideo = Base64.decode(instance.video).toNSData()
-                        val metadata = FIRStorageMetadata().apply {
-                            setContentType("video/mp4")
-                        }
-
-                        val videoUrl = uploadAndGetRemoteURL(storageReference, nsDataVideo, metadata)
-                        logMessage("saveInstanceToDatabase") { videoUrl }
+                    instance.video.isNotEmpty() -> {
+                        // Upload video, set URL back
+                        val data = Base64.decode(instance.video).toNSData()
+                        val metadata = FIRStorageMetadata().apply { setContentType("video/mp4") }
+                        val videoUrl = uploadAndGetRemoteURL(storageRef, data, metadata)
+                        logMessage("saveInstanceToDatabase") { "videoUrl=$videoUrl" }
                         instance.updateVideo(videoUrl)
+
+                        val map = instance.toMap() as NSDictionary
+                        setValue(dbRef, map)
+                        true
+                    }
+
+                    else -> {
+                        // No media: write instance as is
+                        val map = instance.toMap() as NSDictionary
+                        setValue(dbRef, map)
+                        true
                     }
                 }
-                // Convert instance to Firebase-compatible Map
-                val newMap = instance.toMap() as NSDictionary
-                // Save user object in Realtime Database
-                setValue(databaseReference, newMap)
-                stateFlow.value = true
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
                 e.printStackTrace()
-                stateFlow.value = false
+                false
             }
         }
 
-        @OptIn(ExperimentalEncodingApi::class)
-        suspend fun saveInstanceToDatabase(
-            id: String,
-            path: String,
-            instance: CommentInstance,
-            stateFlow : MutableStateFlow<Boolean?>
-        ) {
-            val storageReference = storage.child(path).child(id)
-            val databaseReference = database.child(path).child(id)
+//        @OptIn(ExperimentalEncodingApi::class)
+//        suspend fun saveInstanceToDatabase(
+//            id: String,
+//            path: String,
+//            instance: BaseNewsInstance
+//        ) : Boolean {
+//            val storageReference = storage.child(path).child(id)
+//            val databaseReference = database.child(path).child(id)
+//
+//            try {
+//                if (instance.image.isNotEmpty()) {
+//                    val nsDataImage = Base64.decode(instance.image).toNSData()
+//                    val metadata = FIRStorageMetadata().apply {
+//                        setContentType("image/jpeg")
+//                    }
+//
+//                    val imageUrl = uploadAndGetRemoteURL(storageReference, nsDataImage, metadata)
+//                    logMessage("saveInstanceToDatabase") { imageUrl }
+//                    instance.updateImage(imageUrl)
+//                } else {
+//                    if(instance.video.isNotEmpty()) {
+//                        val nsDataVideo = Base64.decode(instance.video).toNSData()
+//                        val metadata = FIRStorageMetadata().apply {
+//                            setContentType("video/mp4")
+//                        }
+//
+//                        val videoUrl = uploadAndGetRemoteURL(storageReference, nsDataVideo, metadata)
+//                        logMessage("saveInstanceToDatabase") { videoUrl }
+//                        instance.updateVideo(videoUrl)
+//                    }
+//                }
+//                // Convert instance to Firebase-compatible Map
+//                val newMap = instance.toMap() as NSDictionary
+//                // Save user object in Realtime Database
+//                setValue(databaseReference, newMap)
+//                return true
+//            } catch (e: Exception) {
+//                e.printStackTrace()
+//                return false
+//            }
+//        }
 
-            try {
-                if (instance.image.isNotEmpty()) {
-                    val nsDataImage = Base64.decode(instance.image).toNSData()
-                    val metadata = FIRStorageMetadata().apply {
-                        setContentType("image/jpeg")
-                    }
-
-                    val imageUrl = uploadAndGetRemoteURL(storageReference, nsDataImage, metadata)
-                    logMessage("saveInstanceToDatabase") { imageUrl }
-                    instance.updateImage(imageUrl)
-                }
-                // Convert instance to Firebase-compatible Map
-                val commentMap = instance.toMap() as NSDictionary
-                logMessage("saveInstanceToDatabase") { "After convert to NSDictionary: $commentMap" }
-                // Save user object in Realtime Database
-                setValue(databaseReference, commentMap)
-                stateFlow.value = true
-            } catch (e: Exception) {
-                e.printStackTrace()
-                stateFlow.value = false
-            }
-        }
+//        @OptIn(ExperimentalEncodingApi::class)
+//        suspend fun saveInstanceToDatabase(
+//            id: String,
+//            path: String,
+//            instance: BaseNewsInstance
+//        ) : Boolean{
+//            val storageReference = storage.child(path).child(id)
+//            val databaseReference = database.child(path).child(id)
+//
+//            return try {
+//                if (instance.image.isNotEmpty()) {
+//                    val nsDataImage = Base64.decode(instance.image).toNSData()
+//                    val metadata = FIRStorageMetadata().apply {
+//                        setContentType("image/jpeg")
+//                    }
+//
+//                    val imageUrl = uploadAndGetRemoteURL(storageReference, nsDataImage, metadata)
+//                    logMessage("saveInstanceToDatabase") { imageUrl }
+//                    instance.updateImage(imageUrl)
+//                }
+//                // Convert instance to Firebase-compatible Map
+//                val commentMap = instance.toMap() as NSDictionary
+//                logMessage("saveInstanceToDatabase") { "After convert to NSDictionary: $commentMap" }
+//                // Save user object in Realtime Database
+//                setValue(databaseReference, commentMap)
+//                true
+//            } catch (e: Exception) {
+//                e.printStackTrace()
+//                false
+//            }
+//        }
 
         suspend fun saveValueToDatabase(
             id: String,
             path: String,
             value: Map<String, Int>,
             externalPath: String
-        ) {
-            try{
+        ) : Boolean {
+            return try{
                 val ref = database.child(path).child(id)
                     .let { if (externalPath.isNotEmpty()) it.child(externalPath) else it }
                 if (value.isNotEmpty()) {
@@ -140,8 +187,10 @@ class IosDatabaseHelper {
                 } else {
                     removeValue(ref)
                 }
+                true
             } catch (e : Exception) {
                 e.printStackTrace()
+                false
             }
         }
 
@@ -198,7 +247,7 @@ class IosDatabaseHelper {
         suspend fun saveNotificationToDatabase(
             id: String,
             path: String,
-            instance: List<NotificationInstance>
+            instance: List<NotificationDTO>
         ) {
             try{
                 val ref = database.child(path).child(id).child(Constants.NOTIFICATION_PATH)
@@ -211,13 +260,13 @@ class IosDatabaseHelper {
         suspend fun deleteNotificationFromDatabase(
             id: String,
             path: String,
-            notification: NotificationInstance
+            notification: NotificationDTO
         ) {
             try {
                 val ref = database.child(path).child(id).child(Constants.NOTIFICATION_PATH)
                 val snapshot = getValue(ref)
                 val list = (snapshot as? List<*>)?.mapNotNull { it as? Map<String, Any> }
-                    ?.mapNotNull { NotificationInstance.fromMap(it) }?.toMutableList()
+                    ?.mapNotNull { NotificationDTO.fromMap(it) }?.toMutableList()
                 list?.remove(notification)
                 setValue(ref, list!!.map { it.toMap() })
             } catch (e : Exception) {
@@ -225,7 +274,7 @@ class IosDatabaseHelper {
             }
         }
 
-        suspend fun deleteNewsFromDatabase(path: String, new: NewsInstance) {
+        suspend fun deleteNewsFromDatabase(path: String, new: NewsDTO) {
             try {
                 val dbRef = database.child(path).child(new.id)
                 val storageRef = storage.child(path).child(new.id)
@@ -236,7 +285,7 @@ class IosDatabaseHelper {
             }
         }
 
-        suspend fun deleteCommentFromDatabase(path: String, comment: CommentInstance) {
+        suspend fun deleteCommentFromDatabase(path: String, comment: BaseNewsInstance) {
             try {
                 val dbRef = database.child(path).child(comment.id)
                 removeValue(dbRef)
@@ -251,9 +300,8 @@ class IosDatabaseHelper {
             newContent: String,
             newImage: String,
             newVideo : String,
-            news: NewsInstance,
-            stateFlow : MutableStateFlow<Boolean?>
-        ) {
+            news: NewsDTO,
+        ) : Boolean {
             logMessage("updateNewsFromDatabase") { newImage }
             try {
                 val storageReference = storage.child(path).child(news.id)
@@ -303,10 +351,10 @@ class IosDatabaseHelper {
                     }
                 }
                 updateChildren(database.child(path).child(news.id), updates)
-                stateFlow.value = true
+                return true
             } catch (e: Throwable) {
                 e.printStackTrace()
-                stateFlow.value = false
+                return false
             }
         }
 
@@ -394,14 +442,14 @@ class IosDatabaseHelper {
                 }
             }
 
-        fun downloadImage(imageUrl: String, fileName: String, onComplete: (Boolean) -> Unit) {
+        suspend fun downloadImage(imageUrl: String, fileName: String) : Boolean = suspendCancellableCoroutine { continuation ->
             val url = NSURL(string = imageUrl)
 
             val session = NSURLSession.sharedSession
 
             val task = session.dataTaskWithURL(url) { data, response, error ->
                 if (error != null || data == null) {
-                    onComplete(false)
+                    if(continuation.isActive) continuation.resume(false)
                     return@dataTaskWithURL
                 }
 
@@ -413,7 +461,7 @@ class IosDatabaseHelper {
 
                 val documentsDirectory = paths.firstOrNull() as? String
                 if (documentsDirectory == null) {
-                    onComplete(false)
+                    if(continuation.isActive) continuation.resume(false)
                     return@dataTaskWithURL
                 }
 
@@ -422,7 +470,7 @@ class IosDatabaseHelper {
 
                 val success = data.writeToURL(fileUrl, atomically = true)
                 saveImageToPhotos(data)
-                onComplete(success)
+                if(continuation.isActive) continuation.resume(success)
             }
 
             task.resume()

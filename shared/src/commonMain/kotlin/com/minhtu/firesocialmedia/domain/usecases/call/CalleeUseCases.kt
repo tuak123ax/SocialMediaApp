@@ -1,10 +1,11 @@
 package com.minhtu.firesocialmedia.domain.usecases.call
 
-import com.minhtu.firesocialmedia.data.model.call.IceCandidateData
-import com.minhtu.firesocialmedia.data.model.call.OfferAnswer
+import com.minhtu.firesocialmedia.data.dto.call.OfferAnswerDTO
+import com.minhtu.firesocialmedia.domain.entity.call.IceCandidateData
 import com.minhtu.firesocialmedia.utils.Utils
 import com.minhtu.firesocialmedia.utils.Utils.Companion.getCallTypeFromSdp
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 
 data class CalleeUseCases(
@@ -37,9 +38,9 @@ class ObservePhoneCallUseCase(private val signalingDataUseCase: SendSignalingDat
     suspend operator fun invoke(
         calleeId : String,
         onReceivePhoneCallRequest : suspend (sessionId : String,
-                                     offer : OfferAnswer,
-                                     callerId : String,
-                                     calleeId : String) -> Unit,
+                                             offer : OfferAnswerDTO,
+                                             callerId : String,
+                                             calleeId : String) -> Unit,
         onEndCall : suspend () -> Unit) {
         signalingDataUseCase.observePhoneCallWithoutCheckingInCall(
             calleeId,
@@ -53,15 +54,37 @@ class ObservePhoneCallUseCase(private val signalingDataUseCase: SendSignalingDat
     }
 }
 
+class ObservePhoneCallWithInCallUseCase(private val signalingDataUseCase: SendSignalingDataUseCase) {
+    suspend operator fun invoke(
+        isInCall :  MutableStateFlow<Boolean>,
+        calleeId : String,
+        onReceivePhoneCallRequest : suspend (sessionId : String,
+                                             offer : OfferAnswerDTO,
+                                             callerId : String,
+                                             calleeId : String) -> Unit,
+        onEndCall : suspend () -> Unit) {
+        signalingDataUseCase.observePhoneCallWithCheckingInCall(
+            isInCall,
+            calleeId,
+            onReceivePhoneCallRequest = { remoteSessionId, remoteOffer, remoteCallerId, remoteCalleeId ->
+                onReceivePhoneCallRequest(remoteSessionId, remoteOffer, remoteCallerId, remoteCalleeId)
+            },
+            onEndCall = {
+                onEndCall()
+            }
+        )
+    }
+}
+
 class SetRemoteDescriptionUseCase(private val initializeCallUseCase: InitializeCallUseCase) {
-    suspend operator fun invoke(offer : OfferAnswer) {
+    suspend operator fun invoke(offer : OfferAnswerDTO) {
         initializeCallUseCase.setRemoteDescription(offer)
     }
 }
 
 class SendAnswerUseCase(private val initializeCallUseCase: InitializeCallUseCase) {
     suspend operator fun invoke(sessionId : String,
-                                offer: OfferAnswer,
+                                offer: OfferAnswerDTO,
                                 onSendAnswerResult : (Boolean) -> Unit) {
         val callType = getCallTypeFromSdp(offer.sdp)
         //Create and send answer.

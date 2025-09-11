@@ -7,7 +7,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
-import com.minhtu.firesocialmedia.data.model.call.CallAction
+import com.minhtu.firesocialmedia.domain.entity.call.CallAction
 import com.minhtu.firesocialmedia.domain.serviceimpl.call.CallActionBroadcastReceiver
 import com.minhtu.firesocialmedia.platform.showToast
 

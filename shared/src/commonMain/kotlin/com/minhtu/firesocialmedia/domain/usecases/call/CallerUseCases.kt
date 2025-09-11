@@ -1,9 +1,9 @@
 package com.minhtu.firesocialmedia.domain.usecases.call
 
 import com.minhtu.firesocialmedia.constants.Constants
-import com.minhtu.firesocialmedia.data.model.call.AudioCallSession
-import com.minhtu.firesocialmedia.data.model.call.IceCandidateData
-import com.minhtu.firesocialmedia.data.model.call.OfferAnswer
+import com.minhtu.firesocialmedia.data.dto.call.OfferAnswerDTO
+import com.minhtu.firesocialmedia.domain.entity.call.AudioCallSession
+import com.minhtu.firesocialmedia.domain.entity.call.IceCandidateData
 import com.minhtu.firesocialmedia.platform.logMessage
 import com.minhtu.firesocialmedia.utils.Utils
 
@@ -137,7 +137,7 @@ class ObserveCallStatus(private val signalingUseCase: SendSignalingDataUseCase) 
 class ObserveVideoCall(private val videoCallUseCase: VideoCallUseCase) {
     suspend operator fun invoke(sessionId: String,
                                 callerId : String,
-                                onReceiveVideoCallRequest : suspend (videoOffer : OfferAnswer) -> Unit) {
+                                onReceiveVideoCallRequest : suspend (videoOffer : OfferAnswerDTO) -> Unit) {
         videoCallUseCase.observeVideoCall(
             sessionId,
             callerId,

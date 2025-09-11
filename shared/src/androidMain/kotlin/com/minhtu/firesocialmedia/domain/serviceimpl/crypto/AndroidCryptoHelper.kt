@@ -119,11 +119,9 @@ class AndroidCryptoHelper {
             }
         }
 
-        fun clearAccount(context: Context){
-            CoroutineScope(Dispatchers.IO).launch {
-                val secureSharedPreferences: SharedPreferences = getEncryptedSharedPreferences(context)
-                secureSharedPreferences.edit().clear().apply()
-            }
+        suspend fun clearAccount(context: Context){
+            val secureSharedPreferences: SharedPreferences = getEncryptedSharedPreferences(context)
+            secureSharedPreferences.edit().clear().apply()
         }
     }
 }

@@ -34,9 +34,9 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.minhtu.firesocialmedia.constants.TestTag
-import com.minhtu.firesocialmedia.data.model.news.NewsInstance
-import com.minhtu.firesocialmedia.data.model.user.UserInstance
 import com.minhtu.firesocialmedia.di.PlatformContext
+import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
+import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.platform.CrossPlatformIcon
 import com.minhtu.firesocialmedia.platform.convertTimeToDateString
 import com.minhtu.firesocialmedia.platform.generateImageLoader
@@ -56,7 +56,8 @@ class PostInformation {
                                   news: NewsInstance,
                                   onNavigateToShowImageScreen: (image: String) -> Unit,
                                   onNavigateToUserInformation: (user: UserInstance?) -> Unit,
-                                  onNavigateToHomeScreen: () -> Unit,
+                                  onNavigateToHomeScreen: (numberOfComments : Int) -> Unit,
+                                  onNavigateBack : () -> Unit,
                                   homeViewModel: HomeViewModel,
                                   commentViewModel : CommentViewModel,
                                   navController : NavigationHandler
@@ -72,13 +73,13 @@ class PostInformation {
             var user by remember { mutableStateOf<UserInstance?>(null) }
 
             LaunchedEffect(news.posterId) {
-                user = homeViewModel.findUserById(news.posterId, platform)
+                user = homeViewModel.findUserById(news.posterId)
             }
             Column(
                 modifier = modifier,
                 verticalArrangement = Arrangement.spacedBy(1.dp)
             ) {
-                UiUtils.Companion.BackAndMoreOptionsRow(navController)
+                UiUtils.Companion.BackAndMoreOptionsRow(onNavigateBack)
                 Row(
                     horizontalArrangement = Arrangement.Start,
                     modifier = Modifier.Companion.background(color = Color.Companion.White)
@@ -169,7 +170,7 @@ class PostInformation {
                 ) {
                     Button(
                         onClick = {
-                            homeViewModel.clickLikeButton(news, platform)
+                            homeViewModel.clickLikeButton(news)
                         },
                         elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp),
                         colors = if (isLiked) ButtonDefaults.buttonColors(Color.Companion.Cyan)

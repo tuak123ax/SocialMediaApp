@@ -28,6 +28,7 @@
 		08B07FD42DDC8CEE00BD60BC /* FirebaseStorage.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = FirebaseStorage.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		08B07FDF2DDCCD1C00BD60BC /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		08B07FE12DDED31200BD60BC /* PushNotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushNotificationManager.swift; sourceTree = "<group>"; };
+		08DFA6DE2E7175CB0024F13D /* Fire_Social_Media.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Fire_Social_Media.entitlements; sourceTree = "<group>"; };
 		08E8C5952DD9EDCE001AAA39 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		2152FB032600AC8F00CF470E /* iOSApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iOSApp.swift; sourceTree = "<group>"; };
 		27F358DFF878D64B67E1BFB8 /* Pods_Fire_Social_Media.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Fire_Social_Media.framework; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -92,6 +93,7 @@
 		7555FF7D242A565900829871 /* Fire_Social_Media */ = {
 			isa = PBXGroup;
 			children = (
+				08DFA6DE2E7175CB0024F13D /* Fire_Social_Media.entitlements */,
 				08B07FE12DDED31200BD60BC /* PushNotificationManager.swift */,
 				058557BA273AAA24004C7B11 /* Assets.xcassets */,
 				7555FF82242A565900829871 /* ContentView.swift */,
@@ -361,9 +363,11 @@
 			baseConfigurationReference = F8FA6D4B27B822596F22CE4E /* Pods-Fire_Social_Media.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Fire_Social_Media/Fire_Social_Media.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_ASSET_PATHS = "\"Fire_Social_Media/Preview Content\"";
-				DEVELOPMENT_TEAM = XZBA6PR227;
+				DEVELOPMENT_TEAM = 63DA3SWC73;
 				ENABLE_PREVIEWS = YES;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -393,8 +397,9 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.minhtu.firesocialmedia;
+				PRODUCT_BUNDLE_IDENTIFIER = "dev.v-key.vtap";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -405,9 +410,11 @@
 			baseConfigurationReference = 324B6593AA5547960FB9733E /* Pods-Fire_Social_Media.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Fire_Social_Media/Fire_Social_Media.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_ASSET_PATHS = "\"Fire_Social_Media/Preview Content\"";
-				DEVELOPMENT_TEAM = XZBA6PR227;
+				DEVELOPMENT_TEAM = 63DA3SWC73;
 				ENABLE_PREVIEWS = YES;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -437,8 +444,9 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.minhtu.firesocialmedia;
+				PRODUCT_BUNDLE_IDENTIFIER = "dev.v-key.vtap";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};

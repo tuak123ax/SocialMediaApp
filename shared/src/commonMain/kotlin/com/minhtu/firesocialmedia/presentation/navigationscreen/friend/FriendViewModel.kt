@@ -1,8 +1,8 @@
 package com.minhtu.firesocialmedia.presentation.navigationscreen.friend
 
 import com.minhtu.firesocialmedia.constants.Constants
-import com.minhtu.firesocialmedia.data.model.user.UserInstance
-import com.minhtu.firesocialmedia.di.PlatformContext
+import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
+import com.minhtu.firesocialmedia.domain.usecases.common.SaveListToDatabaseUseCase
 import com.rickclephas.kmp.observableviewmodel.ViewModel
 import com.rickclephas.kmp.observableviewmodel.launch
 import kotlinx.coroutines.CoroutineDispatcher
@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.withContext
 
 class FriendViewModel(
+    private val saveListToDatabaseUseCase: SaveListToDatabaseUseCase,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : ViewModel() {
     private val friendRequestsList = MutableStateFlow<ArrayList<String>>(ArrayList())
@@ -28,25 +29,31 @@ class FriendViewModel(
         friendList.value.clear()
         friendList.value = ArrayList(friends)
     }
-    fun acceptFriendRequest(requester: UserInstance, currentUser: UserInstance, platform: PlatformContext) {
+    fun acceptFriendRequest(requester: UserInstance, currentUser: UserInstance) {
         viewModelScope.launch {
             withContext(ioDispatcher) {
                 currentUser.friendRequests.remove(requester.uid)
                 currentUser.friends.add(requester.uid)
 
-                platform.database.saveListToDatabase(currentUser.uid,
+                saveListToDatabaseUseCase.invoke(
+                    currentUser.uid,
                     Constants.USER_PATH,
                     currentUser.friendRequests,
-                    Constants.FRIEND_REQUESTS_PATH)
-                platform.database.saveListToDatabase(currentUser.uid,
+                    Constants.FRIEND_REQUESTS_PATH
+                )
+                saveListToDatabaseUseCase.invoke(
+                    currentUser.uid,
                     Constants.USER_PATH,
                     currentUser.friends,
-                    Constants.FRIENDS_PATH)
+                    Constants.FRIENDS_PATH
+                )
                 requester.friends.add(currentUser.uid)
-                platform.database.saveListToDatabase(requester.uid,
+                saveListToDatabaseUseCase.invoke(
+                    requester.uid,
                     Constants.USER_PATH,
                     requester.friends,
-                    Constants.FRIENDS_PATH)
+                    Constants.FRIENDS_PATH
+                )
 
                 //Update value to notify UI
                 friendRequestsList.value = ArrayList(currentUser.friendRequests)
@@ -54,15 +61,17 @@ class FriendViewModel(
             }
         }
     }
-    fun rejectFriendRequest(requester: UserInstance, currentUser: UserInstance, platform : PlatformContext) {
+    fun rejectFriendRequest(requester: UserInstance, currentUser: UserInstance) {
         viewModelScope.launch {
             withContext(ioDispatcher) {
                 currentUser.friendRequests.remove(requester.uid)
 
-                platform.database.saveListToDatabase(currentUser.uid,
+                saveListToDatabaseUseCase.invoke(
+                    currentUser.uid,
                     Constants.USER_PATH,
                     currentUser.friendRequests,
-                    Constants.FRIEND_REQUESTS_PATH)
+                    Constants.FRIEND_REQUESTS_PATH
+                )
 
                 //Update value to notify UI
                 friendRequestsList.value = ArrayList(currentUser.friendRequests)

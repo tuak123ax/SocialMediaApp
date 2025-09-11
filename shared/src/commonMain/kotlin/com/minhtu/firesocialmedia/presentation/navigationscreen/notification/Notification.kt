@@ -60,11 +60,10 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.minhtu.firesocialmedia.constants.TestTag
-import com.minhtu.firesocialmedia.data.model.news.NewsInstance
-import com.minhtu.firesocialmedia.data.model.notification.NotificationInstance
-import com.minhtu.firesocialmedia.data.model.notification.NotificationType
-import com.minhtu.firesocialmedia.data.model.user.UserInstance
-import com.minhtu.firesocialmedia.di.PlatformContext
+import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
+import com.minhtu.firesocialmedia.domain.entity.notification.NotificationInstance
+import com.minhtu.firesocialmedia.domain.entity.notification.NotificationType
+import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.platform.generateImageLoader
 import com.minhtu.firesocialmedia.platform.logMessage
 import com.minhtu.firesocialmedia.platform.showToast
@@ -81,13 +80,12 @@ class Notification {
     companion object{
         @Composable
         fun NotificationScreen(modifier: Modifier,
-                               platform : PlatformContext,
                                paddingValues: PaddingValues,
                                searchViewModel: SearchViewModel,
                                homeViewModel: HomeViewModel,
                                notificationViewModel : NotificationViewModel,
                                loadingViewModel: LoadingViewModel,
-                               onNavigateToPostInformation: (new : NewsInstance?) -> Unit,
+                               onNavigateToPostInformation: (new : NewsInstance) -> Unit,
                                onNavigateToUserInformation: (user : UserInstance?) -> Unit){
             val isLoading by loadingViewModel.isLoading.collectAsState()
             val getNeededUsersStatus by notificationViewModel.getNeededUsersStatus.collectAsState()
@@ -101,8 +99,7 @@ class Notification {
                 //Get more users to show notification information
                 notificationViewModel.checkUsersInCacheAndGetMore(
                     homeViewModel.loadedUsersCache,
-                    homeViewModel.listNotificationOfCurrentUser,
-                    platform)
+                    homeViewModel.listNotificationOfCurrentUser)
             }
             
             // Hide loading when both notifications are loaded and users are ready
@@ -145,7 +142,7 @@ class Notification {
                                 LaunchedEffect(Unit) {
                                     delay(200)
                                     homeViewModel.removeNotificationInList(notification)
-                                    homeViewModel.deleteNotification(notification, platform)
+                                    homeViewModel.deleteNotification(notification)
                                 }
                             }
 
@@ -164,7 +161,6 @@ class Notification {
                                         user,
                                         homeViewModel,
                                         notificationViewModel,
-                                        platform,
                                         onDelete = {
                                             visible = false
                                             pendingDelete = true
@@ -203,9 +199,8 @@ class Notification {
                                          user: UserInstance,
                                          homeViewModel: HomeViewModel,
                                          notificationViewModel: NotificationViewModel,
-                                         platform: PlatformContext,
                                          onDelete: () -> Unit,
-                                         onNavigateToPostInformation: (new : NewsInstance?) -> Unit,
+                                         onNavigateToPostInformation: (new : NewsInstance) -> Unit,
                                          onNavigateToUserInformation: (user : UserInstance?) -> Unit) {
             val swipeDistancePx = with(LocalDensity.current) { 70.dp.toPx() }
             var offsetX by remember { mutableFloatStateOf(0f) }
@@ -282,7 +277,6 @@ class Notification {
                                     notificationViewModel.onNotificationClick(
                                         notification,
                                         homeViewModel.listNews,
-                                        platform,
                                         onNavigateToPostInformation = { relatedNew ->
                                             onNavigateToPostInformation(relatedNew)
                                         },
