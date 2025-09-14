@@ -11,20 +11,22 @@ import android.os.Build
 import android.os.IBinder
 import androidx.core.content.ContextCompat
 import com.minhtu.firesocialmedia.constants.Constants
-import com.minhtu.firesocialmedia.data.dto.call.AudioCallSessionDTO
-import com.minhtu.firesocialmedia.domain.entity.call.CallAction
-import com.minhtu.firesocialmedia.domain.entity.call.CallEvent
-import com.minhtu.firesocialmedia.domain.entity.call.CallEventFlow
-import com.minhtu.firesocialmedia.data.dto.call.OfferAnswerDTO
 import com.minhtu.firesocialmedia.domain.coordinator.call.CalleeCoordinator
 import com.minhtu.firesocialmedia.domain.coordinator.call.CallerCoordinator
 import com.minhtu.firesocialmedia.domain.entity.call.AudioCallSession
+import com.minhtu.firesocialmedia.domain.entity.call.CallAction
+import com.minhtu.firesocialmedia.domain.entity.call.CallEvent
+import com.minhtu.firesocialmedia.domain.entity.call.CallEventFlow
 import com.minhtu.firesocialmedia.domain.entity.call.CallStatus
+import com.minhtu.firesocialmedia.domain.entity.call.OfferAnswer
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
-import com.minhtu.firesocialmedia.domain.service.call.AudioCallService
+import com.minhtu.firesocialmedia.data.remote.service.call.AudioCallService
+import com.minhtu.firesocialmedia.data.remote.service.database.DatabaseService
+import com.minhtu.firesocialmedia.di.AndroidPlatformContext
+import com.minhtu.firesocialmedia.di.AppModule
 import com.minhtu.firesocialmedia.domain.serviceimpl.call.CallNotificationManager.Companion.NOTIF_ID
 import com.minhtu.firesocialmedia.domain.serviceimpl.database.AndroidDatabaseService
-import com.minhtu.firesocialmedia.domain.service.database.DatabaseService
+import com.minhtu.firesocialmedia.domain.serviceimpl.permission.AndroidPermissionManager
 import com.minhtu.firesocialmedia.domain.usecases.call.AcceptCallUseCase
 import com.minhtu.firesocialmedia.domain.usecases.call.CalleeUseCases
 import com.minhtu.firesocialmedia.domain.usecases.call.CallerUseCases
@@ -62,7 +64,7 @@ class CallForegroundService : Service() {
     private lateinit var callNotificationManager: CallNotificationManager
 
     private var sessionId = ""
-    private var offer : OfferAnswerDTO? = null
+    private var offer : OfferAnswer? = null
     private var callerIdForCallee : String = ""
     private var calleeIdForCallee : String = ""
     private var callerFromApp : UserInstance? = null
@@ -89,11 +91,13 @@ class CallForegroundService : Service() {
         backgroundScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
         callNotificationManager = CallNotificationManager(this)
 
+        val platformContext = AndroidPlatformContext(this, AndroidPermissionManager(null))
+        val callRepository = AppModule.provideCallRepository(platformContext)
         //Initialize use cases
-        initializeCallUseCase = InitializeCallUseCase(callManager, databaseService, backgroundScope)
-        sendSignalingDataUseCase = SendSignalingDataUseCase(callManager, databaseService, backgroundScope)
-        manageCallStateUseCase = ManageCallStateUseCase(callManager, databaseService)
-        videoCallUseCase = VideoCallUseCase(callManager, databaseService, backgroundScope)
+        initializeCallUseCase = AppModule.provideInitializeCallUseCase(callRepository)
+        sendSignalingDataUseCase = AppModule.provideSendSignalingDataUseCase(callRepository)
+        manageCallStateUseCase = AppModule.provideManageCallStateUseCase(callRepository)
+        videoCallUseCase = AppModule.provideVideoCallUseCase(callRepository)
 
         //Initialize caller use cases
         callerUseCases = CallerUseCases(
@@ -244,7 +248,7 @@ class CallForegroundService : Service() {
         logMessage("START_VIDEO_CALL", { "START_VIDEO_CALL" })
         backgroundScope.launch {
             val remoteVideoOfferJsonString = intent.getStringExtra("remoteVideoOffer")
-            val remoteVideoOffer = remoteVideoOfferJsonString?.let { Json.decodeFromString<OfferAnswerDTO>(it) }
+            val remoteVideoOffer = remoteVideoOfferJsonString?.let { Json.decodeFromString<OfferAnswer>(it) }
             val currentUserId = intent.getStringExtra("currentUserId")
             //Remote video offer is null means this is caller side.
             if(remoteVideoOffer == null) {
@@ -386,7 +390,7 @@ class CallForegroundService : Service() {
     }
 
     private suspend fun handleAcceptCall(sessionId : String,
-                                         offer : OfferAnswerDTO,
+                                         offer : OfferAnswer,
                                          callerId : String,
                                          calleeId : String) {
         logMessage("handleAcceptCall", { "handleAcceptCall" })

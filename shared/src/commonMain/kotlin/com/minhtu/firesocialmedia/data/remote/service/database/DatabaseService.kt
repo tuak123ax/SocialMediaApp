@@ -1,6 +1,6 @@
-package com.minhtu.firesocialmedia.domain.service.database
+package com.minhtu.firesocialmedia.data.remote.service.database
 
-import com.minhtu.firesocialmedia.domain.entity.base.BaseNewsInstance
+import com.minhtu.firesocialmedia.data.dto.call.AudioCallSessionDTO
 import com.minhtu.firesocialmedia.data.dto.call.IceCandidateDTO
 import com.minhtu.firesocialmedia.data.dto.call.OfferAnswerDTO
 import com.minhtu.firesocialmedia.data.dto.comment.CommentDTO
@@ -9,9 +9,8 @@ import com.minhtu.firesocialmedia.data.dto.news.NewsDTO
 import com.minhtu.firesocialmedia.data.dto.notification.NotificationDTO
 import com.minhtu.firesocialmedia.data.dto.signin.SignInDTO
 import com.minhtu.firesocialmedia.data.dto.user.UserDTO
-import com.minhtu.firesocialmedia.domain.entity.call.AudioCallSession
+import com.minhtu.firesocialmedia.domain.entity.base.BaseNewsInstance
 import com.minhtu.firesocialmedia.domain.entity.call.CallStatus
-import com.minhtu.firesocialmedia.domain.entity.call.IceCandidateData
 import com.minhtu.firesocialmedia.utils.Utils
 import io.mockative.Mockable
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -46,13 +45,6 @@ interface DatabaseService {
         path : String,
         instance : BaseNewsInstance
     ) : Boolean
-
-//    suspend fun saveInstanceToDatabase(
-//        id : String,
-//        path : String,
-//        instance : CommentDTO,
-//        liveData : MutableStateFlow<Boolean?>
-//    )
 
     suspend fun getAllUsers(path: String) : ArrayList<UserDTO>?
     suspend fun getUser(userId: String) : UserDTO?
@@ -94,41 +86,34 @@ interface DatabaseService {
     suspend fun sendOfferToFireBase(
         sessionId : String,
         offer: OfferAnswerDTO,
-        callPath : String,
         sendIceCandidateCallBack : Utils.Companion.BasicCallBack
     )
 
     suspend fun sendIceCandidateToFireBase(sessionId : String,
-                                           iceCandidate: IceCandidateData,
+                                           iceCandidate: IceCandidateDTO,
                                            whichCandidate : String,
-                                           callPath : String,
                                            sendIceCandidateCallBack : Utils.Companion.BasicCallBack)
-    suspend fun sendCallSessionToFirebase(session: AudioCallSession,
-                                          callPath : String,
+    suspend fun sendCallSessionToFirebase(session: AudioCallSessionDTO,
                                           sendCallSessionCallBack : Utils.Companion.BasicCallBack)
 
     fun sendCallStatusToFirebase(sessionId: String,
-                                         status: CallStatus,
-                                         callPath : String,
-                                         sendCallStatusCallBack : Utils.Companion.BasicCallBack)
+                                 status: CallStatus,
+                                 sendCallStatusCallBack : Utils.Companion.BasicCallBack)
 
     suspend fun deleteCallSession(
         sessionId: String,
-        callPath: String,
         deleteCallBack : Utils.Companion.BasicCallBack
     )
 
     suspend fun observePhoneCall(
         isInCall : MutableStateFlow<Boolean>,
         currentUserId : String,
-        callPath : String,
         phoneCallCallBack : (String, String, String, OfferAnswerDTO) -> Unit,
         endCallSession: (Boolean) -> Unit,
         iceCandidateCallBack : (iceCandidates : Map<String, IceCandidateDTO>?) -> Unit)
 
     suspend fun observePhoneCallWithoutCheckingInCall(
         currentUserId : String,
-        callPath : String,
         phoneCallCallBack : (String, String, String, OfferAnswerDTO) -> Unit,
         endCallSession: (Boolean) -> Unit,
         iceCandidateCallBack : (iceCandidates : Map<String, IceCandidateDTO>?) -> Unit)
@@ -136,7 +121,6 @@ interface DatabaseService {
     suspend fun sendAnswerToFirebase(
         sessionId : String,
         answer: OfferAnswerDTO,
-        callPath : String,
         sendIceCandidateCallBack : Utils.Companion.BasicCallBack
     )
 
@@ -144,7 +128,6 @@ interface DatabaseService {
         sessionId : String,
         updateContent: String,
         updateField : String,
-        callPath : String,
         updateAnswerCallBack : Utils.Companion.BasicCallBack
     )
 
@@ -152,7 +135,6 @@ interface DatabaseService {
         sessionId : String,
         updateContent: String,
         updateField : String,
-        callPath : String,
         updateOfferCallBack : Utils.Companion.BasicCallBack
     )
 
@@ -163,14 +145,12 @@ interface DatabaseService {
 
     suspend fun observeAnswerFromCallee(
         sessionId : String,
-        callPath : String,
         answerCallBack : (answer : OfferAnswerDTO) -> Unit,
         rejectCallBack : () -> Unit
     )
 
     suspend fun observeCallStatus(
         sessionId : String,
-        callPath : String,
         callStatusCallBack : Utils.Companion.CallStatusCallBack
     )
 
@@ -181,13 +161,11 @@ interface DatabaseService {
 
     suspend fun observeIceCandidatesFromCallee(
         sessionId : String,
-        callPath : String,
         iceCandidateCallBack: (iceCandidate : IceCandidateDTO) -> Unit
     )
 
     suspend fun observeVideoCall(
         sessionId: String,
-        callPath : String,
         videoCallCallBack: (offer : OfferAnswerDTO) -> Unit
     )
 

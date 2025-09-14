@@ -1,25 +1,24 @@
 package com.minhtu.firesocialmedia.domain.usecases.call
 
-import com.minhtu.firesocialmedia.constants.Constants
-import com.minhtu.firesocialmedia.data.dto.call.OfferAnswerDTO
 import com.minhtu.firesocialmedia.domain.entity.call.CallEventFlow
 import com.minhtu.firesocialmedia.domain.entity.call.CallType
 import com.minhtu.firesocialmedia.domain.entity.call.IceCandidateData
-import com.minhtu.firesocialmedia.domain.service.call.AudioCallService
-import com.minhtu.firesocialmedia.domain.service.database.DatabaseService
+import com.minhtu.firesocialmedia.domain.entity.call.OfferAnswer
+import com.minhtu.firesocialmedia.domain.repository.CallRepository
 import com.minhtu.firesocialmedia.utils.Utils
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.launch
 
 class InitializeCallUseCase(
-    val audioCallService: AudioCallService,
-    val databaseService: DatabaseService,
-    val coroutineScope: CoroutineScope
+    val callRepository: CallRepository,
+    val coroutineScope: CoroutineScope = CoroutineScope(Dispatchers.IO)
 ) {
     suspend fun initializeCall(
         onInitializeFinished : suspend () -> Unit,
         onIceCandidateCreated : suspend (iceCandidateData : IceCandidateData) -> Unit) {
-        audioCallService.initialize(
+        callRepository.initialize(
             onInitializeFinished = {
                 coroutineScope.launch {
                     onInitializeFinished()
@@ -39,8 +38,8 @@ class InitializeCallUseCase(
     }
 
     suspend fun createVideoOffer(currentUserId : String?,
-                                 videoOfferCreated : suspend (videoOffer : OfferAnswerDTO) -> Unit) {
-        audioCallService.createVideoOffer(
+                                 videoOfferCreated : suspend (videoOffer : OfferAnswer) -> Unit) {
+        callRepository.createVideoOffer(
             onOfferCreated = { offer ->
                 coroutineScope.launch {
                     if(currentUserId != null) {
@@ -55,14 +54,13 @@ class InitializeCallUseCase(
 
     suspend fun createAndSendOffer(sessionId : String,
                                    sendOfferCallBack: Utils.Companion.BasicCallBack) {
-        audioCallService.createOffer(
+        callRepository.createOffer(
             onOfferCreated = { offer ->
                 coroutineScope.launch {
                     //Send offer to DB after created
-                    databaseService.sendOfferToFireBase(
+                    callRepository.sendOfferToFireBase(
                         sessionId,
                         offer,
-                        Constants.CALL_PATH,
                         object : Utils.Companion.BasicCallBack{
                             override fun onSuccess() {
                                 //Send offer success
@@ -85,7 +83,7 @@ class InitializeCallUseCase(
                                     callType : CallType,
                                     currentUserId : String?,
                                     sendAnswerCallBack: Utils.Companion.BasicCallBack) {
-        audioCallService.createAnswer(
+        callRepository.createAnswer(
             callType == CallType.VIDEO,
             onAnswerCreated  = { answer ->
                 //Update initiator of answer.
@@ -94,10 +92,9 @@ class InitializeCallUseCase(
                 }
                 coroutineScope.launch {
                     //Send offer to DB after created
-                    databaseService.sendAnswerToFirebase(
+                    callRepository.sendAnswerToFirebase(
                         sessionId,
                         answer,
-                        Constants.CALL_PATH,
                         object : Utils.Companion.BasicCallBack{
                             override fun onSuccess() {
                                 //Send offer success
@@ -116,7 +113,7 @@ class InitializeCallUseCase(
         )
     }
 
-    suspend fun setRemoteDescription(offerAnswer : OfferAnswerDTO) {
-        audioCallService.setRemoteDescription(offerAnswer)
+    suspend fun setRemoteDescription(offerAnswer : OfferAnswer) {
+        callRepository.setRemoteDescription(offerAnswer)
     }
 }

@@ -58,13 +58,12 @@ import com.minhtu.firesocialmedia.constants.TestTag
 import com.minhtu.firesocialmedia.di.PlatformContext
 import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
-import com.minhtu.firesocialmedia.domain.service.imagepicker.ImagePicker
+import com.minhtu.firesocialmedia.data.remote.service.imagepicker.ImagePicker
 import com.minhtu.firesocialmedia.platform.generateImageLoader
 import com.minhtu.firesocialmedia.platform.getImageBytesFromDrawable
 import com.minhtu.firesocialmedia.platform.showToast
 import com.minhtu.firesocialmedia.presentation.home.HomeViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.friend.FriendViewModel
-import com.minhtu.firesocialmedia.utils.NavigationHandler
 import com.minhtu.firesocialmedia.utils.UiUtils
 import com.seiko.imageloader.LocalImageLoader
 import com.seiko.imageloader.ui.AutoSizeImage

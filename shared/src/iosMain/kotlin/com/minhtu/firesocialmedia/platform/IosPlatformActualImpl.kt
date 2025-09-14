@@ -28,7 +28,7 @@ import androidx.navigation.NavHostController
 import com.minhtu.firesocialmedia.constants.Constants
 import com.minhtu.firesocialmedia.di.PlatformContext
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
-import com.minhtu.firesocialmedia.domain.service.imagepicker.ImagePicker
+import com.minhtu.firesocialmedia.data.remote.service.imagepicker.ImagePicker
 import com.minhtu.firesocialmedia.domain.serviceimpl.crypto.IosCryptoHelper
 import com.minhtu.firesocialmedia.domain.serviceimpl.notification.KtorProvider
 import com.minhtu.firesocialmedia.presentation.signin.SignInViewModel

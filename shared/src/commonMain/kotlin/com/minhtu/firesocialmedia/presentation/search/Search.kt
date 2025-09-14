@@ -26,7 +26,6 @@ import com.minhtu.firesocialmedia.constants.TestTag
 import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.presentation.home.HomeViewModel
-import com.minhtu.firesocialmedia.utils.NavigationHandler
 import com.minhtu.firesocialmedia.utils.UiUtils
 
 class Search {

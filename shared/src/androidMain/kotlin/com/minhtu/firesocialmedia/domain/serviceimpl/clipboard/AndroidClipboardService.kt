@@ -3,7 +3,7 @@ package com.minhtu.firesocialmedia.domain.serviceimpl.clipboard
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
-import com.minhtu.firesocialmedia.domain.service.clipboard.ClipboardService
+import com.minhtu.firesocialmedia.data.remote.service.clipboard.ClipboardService
 
 class AndroidClipboardService(
     private val context : Context) : ClipboardService {

@@ -28,7 +28,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.minhtu.firesocialmedia.constants.TestTag
 import com.minhtu.firesocialmedia.domain.entity.call.CallEventFlow
-import com.minhtu.firesocialmedia.data.dto.call.OfferAnswerDTO
+import com.minhtu.firesocialmedia.domain.entity.call.OfferAnswer
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.platform.WebRTCVideoView
 import com.minhtu.firesocialmedia.platform.showToast
@@ -44,7 +44,7 @@ class VideoCall {
             caller : UserInstance?,
             callee : UserInstance?,
             currentUserId : String?,
-            remoteVideoOffer : OfferAnswerDTO?,
+            remoteVideoOffer : OfferAnswer?,
             videoCallViewModel: VideoCallViewModel,
             loadingViewModel: LoadingViewModel,
             navHandler : NavigationHandler,

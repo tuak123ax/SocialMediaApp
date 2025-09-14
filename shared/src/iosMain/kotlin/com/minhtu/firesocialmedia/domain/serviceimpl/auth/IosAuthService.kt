@@ -2,9 +2,9 @@ package com.minhtu.firesocialmedia.domain.serviceimpl.auth
 
 import cocoapods.FirebaseAuth.FIRAuth
 import com.minhtu.firesocialmedia.constants.Constants
-import com.minhtu.firesocialmedia.data.dto.forgotpassword.EmailExistDTO
+import com.minhtu.firesocialmedia.domain.entity.forgotpassword.EmailExistResult
 import com.minhtu.firesocialmedia.domain.error.signin.SignInError
-import com.minhtu.firesocialmedia.domain.serviceimpl.AuthService
+import com.minhtu.firesocialmedia.data.remote.service.auth.AuthService
 import kotlinx.coroutines.suspendCancellableCoroutine
 
 class IosAuthService() : AuthService{
@@ -50,15 +50,15 @@ class IosAuthService() : AuthService{
         return FIRAuth.auth().currentUser()?.email()
     }
 
-    override suspend fun fetchSignInMethodsForEmail(email: String): EmailExistDTO = suspendCancellableCoroutine { continuation ->
+    override suspend fun fetchSignInMethodsForEmail(email: String): EmailExistResult = suspendCancellableCoroutine { continuation ->
         FIRAuth.auth().fetchSignInMethodsForEmail(email) { result, error ->
             if (error != null || result == null) {
-                if(continuation.isActive) continuation.resume(EmailExistDTO(false, Constants.EMAIL_SERVER_ERROR), onCancellation = {})
+                if(continuation.isActive) continuation.resume(EmailExistResult(false, Constants.EMAIL_SERVER_ERROR), onCancellation = {})
             } else {
                 if (result.isNotEmpty()) {
-                    if(continuation.isActive) continuation.resume(EmailExistDTO(true, Constants.EMAIL_EXISTED), onCancellation = {})
+                    if(continuation.isActive) continuation.resume(EmailExistResult(true, Constants.EMAIL_EXISTED), onCancellation = {})
                 } else {
-                    if(continuation.isActive) continuation.resume(EmailExistDTO(false, Constants.EMAIL_NOT_EXISTED), onCancellation = {})
+                    if(continuation.isActive) continuation.resume(EmailExistResult(false, Constants.EMAIL_NOT_EXISTED), onCancellation = {})
                 }
             }
         }

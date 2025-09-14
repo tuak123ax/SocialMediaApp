@@ -1,12 +1,11 @@
 package com.minhtu.firesocialmedia.application.interactor
 
-import com.minhtu.firesocialmedia.constants.Constants
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.domain.interactor.home.UserInteractor
-import com.minhtu.firesocialmedia.domain.usecases.common.GetUserUseCase
-import com.minhtu.firesocialmedia.domain.usecases.common.SaveValueToDatabaseUseCase
-import com.minhtu.firesocialmedia.domain.usecases.home.ClearAccountUseCase
 import com.minhtu.firesocialmedia.domain.usecases.common.GetCurrentUserUidUseCase
+import com.minhtu.firesocialmedia.domain.usecases.common.GetUserUseCase
+import com.minhtu.firesocialmedia.domain.usecases.home.ClearAccountUseCase
+import com.minhtu.firesocialmedia.domain.usecases.home.SaveLikedPostUseCase
 import com.minhtu.firesocialmedia.domain.usecases.home.SearchUserByNameUseCase
 import com.minhtu.firesocialmedia.domain.usecases.home.UpdateFCMTokenUseCase
 
@@ -15,7 +14,7 @@ class UserInteractorImpl(
     private val getUserUseCase: GetUserUseCase,
     private val updateFCMTokenUseCase: UpdateFCMTokenUseCase,
     private val clearAccountUseCase: ClearAccountUseCase,
-    private val saveValueToDatabaseUseCase: SaveValueToDatabaseUseCase,
+    private val saveLikedPostUseCase: SaveLikedPostUseCase,
     private val searchUserByNameUseCase: SearchUserByNameUseCase
 ) : UserInteractor {
     override suspend fun getCurrentUserId(): String? {
@@ -35,19 +34,14 @@ class UserInteractorImpl(
     }
 
     override suspend fun saveLikedPost(id : String,
-                                       path : String,
-                                       value : HashMap<String, Int>,
-                                       externalPath : String) : Boolean {
-        return saveValueToDatabaseUseCase.invoke(
+                                       value : HashMap<String, Int>) : Boolean {
+        return saveLikedPostUseCase.invoke(
             id,
-            path,
-            value,
-            externalPath
+            value
         )
     }
 
-    override suspend fun searchUserByName(name: String,
-                                          path: String): List<UserInstance>? {
-        return searchUserByNameUseCase.invoke(name, Constants.USER_PATH)
+    override suspend fun searchUserByName(name: String): List<UserInstance>? {
+        return searchUserByNameUseCase.invoke(name)
     }
 }

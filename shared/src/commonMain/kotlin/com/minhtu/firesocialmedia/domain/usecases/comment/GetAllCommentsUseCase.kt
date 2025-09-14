@@ -6,8 +6,7 @@ import com.minhtu.firesocialmedia.domain.repository.CommentRepository
 class GetAllCommentsUseCase(
     private val commentRepository: CommentRepository
 ) {
-    suspend operator fun invoke(path: String,
-                                newsId: String) : List<CommentInstance> {
-        return commentRepository.getAllComments(path, newsId)
+    suspend operator fun invoke(newsId: String) : List<CommentInstance> {
+        return commentRepository.getAllComments(newsId)
     }
 }

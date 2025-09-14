@@ -1,7 +1,7 @@
 package com.minhtu.firesocialmedia.data.repository
 
 import com.minhtu.firesocialmedia.domain.repository.ShowImageRepository
-import com.minhtu.firesocialmedia.domain.service.database.DatabaseService
+import com.minhtu.firesocialmedia.data.remote.service.database.DatabaseService
 
 class ShowImageRepositoryImpl(
     private val databaseService: DatabaseService

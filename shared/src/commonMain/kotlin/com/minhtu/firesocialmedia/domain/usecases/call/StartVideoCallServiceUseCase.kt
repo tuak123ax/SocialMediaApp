@@ -1,6 +1,6 @@
 package com.minhtu.firesocialmedia.domain.usecases.call
 
-import com.minhtu.firesocialmedia.data.dto.call.OfferAnswerDTO
+import com.minhtu.firesocialmedia.domain.entity.call.OfferAnswer
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.domain.repository.CallRepository
 
@@ -12,7 +12,7 @@ class StartVideoCallServiceUseCase(
         caller : UserInstance,
         callee : UserInstance,
         currentUserId : String?,
-        remoteVideoOffer : OfferAnswerDTO?) {
+        remoteVideoOffer : OfferAnswer?) {
         callRepository.startVideoCallService(
             sessionId,
             caller,

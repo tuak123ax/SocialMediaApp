@@ -12,8 +12,8 @@ fun AudioCallSessionDTO.toDomain() : AudioCallSession {
         sessionId,
         callerId,
         calleeId,
-        offer,
-        answer,
+        offer?.toDomain(),
+        answer?.toDomain(),
         callerCandidates.toDomainCandidates(),
         calleeCandidates.toDomainCandidates(),
         status
@@ -25,8 +25,8 @@ fun AudioCallSession.toDto() : AudioCallSessionDTO {
         sessionId,
         callerId,
         calleeId,
-        offer,
-        answer,
+        offer?.toDto(),
+        answer?.toDto(),
         callerCandidates.toDtoCandidates(),
         calleeCandidates.toDtoCandidates(),
         status

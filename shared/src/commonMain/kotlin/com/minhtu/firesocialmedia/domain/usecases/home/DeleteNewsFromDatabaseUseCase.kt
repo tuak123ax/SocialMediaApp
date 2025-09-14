@@ -6,8 +6,7 @@ import com.minhtu.firesocialmedia.domain.repository.NewsRepository
 class DeleteNewsFromDatabaseUseCase(
     private val newsRepository: NewsRepository
 ) {
-    suspend operator fun invoke(path : String,
-                                new: NewsInstance) {
-        newsRepository.deleteNewsFromDatabase(path, new)
+    suspend operator fun invoke(new: NewsInstance) {
+        newsRepository.deleteNewsFromDatabase(new)
     }
 }

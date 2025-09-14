@@ -1,4 +1,4 @@
-package com.minhtu.firesocialmedia.domain.service.clipboard
+package com.minhtu.firesocialmedia.data.remote.service.clipboard
 
 import io.mockative.Mockable
 

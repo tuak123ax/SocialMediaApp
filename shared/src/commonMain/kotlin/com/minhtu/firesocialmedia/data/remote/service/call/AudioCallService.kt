@@ -1,8 +1,8 @@
-package com.minhtu.firesocialmedia.domain.service.call
+package com.minhtu.firesocialmedia.data.remote.service.call
 
+import com.minhtu.firesocialmedia.data.dto.call.IceCandidateDTO
 import com.minhtu.firesocialmedia.data.dto.call.OfferAnswerDTO
 import com.minhtu.firesocialmedia.data.dto.user.UserDTO
-import com.minhtu.firesocialmedia.domain.entity.call.IceCandidateData
 import com.minhtu.firesocialmedia.platform.WebRTCVideoTrack
 
 interface AudioCallService{
@@ -44,7 +44,7 @@ interface AudioCallService{
      * onRemoteVideoTrackReceived: return remote video track to show on screen.
      * */
     suspend fun initialize(onInitializeFinished : () -> Unit,
-                           onIceCandidateCreated : (iceCandidateData : IceCandidateData) -> Unit,
+                           onIceCandidateCreated : (iceCandidateData : IceCandidateDTO) -> Unit,
                            onRemoteVideoTrackReceived: (remoteVideoTrack : WebRTCVideoTrack) -> Unit)
 
     /**

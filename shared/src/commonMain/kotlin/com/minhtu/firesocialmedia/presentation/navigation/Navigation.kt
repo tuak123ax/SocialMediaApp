@@ -14,10 +14,10 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.minhtu.firesocialmedia.data.dto.call.OfferAnswerDTO
-import com.minhtu.firesocialmedia.domain.entity.call.SharedCallData
 import com.minhtu.firesocialmedia.di.PlatformContext
 import com.minhtu.firesocialmedia.di.ViewModelProvider
+import com.minhtu.firesocialmedia.domain.entity.call.OfferAnswer
+import com.minhtu.firesocialmedia.domain.entity.call.SharedCallData
 import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.platform.platformViewModel
@@ -91,8 +91,8 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
     var callee : UserInstance? = null
     var caller : UserInstance? = null
     var sessionId = ""
-    var remoteOffer : OfferAnswerDTO? = null
-    var remoteVideoOffer : OfferAnswerDTO? = null
+    var remoteOffer : OfferAnswer? = null
+    var remoteVideoOffer : OfferAnswer? = null
     val callingViewModel : CallingViewModel = platformViewModel { ViewModelProvider.createCallingViewModel(platformContext) }
     val videoCallViewModel : VideoCallViewModel = platformViewModel { ViewModelProvider.createVideoCallViewModel(platformContext) }
 

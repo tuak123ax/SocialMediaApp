@@ -1,9 +1,9 @@
 package com.minhtu.firesocialmedia.domain.serviceimpl.call
 
+import com.minhtu.firesocialmedia.data.dto.call.IceCandidateDTO
 import com.minhtu.firesocialmedia.data.dto.call.OfferAnswerDTO
 import com.minhtu.firesocialmedia.data.dto.user.UserDTO
-import com.minhtu.firesocialmedia.domain.entity.call.IceCandidateData
-import com.minhtu.firesocialmedia.domain.service.call.AudioCallService
+import com.minhtu.firesocialmedia.data.remote.service.call.AudioCallService
 import com.minhtu.firesocialmedia.platform.WebRTCVideoTrack
 
 class IosAudioCallService : AudioCallService {
@@ -31,7 +31,7 @@ class IosAudioCallService : AudioCallService {
 
     override suspend fun initialize(
         onInitializeFinished: () -> Unit,
-        onIceCandidateCreated: (IceCandidateData) -> Unit,
+        onIceCandidateCreated: (IceCandidateDTO) -> Unit,
         onRemoteVideoTrackReceived: (WebRTCVideoTrack) -> Unit
     ) {
         // iOS implementation will be added later

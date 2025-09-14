@@ -1,4 +1,4 @@
-package com.minhtu.firesocialmedia.domain.service.permission
+package com.minhtu.firesocialmedia.data.remote.service.permission
 
 interface PermissionManager {
     suspend fun requestCameraAndAudioPermissions(): Boolean

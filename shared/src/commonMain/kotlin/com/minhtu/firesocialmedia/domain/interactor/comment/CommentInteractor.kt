@@ -5,10 +5,15 @@ import com.minhtu.firesocialmedia.domain.entity.comment.CommentInstance
 
 interface CommentInteractor {
     suspend fun saveComment(id : String,
-                            path : String,
                             instance : BaseNewsInstance) : Boolean
-    suspend fun deleteComment(path: String,
+    suspend fun saveSubComment(id : String,
+                               selectedNewId : String,
+                               parentCommentId : String,
+                               instance : BaseNewsInstance) : Boolean
+    suspend fun deleteComment(selectedNewId : String,
                               comment: BaseNewsInstance)
-    suspend fun getAllComments(path: String,
-                               newsId: String) : List<CommentInstance>?
+    suspend fun deleteSubComment(selectedNewId : String,
+                                 parentCommentId: String,
+                                 comment: BaseNewsInstance)
+    suspend fun getAllComments(newsId: String) : List<CommentInstance>?
 }

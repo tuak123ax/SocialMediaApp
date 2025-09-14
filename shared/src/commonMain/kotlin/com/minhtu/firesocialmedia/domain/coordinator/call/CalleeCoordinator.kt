@@ -1,6 +1,6 @@
 package com.minhtu.firesocialmedia.domain.coordinator.call
 
-import com.minhtu.firesocialmedia.data.dto.call.OfferAnswerDTO
+import com.minhtu.firesocialmedia.domain.entity.call.OfferAnswer
 import com.minhtu.firesocialmedia.domain.usecases.call.CalleeUseCases
 import com.minhtu.firesocialmedia.domain.usecases.call.InitializeCallUseCase
 import com.minhtu.firesocialmedia.domain.usecases.call.VideoCallUseCase
@@ -18,7 +18,7 @@ class CalleeCoordinator(
         sessionId : String,
         calleeId : String,
         onReceivePhoneCallRequest :  suspend (sessionId : String,
-                                              offer : OfferAnswerDTO,
+                                              offer : OfferAnswer,
                                               callerId : String,
                                               calleeId : String) -> Unit,
         onEndCall : suspend () -> Unit
@@ -54,9 +54,9 @@ class CalleeCoordinator(
     suspend fun acceptCall(
         sessionId : String,
         calleeId : String,
-        offer: OfferAnswerDTO,
+        offer: OfferAnswer,
         onAcceptCall : suspend (Boolean) -> Unit,
-        onReceiveVideoCallRequest : suspend (OfferAnswerDTO) -> Unit) {
+        onReceiveVideoCallRequest : suspend (OfferAnswer) -> Unit) {
         //Callee set remote description of caller
         calleeUseCases.setRemoteDescription.invoke(offer)
         //Callee send answer
@@ -93,7 +93,7 @@ class CalleeCoordinator(
 
     suspend fun startVideoCall(currentUserId : String?,
                                sessionId : String,
-                               remoteVideoOffer : OfferAnswerDTO,
+                               remoteVideoOffer : OfferAnswer,
                                onLocalVideoTrackCreated : suspend (localVideoTrack : WebRTCVideoTrack) -> Unit) {
         videoCallUseCase.startVideoCall(
             onLocalVideoTrackCreated = { localVideoTrack ->

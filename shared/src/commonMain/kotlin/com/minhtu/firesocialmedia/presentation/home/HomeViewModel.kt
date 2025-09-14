@@ -5,8 +5,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import com.minhtu.firesocialmedia.constants.Constants
-import com.minhtu.firesocialmedia.data.dto.call.OfferAnswerDTO
+import com.minhtu.firesocialmedia.domain.entity.call.OfferAnswer
 import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
 import com.minhtu.firesocialmedia.domain.entity.notification.NotificationInstance
 import com.minhtu.firesocialmedia.domain.entity.notification.NotificationType
@@ -130,8 +129,7 @@ class HomeViewModel(
                 val latestNewsResult = newsInteractor.pageLatest(
                     10,
                     lastTimePosted,
-                    lastKey,
-                    Constants.NEWS_PATH
+                    lastKey
                 )
                 if(latestNewsResult != null) {
                     if(latestNewsResult.news != null) {
@@ -188,7 +186,6 @@ class HomeViewModel(
                 val currentUserId = userInteractor.getCurrentUserId()
                 if(currentUserId != null) {
                     val notifications = notificationInteractor.allNotificationsOf(
-                        Constants.NOTIFICATION_PATH,
                         currentUserId)
                     if(notifications != null) {
                         listNotificationOfCurrentUser.clear()
@@ -298,18 +295,15 @@ class HomeViewModel(
     ) {
         if(currentUser != null) {
             currentUser!!.likedPosts = likeCache
-            val result = userInteractor.saveLikedPost(currentUser!!.uid,
-                Constants.USER_PATH,
-                likeCache,
-                Constants.LIKED_POSTS_PATH)
+            val result = userInteractor.saveLikedPost(
+                currentUser!!.uid,
+                likeCache)
             saveLikeDataStatus.value = result
             try {
                 for (likedNew in likeCache.keys) {
                     if (likeCountList[likedNew] != null) {
                         newsInteractor.like(
                             likedNew,
-                            Constants.NEWS_PATH,
-                            Constants.LIKED_COUNT_PATH,
                             likeCountList[likedNew]!!
                         )
                         val new = Utils.findNewById(likedNew, listNews)
@@ -323,8 +317,6 @@ class HomeViewModel(
                     if (likeCountList[unlikedNew] != null) {
                         newsInteractor.unlike(
                             unlikedNew,
-                            Constants.NEWS_PATH,
-                            Constants.LIKED_COUNT_PATH,
                             likeCountList[unlikedNew]!!
                         )
                     }
@@ -378,7 +370,6 @@ class HomeViewModel(
             poster.addNotification(notification)
             notificationInteractor.saveNotificationToDatabase(
                 poster.uid,
-                Constants.USER_PATH,
                 poster.notifications
             )
             //Send notification to poster
@@ -393,7 +384,6 @@ class HomeViewModel(
             currentUser!!.notifications.remove(notification)
             notificationInteractor.deleteNotificationFromDatabase(
                 currentUser!!.uid,
-                Constants.USER_PATH,
                 notification
             )
         }
@@ -404,7 +394,6 @@ class HomeViewModel(
         backgroundScope.launch {
             if (action == "Delete") {
                 newsInteractor.delete(
-                    Constants.NEWS_PATH,
                     new
                 )
             }
@@ -423,7 +412,7 @@ class HomeViewModel(
         isInCall.value = input
     }
     suspend fun observePhoneCall(
-        onNavigateToCallingScreen: suspend (String, String, String, OfferAnswerDTO) -> Unit,
+        onNavigateToCallingScreen: suspend (String, String, String, OfferAnswer) -> Unit,
         onNavigateBack: () -> Unit
     ) {
         if(currentUser != null) {
@@ -462,7 +451,7 @@ class HomeViewModel(
 
     suspend fun searchUserByName(name: String) : List<UserInstance>{
         if(name.isBlank()) return emptyList()
-        val resultList = userInteractor.searchUserByName(name, Constants.USER_PATH)
+        val resultList = userInteractor.searchUserByName(name)
         return resultList ?: emptyList()
     }
 }

@@ -1,16 +1,14 @@
 package com.minhtu.firesocialmedia.utils
 
 import androidx.compose.ui.graphics.Color
-import com.minhtu.firesocialmedia.constants.Constants
-import com.minhtu.firesocialmedia.data.dto.comment.CommentDTO
 import com.minhtu.firesocialmedia.di.PlatformContext
 import com.minhtu.firesocialmedia.domain.entity.call.CallStatus
 import com.minhtu.firesocialmedia.domain.entity.call.CallType
 import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
 import com.minhtu.firesocialmedia.domain.entity.notification.NotificationInstance
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
-import com.minhtu.firesocialmedia.domain.usecases.common.DeleteNotificationFromDatabaseUseCase
-import com.minhtu.firesocialmedia.domain.usecases.common.SaveNotificationToDatabaseUseCase
+import com.minhtu.firesocialmedia.domain.usecases.notification.DeleteNotificationFromDatabaseUseCase
+import com.minhtu.firesocialmedia.domain.usecases.notification.SaveNotificationToDatabaseUseCase
 import com.minhtu.firesocialmedia.platform.createCallMessage
 import com.minhtu.firesocialmedia.platform.sendMessageToServer
 import com.minhtu.firesocialmedia.presentation.calling.audiocall.CallingViewModel
@@ -28,15 +26,6 @@ class Utils {
                 else -> throw IllegalArgumentException("Invalid hex color: $hex")
             }
             return Color(colorLong)
-        }
-
-        fun findUserById(userId : String, listUsers : List<UserInstance>) : UserInstance?{
-            for(user in listUsers){
-                if(user.uid == userId) {
-                    return user
-                }
-            }
-            return null
         }
 
         fun findNewById(newId : String, listNews : ArrayList<NewsInstance>) : NewsInstance?{
@@ -57,9 +46,8 @@ class Utils {
                 friend.addNotification(notification)
                 saveNotificationToDatabaseUseCase.invoke(
                     friend.uid,
-                    Constants.USER_PATH,
                     friend.notifications)
-            } catch(e: Exception) {
+            } catch(_: Exception) {
             }
         }
 
@@ -71,9 +59,8 @@ class Utils {
             try{
                 deleteNotificationFromDatabaseUseCase.invoke(
                     currentUser.uid,
-                    Constants.USER_PATH,
                     notification)
-            } catch(e: Exception) {
+            } catch(_: Exception) {
             }
         }
 
@@ -125,11 +112,6 @@ class Utils {
             fun onSuccess(news : List<NewsInstance>,
                           lastTimePosted : Double?,
                           lastKey : String)
-            fun onFailure()
-        }
-
-        interface GetCommentCallback{
-            fun onSuccess(comments : List<CommentDTO>)
             fun onFailure()
         }
 

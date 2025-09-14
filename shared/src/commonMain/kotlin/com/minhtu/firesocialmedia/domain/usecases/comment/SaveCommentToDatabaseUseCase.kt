@@ -8,11 +8,9 @@ class SaveCommentToDatabaseUseCase(
 ) {
     suspend operator fun invoke(
         id : String,
-        path : String,
         instance : BaseNewsInstance) : Boolean {
-        return commonDbRepository.saveInstanceToDatabase(
+        return commonDbRepository.saveCommentToDatabase(
             id,
-            path,
             instance
         )
     }

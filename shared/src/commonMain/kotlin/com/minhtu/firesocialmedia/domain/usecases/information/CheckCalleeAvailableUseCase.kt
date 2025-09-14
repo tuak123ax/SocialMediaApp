@@ -5,11 +5,9 @@ import com.minhtu.firesocialmedia.domain.repository.CallRepository
 class CheckCalleeAvailableUseCase(
     private val callRepository: CallRepository
 ){
-    suspend operator fun invoke(calleeId: String,
-                                callPath: String) : Boolean? {
+    suspend operator fun invoke(calleeId: String) : Boolean? {
         return callRepository.isCalleeInActiveCall(
-            calleeId,
-            callPath
+            calleeId
         )
     }
 }

@@ -46,10 +46,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.minhtu.firesocialmedia.constants.TestTag
+import com.minhtu.firesocialmedia.di.PlatformContext
 import com.minhtu.firesocialmedia.domain.entity.call.CallEvent
 import com.minhtu.firesocialmedia.domain.entity.call.CallEventFlow
-import com.minhtu.firesocialmedia.data.dto.call.OfferAnswerDTO
-import com.minhtu.firesocialmedia.di.PlatformContext
+import com.minhtu.firesocialmedia.domain.entity.call.OfferAnswer
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.platform.generateImageLoader
 import com.minhtu.firesocialmedia.platform.logMessage
@@ -76,12 +76,12 @@ class Calling {
             callee : UserInstance?,
             caller : UserInstance?,
             currentUser : UserInstance?,
-            remoteOffer : OfferAnswerDTO?,
+            remoteOffer : OfferAnswer?,
             navigateToCallingScreenFromNotification : Boolean,
             callingViewModel: CallingViewModel,
             navHandler : NavigationHandler,
             onStopCall : () -> Unit,
-            onNavigateToVideoCall : (sessionId : String, videoOffer : OfferAnswerDTO?) -> Unit,
+            onNavigateToVideoCall : (sessionId : String, videoOffer : OfferAnswer?) -> Unit,
             modifier: Modifier){
             val coroutineScope = rememberCoroutineScope()
             val isCalling = (currentUser == caller)
@@ -93,7 +93,7 @@ class Calling {
             var acceptCall by rememberSaveable { mutableStateOf(false) }
             //Show dialog to accept video call
             val showDialog = remember { mutableStateOf(false) }
-            var videoOffer : OfferAnswerDTO? = null
+            var videoOffer : OfferAnswer? = null
 
             LaunchedEffect(Unit) {
 //                countDownTimer(onTimeOver = {

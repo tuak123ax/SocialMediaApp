@@ -1,7 +1,6 @@
 package com.minhtu.firesocialmedia.data.repository
 
 import com.minhtu.firesocialmedia.data.mapper.crypto.toDomain
-import com.minhtu.firesocialmedia.data.mapper.forgotpassword.toDomain
 import com.minhtu.firesocialmedia.data.mapper.signin.toDomain
 import com.minhtu.firesocialmedia.data.mapper.user.toDto
 import com.minhtu.firesocialmedia.domain.entity.crypto.Credentials
@@ -9,9 +8,9 @@ import com.minhtu.firesocialmedia.domain.entity.forgotpassword.EmailExistResult
 import com.minhtu.firesocialmedia.domain.entity.signin.SignInState
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.domain.repository.AuthenticationRepository
-import com.minhtu.firesocialmedia.domain.service.crypto.CryptoService
-import com.minhtu.firesocialmedia.domain.service.database.DatabaseService
-import com.minhtu.firesocialmedia.domain.serviceimpl.AuthService
+import com.minhtu.firesocialmedia.data.remote.service.auth.AuthService
+import com.minhtu.firesocialmedia.data.remote.service.crypto.CryptoService
+import com.minhtu.firesocialmedia.data.remote.service.database.DatabaseService
 
 class AuthenticationRepositoryImpl(
     private val authService: AuthService,
@@ -49,7 +48,7 @@ class AuthenticationRepositoryImpl(
     }
 
     override suspend fun fetchSignInMethodsForEmail(email: String): EmailExistResult {
-        return authService.fetchSignInMethodsForEmail(email).toDomain()
+        return authService.fetchSignInMethodsForEmail(email)
     }
 
     override suspend fun sendPasswordResetEmail(email: String): Boolean {

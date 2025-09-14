@@ -1,4 +1,4 @@
-package com.minhtu.firesocialmedia.domain.service.imagepicker
+package com.minhtu.firesocialmedia.data.remote.service.imagepicker
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier

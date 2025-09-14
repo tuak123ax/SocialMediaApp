@@ -28,6 +28,7 @@ import com.minhtu.firesocialmedia.domain.repository.NewsRepository
 import com.minhtu.firesocialmedia.domain.repository.NotificationRepository
 import com.minhtu.firesocialmedia.domain.repository.ShowImageRepository
 import com.minhtu.firesocialmedia.domain.repository.UserRepository
+import com.minhtu.firesocialmedia.domain.usecases.call.InitializeCallUseCase
 import com.minhtu.firesocialmedia.domain.usecases.call.ManageCallStateUseCase
 import com.minhtu.firesocialmedia.domain.usecases.call.ObservePhoneCallWithInCallUseCase
 import com.minhtu.firesocialmedia.domain.usecases.call.RequestCameraAndAudioPermissionsUseCase
@@ -35,30 +36,39 @@ import com.minhtu.firesocialmedia.domain.usecases.call.RequestPermissionUseCase
 import com.minhtu.firesocialmedia.domain.usecases.call.SendSignalingDataUseCase
 import com.minhtu.firesocialmedia.domain.usecases.call.StartCallServiceUseCase
 import com.minhtu.firesocialmedia.domain.usecases.call.StartVideoCallServiceUseCase
+import com.minhtu.firesocialmedia.domain.usecases.call.VideoCallUseCase
 import com.minhtu.firesocialmedia.domain.usecases.comment.DeleteCommentFromDatabaseUseCase
+import com.minhtu.firesocialmedia.domain.usecases.comment.DeleteSubCommentFromDatabaseUseCase
 import com.minhtu.firesocialmedia.domain.usecases.comment.GetAllCommentsUseCase
 import com.minhtu.firesocialmedia.domain.usecases.comment.SaveCommentToDatabaseUseCase
-import com.minhtu.firesocialmedia.domain.usecases.common.DeleteNotificationFromDatabaseUseCase
-import com.minhtu.firesocialmedia.domain.usecases.common.GetAllNotificationOfUserUseCase
-import com.minhtu.firesocialmedia.domain.usecases.common.GetUserUseCase
-import com.minhtu.firesocialmedia.domain.usecases.common.SaveListToDatabaseUseCase
-import com.minhtu.firesocialmedia.domain.usecases.common.SaveNotificationToDatabaseUseCase
-import com.minhtu.firesocialmedia.domain.usecases.common.SaveValueToDatabaseUseCase
-import com.minhtu.firesocialmedia.domain.usecases.forgotpassword.CheckIfEmailExistsUseCase
-import com.minhtu.firesocialmedia.domain.usecases.forgotpassword.SendEmailResetPasswordUseCase
-import com.minhtu.firesocialmedia.domain.usecases.home.ClearAccountUseCase
-import com.minhtu.firesocialmedia.domain.usecases.home.DeleteNewsFromDatabaseUseCase
+import com.minhtu.firesocialmedia.domain.usecases.comment.SaveLikedCommentsUseCase
+import com.minhtu.firesocialmedia.domain.usecases.comment.SaveSubCommentToDatabaseUseCase
+import com.minhtu.firesocialmedia.domain.usecases.comment.UpdateCommentCountForNewUseCase
+import com.minhtu.firesocialmedia.domain.usecases.comment.UpdateLikeCountForCommentUseCase
+import com.minhtu.firesocialmedia.domain.usecases.comment.UpdateLikeCountForSubCommentUseCase
+import com.minhtu.firesocialmedia.domain.usecases.comment.UpdateReplyCountForCommentUseCase
 import com.minhtu.firesocialmedia.domain.usecases.common.GetCurrentUserUidUseCase
 import com.minhtu.firesocialmedia.domain.usecases.common.GetFCMTokenUseCase
+import com.minhtu.firesocialmedia.domain.usecases.common.GetUserUseCase
+import com.minhtu.firesocialmedia.domain.usecases.forgotpassword.CheckIfEmailExistsUseCase
+import com.minhtu.firesocialmedia.domain.usecases.forgotpassword.SendEmailResetPasswordUseCase
+import com.minhtu.firesocialmedia.domain.usecases.friend.SaveFriendRequestUseCase
+import com.minhtu.firesocialmedia.domain.usecases.friend.SaveFriendUseCase
+import com.minhtu.firesocialmedia.domain.usecases.home.ClearAccountUseCase
+import com.minhtu.firesocialmedia.domain.usecases.home.DeleteNewsFromDatabaseUseCase
 import com.minhtu.firesocialmedia.domain.usecases.home.GetLatestNewsUseCase
+import com.minhtu.firesocialmedia.domain.usecases.home.SaveLikedPostUseCase
 import com.minhtu.firesocialmedia.domain.usecases.home.SearchUserByNameUseCase
-import com.minhtu.firesocialmedia.domain.usecases.common.UpdateCountValueInDatabase
 import com.minhtu.firesocialmedia.domain.usecases.home.UpdateFCMTokenUseCase
+import com.minhtu.firesocialmedia.domain.usecases.home.UpdateLikeCountForNewUseCase
 import com.minhtu.firesocialmedia.domain.usecases.information.CheckCalleeAvailableUseCase
 import com.minhtu.firesocialmedia.domain.usecases.information.SaveSignUpInformationUseCase
 import com.minhtu.firesocialmedia.domain.usecases.newsfeed.SaveNewToDatabaseUseCase
 import com.minhtu.firesocialmedia.domain.usecases.newsfeed.UpdateNewsFromDatabaseUseCase
+import com.minhtu.firesocialmedia.domain.usecases.notification.DeleteNotificationFromDatabaseUseCase
 import com.minhtu.firesocialmedia.domain.usecases.notification.FindNewByIdInDbUseCase
+import com.minhtu.firesocialmedia.domain.usecases.notification.GetAllNotificationOfUserUseCase
+import com.minhtu.firesocialmedia.domain.usecases.notification.SaveNotificationToDatabaseUseCase
 import com.minhtu.firesocialmedia.domain.usecases.showimage.DownloadImageUseCase
 import com.minhtu.firesocialmedia.domain.usecases.signin.CheckLocalAccountUseCase
 import com.minhtu.firesocialmedia.domain.usecases.signin.CheckUserExistsUseCase
@@ -87,18 +97,17 @@ object AppModule {
     fun provideDeleteNotificationFromDatabaseUseCase(notificationRepository: NotificationRepository) : DeleteNotificationFromDatabaseUseCase{
         return DeleteNotificationFromDatabaseUseCase(notificationRepository)
     }
-    fun provideSaveValueToDatabaseUseCase(commonDbRepository: CommonDbRepository) : SaveValueToDatabaseUseCase {
-        return SaveValueToDatabaseUseCase(commonDbRepository)
+    fun provideSaveValueToDatabaseUseCase(commonDbRepository: CommonDbRepository) : SaveLikedPostUseCase {
+        return SaveLikedPostUseCase(commonDbRepository)
+    }
+    fun provideSaveLikedCommentsUseCase(commonDbRepository: CommonDbRepository) : SaveLikedCommentsUseCase {
+        return SaveLikedCommentsUseCase(commonDbRepository)
     }
     fun provideNotificationRepository(platformContext: PlatformContext) : NotificationRepository {
         return NotificationRepositoryImpl(platformContext.database)
     }
     fun provideCommonDbRepository(platformContext: PlatformContext) : CommonDbRepository{
         return CommonDbRepositoryImpl(platformContext.database)
-    }
-
-    fun provideSaveListToDatabaseUseCase(commonDbRepository: CommonDbRepository) : SaveListToDatabaseUseCase{
-        return SaveListToDatabaseUseCase(commonDbRepository)
     }
     //---------------------------Sign in----------------------------------------//
     fun provideSignInUseCase(authenticationRepository: AuthenticationRepository) : SignInUseCase {
@@ -208,8 +217,8 @@ object AppModule {
     fun provideClearAccountUseCase(homeRepository: AuthenticationRepository) : ClearAccountUseCase {
         return ClearAccountUseCase(homeRepository)
     }
-    fun provideUpdateCountValueInDatabase(commonDbRepository: CommonDbRepository) : UpdateCountValueInDatabase {
-        return UpdateCountValueInDatabase(commonDbRepository)
+    fun provideUpdateCountValueInDatabase(commonDbRepository: CommonDbRepository) : UpdateLikeCountForNewUseCase {
+        return UpdateLikeCountForNewUseCase(commonDbRepository)
     }
     fun provideDeleteNewsFromDatabaseUseCase(newsRepository: NewsRepository) : DeleteNewsFromDatabaseUseCase {
         return DeleteNewsFromDatabaseUseCase(newsRepository)
@@ -220,15 +229,15 @@ object AppModule {
     fun provideSearchUserByNameUseCase(userRepository: UserRepository) : SearchUserByNameUseCase {
         return SearchUserByNameUseCase(userRepository)
     }
-    fun provideSendSignalingDataUseCase(platformContext: PlatformContext) : SendSignalingDataUseCase {
-        return SendSignalingDataUseCase(platformContext.audioCall, platformContext.database)
+    fun provideSendSignalingDataUseCase(callRepository: CallRepository) : SendSignalingDataUseCase {
+        return SendSignalingDataUseCase(callRepository)
     }
     fun provideUserInteractor(
         getCurrentUserUidUseCase: GetCurrentUserUidUseCase,
         getUserUseCase: GetUserUseCase,
         updateFCMTokenUseCase: UpdateFCMTokenUseCase,
         clearAccountUseCase: ClearAccountUseCase,
-        saveValueToDatabaseUseCase: SaveValueToDatabaseUseCase,
+        saveValueToDatabaseUseCase: SaveLikedPostUseCase,
         searchUserByNameUseCase: SearchUserByNameUseCase
     ) : UserInteractor {
         return UserInteractorImpl(
@@ -242,7 +251,7 @@ object AppModule {
     }
     fun provideNewsInteractor(
         getLatestNewsUseCase: GetLatestNewsUseCase,
-        updateCountValueInDatabase: UpdateCountValueInDatabase,
+        updateCountValueInDatabase: UpdateLikeCountForNewUseCase,
         deleteNewsFromDatabaseUseCase: DeleteNewsFromDatabaseUseCase
     ) : NewsInteractor {
         return NewsInteractorImpl(
@@ -290,36 +299,64 @@ object AppModule {
     fun provideSaveCommentToDatabaseUseCase(commonDbRepository: CommonDbRepository) : SaveCommentToDatabaseUseCase {
         return SaveCommentToDatabaseUseCase(commonDbRepository)
     }
+    fun provideSaveSubCommentToDatabaseUseCase(commonDbRepository: CommonDbRepository) : SaveSubCommentToDatabaseUseCase {
+        return SaveSubCommentToDatabaseUseCase(commonDbRepository)
+    }
     fun provideDeleteCommentFromDatabaseUseCase(commonDbRepository: CommonDbRepository) : DeleteCommentFromDatabaseUseCase {
         return DeleteCommentFromDatabaseUseCase(commonDbRepository)
+    }
+    fun provideDeleteSubCommentFromDatabaseUseCase(commonDbRepository: CommonDbRepository) : DeleteSubCommentFromDatabaseUseCase {
+        return DeleteSubCommentFromDatabaseUseCase(commonDbRepository)
     }
     fun provideGetAllCommentsUseCase(commentRepository: CommentRepository) : GetAllCommentsUseCase {
         return GetAllCommentsUseCase(commentRepository)
     }
+    fun provideUpdateCommentCountForNewUseCase(commonDbRepository: CommonDbRepository) : UpdateCommentCountForNewUseCase {
+        return UpdateCommentCountForNewUseCase(commonDbRepository)
+    }
+    fun provideUpdateReplyCountForCommentUseCase(commonDbRepository: CommonDbRepository) : UpdateReplyCountForCommentUseCase {
+        return UpdateReplyCountForCommentUseCase(commonDbRepository)
+    }
     fun provideCommentInteractor(
         saveCommentToDatabaseUseCase: SaveCommentToDatabaseUseCase,
+        saveSubCommentToDatabaseUseCase: SaveSubCommentToDatabaseUseCase,
         deleteCommentFromDatabaseUseCase: DeleteCommentFromDatabaseUseCase,
+        deleteSubCommentFromDatabaseUseCase: DeleteSubCommentFromDatabaseUseCase,
         getAllCommentsUseCase: GetAllCommentsUseCase
     ) : CommentInteractor {
         return CommentInteractorImpl(
             saveCommentToDatabaseUseCase,
+            saveSubCommentToDatabaseUseCase,
             deleteCommentFromDatabaseUseCase,
+            deleteSubCommentFromDatabaseUseCase,
             getAllCommentsUseCase
         )
+    }
+    fun provideUpdateLikeCountForCommentUseCase(commonDbRepository: CommonDbRepository) : UpdateLikeCountForCommentUseCase {
+        return UpdateLikeCountForCommentUseCase(commonDbRepository)
+    }
+    fun provideUpdateLikeCountForSubCommentUseCase(commonDbRepository: CommonDbRepository) : UpdateLikeCountForSubCommentUseCase {
+        return UpdateLikeCountForSubCommentUseCase(commonDbRepository)
     }
     fun provideCommentViewModel(
         commentInteractor: CommentInteractor,
         getUserUseCase : GetUserUseCase,
-        saveValueToDatabaseUseCase : SaveValueToDatabaseUseCase,
+        saveLikedCommentsUseCase : SaveLikedCommentsUseCase,
         saveNotificationToDatabaseUseCase: SaveNotificationToDatabaseUseCase,
-        updateCountValueInDatabase: UpdateCountValueInDatabase
+        updateCommentCountForNewUseCase: UpdateCommentCountForNewUseCase,
+        updateReplyCountForCommentUseCase: UpdateReplyCountForCommentUseCase,
+        updateLikeCountForCommentUseCase: UpdateLikeCountForCommentUseCase,
+        updateLikeCountForSubCommentUseCase: UpdateLikeCountForSubCommentUseCase
     ) : CommentViewModel {
         return CommentViewModel(
             commentInteractor,
             getUserUseCase,
-            saveValueToDatabaseUseCase,
+            saveLikedCommentsUseCase,
             saveNotificationToDatabaseUseCase,
-            updateCountValueInDatabase
+            updateCommentCountForNewUseCase,
+            updateReplyCountForCommentUseCase,
+            updateLikeCountForCommentUseCase,
+            updateLikeCountForSubCommentUseCase
         )
     }
 
@@ -345,25 +382,41 @@ object AppModule {
 
     //---------------------------User Information----------------------------------------//
     fun provideCallRepository(platformContext: PlatformContext) : CallRepository {
-        return CallRepositoryImpl(platformContext.database, platformContext.audioCall)
+        return CallRepositoryImpl(
+            platformContext.audioCall,
+            platformContext.database,
+            platformContext.audioCall,
+            platformContext.permissionManager)
     }
     fun provideCheckCalleeAvailableUseCase(callRepository: CallRepository) : CheckCalleeAvailableUseCase{
         return CheckCalleeAvailableUseCase(callRepository)
     }
     fun provideUserInformationViewModel(
+        saveFriendUseCase: SaveFriendUseCase,
+        saveFriendRequestUseCase: SaveFriendRequestUseCase,
         saveNotificationToDatabaseUseCase: SaveNotificationToDatabaseUseCase,
-        saveListToDatabaseUseCase: SaveListToDatabaseUseCase,
         checkCalleeAvailableUseCase: CheckCalleeAvailableUseCase): UserInformationViewModel {
         return UserInformationViewModel(
+            saveFriendUseCase,
+            saveFriendRequestUseCase,
             saveNotificationToDatabaseUseCase,
-            saveListToDatabaseUseCase,
             checkCalleeAvailableUseCase
         )
     }
 
     //---------------------------Friend----------------------------------------//
-    fun provideFriendViewModel(saveListToDatabaseUseCase: SaveListToDatabaseUseCase) : FriendViewModel {
-        return FriendViewModel(saveListToDatabaseUseCase)
+    fun provideSaveFriendUseCase(commonDbRepository: CommonDbRepository) : SaveFriendUseCase{
+        return SaveFriendUseCase(commonDbRepository)
+    }
+    fun provideSaveFriendRequestUseCase(commonDbRepository: CommonDbRepository) : SaveFriendRequestUseCase{
+        return SaveFriendRequestUseCase(commonDbRepository)
+    }
+    fun provideFriendViewModel(
+        saveFriendUseCase: SaveFriendUseCase,
+        saveFriendRequestUseCase: SaveFriendRequestUseCase) : FriendViewModel {
+        return FriendViewModel(
+            saveFriendUseCase,
+            saveFriendRequestUseCase)
     }
 
     //---------------------------Search----------------------------------------//
@@ -408,19 +461,27 @@ object AppModule {
         return StartCallServiceUseCase(callRepository)
     }
 
-    fun provideManageCallStateUseCase(platformContext: PlatformContext) : ManageCallStateUseCase{
-        return ManageCallStateUseCase(platformContext.audioCall, platformContext.database)
+    fun provideManageCallStateUseCase(callRepository: CallRepository) : ManageCallStateUseCase{
+        return ManageCallStateUseCase(callRepository)
     }
 
-    fun provideRequestPermissionUseCase(platformContext: PlatformContext) : RequestPermissionUseCase{
-        return RequestPermissionUseCase(platformContext.permissionManager)
+    fun provideRequestPermissionUseCase(callRepository: CallRepository) : RequestPermissionUseCase{
+        return RequestPermissionUseCase(callRepository)
     }
 
     fun provideStartVideoCallServiceUseCase(callRepository: CallRepository) : StartVideoCallServiceUseCase {
         return StartVideoCallServiceUseCase(callRepository)
     }
 
-    fun provideRequestCameraAndAudioPermissionsUseCase(platformContext: PlatformContext) : RequestCameraAndAudioPermissionsUseCase {
-        return RequestCameraAndAudioPermissionsUseCase(platformContext.permissionManager)
+    fun provideRequestCameraAndAudioPermissionsUseCase(callRepository: CallRepository) : RequestCameraAndAudioPermissionsUseCase {
+        return RequestCameraAndAudioPermissionsUseCase(callRepository)
+    }
+
+    fun provideInitializeCallUseCase(callRepository: CallRepository) : InitializeCallUseCase {
+        return InitializeCallUseCase(callRepository)
+    }
+
+    fun provideVideoCallUseCase(callRepository: CallRepository) : VideoCallUseCase {
+        return VideoCallUseCase(callRepository)
     }
 }

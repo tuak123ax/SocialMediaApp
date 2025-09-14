@@ -9,9 +9,9 @@ import com.minhtu.firesocialmedia.domain.entity.notification.NotificationInstanc
 import com.minhtu.firesocialmedia.domain.entity.notification.NotificationType
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.domain.usecases.common.GetUserUseCase
-import com.minhtu.firesocialmedia.domain.usecases.common.SaveNotificationToDatabaseUseCase
 import com.minhtu.firesocialmedia.domain.usecases.newsfeed.SaveNewToDatabaseUseCase
 import com.minhtu.firesocialmedia.domain.usecases.newsfeed.UpdateNewsFromDatabaseUseCase
+import com.minhtu.firesocialmedia.domain.usecases.notification.SaveNotificationToDatabaseUseCase
 import com.minhtu.firesocialmedia.platform.createMessageForServer
 import com.minhtu.firesocialmedia.platform.generateRandomId
 import com.minhtu.firesocialmedia.platform.getCurrentTime
@@ -87,7 +87,7 @@ class UploadNewfeedViewModel(
                     newsInstance.timePosted = getCurrentTime()
                     _createPostStatus.value = saveNewToDatabase.invoke(
                         newsRandomId,
-                        Constants.NEWS_PATH,newsInstance
+                        newsInstance
                     )
 
                     //Create noti object
@@ -142,7 +142,6 @@ class UploadNewfeedViewModel(
             friend.addNotification(notification)
             saveNotificationToDatabaseUseCase.invoke(
                 friend.uid,
-                Constants.USER_PATH,
                 friend.notifications)
         } catch(_: Exception) {
         }
@@ -171,7 +170,6 @@ class UploadNewfeedViewModel(
         backgroundScope.launch {
             if(message.isNotEmpty() || image.isNotEmpty() || video.isNotEmpty()) {
                 _updatePostStatus.value = updateNewsFromDatabaseUseCase.invoke(
-                    Constants.NEWS_PATH,
                     message,
                     image,
                     video,

@@ -46,7 +46,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.minhtu.firesocialmedia.constants.TestTag
-import com.minhtu.firesocialmedia.data.dto.call.OfferAnswerDTO
+import com.minhtu.firesocialmedia.domain.entity.call.OfferAnswer
 import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.platform.CrossPlatformIcon
@@ -76,7 +76,7 @@ class Home {
                        onNavigateToSignIn: () -> Unit,
                        onNavigateToUserInformation: (user: UserInstance?) -> Unit,
                        onNavigateToCommentScreen: (selectedNew : NewsInstance) -> Unit,
-                       onNavigateToCallingScreen : suspend (sessionId : String, caller : String, callee : String, offer: OfferAnswerDTO, ) -> Unit,
+                       onNavigateToCallingScreen : suspend (sessionId : String, caller : String, callee : String, offer: OfferAnswer ) -> Unit,
                        onNavigateToCallingScreenWithUI : suspend () -> Unit,
                        navHandler : NavigationHandler){
             val isLoading by loadingViewModel.isLoading.collectAsState()

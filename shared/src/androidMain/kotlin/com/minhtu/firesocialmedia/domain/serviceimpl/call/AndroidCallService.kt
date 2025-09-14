@@ -5,11 +5,11 @@ import android.content.Intent
 import android.media.AudioManager
 import android.util.Log
 import com.minhtu.firesocialmedia.constants.Constants
-import com.minhtu.firesocialmedia.domain.entity.call.CallAction
+import com.minhtu.firesocialmedia.data.dto.call.IceCandidateDTO
 import com.minhtu.firesocialmedia.data.dto.call.OfferAnswerDTO
 import com.minhtu.firesocialmedia.data.dto.user.UserDTO
-import com.minhtu.firesocialmedia.domain.entity.call.IceCandidateData
-import com.minhtu.firesocialmedia.domain.service.call.AudioCallService
+import com.minhtu.firesocialmedia.data.remote.service.call.AudioCallService
+import com.minhtu.firesocialmedia.domain.entity.call.CallAction
 import com.minhtu.firesocialmedia.platform.WebRTCVideoTrack
 import com.minhtu.firesocialmedia.platform.logMessage
 import com.minhtu.firesocialmedia.utils.AndroidUtils
@@ -321,7 +321,7 @@ class AndroidAudioCallService(
      * */
     override suspend fun initialize(
         onInitializeFinished : () -> Unit,
-        onIceCandidateCreated : (iceCandidateData : IceCandidateData) -> Unit,
+        onIceCandidateCreated : (iceCandidateData : IceCandidateDTO) -> Unit,
         onRemoteVideoTrackReceived: (remoteVideoTrack :WebRTCVideoTrack) -> Unit) {
         logMessage("initialize", { "start initialize" })
         //Setup audio manager
@@ -356,7 +356,7 @@ class AndroidAudioCallService(
 
             override fun onIceCandidate(candidate: IceCandidate) {
                 logMessage("initialize", { "onIceCandidate" })
-                val iceCandidateData = IceCandidateData(candidate.sdp, candidate.sdpMid, candidate.sdpMLineIndex)
+                val iceCandidateData = IceCandidateDTO(candidate.sdp, candidate.sdpMid, candidate.sdpMLineIndex)
                 onIceCandidateCreated(iceCandidateData)
             }
 

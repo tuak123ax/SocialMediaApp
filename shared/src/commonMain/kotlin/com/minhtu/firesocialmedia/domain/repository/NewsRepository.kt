@@ -7,12 +7,9 @@ interface NewsRepository {
     suspend fun getNew(newId: String) : NewsInstance?
     suspend fun getLatestNews(number : Int,
                               lastTimePosted : Double?,
-                              lastKey: String?,
-                              path: String) : LatestNewsResult?
-    suspend fun deleteNewsFromDatabase(path : String,
-                                       new: NewsInstance)
+                              lastKey: String?) : LatestNewsResult?
+    suspend fun deleteNewsFromDatabase(new: NewsInstance)
     suspend fun updateNewsFromDatabase(
-        path: String,
         newContent: String,
         newImage: String,
         newVideo : String,

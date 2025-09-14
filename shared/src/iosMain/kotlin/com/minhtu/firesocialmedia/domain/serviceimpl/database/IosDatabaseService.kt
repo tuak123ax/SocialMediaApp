@@ -8,6 +8,8 @@ import cocoapods.FirebaseStorage.FIRStorage
 import cocoapods.FirebaseStorage.FIRStorageMetadata
 import cocoapods.FirebaseStorage.FIRStorageReference
 import com.minhtu.firesocialmedia.constants.Constants
+import com.minhtu.firesocialmedia.data.constant.DataConstant
+import com.minhtu.firesocialmedia.data.dto.call.AudioCallSessionDTO
 import com.minhtu.firesocialmedia.data.dto.call.IceCandidateDTO
 import com.minhtu.firesocialmedia.data.dto.call.OfferAnswerDTO
 import com.minhtu.firesocialmedia.data.dto.comment.CommentDTO
@@ -18,11 +20,9 @@ import com.minhtu.firesocialmedia.data.dto.notification.fromMap
 import com.minhtu.firesocialmedia.data.dto.signin.SignInDTO
 import com.minhtu.firesocialmedia.data.dto.user.UserDTO
 import com.minhtu.firesocialmedia.data.dto.user.toMap
+import com.minhtu.firesocialmedia.data.remote.service.database.DatabaseService
 import com.minhtu.firesocialmedia.domain.entity.base.BaseNewsInstance
-import com.minhtu.firesocialmedia.domain.entity.call.AudioCallSession
 import com.minhtu.firesocialmedia.domain.entity.call.CallStatus
-import com.minhtu.firesocialmedia.domain.entity.call.IceCandidateData
-import com.minhtu.firesocialmedia.domain.service.database.DatabaseService
 import com.minhtu.firesocialmedia.domain.serviceimpl.crypto.IosCryptoHelper
 import com.minhtu.firesocialmedia.platform.logMessage
 import com.minhtu.firesocialmedia.platform.toNSData
@@ -42,7 +42,7 @@ class IosDatabaseService() : DatabaseService {
         if(currentFCMToken.isNotEmpty()) {
             if(currentUser.token != currentFCMToken) {
                 currentUser.token = currentFCMToken
-                IosDatabaseHelper.saveStringToDatabase(currentUser.uid,Constants.USER_PATH, currentFCMToken, Constants.TOKEN_PATH)
+                IosDatabaseHelper.saveStringToDatabase(currentUser.uid, DataConstant.USER_PATH, currentFCMToken, DataConstant.TOKEN_PATH)
             }
         }
     }
@@ -73,7 +73,7 @@ class IosDatabaseService() : DatabaseService {
                             existed = true
                             break
                         }
-                    } catch (e: Exception) {
+                    } catch (_: Exception) {
                         continue
                     }
                 }
@@ -135,19 +135,6 @@ class IosDatabaseService() : DatabaseService {
             instance)
     }
 
-//    override suspend fun saveInstanceToDatabase(
-//        id: String,
-//        path: String,
-//        instance: CommentDTO,
-//        stateFlow: MutableStateFlow<Boolean?>
-//    ) {
-//        IosDatabaseHelper.saveInstanceToDatabase(
-//            id,
-//            path,
-//            instance,
-//            stateFlow)
-//    }
-
     override suspend fun getAllUsers(path: String): ArrayList<UserDTO>? = suspendCancellableCoroutine{ continuation ->
         val result = ArrayList<UserDTO>()
         val databaseReference = FIRDatabase.database().reference().child(path)
@@ -181,7 +168,7 @@ class IosDatabaseService() : DatabaseService {
         return suspendCancellableCoroutine { continuation ->
             val database = FIRDatabase.database()
             val databaseReference = database.reference()
-                .child(Constants.USER_PATH)
+                .child(DataConstant.USER_PATH)
                 .child(userId)
 
             databaseReference.observeSingleEventOfType(
@@ -193,7 +180,7 @@ class IosDatabaseService() : DatabaseService {
                             try {
                                 val user = value.toUserDTO()
                                 continuation.resume(user) {}
-                            } catch (e: Exception) {
+                            } catch (_: Exception) {
                                 continuation.resume(null) {}
                             }
                         } else {
@@ -213,7 +200,7 @@ class IosDatabaseService() : DatabaseService {
         return suspendCancellableCoroutine { continuation ->
             val database = FIRDatabase.database()
             val databaseReference = database.reference()
-                .child(Constants.NEWS_PATH)
+                .child(DataConstant.NEWS_PATH)
                 .child(newId)
 
             databaseReference.observeSingleEventOfType(
@@ -230,7 +217,7 @@ class IosDatabaseService() : DatabaseService {
                                 
                                 val news = value.toNewsDTO()
                                 continuation.resume(news) {}
-                            } catch (e: Exception) {
+                            } catch (_: Exception) {
                                 continuation.resume(null) {}
                             }
                         } else {
@@ -305,7 +292,7 @@ class IosDatabaseService() : DatabaseService {
         val databaseReference = FIRDatabase
             .database()
             .reference()
-            .child(Constants.NEWS_PATH)
+            .child(DataConstant.NEWS_PATH)
             .child(newsId)
             .child(path)
 
@@ -346,7 +333,7 @@ class IosDatabaseService() : DatabaseService {
     ): List<NotificationDTO>? = suspendCancellableCoroutine { continuation ->
         val result = mutableListOf<NotificationDTO>()
         val databaseReference = FIRDatabase.database().reference()
-            .child(Constants.USER_PATH)
+            .child(DataConstant.USER_PATH)
             .child(currentUserUid)
             .child(path)
 
@@ -455,7 +442,6 @@ class IosDatabaseService() : DatabaseService {
     override suspend fun sendOfferToFireBase(
         sessionId: String,
         offer: OfferAnswerDTO,
-        callPath: String,
         sendIceCandidateCallBack: Utils.Companion.BasicCallBack
     ) {
         // iOS implementation will be added later
@@ -463,17 +449,15 @@ class IosDatabaseService() : DatabaseService {
 
     override suspend fun sendIceCandidateToFireBase(
         sessionId: String,
-        iceCandidate: IceCandidateData,
+        iceCandidate: IceCandidateDTO,
         whichCandidate: String,
-        callPath: String,
         sendIceCandidateCallBack: Utils.Companion.BasicCallBack
     ) {
         // iOS implementation will be added later
     }
 
     override suspend fun sendCallSessionToFirebase(
-        session: AudioCallSession,
-        callPath: String,
+        session: AudioCallSessionDTO,
         sendCallSessionCallBack: Utils.Companion.BasicCallBack
     ) {
         // iOS implementation will be added later
@@ -482,7 +466,6 @@ class IosDatabaseService() : DatabaseService {
     override fun sendCallStatusToFirebase(
         sessionId: String,
         status: CallStatus,
-        callPath: String,
         sendCallStatusCallBack: Utils.Companion.BasicCallBack
     ) {
         // iOS implementation will be added later
@@ -490,7 +473,6 @@ class IosDatabaseService() : DatabaseService {
 
     override suspend fun deleteCallSession(
         sessionId: String,
-        callPath: String,
         deleteCallBack: Utils.Companion.BasicCallBack
     ) {
         // iOS implementation will be added later
@@ -499,7 +481,6 @@ class IosDatabaseService() : DatabaseService {
     override suspend fun observePhoneCall(
         isInCall: MutableStateFlow<Boolean>,
         currentUserId: String,
-        callPath: String,
         phoneCallCallBack: (String, String, String, OfferAnswerDTO) -> Unit,
         endCallSession: (Boolean) -> Unit,
         iceCandidateCallBack: (Map<String, IceCandidateDTO>?) -> Unit
@@ -509,7 +490,6 @@ class IosDatabaseService() : DatabaseService {
 
     override suspend fun observePhoneCallWithoutCheckingInCall(
         currentUserId: String,
-        callPath: String,
         phoneCallCallBack: (String, String, String, OfferAnswerDTO) -> Unit,
         endCallSession: (Boolean) -> Unit,
         iceCandidateCallBack: (Map<String, IceCandidateDTO>?) -> Unit
@@ -520,7 +500,6 @@ class IosDatabaseService() : DatabaseService {
     override suspend fun sendAnswerToFirebase(
         sessionId: String,
         answer: OfferAnswerDTO,
-        callPath: String,
         sendIceCandidateCallBack: Utils.Companion.BasicCallBack
     ) {
         // iOS implementation will be added later
@@ -530,7 +509,6 @@ class IosDatabaseService() : DatabaseService {
         sessionId: String,
         updateContent: String,
         updateField: String,
-        callPath: String,
         updateAnswerCallBack: Utils.Companion.BasicCallBack
     ) {
         // iOS implementation will be added later
@@ -540,7 +518,6 @@ class IosDatabaseService() : DatabaseService {
         sessionId: String,
         updateContent: String,
         updateField: String,
-        callPath: String,
         updateOfferCallBack: Utils.Companion.BasicCallBack
     ) {
         // iOS implementation will be added later
@@ -556,7 +533,6 @@ class IosDatabaseService() : DatabaseService {
 
     override suspend fun observeAnswerFromCallee(
         sessionId: String,
-        callPath: String,
         answerCallBack: (OfferAnswerDTO) -> Unit,
         rejectCallBack: () -> Unit
     ) {
@@ -565,7 +541,6 @@ class IosDatabaseService() : DatabaseService {
 
     override suspend fun observeCallStatus(
         sessionId: String,
-        callPath: String,
         callStatusCallBack: Utils.Companion.CallStatusCallBack
     ) {
         // iOS implementation will be added later
@@ -580,7 +555,6 @@ class IosDatabaseService() : DatabaseService {
 
     override suspend fun observeIceCandidatesFromCallee(
         sessionId: String,
-        callPath: String,
         iceCandidateCallBack: (IceCandidateDTO) -> Unit
     ) {
         // iOS implementation will be added later
@@ -588,7 +562,6 @@ class IosDatabaseService() : DatabaseService {
 
     override suspend fun observeVideoCall(
         sessionId: String,
-        callPath: String,
         videoCallCallBack: (OfferAnswerDTO) -> Unit
     ) {
         // iOS implementation will be added later
@@ -600,7 +573,7 @@ class IosDatabaseService() : DatabaseService {
     ): List<UserDTO>? {
         return suspendCancellableCoroutine { continuation ->
             val database = FIRDatabase.database()
-            val databaseReference = database.reference().child(Constants.USER_PATH)
+            val databaseReference = database.reference().child(DataConstant.USER_PATH)
 
             databaseReference.observeSingleEventOfType(
                 FIRDataEventType.FIRDataEventTypeValue,

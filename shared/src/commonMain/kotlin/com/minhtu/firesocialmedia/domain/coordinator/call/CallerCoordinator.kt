@@ -1,7 +1,7 @@
 package com.minhtu.firesocialmedia.domain.coordinator.call
 
-import com.minhtu.firesocialmedia.data.dto.call.OfferAnswerDTO
 import com.minhtu.firesocialmedia.domain.entity.call.AudioCallSession
+import com.minhtu.firesocialmedia.domain.entity.call.OfferAnswer
 import com.minhtu.firesocialmedia.domain.usecases.call.CallerUseCases
 import com.minhtu.firesocialmedia.domain.usecases.call.InitializeCallUseCase
 import com.minhtu.firesocialmedia.domain.usecases.call.SendSignalingDataUseCase
@@ -22,7 +22,7 @@ class CallerCoordinator(
         onRejectVideoCall : suspend () -> Unit,
         onAcceptCall : suspend () -> Unit,
         onEndCall : suspend () -> Unit,
-        onReceiveVideoCall : suspend (OfferAnswerDTO) -> Unit
+        onReceiveVideoCall : suspend (OfferAnswer) -> Unit
     ) {
         //Caller starts call
         callerUseCases.startCall.invoke(

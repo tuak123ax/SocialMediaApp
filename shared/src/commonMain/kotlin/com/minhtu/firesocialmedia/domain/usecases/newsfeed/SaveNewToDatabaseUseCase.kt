@@ -8,11 +8,9 @@ class SaveNewToDatabaseUseCase(
 ) {
     suspend operator fun invoke(
         id : String,
-        path : String,
         instance : BaseNewsInstance) : Boolean {
         return commonDbRepository.saveInstanceToDatabase(
             id,
-            path,
             instance
         )
     }

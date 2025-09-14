@@ -3,7 +3,6 @@ package com.minhtu.firesocialmedia.presentation.comment
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import com.minhtu.firesocialmedia.constants.Constants
 import com.minhtu.firesocialmedia.di.PlatformContext
 import com.minhtu.firesocialmedia.domain.entity.comment.CommentInstance
 import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
@@ -11,10 +10,13 @@ import com.minhtu.firesocialmedia.domain.entity.notification.NotificationInstanc
 import com.minhtu.firesocialmedia.domain.entity.notification.NotificationType
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.domain.interactor.comment.CommentInteractor
+import com.minhtu.firesocialmedia.domain.usecases.comment.SaveLikedCommentsUseCase
+import com.minhtu.firesocialmedia.domain.usecases.comment.UpdateCommentCountForNewUseCase
+import com.minhtu.firesocialmedia.domain.usecases.comment.UpdateLikeCountForCommentUseCase
+import com.minhtu.firesocialmedia.domain.usecases.comment.UpdateLikeCountForSubCommentUseCase
+import com.minhtu.firesocialmedia.domain.usecases.comment.UpdateReplyCountForCommentUseCase
 import com.minhtu.firesocialmedia.domain.usecases.common.GetUserUseCase
-import com.minhtu.firesocialmedia.domain.usecases.common.SaveNotificationToDatabaseUseCase
-import com.minhtu.firesocialmedia.domain.usecases.common.SaveValueToDatabaseUseCase
-import com.minhtu.firesocialmedia.domain.usecases.common.UpdateCountValueInDatabase
+import com.minhtu.firesocialmedia.domain.usecases.notification.SaveNotificationToDatabaseUseCase
 import com.minhtu.firesocialmedia.platform.createMessageForServer
 import com.minhtu.firesocialmedia.platform.generateRandomId
 import com.minhtu.firesocialmedia.platform.getCurrentTime
@@ -32,16 +34,18 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class CommentViewModel(
     private val commentInteractor: CommentInteractor,
     private val getUserUseCase : GetUserUseCase,
-    private val saveValueToDatabaseUseCase: SaveValueToDatabaseUseCase,
+    private val saveLikedCommentsUseCase: SaveLikedCommentsUseCase,
     private val saveNotificationToDatabaseUseCase: SaveNotificationToDatabaseUseCase,
-    private val updateCountValueInDatabase: UpdateCountValueInDatabase,
+    private val updateCommentCountForNewUseCase: UpdateCommentCountForNewUseCase,
+    private val updateReplyCountForCommentUseCase: UpdateReplyCountForCommentUseCase,
+    private val updateLikeCountForCommentUseCase: UpdateLikeCountForCommentUseCase,
+    private val updateLikeCountForSubCommentUseCase : UpdateLikeCountForSubCommentUseCase,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : ViewModel() {
     var listComments : ArrayList<CommentInstance> = ArrayList()
@@ -79,14 +83,11 @@ class CommentViewModel(
                             updateComments(listComments)
                             _createCommentStatus.value = commentInteractor.saveComment(
                                 commentRandomId,
-                                Constants.NEWS_PATH+"/"+selectedNew.id+"/"+ Constants.COMMENT_PATH,
                                 commentInstance
                             )
 
-                            updateCountValueInDatabase.invoke(
+                            updateCommentCountForNewUseCase.invoke(
                                 selectedNew.id,
-                                Constants.NEWS_PATH,
-                                Constants.COMMENT_COUNT_PATH,
                                 listComments.size
                             )
                             updateMessage("")
@@ -138,7 +139,6 @@ class CommentViewModel(
             friend.addNotification(notification)
             saveNotificationToDatabaseUseCase.invoke(
                 friend.uid,
-                Constants.USER_PATH,
                 friend.notifications)
         } catch(e: Exception) {
         }
@@ -169,17 +169,15 @@ class CommentViewModel(
                     currentComment.listReplies.put(commentInstance.id, commentInstance)
                     listComments.add(currentComment)
                     updateComments(listComments)
-                    _createCommentStatus.value = commentInteractor.saveComment(
+                    _createCommentStatus.value = commentInteractor.saveSubComment(
                         commentRandomId,
-                        Constants.NEWS_PATH+"/"+selectedNew.id+"/"+ Constants.COMMENT_PATH+"/"+currentComment.id+"/"+ Constants.LIST_REPLIES_PATH,
+                        selectedNew.id,
+                        currentComment.id,
                         commentInstance
                     )
 
-                    updateCountValueInDatabase.invoke(
+                    updateCommentCountForNewUseCase.invoke(
                         selectedNew.id,
-                        Constants.NEWS_PATH,
-                        Constants.COMMENT_PATH + "/" + currentComment.id +"/"
-                                +Constants.COMMENT_COUNT_PATH,
                         currentComment.listReplies.size
                     )
                     updateMessage("")
@@ -239,34 +237,31 @@ class CommentViewModel(
     val sendLikeDataStatus = mutableStateOf(false)
     private suspend fun sendLikeUpdatesToFirebase(likeCountList : HashMap<String,Int>, selectedNew : NewsInstance, currentUser : UserInstance) {
         currentUser.likedComments = likeCache
-        val result = saveValueToDatabaseUseCase.invoke(
+        saveLikedCommentsUseCase.invoke(
             currentUser.uid,
-            Constants.USER_PATH,
-            likeCache,
-            Constants.LIKED_COMMENT_PATH
+            likeCache
+        )
+        val result = saveLikedCommentsUseCase.invoke(
+            currentUser.uid,
+            likeCache
         )
         sendLikeDataStatus.value = result
         val listCommentId = listComments.map { it.id}
         for(likedComment in likeCache.keys) {
             if(likeCountList[likedComment] != null) {
                 if(listCommentId.contains(likedComment)) {
-                    updateCountValueInDatabase.invoke(
+                    updateLikeCountForCommentUseCase.invoke(
                         selectedNew.id,
-                        Constants.NEWS_PATH,
-                        Constants.COMMENT_PATH + "/" +
-                                likedComment + "/" +
-                                Constants.LIKED_COUNT_PATH, likeCountList[likedComment]!!
+                        likedComment,
+                        likeCountList[likedComment]!!
                     )
                 }
                 if(mapSubComments.keys.contains(likedComment)) {
-                    updateCountValueInDatabase.invoke(
+                    updateLikeCountForSubCommentUseCase.invoke(
                         selectedNew.id,
-                        Constants.NEWS_PATH,
-                        Constants.COMMENT_PATH + "/" +
-                                findParentCommentId(likedComment) + "/" +
-                                Constants.LIST_REPLIES_PATH + "/" +
-                                likedComment + "/" +
-                                Constants.LIKED_COUNT_PATH, likeCountList[likedComment]!!
+                        likedComment,
+                        findParentCommentId(likedComment),
+                        likeCountList[likedComment]!!
                     )
                 }
             }
@@ -274,23 +269,18 @@ class CommentViewModel(
         for(unlikedComment in unlikeCache) {
             if(likeCountList[unlikedComment] != null) {
                 if(listCommentId.contains(unlikedComment)) {
-                    updateCountValueInDatabase.invoke(
+                    updateLikeCountForCommentUseCase.invoke(
                         selectedNew.id,
-                        Constants.NEWS_PATH,
-                        Constants.COMMENT_PATH + "/" +
-                                unlikedComment + "/" +
-                                Constants.LIKED_COUNT_PATH, likeCountList[unlikedComment]!!
+                        unlikedComment,
+                        likeCountList[unlikedComment]!!
                     )
                 }
                 if(mapSubComments.keys.contains(unlikedComment)) {
-                    updateCountValueInDatabase.invoke(
+                    updateLikeCountForSubCommentUseCase.invoke(
                         selectedNew.id,
-                        Constants.NEWS_PATH,
-                        Constants.COMMENT_PATH + "/" +
-                                findParentCommentId(unlikedComment) + "/" +
-                                Constants.LIST_REPLIES_PATH + "/" +
-                                unlikedComment + "/" +
-                                Constants.LIKED_COUNT_PATH, likeCountList[unlikedComment]!!
+                        unlikedComment,
+                        findParentCommentId(unlikedComment),
+                        likeCountList[unlikedComment]!!
                     )
                 }
             }
@@ -315,19 +305,14 @@ class CommentViewModel(
             val listCommentId = listComments.map { it.id}
             if(listCommentId.contains(comment.id)){
                 commentInteractor.deleteComment(
-                    Constants.NEWS_PATH + "/" +
-                            selectedNew.id + "/" +
-                            Constants.COMMENT_PATH,
+                    selectedNew.id,
                     comment
                 )
             }
             if(mapSubComments.keys.contains(comment.id)) {
-                commentInteractor.deleteComment(
-                    Constants.NEWS_PATH + "/" +
-                            selectedNew.id + "/" +
-                            Constants.COMMENT_PATH + "/" +
-                            findParentCommentId(comment.id) + "/" +
-                            Constants.LIST_REPLIES_PATH,
+                commentInteractor.deleteSubComment(
+                    selectedNew.id,
+                    findParentCommentId(comment.id),
                     comment
                 )
             }
@@ -340,7 +325,6 @@ class CommentViewModel(
 
     suspend fun getAllCommentsOfNew(newsId : String) {
         val result = commentInteractor.getAllComments(
-            Constants.COMMENT_PATH,
             newsId
         )
         if(result == null) {

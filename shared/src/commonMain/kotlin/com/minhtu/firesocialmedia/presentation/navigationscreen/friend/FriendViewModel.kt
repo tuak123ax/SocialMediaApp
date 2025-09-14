@@ -1,8 +1,8 @@
 package com.minhtu.firesocialmedia.presentation.navigationscreen.friend
 
-import com.minhtu.firesocialmedia.constants.Constants
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
-import com.minhtu.firesocialmedia.domain.usecases.common.SaveListToDatabaseUseCase
+import com.minhtu.firesocialmedia.domain.usecases.friend.SaveFriendRequestUseCase
+import com.minhtu.firesocialmedia.domain.usecases.friend.SaveFriendUseCase
 import com.rickclephas.kmp.observableviewmodel.ViewModel
 import com.rickclephas.kmp.observableviewmodel.launch
 import kotlinx.coroutines.CoroutineDispatcher
@@ -13,7 +13,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.withContext
 
 class FriendViewModel(
-    private val saveListToDatabaseUseCase: SaveListToDatabaseUseCase,
+    private val saveFriendUseCase: SaveFriendUseCase,
+    private val saveFriendRequestUseCase: SaveFriendRequestUseCase,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : ViewModel() {
     private val friendRequestsList = MutableStateFlow<ArrayList<String>>(ArrayList())
@@ -35,24 +36,20 @@ class FriendViewModel(
                 currentUser.friendRequests.remove(requester.uid)
                 currentUser.friends.add(requester.uid)
 
-                saveListToDatabaseUseCase.invoke(
+                saveFriendRequestUseCase.invoke(
                     currentUser.uid,
-                    Constants.USER_PATH,
-                    currentUser.friendRequests,
-                    Constants.FRIEND_REQUESTS_PATH
+                    currentUser.friendRequests
                 )
-                saveListToDatabaseUseCase.invoke(
+
+                saveFriendUseCase.invoke(
                     currentUser.uid,
-                    Constants.USER_PATH,
-                    currentUser.friends,
-                    Constants.FRIENDS_PATH
+                    currentUser.friends
                 )
+
                 requester.friends.add(currentUser.uid)
-                saveListToDatabaseUseCase.invoke(
+                saveFriendUseCase.invoke(
                     requester.uid,
-                    Constants.USER_PATH,
-                    requester.friends,
-                    Constants.FRIENDS_PATH
+                    requester.friends
                 )
 
                 //Update value to notify UI
@@ -66,11 +63,9 @@ class FriendViewModel(
             withContext(ioDispatcher) {
                 currentUser.friendRequests.remove(requester.uid)
 
-                saveListToDatabaseUseCase.invoke(
+                saveFriendRequestUseCase.invoke(
                     currentUser.uid,
-                    Constants.USER_PATH,
-                    currentUser.friendRequests,
-                    Constants.FRIEND_REQUESTS_PATH
+                    currentUser.friendRequests
                 )
 
                 //Update value to notify UI

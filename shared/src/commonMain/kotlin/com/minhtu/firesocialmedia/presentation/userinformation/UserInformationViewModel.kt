@@ -7,9 +7,10 @@ import com.minhtu.firesocialmedia.constants.Constants
 import com.minhtu.firesocialmedia.domain.entity.notification.NotificationInstance
 import com.minhtu.firesocialmedia.domain.entity.notification.NotificationType
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
-import com.minhtu.firesocialmedia.domain.usecases.common.SaveListToDatabaseUseCase
-import com.minhtu.firesocialmedia.domain.usecases.common.SaveNotificationToDatabaseUseCase
+import com.minhtu.firesocialmedia.domain.usecases.friend.SaveFriendRequestUseCase
+import com.minhtu.firesocialmedia.domain.usecases.friend.SaveFriendUseCase
 import com.minhtu.firesocialmedia.domain.usecases.information.CheckCalleeAvailableUseCase
+import com.minhtu.firesocialmedia.domain.usecases.notification.SaveNotificationToDatabaseUseCase
 import com.minhtu.firesocialmedia.platform.createMessageForServer
 import com.minhtu.firesocialmedia.platform.getCurrentTime
 import com.minhtu.firesocialmedia.platform.getRandomIdForNotification
@@ -35,8 +36,9 @@ enum class Relationship{
     NONE
 }
 class UserInformationViewModel(
+    private val saveFriendUseCase: SaveFriendUseCase,
+    private val saveFriendRequestUseCase: SaveFriendRequestUseCase,
     private val saveNotificationToDatabaseUseCase : SaveNotificationToDatabaseUseCase,
-    private val saveListToDatabaseUseCase: SaveListToDatabaseUseCase,
     private val checkCalleeAvailableUseCase: CheckCalleeAvailableUseCase,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : ViewModel() {
@@ -126,11 +128,10 @@ class UserInformationViewModel(
     private suspend fun saveFriendRequest(friend : UserInstance, currentUser: UserInstance) {
         try{
             friendRequestList.add(currentUser.uid)
-            saveListToDatabaseUseCase.invoke(
+
+            saveFriendRequestUseCase.invoke(
                 friend.uid,
-                Constants.USER_PATH,
-                friendRequestList,
-                Constants.FRIEND_REQUESTS_PATH
+                friendRequestList
             )
             _addFriendStatus.value = Relationship.FRIEND_REQUEST
         } catch(_: Exception) {
@@ -139,11 +140,9 @@ class UserInformationViewModel(
     private suspend fun removeFriendRequest(friend : UserInstance, currentUser : UserInstance) {
         try{
             friendRequestList.remove(currentUser.uid)
-            saveListToDatabaseUseCase.invoke(
+            saveFriendRequestUseCase.invoke(
                 friend.uid,
-                Constants.USER_PATH,
-                friendRequestList,
-                Constants.FRIEND_REQUESTS_PATH
+                friendRequestList
             )
             _addFriendStatus.value = Relationship.NONE
         } catch(_: Exception) {
@@ -152,20 +151,16 @@ class UserInformationViewModel(
 
     private suspend fun removeFriend(friend : UserInstance, currentUser : UserInstance) {
         try{
-            saveListToDatabaseUseCase.invoke(
+            saveFriendUseCase.invoke(
                 currentUser.uid,
-                Constants.USER_PATH,
-                currentUser.friends,
-                Constants.FRIENDS_PATH
+                currentUser.friends
             )
         } catch(_: Exception) {
         }
         try {
-            saveListToDatabaseUseCase.invoke(
+            saveFriendUseCase.invoke(
                 friend.uid,
-                Constants.USER_PATH,
-                friend.friends,
-                Constants.FRIENDS_PATH
+                friend.friends
             )
         } catch(_: Exception) {
         }
@@ -176,8 +171,7 @@ class UserInformationViewModel(
         viewModelScope.launch {
             withContext(ioDispatcher) {
                 val result = checkCalleeAvailableUseCase.invoke(
-                    callee.uid,
-                    Constants.CALL_PATH
+                    callee.uid
                 )
                 onResult(result)
             }

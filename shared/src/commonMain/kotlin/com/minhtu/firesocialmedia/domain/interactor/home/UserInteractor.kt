@@ -8,9 +8,6 @@ interface UserInteractor {
     suspend fun updateFcmToken(user: UserInstance)
     suspend fun clearLocalAccount()
     suspend fun saveLikedPost(id : String,
-                              path : String,
-                              value : HashMap<String, Int>,
-                              externalPath : String) : Boolean
-    suspend fun searchUserByName(name: String,
-                                 path: String): List<UserInstance>?
+                              value : HashMap<String, Int>) : Boolean
+    suspend fun searchUserByName(name: String): List<UserInstance>?
 }

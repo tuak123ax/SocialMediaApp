@@ -2,7 +2,7 @@ package com.minhtu.firesocialmedia.presentation.calling.videocall
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.minhtu.firesocialmedia.data.dto.call.OfferAnswerDTO
+import com.minhtu.firesocialmedia.domain.entity.call.OfferAnswer
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.domain.usecases.call.RequestCameraAndAudioPermissionsUseCase
 import com.minhtu.firesocialmedia.domain.usecases.call.StartVideoCallServiceUseCase
@@ -19,7 +19,7 @@ class VideoCallViewModel(
     val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : ViewModel() {
     fun startVideoCall(
-        remoteVideoOffer : OfferAnswerDTO?,
+        remoteVideoOffer : OfferAnswer?,
         caller : UserInstance,
         callee : UserInstance,
         currentUserId : String?,

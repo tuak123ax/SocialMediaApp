@@ -6,6 +6,9 @@ import android.graphics.Bitmap
 import android.graphics.drawable.BitmapDrawable
 import android.util.Log
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.IntentSenderRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -22,24 +25,26 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.IntentSenderRequest
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.edit
 import androidx.media3.common.MediaItem
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
+import com.google.android.gms.auth.api.identity.BeginSignInRequest
+import com.google.android.gms.auth.api.identity.Identity
 import com.minhtu.firesocialmedia.R
 import com.minhtu.firesocialmedia.constants.Constants
 import com.minhtu.firesocialmedia.di.PlatformContext
-import com.minhtu.firesocialmedia.domain.serviceimpl.imagepicker.AndroidImagePicker
+import com.minhtu.firesocialmedia.domain.entity.signin.SignInState
+import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
+import com.minhtu.firesocialmedia.data.remote.service.imagepicker.ImagePicker
+import com.minhtu.firesocialmedia.data.remote.service.signinlauncher.SignInLauncher
 import com.minhtu.firesocialmedia.domain.serviceimpl.call.WebRTCManager
 import com.minhtu.firesocialmedia.domain.serviceimpl.crypto.AndroidCryptoHelper
+import com.minhtu.firesocialmedia.domain.serviceimpl.imagepicker.AndroidImagePicker
 import com.minhtu.firesocialmedia.domain.serviceimpl.notification.Client
 import com.minhtu.firesocialmedia.domain.serviceimpl.notification.NotificationApiService
-import com.minhtu.firesocialmedia.domain.service.signinlauncher.SignInLauncher
 import com.minhtu.firesocialmedia.presentation.signin.SignInViewModel
 import com.minhtu.firesocialmedia.utils.NavigationHandler
 import com.russhwolf.settings.BuildConfig
@@ -64,11 +69,6 @@ import java.io.ByteArrayOutputStream
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.UUID
-import com.google.android.gms.auth.api.identity.BeginSignInRequest
-import com.google.android.gms.auth.api.identity.Identity
-import com.minhtu.firesocialmedia.domain.entity.signin.SignInState
-import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
-import com.minhtu.firesocialmedia.domain.service.imagepicker.ImagePicker
 import androidx.activity.compose.BackHandler as AndroidBackHandler
 
 private lateinit var appContext: Context

@@ -12,14 +12,19 @@ import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.GenericTypeIndicator
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.storage.FirebaseStorage
-import com.minhtu.firesocialmedia.constants.Constants
-import com.minhtu.firesocialmedia.data.dto.call.OfferAnswerDTO
-import com.minhtu.firesocialmedia.domain.entity.base.BaseNewsInstance
+import com.minhtu.firesocialmedia.data.constant.DataConstant
 import com.minhtu.firesocialmedia.data.dto.call.AudioCallSessionDTO
 import com.minhtu.firesocialmedia.data.dto.call.IceCandidateDTO
+import com.minhtu.firesocialmedia.data.dto.call.OfferAnswerDTO
 import com.minhtu.firesocialmedia.data.dto.news.NewsDTO
 import com.minhtu.firesocialmedia.data.dto.notification.NotificationDTO
+import com.minhtu.firesocialmedia.data.mapper.call.toDomain
+import com.minhtu.firesocialmedia.data.mapper.call.toDomainCandidates
+import com.minhtu.firesocialmedia.domain.entity.base.BaseNewsInstance
+import com.minhtu.firesocialmedia.domain.entity.call.AudioCallSession
 import com.minhtu.firesocialmedia.domain.entity.call.CallStatus
+import com.minhtu.firesocialmedia.domain.entity.call.IceCandidateData
+import com.minhtu.firesocialmedia.domain.entity.call.OfferAnswer
 import com.minhtu.firesocialmedia.utils.Utils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -150,7 +155,7 @@ class AndroidDatabaseHelper {
                                    instance : ArrayList<NotificationDTO>) {
             Log.d("Task", "saveNotificationToDatabase")
             val databaseReference = FirebaseDatabase.getInstance().getReference()
-                .child(path).child(id).child(Constants.NOTIFICATION_PATH)
+                .child(path).child(id).child(DataConstant.NOTIFICATION_PATH)
             databaseReference.setValue(instance)
             }
 
@@ -159,7 +164,7 @@ class AndroidDatabaseHelper {
                                            notification: NotificationDTO) {
             Log.d("Task", "deleteNotificationFromDatabase")
             val databaseReference = FirebaseDatabase.getInstance().getReference()
-                .child(path).child(id).child(Constants.NOTIFICATION_PATH)
+                .child(path).child(id).child(DataConstant.NOTIFICATION_PATH)
             databaseReference.get().addOnSuccessListener { snapshot ->
                 //Get notification list from db
                 val list = snapshot.getValue(object : GenericTypeIndicator<List<NotificationDTO>>() {})?.toMutableList()
@@ -462,7 +467,7 @@ class AndroidDatabaseHelper {
                         val audioCallSession = snapshot.getValue(AudioCallSessionDTO::class.java) ?: return
                         handleOffer(
                             audioCallSession,
-                            offer, 
+                            offer,
                             isInCall,
                             currentUserId,
                             endCallSession,

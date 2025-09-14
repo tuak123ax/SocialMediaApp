@@ -6,6 +6,5 @@ interface UserRepository {
     suspend fun getUser(userId : String) : UserInstance?
     suspend fun getCurrentUserUid() : String?
     suspend fun updateFCMTokenForCurrentUser(user : UserInstance)
-    suspend fun searchUserByName(name: String,
-                                 path: String): List<UserInstance>?
+    suspend fun searchUserByName(name: String): List<UserInstance>?
 }

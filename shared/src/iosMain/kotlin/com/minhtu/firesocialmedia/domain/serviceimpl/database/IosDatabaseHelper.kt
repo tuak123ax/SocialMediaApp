@@ -9,7 +9,6 @@ import cocoapods.FirebaseStorage.FIRStorageMetadata
 import cocoapods.FirebaseStorage.FIRStorageReference
 import cocoapods.FirebaseStorage.FIRStorageTaskStatusFailure
 import cocoapods.FirebaseStorage.FIRStorageTaskStatusSuccess
-import com.minhtu.firesocialmedia.constants.Constants
 import com.minhtu.firesocialmedia.data.dto.news.NewsDTO
 import com.minhtu.firesocialmedia.data.dto.notification.NotificationDTO
 import com.minhtu.firesocialmedia.data.dto.notification.fromMap
@@ -250,7 +249,7 @@ class IosDatabaseHelper {
             instance: List<NotificationDTO>
         ) {
             try{
-                val ref = database.child(path).child(id).child(Constants.NOTIFICATION_PATH)
+                val ref = database.child(path).child(id).child(path)
                 setValue(ref, instance.map { it.toMap() })
             } catch(e : Exception){
                 e.printStackTrace()
@@ -263,7 +262,7 @@ class IosDatabaseHelper {
             notification: NotificationDTO
         ) {
             try {
-                val ref = database.child(path).child(id).child(Constants.NOTIFICATION_PATH)
+                val ref = database.child(path).child(id).child(path)
                 val snapshot = getValue(ref)
                 val list = (snapshot as? List<*>)?.mapNotNull { it as? Map<String, Any> }
                     ?.mapNotNull { NotificationDTO.fromMap(it) }?.toMutableList()

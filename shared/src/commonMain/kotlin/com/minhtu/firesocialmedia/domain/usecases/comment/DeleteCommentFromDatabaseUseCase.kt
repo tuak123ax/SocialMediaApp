@@ -6,8 +6,8 @@ import com.minhtu.firesocialmedia.domain.repository.CommonDbRepository
 class DeleteCommentFromDatabaseUseCase(
     private val commonDbRepository: CommonDbRepository
 ) {
-    suspend operator fun invoke(path: String,
+    suspend operator fun invoke(selectedNewId: String,
                                 comment: BaseNewsInstance) {
-        commonDbRepository.deleteInstanceFromDatabase(path, comment)
+        commonDbRepository.deleteCommentFromDatabase(selectedNewId, comment)
     }
 }

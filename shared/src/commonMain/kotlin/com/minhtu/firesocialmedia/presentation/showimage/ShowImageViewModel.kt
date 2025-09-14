@@ -1,6 +1,5 @@
 package com.minhtu.firesocialmedia.presentation.showimage
 
-import com.minhtu.firesocialmedia.di.PlatformContext
 import com.minhtu.firesocialmedia.domain.usecases.showimage.DownloadImageUseCase
 import com.minhtu.firesocialmedia.platform.showToast
 import com.rickclephas.kmp.observableviewmodel.ViewModel

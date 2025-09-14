@@ -8,8 +8,7 @@ class GetLatestNewsUseCase(
 ) {
     suspend operator fun invoke(number : Int,
                                 lastTimePosted : Double?,
-                                lastKey: String?,
-                                path: String) : LatestNewsResult? {
-        return newsRepository.getLatestNews(number, lastTimePosted, lastKey, path)
+                                lastKey: String?) : LatestNewsResult? {
+        return newsRepository.getLatestNews(number, lastTimePosted, lastKey)
     }
 }

@@ -1,6 +1,6 @@
 package com.minhtu.firesocialmedia.application.interactor
 
-import com.minhtu.firesocialmedia.data.dto.call.OfferAnswerDTO
+import com.minhtu.firesocialmedia.domain.entity.call.OfferAnswer
 import com.minhtu.firesocialmedia.domain.interactor.home.CallInteractor
 import com.minhtu.firesocialmedia.domain.usecases.call.ObservePhoneCallWithInCallUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -11,7 +11,7 @@ class CallInteractorImpl(
     override suspend fun observe(
         isInCall: MutableStateFlow<Boolean>,
         userId: String,
-        onReceivePhoneCallRequest: suspend (String, String, String, OfferAnswerDTO) -> Unit,
+        onReceivePhoneCallRequest: suspend (String, String, String, OfferAnswer) -> Unit,
         onEndCall: () -> Unit
     ) {
         observePhoneCallUseCase.invoke(

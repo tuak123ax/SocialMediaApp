@@ -74,6 +74,7 @@ object ViewModelProvider {
         val commonDbRepository = AppModule.provideCommonDbRepository(platformContext)
         val userRepository = AppModule.provideUserRepository(platformContext)
         val newsRepository = AppModule.provideNewsRepository(platformContext)
+        val callRepository = AppModule.provideCallRepository(platformContext)
         val getCurrentUserUidUseCase = AppModule.provideGetCurrentUserUidUseCase(userRepository)
         val getUserUseCase = AppModule.provideGetUserUseCase(userRepository)
         val getLatestNewsUseCase = AppModule.provideGetLatestNewsUseCase(newsRepository)
@@ -83,7 +84,7 @@ object ViewModelProvider {
         val saveValueToDatabaseUseCase = AppModule.provideSaveValueToDatabaseUseCase(commonDbRepository)
         val updateCountValueInDatabase = AppModule.provideUpdateCountValueInDatabase(commonDbRepository)
         val deleteNewsFromDatabaseUseCase = AppModule.provideDeleteNewsFromDatabaseUseCase(newsRepository)
-        val sendSignalingDataUseCase = AppModule.provideSendSignalingDataUseCase(platformContext)
+        val sendSignalingDataUseCase = AppModule.provideSendSignalingDataUseCase(callRepository)
         val observePhoneCallWithInCallUseCase = AppModule.provideObservePhoneCallWithInCallUseCase(sendSignalingDataUseCase)
         val saveNotificationToDatabaseUseCase = AppModule.provideSaveNotificationToDatabaseUseCase(notificationRepository)
         val deleteNotificationFromDatabaseUseCase = AppModule.provideDeleteNotificationFromDatabaseUseCase(notificationRepository)
@@ -124,23 +125,32 @@ object ViewModelProvider {
         val commentRepository = AppModule.provideCommentRepository(platformContext)
         val getUserUseCase = AppModule.provideGetUserUseCase(userRepository)
         val saveCommentToDatabaseUseCase = AppModule.provideSaveCommentToDatabaseUseCase(commonDbRepository)
+        val saveSubCommentToDatabaseUseCase = AppModule.provideSaveSubCommentToDatabaseUseCase(commonDbRepository)
         val deleteCommentFromDatabaseUseCase = AppModule.provideDeleteCommentFromDatabaseUseCase(commonDbRepository)
+        val deleteSubCommentFromDatabaseUseCase = AppModule.provideDeleteSubCommentFromDatabaseUseCase(commonDbRepository)
         val getAllCommentsUseCase = AppModule.provideGetAllCommentsUseCase(commentRepository)
         val commentInteractor = AppModule.provideCommentInteractor(
             saveCommentToDatabaseUseCase,
+            saveSubCommentToDatabaseUseCase,
             deleteCommentFromDatabaseUseCase,
+            deleteSubCommentFromDatabaseUseCase,
             getAllCommentsUseCase
         )
-        val saveValueToDatabaseUseCase = AppModule.provideSaveValueToDatabaseUseCase(commonDbRepository)
+        val saveLikedCommentsUseCase = AppModule.provideSaveLikedCommentsUseCase(commonDbRepository)
         val saveNotificationToDatabaseUseCase = AppModule.provideSaveNotificationToDatabaseUseCase(notificationRepository)
-        val updateCountValueInDatabase = AppModule.provideUpdateCountValueInDatabase(commonDbRepository)
+        val updateCommentCountForNewUseCase = AppModule.provideUpdateCommentCountForNewUseCase(commonDbRepository)
+        val updateReplyCountForCommentUseCase = AppModule.provideUpdateReplyCountForCommentUseCase(commonDbRepository)
+        val updateLikeCountForCommentUseCase = AppModule.provideUpdateLikeCountForCommentUseCase(commonDbRepository)
+        val updateLikeCountForSubCommentUseCase = AppModule.provideUpdateLikeCountForSubCommentUseCase(commonDbRepository)
         return AppModule.provideCommentViewModel(
             commentInteractor,
             getUserUseCase,
-            saveValueToDatabaseUseCase,
+            saveLikedCommentsUseCase,
             saveNotificationToDatabaseUseCase,
-            updateCountValueInDatabase
-
+            updateCommentCountForNewUseCase,
+            updateReplyCountForCommentUseCase,
+            updateLikeCountForCommentUseCase,
+            updateLikeCountForSubCommentUseCase
         )
     }
 
@@ -165,12 +175,14 @@ object ViewModelProvider {
         val notificationRepository = AppModule.provideNotificationRepository(platformContext)
         val commonDbRepository = AppModule.provideCommonDbRepository(platformContext)
         val callRepository = AppModule.provideCallRepository(platformContext)
+        val saveFriendUseCase = AppModule.provideSaveFriendUseCase(commonDbRepository)
+        val saveFriendRequestUseCase = AppModule.provideSaveFriendRequestUseCase(commonDbRepository)
         val saveNotificationToDatabaseUseCase = AppModule.provideSaveNotificationToDatabaseUseCase(notificationRepository)
-        val saveListToDatabaseUseCase = AppModule.provideSaveListToDatabaseUseCase(commonDbRepository)
         val checkCalleeAvailableUseCase = AppModule.provideCheckCalleeAvailableUseCase(callRepository)
         return AppModule.provideUserInformationViewModel(
+            saveFriendUseCase,
+            saveFriendRequestUseCase,
             saveNotificationToDatabaseUseCase,
-            saveListToDatabaseUseCase,
             checkCalleeAvailableUseCase)
     }
 
@@ -180,8 +192,12 @@ object ViewModelProvider {
 
     fun createFriendViewModel(platformContext : PlatformContext) : FriendViewModel {
         val commonDbRepository = AppModule.provideCommonDbRepository(platformContext)
-        val saveListToDatabaseUseCase = AppModule.provideSaveListToDatabaseUseCase(commonDbRepository)
-        return AppModule.provideFriendViewModel(saveListToDatabaseUseCase)
+        val saveFriendUseCase = AppModule.provideSaveFriendUseCase(commonDbRepository)
+        val saveFriendRequestUseCase = AppModule.provideSaveFriendRequestUseCase(commonDbRepository)
+        return AppModule.provideFriendViewModel(
+            saveFriendUseCase,
+            saveFriendRequestUseCase
+        )
     }
 
     fun createShowImageViewModel(platformContext: PlatformContext) : ShowImageViewModel{
@@ -204,8 +220,8 @@ object ViewModelProvider {
     fun createCallingViewModel(platformContext: PlatformContext) : CallingViewModel {
         val callRepository = AppModule.provideCallRepository(platformContext)
         val startCallServiceUseCase = AppModule.provideStartCallServiceUseCase(callRepository)
-        val manageCallStateUseCase = AppModule.provideManageCallStateUseCase(platformContext)
-        val requestPermissionUseCase = AppModule.provideRequestPermissionUseCase(platformContext)
+        val manageCallStateUseCase = AppModule.provideManageCallStateUseCase(callRepository)
+        val requestPermissionUseCase = AppModule.provideRequestPermissionUseCase(callRepository)
         return CallingViewModel(
             startCallServiceUseCase,
             manageCallStateUseCase,
@@ -216,7 +232,7 @@ object ViewModelProvider {
     fun createVideoCallViewModel(platformContext: PlatformContext) : VideoCallViewModel {
         val callRepository = AppModule.provideCallRepository(platformContext)
         val startVideoCallServiceUseCase = AppModule.provideStartVideoCallServiceUseCase(callRepository)
-        val requestCameraAndAudioPermissionsUseCase = AppModule.provideRequestCameraAndAudioPermissionsUseCase(platformContext)
+        val requestCameraAndAudioPermissionsUseCase = AppModule.provideRequestCameraAndAudioPermissionsUseCase(callRepository)
         return VideoCallViewModel(
             startVideoCallServiceUseCase,
             requestCameraAndAudioPermissionsUseCase

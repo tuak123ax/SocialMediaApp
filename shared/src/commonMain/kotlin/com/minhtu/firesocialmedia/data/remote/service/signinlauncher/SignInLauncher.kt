@@ -1,4 +1,4 @@
-package com.minhtu.firesocialmedia.domain.service.signinlauncher
+package com.minhtu.firesocialmedia.data.remote.service.signinlauncher
 
 import io.mockative.Mockable
 
