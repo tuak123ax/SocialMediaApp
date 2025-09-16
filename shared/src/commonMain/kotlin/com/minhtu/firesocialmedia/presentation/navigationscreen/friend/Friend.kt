@@ -33,8 +33,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.minhtu.firesocialmedia.constants.TestTag
-import com.minhtu.firesocialmedia.data.model.user.UserInstance
 import com.minhtu.firesocialmedia.di.PlatformContext
+import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.presentation.home.HomeViewModel
 import com.minhtu.firesocialmedia.presentation.search.Search
 import com.minhtu.firesocialmedia.presentation.search.SearchViewModel
@@ -143,7 +143,7 @@ class Friend {
                             filterList = coroutineScope {
                                 friendStatus.map { userId ->
                                     async {
-                                        homeViewModel.findUserById(userId, platform)
+                                        homeViewModel.findUserById(userId)
                                             ?.takeIf { it.name.contains(searchViewModel.query, ignoreCase = true) }
                                     }
                                 }.awaitAll().filterNotNull()
@@ -168,7 +168,7 @@ class Friend {
                             filterList = coroutineScope {
                                 friendRequestsStatus.map { userId ->
                                     async {
-                                        homeViewModel.findUserById(userId, platform)
+                                        homeViewModel.findUserById(userId)
                                             ?.takeIf { it.name.contains(searchViewModel.query, ignoreCase = true) }
                                     }
                                 }.awaitAll().filterNotNull()

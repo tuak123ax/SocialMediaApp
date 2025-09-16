@@ -4,9 +4,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.minhtu.firesocialmedia.constants.Constants
-import com.minhtu.firesocialmedia.data.model.user.UserInstance
-import com.minhtu.firesocialmedia.di.PlatformContext
-import com.minhtu.firesocialmedia.utils.Utils
+import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
+import com.minhtu.firesocialmedia.domain.usecases.common.GetCurrentUserUidUseCase
+import com.minhtu.firesocialmedia.domain.usecases.common.GetFCMTokenUseCase
+import com.minhtu.firesocialmedia.domain.usecases.information.SaveSignUpInformationUseCase
 import com.rickclephas.kmp.observableviewmodel.ViewModel
 import com.rickclephas.kmp.observableviewmodel.launch
 import kotlinx.coroutines.CoroutineDispatcher
@@ -17,6 +18,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.withContext
 
 class InformationViewModel(
+    private val saveSignUpInformationUseCase: SaveSignUpInformationUseCase,
+    private val getCurrentUserUidUseCase: GetCurrentUserUidUseCase,
+    private val getFCMTokenUseCase: GetFCMTokenUseCase,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : ViewModel() {
     private val _addInformationStatus = MutableStateFlow<Boolean?>(null)
@@ -42,25 +46,17 @@ class InformationViewModel(
         username = input
     }
 
-    fun finishSignUpStage(platform: PlatformContext){
+    fun finishSignUpStage(){
         viewModelScope.launch {
             withContext(ioDispatcher) {
                 if(username.isEmpty()) {
                     _addInformationStatus.value = false
                 } else {
-                    val uid = platform.auth.getCurrentUserUid()
+                    val uid = getCurrentUserUidUseCase.invoke()
                     val userInstance = UserInstance(email, avatar,username,"",
-                        platform.crypto.getFCMToken(),uid!!, HashMap())
-                    platform.database.saveSignUpInformation(userInstance,
-                        object : Utils.Companion.SaveSignUpInformationCallBack{
-                            override fun onSuccess() {
-                                _addInformationStatus.value = true
-                            }
-
-                            override fun onFailure() {
-                                _addInformationStatus.value = false
-                            }
-                        })
+                        getFCMTokenUseCase.invoke(),uid!!, HashMap())
+                    val result = saveSignUpInformationUseCase.invoke(userInstance)
+                    _addInformationStatus.value = result
                 }
             }
         }

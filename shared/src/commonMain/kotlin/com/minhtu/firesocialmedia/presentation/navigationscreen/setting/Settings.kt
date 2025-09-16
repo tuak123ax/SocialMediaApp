@@ -28,7 +28,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.minhtu.firesocialmedia.constants.TestTag
-import com.minhtu.firesocialmedia.di.PlatformContext
 import com.minhtu.firesocialmedia.platform.CrossPlatformIcon
 import com.minhtu.firesocialmedia.presentation.home.HomeViewModel
 import com.minhtu.firesocialmedia.utils.UiUtils
@@ -37,7 +36,6 @@ class Settings {
     companion object{
         @Composable
         fun SettingsScreen(modifier: Modifier,
-                           platform : PlatformContext,
                            paddingValues: PaddingValues,
                            homeViewModel: HomeViewModel,
                            onNavigateToSignIn: () -> Unit){
@@ -57,7 +55,7 @@ class Settings {
 //                val openChatAppLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()){}
                 val showDialog = remember { mutableStateOf(false) }
                 UiUtils.Companion.ShowAlertDialogToLogout(onClickConfirm = {
-                    homeViewModel.clearAccountInStorage(platform)
+                    homeViewModel.clearAccountInStorage()
                 }, onNavigateToSignIn, showDialog)
                 //Fire chat button
                 Button(

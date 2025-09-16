@@ -1,17 +1,17 @@
 package com.minhtu.firesocialmedia.di
 
 import android.content.Context
-import com.minhtu.firesocialmedia.domain.serviceimpl.AuthService
+import com.minhtu.firesocialmedia.data.remote.service.auth.AuthService
+import com.minhtu.firesocialmedia.data.remote.service.call.AudioCallService
+import com.minhtu.firesocialmedia.data.remote.service.clipboard.ClipboardService
+import com.minhtu.firesocialmedia.data.remote.service.crypto.CryptoService
+import com.minhtu.firesocialmedia.data.remote.service.database.DatabaseService
+import com.minhtu.firesocialmedia.data.remote.service.permission.PermissionManager
 import com.minhtu.firesocialmedia.domain.serviceimpl.auth.AndroidAuthService
 import com.minhtu.firesocialmedia.domain.serviceimpl.call.AndroidAudioCallService
-import com.minhtu.firesocialmedia.domain.serviceimpl.call.AudioCallService
 import com.minhtu.firesocialmedia.domain.serviceimpl.clipboard.AndroidClipboardService
-import com.minhtu.firesocialmedia.domain.serviceimpl.clipboard.ClipboardService
 import com.minhtu.firesocialmedia.domain.serviceimpl.crypto.AndroidCryptoService
-import com.minhtu.firesocialmedia.domain.serviceimpl.crypto.CryptoService
 import com.minhtu.firesocialmedia.domain.serviceimpl.database.AndroidDatabaseService
-import com.minhtu.firesocialmedia.domain.serviceimpl.database.DatabaseService
-import com.minhtu.firesocialmedia.domain.serviceimpl.permission.PermissionManager
 
 class AndroidPlatformContext(
     context : Context,

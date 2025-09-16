@@ -2,19 +2,6 @@ package com.minhtu.firesocialmedia.constants
 
 class Constants {
     companion object{
-        val TOKEN_PATH = "token"
-        const val USER_PATH = "users"
-        const val NEWS_PATH = "news"
-        const val COMMENT_PATH = "comments"
-        const val CALL_PATH = "calls"
-        const val LIST_REPLIES_PATH = "listReplies"
-        const val LIKED_POSTS_PATH = "likedPosts"
-        const val LIKED_COMMENT_PATH = "likedComments"
-        const val FRIEND_REQUESTS_PATH = "friendRequests"
-        const val NOTIFICATION_PATH = "notifications"
-        const val FRIENDS_PATH = "friends"
-        const val LIKED_COUNT_PATH = "likeCount"
-        const val COMMENT_COUNT_PATH = "commentCount"
         const val CHANNEL_ID = "NotificationID"
         const val PASSWORD = "Password"
         const val CONFIRM_PASSWORD = "Confirm Password"
@@ -32,6 +19,7 @@ class Constants {
         const val EMAIL_SERVER_ERROR = "EMAIL_SERVER_ERROR"
         const val EMAIL_NOT_EXISTED = "EMAIL_NOT_EXISTED"
         const val EMAIL_EXISTED = "EMAIL_EXISTED"
+
         const val DEFAULT_AVATAR_URL = "https://firebasestorage.googleapis.com/v0/b/firechat-aa433.appspot.com/o/unknownavatar.png?alt=media&token=9a49ff27-e5fa-4813-97d4-47bd15281550"
         const val REMOTE_MSG_AUTHORIZATION = "Authorization"
         const val REMOTE_MSG_CONTENT_TYPE = "Content-Type"

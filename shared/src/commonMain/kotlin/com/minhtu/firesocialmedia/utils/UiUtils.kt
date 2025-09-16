@@ -81,9 +81,9 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.minhtu.firesocialmedia.constants.TestTag
-import com.minhtu.firesocialmedia.data.model.news.NewsInstance
-import com.minhtu.firesocialmedia.data.model.user.UserInstance
 import com.minhtu.firesocialmedia.di.PlatformContext
+import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
+import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.platform.CommonBackHandler
 import com.minhtu.firesocialmedia.platform.CrossPlatformIcon
 import com.minhtu.firesocialmedia.platform.VideoPlayer
@@ -105,7 +105,7 @@ import kotlinx.coroutines.launch
 class UiUtils {
     companion object{
         @Composable
-        fun NewsCard(platform : PlatformContext,
+        fun NewsCard(
                      news: NewsInstance,
                      onNavigateToShowImageScreen: (image: String) -> Unit,
                      onNavigateToUserInformation: (user: UserInstance) -> Unit,
@@ -124,7 +124,7 @@ class UiUtils {
             var user by remember { mutableStateOf<UserInstance?>(null) }
 
             LaunchedEffect(news.posterId) {
-                user = homeViewModel.findUserById(news.posterId, platform)
+                user = homeViewModel.findUserById(news.posterId)
             }
             Card(
                 modifier = Modifier
@@ -253,7 +253,7 @@ class UiUtils {
                     }
                     Row(modifier = Modifier.fillMaxWidth().padding(bottom = 5.dp, start = 10.dp, end = 10.dp)) {
                         Button(onClick = {
-                            homeViewModel.clickLikeButton(news, platform)
+                            homeViewModel.clickLikeButton(news)
                         },
                             elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp),
                             colors = if(isLiked) ButtonDefaults.buttonColors(Color.Cyan)
@@ -578,7 +578,7 @@ class UiUtils {
             }
         }
         @Composable
-        fun BackAndMoreOptionsRow(navHandle : NavigationHandler) {
+        fun BackAndMoreOptionsRow(navigateBack : () -> Unit) {
             Row(horizontalArrangement = Arrangement.Start,
                 modifier = Modifier
                     .fillMaxWidth()
@@ -597,7 +597,7 @@ class UiUtils {
                         }
                         .clickable {
                             // Handle back button click
-                            navHandle.navigateBack()
+                            navigateBack()
                         }
                 )
                 Spacer(modifier = Modifier.weight(1f))
@@ -620,13 +620,14 @@ class UiUtils {
         }
 
         @Composable
-        fun TabLayout(platform : PlatformContext,
-                      tabTitles : List<String>,
-                      homeViewModel: HomeViewModel,
-                      searchViewModel: SearchViewModel,
-                      onNavigateToShowImageScreen: (image: String) -> Unit,
-                      onNavigateToUserInformation: (user: UserInstance?) -> Unit,
-                      onNavigateToUploadNewsfeed : (updateNew : NewsInstance?) -> Unit){
+        fun TabLayout(
+            listState: LazyListState,
+            tabTitles : List<String>,
+            homeViewModel: HomeViewModel,
+            searchViewModel: SearchViewModel,
+            onNavigateToShowImageScreen: (image: String) -> Unit,
+            onNavigateToUserInformation: (user: UserInstance?) -> Unit,
+            onNavigateToUploadNewsfeed : (updateNew : NewsInstance?) -> Unit){
             var selectedTabIndex by remember { mutableIntStateOf(0) }
 
             Column(modifier = Modifier.fillMaxSize()){
@@ -660,7 +661,7 @@ class UiUtils {
                         var searchList by remember { mutableStateOf<List<UserInstance>>(emptyList()) }
                         // Filtered List
                         LaunchedEffect(searchViewModel.query) {
-                            searchList = homeViewModel.searchUserByName(searchViewModel.query, platform)
+                            searchList = homeViewModel.searchUserByName(searchViewModel.query)
                         }
                         LazyColumn(modifier = Modifier
                             .testTag(TestTag.TAG_PEOPLE_COLUMN)
@@ -683,7 +684,7 @@ class UiUtils {
                                 }
                             }
                             LazyColumnOfNewsWithSlideOutAnimationAndLoadMore(
-                                platform,
+                                listState,
                                 homeViewModel,
                                 filterList,
                                 onNavigateToUploadNewsfeed,
@@ -772,7 +773,7 @@ class UiUtils {
                     Row(horizontalArrangement = Arrangement.Center,
                         modifier = Modifier.fillMaxWidth().padding(horizontal = 5.dp)){
                         Button(onClick = {
-                            friendViewModel.acceptFriendRequest(requester, currentUser, platform)
+                            friendViewModel.acceptFriendRequest(requester, currentUser)
                         },
                             elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp),
                             colors = ButtonDefaults.buttonColors(Color.Cyan),
@@ -781,7 +782,7 @@ class UiUtils {
                         }
                         Spacer(modifier = Modifier.width(10.dp))
                         Button(onClick = {
-                            friendViewModel.rejectFriendRequest(requester, currentUser, platform)
+                            friendViewModel.rejectFriendRequest(requester, currentUser)
                         },
                             elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp),
                             colors = ButtonDefaults.buttonColors(Color.White),
@@ -870,12 +871,13 @@ class UiUtils {
         }
 
         @Composable
-        fun LazyColumnOfNewsWithSlideOutAnimationAndLoadMore(platform : PlatformContext,
-                                                  homeViewModel: HomeViewModel,
-                                                  list : List<NewsInstance>,
-                                                  onNavigateToUploadNews: (updateNew : NewsInstance?) -> Unit,
-                                                  onNavigateToShowImageScreen: (image : String) -> Unit,
-                                                  onNavigateToUserInformation: (user: UserInstance?) -> Unit) {
+        fun LazyColumnOfNewsWithSlideOutAnimationAndLoadMore(
+            listState: LazyListState,
+            homeViewModel: HomeViewModel,
+            list : List<NewsInstance>,
+            onNavigateToUploadNews: (updateNew : NewsInstance?) -> Unit,
+            onNavigateToShowImageScreen: (image : String) -> Unit,
+            onNavigateToUserInformation: (user: UserInstance?) -> Unit) {
             val coroutineScope = rememberCoroutineScope()
             LazyColumn(
                 modifier = Modifier
@@ -885,7 +887,7 @@ class UiUtils {
                     .semantics{
                         contentDescription = TestTag.TAG_POSTS_COLUMN
                     },
-                state = homeViewModel.listState
+                state = listState
             ) {
                 items(
                     items = list,
@@ -901,17 +903,16 @@ class UiUtils {
                         )
                     ) {
                         NewsCard(
-                            platform,
                             news = news,
                             onNavigateToShowImageScreen = onNavigateToShowImageScreen,
                             onNavigateToUserInformation = onNavigateToUserInformation,
                             homeViewModel = homeViewModel,
-                            listState = homeViewModel.listState,
+                            listState = listState,
                             onDelete = { action, deletedNews ->
                                 isVisible = false
                                 coroutineScope.launch {
                                     delay(250)
-                                    homeViewModel.deleteOrHideNew(action, deletedNews, platform)
+                                    homeViewModel.deleteOrHideNew(action, deletedNews)
                                 }
                             },
                             onNavigateToUploadNews

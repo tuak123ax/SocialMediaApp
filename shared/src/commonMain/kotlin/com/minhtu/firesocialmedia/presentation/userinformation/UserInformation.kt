@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -54,16 +55,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.minhtu.firesocialmedia.constants.Constants
 import com.minhtu.firesocialmedia.constants.TestTag
-import com.minhtu.firesocialmedia.data.model.news.NewsInstance
-import com.minhtu.firesocialmedia.data.model.user.UserInstance
 import com.minhtu.firesocialmedia.di.PlatformContext
-import com.minhtu.firesocialmedia.domain.serviceimpl.imagepicker.ImagePicker
+import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
+import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
+import com.minhtu.firesocialmedia.data.remote.service.imagepicker.ImagePicker
 import com.minhtu.firesocialmedia.platform.generateImageLoader
 import com.minhtu.firesocialmedia.platform.getImageBytesFromDrawable
 import com.minhtu.firesocialmedia.platform.showToast
 import com.minhtu.firesocialmedia.presentation.home.HomeViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.friend.FriendViewModel
-import com.minhtu.firesocialmedia.utils.NavigationHandler
 import com.minhtu.firesocialmedia.utils.UiUtils
 import com.seiko.imageloader.LocalImageLoader
 import com.seiko.imageloader.ui.AutoSizeImage
@@ -83,10 +83,11 @@ class UserInformation {
             userInformationViewModel: UserInformationViewModel,
             onNavigateToShowImageScreen : (image : String) -> Unit,
             onNavigateToUserInformation : (user : UserInstance?) -> Unit,
-            navController : NavigationHandler,
+            onNavigateBack : () -> Unit,
             onNavigateToUploadNewsfeed: (updateNew : NewsInstance?) -> Unit,
             onNavigateToCallingScreen : (user : UserInstance?) -> Unit
         ){
+            val listState = rememberLazyListState()
             val newsList = homeViewModel.allNews.collectAsState()
             val addFriendStatus by userInformationViewModel.addFriendStatus.collectAsState()
             LaunchedEffect(Unit) {
@@ -217,16 +218,20 @@ class UserInformation {
                             IconButton(
                                 onClick = {
                                     if(user != null) {
-                                        userInformationViewModel.checkCalleeAvailable(user, platform,
+                                        userInformationViewModel.checkCalleeAvailable(user,
                                             onResult = { available ->
-                                                if(available) {
-                                                    if(isCurrentUser) {
-                                                        showToast("Cannot call for yourself.")
-                                                    } else {
-                                                        onNavigateToCallingScreen(user)
-                                                    }
+                                                if(available == null) {
+                                                    showToast("This feature is not available now!")
                                                 } else {
-                                                    showToast("This user is having another call! Please recall after a few minutes.")
+                                                    if(available) {
+                                                        if(isCurrentUser) {
+                                                            showToast("Cannot call for yourself.")
+                                                        } else {
+                                                            onNavigateToCallingScreen(user)
+                                                        }
+                                                    } else {
+                                                        showToast("This user is having another call! Please recall after a few minutes.")
+                                                    }
                                                 }
                                             })
                                     }
@@ -273,8 +278,7 @@ class UserInformation {
                                             userInformationViewModel.updateRelationship(relationship)
                                             userInformationViewModel.clickAddFriendButton(
                                                 friend = user,
-                                                currentUser = homeViewModel.currentUser,
-                                                platform
+                                                currentUser = homeViewModel.currentUser
                                             )
                                         } else {
                                             showMenu = true
@@ -326,7 +330,7 @@ class UserInformation {
                         }
                     }
                     UiUtils.Companion.LazyColumnOfNewsWithSlideOutAnimationAndLoadMore(
-                        platform,
+                        listState,
                         homeViewModel,
                         filterList,
                         onNavigateToUploadNewsfeed,
@@ -334,7 +338,7 @@ class UserInformation {
                         onNavigateToUserInformation
                     )
                 }
-                UiUtils.Companion.BackAndMoreOptionsRow(navController)
+                UiUtils.Companion.BackAndMoreOptionsRow(onNavigateBack)
             }
         }
 
@@ -354,7 +358,7 @@ class UserInformation {
                     text = { Text("Accept") },
                     onClick = {
                         // Handle Accept action
-                        friendViewModel.acceptFriendRequest(requester, currentUser, platform)
+                        friendViewModel.acceptFriendRequest(requester, currentUser)
                         userInformationViewModel.updateRelationship(Relationship.FRIEND)
                         onDismissRequest()
                     },
@@ -368,7 +372,7 @@ class UserInformation {
                     text = { Text("Reject") },
                     onClick = {
                         // Handle Reject action
-                        friendViewModel.rejectFriendRequest(requester, currentUser, platform)
+                        friendViewModel.rejectFriendRequest(requester, currentUser)
                         userInformationViewModel.updateRelationship(Relationship.NONE)
                         onDismissRequest()
                     },

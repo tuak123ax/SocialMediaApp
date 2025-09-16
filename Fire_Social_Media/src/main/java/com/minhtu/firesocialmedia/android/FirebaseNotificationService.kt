@@ -23,8 +23,8 @@ import com.google.firebase.messaging.RemoteMessage
 import com.google.gson.Gson
 import com.minhtu.firesocialmedia.R
 import com.minhtu.firesocialmedia.constants.Constants
-import com.minhtu.firesocialmedia.data.model.call.CallAction
-import com.minhtu.firesocialmedia.data.model.user.UserInstance
+import com.minhtu.firesocialmedia.domain.entity.call.CallAction
+import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.domain.serviceimpl.call.CallActionBroadcastReceiver
 import com.minhtu.firesocialmedia.domain.serviceimpl.call.CallNotificationManager.Companion.NOTIF_ID
 import com.minhtu.firesocialmedia.domain.serviceimpl.call.CallNotificationManager.Companion.channelId

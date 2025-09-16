@@ -8,51 +8,93 @@ import cocoapods.FirebaseStorage.FIRStorage
 import cocoapods.FirebaseStorage.FIRStorageMetadata
 import cocoapods.FirebaseStorage.FIRStorageReference
 import com.minhtu.firesocialmedia.constants.Constants
-import com.minhtu.firesocialmedia.data.model.call.AudioCallSession
-import com.minhtu.firesocialmedia.data.model.call.CallStatus
-import com.minhtu.firesocialmedia.data.model.call.IceCandidateData
-import com.minhtu.firesocialmedia.data.model.call.OfferAnswer
-import com.minhtu.firesocialmedia.data.model.news.CommentInstance
-import com.minhtu.firesocialmedia.data.model.news.NewsInstance
-import com.minhtu.firesocialmedia.data.model.notification.NotificationInstance
-import com.minhtu.firesocialmedia.data.model.notification.fromMap
-import com.minhtu.firesocialmedia.data.model.signin.SignInState
-import com.minhtu.firesocialmedia.data.model.user.UserInstance
-import com.minhtu.firesocialmedia.data.model.user.toMap
+import com.minhtu.firesocialmedia.data.constant.DataConstant
+import com.minhtu.firesocialmedia.data.dto.call.AudioCallSessionDTO
+import com.minhtu.firesocialmedia.data.dto.call.IceCandidateDTO
+import com.minhtu.firesocialmedia.data.dto.call.OfferAnswerDTO
+import com.minhtu.firesocialmedia.data.dto.comment.CommentDTO
+import com.minhtu.firesocialmedia.data.dto.home.LatestNewsDTO
+import com.minhtu.firesocialmedia.data.dto.news.NewsDTO
+import com.minhtu.firesocialmedia.data.dto.notification.NotificationDTO
+import com.minhtu.firesocialmedia.data.dto.notification.fromMap
+import com.minhtu.firesocialmedia.data.dto.signin.SignInDTO
+import com.minhtu.firesocialmedia.data.dto.user.UserDTO
+import com.minhtu.firesocialmedia.data.dto.user.toMap
+import com.minhtu.firesocialmedia.data.remote.service.database.DatabaseService
+import com.minhtu.firesocialmedia.domain.entity.base.BaseNewsInstance
+import com.minhtu.firesocialmedia.domain.entity.call.CallStatus
 import com.minhtu.firesocialmedia.domain.serviceimpl.crypto.IosCryptoHelper
 import com.minhtu.firesocialmedia.platform.logMessage
-import com.minhtu.firesocialmedia.platform.showToast
 import com.minhtu.firesocialmedia.platform.toNSData
-import com.minhtu.firesocialmedia.utils.IosUtils.Companion.toCommentInstance
-import com.minhtu.firesocialmedia.utils.IosUtils.Companion.toNewsInstance
-import com.minhtu.firesocialmedia.utils.IosUtils.Companion.toUserInstance
+import com.minhtu.firesocialmedia.utils.IosUtils.Companion.toCommentDTO
+import com.minhtu.firesocialmedia.utils.IosUtils.Companion.toNewsDTO
+import com.minhtu.firesocialmedia.utils.IosUtils.Companion.toUserDTO
 import com.minhtu.firesocialmedia.utils.Utils
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.suspendCancellableCoroutine
 import platform.Foundation.NSDictionary
-import kotlin.coroutines.resumeWithException
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 
-class IosDatabaseService() : DatabaseService{
-    override suspend fun updateFCMTokenForCurrentUser(currentUser : UserInstance) {
+class IosDatabaseService() : DatabaseService {
+    override suspend fun updateFCMTokenForCurrentUser(currentUser: UserDTO) {
         val currentFCMToken = IosCryptoHelper.getFromKeychain(Constants.KEY_FCM_TOKEN) ?: ""
         if(currentFCMToken.isNotEmpty()) {
             if(currentUser.token != currentFCMToken) {
                 currentUser.token = currentFCMToken
-                IosDatabaseHelper.saveStringToDatabase(currentUser.uid,Constants.USER_PATH, currentFCMToken, Constants.TOKEN_PATH)
+                IosDatabaseHelper.saveStringToDatabase(currentUser.uid, DataConstant.USER_PATH, currentFCMToken, DataConstant.TOKEN_PATH)
             }
         }
+    }
+
+    override suspend fun checkUserExists(email: String): SignInDTO = suspendCancellableCoroutine{ continuation ->
+        val database = FIRDatabase.database()
+        val ref = database.reference().child("users")
+
+        ref.observeEventType(
+            FIRDataEventType.FIRDataEventTypeValue,
+            withBlock = { snapshot: FIRDataSnapshot? ->
+                if (snapshot == null || !snapshot.exists()) {
+                    if(continuation.isActive) continuation.resume(SignInDTO(true, Constants.ACCOUNT_NOT_EXISTED), onCancellation = {})
+                    return@observeEventType
+                }
+
+                val children = snapshot.children
+
+                var existed = false
+
+                while (true) {
+                    val child = children.nextObject() as? FIRDataSnapshot ?: break
+                    val value = child.value as? Map<*,*> ?: continue
+                    try {
+                        val user = value.toUserDTO()
+                        if (user.email == email) {
+                            if(continuation.isActive) continuation.resume(SignInDTO(true, Constants.ACCOUNT_EXISTED), onCancellation = {})
+                            existed = true
+                            break
+                        }
+                    } catch (_: Exception) {
+                        continue
+                    }
+                }
+
+                if (!existed) {
+                    if(continuation.isActive) continuation.resume(SignInDTO(true, Constants.ACCOUNT_NOT_EXISTED), onCancellation = {})
+                }
+            },
+            withCancelBlock = { error ->
+                if(continuation.isActive) continuation.resume(SignInDTO(false, Constants.LOGIN_ERROR), onCancellation = {})
+            }
+        )
     }
 
     override suspend fun saveValueToDatabase(
         id: String,
         path: String,
         value: HashMap<String, Int>,
-        externalPath: String,
-        callback : Utils.Companion.BasicCallBack
-    ) {
-        IosDatabaseHelper.saveValueToDatabase(id,
+        externalPath: String
+    ): Boolean {
+        return IosDatabaseHelper.saveValueToDatabase(id,
             path, value, externalPath)
     }
 
@@ -70,14 +112,14 @@ class IosDatabaseService() : DatabaseService{
 
     override suspend fun deleteNewsFromDatabase(
         path: String,
-        new: NewsInstance
+        new: NewsDTO
     ) {
         IosDatabaseHelper.deleteNewsFromDatabase(path, new)
     }
 
     override suspend fun deleteCommentFromDatabase(
         path: String,
-        comment: CommentInstance
+        comment: BaseNewsInstance
     ) {
         IosDatabaseHelper.deleteCommentFromDatabase(path, comment)
     }
@@ -85,31 +127,16 @@ class IosDatabaseService() : DatabaseService{
     override suspend fun saveInstanceToDatabase(
         id: String,
         path: String,
-        instance: NewsInstance,
-        stateFlow: MutableStateFlow<Boolean?>
-    ) {
-        IosDatabaseHelper.saveInstanceToDatabase(
+        instance: BaseNewsInstance
+    ): Boolean {
+        return IosDatabaseHelper.saveInstanceToDatabase(
             id,
             path,
-            instance,
-            stateFlow)
+            instance)
     }
 
-    override suspend fun saveInstanceToDatabase(
-        id: String,
-        path: String,
-        instance: CommentInstance,
-        stateFlow: MutableStateFlow<Boolean?>
-    ) {
-        IosDatabaseHelper.saveInstanceToDatabase(
-            id,
-            path,
-            instance,
-            stateFlow)
-    }
-
-    override suspend fun getAllUsers(path: String, callback: Utils.Companion.GetUserCallback) {
-        val result = mutableListOf<UserInstance>()
+    override suspend fun getAllUsers(path: String): ArrayList<UserDTO>? = suspendCancellableCoroutine{ continuation ->
+        val result = ArrayList<UserDTO>()
         val databaseReference = FIRDatabase.database().reference().child(path)
 
         databaseReference.observeSingleEventOfType(
@@ -123,25 +150,25 @@ class IosDatabaseService() : DatabaseService{
                         val value = child.value as? Map<*, *> ?: continue
 
                         try {
-                            val user = value.toUserInstance()
+                            val user = value.toUserDTO()
                             result.add(user)
                         } catch (e: Exception) {
                             e.printStackTrace()
                         }
                     }
-                    callback.onSuccess(result)
+                    if(continuation.isActive) continuation.resume(result, onCancellation = {})
                 } else {
-                    callback.onFailure()
+                    if(continuation.isActive) continuation.resume(null, onCancellation = {})
                 }
             }
         )
     }
 
-    override suspend fun getUser(userId: String): UserInstance? {
+    override suspend fun getUser(userId: String): UserDTO? {
         return suspendCancellableCoroutine { continuation ->
             val database = FIRDatabase.database()
             val databaseReference = database.reference()
-                .child(Constants.USER_PATH)
+                .child(DataConstant.USER_PATH)
                 .child(userId)
 
             databaseReference.observeSingleEventOfType(
@@ -151,9 +178,9 @@ class IosDatabaseService() : DatabaseService{
                         val value = snapshot.value as? Map<*, *> ?: null
                         if (value != null) {
                             try {
-                                val user = value.toUserInstance()
+                                val user = value.toUserDTO()
                                 continuation.resume(user) {}
-                            } catch (e: Exception) {
+                            } catch (_: Exception) {
                                 continuation.resume(null) {}
                             }
                         } else {
@@ -169,11 +196,11 @@ class IosDatabaseService() : DatabaseService{
         }
     }
 
-    override suspend fun getNew(newId: String): NewsInstance? {
+    override suspend fun getNew(newId: String): NewsDTO? {
         return suspendCancellableCoroutine { continuation ->
             val database = FIRDatabase.database()
             val databaseReference = database.reference()
-                .child(Constants.NEWS_PATH)
+                .child(DataConstant.NEWS_PATH)
                 .child(newId)
 
             databaseReference.observeSingleEventOfType(
@@ -188,9 +215,9 @@ class IosDatabaseService() : DatabaseService{
                                     (it.key as? String) to it.value
                                 }.filterKeys { it != null } as Map<String, Any?>
                                 
-                                val news = value.toNewsInstance()
+                                val news = value.toNewsDTO()
                                 continuation.resume(news) {}
-                            } catch (e: Exception) {
+                            } catch (_: Exception) {
                                 continuation.resume(null) {}
                             }
                         } else {
@@ -210,9 +237,8 @@ class IosDatabaseService() : DatabaseService{
         number: Int,
         lastTimePosted: Double?,
         lastKey: String?,
-        path: String,
-        callback: Utils.Companion.GetNewCallback
-    ) {
+        path: String
+    ): LatestNewsDTO = suspendCancellableCoroutine{ continuation ->
         val query = FIRDatabase.database()
             .referenceWithPath(path)
             .queryOrderedByChild("timePosted")
@@ -227,7 +253,7 @@ class IosDatabaseService() : DatabaseService{
             FIRDataEventType.FIRDataEventTypeValue,
             withBlock = { snapshot ->
                 val enumerator = snapshot?.children
-                val newsList = mutableListOf<NewsInstance>()
+                val newsList = mutableListOf<NewsDTO>()
                 if (enumerator != null) {
                     while (true) {
                         val child = enumerator.nextObject() as? FIRDataSnapshot ?: break
@@ -236,7 +262,7 @@ class IosDatabaseService() : DatabaseService{
                             .associate { (k, v) -> (k as? String) to v }
                             .filterKeys { it != null } as Map<String, Any?>
                         try {
-                            newsList.add(value.toNewsInstance())
+                            newsList.add(value.toNewsDTO())
                         } catch (_: Exception) {
                         }
                     }
@@ -246,28 +272,27 @@ class IosDatabaseService() : DatabaseService{
                     val sorted = newsList.sortedByDescending { it.timePosted }
                     val oldest = sorted.last()
 
-                    callback.onSuccess(
+                    if(continuation.isActive) continuation.resume(LatestNewsDTO(
                         sorted,
                         if (newsList.size < number) null else oldest.timePosted.toDouble(),
                         oldest.id
-                    )
+                    ), onCancellation = {})
                 }
             }
         ) { _ ->
-            callback.onFailure()
+            continuation.resume(LatestNewsDTO(null, null, null), onCancellation = {})
         }
     }
 
     override suspend fun getAllComments(
         path: String,
-        newsId: String,
-        callback: Utils.Companion.GetCommentCallback
-    ) {
-        val result = mutableListOf<CommentInstance>()
+        newsId: String
+    ): List<CommentDTO>? = suspendCancellableCoroutine { continuation ->
+        val result = mutableListOf<CommentDTO>()
         val databaseReference = FIRDatabase
             .database()
             .reference()
-            .child(Constants.NEWS_PATH)
+            .child(DataConstant.NEWS_PATH)
             .child(newsId)
             .child(path)
 
@@ -287,30 +312,28 @@ class IosDatabaseService() : DatabaseService{
                         }.filterKeys { it != null } as Map<String, Any?>
 
                         try {
-                            val comment = value.toCommentInstance()
+                            val comment = value.toCommentDTO()
                             logMessage("allComment") { comment.id + ": "+ comment.listReplies.size }
                             result.add(comment)
                         } catch (e: Exception) {
                             e.printStackTrace()
                         }
                     }
-                    callback.onSuccess(ArrayList(result))
+                    if(continuation.isActive) continuation.resume(ArrayList(result), onCancellation = {})
                 } else {
-                    callback.onFailure()
+                    if(continuation.isActive) continuation.resume(null, onCancellation = {})
                 }
             }
         )
     }
 
-
     override suspend fun getAllNotificationsOfUser(
         path: String,
-        currentUserUid: String,
-        callback: Utils.Companion.GetNotificationCallback
-    ) {
-        val result = mutableListOf<NotificationInstance>()
+        currentUserUid: String
+    ): List<NotificationDTO>? = suspendCancellableCoroutine { continuation ->
+        val result = mutableListOf<NotificationDTO>()
         val databaseReference = FIRDatabase.database().reference()
-            .child(Constants.USER_PATH)
+            .child(DataConstant.USER_PATH)
             .child(currentUserUid)
             .child(path)
 
@@ -325,24 +348,23 @@ class IosDatabaseService() : DatabaseService{
                         val value = child.value as? Map<*, *> ?: continue
 
                         try {
-                            val notification = NotificationInstance.fromMap(value as Map<String,Any>)
+                            val notification = NotificationDTO.fromMap(value as Map<String,Any>)
                             result.add(notification)
                         } catch (e: Exception) {
                             e.printStackTrace()
                         }
                     }
-                    callback.onSuccess(result)
+                    if(continuation.isActive) continuation.resume(result, onCancellation = {})
                 } else {
-                    callback.onFailure()
+                    if(continuation.isActive) continuation.resume(null, onCancellation = {})
                 }
             }
         ) { error ->
             // Handle error case
             logMessage("getAllNotificationsOfUser", { "Error: ${error?.localizedDescription}" })
-            callback.onFailure()
+            if(continuation.isActive) continuation.resume(null, onCancellation = {})
         }
     }
-
 
     override suspend fun saveListToDatabase(
         id: String,
@@ -353,26 +375,25 @@ class IosDatabaseService() : DatabaseService{
         IosDatabaseHelper.saveListToDatabase(id,path,value,externalPath)
     }
 
-    override suspend fun downloadImage(image: String, fileName: String, onComplete: (Boolean) -> Unit) {
-        IosDatabaseHelper.downloadImage(image, fileName, onComplete)
+    override suspend fun downloadImage(
+        image: String,
+        fileName: String
+    ): Boolean {
+        return IosDatabaseHelper.downloadImage(image, fileName)
     }
 
     override suspend fun updateNewsFromDatabase(
         path: String,
         newContent: String,
         newImage: String,
-        newVideo : String,
-        new: NewsInstance,
-        status: MutableStateFlow<Boolean?>
-    ) {
-        IosDatabaseHelper.updateNewsFromDatabase(path,newContent,newImage, newVideo,new,status)
+        newVideo: String,
+        new: NewsDTO
+    ): Boolean {
+        return IosDatabaseHelper.updateNewsFromDatabase(path,newContent,newImage, newVideo,new)
     }
 
     @OptIn(ExperimentalEncodingApi::class)
-    override suspend fun saveSignUpInformation(
-        user: UserInstance,
-        callBack: Utils.Companion.SaveSignUpInformationCallBack
-    ) {
+    override suspend fun saveSignUpInformation(user: UserDTO): Boolean {
         val storageReference: FIRStorageReference = FIRStorage.storage().reference().child("avatar").child(user.uid)
         val databaseReference: FIRDatabaseReference = FIRDatabase.database().reference().child("users").child(user.uid)
         try {
@@ -394,25 +415,18 @@ class IosDatabaseService() : DatabaseService{
             val userMap = user.toMap() as NSDictionary
 
             // Save user object in Realtime Database
-            suspendCancellableCoroutine<Unit> { cont ->
-                databaseReference.setValue(userMap) { error, _ ->
-                    if (error != null) cont.resumeWithException(Throwable(error.localizedDescription))
-                    else cont.resume(Unit,
-                        onCancellation = {})
-                }
-            }
-
-            callBack.onSuccess()
+            databaseReference.setValue(userMap)
+            return true
         } catch (e: Exception) {
             e.printStackTrace()
-            callBack.onFailure()
+            return false
         }
     }
 
     override suspend fun saveNotificationToDatabase(
         id: String,
         path: String,
-        instance: ArrayList<NotificationInstance>
+        instance: ArrayList<NotificationDTO>
     ) {
         IosDatabaseHelper.saveNotificationToDatabase(id,path,instance)
     }
@@ -420,15 +434,14 @@ class IosDatabaseService() : DatabaseService{
     override suspend fun deleteNotificationFromDatabase(
         id: String,
         path: String,
-        notification: NotificationInstance
+        notification: NotificationDTO
     ) {
         IosDatabaseHelper.deleteNotificationFromDatabase(id, path, notification)
     }
 
     override suspend fun sendOfferToFireBase(
         sessionId: String,
-        offer: OfferAnswer,
-        callPath: String,
+        offer: OfferAnswerDTO,
         sendIceCandidateCallBack: Utils.Companion.BasicCallBack
     ) {
         // iOS implementation will be added later
@@ -436,17 +449,15 @@ class IosDatabaseService() : DatabaseService{
 
     override suspend fun sendIceCandidateToFireBase(
         sessionId: String,
-        iceCandidate: IceCandidateData,
+        iceCandidate: IceCandidateDTO,
         whichCandidate: String,
-        callPath: String,
         sendIceCandidateCallBack: Utils.Companion.BasicCallBack
     ) {
         // iOS implementation will be added later
     }
 
     override suspend fun sendCallSessionToFirebase(
-        session: AudioCallSession,
-        callPath: String,
+        session: AudioCallSessionDTO,
         sendCallSessionCallBack: Utils.Companion.BasicCallBack
     ) {
         // iOS implementation will be added later
@@ -455,7 +466,6 @@ class IosDatabaseService() : DatabaseService{
     override fun sendCallStatusToFirebase(
         sessionId: String,
         status: CallStatus,
-        callPath: String,
         sendCallStatusCallBack: Utils.Companion.BasicCallBack
     ) {
         // iOS implementation will be added later
@@ -463,7 +473,6 @@ class IosDatabaseService() : DatabaseService{
 
     override suspend fun deleteCallSession(
         sessionId: String,
-        callPath: String,
         deleteCallBack: Utils.Companion.BasicCallBack
     ) {
         // iOS implementation will be added later
@@ -472,28 +481,25 @@ class IosDatabaseService() : DatabaseService{
     override suspend fun observePhoneCall(
         isInCall: MutableStateFlow<Boolean>,
         currentUserId: String,
-        callPath: String,
-        phoneCallCallBack: (String, String, String, OfferAnswer) -> Unit,
+        phoneCallCallBack: (String, String, String, OfferAnswerDTO) -> Unit,
         endCallSession: (Boolean) -> Unit,
-        iceCandidateCallBack: (Map<String, IceCandidateData>?) -> Unit
+        iceCandidateCallBack: (Map<String, IceCandidateDTO>?) -> Unit
     ) {
         // iOS implementation will be added later
     }
 
     override suspend fun observePhoneCallWithoutCheckingInCall(
         currentUserId: String,
-        callPath: String,
-        phoneCallCallBack: (String, String, String, OfferAnswer) -> Unit,
+        phoneCallCallBack: (String, String, String, OfferAnswerDTO) -> Unit,
         endCallSession: (Boolean) -> Unit,
-        iceCandidateCallBack: (Map<String, IceCandidateData>?) -> Unit
+        iceCandidateCallBack: (Map<String, IceCandidateDTO>?) -> Unit
     ) {
         // iOS implementation will be added later
     }
 
     override suspend fun sendAnswerToFirebase(
         sessionId: String,
-        answer: OfferAnswer,
-        callPath: String,
+        answer: OfferAnswerDTO,
         sendIceCandidateCallBack: Utils.Companion.BasicCallBack
     ) {
         // iOS implementation will be added later
@@ -503,7 +509,6 @@ class IosDatabaseService() : DatabaseService{
         sessionId: String,
         updateContent: String,
         updateField: String,
-        callPath: String,
         updateAnswerCallBack: Utils.Companion.BasicCallBack
     ) {
         // iOS implementation will be added later
@@ -513,7 +518,6 @@ class IosDatabaseService() : DatabaseService{
         sessionId: String,
         updateContent: String,
         updateField: String,
-        callPath: String,
         updateOfferCallBack: Utils.Companion.BasicCallBack
     ) {
         // iOS implementation will be added later
@@ -521,17 +525,15 @@ class IosDatabaseService() : DatabaseService{
 
     override suspend fun isCalleeInActiveCall(
         calleeId: String,
-        callPath: String,
-        onResult: (Boolean) -> Unit
-    ) {
+        callPath: String
+    ): Boolean? {
         // iOS implementation will be added later
-        showToast("This feature is not available for iOS now!")
+        return null
     }
 
     override suspend fun observeAnswerFromCallee(
         sessionId: String,
-        callPath: String,
-        answerCallBack: (OfferAnswer) -> Unit,
+        answerCallBack: (OfferAnswerDTO) -> Unit,
         rejectCallBack: () -> Unit
     ) {
         // iOS implementation will be added later
@@ -539,7 +541,6 @@ class IosDatabaseService() : DatabaseService{
 
     override suspend fun observeCallStatus(
         sessionId: String,
-        callPath: String,
         callStatusCallBack: Utils.Companion.CallStatusCallBack
     ) {
         // iOS implementation will be added later
@@ -554,16 +555,14 @@ class IosDatabaseService() : DatabaseService{
 
     override suspend fun observeIceCandidatesFromCallee(
         sessionId: String,
-        callPath: String,
-        iceCandidateCallBack: (IceCandidateData) -> Unit
+        iceCandidateCallBack: (IceCandidateDTO) -> Unit
     ) {
         // iOS implementation will be added later
     }
 
     override suspend fun observeVideoCall(
         sessionId: String,
-        callPath: String,
-        videoCallCallBack: (OfferAnswer) -> Unit
+        videoCallCallBack: (OfferAnswerDTO) -> Unit
     ) {
         // iOS implementation will be added later
     }
@@ -571,16 +570,16 @@ class IosDatabaseService() : DatabaseService{
     override suspend fun searchUserByName(
         name: String,
         path: String
-    ): List<UserInstance>? {
+    ): List<UserDTO>? {
         return suspendCancellableCoroutine { continuation ->
             val database = FIRDatabase.database()
-            val databaseReference = database.reference().child(Constants.USER_PATH)
+            val databaseReference = database.reference().child(DataConstant.USER_PATH)
 
             databaseReference.observeSingleEventOfType(
                 FIRDataEventType.FIRDataEventTypeValue,
                 withBlock = { snapshot ->
                     if (snapshot != null && snapshot.exists()) {
-                        val users = mutableListOf<UserInstance>()
+                        val users = mutableListOf<UserDTO>()
                         val children = snapshot.children
                         
                         while (true) {
@@ -588,7 +587,7 @@ class IosDatabaseService() : DatabaseService{
                             val value = child.value as? Map<*, *> ?: continue
                             
                             try {
-                                val user = value.toUserInstance()
+                                val user = value.toUserDTO()
                                 if (user.name.contains(name, ignoreCase = true)) {
                                     users.add(user)
                                     if (users.size >= 5) break // only return first 5 matches
@@ -600,53 +599,12 @@ class IosDatabaseService() : DatabaseService{
                         
                         continuation.resume(users) {}
                     } else {
-                        continuation.resume(emptyList<UserInstance>()) {}
+                        continuation.resume(emptyList<UserDTO>()) {}
                     }
                 }
             ) { error ->
                 continuation.resume(null) {}
             }
         }
-    }
-
-    override fun checkUserExists(email: String, callback: (SignInState) -> Unit) {
-        val database = FIRDatabase.database()
-        val ref = database.reference().child("users")
-
-        ref.observeEventType(
-            FIRDataEventType.FIRDataEventTypeValue,
-            withBlock = { snapshot: FIRDataSnapshot? ->
-                if (snapshot == null || !snapshot.exists()) {
-                    callback(SignInState(true, Constants.ACCOUNT_NOT_EXISTED))
-                    return@observeEventType
-                }
-
-                val children = snapshot.children
-
-                var existed = false
-
-                while (true) {
-                    val child = children.nextObject() as? FIRDataSnapshot ?: break
-                    val value = child.value as? Map<*,*> ?: continue
-                    try {
-                        val user = value.toUserInstance()
-                        if (user.email == email) {
-                            callback.invoke(SignInState(true, Constants.ACCOUNT_EXISTED))
-                            existed = true
-                            break
-                        }
-                    } catch (e: Exception) {
-                        continue
-                    }
-                }
-
-                if (!existed) {
-                    callback.invoke(SignInState(true, Constants.ACCOUNT_NOT_EXISTED))
-                }
-            },
-            withCancelBlock = { error ->
-                callback.invoke(SignInState(false, Constants.LOGIN_ERROR))
-            }
-        )
     }
 }

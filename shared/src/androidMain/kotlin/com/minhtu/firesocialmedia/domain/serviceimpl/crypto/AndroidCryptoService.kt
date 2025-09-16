@@ -2,25 +2,27 @@ package com.minhtu.firesocialmedia.domain.serviceimpl.crypto
 
 import android.content.Context
 import com.minhtu.firesocialmedia.constants.Constants
-import com.minhtu.firesocialmedia.data.model.crypto.Credentials
+import com.minhtu.firesocialmedia.data.dto.crypto.CredentialsDTO
+import com.minhtu.firesocialmedia.data.remote.service.crypto.CryptoService
+import com.minhtu.firesocialmedia.domain.entity.crypto.Credentials
 
-class AndroidCryptoService(private val context: Context) : CryptoService{
+class AndroidCryptoService(private val context: Context) : CryptoService {
     override fun saveAccount(email: String, password: String) {
         AndroidCryptoHelper.saveAccount(context, email, password)
     }
 
-    override suspend fun loadAccount(): Credentials? {
+    override suspend fun loadAccount(): CredentialsDTO? {
         val secureSharedPreferences = AndroidCryptoHelper.getEncryptedSharedPreferences(context)
         val email = secureSharedPreferences.getString(Constants.KEY_EMAIL, "")
         val password = secureSharedPreferences.getString(Constants.KEY_PASSWORD, "")
         return if(!email.isNullOrEmpty() && !password.isNullOrEmpty()){
-            Credentials(email, password)
+            CredentialsDTO(email, password)
         } else {
             null
         }
     }
 
-    override fun clearAccount() {
+    override suspend fun clearAccount() {
         AndroidCryptoHelper.clearAccount(context)
     }
 

@@ -1,7 +1,6 @@
 package com.minhtu.firesocialmedia.domain.serviceimpl.database
 
 import android.content.Context
-import android.util.Log
 import androidx.core.net.toUri
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
@@ -10,74 +9,74 @@ import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.storage.FirebaseStorage
 import com.minhtu.firesocialmedia.constants.Constants
-import com.minhtu.firesocialmedia.data.model.call.AudioCallSession
-import com.minhtu.firesocialmedia.data.model.call.CallStatus
-import com.minhtu.firesocialmedia.data.model.call.IceCandidateData
-import com.minhtu.firesocialmedia.data.model.call.OfferAnswer
-import com.minhtu.firesocialmedia.data.model.news.CommentInstance
-import com.minhtu.firesocialmedia.data.model.news.NewsInstance
-import com.minhtu.firesocialmedia.data.model.notification.NotificationInstance
-import com.minhtu.firesocialmedia.data.model.signin.SignInState
-import com.minhtu.firesocialmedia.data.model.user.UserInstance
+import com.minhtu.firesocialmedia.data.constant.DataConstant
+import com.minhtu.firesocialmedia.data.dto.call.AudioCallSessionDTO
+import com.minhtu.firesocialmedia.data.dto.call.IceCandidateDTO
+import com.minhtu.firesocialmedia.data.dto.call.OfferAnswerDTO
+import com.minhtu.firesocialmedia.data.dto.comment.CommentDTO
+import com.minhtu.firesocialmedia.data.dto.home.LatestNewsDTO
+import com.minhtu.firesocialmedia.data.dto.news.NewsDTO
+import com.minhtu.firesocialmedia.data.dto.notification.NotificationDTO
+import com.minhtu.firesocialmedia.data.dto.signin.SignInDTO
+import com.minhtu.firesocialmedia.data.dto.user.UserDTO
+import com.minhtu.firesocialmedia.data.remote.service.database.DatabaseService
+import com.minhtu.firesocialmedia.domain.entity.base.BaseNewsInstance
+import com.minhtu.firesocialmedia.domain.entity.call.CallStatus
 import com.minhtu.firesocialmedia.domain.serviceimpl.crypto.AndroidCryptoHelper
 import com.minhtu.firesocialmedia.utils.Utils
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeout
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
-class AndroidDatabaseService(private val context: Context) : DatabaseService{
-    override suspend fun updateFCMTokenForCurrentUser(currentUser : UserInstance) {
+class AndroidDatabaseService(private val context: Context) : DatabaseService {
+    override suspend fun updateFCMTokenForCurrentUser(currentUser: UserDTO) {
         val secureSharedPreferences = AndroidCryptoHelper.getEncryptedSharedPreferences(context)
         val currentFCMToken = secureSharedPreferences.getString(Constants.KEY_FCM_TOKEN, "")
         if(!currentFCMToken.isNullOrEmpty()) {
             if(currentUser.token != currentFCMToken) {
                 currentUser.token = currentFCMToken
-                AndroidDatabaseHelper.saveStringToDatabase(currentUser.uid,Constants.USER_PATH, currentFCMToken, Constants.TOKEN_PATH)
+                AndroidDatabaseHelper.saveStringToDatabase(currentUser.uid, DataConstant.USER_PATH, currentFCMToken, DataConstant.TOKEN_PATH)
             }
         }
     }
 
-    override fun checkUserExists(email: String, callback: (SignInState) -> Unit) {
+    override suspend fun checkUserExists(email: String) : SignInDTO = suspendCancellableCoroutine{ continuation ->
         val database = FirebaseDatabase.getInstance()
         val databaseReference: DatabaseReference = database.getReference().child("users")
-        databaseReference.addValueEventListener(object : ValueEventListener {
+        val listener = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
-                var existed = false
-                for (dataSnapshot in snapshot.getChildren()) {
-                    val user: UserInstance? = dataSnapshot.getValue(UserInstance::class.java)
-                    if (user != null) {
-                        if(user.email == email){
-                            callback.invoke(SignInState(true, Constants.ACCOUNT_EXISTED))
-                            existed = true
-                        }
-                    }
+                if (!continuation.isActive) return
+                val exists = snapshot.children.any {
+                    it.getValue(UserDTO::class.java)?.email == email
                 }
-                if(!existed) {
-                    callback.invoke(SignInState(true, Constants.ACCOUNT_NOT_EXISTED))
-                    Log.e("SignInViewModel","signIn: ACCOUNT_NOT_EXISTED")
+                val result = if (exists) {
+                    SignInDTO(true, Constants.ACCOUNT_EXISTED)
+                } else {
+                    SignInDTO(true, Constants.ACCOUNT_NOT_EXISTED)
                 }
+                continuation.resume(result)
             }
 
             override fun onCancelled(error: DatabaseError) {
-                callback.invoke(SignInState(false, Constants.LOGIN_ERROR))
-                Log.e("SignInViewModel","signIn: LOGIN_ERROR")
+                if (!continuation.isActive) return
+                continuation.resume(SignInDTO(false, Constants.LOGIN_ERROR))
             }
-        })
+        }
+        databaseReference.addValueEventListener(listener)
+        continuation.invokeOnCancellation { databaseReference.removeEventListener(listener) }
     }
 
     override suspend fun saveValueToDatabase(
         id: String,
         path: String,
         value: HashMap<String, Int>,
-        externalPath: String,
-        callback : Utils.Companion.BasicCallBack
-    ) {
-        AndroidDatabaseHelper.saveValueToDatabase(id,
+        externalPath: String) : Boolean {
+        return AndroidDatabaseHelper.saveValueToDatabase(id,
             path,
             value,
-            externalPath,
-            callback)
+            externalPath)
     }
 
     override suspend fun updateCountValueInDatabase(
@@ -94,14 +93,14 @@ class AndroidDatabaseService(private val context: Context) : DatabaseService{
 
     override suspend fun deleteNewsFromDatabase(
         path: String,
-        new: NewsInstance
+        new: NewsDTO
     ) {
         AndroidDatabaseHelper.deleteNewsFromDatabase(path, new)
     }
 
     override suspend fun deleteCommentFromDatabase(
         path: String,
-        comment: CommentInstance
+        comment: BaseNewsInstance
     ) {
         AndroidDatabaseHelper.deleteCommentFromDatabase(path, comment)
     }
@@ -109,62 +108,47 @@ class AndroidDatabaseService(private val context: Context) : DatabaseService{
     override suspend fun saveInstanceToDatabase(
         id: String,
         path: String,
-        instance: NewsInstance,
-        stateFlow: MutableStateFlow<Boolean?>
-    ) {
-        AndroidDatabaseHelper.saveInstanceToDatabase(
+        instance: BaseNewsInstance
+    ) : Boolean{
+        return AndroidDatabaseHelper.saveInstanceToDatabase(
             id,
             path,
-            instance,
-            stateFlow)
+            instance)
     }
 
-    override suspend fun saveInstanceToDatabase(
-        id: String,
-        path: String,
-        instance: CommentInstance,
-        stateFlow: MutableStateFlow<Boolean?>
-    ) {
-        AndroidDatabaseHelper.saveInstanceToDatabase(
-            id,
-            path,
-            instance,
-            stateFlow)
-    }
-
-    override suspend fun getAllUsers(path: String, callback: Utils.Companion.GetUserCallback){
-        val result = ArrayList<UserInstance>()
+    override suspend fun getAllUsers(path: String) : ArrayList<UserDTO>? = suspendCancellableCoroutine{ continuation ->
+        val result = ArrayList<UserDTO>()
         val database = FirebaseDatabase.getInstance()
-        val databaseReference: DatabaseReference = database.getReference().child(Constants.USER_PATH)
+        val databaseReference: DatabaseReference = database.getReference().child(DataConstant.USER_PATH)
         databaseReference.addValueEventListener(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 result.clear()
                 for (dataSnapshot in snapshot.getChildren()) {
-                    val user: UserInstance? = dataSnapshot.getValue(UserInstance::class.java)
+                    val user: UserDTO? = dataSnapshot.getValue(UserDTO::class.java)
                     if (user != null) {
                         result.add(user)
                     }
                 }
-                callback.onSuccess(result)
+                if(continuation.isActive) continuation.resume(result)
             }
 
             override fun onCancelled(error: DatabaseError) {
-                callback.onFailure()
+                if(continuation.isActive) continuation.resume(null)
             }
         })
     }
 
-    override suspend fun getUser(userId: String): UserInstance? =
+    override suspend fun getUser(userId: String): UserDTO? =
         withTimeout(5000) {
             suspendCoroutine { continuation ->
                 val database = FirebaseDatabase.getInstance()
                 val databaseReference = database.getReference()
-                    .child(Constants.USER_PATH)
+                    .child(DataConstant.USER_PATH)
                     .child(userId)
 
                 databaseReference.addListenerForSingleValueEvent(object : ValueEventListener {
                     override fun onDataChange(snapshot: DataSnapshot) {
-                        val user = snapshot.getValue(UserInstance::class.java)
+                        val user = snapshot.getValue(UserDTO::class.java)
                         if (user != null) {
                             continuation.resume(user)
                         } else {
@@ -179,16 +163,16 @@ class AndroidDatabaseService(private val context: Context) : DatabaseService{
             }
         }
 
-    override suspend fun getNew(newId: String): NewsInstance? = withTimeout(5000) {
+    override suspend fun getNew(newId: String): NewsDTO? = withTimeout(5000) {
         suspendCoroutine { continuation ->
             val database = FirebaseDatabase.getInstance()
             val databaseReference = database.getReference()
-                .child(Constants.NEWS_PATH)
+                .child(DataConstant.NEWS_PATH)
                 .child(newId)
 
             databaseReference.addListenerForSingleValueEvent(object : ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
-                    val new = snapshot.getValue(NewsInstance::class.java)
+                    val new = snapshot.getValue(NewsDTO::class.java)
                     if (new != null) {
                         continuation.resume(new)
                     } else {
@@ -203,16 +187,16 @@ class AndroidDatabaseService(private val context: Context) : DatabaseService{
         }
     }
 
-    override suspend fun searchUserByName(name: String, path: String) : List<UserInstance>? =
+    override suspend fun searchUserByName(name: String, path: String) : List<UserDTO>? =
         withTimeout(5000) {
             val database = FirebaseDatabase.getInstance()
-            val databaseReference = database.getReference(Constants.USER_PATH)
+            val databaseReference = database.getReference(path)
 
             suspendCoroutine { continuation ->
                 databaseReference.addListenerForSingleValueEvent(object : ValueEventListener {
                     override fun onDataChange(snapshot: DataSnapshot) {
                         val users = snapshot.children
-                            .mapNotNull { it.getValue(UserInstance::class.java) }
+                            .mapNotNull { it.getValue(UserDTO::class.java) }
                             .filter { it.name.contains(name, ignoreCase = true) }
                             .take(5) // only return first 5 matches
 
@@ -230,9 +214,8 @@ class AndroidDatabaseService(private val context: Context) : DatabaseService{
         number: Int,
         lastTimePosted: Double?,
         lastKey: String?,
-        path: String,
-        callback: Utils.Companion.GetNewCallback
-    ) {
+        path: String
+    ) : LatestNewsDTO = suspendCancellableCoroutine{ continuation ->
         val dbRef = FirebaseDatabase.getInstance()
             .getReference(path)
             .orderByChild("timePosted")
@@ -247,22 +230,22 @@ class AndroidDatabaseService(private val context: Context) : DatabaseService{
 
         dbRef.addValueEventListener(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
-                val newsList = snapshot.children.mapNotNull { it.getValue(NewsInstance::class.java) }
+                val newsList = snapshot.children.mapNotNull { it.getValue(NewsDTO::class.java) }
 
                 if (newsList.isNotEmpty()) {
                     // Sort newest → oldest
-                    val sorted = newsList.sortedByDescending { it.timePosted }
+                    val sorted = newsList.sortedByDescending { it.timePosted }.map { it }
                     val oldest = sorted.last()
-                    callback.onSuccess(
+                    if(continuation.isActive) continuation.resume(LatestNewsDTO(
                         sorted,
                         if(newsList.size < number) null else oldest.timePosted.toDouble(),
                         oldest.id // Return both for next pagination
-                    )
+                    ))
                 }
             }
 
             override fun onCancelled(error: DatabaseError) {
-                callback.onFailure()
+                if(continuation.isActive) continuation.resume(LatestNewsDTO())
             }
         })
     }
@@ -270,56 +253,53 @@ class AndroidDatabaseService(private val context: Context) : DatabaseService{
 
     override suspend fun getAllComments(
         path: String,
-        newsId : String,
-        callback: Utils.Companion.GetCommentCallback
-    ) {
-        val result = ArrayList<CommentInstance>()
+        newsId : String) : List<CommentDTO>? = suspendCancellableCoroutine { continuation ->
+        val result = ArrayList<CommentDTO>()
         val database = FirebaseDatabase.getInstance()
         val databaseReference: DatabaseReference = database.getReference()
-            .child(Constants.NEWS_PATH)
+            .child(DataConstant.NEWS_PATH)
             .child(newsId)
             .child(path)
         databaseReference.addValueEventListener(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 result.clear()
                 for (dataSnapshot in snapshot.getChildren()) {
-                    val comments: CommentInstance? = dataSnapshot.getValue(CommentInstance::class.java)
+                    val comments: CommentDTO? = dataSnapshot.getValue(CommentDTO::class.java)
                     if (comments != null) {
                         result.add(comments)
                     }
                 }
-                callback.onSuccess(result)
+                if(continuation.isActive) continuation.resume(result)
             }
 
             override fun onCancelled(error: DatabaseError) {
-                callback.onFailure()
+                if(continuation.isActive) continuation.resume(null)
             }
         })
     }
 
     override suspend fun getAllNotificationsOfUser(
         path: String,
-        currentUserUid : String,
-        callback: Utils.Companion.GetNotificationCallback
-    ) {
-        val result = ArrayList<NotificationInstance>()
+        currentUserUid : String
+    ) : List<NotificationDTO>? = suspendCancellableCoroutine { continuation ->
+        val result = ArrayList<NotificationDTO>()
         val database = FirebaseDatabase.getInstance()
-        val databaseReference: DatabaseReference = database.getReference().child(Constants.USER_PATH)
+        val databaseReference: DatabaseReference = database.getReference().child(DataConstant.USER_PATH)
             .child(currentUserUid).child(path)
         databaseReference.addValueEventListener(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 result.clear()
                 for (dataSnapshot in snapshot.getChildren()) {
-                    val notification = dataSnapshot.getValue(NotificationInstance::class.java)
+                    val notification = dataSnapshot.getValue(NotificationDTO::class.java)
                     if (notification != null) {
                         result.add(notification)
                     }
                 }
-                callback.onSuccess(result)
+                if(continuation.isActive) continuation.resume(result)
             }
 
             override fun onCancelled(error: DatabaseError) {
-                callback.onFailure()
+                if(continuation.isActive) continuation.resume(null)
             }
         })
     }
@@ -333,23 +313,21 @@ class AndroidDatabaseService(private val context: Context) : DatabaseService{
         AndroidDatabaseHelper.saveListToDatabase(id,path,value,externalPath)
     }
 
-    override suspend fun downloadImage(image: String, fileName: String, onComplete: (Boolean) -> Unit) {
-        AndroidDatabaseHelper.downloadImage(context, image, fileName, onComplete)
+    override suspend fun downloadImage(image: String, fileName: String) : Boolean {
+        return AndroidDatabaseHelper.downloadImage(context, image, fileName)
     }
 
     override suspend fun updateNewsFromDatabase(
         path: String,
         newContent: String,
         newImage: String,
-        newVideo : String,
-        new: NewsInstance,
-        status: MutableStateFlow<Boolean?>
-    ) {
-        AndroidDatabaseHelper.updateNewsFromDatabase(path,newContent,newImage,newVideo,new,status)
+        newVideo: String,
+        new: NewsDTO
+    ): Boolean {
+        return AndroidDatabaseHelper.updateNewsFromDatabase(path,newContent,newImage,newVideo,new)
     }
 
-    override suspend fun saveSignUpInformation(user : UserInstance,
-                                               callBack: Utils.Companion.SaveSignUpInformationCallBack) {
+    override suspend fun saveSignUpInformation(user : UserDTO) : Boolean = suspendCancellableCoroutine{ continuation ->
         val storageReference = FirebaseStorage.getInstance().getReference()
             .child("avatar").child(user.uid)
         val databaseReference = FirebaseDatabase.getInstance().getReference()
@@ -362,9 +340,9 @@ class AndroidDatabaseService(private val context: Context) : DatabaseService{
                         user.updateImage(avatarUrl.toString())
                         databaseReference.setValue(user).addOnCompleteListener{addUserTask ->
                             if(addUserTask.isSuccessful){
-                                callBack.onSuccess()
+                                if(continuation.isActive) continuation.resume(true)
                             } else {
-                                callBack.onFailure()
+                                if(continuation.isActive) continuation.resume(false)
                             }
                         }
                     }
@@ -373,9 +351,9 @@ class AndroidDatabaseService(private val context: Context) : DatabaseService{
         } else {
             databaseReference.setValue(user).addOnCompleteListener{addUserTask ->
                 if(addUserTask.isSuccessful){
-                    callBack.onSuccess()
+                    if(continuation.isActive) continuation.resume(true)
                 } else {
-                    callBack.onFailure()
+                    if(continuation.isActive) continuation.resume(false)
                 }
             }
         }
@@ -384,7 +362,7 @@ class AndroidDatabaseService(private val context: Context) : DatabaseService{
     override suspend fun saveNotificationToDatabase(
         id: String,
         path: String,
-        instance: ArrayList<NotificationInstance>
+        instance: ArrayList<NotificationDTO>
     ) {
         AndroidDatabaseHelper.saveNotificationToDatabase(id,path,instance)
     }
@@ -392,71 +370,65 @@ class AndroidDatabaseService(private val context: Context) : DatabaseService{
     override suspend fun deleteNotificationFromDatabase(
         id: String,
         path: String,
-        notification: NotificationInstance
+        notification: NotificationDTO
     ) {
         AndroidDatabaseHelper.deleteNotificationFromDatabase(id, path, notification)
     }
 
     override suspend fun sendOfferToFireBase(
         sessionId : String,
-        offer : OfferAnswer,
-        callPath : String,
+        offer : OfferAnswerDTO,
         sendOfferCallBack : Utils.Companion.BasicCallBack) {
         AndroidDatabaseHelper.sendOfferToFireBase(
             sessionId,
             offer,
-            callPath,
+            DataConstant.CALL_PATH,
             sendOfferCallBack
         )
     }
 
     override suspend fun sendIceCandidateToFireBase(
         sessionId : String,
-        iceCandidate: IceCandidateData,
+        iceCandidate: IceCandidateDTO,
         whichCandidate : String,
-        callPath : String,
         sendIceCandidateCallBack : Utils.Companion.BasicCallBack) {
         AndroidDatabaseHelper.sendIceCandidateToFireBase(
             sessionId,
             iceCandidate,
             whichCandidate,
-            callPath,
+            DataConstant.CALL_PATH,
             sendIceCandidateCallBack)
     }
 
-    override suspend fun sendCallSessionToFirebase(session: AudioCallSession,
-                                           callPath : String,
+    override suspend fun sendCallSessionToFirebase(session: AudioCallSessionDTO,
                                            sendCallSessionCallBack : Utils.Companion.BasicCallBack) {
-        AndroidDatabaseHelper.sendCallSessionToFirebase(session, callPath, sendCallSessionCallBack)
+        AndroidDatabaseHelper.sendCallSessionToFirebase(session, DataConstant.CALL_PATH, sendCallSessionCallBack)
     }
 
     override fun sendCallStatusToFirebase(
                                     sessionId : String,
                                     status: CallStatus,
-                                    callPath : String,
                                     sendCallStatusCallBack : Utils.Companion.BasicCallBack) {
-        AndroidDatabaseHelper.sendCallStatusToFirebase(sessionId, status, callPath, sendCallStatusCallBack)
+        AndroidDatabaseHelper.sendCallStatusToFirebase(sessionId, status, DataConstant.CALL_PATH, sendCallStatusCallBack)
     }
 
     override suspend fun deleteCallSession(
         sessionId: String,
-        callPath: String,
         deleteCallBack: Utils.Companion.BasicCallBack
     ) {
-        AndroidDatabaseHelper.deleteCallSession(sessionId, callPath, deleteCallBack)
+        AndroidDatabaseHelper.deleteCallSession(sessionId, DataConstant.CALL_PATH, deleteCallBack)
     }
 
     override suspend fun observePhoneCall(
         isInCall : MutableStateFlow<Boolean>,
         currentUserId: String,
-        callPath: String,
-        phoneCallCallBack : (String, String, String, OfferAnswer) -> Unit,
+        phoneCallCallBack : (String, String, String, OfferAnswerDTO) -> Unit,
         endCallSession: (Boolean) -> Unit,
-        iceCandidateCallBack : (iceCandidates : Map<String, IceCandidateData>?) -> Unit) {
+        iceCandidateCallBack : (iceCandidates : Map<String, IceCandidateDTO>?) -> Unit) {
         AndroidDatabaseHelper.observePhoneCall(
             isInCall,
             currentUserId,
-            callPath,
+            DataConstant.CALL_PATH,
             phoneCallCallBack,
             endCallSession,
             iceCandidateCallBack)
@@ -464,13 +436,12 @@ class AndroidDatabaseService(private val context: Context) : DatabaseService{
 
     override suspend fun observePhoneCallWithoutCheckingInCall(
         currentUserId: String,
-        callPath: String,
-        phoneCallCallBack : (String, String, String, OfferAnswer) -> Unit,
+        phoneCallCallBack : (String, String, String, OfferAnswerDTO) -> Unit,
         endCallSession: (Boolean) -> Unit,
-        iceCandidateCallBack : (iceCandidates : Map<String, IceCandidateData>?) -> Unit) {
+        iceCandidateCallBack : (iceCandidates : Map<String, IceCandidateDTO>?) -> Unit) {
         AndroidDatabaseHelper.observePhoneCallWithoutCheckingInCall(
             currentUserId,
-            callPath,
+            DataConstant.CALL_PATH,
             phoneCallCallBack,
             endCallSession,
             iceCandidateCallBack)
@@ -478,14 +449,13 @@ class AndroidDatabaseService(private val context: Context) : DatabaseService{
 
     override suspend fun sendAnswerToFirebase(
         sessionId: String,
-        answer: OfferAnswer,
-        callPath: String,
+        answer: OfferAnswerDTO,
         sendAnswerCallBack: Utils.Companion.BasicCallBack
     ) {
         AndroidDatabaseHelper.sendAnswerToFireBase(
             sessionId,
             answer,
-            callPath,
+            DataConstant.CALL_PATH,
             sendAnswerCallBack
         )
     }
@@ -494,14 +464,13 @@ class AndroidDatabaseService(private val context: Context) : DatabaseService{
         sessionId: String,
         updateContent: String,
         updateField: String,
-        callPath: String,
         updateAnswerCallBack: Utils.Companion.BasicCallBack
     ) {
         AndroidDatabaseHelper.updateAnswerInFirebase(
             sessionId,
             updateContent,
             updateField,
-            callPath,
+            DataConstant.CALL_PATH,
             updateAnswerCallBack
         )
     }
@@ -510,23 +479,21 @@ class AndroidDatabaseService(private val context: Context) : DatabaseService{
         sessionId: String,
         updateContent: String,
         updateField: String,
-        callPath: String,
         updateOfferCallBack: Utils.Companion.BasicCallBack
     ) {
         AndroidDatabaseHelper.updateOfferInFirebase(
             sessionId,
             updateContent,
             updateField,
-            callPath,
+            DataConstant.CALL_PATH,
             updateOfferCallBack
         )
     }
 
     override suspend fun isCalleeInActiveCall(
         calleeId: String,
-        callPath: String,
-        onResult: (Boolean) -> Unit
-    ) {
+        callPath: String
+    ) : Boolean? = suspendCancellableCoroutine { continuation ->
         val ref = FirebaseDatabase.getInstance().getReference(callPath)
 
         ref.get().addOnSuccessListener { snapshot ->
@@ -539,33 +506,31 @@ class AndroidDatabaseService(private val context: Context) : DatabaseService{
                     break
                 }
             }
-            onResult(!isBusy)
+            if(continuation.isActive) continuation.resume(!isBusy)
         }.addOnFailureListener {
-            onResult(false)
+            if(continuation.isActive) continuation.resume(false)
         }
     }
 
     override suspend fun observeAnswerFromCallee(
         sessionId: String,
-        callPath: String,
-        answerCallBack: (answer : OfferAnswer) -> Unit,
+        answerCallBack: (answer : OfferAnswerDTO) -> Unit,
         rejectCallBack : () -> Unit
     ) {
         AndroidDatabaseHelper.observeAnswerFromCallee(
             sessionId,
-            callPath,
+            DataConstant.CALL_PATH,
             answerCallBack,
             rejectCallBack)
     }
 
     override suspend fun observeCallStatus(
         sessionId: String,
-        callPath: String,
         callStatusCallBack: Utils.Companion.CallStatusCallBack
     ) {
         AndroidDatabaseHelper.observeCallStatus(
             sessionId,
-            callPath,
+            DataConstant.CALL_PATH,
             callStatusCallBack)
     }
 
@@ -577,23 +542,21 @@ class AndroidDatabaseService(private val context: Context) : DatabaseService{
 
     override suspend fun observeIceCandidatesFromCallee(
         sessionId: String,
-        callPath: String,
-        iceCandidateCallBack: (iceCandidate : IceCandidateData) -> Unit
+        iceCandidateCallBack: (iceCandidate : IceCandidateDTO) -> Unit
     ) {
         AndroidDatabaseHelper.observeIceCandidatesFromCallee(
             sessionId,
-            callPath,
+            DataConstant.CALL_PATH,
             iceCandidateCallBack)
     }
 
     override suspend fun observeVideoCall(
         sessionId: String,
-        callPath: String,
-        videoCallCallBack: (offer : OfferAnswer) -> Unit
+        videoCallCallBack: (offer : OfferAnswerDTO) -> Unit
     ) {
         AndroidDatabaseHelper.observeVideoCall(
             sessionId,
-            callPath,
+            DataConstant.CALL_PATH,
             videoCallCallBack)
     }
 

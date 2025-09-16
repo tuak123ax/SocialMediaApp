@@ -26,7 +26,6 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.minhtu.firesocialmedia.constants.TestTag
-import com.minhtu.firesocialmedia.di.PlatformContext
 import com.minhtu.firesocialmedia.platform.CrossPlatformIcon
 import com.minhtu.firesocialmedia.platform.generateImageLoader
 import com.seiko.imageloader.LocalImageLoader
@@ -35,7 +34,7 @@ import com.seiko.imageloader.ui.AutoSizeImage
 class ShowImage {
     companion object {
         @Composable
-        fun ShowImageScreen(platform : PlatformContext,
+        fun ShowImageScreen(
                             image: String,
                             showImageViewModel: ShowImageViewModel,
                             modifier: Modifier,
@@ -66,8 +65,7 @@ class ShowImage {
                                 .clickable {
                                     showImageViewModel.downloadImage(
                                         image,
-                                        generateRandomImageName(16),
-                                        platform
+                                        generateRandomImageName(16)
                                     )
                                 }
                                 .testTag(TestTag.Companion.TAG_BUTTON_DOWNLOAD)

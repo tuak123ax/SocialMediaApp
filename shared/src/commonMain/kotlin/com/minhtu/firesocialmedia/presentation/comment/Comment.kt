@@ -32,6 +32,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -51,10 +52,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.minhtu.firesocialmedia.constants.TestTag
-import com.minhtu.firesocialmedia.data.model.news.CommentInstance
-import com.minhtu.firesocialmedia.data.model.news.NewsInstance
-import com.minhtu.firesocialmedia.data.model.user.UserInstance
 import com.minhtu.firesocialmedia.di.PlatformContext
+import com.minhtu.firesocialmedia.domain.entity.comment.CommentInstance
+import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
+import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
+import com.minhtu.firesocialmedia.platform.CommonBackHandler
 import com.minhtu.firesocialmedia.platform.CrossPlatformIcon
 import com.minhtu.firesocialmedia.platform.convertTimeToDateString
 import com.minhtu.firesocialmedia.platform.generateImageLoader
@@ -65,6 +67,10 @@ import com.minhtu.firesocialmedia.utils.Utils
 import com.rickclephas.kmp.observableviewmodel.launch
 import com.seiko.imageloader.LocalImageLoader
 import com.seiko.imageloader.ui.AutoSizeImage
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 class Comment {
     companion object{
@@ -77,13 +83,13 @@ class Comment {
                           selectedNew : NewsInstance,
                           onNavigateToShowImageScreen: (image: String) -> Unit,
                           onNavigateToUserInformation: (user: UserInstance?) -> Unit,
-                          onNavigateToHomeScreen: () -> Unit) {
+                          onNavigateToHomeScreen: (numberOfComments : Int) -> Unit) {
             val commentStatus = commentViewModel.createCommentStatus.collectAsState()
             val focusRequester = remember { FocusRequester() }
             val keyboardController = LocalSoftwareKeyboardController.current
             val commentBeReplied = commentViewModel.commentBeReplied.collectAsState()
             LaunchedEffect(Unit) {
-                Utils.Companion.getAllCommentsOfNew(commentViewModel, selectedNew.id, platform)
+                commentViewModel.getAllCommentsOfNew(selectedNew.id)
             }
             LaunchedEffect(commentStatus.value) {
                 if (commentStatus.value != null) {
@@ -96,6 +102,16 @@ class Comment {
             }
 
             val commentsList =  commentViewModel.allComments.collectAsState()
+            val coroutineScope = rememberCoroutineScope()
+            CommonBackHandler {
+                onNavigateToHomeScreen(commentsList.value.size)
+                coroutineScope.launch(Dispatchers.IO) {
+                    //Delay to wait for animation finished before reset comment list
+                    delay(700)
+                    commentViewModel.resetCommentStatus()
+                    commentViewModel.clearCommentList()
+                }
+            }
 
             Box(
                 modifier = modifier
@@ -121,8 +137,13 @@ class Comment {
                                 modifier = Modifier.Companion
                                     .size(30.dp)
                                     .clickable {
-                                        commentViewModel.resetCommentStatus()
-                                        onNavigateToHomeScreen()
+                                        onNavigateToHomeScreen(commentsList.value.size)
+                                        coroutineScope.launch(Dispatchers.IO) {
+                                            //Delay to wait for animation finished before reset comment list
+                                            delay(700)
+                                            commentViewModel.resetCommentStatus()
+                                            commentViewModel.clearCommentList()
+                                        }
                                     }
                                     .testTag(TestTag.Companion.TAG_BUTTON_BACK)
                                     .semantics {
@@ -146,7 +167,9 @@ class Comment {
                         verticalArrangement = Arrangement.spacedBy(5.dp) // Adds spacing between messages
                     ) {
                         //Sort comments by timePosted in descending order
-                        items(commentsList.value.sortedByDescending { it.timePosted }) { comment ->
+                        items(
+                            items = commentsList.value.sortedByDescending { it.timePosted },
+                            key = {it.id}) { comment ->
                             CommentCard(
                                 comment,
                                 commentViewModel,
@@ -163,8 +186,7 @@ class Comment {
                                     commentViewModel.onLikeComment(
                                         selectedNew,
                                         currentUser,
-                                        comment,
-                                        platform
+                                        comment
                                     )
                                 },
                                 onReplyComment = {
@@ -173,7 +195,7 @@ class Comment {
                                     keyboardController?.show()
                                 },
                                 onDeleteComment = {
-                                    commentViewModel.onDeleteComment(selectedNew, comment, platform)
+                                    commentViewModel.onDeleteComment(selectedNew, comment)
                                 })
                         }
                     }
@@ -226,8 +248,7 @@ class Comment {
                                 .clickable {
                                     commentViewModel.sendComment(
                                         currentUser,
-                                        selectedNew,
-                                        platform
+                                        selectedNew
                                     )
                                 }
                                 .testTag(TestTag.Companion.TAG_BUTTON_SEND)
@@ -261,6 +282,8 @@ class Comment {
             LaunchedEffect(likeStatus) {
                 commentViewModel.updateLikeStatus()
             }
+            val likeCountList = commentViewModel.likeCountList.collectAsState()
+
             Column(
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.Companion.CenterHorizontally,
@@ -293,7 +316,7 @@ class Comment {
                                 modifier = Modifier.Companion.padding(10.dp).fillMaxWidth()
                                     .clickable {
                                         commentViewModel.viewModelScope.launch {
-                                            var user = commentViewModel.findUserById(comment.posterId, platform)
+                                            var user = commentViewModel.findUserById(comment.posterId)
                                             onNavigateToUserInformation(user)
                                         }
                                     }) {
@@ -373,7 +396,7 @@ class Comment {
                                 tint = if (isLiked) Utils.Companion.hexToColor("#00FFFF") else Color.Companion.Unspecified
                             )
                             Text(
-                                text = "${comment.likeCount}",
+                                text = "${likeCountList.value[comment.id] ?: 0}",
                                 fontSize = 12.sp,
                                 color = Color.Companion.Black,
                                 modifier = Modifier.Companion.padding(2.dp)
@@ -462,16 +485,14 @@ class Comment {
                                         commentViewModel.onLikeComment(
                                             selectedNew,
                                             currentUser,
-                                            reply,
-                                            platform
+                                            reply
                                         )
                                     },
                                     onReplyComment = {},
                                     onDeleteComment = {
                                         commentViewModel.onDeleteComment(
                                             selectedNew,
-                                            reply,
-                                            platform
+                                            reply
                                         )
                                     }
                                 )

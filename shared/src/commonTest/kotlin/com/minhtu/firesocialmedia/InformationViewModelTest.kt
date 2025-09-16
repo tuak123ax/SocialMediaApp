@@ -1,6 +1,6 @@
 package com.minhtu.firesocialmedia
 
-import com.minhtu.firesocialmedia.data.model.user.UserInstance
+import com.minhtu.firesocialmedia.data.dto.user.UserInstance
 import com.minhtu.firesocialmedia.di.AuthServiceMock
 import com.minhtu.firesocialmedia.di.CryptoServiceMock
 import com.minhtu.firesocialmedia.di.DatabaseServiceMock

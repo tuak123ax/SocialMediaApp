@@ -45,7 +45,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.minhtu.firesocialmedia.constants.Constants
 import com.minhtu.firesocialmedia.constants.TestTag
-import com.minhtu.firesocialmedia.di.PlatformContext
 import com.minhtu.firesocialmedia.platform.CommonBackHandler
 import com.minhtu.firesocialmedia.platform.CrossPlatformIcon
 import com.minhtu.firesocialmedia.platform.PasswordVisibilityIcon
@@ -58,7 +57,6 @@ class SignIn{
     companion object{
         @Composable
         fun SignInScreen(
-            platform : PlatformContext,
             signInViewModel: SignInViewModel,
             loadingViewModel: LoadingViewModel,
             modifier: Modifier,
@@ -68,9 +66,19 @@ class SignIn{
             onNavigateToForgotPasswordScreen:() -> Unit) {
             val isLoading = loadingViewModel.isLoading.collectAsState()
 
+            val localCredentials = signInViewModel.localCredentials
             LaunchedEffect(Unit) {
                 //Check login information in storage
-                signInViewModel.checkLocalAccount(platform) { loadingViewModel.showLoading() }
+                signInViewModel.checkLocalAccount()
+            }
+            LaunchedEffect(localCredentials.value) {
+                if(localCredentials.value != null) {
+                    signInViewModel.signIn(
+                        showLoading = {
+                            loadingViewModel.showLoading()
+                        }
+                    )
+                }
             }
             val signInStatus = signInViewModel.signInState.collectAsState()
             LaunchedEffect(signInStatus.value) {
@@ -166,8 +174,7 @@ class SignIn{
                         Button(
                             onClick = {
                                 signInViewModel.signIn(
-                                    showLoading = { loadingViewModel.showLoading() },
-                                    platform
+                                    showLoading = { loadingViewModel.showLoading() }
                                 )
                             },
                             modifier = Modifier.Companion.testTag(TestTag.Companion.TAG_BUTTON_SIGNIN)

@@ -4,10 +4,11 @@ import android.Manifest
 import android.app.Activity
 import android.content.pm.PackageManager
 import androidx.core.app.ActivityCompat
+import com.minhtu.firesocialmedia.data.remote.service.permission.PermissionManager
 import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.suspendCancellableCoroutine
 
-class AndroidPermissionManager(private val activity: Activity) : PermissionManager {
+class AndroidPermissionManager(private val activity: Activity?) : PermissionManager {
     private var continuation: CancellableContinuation<Boolean>? = null
 
     override suspend fun requestCameraAndAudioPermissions(): Boolean {
@@ -27,7 +28,9 @@ class AndroidPermissionManager(private val activity: Activity) : PermissionManag
     private suspend fun requestPermissions(permissions: Array<String>): Boolean {
         return suspendCancellableCoroutine { cont ->
             continuation = cont
-            ActivityCompat.requestPermissions(activity, permissions, REQUEST_CODE)
+            if(activity!= null) {
+                ActivityCompat.requestPermissions(activity, permissions, REQUEST_CODE)
+            }
         }
     }
 

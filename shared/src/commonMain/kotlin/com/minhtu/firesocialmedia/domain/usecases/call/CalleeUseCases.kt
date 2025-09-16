@@ -1,10 +1,11 @@
 package com.minhtu.firesocialmedia.domain.usecases.call
 
-import com.minhtu.firesocialmedia.data.model.call.IceCandidateData
-import com.minhtu.firesocialmedia.data.model.call.OfferAnswer
+import com.minhtu.firesocialmedia.domain.entity.call.IceCandidateData
+import com.minhtu.firesocialmedia.domain.entity.call.OfferAnswer
 import com.minhtu.firesocialmedia.utils.Utils
 import com.minhtu.firesocialmedia.utils.Utils.Companion.getCallTypeFromSdp
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 
 data class CalleeUseCases(
@@ -37,11 +38,33 @@ class ObservePhoneCallUseCase(private val signalingDataUseCase: SendSignalingDat
     suspend operator fun invoke(
         calleeId : String,
         onReceivePhoneCallRequest : suspend (sessionId : String,
-                                     offer : OfferAnswer,
-                                     callerId : String,
-                                     calleeId : String) -> Unit,
+                                             offer : OfferAnswer,
+                                             callerId : String,
+                                             calleeId : String) -> Unit,
         onEndCall : suspend () -> Unit) {
         signalingDataUseCase.observePhoneCallWithoutCheckingInCall(
+            calleeId,
+            onReceivePhoneCallRequest = { remoteSessionId, remoteOffer, remoteCallerId, remoteCalleeId ->
+                onReceivePhoneCallRequest(remoteSessionId, remoteOffer, remoteCallerId, remoteCalleeId)
+            },
+            onEndCall = {
+                onEndCall()
+            }
+        )
+    }
+}
+
+class ObservePhoneCallWithInCallUseCase(private val signalingDataUseCase: SendSignalingDataUseCase) {
+    suspend operator fun invoke(
+        isInCall :  MutableStateFlow<Boolean>,
+        calleeId : String,
+        onReceivePhoneCallRequest : suspend (sessionId : String,
+                                             offer : OfferAnswer,
+                                             callerId : String,
+                                             calleeId : String) -> Unit,
+        onEndCall : suspend () -> Unit) {
+        signalingDataUseCase.observePhoneCallWithCheckingInCall(
+            isInCall,
             calleeId,
             onReceivePhoneCallRequest = { remoteSessionId, remoteOffer, remoteCallerId, remoteCalleeId ->
                 onReceivePhoneCallRequest(remoteSessionId, remoteOffer, remoteCallerId, remoteCalleeId)

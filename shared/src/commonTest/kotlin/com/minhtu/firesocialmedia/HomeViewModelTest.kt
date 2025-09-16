@@ -1,9 +1,9 @@
 package com.minhtu.firesocialmedia
 
 import com.minhtu.firesocialmedia.constants.Constants
-import com.minhtu.firesocialmedia.data.model.news.NewsInstance
-import com.minhtu.firesocialmedia.data.model.notification.NotificationInstance
-import com.minhtu.firesocialmedia.data.model.user.UserInstance
+import com.minhtu.firesocialmedia.data.dto.news.NewsInstance
+import com.minhtu.firesocialmedia.data.dto.notification.NotificationInstance
+import com.minhtu.firesocialmedia.data.dto.user.UserInstance
 import com.minhtu.firesocialmedia.di.AuthServiceMock
 import com.minhtu.firesocialmedia.di.DatabaseServiceMock
 import com.minhtu.firesocialmedia.di.PlatformContextMock

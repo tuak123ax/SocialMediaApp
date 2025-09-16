@@ -1,48 +1,23 @@
 package com.minhtu.firesocialmedia.utils
 
 import androidx.compose.ui.graphics.Color
-import com.minhtu.firesocialmedia.constants.Constants
-import com.minhtu.firesocialmedia.data.model.call.CallStatus
-import com.minhtu.firesocialmedia.data.model.call.CallType
-import com.minhtu.firesocialmedia.data.model.news.CommentInstance
-import com.minhtu.firesocialmedia.data.model.news.NewsInstance
-import com.minhtu.firesocialmedia.data.model.notification.NotificationInstance
-import com.minhtu.firesocialmedia.data.model.user.UserInstance
 import com.minhtu.firesocialmedia.di.PlatformContext
+import com.minhtu.firesocialmedia.domain.entity.call.CallStatus
+import com.minhtu.firesocialmedia.domain.entity.call.CallType
+import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
+import com.minhtu.firesocialmedia.domain.entity.notification.NotificationInstance
+import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
+import com.minhtu.firesocialmedia.domain.usecases.notification.DeleteNotificationFromDatabaseUseCase
+import com.minhtu.firesocialmedia.domain.usecases.notification.SaveNotificationToDatabaseUseCase
 import com.minhtu.firesocialmedia.platform.createCallMessage
 import com.minhtu.firesocialmedia.platform.sendMessageToServer
 import com.minhtu.firesocialmedia.presentation.calling.audiocall.CallingViewModel
-import com.minhtu.firesocialmedia.presentation.comment.CommentViewModel
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class Utils {
     companion object{
-        fun getAllCommentsOfNew(commentViewModel: CommentViewModel, newsId : String, platform: PlatformContext) {
-            CoroutineScope(Dispatchers.IO).launch {
-                platform.database.getAllComments(Constants.COMMENT_PATH, newsId, object : GetCommentCallback{
-                    override fun onSuccess(comments: List<CommentInstance>) {
-                        commentViewModel.listComments.clear()
-                        commentViewModel.updateComments(ArrayList(comments))
-                        commentViewModel.listComments.addAll(comments)
-                        for(comment in commentViewModel.listComments) {
-                            commentViewModel.addLikeCountData(comment.id, comment.likeCount)
-                            if(comment.listReplies.isNotEmpty()){
-                                commentViewModel.mapSubComments.putAll(comment.listReplies)
-                            }
-                        }
-                    }
-
-                    override fun onFailure() {
-                    }
-
-                })
-            }
-        }
-
         fun hexToColor(hex: String): Color {
             val cleanHex = hex.removePrefix("#")
             val colorLong = when (cleanHex.length) {
@@ -51,15 +26,6 @@ class Utils {
                 else -> throw IllegalArgumentException("Invalid hex color: $hex")
             }
             return Color(colorLong)
-        }
-
-        fun findUserById(userId : String, listUsers : List<UserInstance>) : UserInstance?{
-            for(user in listUsers){
-                if(user.uid == userId) {
-                    return user
-                }
-            }
-            return null
         }
 
         fun findNewById(newId : String, listNews : ArrayList<NewsInstance>) : NewsInstance?{
@@ -71,22 +37,30 @@ class Utils {
             return null
         }
 
-        suspend fun saveNotification(notification: NotificationInstance, friend : UserInstance, platform: PlatformContext) {
+        suspend fun saveNotification(
+            notification: NotificationInstance,
+            friend : UserInstance,
+            saveNotificationToDatabaseUseCase: SaveNotificationToDatabaseUseCase) {
             //Save notification to friend's notification list
             try{
                 friend.addNotification(notification)
-                platform.database.saveNotificationToDatabase(friend.uid,
-                    Constants.USER_PATH, friend.notifications)
-            } catch(e: Exception) {
+                saveNotificationToDatabaseUseCase.invoke(
+                    friend.uid,
+                    friend.notifications)
+            } catch(_: Exception) {
             }
         }
 
-        suspend fun deleteNotification(notification: NotificationInstance, currentUser: UserInstance, platform: PlatformContext) {
+        suspend fun deleteNotification(
+            notification: NotificationInstance,
+            currentUser: UserInstance,
+            deleteNotificationFromDatabaseUseCase: DeleteNotificationFromDatabaseUseCase) {
             //Save notification to friend's notification list
             try{
-                platform.database.deleteNotificationFromDatabase(currentUser.uid,
-                    Constants.USER_PATH, notification)
-            } catch(e: Exception) {
+                deleteNotificationFromDatabaseUseCase.invoke(
+                    currentUser.uid,
+                    notification)
+            } catch(_: Exception) {
             }
         }
 
@@ -108,7 +82,7 @@ class Utils {
         ) {
             coroutineScope.launch {
                 delay(2000L)
-                callingViewModel.stopCall(platform)
+                callingViewModel.stopCall()
                 onStopCall()
             }
         }
@@ -138,11 +112,6 @@ class Utils {
             fun onSuccess(news : List<NewsInstance>,
                           lastTimePosted : Double?,
                           lastKey : String)
-            fun onFailure()
-        }
-
-        interface GetCommentCallback{
-            fun onSuccess(comments : List<CommentInstance>)
             fun onFailure()
         }
 

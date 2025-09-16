@@ -5,10 +5,11 @@ import android.content.Intent
 import android.media.AudioManager
 import android.util.Log
 import com.minhtu.firesocialmedia.constants.Constants
-import com.minhtu.firesocialmedia.data.model.call.CallAction
-import com.minhtu.firesocialmedia.data.model.call.IceCandidateData
-import com.minhtu.firesocialmedia.data.model.call.OfferAnswer
-import com.minhtu.firesocialmedia.data.model.user.UserInstance
+import com.minhtu.firesocialmedia.data.dto.call.IceCandidateDTO
+import com.minhtu.firesocialmedia.data.dto.call.OfferAnswerDTO
+import com.minhtu.firesocialmedia.data.dto.user.UserDTO
+import com.minhtu.firesocialmedia.data.remote.service.call.AudioCallService
+import com.minhtu.firesocialmedia.domain.entity.call.CallAction
 import com.minhtu.firesocialmedia.platform.WebRTCVideoTrack
 import com.minhtu.firesocialmedia.platform.logMessage
 import com.minhtu.firesocialmedia.utils.AndroidUtils
@@ -42,7 +43,7 @@ object WebRTCManager {
 }
 class AndroidAudioCallService(
     private val context : Context
-    ) : AudioCallService{
+    ) : AudioCallService {
     private var peerConnectionFactory: PeerConnectionFactory
     private var peerConnection : PeerConnection? = null
     private var localAudioSource : AudioSource? = null
@@ -86,7 +87,7 @@ class AndroidAudioCallService(
      * @Param:
      * onOfferCreated: return created audio offer to process next step.
      * */
-    override suspend fun createOffer(onOfferCreated : (offer : OfferAnswer) -> Unit) {
+    override suspend fun createOffer(onOfferCreated : (offer : OfferAnswerDTO) -> Unit) {
         logMessage("createOffer", { "start createOffer" })
         //Create constraints for audio call.
         val constraints = MediaConstraints().apply {
@@ -104,7 +105,7 @@ class AndroidAudioCallService(
                     override fun onSetSuccess() {
                         logMessage("setLocalDescription", { "onSetSuccess" })
                         //Return offer after set to local description.
-                        onOfferCreated(OfferAnswer(description.description, description.type.canonicalForm()))
+                        onOfferCreated(OfferAnswerDTO(description.description, description.type.canonicalForm()))
                     }
 
                     override fun onCreateFailure(p0: String?) {
@@ -139,7 +140,7 @@ class AndroidAudioCallService(
      * onOfferCreated: return created video offer to process next step.
      * */
     override suspend fun createVideoOffer(
-        onOfferCreated: (OfferAnswer) -> Unit) {
+        onOfferCreated: (OfferAnswerDTO) -> Unit) {
         //Create constraints for video call.
         val constraints = MediaConstraints().apply {
             mandatory.add(MediaConstraints.KeyValuePair("OfferToReceiveAudio", "true"))
@@ -157,7 +158,7 @@ class AndroidAudioCallService(
                     override fun onSetSuccess() {
                         logMessage("setLocalDescription", { "onSetSuccess" })
                         //Return offer after set to local description.
-                        onOfferCreated(OfferAnswer(description.description, description.type.canonicalForm()))
+                        onOfferCreated(OfferAnswerDTO(description.description, description.type.canonicalForm()))
                     }
 
                     override fun onCreateFailure(p0: String?) {
@@ -193,7 +194,7 @@ class AndroidAudioCallService(
      * onAnswerCreated: return created answer to process next step.
      * */
     override suspend fun createAnswer(videoSupport : Boolean,
-                              onAnswerCreated : (answer : OfferAnswer) -> Unit) {
+                              onAnswerCreated : (answer : OfferAnswerDTO) -> Unit) {
         logMessage("createAnswer", { "start createAnswer" })
         //Create constraints for audio or video call.
         var constraints = MediaConstraints()
@@ -220,7 +221,7 @@ class AndroidAudioCallService(
                         logMessage("setLocalDescription", { "onSetSuccess" })
                         //Return answer after set to local description.
                         //Send this answer back to the caller
-                        onAnswerCreated(OfferAnswer(sdp.description, sdp.type.canonicalForm()))
+                        onAnswerCreated(OfferAnswerDTO(sdp.description, sdp.type.canonicalForm()))
                     }
 
                     override fun onCreateFailure(p0: String?) {
@@ -251,7 +252,7 @@ class AndroidAudioCallService(
      * @Param:
      * remoteOffer: remote offer/answer to set in remote description of peer connection.
      * */
-    override suspend fun setRemoteDescription(remoteOfferAnswer : OfferAnswer) {
+    override suspend fun setRemoteDescription(remoteOfferAnswer : OfferAnswerDTO) {
         val sessionDescription = SessionDescription(SessionDescription.Type.fromCanonicalForm(remoteOfferAnswer.type), remoteOfferAnswer.sdp)
         peerConnection?.setRemoteDescription(object : SdpObserver{
             override fun onCreateSuccess(p0: SessionDescription?) {
@@ -279,7 +280,7 @@ class AndroidAudioCallService(
      * sessionId: session id of the call.
      * calleeId: id of callee.
      * */
-    override fun acceptCallFromApp(sessionId: String, calleeId: String?) {
+    override suspend fun acceptCallFromApp(sessionId: String, calleeId: String?) {
         val acceptIntent = Intent(context, CallActionBroadcastReceiver::class.java).apply {
             action = CallAction.ACCEPT_CALL_ACTION
             putExtra(Constants.KEY_SESSION_ID, sessionId)
@@ -290,7 +291,7 @@ class AndroidAudioCallService(
         context.sendBroadcast(acceptIntent)
     }
 
-    override fun endCallFromApp() {
+    override suspend fun endCallFromApp() {
         val acceptIntent = Intent(context, CallActionBroadcastReceiver::class.java).apply {
             action = CallAction.STOP_CALL_ACTION_FROM_CALLER
             putExtra(Constants.FROM_NOTIFICATION, false)
@@ -320,7 +321,7 @@ class AndroidAudioCallService(
      * */
     override suspend fun initialize(
         onInitializeFinished : () -> Unit,
-        onIceCandidateCreated : (iceCandidateData : IceCandidateData) -> Unit,
+        onIceCandidateCreated : (iceCandidateData : IceCandidateDTO) -> Unit,
         onRemoteVideoTrackReceived: (remoteVideoTrack :WebRTCVideoTrack) -> Unit) {
         logMessage("initialize", { "start initialize" })
         //Setup audio manager
@@ -355,7 +356,7 @@ class AndroidAudioCallService(
 
             override fun onIceCandidate(candidate: IceCandidate) {
                 logMessage("initialize", { "onIceCandidate" })
-                val iceCandidateData = IceCandidateData(candidate.sdp, candidate.sdpMid, candidate.sdpMLineIndex)
+                val iceCandidateData = IceCandidateDTO(candidate.sdp, candidate.sdpMid, candidate.sdpMLineIndex)
                 onIceCandidateCreated(iceCandidateData)
             }
 
@@ -518,7 +519,7 @@ class AndroidAudioCallService(
      * caller: information of caller.
      * callee: information of callee.
      * */
-    override suspend fun startCallService(sessionId : String, caller : UserInstance, callee : UserInstance) {
+    override suspend fun startCallService(sessionId : String, caller : UserDTO, callee : UserDTO) {
         callForegroundServiceIntent = Intent(context, CallForegroundService::class.java)
         callForegroundServiceIntent?.putExtra("sessionId", sessionId)
         callForegroundServiceIntent?.putExtra("caller", Json.encodeToString(caller))
@@ -539,10 +540,10 @@ class AndroidAudioCallService(
      * remoteVideoOffer: offer from caller if have.
      * */
     override suspend fun startVideoCallService(sessionId : String,
-                                               caller : UserInstance,
-                                               callee : UserInstance,
+                                               caller : UserDTO,
+                                               callee : UserDTO,
                                                currentUserId : String?,
-                                               remoteVideoOffer : OfferAnswer?) {
+                                               remoteVideoOffer : OfferAnswerDTO?) {
         videoCallForegroundServiceIntent = Intent(context, CallForegroundService::class.java).apply {
             action = CallAction.START_VIDEO_CALL
         }

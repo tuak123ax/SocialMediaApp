@@ -1,9 +1,8 @@
 package com.minhtu.firesocialmedia.domain.usecases.call
 
-import com.minhtu.firesocialmedia.constants.Constants
-import com.minhtu.firesocialmedia.data.model.call.AudioCallSession
-import com.minhtu.firesocialmedia.data.model.call.IceCandidateData
-import com.minhtu.firesocialmedia.data.model.call.OfferAnswer
+import com.minhtu.firesocialmedia.domain.entity.call.AudioCallSession
+import com.minhtu.firesocialmedia.domain.entity.call.IceCandidateData
+import com.minhtu.firesocialmedia.domain.entity.call.OfferAnswer
 import com.minhtu.firesocialmedia.platform.logMessage
 import com.minhtu.firesocialmedia.utils.Utils
 
@@ -80,7 +79,6 @@ class SendIceCandidateUseCase(private val signalingUseCase: SendSignalingDataUse
             sessionId,
             iceCandidateData,
             whichCandidate,
-            Constants.CALL_PATH,
             object : Utils.Companion.BasicCallBack{
                 override fun onSuccess() {
                     //Send ice candidate success
