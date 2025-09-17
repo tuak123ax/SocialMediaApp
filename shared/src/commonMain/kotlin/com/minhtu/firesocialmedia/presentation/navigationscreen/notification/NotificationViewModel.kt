@@ -16,6 +16,9 @@ import kotlinx.coroutines.IO
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.supervisorScope
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
 class NotificationViewModel (
@@ -23,11 +26,12 @@ class NotificationViewModel (
     private val findNewByIdInDbUseCase : FindNewByIdInDbUseCase,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : ViewModel(){
-    var allNeededUsers : MutableSet<UserInstance?> = mutableSetOf()
+    var allNeededUsers : HashMap<String,UserInstance?> = HashMap()
     val _getNeededUsersStatus = MutableStateFlow(false)
     val getNeededUsersStatus = _getNeededUsersStatus
+    private val cacheMutex = Mutex()
     fun checkUsersInCacheAndGetMore(
-        loadedUsersCache: MutableSet<UserInstance?>,
+        loadedUsersCache: HashMap<String,UserInstance?>,
         allNotifications: SnapshotStateList<NotificationInstance>
     ) {
         viewModelScope.launch(ioDispatcher) {
@@ -35,19 +39,25 @@ class NotificationViewModel (
             allNeededUsers = loadedUsersCache
             val allSenderIds = allNotifications.map { it.sender }.distinct()
             val missingSenderIds = allSenderIds.filterNot { senderId ->
-                loadedUsersCache.any( {it?.uid == senderId} )
+                loadedUsersCache.any( {it.key == senderId} )
             }
 
             if(missingSenderIds.isNotEmpty()) {
                 try{
-                    val newUsers = missingSenderIds.map { senderId ->
-                        async {
-                            getUserUseCase.invoke(senderId)
+                    val newUsers: List<Pair<String, UserInstance?>> = supervisorScope {
+                        missingSenderIds.map { senderId ->
+                            async { senderId to runCatching { getUserUseCase.invoke(senderId) }.getOrNull() }
+                        }.awaitAll()
+                    }
+
+                    cacheMutex.withLock {
+                        for ((id, user) in newUsers) {
+                            if (user != null) {
+                                allNeededUsers[id] = user
+                                loadedUsersCache[id] = user
+                            }
                         }
-                    }.awaitAll().filterNotNull()
-                    // Add to the cache + global set
-                    allNeededUsers.addAll(newUsers)
-                    loadedUsersCache.addAll(newUsers)
+                    }
                 } catch (e : Exception) {
                     logMessage("checkUsersInCacheAndGetMore",
                         { "Exception when get more users: " + e.message.toString() })
@@ -60,7 +70,7 @@ class NotificationViewModel (
     }
 
     fun findLoadedUserInSet(userId: String): UserInstance? {
-        return allNeededUsers.firstOrNull { it?.uid == userId }
+        return allNeededUsers[userId]
     }
 
     suspend fun requestFindNewById(newId: String) : NewsInstance? {

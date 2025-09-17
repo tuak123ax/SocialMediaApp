@@ -5,8 +5,6 @@ plugins {
     alias(libs.plugins.kotlinCocoapods)
     alias(libs.plugins.androidLibrary)
     id("org.jetbrains.compose") version "1.7.3"
-//    id("com.google.dagger.hilt.android") //  Added Hilt plugin
-//    id("org.jetbrains.kotlin.kapt")
     id("org.jetbrains.kotlin.plugin.compose")
 
     id("org.jetbrains.kotlinx.kover")
@@ -73,8 +71,8 @@ kotlin {
             isStatic = true
         }
     }
-
     val ktorVersion = "3.0.3"
+    val kotlinVersion = "1.7.3"
 
     sourceSets {
         all {
@@ -87,7 +85,7 @@ kotlin {
             implementation(compose.material3)
             implementation(compose.animation)
             implementation("org.jetbrains.androidx.navigation:navigation-compose:2.8.0-alpha12")
-            implementation("org.jetbrains.compose.components:components-resources:1.7.3")
+            implementation("org.jetbrains.compose.components:components-resources:$kotlinVersion")
             api("com.rickclephas.kmp:kmp-observableviewmodel-core:1.0.0-BETA-10")
             implementation("io.ktor:ktor-client-core:$ktorVersion")
 
@@ -100,7 +98,7 @@ kotlin {
             implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:1.5.1")
             implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.1")
 
-            implementation("org.jetbrains.compose.material:material-icons-extended:1.7.3")
+            implementation("org.jetbrains.compose.material:material-icons-extended:$kotlinVersion")
             implementation("com.russhwolf:multiplatform-settings:1.3.0")
 
             implementation("org.javassist:javassist:3.29.2-GA")
@@ -110,7 +108,7 @@ kotlin {
             dependencies{
                 implementation(kotlin("test"))
                 implementation("io.mockative:mockative:3.0.1")
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:$kotlinVersion")
             }
         }
         androidMain.dependencies {
@@ -169,7 +167,7 @@ kotlin {
 
         androidUnitTest.dependencies {
             implementation("io.mockk:mockk:1.14.2")
-            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
+            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:$kotlinVersion")
             implementation("junit:junit:4.13.2")
         }
 

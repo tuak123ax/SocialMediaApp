@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -20,6 +21,7 @@ import com.minhtu.firesocialmedia.domain.entity.call.OfferAnswer
 import com.minhtu.firesocialmedia.domain.entity.call.SharedCallData
 import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
+import com.minhtu.firesocialmedia.platform.generateImageLoader
 import com.minhtu.firesocialmedia.platform.platformViewModel
 import com.minhtu.firesocialmedia.platform.rememberPlatformImagePicker
 import com.minhtu.firesocialmedia.platform.setupSignInLauncher
@@ -56,6 +58,7 @@ import com.minhtu.firesocialmedia.presentation.uploadnewsfeed.UploadNewsfeed
 import com.minhtu.firesocialmedia.presentation.userinformation.UserInformation
 import com.minhtu.firesocialmedia.presentation.userinformation.UserInformationViewModel
 import com.minhtu.firesocialmedia.utils.UiUtils.Companion.BottomNavigationBar
+import com.seiko.imageloader.LocalImageLoader
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.delay
@@ -70,6 +73,7 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
     var selectedUser: UserInstance? = null
     lateinit var selectedNew : NewsInstance
     val coroutineScope = rememberCoroutineScope()
+    val localImageLoaderValue = LocalImageLoader provides remember { generateImageLoader() }
 
     // Shared viewModels
     val signUpViewModel: SignUpViewModel = platformViewModel { ViewModelProvider.createSignUpViewModel(platformContext) }
@@ -182,6 +186,7 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                     loadingViewModel,
                     SharedCallData.navigateToCallingScreenFromNotification,
                     paddingValues = paddingValues,
+                    localImageLoaderValue = localImageLoaderValue,
                     onNavigateToUploadNews = { new ->
                         updateNew = new
                         navController.navigate(route = UploadNewsfeed.getScreenName())
@@ -250,6 +255,7 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                 popExitTransition = DefaultNavAnimations.popExit) {
                 ShowImage.ShowImageScreen(
                     selectedImage,
+                    localImageLoaderValue = localImageLoaderValue,
                     showImageViewModel = showImageViewModel,
                     modifier = Modifier
                         .fillMaxSize()
@@ -274,6 +280,7 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                         .background(color = Color.White),
                     searchViewModel,
                     homeViewModel,
+                    localImageLoaderValue = localImageLoaderValue,
                     onNavigateBack = {
                         navController.popBackStack()
                     },
@@ -311,6 +318,7 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                     user = selectedUser,
                     isCurrentUser = selectedUser == homeViewModel.currentUser,
                     paddingValues = paddingValues,
+                    localImageLoaderValue = localImageLoaderValue,
                     modifier = Modifier
                         .fillMaxSize()
                         .background(color = Color.White),
@@ -352,6 +360,7 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                         .fillMaxSize()
                         .background(color = Color.White),
                     platform = platformContext,
+                    localImageLoaderValue = localImageLoaderValue,
                     showCloseIcon = true,
                     commentViewModel = commentViewModel,
                     currentUser = homeViewModel.currentUser!!,
@@ -399,6 +408,7 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                         .fillMaxSize()
                         .background(Color.White),
                     paddingValues = paddingValues,
+                    localImageLoaderValue = localImageLoaderValue,
                     searchViewModel,
                     homeViewModel = homeViewModel,
                     friendViewModel,
@@ -423,6 +433,7 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                         .fillMaxSize()
                         .background(Color.White),
                     paddingValues = paddingValues,
+                    localImageLoaderValue = localImageLoaderValue,
                     searchViewModel = searchViewModel,
                     homeViewModel = homeViewModel,
                     notificationViewModel = notificationViewModel,
@@ -467,6 +478,7 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                         .fillMaxSize()
                         .background(Color.White),
                     platformContext,
+                    localImageLoaderValue = localImageLoaderValue,
                     relatedNew,
                     onNavigateToShowImageScreen = { image ->
                         selectedImage = image
@@ -483,8 +495,7 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                         navController.popBackStack()
                     },
                     homeViewModel,
-                    commentViewModel,
-                    navigationHandler
+                    commentViewModel
                 )
             }
             composable(
@@ -496,6 +507,7 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                 homeViewModel.updateIsInCall(true)
                 Calling.CallingScreen(
                     platformContext,
+                    localImageLoaderValue = localImageLoaderValue,
                     sessionId,
                     callee,
                     caller,

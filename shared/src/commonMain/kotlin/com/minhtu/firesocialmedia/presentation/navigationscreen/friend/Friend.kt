@@ -16,6 +16,7 @@ import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.ProvidedValue
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -49,6 +50,7 @@ class Friend {
         fun FriendScreen(platform : PlatformContext,
                          modifier: Modifier,
                          paddingValues: PaddingValues,
+                         localImageLoaderValue : ProvidedValue<*>,
                          searchViewModel: SearchViewModel,
                          homeViewModel: HomeViewModel,
                          friendViewModel: FriendViewModel,
@@ -86,6 +88,7 @@ class Friend {
                 TabLayoutForFriendScreen(
                     platform,
                     listOf("Friends", "Friend Requests"),
+                    localImageLoaderValue,
                     homeViewModel = homeViewModel,
                     searchViewModel = searchViewModel,
                     friendViewModel = friendViewModel,
@@ -103,6 +106,7 @@ class Friend {
         @Composable
         fun TabLayoutForFriendScreen(platform : PlatformContext,
                                      tabTitles : List<String>,
+                                     localImageLoaderValue : ProvidedValue<*>,
                                      homeViewModel: HomeViewModel,
                                      searchViewModel: SearchViewModel,
                                      friendViewModel: FriendViewModel,
@@ -156,7 +160,7 @@ class Friend {
                                 .semantics { contentDescription = TestTag.TAG_FRIEND_TAB_LIST }
                         ) {
                             items(filterList) { user ->
-                                UiUtils.UserRow(user, onNavigateToUserInformation)
+                                UiUtils.UserRow(user, localImageLoaderValue, onNavigateToUserInformation)
                             }
                         }
                     }
@@ -182,7 +186,7 @@ class Friend {
                         ) {
                             items(filterList) { user ->
                                 UiUtils.Companion.FriendRequest(
-                                    platform,
+                                    localImageLoaderValue,
                                     user,
                                     homeViewModel.currentUser!!,
                                     onNavigateToUserInformation,

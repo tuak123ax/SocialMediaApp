@@ -31,6 +31,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.ProvidedValue
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -77,6 +78,7 @@ class UserInformation {
             user: UserInstance?,
             isCurrentUser : Boolean,
             paddingValues: PaddingValues,
+            localImageLoaderValue : ProvidedValue<*>,
             modifier: Modifier,
             homeViewModel : HomeViewModel,
             friendViewModel: FriendViewModel,
@@ -159,7 +161,7 @@ class UserInformation {
                         ) {
                             // User avatar
                             CompositionLocalProvider(
-                                LocalImageLoader provides remember { generateImageLoader() },
+                                localImageLoaderValue
                             ) {
                                 AutoSizeImage(
                                     user!!.image,
@@ -330,6 +332,7 @@ class UserInformation {
                         }
                     }
                     UiUtils.Companion.LazyColumnOfNewsWithSlideOutAnimationAndLoadMore(
+                        localImageLoaderValue,
                         listState,
                         homeViewModel,
                         filterList,
