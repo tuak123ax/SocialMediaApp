@@ -37,6 +37,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.ProvidedValue
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -81,6 +82,7 @@ class Notification {
         @Composable
         fun NotificationScreen(modifier: Modifier,
                                paddingValues: PaddingValues,
+                               localImageLoaderValue : ProvidedValue<*>,
                                searchViewModel: SearchViewModel,
                                homeViewModel: HomeViewModel,
                                notificationViewModel : NotificationViewModel,
@@ -159,6 +161,7 @@ class Notification {
                                     NotificationHasSwipeToDelete(
                                         notification,
                                         user,
+                                        localImageLoaderValue,
                                         homeViewModel,
                                         notificationViewModel,
                                         onDelete = {
@@ -197,6 +200,7 @@ class Notification {
         @Composable
         fun NotificationHasSwipeToDelete(notification: NotificationInstance,
                                          user: UserInstance,
+                                         localImageLoaderValue : ProvidedValue<*>,
                                          homeViewModel: HomeViewModel,
                                          notificationViewModel: NotificationViewModel,
                                          onDelete: () -> Unit,
@@ -295,13 +299,15 @@ class Notification {
                             }
                         }
                 ) {
-                    NotificationRow(notification, user)
+                    NotificationRow(notification, user, localImageLoaderValue)
                 }
             }
 
         }
         @Composable
-        fun NotificationRow(notification: NotificationInstance, user: UserInstance) {
+        fun NotificationRow(notification: NotificationInstance,
+                            user: UserInstance,
+                            localImageLoaderValue : ProvidedValue<*>) {
             Row(
                 horizontalArrangement = Arrangement.Start,
                 verticalAlignment = Alignment.Companion.CenterVertically,
@@ -310,7 +316,7 @@ class Notification {
                     .padding(horizontal = 10.dp, vertical = 8.dp)
             ) {
                 CompositionLocalProvider(
-                    LocalImageLoader provides remember { generateImageLoader() },
+                    localImageLoaderValue
                 ) {
                     AutoSizeImage(
                         notification.avatar,

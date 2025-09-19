@@ -14,6 +14,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.ProvidedValue
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -34,6 +35,7 @@ class Search {
         fun SearchScreen(modifier: Modifier,
                          searchViewModel: SearchViewModel,
                          homeViewModel: HomeViewModel,
+                         localImageLoaderValue : ProvidedValue<*>,
                          onNavigateBack: () -> Unit,
                          onNavigateToUserInformation: (user : UserInstance?) -> Unit,
                          onNavigateToShowImageScreen: (image : String) -> Unit,
@@ -62,6 +64,7 @@ class Search {
                 UiUtils.Companion.TabLayout(
                     listState,
                     listOf("People", "Posts"),
+                    localImageLoaderValue,
                     homeViewModel,
                     searchViewModel,
                     onNavigateToShowImageScreen,

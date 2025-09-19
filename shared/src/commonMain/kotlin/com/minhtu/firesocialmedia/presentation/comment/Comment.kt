@@ -28,6 +28,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.ProvidedValue
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -77,6 +78,7 @@ class Comment {
         @Composable
         fun CommentScreen(modifier: Modifier,
                           platform : PlatformContext,
+                          localImageLoaderValue : ProvidedValue<*>,
                           showCloseIcon : Boolean,
                           commentViewModel: CommentViewModel,
                           currentUser : UserInstance,
@@ -173,6 +175,7 @@ class Comment {
                             CommentCard(
                                 comment,
                                 commentViewModel,
+                                localImageLoaderValue,
                                 currentUser,
                                 platform,
                                 selectedNew,
@@ -264,6 +267,7 @@ class Comment {
         @Composable
         fun CommentCard(comment: CommentInstance,
                         commentViewModel: CommentViewModel,
+                        localImageLoaderValue : ProvidedValue<*>,
                         currentUser : UserInstance,
                         platform : PlatformContext,
                         selectedNew : NewsInstance,
@@ -321,7 +325,7 @@ class Comment {
                                         }
                                     }) {
                                 CompositionLocalProvider(
-                                    LocalImageLoader provides remember { generateImageLoader() },
+                                    localImageLoaderValue
                                 ) {
                                     AutoSizeImage(
                                         comment.avatar,
@@ -357,7 +361,7 @@ class Comment {
 
                             if (comment.image.isNotEmpty()) {
                                 CompositionLocalProvider(
-                                    LocalImageLoader provides remember { generateImageLoader() },
+                                    localImageLoaderValue
                                 ) {
                                     AutoSizeImage(
                                         comment.image,
@@ -474,6 +478,7 @@ class Comment {
                                 CommentCard(
                                     reply,
                                     commentViewModel,
+                                    localImageLoaderValue,
                                     currentUser,
                                     platform,
                                     selectedNew,

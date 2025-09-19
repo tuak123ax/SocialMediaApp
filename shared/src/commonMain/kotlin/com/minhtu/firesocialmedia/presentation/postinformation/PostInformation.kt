@@ -19,6 +19,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.ProvidedValue
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -53,18 +54,18 @@ class PostInformation {
         @Composable
         fun PostInformationScreen(modifier : Modifier,
                                   platform : PlatformContext,
+                                  localImageLoaderValue : ProvidedValue<*>,
                                   news: NewsInstance,
                                   onNavigateToShowImageScreen: (image: String) -> Unit,
                                   onNavigateToUserInformation: (user: UserInstance?) -> Unit,
                                   onNavigateToHomeScreen: (numberOfComments : Int) -> Unit,
                                   onNavigateBack : () -> Unit,
                                   homeViewModel: HomeViewModel,
-                                  commentViewModel : CommentViewModel,
-                                  navController : NavigationHandler
+                                  commentViewModel : CommentViewModel
         ) {
             val likeStatus by homeViewModel.likedPosts.collectAsState()
-            val isLiked = likeStatus.contains(news.id)
-            LaunchedEffect(likeStatus) {
+            val isLiked = likeStatus.containsKey(news.id)
+            LaunchedEffect(Unit) {
                 homeViewModel.updateLikeStatus()
             }
             val likeCountList = homeViewModel.likeCountList.collectAsState()
@@ -93,7 +94,7 @@ class PostInformation {
                             }
                         }) {
                     CompositionLocalProvider(
-                        LocalImageLoader provides remember { generateImageLoader() },
+                        localImageLoaderValue
                     ) {
                         AutoSizeImage(
                             news.avatar,
@@ -126,7 +127,7 @@ class PostInformation {
                 UiUtils.Companion.ExpandableText(news.message)
                 if (news.image.isNotEmpty()) {
                     CompositionLocalProvider(
-                        LocalImageLoader provides remember { generateImageLoader() },
+                        localImageLoaderValue
                     ) {
                         AutoSizeImage(
                             news.image,
@@ -220,6 +221,7 @@ class PostInformation {
                         .fillMaxSize()
                         .background(color = Color.Companion.White),
                     platform,
+                    localImageLoaderValue,
                     showCloseIcon = false,
                     commentViewModel = commentViewModel,
                     currentUser = homeViewModel.currentUser!!,

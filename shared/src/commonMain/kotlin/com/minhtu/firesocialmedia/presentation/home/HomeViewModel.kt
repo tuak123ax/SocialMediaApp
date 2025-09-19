@@ -34,6 +34,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.supervisorScope
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
 class HomeViewModel(
@@ -43,10 +46,11 @@ class HomeViewModel(
     private val callInteractor: CallInteractor,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : ViewModel() {
+    var isRefreshing = mutableStateOf(false)
     var listNews: ArrayList<NewsInstance> = ArrayList()
     var listNotificationOfCurrentUser = mutableStateListOf<NotificationInstance>()
     //Cache loaded users, only fetch new user if that user is not in this cache
-    var loadedUsersCache : MutableSet<UserInstance?> = mutableSetOf()
+    var loadedUsersCache : HashMap<String,UserInstance?> = HashMap()
     var currentUser: UserInstance? = null
     var currentUserState by mutableStateOf(currentUser)
     suspend fun updateCurrentUser(user: UserInstance) {
@@ -68,18 +72,12 @@ class HomeViewModel(
                     _getCurrentUserStatus.value = true
                     getAllUserFriends(user)
                 } else {
-                    logMessage("getCurrentUser",
-                        { "Current user is null" })
                     _getCurrentUserStatus.value = false
                 }
             } else {
-                logMessage("getCurrentUser",
-                    { "Current user id is null" })
                 _getCurrentUserStatus.value = false
             }
         } catch (ex : Exception) {
-            logMessage("getCurrentUser",
-                { "Cannot get current user: " + ex.message.toString() })
             _getCurrentUserStatus.value = false
         }
     }
@@ -150,30 +148,52 @@ class HomeViewModel(
                 } else {
                     _getAllNewsStatus.value = false
                 }
-            } finally { isLoadingMore.value = false }
+            } finally {
+                isLoadingMore.value = false
+                isRefreshing.value = false
+            }
         }
     }
 
+    fun resetGetLatestNewsParams() {
+        _getAllNewsStatus.value = false
+        isLoadingMore.value = false
+        hasMoreData.value = true
+        lastTimePosted = null
+        lastKey = null
+        updateNews(ArrayList(emptyList()))
+        listNews.clear()
+    }
+
+    private val cacheMutex = Mutex()
     fun checkUsersInCacheAndGetMore() {
         viewModelScope.launch(ioDispatcher) {
-            val allPosterIds = listNews.map { it.posterId }.distinct()
-            val missingPosterIds = allPosterIds.filterNot { posterId ->
-                loadedUsersCache.any( {it?.uid == posterId} )
-            }
+            val neededIds = listNews.asSequence()
+                .map { it.posterId }
+                .filter { it.isNotBlank() }
+                .distinct()
+                .toList()
 
-            if(missingPosterIds.isNotEmpty()) {
-                try{
-                    val newUsers = missingPosterIds.map { posterId ->
-                        async {
-                            userInteractor.getUser(posterId)
-                        }
-                    }.awaitAll().filterNotNull()
-                    // Add to the cache + global set
-                    loadedUsersCache.addAll(newUsers)
-                } catch (e : Exception) {
-                    logMessage("checkUsersInCacheAndGetMore",
-                        { "Exception when get more users: " + e.message.toString() })
+            // compute missing under lock to avoid races
+            val missingIds = cacheMutex.withLock {
+                neededIds.filterNot { id -> loadedUsersCache.containsKey(id) }
+            }
+            if (missingIds.isEmpty()) return@launch
+
+            try {
+                val newUsers: List<Pair<String, UserInstance?>> = supervisorScope {
+                    missingIds.map { id ->
+                        async { id to runCatching { userInteractor.getUser(id) }.getOrNull() }
+                    }.awaitAll()
                 }
+
+                cacheMutex.withLock {
+                    for ((id, user) in newUsers) {
+                        if (user != null) loadedUsersCache[id] = user
+                    }
+                }
+            } catch (e: Exception) {
+                logMessage("checkUsersInCacheAndGetMore") { "Exception when get more users: ${e.message}" }
             }
         }
     }
@@ -213,16 +233,22 @@ class HomeViewModel(
     fun updateUserFriends(users: ArrayList<UserInstance?>) {
         _allUserFriends.value = users
         //Add loaded user friends to cache
-        loadedUsersCache = (loadedUsersCache + users).toMutableSet()
+        val loadedFriendsMap = users
+            .filterNotNull()
+            .associateBy { it.uid }
+
+        if (loadedFriendsMap.isNotEmpty()) {
+            loadedUsersCache.putAll(loadedFriendsMap)
+        }
     }
 
-    private var _allNews = MutableStateFlow<MutableSet<NewsInstance>>(mutableSetOf())
+    private var _allNews = MutableStateFlow<ArrayList<NewsInstance>>(ArrayList())
     val allNews = _allNews.asStateFlow()
     fun addNews(news: ArrayList<NewsInstance>) {
-        _allNews.value = (_allNews.value + news).toMutableSet()
+        _allNews.value.addAll(news)
     }
     fun updateNews(news: ArrayList<NewsInstance>) {
-        _allNews.value = news.toMutableSet()
+        _allNews.value = news
     }
 
     private val _allNotifications = MutableStateFlow<List<NotificationInstance>>(emptyList())
@@ -445,8 +471,18 @@ class HomeViewModel(
         }
     }
 
+    fun refreshNews() {
+        isRefreshing.value = true
+        resetGetLatestNewsParams()
+        loadMoreNews()
+    }
+
     suspend fun findUserById(userId: String) : UserInstance? {
         return userInteractor.getUser(userId)
+    }
+
+    fun findUserByIdInCache(userId: String) : UserInstance? {
+        return loadedUsersCache[userId]
     }
 
     suspend fun searchUserByName(name: String) : List<UserInstance>{

@@ -55,6 +55,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.ProvidedValue
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -106,26 +107,22 @@ class UiUtils {
     companion object{
         @Composable
         fun NewsCard(
-                     news: NewsInstance,
-                     onNavigateToShowImageScreen: (image: String) -> Unit,
-                     onNavigateToUserInformation: (user: UserInstance) -> Unit,
-                     homeViewModel: HomeViewModel,
-                     listState : LazyListState,
-                     onDelete: (action : String, new : NewsInstance) -> Unit,
-                     onNavigateToCreatePost : (updateNew : NewsInstance) -> Unit) {
-            val likeStatus by homeViewModel.likedPosts.collectAsState()
-            val isLiked = likeStatus.contains(news.id)
-            LaunchedEffect(likeStatus) {
+            news: NewsInstance,
+            user : UserInstance,
+            isLiked : Boolean,
+            likeCountList : HashMap<String, Int>,
+            commentCountList : HashMap<String, Int>,
+            localImageLoaderValue : ProvidedValue<*>,
+            onNavigateToShowImageScreen: (image: String) -> Unit,
+            onNavigateToUserInformation: (user: UserInstance) -> Unit,
+            homeViewModel: HomeViewModel,
+            listState : LazyListState,
+            onDelete: (action : String, new : NewsInstance) -> Unit,
+            onNavigateToCreatePost : (updateNew : NewsInstance) -> Unit) {
+            LaunchedEffect(Unit) {
                 homeViewModel.updateLikeStatus()
             }
-            val likeCountList = homeViewModel.likeCountList.collectAsState()
-            val commentCountList = homeViewModel.commentCountList.collectAsState()
 
-            var user by remember { mutableStateOf<UserInstance?>(null) }
-
-            LaunchedEffect(news.posterId) {
-                user = homeViewModel.findUserById(news.posterId)
-            }
             Card(
                 modifier = Modifier
                     .padding(start = 10.dp, end = 10.dp, top = 5.dp)
@@ -141,15 +138,10 @@ class UiUtils {
                     Row(horizontalArrangement = Arrangement.Start,
                         modifier = Modifier.background(color = Color.White).padding(10.dp).fillMaxWidth()
                             .clickable {
-                                if(user == null) {
-                                    user = homeViewModel.currentUser
-                                }
-                                if(user != null) {
-                                    onNavigateToUserInformation(user!!)
-                                }
+                                onNavigateToUserInformation(user)
                             }){
                         CompositionLocalProvider(
-                            LocalImageLoader provides remember { generateImageLoader() },
+                            localImageLoaderValue
                         ) {
                             AutoSizeImage(
                                 news.avatar,
@@ -203,7 +195,7 @@ class UiUtils {
                     ExpandableText(news.message)
                     if(news.image.isNotEmpty()){
                         CompositionLocalProvider(
-                            LocalImageLoader provides remember { generateImageLoader() },
+                            localImageLoaderValue
                         ) {
                             AutoSizeImage(
                                 news.image,
@@ -238,14 +230,14 @@ class UiUtils {
                     Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp),
                         horizontalArrangement = Arrangement.Start) {
                         Text(
-                            text = "Like: ${likeCountList.value[news.id] ?: 0}",
+                            text = "Like: ${likeCountList[news.id] ?: 0}",
                             fontSize = 12.sp,
                             color = Color.Black,
                             modifier = Modifier.padding(2.dp)
                         )
                         Spacer(modifier = Modifier.weight(1f))
                         Text(
-                            text = "Comment: ${commentCountList.value[news.id] ?: 0}",
+                            text = "Comment: ${commentCountList[news.id] ?: 0}",
                             fontSize = 12.sp,
                             color = Color.Black,
                             modifier = Modifier.padding(2.dp)
@@ -623,6 +615,7 @@ class UiUtils {
         fun TabLayout(
             listState: LazyListState,
             tabTitles : List<String>,
+            localImageLoaderValue : ProvidedValue<*>,
             homeViewModel: HomeViewModel,
             searchViewModel: SearchViewModel,
             onNavigateToShowImageScreen: (image: String) -> Unit,
@@ -670,7 +663,7 @@ class UiUtils {
                             }
                         ) {
                             items(searchList){user ->
-                                UserRow(user, onNavigateToUserInformation)
+                                UserRow(user,localImageLoaderValue, onNavigateToUserInformation)
                             }
                         }
                     }
@@ -684,6 +677,7 @@ class UiUtils {
                                 }
                             }
                             LazyColumnOfNewsWithSlideOutAnimationAndLoadMore(
+                                localImageLoaderValue,
                                 listState,
                                 homeViewModel,
                                 filterList,
@@ -703,7 +697,9 @@ class UiUtils {
         }
 
         @Composable
-        fun UserRow(user : UserInstance, onNavigateToUserInformation: (user: UserInstance) -> Unit) {
+        fun UserRow(user : UserInstance,
+                    localImageLoaderValue : ProvidedValue<*>,
+                    onNavigateToUserInformation: (user: UserInstance) -> Unit) {
             Row(horizontalArrangement = Arrangement.Start,
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
@@ -716,7 +712,7 @@ class UiUtils {
                         contentDescription = TestTag.TAG_FRIEND
                     }){
                 CompositionLocalProvider(
-                    LocalImageLoader provides remember { generateImageLoader() },
+                    localImageLoaderValue
                 ) {
                     AutoSizeImage(
                         user.image,
@@ -738,7 +734,11 @@ class UiUtils {
         }
 
         @Composable
-        fun FriendRequest(platform : PlatformContext, requester : UserInstance, currentUser : UserInstance, onNavigateToUserInformation: (user: UserInstance) -> Unit, friendViewModel: FriendViewModel) {
+        fun FriendRequest(localImageLoaderValue : ProvidedValue<*>,
+                          requester : UserInstance,
+                          currentUser : UserInstance,
+                          onNavigateToUserInformation: (user: UserInstance) -> Unit,
+                          friendViewModel: FriendViewModel) {
             Row(horizontalArrangement = Arrangement.Start,
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
@@ -751,7 +751,7 @@ class UiUtils {
                         contentDescription = TestTag.TAG_FRIEND_REQUEST
                     }){
                 CompositionLocalProvider(
-                    LocalImageLoader provides remember { generateImageLoader() },
+                    localImageLoaderValue
                 ) {
                     AutoSizeImage(
                         requester.image,
@@ -872,6 +872,7 @@ class UiUtils {
 
         @Composable
         fun LazyColumnOfNewsWithSlideOutAnimationAndLoadMore(
+            localImageLoaderValue : ProvidedValue<*>,
             listState: LazyListState,
             homeViewModel: HomeViewModel,
             list : List<NewsInstance>,
@@ -879,6 +880,9 @@ class UiUtils {
             onNavigateToShowImageScreen: (image : String) -> Unit,
             onNavigateToUserInformation: (user: UserInstance?) -> Unit) {
             val coroutineScope = rememberCoroutineScope()
+            val likeStatus by homeViewModel.likedPosts.collectAsState()
+            val likeCountList = homeViewModel.likeCountList.collectAsState()
+            val commentCountList = homeViewModel.commentCountList.collectAsState()
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
@@ -902,21 +906,29 @@ class UiUtils {
                             animationSpec = tween(durationMillis = 200)
                         )
                     ) {
-                        NewsCard(
-                            news = news,
-                            onNavigateToShowImageScreen = onNavigateToShowImageScreen,
-                            onNavigateToUserInformation = onNavigateToUserInformation,
-                            homeViewModel = homeViewModel,
-                            listState = listState,
-                            onDelete = { action, deletedNews ->
-                                isVisible = false
-                                coroutineScope.launch {
-                                    delay(250)
-                                    homeViewModel.deleteOrHideNew(action, deletedNews)
-                                }
-                            },
-                            onNavigateToUploadNews
-                        )
+                        val user = homeViewModel.findUserByIdInCache(news.posterId)
+                        if(user != null) {
+                            NewsCard(
+                                news = news,
+                                user = user,
+                                isLiked = likeStatus.containsKey(news.id),
+                                likeCountList.value,
+                                commentCountList.value,
+                                localImageLoaderValue,
+                                onNavigateToShowImageScreen = onNavigateToShowImageScreen,
+                                onNavigateToUserInformation = onNavigateToUserInformation,
+                                homeViewModel = homeViewModel,
+                                listState = listState,
+                                onDelete = { action, deletedNews ->
+                                    isVisible = false
+                                    coroutineScope.launch {
+                                        delay(250)
+                                        homeViewModel.deleteOrHideNew(action, deletedNews)
+                                    }
+                                },
+                                onNavigateToUploadNews
+                            )
+                        }
                     }
                 }
 
