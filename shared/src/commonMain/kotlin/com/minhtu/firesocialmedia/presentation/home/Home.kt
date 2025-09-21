@@ -67,6 +67,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import com.minhtu.firesocialmedia.constants.TestTag
+import com.minhtu.firesocialmedia.domain.entity.call.CallingRequestData
 import com.minhtu.firesocialmedia.domain.entity.call.OfferAnswer
 import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
@@ -97,7 +98,7 @@ class Home {
                        onNavigateToSignIn: () -> Unit,
                        onNavigateToUserInformation: (user: UserInstance?) -> Unit,
                        onNavigateToCommentScreen: (selectedNew : NewsInstance) -> Unit,
-                       onNavigateToCallingScreen : suspend (sessionId : String, caller : String, callee : String, offer: OfferAnswer ) -> Unit,
+                       onNavigateToCallingScreen : suspend (CallingRequestData) -> Unit,
                        onNavigateToCallingScreenWithUI : suspend () -> Unit,
                        navHandler : NavigationHandler){
             val isLoading by loadingViewModel.isLoading.collectAsState()
@@ -147,21 +148,30 @@ class Home {
                 }
             }
 
+            val endCallStatus by homeViewModel.endCallStatus.collectAsState()
+            LaunchedEffect(endCallStatus) {
+                if(endCallStatus) {
+                    navHandler.navigateBack()
+                    homeViewModel.resetEndCallStatus()
+                }
+            }
             val getCurrentUserStatus by homeViewModel.getCurrentUserStatus
             LaunchedEffect(getCurrentUserStatus) {
                 if(getCurrentUserStatus) {
                     logMessage("observePhoneCall", { "start observe phone call" })
-                    homeViewModel.observePhoneCall(
-                        onNavigateToCallingScreen,
-                        onNavigateBack = {
-                            logMessage("NavStack",
-                                { "Current destination: ${navHandler.getCurrentRoute()}" })
-                            navHandler.navigateBack()
-                        })
+                    homeViewModel.observePhoneCall()
                     if(navigateToCallingScreen) {
                         logMessage("navigateToCallingScreen", { "onNavigateToCallingScreenWithUI" })
                         onNavigateToCallingScreenWithUI()
                     }
+                }
+            }
+
+            val phoneCallRequestStatus by homeViewModel.phoneCallRequestStatus.collectAsState()
+            LaunchedEffect(phoneCallRequestStatus) {
+                if(phoneCallRequestStatus != null) {
+                    onNavigateToCallingScreen(phoneCallRequestStatus!!)
+                    homeViewModel.resetPhoneCallRequestStatus()
                 }
             }
 

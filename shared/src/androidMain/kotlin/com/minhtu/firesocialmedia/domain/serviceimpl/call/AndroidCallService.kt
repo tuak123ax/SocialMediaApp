@@ -46,6 +46,8 @@ class AndroidAudioCallService(
     ) : AudioCallService {
     private var peerConnectionFactory: PeerConnectionFactory
     private var peerConnection : PeerConnection? = null
+    private var isRemoteDescriptionSet: Boolean = false
+    private val pendingRemoteIceCandidates: MutableList<IceCandidate> = mutableListOf()
     private var localAudioSource : AudioSource? = null
     private var localAudioTrack : AudioTrack? = null
     private var localVideoSource : VideoSource? = null
@@ -261,6 +263,16 @@ class AndroidAudioCallService(
 
             override fun onSetSuccess() {
                 logMessage("setRemoteDescription", { "onSetSuccess" })
+                isRemoteDescriptionSet = true
+                val pendingCount = pendingRemoteIceCandidates.size
+                if (pendingCount > 0) {
+                    Log.d("WebRTC", "Flushing $pendingCount pending remote ICE candidates")
+                    pendingRemoteIceCandidates.forEach { candidate ->
+                        val added = peerConnection?.addIceCandidate(candidate) ?: false
+                        Log.d("WebRTC", "Flushed ICE candidate added=$added: ${candidate.sdpMid}:${candidate.sdpMLineIndex}")
+                    }
+                    pendingRemoteIceCandidates.clear()
+                }
             }
 
             override fun onCreateFailure(p0: String?) {
@@ -310,7 +322,14 @@ class AndroidAudioCallService(
     ) {
         logMessage("addIceCandidate", { "addIceCandidate" })
         val candidate = IceCandidate(sdpMid, sdpMLineIndex, sdp)
-        peerConnection?.addIceCandidate(candidate)
+        Log.d("WebRTC", "addIceCandidate called. isRemoteDescriptionSet=$isRemoteDescriptionSet")
+        if (isRemoteDescriptionSet) {
+            val added = peerConnection?.addIceCandidate(candidate) ?: false
+            Log.d("WebRTC", "Applied ICE candidate added=$added: ${candidate.sdpMid}:${candidate.sdpMLineIndex}")
+        } else {
+            pendingRemoteIceCandidates.add(candidate)
+            Log.d("WebRTC", "Queued ICE candidate. Pending size=${pendingRemoteIceCandidates.size}")
+        }
     }
 
     /**
@@ -324,6 +343,8 @@ class AndroidAudioCallService(
         onIceCandidateCreated : (iceCandidateData : IceCandidateDTO) -> Unit,
         onRemoteVideoTrackReceived: (remoteVideoTrack :WebRTCVideoTrack) -> Unit) {
         logMessage("initialize", { "start initialize" })
+        isRemoteDescriptionSet = false
+        pendingRemoteIceCandidates.clear()
         //Setup audio manager
         setupAudioManager()
         //Setup ice servers.
@@ -610,8 +631,10 @@ class AndroidAudioCallService(
             videoCapturer = null
 
             // Dispose local sources
-            localVideoSource?.dispose(); localVideoSource = null
-            localAudioSource?.dispose(); localAudioSource = null
+            localVideoSource?.dispose()
+            localVideoSource = null
+            localAudioSource?.dispose()
+            localAudioSource = null
 
             surfaceTextureHelper?.stopListening()
             surfaceTextureHelper?.dispose()

@@ -2,6 +2,7 @@ package com.minhtu.firesocialmedia.domain.repository
 
 import com.minhtu.firesocialmedia.domain.entity.call.AudioCallSession
 import com.minhtu.firesocialmedia.domain.entity.call.CallStatus
+import com.minhtu.firesocialmedia.domain.entity.call.CallingRequestData
 import com.minhtu.firesocialmedia.domain.entity.call.IceCandidateData
 import com.minhtu.firesocialmedia.domain.entity.call.OfferAnswer
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
@@ -115,14 +116,14 @@ interface CallRepository {
 
     suspend fun observePhoneCallWithoutCheckingInCall(
         currentUserId : String,
-        phoneCallCallBack : (String, String, String, OfferAnswer) -> Unit,
+        phoneCallCallBack : (CallingRequestData) -> Unit,
         endCallSession: (Boolean) -> Unit,
         iceCandidateCallBack : (iceCandidates : Map<String, IceCandidateData>?) -> Unit)
 
     suspend fun observePhoneCall(
         isInCall : MutableStateFlow<Boolean>,
         currentUserId : String,
-        phoneCallCallBack : (String, String, String, OfferAnswer) -> Unit,
+        phoneCallCallBack : (CallingRequestData) -> Unit,
         endCallSession: (Boolean) -> Unit,
         iceCandidateCallBack : (iceCandidates : Map<String, IceCandidateData>?) -> Unit)
 

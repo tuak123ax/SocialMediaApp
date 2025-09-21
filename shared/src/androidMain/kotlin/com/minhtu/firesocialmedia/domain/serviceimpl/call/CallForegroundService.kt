@@ -11,6 +11,14 @@ import android.os.Build
 import android.os.IBinder
 import androidx.core.content.ContextCompat
 import com.minhtu.firesocialmedia.constants.Constants
+import com.minhtu.firesocialmedia.data.dto.call.OfferAnswerDTO
+import com.minhtu.firesocialmedia.data.dto.user.UserDTO
+import com.minhtu.firesocialmedia.data.mapper.call.toDomain
+import com.minhtu.firesocialmedia.data.mapper.user.toDomain
+import com.minhtu.firesocialmedia.data.remote.service.call.AudioCallService
+import com.minhtu.firesocialmedia.data.remote.service.database.DatabaseService
+import com.minhtu.firesocialmedia.di.AndroidPlatformContext
+import com.minhtu.firesocialmedia.di.AppModule
 import com.minhtu.firesocialmedia.domain.coordinator.call.CalleeCoordinator
 import com.minhtu.firesocialmedia.domain.coordinator.call.CallerCoordinator
 import com.minhtu.firesocialmedia.domain.entity.call.AudioCallSession
@@ -18,18 +26,17 @@ import com.minhtu.firesocialmedia.domain.entity.call.CallAction
 import com.minhtu.firesocialmedia.domain.entity.call.CallEvent
 import com.minhtu.firesocialmedia.domain.entity.call.CallEventFlow
 import com.minhtu.firesocialmedia.domain.entity.call.CallStatus
+import com.minhtu.firesocialmedia.domain.entity.call.CallingRequestData
 import com.minhtu.firesocialmedia.domain.entity.call.OfferAnswer
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
-import com.minhtu.firesocialmedia.data.remote.service.call.AudioCallService
-import com.minhtu.firesocialmedia.data.remote.service.database.DatabaseService
-import com.minhtu.firesocialmedia.di.AndroidPlatformContext
-import com.minhtu.firesocialmedia.di.AppModule
 import com.minhtu.firesocialmedia.domain.serviceimpl.call.CallNotificationManager.Companion.NOTIF_ID
 import com.minhtu.firesocialmedia.domain.serviceimpl.database.AndroidDatabaseService
 import com.minhtu.firesocialmedia.domain.serviceimpl.permission.AndroidPermissionManager
 import com.minhtu.firesocialmedia.domain.usecases.call.AcceptCallUseCase
+import com.minhtu.firesocialmedia.domain.usecases.call.AddIceCandidatesUseCase
 import com.minhtu.firesocialmedia.domain.usecases.call.CalleeUseCases
 import com.minhtu.firesocialmedia.domain.usecases.call.CallerUseCases
+import com.minhtu.firesocialmedia.domain.usecases.call.CreateOfferUseCase
 import com.minhtu.firesocialmedia.domain.usecases.call.EndCallUseCase
 import com.minhtu.firesocialmedia.domain.usecases.call.InitializeCallUseCase
 import com.minhtu.firesocialmedia.domain.usecases.call.ListenForIncomingCallsUseCase
@@ -101,8 +108,9 @@ class CallForegroundService : Service() {
 
         //Initialize caller use cases
         callerUseCases = CallerUseCases(
-            StartCallUseCase(initializeCallUseCase, sendSignalingDataUseCase),
+            StartCallUseCase(initializeCallUseCase, sendSignalingDataUseCase, backgroundScope),
             SendOfferUseCase(initializeCallUseCase),
+            CreateOfferUseCase(initializeCallUseCase),
             SendIceCandidateUseCase(sendSignalingDataUseCase),
             ObserveIceCandidateUseCase(sendSignalingDataUseCase),
             ObserveAnswer(sendSignalingDataUseCase),
@@ -116,6 +124,7 @@ class CallForegroundService : Service() {
             ListenForIncomingCallsUseCase(initializeCallUseCase),
             ObservePhoneCallUseCase(sendSignalingDataUseCase),
             SendIceCandidateUseCase(sendSignalingDataUseCase),
+            AddIceCandidatesUseCase(initializeCallUseCase),
             SendAnswerUseCase(initializeCallUseCase),
             SetRemoteDescriptionUseCase(initializeCallUseCase),
             AcceptCallUseCase(manageCallStateUseCase, backgroundScope),
@@ -178,9 +187,9 @@ class CallForegroundService : Service() {
                 //Extract data from app.
                 val sessionIdFromApp = intent.getStringExtra("sessionId")
                 val callerJsonString = intent.getStringExtra("caller")
-                val caller = callerJsonString?.let { Json.decodeFromString<UserInstance>(it) }
+                val caller = callerJsonString?.let { Json.decodeFromString<UserDTO>(it) }?.toDomain()
                 val calleeJsonString = intent.getStringExtra("callee")
-                val callee = calleeJsonString?.let { Json.decodeFromString<UserInstance>(it) }
+                val callee = calleeJsonString?.let { Json.decodeFromString<UserDTO>(it) }?.toDomain()
                 if(sessionIdFromApp != null && caller != null && callee != null) {
                     sessionId = sessionIdFromApp
                     callerFromApp = caller
@@ -195,16 +204,10 @@ class CallForegroundService : Service() {
                     try{
                         callerCoordinator.startCall(
                             audioCallSession,
-                            onSendOfferResult = { result ->
-                                if(result) {
-                                    sendNotification("Is calling you", sessionId, caller, callee, "CALL")
-                                } else {
-                                    logMessage("onSendOfferResult", { "send offer fail" })
-                                }
-                            },
                             onSendCallSessionResult = { result ->
                                 if(result) {
                                     showCallNotification(callNotificationManager.buildCallNotification(callee.name))
+                                    sendNotification("Is calling you", sessionId, caller, callee, "CALL")
                                 } else {
                                     logMessage("onSendCallSessionResult", { "send call session fail" })
                                 }
@@ -218,9 +221,6 @@ class CallForegroundService : Service() {
                                 CallEventFlow.events.emit(CallEvent.AnswerReceived)
                                 //Show timer notification
                                 showCallNotification(callNotificationManager.startTimerNotification(sessionId, caller.uid, callee.uid))
-                            },
-                            onEndCall = {
-                                handleEndCall(CallEvent.CallEnded)
                             },
                             onReceiveVideoCall = { videoOffer ->
                                 CallEventFlow.videoCallState.emit(videoOffer)
@@ -248,7 +248,7 @@ class CallForegroundService : Service() {
         logMessage("START_VIDEO_CALL", { "START_VIDEO_CALL" })
         backgroundScope.launch {
             val remoteVideoOfferJsonString = intent.getStringExtra("remoteVideoOffer")
-            val remoteVideoOffer = remoteVideoOfferJsonString?.let { Json.decodeFromString<OfferAnswer>(it) }
+            val remoteVideoOffer = remoteVideoOfferJsonString?.let { Json.decodeFromString<OfferAnswerDTO>(it).toDomain() }
             val currentUserId = intent.getStringExtra("currentUserId")
             //Remote video offer is null means this is caller side.
             if(remoteVideoOffer == null) {
@@ -292,7 +292,7 @@ class CallForegroundService : Service() {
                 //Send notification to stop service for callee from caller side.
                 sendNotification("", sessionId, callerFromApp!!, calleeFromApp!!, "STOP_CALL")
             }
-            handleEndCall(CallEvent.CallEnded)
+            handleEndCall(CallEvent.StopCalling)
         }
     }
 
@@ -309,16 +309,11 @@ class CallForegroundService : Service() {
         callNotificationManager.stopTimerNotificationUpdates()
         //Emit event to update UI.
         logMessage("handleEndCall", { "stopCallFlow" })
-        stopCallFlow(callEvent)
         releaseCallAndStopService(callEvent)
     }
 
     private suspend fun releaseCallAndStopService(callEvent : CallEvent) {
         handleRejectCall(callEvent)
-        withContext(Dispatchers.IO) {
-            //Release call manager resources
-            callManager.releaseResources()
-        }
         logMessage("handleEndCall", { "Calling stopForeground + stopSelf" })
         withContext(Dispatchers.Main) {
             //Stop foreground service.
@@ -350,13 +345,13 @@ class CallForegroundService : Service() {
                         calleeCoordinator.startCall(
                             sessionId,
                             calleeIdFromFCM,
-                            onReceivePhoneCallRequest = { remoteSessionId, remoteOffer, remoteCallerId, remoteCalleeId ->
-                                sessionId = remoteSessionId
-                                offer = remoteOffer
-                                callerIdForCallee = remoteCallerId
-                                calleeIdForCallee = remoteCalleeId
+                            onReceivePhoneCallRequest = { callingRequestData ->
+                                sessionId = callingRequestData.sessionId
+                                offer = callingRequestData.offer
+                                callerIdForCallee = callingRequestData.callerId
+                                calleeIdForCallee = callingRequestData.calleeId
                                 //Handle accept call.
-                                handleAcceptCall(sessionId, offer!!, callerIdForCallee, calleeIdForCallee)
+                                handleAcceptCall(callingRequestData)
                             },
                             onEndCall = {
                                 handleEndCall(CallEvent.CallEnded)
@@ -389,20 +384,21 @@ class CallForegroundService : Service() {
         notificationManager.cancel(NOTIF_ID)
     }
 
-    private suspend fun handleAcceptCall(sessionId : String,
-                                         offer : OfferAnswer,
-                                         callerId : String,
-                                         calleeId : String) {
+    private suspend fun handleAcceptCall(callingRequestData : CallingRequestData) {
         logMessage("handleAcceptCall", { "handleAcceptCall" })
         try{
             calleeCoordinator.acceptCall(
-                sessionId,
-                calleeId,
-                offer,
+                callingRequestData.sessionId,
+                callingRequestData.calleeId,
+                callingRequestData.offer!!,
                 onAcceptCall = { result ->
                     if(result) {
                         //Show timer notification.
-                        showCallNotification(callNotificationManager.startTimerNotification(sessionId, callerId, calleeId))
+                        showCallNotification(
+                            callNotificationManager.startTimerNotification(
+                                callingRequestData.sessionId,
+                                callingRequestData.callerId,
+                                callingRequestData.calleeId))
                         //Emit event to update UI.
                         CallEventFlow.events.emit(CallEvent.AnswerReceived)
                     } else {

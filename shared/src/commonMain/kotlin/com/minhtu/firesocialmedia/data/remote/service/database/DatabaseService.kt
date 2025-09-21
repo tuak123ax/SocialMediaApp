@@ -1,6 +1,7 @@
 package com.minhtu.firesocialmedia.data.remote.service.database
 
 import com.minhtu.firesocialmedia.data.dto.call.AudioCallSessionDTO
+import com.minhtu.firesocialmedia.data.dto.call.CallingRequestDTO
 import com.minhtu.firesocialmedia.data.dto.call.IceCandidateDTO
 import com.minhtu.firesocialmedia.data.dto.call.OfferAnswerDTO
 import com.minhtu.firesocialmedia.data.dto.comment.CommentDTO
@@ -86,7 +87,7 @@ interface DatabaseService {
     suspend fun sendOfferToFireBase(
         sessionId : String,
         offer: OfferAnswerDTO,
-        sendIceCandidateCallBack : Utils.Companion.BasicCallBack
+        sendOfferCallBack : Utils.Companion.BasicCallBack
     )
 
     suspend fun sendIceCandidateToFireBase(sessionId : String,
@@ -108,13 +109,13 @@ interface DatabaseService {
     suspend fun observePhoneCall(
         isInCall : MutableStateFlow<Boolean>,
         currentUserId : String,
-        phoneCallCallBack : (String, String, String, OfferAnswerDTO) -> Unit,
+        phoneCallCallBack : (CallingRequestDTO) -> Unit,
         endCallSession: (Boolean) -> Unit,
         iceCandidateCallBack : (iceCandidates : Map<String, IceCandidateDTO>?) -> Unit)
 
     suspend fun observePhoneCallWithoutCheckingInCall(
         currentUserId : String,
-        phoneCallCallBack : (String, String, String, OfferAnswerDTO) -> Unit,
+        phoneCallCallBack : (CallingRequestDTO) -> Unit,
         endCallSession: (Boolean) -> Unit,
         iceCandidateCallBack : (iceCandidates : Map<String, IceCandidateDTO>?) -> Unit)
 

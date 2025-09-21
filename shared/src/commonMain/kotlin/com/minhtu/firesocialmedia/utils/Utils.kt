@@ -14,6 +14,8 @@ import com.minhtu.firesocialmedia.platform.sendMessageToServer
 import com.minhtu.firesocialmedia.presentation.calling.audiocall.CallingViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 class Utils {
@@ -70,20 +72,6 @@ class Utils {
                 sdp.contains("m=video") -> CallType.VIDEO
                 sdp.contains("m=audio") -> CallType.AUDIO
                 else -> CallType.UNKNOWN
-            }
-        }
-
-        fun stopCallAction(
-            callingViewModel: CallingViewModel,
-            coroutineScope: CoroutineScope,
-            onStopCall: () -> Unit,
-            platform: PlatformContext,
-            navHandler: NavigationHandler
-        ) {
-            coroutineScope.launch {
-                delay(2000L)
-                callingViewModel.stopCall()
-                onStopCall()
             }
         }
 

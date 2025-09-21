@@ -47,19 +47,15 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.minhtu.firesocialmedia.constants.TestTag
-import com.minhtu.firesocialmedia.di.PlatformContext
 import com.minhtu.firesocialmedia.domain.entity.call.CallEvent
 import com.minhtu.firesocialmedia.domain.entity.call.CallEventFlow
 import com.minhtu.firesocialmedia.domain.entity.call.OfferAnswer
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
-import com.minhtu.firesocialmedia.platform.generateImageLoader
 import com.minhtu.firesocialmedia.platform.logMessage
 import com.minhtu.firesocialmedia.platform.showToast
 import com.minhtu.firesocialmedia.utils.NavigationHandler
 import com.minhtu.firesocialmedia.utils.UiUtils
 import com.minhtu.firesocialmedia.utils.Utils.Companion.sendNotification
-import com.minhtu.firesocialmedia.utils.Utils.Companion.stopCallAction
-import com.seiko.imageloader.LocalImageLoader
 import com.seiko.imageloader.ui.AutoSizeImage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -72,7 +68,6 @@ class Calling {
     companion object{
         @Composable
         fun CallingScreen(
-            platform : PlatformContext,
             localImageLoaderValue : ProvidedValue<*>,
             sessionId : String,
             callee : UserInstance?,
@@ -82,10 +77,9 @@ class Calling {
             navigateToCallingScreenFromNotification : Boolean,
             callingViewModel: CallingViewModel,
             navHandler : NavigationHandler,
-            onStopCall : () -> Unit,
+            onStopCallAndNavigateBack : () -> Unit,
             onNavigateToVideoCall : (sessionId : String, videoOffer : OfferAnswer?) -> Unit,
             modifier: Modifier){
-            val coroutineScope = rememberCoroutineScope()
             val isCalling = (currentUser == caller)
             //Start count up timer and show video call button
             var startCount by rememberSaveable { mutableStateOf(false) }
@@ -162,26 +156,14 @@ class Calling {
                                  showToast(callee?.name + " stopped your call!")
                              }
                              isRunning = false
-                             stopCallAction(
-                                 callingViewModel,
-                                 coroutineScope,
-                                 onStopCall,
-                                 platform,
-                                 navHandler
-                             )
+                             onStopCallAndNavigateBack()
                          }
 
                         CallEvent.StopCalling -> {
                             logMessage("CallEvent", { "StopCalling" })
                             showToast("You stopped the call!")
-//                            isRunning = false
-//                            stopCallAction(
-//                                callingViewModel,
-//                                coroutineScope,
-//                                onStopCall,
-//                                platform,
-//                                navHandler
-//                            )
+                            isRunning = false
+                            onStopCallAndNavigateBack()
                         }
                     }
                 }
@@ -209,7 +191,6 @@ class Calling {
                 "Video Call",
                 "Other person want to make a video call. Do you want to join?",
                 onClickConfirm = {
-                    logMessage("onClickConfirm", { "Confirm" })
                     if(videoOffer != null) {
                         onNavigateToVideoCall(callingViewModel.getSessionId(sessionId), videoOffer)
                     }
@@ -368,12 +349,8 @@ class Calling {
                             onClick = {
                                 backgroundButton = Color.Gray
                                 isRunning = false
-                                stopCallAction(
-                                    callingViewModel,
-                                    coroutineScope,
-                                    onStopCall,
-                                    platform,
-                                    navHandler
+                                callingViewModel.stopCallAction(
+                                    callingViewModel
                                 )
                                 if(caller != null && callee != null) {
                                     sendNotification("", sessionId, caller, callee, "STOP_CALL")

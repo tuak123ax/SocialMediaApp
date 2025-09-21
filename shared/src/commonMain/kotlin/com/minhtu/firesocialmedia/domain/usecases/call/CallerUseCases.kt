@@ -5,10 +5,13 @@ import com.minhtu.firesocialmedia.domain.entity.call.IceCandidateData
 import com.minhtu.firesocialmedia.domain.entity.call.OfferAnswer
 import com.minhtu.firesocialmedia.platform.logMessage
 import com.minhtu.firesocialmedia.utils.Utils
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 
 data class CallerUseCases(
     val startCall: StartCallUseCase,
     val sendOffer: SendOfferUseCase,
+    val createOffer : CreateOfferUseCase,
     val sendIceCandidate: SendIceCandidateUseCase,
     val observeIceCandidateFromCallee : ObserveIceCandidateUseCase,
     val observeAnswerFromCallee : ObserveAnswer,
@@ -18,11 +21,11 @@ data class CallerUseCases(
 )
 class StartCallUseCase(
     private val initializeCallUseCase: InitializeCallUseCase,
-    private val signalingUseCase: SendSignalingDataUseCase
+    private val signalingUseCase: SendSignalingDataUseCase,
+    private val coroutineScope: CoroutineScope
 ) {
     suspend operator fun invoke(
         session: AudioCallSession,
-        onInitializeFinished: suspend () -> Unit,
         onIceCandidateCreated: suspend (IceCandidateData) -> Unit,
         onSendCallSession : (Boolean) -> Unit,
         onError : (ex : Exception) -> Unit
@@ -30,21 +33,30 @@ class StartCallUseCase(
         try {
             // 1. Initialize local WebRTC session
             initializeCallUseCase.initializeCall(
-                onInitializeFinished = onInitializeFinished,
-                onIceCandidateCreated = onIceCandidateCreated
-            )
+                onInitializeFinished = {
+                    //Create offer
+                    initializeCallUseCase.createOffer(
+                        createOfferCallBack = { offer ->
+                            session.offer = offer
 
-            // 2. Send the initial call session to backend
-            signalingUseCase.sendCallSessionToFirebase(
-                session,
-                object : Utils.Companion.BasicCallBack {
-                    override fun onSuccess() {
-                        onSendCallSession(true)
-                    }
-                    override fun onFailure() {
-                        onSendCallSession(false)
-                    }
-                }
+                            // 2. Send the initial call session to backend
+                            coroutineScope.launch {
+                                signalingUseCase.sendCallSessionToFirebase(
+                                    session,
+                                    object : Utils.Companion.BasicCallBack {
+                                        override fun onSuccess() {
+                                            onSendCallSession(true)
+                                        }
+                                        override fun onFailure() {
+                                            onSendCallSession(false)
+                                        }
+                                    }
+                                )
+                            }
+                        }
+                    )
+                },
+                onIceCandidateCreated = onIceCandidateCreated
             )
         } catch (e: Exception) {
             onError(e)
@@ -73,6 +85,16 @@ class SendOfferUseCase(private val initializeCallUseCase: InitializeCallUseCase)
     }
 }
 
+class CreateOfferUseCase(private val initializeCallUseCase: InitializeCallUseCase) {
+    suspend operator fun invoke(onCreateOfferResult : (offer : OfferAnswer) -> Unit){
+        initializeCallUseCase.createOffer(
+            createOfferCallBack = { offer ->
+                onCreateOfferResult(offer)
+            }
+        )
+    }
+}
+
 class SendIceCandidateUseCase(private val signalingUseCase: SendSignalingDataUseCase) {
     suspend operator fun invoke(sessionId: String, iceCandidateData: IceCandidateData, whichCandidate : String){
         signalingUseCase.sendIceCandidateToFireBase(
@@ -82,10 +104,12 @@ class SendIceCandidateUseCase(private val signalingUseCase: SendSignalingDataUse
             object : Utils.Companion.BasicCallBack{
                 override fun onSuccess() {
                     //Send ice candidate success
+                    logMessage("sendIceCandidateToFireBase", { "send ice candidate success" })
                 }
 
                 override fun onFailure() {
                     //Send ice candidate fail
+                    logMessage("sendIceCandidateToFireBase", { "send ice candidate fail" })
                 }
 
             }

@@ -1,7 +1,9 @@
 package com.minhtu.firesocialmedia.domain.usecases.call
 
+import com.minhtu.firesocialmedia.domain.entity.call.CallingRequestData
 import com.minhtu.firesocialmedia.domain.entity.call.IceCandidateData
 import com.minhtu.firesocialmedia.domain.entity.call.OfferAnswer
+import com.minhtu.firesocialmedia.platform.logMessage
 import com.minhtu.firesocialmedia.utils.Utils
 import com.minhtu.firesocialmedia.utils.Utils.Companion.getCallTypeFromSdp
 import kotlinx.coroutines.CoroutineScope
@@ -12,6 +14,7 @@ data class CalleeUseCases(
     val listenForIncomingCalls : ListenForIncomingCallsUseCase,
     val observePhoneCall : ObservePhoneCallUseCase,
     val sendIceCandidate: SendIceCandidateUseCase,
+    val addIceCandidates : AddIceCandidatesUseCase,
     val sendAnswer : SendAnswerUseCase,
     val setRemoteDescription : SetRemoteDescriptionUseCase,
     val acceptCall : AcceptCallUseCase,
@@ -37,15 +40,16 @@ class ListenForIncomingCallsUseCase(private val initializeCallUseCase: Initializ
 class ObservePhoneCallUseCase(private val signalingDataUseCase: SendSignalingDataUseCase) {
     suspend operator fun invoke(
         calleeId : String,
-        onReceivePhoneCallRequest : suspend (sessionId : String,
-                                             offer : OfferAnswer,
-                                             callerId : String,
-                                             calleeId : String) -> Unit,
+        onReceivePhoneCallRequest : suspend (CallingRequestData) -> Unit,
+        iceCandidateCallBack : suspend (iceCandidates : Map<String, IceCandidateData>?) -> Unit,
         onEndCall : suspend () -> Unit) {
         signalingDataUseCase.observePhoneCallWithoutCheckingInCall(
             calleeId,
-            onReceivePhoneCallRequest = { remoteSessionId, remoteOffer, remoteCallerId, remoteCalleeId ->
-                onReceivePhoneCallRequest(remoteSessionId, remoteOffer, remoteCallerId, remoteCalleeId)
+            onReceivePhoneCallRequest = { callingRequestData ->
+                onReceivePhoneCallRequest(callingRequestData)
+            },
+            iceCandidateCallBack = { iceCandidates ->
+                iceCandidateCallBack(iceCandidates)
             },
             onEndCall = {
                 onEndCall()
@@ -58,16 +62,13 @@ class ObservePhoneCallWithInCallUseCase(private val signalingDataUseCase: SendSi
     suspend operator fun invoke(
         isInCall :  MutableStateFlow<Boolean>,
         calleeId : String,
-        onReceivePhoneCallRequest : suspend (sessionId : String,
-                                             offer : OfferAnswer,
-                                             callerId : String,
-                                             calleeId : String) -> Unit,
+        onReceivePhoneCallRequest : suspend (CallingRequestData) -> Unit,
         onEndCall : suspend () -> Unit) {
         signalingDataUseCase.observePhoneCallWithCheckingInCall(
             isInCall,
             calleeId,
-            onReceivePhoneCallRequest = { remoteSessionId, remoteOffer, remoteCallerId, remoteCalleeId ->
-                onReceivePhoneCallRequest(remoteSessionId, remoteOffer, remoteCallerId, remoteCalleeId)
+            onReceivePhoneCallRequest = { callingRequestData ->
+                onReceivePhoneCallRequest(callingRequestData)
             },
             onEndCall = {
                 onEndCall()
@@ -127,5 +128,11 @@ class AcceptCallUseCase(
                     }
                 }
             })
+    }
+}
+
+class AddIceCandidatesUseCase(private val initializeCallUseCase: InitializeCallUseCase) {
+    suspend operator fun invoke(iceCandidates :Map<String, IceCandidateData>){
+        initializeCallUseCase.addIceCandidates(iceCandidates)
     }
 }

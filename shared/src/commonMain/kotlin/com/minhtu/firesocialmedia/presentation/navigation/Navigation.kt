@@ -208,11 +208,11 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                         selectedNew = new
                         navController.navigate(route = Comment.getScreenName())
                     },
-                    onNavigateToCallingScreen = { sessionID, callerId, calleeId, offer ->
-                        sessionId = sessionID
-                        remoteOffer = offer
-                        caller = if(callerId == homeViewModel.currentUser?.uid) homeViewModel.currentUser else homeViewModel.findUserById(callerId)
-                        callee = if(calleeId == homeViewModel.currentUser?.uid) homeViewModel.currentUser else homeViewModel.findUserById(calleeId)
+                    onNavigateToCallingScreen = { callingRequestData ->
+                        sessionId = callingRequestData.sessionId
+                        remoteOffer = callingRequestData.offer
+                        caller = if(callingRequestData.callerId == homeViewModel.currentUser?.uid) homeViewModel.currentUser else homeViewModel.findUserById(callingRequestData.callerId)
+                        callee = if(callingRequestData.calleeId == homeViewModel.currentUser?.uid) homeViewModel.currentUser else homeViewModel.findUserById(callingRequestData.calleeId)
                         navController.navigate(route = Calling.getScreenName())
                     },
                     onNavigateToCallingScreenWithUI = {
@@ -506,7 +506,6 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                 popExitTransition = DefaultNavAnimations.popExit) {
                 homeViewModel.updateIsInCall(true)
                 Calling.CallingScreen(
-                    platformContext,
                     localImageLoaderValue = localImageLoaderValue,
                     sessionId,
                     callee,
@@ -516,7 +515,9 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                     SharedCallData.navigateToCallingScreenFromNotification,
                     callingViewModel,
                     navigationHandler,
-                    onStopCall = { homeViewModel.updateIsInCall(false) },
+                    onStopCallAndNavigateBack = {
+                        navigationHandler.navigateBack()
+                        homeViewModel.updateIsInCall(false) },
                     onNavigateToVideoCall = { sessionID, videoOffer ->
                         sessionId = sessionID
                         remoteVideoOffer = videoOffer

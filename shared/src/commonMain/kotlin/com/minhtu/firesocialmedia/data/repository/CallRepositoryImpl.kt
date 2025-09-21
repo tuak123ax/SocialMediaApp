@@ -10,6 +10,7 @@ import com.minhtu.firesocialmedia.data.remote.service.database.DatabaseService
 import com.minhtu.firesocialmedia.data.remote.service.permission.PermissionManager
 import com.minhtu.firesocialmedia.domain.entity.call.AudioCallSession
 import com.minhtu.firesocialmedia.domain.entity.call.CallStatus
+import com.minhtu.firesocialmedia.domain.entity.call.CallingRequestData
 import com.minhtu.firesocialmedia.domain.entity.call.IceCandidateData
 import com.minhtu.firesocialmedia.domain.entity.call.OfferAnswer
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
@@ -158,13 +159,11 @@ class CallRepositoryImpl(
             object : Utils.Companion.BasicCallBack{
                 override fun onSuccess() {
                     //Send call status success
-                    logMessage("sendCallStatusToFirebase", { "send call status success" })
                     sendCallStatusCallBack.onSuccess()
                 }
 
                 override fun onFailure() {
                     //Send call status fail
-                    logMessage("sendCallStatusToFirebase", { "send call status fail" })
                     sendCallStatusCallBack.onFailure()
                 }
             })
@@ -354,14 +353,14 @@ class CallRepositoryImpl(
 
     override suspend fun observePhoneCallWithoutCheckingInCall(
         currentUserId: String,
-        phoneCallCallBack: (String, String, String, OfferAnswer) -> Unit,
+        phoneCallCallBack: (CallingRequestData) -> Unit,
         endCallSession: (Boolean) -> Unit,
         iceCandidateCallBack: (Map<String, IceCandidateData>?) -> Unit
     ) {
         databaseService.observePhoneCallWithoutCheckingInCall(
             currentUserId,
-            phoneCallCallBack = { remoteSessionId,remoteCallerId, remoteCalleeId, remoteOffer ->
-                phoneCallCallBack(remoteSessionId, remoteCalleeId, remoteCallerId, remoteOffer.toDomain())
+            phoneCallCallBack = { callingRequestDTO ->
+                phoneCallCallBack(callingRequestDTO.toDomain())
             },
             endCallSession = { end ->
                 endCallSession(end)
@@ -375,15 +374,15 @@ class CallRepositoryImpl(
     override suspend fun observePhoneCall(
         isInCall: MutableStateFlow<Boolean>,
         currentUserId: String,
-        phoneCallCallBack: (String, String, String, OfferAnswer) -> Unit,
+        phoneCallCallBack: (CallingRequestData) -> Unit,
         endCallSession: (Boolean) -> Unit,
         iceCandidateCallBack: (Map<String, IceCandidateData>?) -> Unit
     ) {
         databaseService.observePhoneCall(
             isInCall,
             currentUserId,
-            phoneCallCallBack = { sessionId,callerId, calleeId, offer ->
-                phoneCallCallBack(sessionId, calleeId, callerId, offer.toDomain())
+            phoneCallCallBack = { callingRequestDTO ->
+                phoneCallCallBack(callingRequestDTO.toDomain())
             },
             endCallSession = { end ->
                 endCallSession(end)

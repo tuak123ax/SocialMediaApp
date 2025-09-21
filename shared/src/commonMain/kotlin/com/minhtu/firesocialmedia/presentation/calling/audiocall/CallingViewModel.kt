@@ -9,8 +9,12 @@ import com.minhtu.firesocialmedia.domain.usecases.call.RequestPermissionUseCase
 import com.minhtu.firesocialmedia.domain.usecases.call.StartCallServiceUseCase
 import com.minhtu.firesocialmedia.platform.logMessage
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -41,18 +45,14 @@ class CallingViewModel(
         }
     }
 
-    fun stopCall() {
-        viewModelScope.launch {
-            withContext(ioDispatcher) {
-                try{
-                    manageCallStateUseCase.endCall(sessionId)
-                    manageCallStateUseCase.endCallFromApp()
-                } catch(e : Exception) {
-                    logMessage("stopCall Exception", { e.message.toString() })
-                } finally {
-                    sessionId = ""
-                }
-            }
+    suspend fun stopCall() {
+        try{
+//                    manageCallStateUseCase.endCall(sessionId)
+            manageCallStateUseCase.endCallFromApp()
+        } catch(e : Exception) {
+            logMessage("stopCall Exception", { e.message.toString() })
+        } finally {
+            sessionId = ""
         }
     }
 
@@ -78,9 +78,7 @@ class CallingViewModel(
     }
 
     fun getSessionId(ssId : String) : String {
-        return if(ssId.isNotEmpty()) {
-            ssId
-        } else sessionId
+        return ssId.ifEmpty { sessionId }
     }
 
     fun acceptCall(
@@ -100,5 +98,13 @@ class CallingViewModel(
 
     fun updateVideoState() {
         CallEventFlow.videoCallState.value = null
+    }
+    fun stopCallAction(
+        callingViewModel: CallingViewModel
+    ) {
+        viewModelScope.launch(ioDispatcher) {
+            delay(2000L)
+            callingViewModel.stopCall()
+        }
     }
 }

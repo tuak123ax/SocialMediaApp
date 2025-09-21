@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.minhtu.firesocialmedia.domain.entity.call.CallingRequestData
 import com.minhtu.firesocialmedia.domain.entity.call.OfferAnswer
 import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
 import com.minhtu.firesocialmedia.domain.entity.notification.NotificationInstance
@@ -432,35 +433,44 @@ class HomeViewModel(
 
     //----------------------------CALL FEATURE-----------------------------------//
 
-    var isInCall = MutableStateFlow<Boolean>(false)
+    var isInCall = MutableStateFlow(false)
 
     fun updateIsInCall(input : Boolean) {
         isInCall.value = input
     }
-    suspend fun observePhoneCall(
-        onNavigateToCallingScreen: suspend (String, String, String, OfferAnswer) -> Unit,
-        onNavigateBack: () -> Unit
-    ) {
+    private val _endCallStatus = MutableStateFlow(false)
+    val endCallStatus = _endCallStatus.asStateFlow()
+
+    private var _phoneCallRequestStatus = MutableStateFlow<CallingRequestData?>(null)
+    val phoneCallRequestStatus = _phoneCallRequestStatus.asStateFlow()
+    suspend fun observePhoneCall() {
         if(currentUser != null) {
             try{
                 callInteractor.observe(
                     isInCall,
                     currentUser!!.uid,
-                    onReceivePhoneCallRequest = {remoteSessionId, remoteCallerId, remoteCalleeId, remoteOffer ->
-                        if(remoteCalleeId == currentUser!!.uid) {
-                            viewModelScope.launch(ioDispatcher) {
-                                onNavigateToCallingScreen(remoteSessionId, remoteCallerId, remoteCalleeId, remoteOffer)
-                            }
+                    onReceivePhoneCallRequest = {callingRequestData ->
+                        if(callingRequestData.calleeId == currentUser!!.uid) {
+                            logMessage("observePhoneCall", { "onReceivePhoneCallRequest" })
+                            _phoneCallRequestStatus.value = callingRequestData
                         }
                     },
                     onEndCall = {
-                        onNavigateBack()
+                        _endCallStatus.value = true
                     }
                 )
             } catch(e : Exception){
                 logMessage("observePhoneCall Exception", { e.message.toString() })
             }
         }
+    }
+
+    fun resetPhoneCallRequestStatus() {
+        _phoneCallRequestStatus.value = null
+    }
+
+    fun resetEndCallStatus() {
+        _endCallStatus.value = false
     }
     //---------------------------------------------------------------------------//
 

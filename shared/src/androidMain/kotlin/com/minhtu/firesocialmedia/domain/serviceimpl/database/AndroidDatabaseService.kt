@@ -11,6 +11,7 @@ import com.google.firebase.storage.FirebaseStorage
 import com.minhtu.firesocialmedia.constants.Constants
 import com.minhtu.firesocialmedia.data.constant.DataConstant
 import com.minhtu.firesocialmedia.data.dto.call.AudioCallSessionDTO
+import com.minhtu.firesocialmedia.data.dto.call.CallingRequestDTO
 import com.minhtu.firesocialmedia.data.dto.call.IceCandidateDTO
 import com.minhtu.firesocialmedia.data.dto.call.OfferAnswerDTO
 import com.minhtu.firesocialmedia.data.dto.comment.CommentDTO
@@ -422,7 +423,7 @@ class AndroidDatabaseService(private val context: Context) : DatabaseService {
     override suspend fun observePhoneCall(
         isInCall : MutableStateFlow<Boolean>,
         currentUserId: String,
-        phoneCallCallBack : (String, String, String, OfferAnswerDTO) -> Unit,
+        phoneCallCallBack : (CallingRequestDTO) -> Unit,
         endCallSession: (Boolean) -> Unit,
         iceCandidateCallBack : (iceCandidates : Map<String, IceCandidateDTO>?) -> Unit) {
         AndroidDatabaseHelper.observePhoneCall(
@@ -436,7 +437,7 @@ class AndroidDatabaseService(private val context: Context) : DatabaseService {
 
     override suspend fun observePhoneCallWithoutCheckingInCall(
         currentUserId: String,
-        phoneCallCallBack : (String, String, String, OfferAnswerDTO) -> Unit,
+        phoneCallCallBack : (CallingRequestDTO) -> Unit,
         endCallSession: (Boolean) -> Unit,
         iceCandidateCallBack : (iceCandidates : Map<String, IceCandidateDTO>?) -> Unit) {
         AndroidDatabaseHelper.observePhoneCallWithoutCheckingInCall(

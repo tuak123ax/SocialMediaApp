@@ -1,5 +1,7 @@
 package com.minhtu.firesocialmedia.domain.coordinator.call
 
+import com.minhtu.firesocialmedia.domain.entity.call.CallingRequestData
+import com.minhtu.firesocialmedia.domain.entity.call.IceCandidateData
 import com.minhtu.firesocialmedia.domain.entity.call.OfferAnswer
 import com.minhtu.firesocialmedia.domain.usecases.call.CalleeUseCases
 import com.minhtu.firesocialmedia.domain.usecases.call.InitializeCallUseCase
@@ -17,13 +19,10 @@ class CalleeCoordinator(
     suspend fun startCall(
         sessionId : String,
         calleeId : String,
-        onReceivePhoneCallRequest :  suspend (sessionId : String,
-                                              offer : OfferAnswer,
-                                              callerId : String,
-                                              calleeId : String) -> Unit,
+        onReceivePhoneCallRequest :  suspend (CallingRequestData) -> Unit,
         onEndCall : suspend () -> Unit
     ) {
-        logMessage("initialize", { "start initialize" })
+        var tempCallingRequestData : CallingRequestData? = null
         //Callee starts call
         calleeUseCases.listenForIncomingCalls.invoke(
             onInitializeFinished = {
@@ -31,8 +30,21 @@ class CalleeCoordinator(
                 //Observe phone call request.
                 calleeUseCases.observePhoneCall.invoke(
                     calleeId,
-                    onReceivePhoneCallRequest = { remoteSessionId, remoteOffer, remoteCallerId, remoteCalleeId ->
-                        onReceivePhoneCallRequest(remoteSessionId, remoteOffer, remoteCallerId, remoteCalleeId)
+                    onReceivePhoneCallRequest = { callingRequestData->
+                        tempCallingRequestData = callingRequestData
+                        onReceivePhoneCallRequest(callingRequestData)
+                    },
+                    iceCandidateCallBack = { iceCandidates ->
+                        //Callee set remote description of caller
+                        if(tempCallingRequestData?.offer != null) {
+                            logMessage("startCall" , { "setRemoteDescription" })
+                            calleeUseCases.setRemoteDescription.invoke(tempCallingRequestData.offer!!)
+                        }
+                        //Callee set remote ice candidates of caller
+                        if(iceCandidates != null) {
+                            logMessage("startCall" , { "addIceCandidates" })
+                            calleeUseCases.addIceCandidates.invoke(iceCandidates)
+                        }
                     },
                     onEndCall = {
                         calleeUseCases.endCallUseCase.invoke(sessionId)
@@ -57,9 +69,10 @@ class CalleeCoordinator(
         offer: OfferAnswer,
         onAcceptCall : suspend (Boolean) -> Unit,
         onReceiveVideoCallRequest : suspend (OfferAnswer) -> Unit) {
-        //Callee set remote description of caller
-        calleeUseCases.setRemoteDescription.invoke(offer)
-        //Callee send answer
+        // Ensure remote description is set before creating the answer
+        initializeCallUseCase.setRemoteDescription(offer)
+
+        // Callee send answer
         calleeUseCases.sendAnswer.invoke(
             sessionId,
             offer,

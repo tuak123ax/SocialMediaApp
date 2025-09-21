@@ -8,6 +8,7 @@ import com.minhtu.firesocialmedia.domain.usecases.call.SendSignalingDataUseCase
 import com.minhtu.firesocialmedia.domain.usecases.call.VideoCallUseCase
 import com.minhtu.firesocialmedia.platform.WebRTCVideoTrack
 import com.minhtu.firesocialmedia.platform.logMessage
+import com.minhtu.firesocialmedia.utils.Utils
 
 class CallerCoordinator(
     val callerUseCases : CallerUseCases,
@@ -17,24 +18,14 @@ class CallerCoordinator(
 ) {
     suspend fun startCall(
         audioCallSession : AudioCallSession,
-        onSendOfferResult: (Boolean) -> Unit,
         onSendCallSessionResult : (Boolean) -> Unit,
         onRejectVideoCall : suspend () -> Unit,
         onAcceptCall : suspend () -> Unit,
-        onEndCall : suspend () -> Unit,
         onReceiveVideoCall : suspend (OfferAnswer) -> Unit
     ) {
         //Caller starts call
         callerUseCases.startCall.invoke(
             audioCallSession,
-            onInitializeFinished = {
-                //Create offer
-                callerUseCases.sendOffer.invoke(
-                    audioCallSession.sessionId,
-                    onSendOfferResult = { result ->
-                        onSendOfferResult(result)
-                    })
-            },
             onIceCandidateCreated = { iceCandidateData ->
                 callerUseCases.sendIceCandidate.invoke(
                     audioCallSession.sessionId,
@@ -80,8 +71,8 @@ class CallerCoordinator(
                 onAcceptCall()
             },
             onEndCall = {
+//                onEndCall()
                 callerUseCases.endCall.invoke(audioCallSession.sessionId)
-                onEndCall()
             }
         )
     }

@@ -442,7 +442,7 @@ class IosDatabaseService() : DatabaseService {
     override suspend fun sendOfferToFireBase(
         sessionId: String,
         offer: OfferAnswerDTO,
-        sendIceCandidateCallBack: Utils.Companion.BasicCallBack
+        sendOfferCallBack: Utils.Companion.BasicCallBack
     ) {
         // iOS implementation will be added later
     }

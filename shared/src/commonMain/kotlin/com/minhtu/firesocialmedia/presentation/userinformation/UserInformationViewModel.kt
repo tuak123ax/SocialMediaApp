@@ -25,6 +25,7 @@ import kotlinx.coroutines.IO
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -167,14 +168,20 @@ class UserInformationViewModel(
         _addFriendStatus.value = Relationship.NONE
     }
 
-    fun checkCalleeAvailable(callee : UserInstance, onResult: (Boolean?) -> Unit){
+    private val _calleeCurrentState = MutableStateFlow<Boolean?>(null)
+    var calleeCurrentState = _calleeCurrentState.asStateFlow()
+    fun checkCalleeAvailable(callee : UserInstance){
         viewModelScope.launch {
             withContext(ioDispatcher) {
                 val result = checkCalleeAvailableUseCase.invoke(
                     callee.uid
                 )
-                onResult(result)
+                _calleeCurrentState.value = result
             }
         }
+    }
+
+    fun resetCalleeState() {
+        _calleeCurrentState.value = null
     }
 }

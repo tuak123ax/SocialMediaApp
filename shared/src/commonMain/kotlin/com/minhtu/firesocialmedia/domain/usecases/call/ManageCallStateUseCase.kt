@@ -38,10 +38,12 @@ class ManageCallStateUseCase(
             object : Utils.Companion.BasicCallBack {
                 override fun onSuccess() {
                     //Success
+                    logMessage("sendCallStatusToFirebase", { "send Ended success" })
                 }
 
                 override fun onFailure() {
                     //Fail
+                    logMessage("sendCallStatusToFirebase", { "send Ended fail" })
                 }
             }
         )
@@ -56,10 +58,12 @@ class ManageCallStateUseCase(
                     object : Utils.Companion.BasicCallBack{
                         override fun onSuccess() {
                             //Delete call session success
+                            logMessage("endCall", { "Delete callsession success" })
                         }
 
                         override fun onFailure() {
                             //Delete call session fail
+                            logMessage("endCall", { "Delete callsession fail" })
                         }
                     }
                 )
