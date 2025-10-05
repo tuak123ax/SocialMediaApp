@@ -464,19 +464,19 @@ class IosDatabaseService() : DatabaseService {
         // iOS implementation will be added later
     }
 
-    override fun sendCallStatusToFirebase(
+    override suspend fun sendCallStatusToFirebase(
         sessionId: String,
-        status: CallStatus,
-        sendCallStatusCallBack: Utils.Companion.BasicCallBack
-    ) {
+        status: CallStatus
+    ): Boolean {
         // iOS implementation will be added later
+        return false
     }
 
     override suspend fun deleteCallSession(
-        sessionId: String,
-        deleteCallBack: Utils.Companion.BasicCallBack
-    ) {
+        sessionId: String
+    ): Boolean {
         // iOS implementation will be added later
+        return false
     }
 
     override suspend fun observePhoneCall(
@@ -484,6 +484,7 @@ class IosDatabaseService() : DatabaseService {
         currentUserId: String,
         phoneCallCallBack: (CallingRequestDTO) -> Unit,
         endCallSession: (Boolean) -> Unit,
+        whoEndCallCallBack: (String) -> Unit,
         iceCandidateCallBack: (Map<String, IceCandidateDTO>?) -> Unit
     ) {
         // iOS implementation will be added later
@@ -493,6 +494,7 @@ class IosDatabaseService() : DatabaseService {
         currentUserId: String,
         phoneCallCallBack: (CallingRequestDTO) -> Unit,
         endCallSession: (Boolean) -> Unit,
+        whoEndCallCallBack: (String) -> Unit,
         iceCandidateCallBack: (Map<String, IceCandidateDTO>?) -> Unit
     ) {
         // iOS implementation will be added later
@@ -565,6 +567,15 @@ class IosDatabaseService() : DatabaseService {
         sessionId: String,
         videoCallCallBack: (OfferAnswerDTO) -> Unit
     ) {
+        // iOS implementation will be added later
+    }
+
+    override suspend fun sendWhoEndCall(sessionId: String, whoEndCall: String): Boolean {
+        // iOS implementation will be added later
+        return false
+    }
+
+    override fun stopObservePhoneCall() {
         // iOS implementation will be added later
     }
 

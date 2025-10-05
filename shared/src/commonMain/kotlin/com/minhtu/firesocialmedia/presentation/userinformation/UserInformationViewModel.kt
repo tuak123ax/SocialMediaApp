@@ -4,6 +4,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.minhtu.firesocialmedia.constants.Constants
+import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
 import com.minhtu.firesocialmedia.domain.entity.notification.NotificationInstance
 import com.minhtu.firesocialmedia.domain.entity.notification.NotificationType
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance

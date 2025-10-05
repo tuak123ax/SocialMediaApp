@@ -36,14 +36,14 @@ import kotlinx.coroutines.withContext
 
 class AndroidDatabaseHelper {
     companion object {
-        suspend fun saveInstanceToDatabase(id : String,
+        suspend fun saveInstanceToDatabase(commentId : String,
                                    path : String,
                                    instance : BaseNewsInstance) : Boolean = suspendCancellableCoroutine { continuation ->
             Log.d("Task", "saveInstanceToDatabase")
             val storageReference = FirebaseStorage.getInstance().getReference()
-                .child(path).child(id)
+                .child(path).child(commentId)
             val databaseReference = FirebaseDatabase.getInstance().getReference()
-                .child(path).child(id)
+                .child(path).child(commentId)
             if(instance.image.isNotEmpty()){
                 storageReference.putFile(instance.image.toUri()).addOnCompleteListener{ putFileTask ->
                     if(putFileTask.isSuccessful){

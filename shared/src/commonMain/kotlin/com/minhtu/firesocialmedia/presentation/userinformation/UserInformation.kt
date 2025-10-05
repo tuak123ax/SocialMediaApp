@@ -71,7 +71,6 @@ class UserInformation {
     companion object{
         @Composable
         fun UserInformationScreen(
-            platform : PlatformContext,
             imagePicker: ImagePicker,
             user: UserInstance?,
             isCurrentUser : Boolean,
@@ -85,7 +84,8 @@ class UserInformation {
             onNavigateToUserInformation : (user : UserInstance?) -> Unit,
             onNavigateBack : () -> Unit,
             onNavigateToUploadNewsfeed: (updateNew : NewsInstance?) -> Unit,
-            onNavigateToCallingScreen : (user : UserInstance?) -> Unit
+            onNavigateToCallingScreen : (user : UserInstance?) -> Unit,
+            onNavigateToCommentScreen: (selectedNew : NewsInstance) -> Unit,
         ){
             val listState = rememberLazyListState()
             val newsList = homeViewModel.allNews.collectAsState()
@@ -114,6 +114,14 @@ class UserInformation {
                         showToast("This user is having another call! Please recall after a few minutes.")
                     }
                     userInformationViewModel.resetCalleeState()
+                }
+            }
+
+            val commentStatus by homeViewModel.commentStatus.collectAsState()
+            LaunchedEffect(commentStatus) {
+                commentStatus?.let { selectedNew ->
+                    onNavigateToCommentScreen(selectedNew)
+                    homeViewModel.resetCommentStatus()
                 }
             }
 

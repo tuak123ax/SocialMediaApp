@@ -109,12 +109,12 @@ class AndroidDatabaseService(private val context: Context) : DatabaseService {
     }
 
     override suspend fun saveInstanceToDatabase(
-        id: String,
+        commentId: String,
         path: String,
         instance: BaseNewsInstance
     ) : Boolean{
         return AndroidDatabaseHelper.saveInstanceToDatabase(
-            id,
+            commentId,
             path,
             instance)
     }

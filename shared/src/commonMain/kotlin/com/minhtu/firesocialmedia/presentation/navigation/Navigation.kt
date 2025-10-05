@@ -313,7 +313,6 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                     onVideoPicked = {}
                 )
                 UserInformation.UserInformationScreen(
-                    platform = platformContext,
                     imagePicker = picker,
                     user = selectedUser,
                     isCurrentUser = selectedUser == homeViewModel.currentUser,
@@ -346,6 +345,10 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                             callee = user
                             navController.navigate(route = Calling.getScreenName())
                         }
+                    },
+                    onNavigateToCommentScreen = { new ->
+                        selectedNew = new
+                        navController.navigate(route = Comment.getScreenName())
                     }
                 )
             }

@@ -17,10 +17,12 @@ class CommentInteractorImpl(
     private val getAllCommentsUseCase : GetAllCommentsUseCase
 ) : CommentInteractor {
     override suspend fun saveComment(
-        id: String,
-        instance: BaseNewsInstance) : Boolean {
+        selectedNewId: String,
+        commentId : String,
+        instance : BaseNewsInstance) : Boolean {
         return saveCommentToDatabaseUseCase.invoke(
-            id,
+            selectedNewId,
+            commentId,
             instance
         )
     }

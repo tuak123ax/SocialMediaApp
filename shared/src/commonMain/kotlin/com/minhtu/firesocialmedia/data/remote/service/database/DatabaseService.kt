@@ -42,7 +42,7 @@ interface DatabaseService {
     )
 
     suspend fun saveInstanceToDatabase(
-        id : String,
+        commentId : String,
         path : String,
         instance : BaseNewsInstance
     ) : Boolean

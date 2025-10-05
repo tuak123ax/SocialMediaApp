@@ -11,15 +11,15 @@ class IosAuthService() : AuthService{
     override suspend fun signInWithEmailAndPassword(
         email: String,
         password: String
-    ): Result<Unit> {
+    ): SignInError? {
         return suspendCancellableCoroutine { cont ->
             FIRAuth.auth().signInWithEmail(email, password = password) { authResult, error ->
                 if (error != null) {
                     com.minhtu.firesocialmedia.platform.logMessage("iOSAuth") { "signIn error: ${error.localizedDescription}" }
-                    cont.resume(Result.failure(SignInError.Unknown(error.localizedDescription)), onCancellation = {})
+                    cont.resume(SignInError.Unknown(error.localizedDescription), onCancellation = {})
                 } else {
                     com.minhtu.firesocialmedia.platform.logMessage("iOSAuth") { "signIn success" }
-                    cont.resume(Result.success(Unit), onCancellation = {})
+                    cont.resume(null, onCancellation = {})
                 }
             }
         }

@@ -11,7 +11,8 @@ interface CommonDbRepository {
         instance : BaseNewsInstance) : Boolean
 
     suspend fun saveCommentToDatabase(
-        id : String,
+        selectedNewId: String,
+        commentId : String,
         instance : BaseNewsInstance) : Boolean
 
     suspend fun saveSubCommentToDatabase(
