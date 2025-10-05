@@ -97,26 +97,24 @@ interface DatabaseService {
     suspend fun sendCallSessionToFirebase(session: AudioCallSessionDTO,
                                           sendCallSessionCallBack : Utils.Companion.BasicCallBack)
 
-    fun sendCallStatusToFirebase(sessionId: String,
-                                 status: CallStatus,
-                                 sendCallStatusCallBack : Utils.Companion.BasicCallBack)
+    suspend fun sendCallStatusToFirebase(sessionId: String,
+                                 status: CallStatus) : Boolean
 
-    suspend fun deleteCallSession(
-        sessionId: String,
-        deleteCallBack : Utils.Companion.BasicCallBack
-    )
+    suspend fun deleteCallSession(sessionId: String) : Boolean
 
     suspend fun observePhoneCall(
         isInCall : MutableStateFlow<Boolean>,
         currentUserId : String,
         phoneCallCallBack : (CallingRequestDTO) -> Unit,
         endCallSession: (Boolean) -> Unit,
+        whoEndCallCallBack : (String) -> Unit,
         iceCandidateCallBack : (iceCandidates : Map<String, IceCandidateDTO>?) -> Unit)
 
     suspend fun observePhoneCallWithoutCheckingInCall(
         currentUserId : String,
         phoneCallCallBack : (CallingRequestDTO) -> Unit,
         endCallSession: (Boolean) -> Unit,
+        whoEndCallCallBack : (String) -> Unit,
         iceCandidateCallBack : (iceCandidates : Map<String, IceCandidateDTO>?) -> Unit)
 
     suspend fun sendAnswerToFirebase(
@@ -171,4 +169,6 @@ interface DatabaseService {
     )
 
     suspend fun searchUserByName(name: String, path: String) : List<UserDTO>?
+    suspend fun sendWhoEndCall(sessionId: String, whoEndCall: String): Boolean
+    fun stopObservePhoneCall()
 }

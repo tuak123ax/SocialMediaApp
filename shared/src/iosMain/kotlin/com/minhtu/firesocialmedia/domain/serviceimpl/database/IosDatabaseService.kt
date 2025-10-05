@@ -10,6 +10,7 @@ import cocoapods.FirebaseStorage.FIRStorageReference
 import com.minhtu.firesocialmedia.constants.Constants
 import com.minhtu.firesocialmedia.data.constant.DataConstant
 import com.minhtu.firesocialmedia.data.dto.call.AudioCallSessionDTO
+import com.minhtu.firesocialmedia.data.dto.call.CallingRequestDTO
 import com.minhtu.firesocialmedia.data.dto.call.IceCandidateDTO
 import com.minhtu.firesocialmedia.data.dto.call.OfferAnswerDTO
 import com.minhtu.firesocialmedia.data.dto.comment.CommentDTO
@@ -481,7 +482,7 @@ class IosDatabaseService() : DatabaseService {
     override suspend fun observePhoneCall(
         isInCall: MutableStateFlow<Boolean>,
         currentUserId: String,
-        phoneCallCallBack: (String, String, String, OfferAnswerDTO) -> Unit,
+        phoneCallCallBack: (CallingRequestDTO) -> Unit,
         endCallSession: (Boolean) -> Unit,
         iceCandidateCallBack: (Map<String, IceCandidateDTO>?) -> Unit
     ) {
@@ -490,7 +491,7 @@ class IosDatabaseService() : DatabaseService {
 
     override suspend fun observePhoneCallWithoutCheckingInCall(
         currentUserId: String,
-        phoneCallCallBack: (String, String, String, OfferAnswerDTO) -> Unit,
+        phoneCallCallBack: (CallingRequestDTO) -> Unit,
         endCallSession: (Boolean) -> Unit,
         iceCandidateCallBack: (Map<String, IceCandidateDTO>?) -> Unit
     ) {

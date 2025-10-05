@@ -24,6 +24,7 @@ import com.minhtu.firesocialmedia.data.remote.service.database.DatabaseService
 import com.minhtu.firesocialmedia.domain.entity.base.BaseNewsInstance
 import com.minhtu.firesocialmedia.domain.entity.call.CallStatus
 import com.minhtu.firesocialmedia.domain.serviceimpl.crypto.AndroidCryptoHelper
+import com.minhtu.firesocialmedia.platform.logMessage
 import com.minhtu.firesocialmedia.utils.Utils
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -62,6 +63,7 @@ class AndroidDatabaseService(private val context: Context) : DatabaseService {
 
             override fun onCancelled(error: DatabaseError) {
                 if (!continuation.isActive) return
+                logMessage("checkUserExists", { "Error when checkUserExists" })
                 continuation.resume(SignInDTO(false, Constants.LOGIN_ERROR))
             }
         }
@@ -406,18 +408,21 @@ class AndroidDatabaseService(private val context: Context) : DatabaseService {
         AndroidDatabaseHelper.sendCallSessionToFirebase(session, DataConstant.CALL_PATH, sendCallSessionCallBack)
     }
 
-    override fun sendCallStatusToFirebase(
+    override suspend fun sendCallStatusToFirebase(
                                     sessionId : String,
-                                    status: CallStatus,
-                                    sendCallStatusCallBack : Utils.Companion.BasicCallBack) {
-        AndroidDatabaseHelper.sendCallStatusToFirebase(sessionId, status, DataConstant.CALL_PATH, sendCallStatusCallBack)
+                                    status: CallStatus) : Boolean{
+        return AndroidDatabaseHelper.sendCallStatusToFirebase(sessionId, status, DataConstant.CALL_PATH)
     }
 
-    override suspend fun deleteCallSession(
+    override suspend fun sendWhoEndCall(
         sessionId: String,
-        deleteCallBack: Utils.Companion.BasicCallBack
-    ) {
-        AndroidDatabaseHelper.deleteCallSession(sessionId, DataConstant.CALL_PATH, deleteCallBack)
+        whoEndCall: String
+    ): Boolean {
+        return AndroidDatabaseHelper.sendWhoEndCall(sessionId, whoEndCall, DataConstant.CALL_PATH)
+    }
+
+    override suspend fun deleteCallSession(sessionId: String) : Boolean{
+        return AndroidDatabaseHelper.deleteCallSession(sessionId, DataConstant.CALL_PATH)
     }
 
     override suspend fun observePhoneCall(
@@ -425,6 +430,7 @@ class AndroidDatabaseService(private val context: Context) : DatabaseService {
         currentUserId: String,
         phoneCallCallBack : (CallingRequestDTO) -> Unit,
         endCallSession: (Boolean) -> Unit,
+        whoEndCallCallBack : (String) -> Unit,
         iceCandidateCallBack : (iceCandidates : Map<String, IceCandidateDTO>?) -> Unit) {
         AndroidDatabaseHelper.observePhoneCall(
             isInCall,
@@ -432,19 +438,26 @@ class AndroidDatabaseService(private val context: Context) : DatabaseService {
             DataConstant.CALL_PATH,
             phoneCallCallBack,
             endCallSession,
+            whoEndCallCallBack,
             iceCandidateCallBack)
+    }
+
+    override fun stopObservePhoneCall() {
+        AndroidDatabaseHelper.stopObservePhoneCall()
     }
 
     override suspend fun observePhoneCallWithoutCheckingInCall(
         currentUserId: String,
         phoneCallCallBack : (CallingRequestDTO) -> Unit,
         endCallSession: (Boolean) -> Unit,
+        whoEndCallCallBack : (String) -> Unit,
         iceCandidateCallBack : (iceCandidates : Map<String, IceCandidateDTO>?) -> Unit) {
         AndroidDatabaseHelper.observePhoneCallWithoutCheckingInCall(
             currentUserId,
             DataConstant.CALL_PATH,
             phoneCallCallBack,
             endCallSession,
+            whoEndCallCallBack,
             iceCandidateCallBack)
     }
 

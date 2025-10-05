@@ -162,7 +162,8 @@ class SendSignalingDataUseCase(
         calleeIdFromFCM : String,
         onReceivePhoneCallRequest : suspend (CallingRequestData) -> Unit,
         iceCandidateCallBack : suspend (iceCandidates : Map<String, IceCandidateData>?) -> Unit,
-        onEndCall: suspend () -> Unit) {
+        onEndCall: suspend () -> Unit,
+        whoEndCallCallBack : suspend (String) -> Unit) {
         callRepository.observePhoneCallWithoutCheckingInCall(
             calleeIdFromFCM,
             phoneCallCallBack = { callingRequestData ->
@@ -183,6 +184,11 @@ class SendSignalingDataUseCase(
                     }
                 }
             },
+            whoEndCallCallBack = { whoEndCall ->
+                coroutineScope.launch {
+                    whoEndCallCallBack(whoEndCall)
+                }
+            },
             iceCandidateCallBack = { iceCandidates ->
                 //Add ice candidates to peer connection.
                 coroutineScope.launch{
@@ -198,7 +204,8 @@ class SendSignalingDataUseCase(
         isInCall :  MutableStateFlow<Boolean>,
         currentUserId : String,
         onReceivePhoneCallRequest : suspend (CallingRequestData) -> Unit,
-        onEndCall: suspend () -> Unit) {
+        onEndCall: suspend () -> Unit,
+        whoEndCallCallBack : suspend (String) -> Unit) {
         callRepository.observePhoneCall(
             isInCall,
             currentUserId,
@@ -215,6 +222,11 @@ class SendSignalingDataUseCase(
                     coroutineScope.launch {
                         onEndCall()
                     }
+                }
+            },
+            whoEndCallCallBack = { whoEndCall ->
+                coroutineScope.launch {
+                    whoEndCallCallBack(whoEndCall)
                 }
             },
             iceCandidateCallBack = { iceCandidates ->
@@ -257,5 +269,9 @@ class SendSignalingDataUseCase(
             whichCandidate,
             sendIceCandidateCallBack
         )
+    }
+
+    fun stopObservePhoneCall() {
+        callRepository.stopObservePhoneCall()
     }
 }

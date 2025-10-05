@@ -1,5 +1,6 @@
 package com.minhtu.firesocialmedia.presentation.calling.audiocall
 
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.minhtu.firesocialmedia.domain.entity.call.CallEventFlow
@@ -9,12 +10,9 @@ import com.minhtu.firesocialmedia.domain.usecases.call.RequestPermissionUseCase
 import com.minhtu.firesocialmedia.domain.usecases.call.StartCallServiceUseCase
 import com.minhtu.firesocialmedia.platform.logMessage
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -27,6 +25,14 @@ class CallingViewModel(
     var sessionId = ""
     fun updateSessionId(id : String) {
         sessionId = id
+    }
+
+    var secondsForCountUpTimer = mutableStateOf(0)
+    fun count() {
+        secondsForCountUpTimer.value++
+    }
+    fun resetCounter() {
+        secondsForCountUpTimer.value = 0
     }
     fun startCall(caller : UserInstance, callee: UserInstance) {
         viewModelScope.launch {
@@ -45,10 +51,15 @@ class CallingViewModel(
         }
     }
 
-    suspend fun stopCall() {
+    suspend fun stopCall(isCaller : Boolean, currentUser : String) {
         try{
-//                    manageCallStateUseCase.endCall(sessionId)
-            manageCallStateUseCase.endCallFromApp()
+            if(isCaller) {
+                logMessage("stopCall", { "stopCall from caller:$currentUser" })
+                manageCallStateUseCase.callerEndCallFromApp(currentUser)
+            } else {
+                logMessage("stopCall", { "stopCall from callee:$currentUser" })
+                manageCallStateUseCase.calleeEndCallFromApp(sessionId, currentUser)
+            }
         } catch(e : Exception) {
             logMessage("stopCall Exception", { e.message.toString() })
         } finally {
@@ -100,11 +111,14 @@ class CallingViewModel(
         CallEventFlow.videoCallState.value = null
     }
     fun stopCallAction(
+        currentUser : String,
+        isCaller : Boolean,
         callingViewModel: CallingViewModel
     ) {
         viewModelScope.launch(ioDispatcher) {
             delay(2000L)
-            callingViewModel.stopCall()
+            callingViewModel.stopCall(isCaller, currentUser)
+            callingViewModel.resetCounter()
         }
     }
 }

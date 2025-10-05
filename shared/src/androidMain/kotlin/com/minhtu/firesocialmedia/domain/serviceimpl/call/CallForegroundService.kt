@@ -50,6 +50,7 @@ import com.minhtu.firesocialmedia.domain.usecases.call.SendAnswerUseCase
 import com.minhtu.firesocialmedia.domain.usecases.call.SendIceCandidateUseCase
 import com.minhtu.firesocialmedia.domain.usecases.call.SendOfferUseCase
 import com.minhtu.firesocialmedia.domain.usecases.call.SendSignalingDataUseCase
+import com.minhtu.firesocialmedia.domain.usecases.call.SendWhoEndCallUseCase
 import com.minhtu.firesocialmedia.domain.usecases.call.SetRemoteDescriptionUseCase
 import com.minhtu.firesocialmedia.domain.usecases.call.StartCallUseCase
 import com.minhtu.firesocialmedia.domain.usecases.call.VideoCallUseCase
@@ -116,7 +117,8 @@ class CallForegroundService : Service() {
             ObserveAnswer(sendSignalingDataUseCase),
             ObserveCallStatus(sendSignalingDataUseCase),
             ObserveVideoCall(videoCallUseCase),
-            EndCallUseCase(manageCallStateUseCase)
+            EndCallUseCase(manageCallStateUseCase),
+            SendWhoEndCallUseCase(manageCallStateUseCase)
         )
 
         //Initialize callee use cases
@@ -127,9 +129,10 @@ class CallForegroundService : Service() {
             AddIceCandidatesUseCase(initializeCallUseCase),
             SendAnswerUseCase(initializeCallUseCase),
             SetRemoteDescriptionUseCase(initializeCallUseCase),
-            AcceptCallUseCase(manageCallStateUseCase, backgroundScope),
+            AcceptCallUseCase(manageCallStateUseCase),
             ObserveVideoCall(videoCallUseCase),
-            EndCallUseCase(manageCallStateUseCase)
+            EndCallUseCase(manageCallStateUseCase),
+            SendWhoEndCallUseCase(manageCallStateUseCase)
         )
 
         //Initialize coordinator which combines all steps into one flow.
@@ -153,12 +156,17 @@ class CallForegroundService : Service() {
                 }
 
                 CallAction.REJECT_CALL_ACTION -> {
-                    rejectCallAction()
+                    rejectCallAction(intent)
                     return START_NOT_STICKY
                 }
 
                 CallAction.STOP_CALL_ACTION_FROM_CALLER -> {
-                    stopCallActionFromCaller()
+                    stopCallActionFromCaller(intent)
+                    return START_NOT_STICKY
+                }
+
+                CallAction.STOP_CALL_ACTION_FROM_CALLEE -> {
+                    stopCallActionFromCallee(intent)
                     return START_NOT_STICKY
                 }
 
@@ -206,7 +214,7 @@ class CallForegroundService : Service() {
                             audioCallSession,
                             onSendCallSessionResult = { result ->
                                 if(result) {
-                                    showCallNotification(callNotificationManager.buildCallNotification(callee.name))
+                                    showCallNotification(callNotificationManager.buildCallNotification(callee.name, caller.uid))
                                     sendNotification("Is calling you", sessionId, caller, callee, "CALL")
                                 } else {
                                     logMessage("onSendCallSessionResult", { "send call session fail" })
@@ -218,12 +226,21 @@ class CallForegroundService : Service() {
                             },
                             onAcceptCall = {
                                 //Emit event for UI
-                                CallEventFlow.events.emit(CallEvent.AnswerReceived)
+                                CallEventFlow.events.value = CallEvent.AnswerReceived
                                 //Show timer notification
-                                showCallNotification(callNotificationManager.startTimerNotification(sessionId, caller.uid, callee.uid))
+                                showCallNotification(
+                                    callNotificationManager.startTimerNotification(
+                                        sessionId,
+                                        caller.uid,
+                                        callee.uid,
+                                        true))
                             },
                             onReceiveVideoCall = { videoOffer ->
                                 CallEventFlow.videoCallState.emit(videoOffer)
+                            },
+                            onEndCall = {
+                                logMessage("onEndCallCaller", { "caller" })
+                                handleEndCall(CallEvent.CallEnded)
                             }
                         )
                     } catch (ex : Exception) {
@@ -285,25 +302,61 @@ class CallForegroundService : Service() {
         }
     }
 
-    private fun stopCallActionFromCaller() {
+    private fun stopCallActionFromCaller(intent: Intent) {
         backgroundScope.launch {
+            var callerId = ""
             logMessage("STOP_CALL_ACTION_FROM_CALLER", { "STOP_CALL_ACTION_FROM_CALLER" })
             if(callerFromApp != null && calleeFromApp != null) {
                 //Send notification to stop service for callee from caller side.
+                logMessage("STOP_CALL_ACTION_FROM_CALLER", { "callerId:$callerFromApp" })
+                logMessage("STOP_CALL_ACTION_FROM_CALLER", { "calleeId:$calleeFromApp" })
                 sendNotification("", sessionId, callerFromApp!!, calleeFromApp!!, "STOP_CALL")
             }
+            if(intent.hasExtra(Constants.KEY_CALLER_ID)) {
+                callerId = intent.getStringExtra(Constants.KEY_CALLER_ID).toString()
+            }
+            val sendWhoEndCall = calleeUseCases.sendWhoEndCallUseCase.invoke(sessionId, callerId)
+            val deleteCallSessionResult = calleeUseCases.endCallUseCase.invoke(sessionId)
+            handleEndCall(null)
+        }
+    }
+
+    private fun stopCallActionFromCallee(intent: Intent) {
+        backgroundScope.launch {
+            var calleeId = ""
+            logMessage("STOP_CALL_ACTION_FROM_CALLEE", { "STOP_CALL_ACTION_FROM_CALLEE" })
+            if(intent.hasExtra(Constants.KEY_SESSION_ID)) {
+                sessionId = intent.getStringExtra(Constants.KEY_SESSION_ID).toString()
+            }
+            if(intent.hasExtra(Constants.KEY_CALLEE_ID)) {
+                calleeId = intent.getStringExtra(Constants.KEY_CALLEE_ID).toString()
+            }
+            val sendWhoEndCall = calleeUseCases.sendWhoEndCallUseCase.invoke(sessionId, calleeId)
+            val deleteCallSessionResult = calleeUseCases.endCallUseCase.invoke(sessionId)
             handleEndCall(CallEvent.StopCalling)
         }
     }
 
-    private fun rejectCallAction(){
+    private fun rejectCallAction(intent: Intent){
         backgroundScope.launch {
+            var calleeId = ""
             logMessage("REJECT_CALL_ACTION", { "REJECT_CALL_ACTION" })
-            releaseCallAndStopService(CallEvent.CallEnded)
+            if(intent.hasExtra(Constants.KEY_SESSION_ID)) {
+                sessionId = intent.getStringExtra(Constants.KEY_SESSION_ID).toString()
+            }
+            if(intent.hasExtra(Constants.KEY_CALLEE_ID)) {
+                calleeId = intent.getStringExtra(Constants.KEY_CALLEE_ID).toString()
+            }
+            //Emit stop calling event before end call, so that when homeViewModel observed
+            //end call action, it won't emit event again
+            CallEventFlow.events.value = CallEvent.StopCalling
+            val sendWhoEndCall = calleeUseCases.sendWhoEndCallUseCase.invoke(sessionId, calleeId)
+            val deleteCallSessionResult = calleeUseCases.endCallUseCase.invoke(sessionId)
+            handleEndCall(null)
         }
     }
 
-    private suspend fun handleEndCall(callEvent : CallEvent) {
+    private suspend fun handleEndCall(callEvent : CallEvent?) {
         //Stop count-up timer.
         logMessage("handleEndCall", { "stopTimerNotificationUpdates" })
         callNotificationManager.stopTimerNotificationUpdates()
@@ -312,7 +365,7 @@ class CallForegroundService : Service() {
         releaseCallAndStopService(callEvent)
     }
 
-    private suspend fun releaseCallAndStopService(callEvent : CallEvent) {
+    private suspend fun releaseCallAndStopService(callEvent : CallEvent?) {
         handleRejectCall(callEvent)
         logMessage("handleEndCall", { "Calling stopForeground + stopSelf" })
         withContext(Dispatchers.Main) {
@@ -355,6 +408,8 @@ class CallForegroundService : Service() {
                             },
                             onEndCall = {
                                 handleEndCall(CallEvent.CallEnded)
+                            },
+                            whoEndCallCallBack = {
                             }
                         )
                     } catch (ex : Exception) {
@@ -368,17 +423,20 @@ class CallForegroundService : Service() {
         }
     }
 
-    private suspend fun handleRejectCall(emitEvent: CallEvent) {
-        manageCallStateUseCase.rejectCall(sessionId)
+    private suspend fun handleRejectCall(emitEvent: CallEvent?) {
+        val rejectCallResult = manageCallStateUseCase.rejectCall(sessionId)
         //Stop call flow.
         stopCallFlow(emitEvent)
     }
 
-    private suspend fun stopCallFlow(emitEvent : CallEvent) {
+    private suspend fun stopCallFlow(emitEvent : CallEvent?) {
         //Stop call in call manager
         callManager.stopCall()
         //Emit event to UI
-        CallEventFlow.events.emit(emitEvent)
+        if(emitEvent != null && CallEventFlow.events.value != CallEvent.StopCalling &&
+            CallEventFlow.events.value != CallEvent.CallEnded) {
+            CallEventFlow.events.value = emitEvent
+        }
         //Dismiss notification
         val notificationManager = applicationContext.getSystemService(NOTIFICATION_SERVICE) as NotificationManager
         notificationManager.cancel(NOTIF_ID)
@@ -398,9 +456,10 @@ class CallForegroundService : Service() {
                             callNotificationManager.startTimerNotification(
                                 callingRequestData.sessionId,
                                 callingRequestData.callerId,
-                                callingRequestData.calleeId))
+                                callingRequestData.calleeId,
+                                false))
                         //Emit event to update UI.
-                        CallEventFlow.events.emit(CallEvent.AnswerReceived)
+                        CallEventFlow.events.value = CallEvent.AnswerReceived
                     } else {
                         logMessage("acceptCall", {"accept Call fail"})
                     }

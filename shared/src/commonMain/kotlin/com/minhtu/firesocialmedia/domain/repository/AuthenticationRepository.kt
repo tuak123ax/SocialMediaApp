@@ -4,10 +4,11 @@ import com.minhtu.firesocialmedia.domain.entity.crypto.Credentials
 import com.minhtu.firesocialmedia.domain.entity.forgotpassword.EmailExistResult
 import com.minhtu.firesocialmedia.domain.entity.signin.SignInState
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
+import com.minhtu.firesocialmedia.domain.error.signin.SignInError
 
 interface AuthenticationRepository {
     suspend fun signInWithEmailAndPassword(email: String,
-                                   password: String) : Result<Unit>
+                                   password: String) : SignInError?
     suspend fun saveAccountToLocalStorage(email: String,
                                           password: String)
     suspend fun checkUserExists(email : String) : SignInState

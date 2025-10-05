@@ -29,7 +29,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -53,6 +52,7 @@ import com.minhtu.firesocialmedia.domain.entity.call.OfferAnswer
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.platform.logMessage
 import com.minhtu.firesocialmedia.platform.showToast
+import com.minhtu.firesocialmedia.presentation.home.HomeViewModel
 import com.minhtu.firesocialmedia.utils.NavigationHandler
 import com.minhtu.firesocialmedia.utils.UiUtils
 import com.minhtu.firesocialmedia.utils.Utils.Companion.sendNotification
@@ -76,6 +76,7 @@ class Calling {
             remoteOffer : OfferAnswer?,
             navigateToCallingScreenFromNotification : Boolean,
             callingViewModel: CallingViewModel,
+            homeViewModel: HomeViewModel,
             navHandler : NavigationHandler,
             onStopCallAndNavigateBack : () -> Unit,
             onNavigateToVideoCall : (sessionId : String, videoOffer : OfferAnswer?) -> Unit,
@@ -89,18 +90,27 @@ class Calling {
             var acceptCall by rememberSaveable { mutableStateOf(false) }
             //Show dialog to accept video call
             val showDialog = remember { mutableStateOf(false) }
+            var backgroundButton by remember {mutableStateOf(Color.Red)}
             var videoOffer : OfferAnswer? = null
 
+
+
             LaunchedEffect(Unit) {
-//                countDownTimer(onTimeOver = {
-//                    stopCallAction(
-//                        callingViewModel,
-//                        coroutineScope,
-//                        navHandler,
-//                        onStopCall,
-//                        platform
-//                    )
-//                })
+                countDownTimer(
+                    onTimeOver = {
+                        backgroundButton = Color.Gray
+                        isRunning = false
+                        callingViewModel.stopCallAction(
+                            currentUser!!.uid,
+                            isCalling,
+                            callingViewModel
+                        )
+                        if(caller != null && callee != null) {
+                            sendNotification("", sessionId, caller, callee, "STOP_CALL")
+                        }
+                    },
+                    acceptCall = acceptCall
+                    )
                 callingViewModel.requestPermissionAndStartAudioCall(
                     onGranted = {
                         if(!startCount) {
@@ -138,10 +148,10 @@ class Calling {
                 )
             }
 
-            LaunchedEffect(Unit) {
-                //Observe answer
-                CallEventFlow.events.collect { event ->
-                    when(event) {
+            val callEventState by CallEventFlow.events.collectAsState()
+            LaunchedEffect(callEventState) {
+                if(callEventState != null) {
+                    when(callEventState) {
                         CallEvent.AnswerReceived -> {
                             if(currentUser?.uid != callee?.uid) {
                                 showToast(callee?.name + " accepted your call!")
@@ -151,13 +161,15 @@ class Calling {
                             acceptCall = true
                         }
 
-                         CallEvent.CallEnded -> {
-                             if(currentUser?.uid != callee?.uid) {
-                                 showToast(callee?.name + " stopped your call!")
-                             }
-                             isRunning = false
-                             onStopCallAndNavigateBack()
-                         }
+                        CallEvent.CallEnded -> {
+                            if(callee?.name == currentUser?.name) {
+                                showToast(caller?.name + " stopped the call!")
+                            } else {
+                                showToast(callee?.name + " stopped the call!")
+                            }
+                            isRunning = false
+                            onStopCallAndNavigateBack()
+                        }
 
                         CallEvent.StopCalling -> {
                             logMessage("CallEvent", { "StopCalling" })
@@ -165,6 +177,8 @@ class Calling {
                             isRunning = false
                             onStopCallAndNavigateBack()
                         }
+
+                        else -> {}
                     }
                 }
             }
@@ -253,7 +267,11 @@ class Calling {
                 if(startCount) {
                     Spacer(modifier = Modifier.Companion.height(20.dp))
                     //Count-up timer
-                    CountUpTimer(onTick = {},
+                    CountUpTimer(
+                        callingViewModel.secondsForCountUpTimer.value,
+                        onCount = {
+                            callingViewModel.count()
+                        },
                         isRunning)
                     Spacer(modifier = Modifier.height(20.dp))
                     //Video call button
@@ -320,6 +338,7 @@ class Calling {
                                                     )
                                                 }
                                             }
+                                            callingViewModel.resetCounter()
                                         },
                                         shape = CircleShape,
                                         containerColor = Color.Transparent, // Transparent to let gradient show
@@ -332,7 +351,6 @@ class Calling {
                             }
                         }
                     }
-                    var backgroundButton by remember {mutableStateOf(Color.Red)}
                     Box(
                         contentAlignment = Alignment.Center,
                         modifier = Modifier
@@ -350,10 +368,23 @@ class Calling {
                                 backgroundButton = Color.Gray
                                 isRunning = false
                                 callingViewModel.stopCallAction(
+                                    currentUser!!.uid,
+                                    isCalling,
                                     callingViewModel
                                 )
                                 if(caller != null && callee != null) {
-                                    sendNotification("", sessionId, caller, callee, "STOP_CALL")
+                                    if(isCalling) {
+                                        logMessage("stopCallAction",
+                                            { "Remove notification for callee" })
+                                        sendNotification("", sessionId, caller, callee, "STOP_CALL")
+                                    } else {
+                                        logMessage("stopCallAction",
+                                            { "Remove notification for caller" })
+                                        sendNotification("", sessionId, callee,caller, "STOP_CALL")
+                                    }
+                                }
+                                if(currentUser != null) {
+                                    homeViewModel.setWhoStopCall(currentUser.uid)
                                 }
                             },
                             shape = CircleShape,
@@ -373,16 +404,14 @@ class Calling {
 
         @Composable
         fun CountUpTimer(
-            onTick: ((Int) -> Unit)? = null,
+            seconds : Int,
+            onCount : () -> Unit,
             isRunning: Boolean = true
         ) {
-            var seconds by remember { mutableStateOf(0) }
-
             LaunchedEffect(isRunning) {
                 while (isRunning) {
                     delay(1000L)
-                    seconds++
-                    onTick?.invoke(seconds)
+                    onCount()
                 }
             }
 
@@ -406,16 +435,18 @@ class Calling {
 
         fun countDownTimer(
             onTimeOver: () -> Unit,
-            isRunning: Boolean = true
+            acceptCall: Boolean = false
         ) {
             val backgroundScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
             backgroundScope.launch {
-                var seconds = 30
+                var seconds = 60
                 while (seconds != 0) {
                     delay(1000L)
                     seconds--
                 }
-                onTimeOver()
+                if(!acceptCall) {
+                    onTimeOver()
+                }
             }
         }
     }

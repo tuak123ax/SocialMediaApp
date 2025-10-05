@@ -167,6 +167,7 @@ class AppFirebaseNotificationService: FirebaseMessagingService() {
         val rejectIntent = Intent(this, CallActionBroadcastReceiver::class.java).apply {
             action = CallAction.REJECT_CALL_ACTION
             putExtra(Constants.KEY_SESSION_ID, sessionId)
+            putExtra(Constants.KEY_CALLEE_ID, calleeId)
         }
 
         val rejectPendingIntent = PendingIntent.getBroadcast(

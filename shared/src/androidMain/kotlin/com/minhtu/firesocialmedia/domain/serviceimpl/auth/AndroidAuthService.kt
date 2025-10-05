@@ -4,7 +4,13 @@ import android.app.Activity
 import android.content.Context
 import com.google.android.gms.auth.api.identity.SignInCredential
 import com.google.firebase.Firebase
+import com.google.firebase.FirebaseException
+import com.google.firebase.FirebaseNetworkException
+import com.google.firebase.FirebaseTooManyRequestsException
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
+import com.google.firebase.auth.FirebaseAuthInvalidUserException
+import com.google.firebase.auth.FirebaseAuthMultiFactorException
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.auth
 import com.minhtu.firesocialmedia.constants.Constants
@@ -14,20 +20,43 @@ import com.minhtu.firesocialmedia.data.remote.service.auth.AuthService
 import com.minhtu.firesocialmedia.platform.logMessage
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.tasks.await
+import kotlin.coroutines.cancellation.CancellationException
 
 class AndroidAuthService(var context: Context) : AuthService{
     override suspend fun signInWithEmailAndPassword(
         email: String,
         password: String
-    ): Result<Unit> {
+    ): SignInError? {
         return try {
             FirebaseAuth.getInstance()
                 .signInWithEmailAndPassword(email, password)
                 .await() // suspend until complete
-            Result.success(Unit)
-        } catch (ex: Exception) {
-            // You can parse exception here to map to your custom error
-            Result.failure(SignInError.Unknown(ex.message ?: "Unknown error"))
+            null
+        } catch (e: CancellationException) {
+            SignInError.Unknown(e.message ?: "Unknown error")
+        } catch (e: FirebaseAuthInvalidCredentialsException) {
+            // Wrong password OR malformed email, inspect errorCode if you want
+            return when (e.errorCode) {
+                "ERROR_INVALID_EMAIL"   -> SignInError.InvalidEmail
+                "ERROR_WRONG_PASSWORD"  -> SignInError.WrongPassword
+                else                    -> SignInError.InvalidCredentials
+            }
+        } catch (e: FirebaseAuthInvalidUserException) {
+            // User disabled / not found
+            return when (e.errorCode) {
+                "ERROR_USER_DISABLED"   -> SignInError.UserDisabled
+                "ERROR_USER_NOT_FOUND"  -> SignInError.UserNotFound
+                else                    -> SignInError.InvalidUser
+            }
+        } catch (e: FirebaseTooManyRequestsException) {
+            return SignInError.TooManyRequests
+        } catch (e: FirebaseNetworkException) {
+            return SignInError.NetworkError
+        } catch (e: FirebaseAuthMultiFactorException) {
+            return SignInError.MultiFactor
+        } catch (e: FirebaseException) {
+            // Any other Firebase auth error
+            return SignInError.Unknown(e.message ?: "Unknown error")
         }
     }
 
@@ -41,7 +70,6 @@ class AndroidAuthService(var context: Context) : AuthService{
                 .await() // suspend until complete
             Result.success(Unit)
         } catch (ex: Exception) {
-            // You can parse exception here to map to your custom error
             Result.failure(SignInError.Unknown(ex.message ?: "Unknown error"))
         }
     }

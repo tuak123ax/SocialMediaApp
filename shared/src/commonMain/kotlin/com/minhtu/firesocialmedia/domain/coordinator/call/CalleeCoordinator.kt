@@ -20,7 +20,8 @@ class CalleeCoordinator(
         sessionId : String,
         calleeId : String,
         onReceivePhoneCallRequest :  suspend (CallingRequestData) -> Unit,
-        onEndCall : suspend () -> Unit
+        onEndCall : suspend () -> Unit,
+        whoEndCallCallBack : suspend (String) -> Unit
     ) {
         var tempCallingRequestData : CallingRequestData? = null
         //Callee starts call
@@ -47,8 +48,13 @@ class CalleeCoordinator(
                         }
                     },
                     onEndCall = {
-                        calleeUseCases.endCallUseCase.invoke(sessionId)
-                        onEndCall()
+                        val deleteCallSessionResult = calleeUseCases.endCallUseCase.invoke(sessionId)
+                        if(deleteCallSessionResult) {
+                            onEndCall()
+                        }
+                    },
+                    whoEndCallCallBack = { whoEndCall ->
+                        whoEndCallCallBack(whoEndCall)
                     }
                 )
             },
@@ -85,23 +91,19 @@ class CalleeCoordinator(
             }
         )
         //Accept call
-        calleeUseCases.acceptCall.invoke(
-            sessionId,
-            onAcceptCall = { result ->
-                if(result) {
-                    //Start observe video call for callee
-                    logMessage("Observer", { "Start observe video call for callee" })
-                    calleeUseCases.observeVideoCall.invoke(
-                        sessionId,
-                        calleeId,
-                        onReceiveVideoCallRequest = { videoOffer ->
-                            onReceiveVideoCallRequest(videoOffer)
-                        }
-                    )
-                    onAcceptCall(result)
+        val sendAcceptCallStatus = calleeUseCases.acceptCall.invoke(sessionId)
+        if(sendAcceptCallStatus) {
+            //Start observe video call for callee
+            logMessage("Observer", { "Start observe video call for callee" })
+            calleeUseCases.observeVideoCall.invoke(
+                sessionId,
+                calleeId,
+                onReceiveVideoCallRequest = { videoOffer ->
+                    onReceiveVideoCallRequest(videoOffer)
                 }
-            }
-        )
+            )
+            onAcceptCall(sendAcceptCallStatus)
+        }
     }
 
     suspend fun startVideoCall(currentUserId : String?,

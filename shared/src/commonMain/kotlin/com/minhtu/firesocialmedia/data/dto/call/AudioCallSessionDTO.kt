@@ -12,5 +12,6 @@ data class AudioCallSessionDTO(
     var answer: OfferAnswerDTO? = null,
     var callerCandidates: Map<String, IceCandidateDTO> = emptyMap(),
     var calleeCandidates: Map<String, IceCandidateDTO> = emptyMap(),
-    var status: CallStatus = CallStatus.RINGING
+    var status: CallStatus = CallStatus.RINGING,
+    var whoEndCall : String = ""
 )

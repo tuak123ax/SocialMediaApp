@@ -150,42 +150,17 @@ class CallRepositoryImpl(
 
     override suspend fun sendCallStatusToFirebase(
         sessionId: String,
-        status: CallStatus,
-        sendCallStatusCallBack: Utils.Companion.BasicCallBack
-    ) {
-        databaseService.sendCallStatusToFirebase(
+        status: CallStatus) : Boolean {
+        return databaseService.sendCallStatusToFirebase(
             sessionId,
-            status,
-            object : Utils.Companion.BasicCallBack{
-                override fun onSuccess() {
-                    //Send call status success
-                    sendCallStatusCallBack.onSuccess()
-                }
-
-                override fun onFailure() {
-                    //Send call status fail
-                    sendCallStatusCallBack.onFailure()
-                }
-            })
+            status)
     }
 
     override suspend fun deleteCallSession(
-        sessionId: String,
-        deleteCallBack: Utils.Companion.BasicCallBack
-    ) {
-        databaseService.deleteCallSession(
-            sessionId,
-            object : Utils.Companion.BasicCallBack{
-                override fun onSuccess() {
-                    //Delete call session success
-                    deleteCallBack.onSuccess()
-                }
-
-                override fun onFailure() {
-                    //Delete call session fail
-                    deleteCallBack.onFailure()
-                }
-            }
+        sessionId: String
+    ) : Boolean {
+        return databaseService.deleteCallSession(
+            sessionId
         )
     }
 
@@ -193,8 +168,12 @@ class CallRepositoryImpl(
         audioCallService.acceptCallFromApp(sessionId, calleeId)
     }
 
-    override suspend fun endCallFromApp() {
-        audioCallService.endCallFromApp()
+    override suspend fun callerEndCallFromApp(currentUser : String) {
+        audioCallService.callerEndCallFromApp(currentUser)
+    }
+
+    override suspend fun calleeEndCallFromApp(sessionId: String, currentUser : String) {
+        audioCallService.calleeEndCallFromApp(sessionId, currentUser)
     }
 
     override suspend fun rejectVideoCall() {
@@ -355,6 +334,7 @@ class CallRepositoryImpl(
         currentUserId: String,
         phoneCallCallBack: (CallingRequestData) -> Unit,
         endCallSession: (Boolean) -> Unit,
+        whoEndCallCallBack : (String) -> Unit,
         iceCandidateCallBack: (Map<String, IceCandidateData>?) -> Unit
     ) {
         databaseService.observePhoneCallWithoutCheckingInCall(
@@ -364,6 +344,9 @@ class CallRepositoryImpl(
             },
             endCallSession = { end ->
                 endCallSession(end)
+            },
+            whoEndCallCallBack = { whoEndCall ->
+                whoEndCallCallBack(whoEndCall)
             },
             iceCandidateCallBack = { iceCandidates ->
                 //Add ice candidates to peer connection.
@@ -376,6 +359,7 @@ class CallRepositoryImpl(
         currentUserId: String,
         phoneCallCallBack: (CallingRequestData) -> Unit,
         endCallSession: (Boolean) -> Unit,
+        whoEndCallCallBack : (String) -> Unit,
         iceCandidateCallBack: (Map<String, IceCandidateData>?) -> Unit
     ) {
         databaseService.observePhoneCall(
@@ -384,12 +368,19 @@ class CallRepositoryImpl(
             phoneCallCallBack = { callingRequestDTO ->
                 phoneCallCallBack(callingRequestDTO.toDomain())
             },
+            whoEndCallCallBack = { whoEndCall ->
+                whoEndCallCallBack(whoEndCall)
+            },
             endCallSession = { end ->
                 endCallSession(end)
             },
             iceCandidateCallBack = { iceCandidates ->
                 iceCandidateCallBack(iceCandidates.toDomainCandidates())
             })
+    }
+
+    override fun stopObservePhoneCall() {
+        databaseService.stopObservePhoneCall()
     }
 
     override suspend fun sendIceCandidateToFireBase(
@@ -403,5 +394,19 @@ class CallRepositoryImpl(
             iceCandidate.toDto(),
             whichCandidate,
             sendIceCandidateCallBack)
+    }
+
+    override suspend fun sendWhoEndCall(
+        sessionId: String,
+        whoEndCall: String
+    ): Boolean {
+        return databaseService.sendWhoEndCall(
+            sessionId,
+            whoEndCall
+        )
+    }
+
+    override suspend fun stopCallService() {
+        callService.stopCall()
     }
 }

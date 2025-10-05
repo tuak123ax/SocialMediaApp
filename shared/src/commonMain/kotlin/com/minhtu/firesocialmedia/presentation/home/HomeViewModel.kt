@@ -5,6 +5,8 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.minhtu.firesocialmedia.domain.entity.call.CallEvent
+import com.minhtu.firesocialmedia.domain.entity.call.CallEventFlow
 import com.minhtu.firesocialmedia.domain.entity.call.CallingRequestData
 import com.minhtu.firesocialmedia.domain.entity.call.OfferAnswer
 import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
@@ -443,26 +445,74 @@ class HomeViewModel(
 
     private var _phoneCallRequestStatus = MutableStateFlow<CallingRequestData?>(null)
     val phoneCallRequestStatus = _phoneCallRequestStatus.asStateFlow()
-    suspend fun observePhoneCall() {
-        if(currentUser != null) {
-            try{
-                callInteractor.observe(
-                    isInCall,
-                    currentUser!!.uid,
-                    onReceivePhoneCallRequest = {callingRequestData ->
-                        if(callingRequestData.calleeId == currentUser!!.uid) {
+    private var whoStopCall : String = ""
+    fun setWhoStopCall(input : String) {
+        whoStopCall = input
+    }
+    fun resetCallEvent() {
+        whoStopCall = ""
+        CallEventFlow.events.value = null
+        updateIsInCall(false)
+    }
+    fun observePhoneCall() {
+        viewModelScope.launch(Dispatchers.IO) {
+            if(currentUser != null) {
+                try{
+                    callInteractor.observe(
+                        isInCall,
+                        currentUser!!.uid,
+                        onReceivePhoneCallRequest = {callingRequestData ->
                             logMessage("observePhoneCall", { "onReceivePhoneCallRequest" })
                             _phoneCallRequestStatus.value = callingRequestData
+                        },
+                        whoEndCallCallBack = { whoEndCall ->
+                            whoStopCall = whoEndCall
+                            logMessage("observePhoneCall", { "whoEndCallCallBack:$whoStopCall" })
+                        },
+                        onEndCall = {
+                            logMessage("observePhoneCall", { "onEndCall" })
+                            _endCallStatus.value = true
+                            viewModelScope.launch(ioDispatcher) {
+                                if(CallEventFlow.events.value != CallEvent.StopCalling &&
+                                    CallEventFlow.events.value != CallEvent.CallEnded) {
+                                    if(whoStopCall == currentUser!!.uid) {
+                                        logMessage("observePhoneCall", { "StopCalling whoStopCall from db" })
+                                        CallEventFlow.events.value = CallEvent.StopCalling
+                                    } else {
+                                        if(whoStopCall.isEmpty()) {
+                                            logMessage("observePhoneCall", { "whoStopCall is empty" })
+                                            if(_phoneCallRequestStatus.value == null) {
+                                                logMessage("observePhoneCall", { "StopCalling" })
+                                                CallEventFlow.events.value = CallEvent.StopCalling
+                                            } else {
+                                                logMessage("observePhoneCall", { "CallEnded" })
+                                                CallEventFlow.events.value = CallEvent.CallEnded
+                                            }
+                                        } else {
+                                            logMessage("observePhoneCall", { "whoStopCall is not empty" })
+                                            logMessage("observePhoneCall", { "StopCalling whoStopCall from db" })
+                                            callInteractor.stopCallService()
+                                            CallEventFlow.events.value = CallEvent.CallEnded
+                                        }
+                                    }
+                                }
+                                resetPhoneCallRequestStatus()
+                                isInCall.value = false
+                                CallEventFlow.localVideoTrack.value = null
+                                CallEventFlow.remoteVideoTrack.value = null
+                                CallEventFlow.videoCallState.value = null
+                            }
                         }
-                    },
-                    onEndCall = {
-                        _endCallStatus.value = true
-                    }
-                )
-            } catch(e : Exception){
-                logMessage("observePhoneCall Exception", { e.message.toString() })
+                    )
+                } catch(e : Exception){
+                    logMessage("observePhoneCall Exception", { e.message.toString() })
+                }
             }
         }
+    }
+
+    fun stopObservePhoneCall() {
+        callInteractor.stopObservePhoneCall()
     }
 
     fun resetPhoneCallRequestStatus() {

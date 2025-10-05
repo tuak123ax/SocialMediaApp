@@ -17,7 +17,8 @@ data class CallerUseCases(
     val observeAnswerFromCallee : ObserveAnswer,
     val observeCallStatus : ObserveCallStatus,
     val observeVideoCall : ObserveVideoCall,
-    val endCall: EndCallUseCase
+    val endCall: EndCallUseCase,
+    val sendWhoEndCallUseCase: SendWhoEndCallUseCase
 )
 class StartCallUseCase(
     private val initializeCallUseCase: InitializeCallUseCase,
@@ -171,7 +172,7 @@ class ObserveVideoCall(private val videoCallUseCase: VideoCallUseCase) {
 }
 
 class EndCallUseCase(private val manageCallStateUseCase : ManageCallStateUseCase) {
-    suspend operator fun invoke(sessionId: String) {
-        manageCallStateUseCase.endCall(sessionId)
+    suspend operator fun invoke(sessionId: String) : Boolean{
+        return manageCallStateUseCase.endCall(sessionId)
     }
 }

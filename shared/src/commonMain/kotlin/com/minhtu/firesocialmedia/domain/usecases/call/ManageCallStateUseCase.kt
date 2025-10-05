@@ -8,68 +8,47 @@ import com.minhtu.firesocialmedia.utils.Utils
 class ManageCallStateUseCase(
     val callRepository: CallRepository
 ) {
-    suspend fun acceptCall(sessionId : String,
-                           sendCallStatusCallBack : Utils.Companion.BasicCallBack) {
+    suspend fun acceptCall(sessionId : String) : Boolean{
         //Send accept call status.
-        callRepository.sendCallStatusToFirebase(
+        return callRepository.sendCallStatusToFirebase(
             sessionId,
-            CallStatus.ACCEPTED,
-            object : Utils.Companion.BasicCallBack{
-                override fun onSuccess() {
-                    //Send call status success
-                    logMessage("sendCallStatusToFirebase", { "send call status success" })
-                    sendCallStatusCallBack.onSuccess()
-                }
-                override fun onFailure() {
-                    //Send call status fail
-                    logMessage("sendCallStatusToFirebase", { "send call status fail" })
-                    sendCallStatusCallBack.onFailure()
-                }
-            }
+            CallStatus.ACCEPTED
         )
     }
 
-    suspend fun rejectCall(sessionId: String) {
-        if (sessionId.isEmpty()) return
+    suspend fun rejectCall(sessionId: String) : Boolean {
+        if (sessionId.isEmpty()) return false
 
-        callRepository.sendCallStatusToFirebase(
+        return callRepository.sendCallStatusToFirebase(
             sessionId,
-            CallStatus.ENDED,
-            object : Utils.Companion.BasicCallBack {
-                override fun onSuccess() {
-                    //Success
-                    logMessage("sendCallStatusToFirebase", { "send Ended success" })
-                }
-
-                override fun onFailure() {
-                    //Fail
-                    logMessage("sendCallStatusToFirebase", { "send Ended fail" })
-                }
-            }
+            CallStatus.ENDED
         )
     }
 
-    suspend fun endCall(sessionId : String) {
-        try{
+    suspend fun sendWhoEndCall(
+        sessionId: String,
+        whoEndCall : String) : Boolean {
+        if (sessionId.isEmpty()) return false
+
+        return callRepository.sendWhoEndCall(
+            sessionId,
+            whoEndCall
+        )
+    }
+
+    suspend fun endCall(sessionId : String) : Boolean{
+        return try{
             //Delete call session on DB when the call ended.
             if(sessionId.isNotEmpty()) {
                 callRepository.deleteCallSession(
-                    sessionId,
-                    object : Utils.Companion.BasicCallBack{
-                        override fun onSuccess() {
-                            //Delete call session success
-                            logMessage("endCall", { "Delete callsession success" })
-                        }
-
-                        override fun onFailure() {
-                            //Delete call session fail
-                            logMessage("endCall", { "Delete callsession fail" })
-                        }
-                    }
+                    sessionId
                 )
+            } else {
+                false
             }
         } catch (e : Exception) {
             logMessage("Exception when handle end call", { e.message.toString() })
+            false
         }
     }
 
@@ -77,8 +56,12 @@ class ManageCallStateUseCase(
         callRepository.acceptCallFromApp(sessionId, calleeId)
     }
 
-    suspend fun endCallFromApp() {
-        callRepository.endCallFromApp()
+    suspend fun callerEndCallFromApp(currentUser : String) {
+        callRepository.callerEndCallFromApp(currentUser)
+    }
+
+    suspend fun calleeEndCallFromApp(sessionId: String, currentUser : String) {
+        callRepository.calleeEndCallFromApp(sessionId, currentUser)
     }
 
     suspend fun rejectVideoCall() {

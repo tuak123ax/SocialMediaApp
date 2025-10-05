@@ -22,6 +22,7 @@ import com.minhtu.firesocialmedia.domain.entity.call.SharedCallData
 import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.platform.generateImageLoader
+import com.minhtu.firesocialmedia.platform.logMessage
 import com.minhtu.firesocialmedia.platform.platformViewModel
 import com.minhtu.firesocialmedia.platform.rememberPlatformImagePicker
 import com.minhtu.firesocialmedia.platform.setupSignInLauncher
@@ -220,8 +221,7 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                         caller = if(SharedCallData.callerId == homeViewModel.currentUser?.uid) homeViewModel.currentUser else homeViewModel.findUserById(SharedCallData.callerId)
                         callee = if(SharedCallData.calleeId == homeViewModel.currentUser?.uid) homeViewModel.currentUser else homeViewModel.findUserById(SharedCallData.calleeId)
                         navController.navigate(route = Calling.getScreenName())
-                    },
-                    navigationHandler
+                    }
                 )
             }
             composable(
@@ -504,7 +504,6 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                 popEnterTransition = DefaultNavAnimations.popEnter,
                 exitTransition = DefaultNavAnimations.exit,
                 popExitTransition = DefaultNavAnimations.popExit) {
-                homeViewModel.updateIsInCall(true)
                 Calling.CallingScreen(
                     localImageLoaderValue = localImageLoaderValue,
                     sessionId,
@@ -514,12 +513,18 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                     remoteOffer,
                     SharedCallData.navigateToCallingScreenFromNotification,
                     callingViewModel,
+                    homeViewModel,
                     navigationHandler,
                     onStopCallAndNavigateBack = {
-                        navigationHandler.navigateBack()
-                        homeViewModel.updateIsInCall(false) },
+                        if(navigationHandler.getCurrentRoute() != Home.getScreenName()) {
+                            logMessage("onStopCallAndNavigateBack",
+                                { navigationHandler.getCurrentRoute().toString() })
+                            navigationHandler.navigateBack()
+                        }
+                        homeViewModel.resetCallEvent() },
                     onNavigateToVideoCall = { sessionID, videoOffer ->
                         sessionId = sessionID
+                        remoteVideoOffer = videoOffer
                         remoteVideoOffer = videoOffer
                         navController.navigate(route = VideoCall.getScreenName())
                     },

@@ -8,6 +8,7 @@ import androidx.core.net.toUri
 import com.google.firebase.database.ChildEventListener
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.GenericTypeIndicator
 import com.google.firebase.database.ValueEventListener
@@ -409,98 +410,124 @@ class AndroidDatabaseHelper {
             }
         }
 
-        fun sendCallStatusToFirebase(
-                                    sessionId : String,
-                                    status: CallStatus,
-                                    callPath : String,
-                                    sendCallStatusCallBack : Utils.Companion.BasicCallBack) {
+        suspend fun sendCallStatusToFirebase(
+            sessionId: String,
+            status: CallStatus,
+            callPath: String) : Boolean = suspendCancellableCoroutine{ continuation ->
             Log.d("Task", "sendCallStatusToFirebase")
-            val database = FirebaseDatabase.getInstance().getReference(callPath).child(sessionId).child("status")
-            database.setValue(status).addOnCompleteListener { task ->
-                if(task.isSuccessful) {
-                    sendCallStatusCallBack.onSuccess()
-                } else {
-                    sendCallStatusCallBack.onFailure()
+            val sessionRef = FirebaseDatabase.getInstance()
+                .getReference(callPath)
+                .child(sessionId)
+
+            sessionRef.get()
+                .addOnSuccessListener { snap ->
+                    if (snap.exists()) {
+                        sessionRef.child("status").setValue(status)
+                            .addOnCompleteListener { t ->
+                                if (t.isSuccessful) {
+                                    if(continuation.isActive) continuation.resume(true, onCancellation = {})
+                                } else {
+                                    if(continuation.isActive) continuation.resume(false, onCancellation = {})
+                                }
+                            }
+                    } else {
+                        if(continuation.isActive) continuation.resume(false, onCancellation = {})
+                    }
                 }
-            }
+                .addOnFailureListener { if(continuation.isActive) continuation.resume(false, onCancellation = {}) }
         }
 
-        fun deleteCallSession(
+        suspend fun sendWhoEndCall(
             sessionId: String,
-            callPath: String,
-            deleteCallBack: Utils.Companion.BasicCallBack
-        ) {
+            whoEndCall: String,
+            callPath: String): Boolean = suspendCancellableCoroutine{ continuation ->
+            Log.d("Task", "sendWhoEndCall: $sessionId $whoEndCall")
+            val sessionRef = FirebaseDatabase.getInstance()
+                .getReference(callPath)
+                .child(sessionId)
+
+            sessionRef.get()
+                .addOnSuccessListener { snap ->
+                    if (snap.exists()) {
+                        sessionRef.child("whoEndCall").setValue(whoEndCall)
+                            .addOnCompleteListener { t ->
+                                if (t.isSuccessful) {
+                                    Log.d("Task", "sendWhoEndCall success")
+                                    if(continuation.isActive) continuation.resume(true, onCancellation = {})
+                                } else {
+                                    if(continuation.isActive) continuation.resume(false, onCancellation = {})
+                                }
+                            }
+                    } else {
+                        if(continuation.isActive) continuation.resume(false, onCancellation = {})
+                    }
+                }
+                .addOnFailureListener { if(continuation.isActive) continuation.resume(false, onCancellation = {}) }
+        }
+
+        suspend fun deleteCallSession(
+            sessionId: String,
+            callPath: String
+        ) : Boolean = suspendCancellableCoroutine{ continuation ->
             Log.d("Task", "deleteCallSession: $sessionId")
             val database = FirebaseDatabase.getInstance().getReference(callPath).child(sessionId)
             database.removeValue().addOnCompleteListener { task ->
                 if(task.isSuccessful) {
-                    deleteCallBack.onSuccess()
+                    if(continuation.isActive) continuation.resume(true, onCancellation = {})
                 } else {
-                    deleteCallBack.onFailure()
+                    if(continuation.isActive) continuation.resume(false, onCancellation = {})
                 }
             }
         }
 
+        private var callListener: ChildEventListener? = null
+        private var firebaseDatabase : DatabaseReference? = null
         fun observePhoneCall(
             isInCall : MutableStateFlow<Boolean>,
             currentUserId: String,
             callPath: String,
             phoneCallCallBack : (CallingRequestDTO) -> Unit,
             endCallSession: (Boolean) -> Unit,
+            whoEndCallCallBack : (String) -> Unit,
             iceCandidateCallBack : (iceCandidates : Map<String, IceCandidateDTO>?) -> Unit) {
-            val firebaseDatabase = FirebaseDatabase.getInstance().getReference(callPath)
-            firebaseDatabase.addChildEventListener(object : ChildEventListener {
+            firebaseDatabase = FirebaseDatabase.getInstance().getReference(callPath)
+            callListener?.let { firebaseDatabase!!.removeEventListener(it) }
+
+            // Keep track of what we've already handled
+            val handled = mutableSetOf<String>()
+
+            callListener = object : ChildEventListener {
                 override fun onChildAdded(snapshot: DataSnapshot, previousChildName: String?) {
                     Log.e("CallObserver", "onChildAdded")
-                    if (isInCall.value) return
-
-                    val offerSnapshot = snapshot.child("offer")
-                    val sdp = offerSnapshot.child("sdp").getValue(String::class.java)
-                    val type = offerSnapshot.child("type").getValue(String::class.java)
-                    val offer = if (sdp != null && type != null) {
-                        OfferAnswerDTO(sdp, type)
-                    } else null
-
-                    if(offer != null) {
-                        val audioCallSession = snapshot.getValue(AudioCallSessionDTO::class.java) ?: return
-                        handleOffer(
-                            audioCallSession,
-                            offer,
-                            callPath,
-                            isInCall,
-                            currentUserId,
-                            endCallSession,
-                            phoneCallCallBack, 
-                            iceCandidateCallBack)
-                    } else {
-                        snapshot.ref.addValueEventListener(object : ValueEventListener {
-                            override fun onDataChange(updatedSnapshot: DataSnapshot) {
-                                val updatedSession = updatedSnapshot.getValue(AudioCallSessionDTO::class.java)
-                                if (updatedSession?.offer != null) {
-                                    handleOffer(
-                                        updatedSession,
-                                        updatedSession.offer!!,
-                                        callPath,
-                                        isInCall,
-                                        currentUserId,
-                                        endCallSession,
-                                        phoneCallCallBack,
-                                        iceCandidateCallBack)
-                                    snapshot.ref.removeEventListener(this) // Detach after use
-                                }
-                            }
-
-                            override fun onCancelled(error: DatabaseError) {}
-                        })
-                    }
+                    processData(
+                        snapshot,
+                        callPath,
+                        isInCall,
+                        currentUserId,
+                        handled,
+                        phoneCallCallBack,
+                        iceCandidateCallBack
+                    )
                 }
 
-                override fun onChildChanged(snapshot: DataSnapshot, previousChildName: String?) {}
+                override fun onChildChanged(snapshot: DataSnapshot, previousChildName: String?) {
+                    Log.e("CallObserver", "onChildChanged")
+                    processData(
+                        snapshot,
+                        callPath,
+                        isInCall,
+                        currentUserId,
+                        handled,
+                        phoneCallCallBack,
+                        iceCandidateCallBack
+                    )
+                }
                 override fun onChildRemoved(snapshot: DataSnapshot) {
                     val session = snapshot.getValue(AudioCallSessionDTO::class.java) ?: return
                     if (session.calleeId == currentUserId || session.callerId == currentUserId) {
                         // Navigate out of call screen, show message, etc.
                         Log.d("CallObserver", "Call ended by caller or callee")
+                        whoEndCallCallBack(session.whoEndCall)
                         endCallSession(true)
                     }
                 }
@@ -508,7 +535,61 @@ class AndroidDatabaseHelper {
                 override fun onCancelled(error: DatabaseError) {
                     Log.e("CallObserver", "Failed to observe call", error.toException())
                 }
-            })
+            }
+            firebaseDatabase!!.addChildEventListener(callListener!!)
+        }
+
+        private fun processData(
+            snapshot : DataSnapshot,
+            callPath: String,
+            isInCall : MutableStateFlow<Boolean>,
+            currentUserId: String,
+            handled : MutableSet<String>,
+            phoneCallCallBack : (CallingRequestDTO) -> Unit,
+            iceCandidateCallBack : (iceCandidates : Map<String, IceCandidateDTO>?) -> Unit
+            ) {
+            Log.e("CallObserver", "isInCall: ${isInCall.value}")
+            if (isInCall.value) return
+            val offerSnapshot = snapshot.child("offer")
+            val sdp = offerSnapshot.child("sdp").getValue(String::class.java)
+            val type = offerSnapshot.child("type").getValue(String::class.java)
+            val offer = if (sdp != null && type != null) {
+                OfferAnswerDTO(sdp, type)
+            } else null
+
+            if(offer != null) {
+                // Dedupe by child key + offer SDP (or add a createdAt/callId field and use that)
+                val key = "${snapshot.key}:${offer.sdp}"
+                if (!handled.add(key)) return
+                val audioCallSession = snapshot.getValue(AudioCallSessionDTO::class.java) ?: return
+                handleOffer(
+                    audioCallSession,
+                    offer,
+                    callPath,
+                    isInCall,
+                    currentUserId,
+                    phoneCallCallBack,
+                    iceCandidateCallBack)
+            } else {
+                snapshot.ref.addValueEventListener(object : ValueEventListener {
+                    override fun onDataChange(updatedSnapshot: DataSnapshot) {
+                        val updatedSession = updatedSnapshot.getValue(AudioCallSessionDTO::class.java)
+                        if (updatedSession?.offer != null) {
+                            handleOffer(
+                                updatedSession,
+                                updatedSession.offer!!,
+                                callPath,
+                                isInCall,
+                                currentUserId,
+                                phoneCallCallBack,
+                                iceCandidateCallBack)
+                            snapshot.ref.removeEventListener(this) // Detach after use
+                        }
+                    }
+
+                    override fun onCancelled(error: DatabaseError) {}
+                })
+            }
         }
 
         fun observePhoneCallWithoutCheckingInCall(
@@ -516,6 +597,7 @@ class AndroidDatabaseHelper {
             callPath: String,
             phoneCallCallBack : (CallingRequestDTO) -> Unit,
             endCallSession: (Boolean) -> Unit,
+            whoEndCallCallBack : (String) -> Unit,
             iceCandidateCallBack : (iceCandidates : Map<String, IceCandidateDTO>?) -> Unit) {
             val firebaseDatabase = FirebaseDatabase.getInstance().getReference(callPath)
             firebaseDatabase.addChildEventListener(object : ChildEventListener {
@@ -537,7 +619,6 @@ class AndroidDatabaseHelper {
                             offer,
                             callPath,
                             currentUserId,
-                            endCallSession,
                             phoneCallCallBack,
                             iceCandidateCallBack)
                     } else {
@@ -550,7 +631,6 @@ class AndroidDatabaseHelper {
                                         updatedSession.offer!!,
                                         callPath,
                                         currentUserId,
-                                        endCallSession,
                                         phoneCallCallBack,
                                         iceCandidateCallBack)
                                     snapshot.ref.removeEventListener(this) // Detach after use
@@ -568,6 +648,7 @@ class AndroidDatabaseHelper {
                     if (session?.calleeId == currentUserId || session?.callerId == currentUserId) {
                         // Navigate out of call screen, show message, etc.
                         Log.d("observePhoneCallWithoutCheckingInCall", "Call ended by caller or callee")
+                        whoEndCallCallBack(session.whoEndCall)
                         endCallSession(true)
                     }
                 }
@@ -583,7 +664,6 @@ class AndroidDatabaseHelper {
                         callPath: String,
                         isInCall : MutableStateFlow<Boolean>,
                         currentUserId: String,
-                        endCallSession: (Boolean) -> Unit,
                         phoneCallCallBack : (CallingRequestDTO) -> Unit,
                         iceCandidateCallBack : (iceCandidates : Map<String, IceCandidateDTO>?) -> Unit) {
             val sessionId = session?.sessionId
@@ -591,37 +671,31 @@ class AndroidDatabaseHelper {
             val calleeId = session?.calleeId
             val callerCandidate = session?.callerCandidates
             val callStatus = session?.status
+            // Only proceed if this user is the callee AND the call is actually ringing
+            if (calleeId == currentUserId && callStatus == CallStatus.RINGING) {
+                isInCall.value = true // Lock state to prevent multiple calls
+                phoneCallCallBack(CallingRequestDTO(sessionId.toString(), callerId.toString(), calleeId, offer))
+                iceCandidateCallBack(callerCandidate)
 
-            if(callStatus != null && callStatus == CallStatus.ENDED) {
-                endCallSession(true)
-            } else {
-                // Only proceed if this user is the callee
-                if (calleeId == currentUserId) {
+                // Observe live caller ICE candidates and forward incrementally
+                if (!sessionId.isNullOrEmpty()) {
+                    val candidatesRef = FirebaseDatabase.getInstance()
+                        .getReference(callPath)
+                        .child(sessionId)
+                        .child("callerCandidates")
 
-                    isInCall.value = true // Lock state to prevent multiple calls
-                    phoneCallCallBack(CallingRequestDTO(sessionId.toString(), callerId.toString(), calleeId, offer))
-                    iceCandidateCallBack(callerCandidate)
-
-                    // Observe live caller ICE candidates and forward incrementally
-                    if (!sessionId.isNullOrEmpty()) {
-                        val candidatesRef = FirebaseDatabase.getInstance()
-                            .getReference(callPath)
-                            .child(sessionId)
-                            .child("callerCandidates")
-
-                        candidatesRef.addChildEventListener(object : ChildEventListener {
-                            override fun onChildAdded(snapshot: DataSnapshot, previousChildName: String?) {
-                                val ice = snapshot.getValue(IceCandidateDTO::class.java) ?: return
-                                val single = HashMap<String, IceCandidateDTO>()
-                                single[snapshot.key ?: System.currentTimeMillis().toString()] = ice
-                                iceCandidateCallBack(single)
-                            }
-                            override fun onChildChanged(snapshot: DataSnapshot, previousChildName: String?) {}
-                            override fun onChildRemoved(snapshot: DataSnapshot) {}
-                            override fun onChildMoved(snapshot: DataSnapshot, previousChildName: String?) {}
-                            override fun onCancelled(error: DatabaseError) {}
-                        })
-                    }
+                    candidatesRef.addChildEventListener(object : ChildEventListener {
+                        override fun onChildAdded(snapshot: DataSnapshot, previousChildName: String?) {
+                            val ice = snapshot.getValue(IceCandidateDTO::class.java) ?: return
+                            val single = HashMap<String, IceCandidateDTO>()
+                            single[snapshot.key ?: System.currentTimeMillis().toString()] = ice
+                            iceCandidateCallBack(single)
+                        }
+                        override fun onChildChanged(snapshot: DataSnapshot, previousChildName: String?) {}
+                        override fun onChildRemoved(snapshot: DataSnapshot) {}
+                        override fun onChildMoved(snapshot: DataSnapshot, previousChildName: String?) {}
+                        override fun onCancelled(error: DatabaseError) {}
+                    })
                 }
             }
         }
@@ -630,7 +704,6 @@ class AndroidDatabaseHelper {
                                       offer : OfferAnswerDTO,
                                       callPath: String,
                                       currentUserId: String,
-                                      endCallSession: (Boolean) -> Unit,
                                       phoneCallCallBack : (CallingRequestDTO) -> Unit,
                                       iceCandidateCallBack : (iceCandidates : Map<String, IceCandidateDTO>?) -> Unit) {
              val sessionId = session?.sessionId
@@ -638,35 +711,30 @@ class AndroidDatabaseHelper {
              val calleeId = session?.calleeId
              val callerCandidate = session?.callerCandidates
              val callStatus = session?.status
+             // Only proceed if this user is the callee
+             if (calleeId == currentUserId) {
+                 phoneCallCallBack(CallingRequestDTO(sessionId.toString(), callerId.toString(), calleeId, offer))
+                 iceCandidateCallBack(callerCandidate)
 
-             if(callStatus != null && callStatus == CallStatus.ENDED) {
-                 endCallSession(true)
-             } else {
-                 // Only proceed if this user is the callee
-                 if (calleeId == currentUserId) {
-                     phoneCallCallBack(CallingRequestDTO(sessionId.toString(), callerId.toString(), calleeId, offer))
-                     iceCandidateCallBack(callerCandidate)
+                 // Observe live caller ICE candidates and forward incrementally
+                 if (!sessionId.isNullOrEmpty()) {
+                     val candidatesRef = FirebaseDatabase.getInstance()
+                         .getReference(callPath)
+                         .child(sessionId)
+                         .child("callerCandidates")
 
-                     // Observe live caller ICE candidates and forward incrementally
-                     if (!sessionId.isNullOrEmpty()) {
-                         val candidatesRef = FirebaseDatabase.getInstance()
-                             .getReference(callPath)
-                             .child(sessionId)
-                             .child("callerCandidates")
-
-                         candidatesRef.addChildEventListener(object : ChildEventListener {
-                             override fun onChildAdded(snapshot: DataSnapshot, previousChildName: String?) {
-                                 val ice = snapshot.getValue(IceCandidateDTO::class.java) ?: return
-                                 val single = HashMap<String, IceCandidateDTO>()
-                                 single[snapshot.key ?: System.currentTimeMillis().toString()] = ice
-                                 iceCandidateCallBack(single)
-                             }
-                             override fun onChildChanged(snapshot: DataSnapshot, previousChildName: String?) {}
-                             override fun onChildRemoved(snapshot: DataSnapshot) {}
-                             override fun onChildMoved(snapshot: DataSnapshot, previousChildName: String?) {}
-                             override fun onCancelled(error: DatabaseError) {}
-                         })
-                     }
+                     candidatesRef.addChildEventListener(object : ChildEventListener {
+                         override fun onChildAdded(snapshot: DataSnapshot, previousChildName: String?) {
+                             val ice = snapshot.getValue(IceCandidateDTO::class.java) ?: return
+                             val single = HashMap<String, IceCandidateDTO>()
+                             single[snapshot.key ?: System.currentTimeMillis().toString()] = ice
+                             iceCandidateCallBack(single)
+                         }
+                         override fun onChildChanged(snapshot: DataSnapshot, previousChildName: String?) {}
+                         override fun onChildRemoved(snapshot: DataSnapshot) {}
+                         override fun onChildMoved(snapshot: DataSnapshot, previousChildName: String?) {}
+                         override fun onCancelled(error: DatabaseError) {}
+                     })
                  }
              }
         }
@@ -790,6 +858,12 @@ class AndroidDatabaseHelper {
                     Log.e("CallObserver", "Failed to observe offer", error.toException())
                 }
             })
+        }
+
+        fun stopObservePhoneCall() {
+            callListener?.let { l -> firebaseDatabase?.removeEventListener(l) }
+            callListener = null
+            firebaseDatabase = null
         }
     }
 }

@@ -8,6 +8,11 @@ interface CallInteractor {
         isInCall: MutableStateFlow<Boolean>,
         userId: String,
         onReceivePhoneCallRequest: suspend (CallingRequestData) -> Unit,
-        onEndCall: () -> Unit
+        onEndCall: suspend () -> Unit,
+        whoEndCallCallBack : suspend (String) -> Unit
     )
+
+    fun stopObservePhoneCall()
+
+    suspend fun stopCallService()
 }

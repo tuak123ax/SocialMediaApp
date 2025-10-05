@@ -3,12 +3,10 @@ package com.minhtu.firesocialmedia.domain.usecases.call
 import com.minhtu.firesocialmedia.domain.entity.call.CallingRequestData
 import com.minhtu.firesocialmedia.domain.entity.call.IceCandidateData
 import com.minhtu.firesocialmedia.domain.entity.call.OfferAnswer
-import com.minhtu.firesocialmedia.platform.logMessage
 import com.minhtu.firesocialmedia.utils.Utils
 import com.minhtu.firesocialmedia.utils.Utils.Companion.getCallTypeFromSdp
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.launch
+import kotlin.math.sign
 
 data class CalleeUseCases(
     val listenForIncomingCalls : ListenForIncomingCallsUseCase,
@@ -19,7 +17,8 @@ data class CalleeUseCases(
     val setRemoteDescription : SetRemoteDescriptionUseCase,
     val acceptCall : AcceptCallUseCase,
     val observeVideoCall : ObserveVideoCall,
-    val endCallUseCase : EndCallUseCase
+    val endCallUseCase : EndCallUseCase,
+    val sendWhoEndCallUseCase: SendWhoEndCallUseCase
 )
 class ListenForIncomingCallsUseCase(private val initializeCallUseCase: InitializeCallUseCase) {
     suspend operator fun invoke(
@@ -42,7 +41,8 @@ class ObservePhoneCallUseCase(private val signalingDataUseCase: SendSignalingDat
         calleeId : String,
         onReceivePhoneCallRequest : suspend (CallingRequestData) -> Unit,
         iceCandidateCallBack : suspend (iceCandidates : Map<String, IceCandidateData>?) -> Unit,
-        onEndCall : suspend () -> Unit) {
+        onEndCall : suspend () -> Unit,
+        whoEndCallCallBack : suspend (String) -> Unit) {
         signalingDataUseCase.observePhoneCallWithoutCheckingInCall(
             calleeId,
             onReceivePhoneCallRequest = { callingRequestData ->
@@ -50,6 +50,9 @@ class ObservePhoneCallUseCase(private val signalingDataUseCase: SendSignalingDat
             },
             iceCandidateCallBack = { iceCandidates ->
                 iceCandidateCallBack(iceCandidates)
+            },
+            whoEndCallCallBack = { whoEndCall ->
+                whoEndCallCallBack(whoEndCall)
             },
             onEndCall = {
                 onEndCall()
@@ -63,17 +66,27 @@ class ObservePhoneCallWithInCallUseCase(private val signalingDataUseCase: SendSi
         isInCall :  MutableStateFlow<Boolean>,
         calleeId : String,
         onReceivePhoneCallRequest : suspend (CallingRequestData) -> Unit,
-        onEndCall : suspend () -> Unit) {
+        onEndCall : suspend () -> Unit,
+        whoEndCallCallBack : suspend (String) -> Unit) {
         signalingDataUseCase.observePhoneCallWithCheckingInCall(
             isInCall,
             calleeId,
             onReceivePhoneCallRequest = { callingRequestData ->
                 onReceivePhoneCallRequest(callingRequestData)
             },
+            whoEndCallCallBack = { whoEndCall ->
+                whoEndCallCallBack(whoEndCall)
+            },
             onEndCall = {
                 onEndCall()
             }
         )
+    }
+}
+
+class StopObservePhoneCallUseCase(private val signalingDataUseCase: SendSignalingDataUseCase) {
+    operator fun invoke() {
+        signalingDataUseCase.stopObservePhoneCall()
     }
 }
 
@@ -109,30 +122,20 @@ class SendAnswerUseCase(private val initializeCallUseCase: InitializeCallUseCase
 }
 
 class AcceptCallUseCase(
-    private val manageCallStateUseCase: ManageCallStateUseCase,
-    private val coroutineScope: CoroutineScope) {
-    suspend operator fun invoke(sessionId : String,
-                                onAcceptCall : suspend (Boolean) -> Unit) {
-        manageCallStateUseCase.acceptCall(
-            sessionId,
-            object : Utils.Companion.BasicCallBack{
-                override fun onSuccess() {
-                    coroutineScope.launch {
-                        onAcceptCall(true)
-                    }
-                }
-
-                override fun onFailure() {
-                    coroutineScope.launch {
-                        onAcceptCall(false)
-                    }
-                }
-            })
+    private val manageCallStateUseCase: ManageCallStateUseCase) {
+    suspend operator fun invoke(sessionId : String) : Boolean {
+        return manageCallStateUseCase.acceptCall(sessionId)
     }
 }
 
 class AddIceCandidatesUseCase(private val initializeCallUseCase: InitializeCallUseCase) {
     suspend operator fun invoke(iceCandidates :Map<String, IceCandidateData>){
         initializeCallUseCase.addIceCandidates(iceCandidates)
+    }
+}
+
+class SendWhoEndCallUseCase(private val manageCallStateUseCase: ManageCallStateUseCase) {
+    suspend operator fun invoke(sessionId: String, whoEndCall: String) : Boolean{
+        return manageCallStateUseCase.sendWhoEndCall(sessionId, whoEndCall)
     }
 }

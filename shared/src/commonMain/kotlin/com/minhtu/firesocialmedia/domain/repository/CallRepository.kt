@@ -53,17 +53,16 @@ interface CallRepository {
     )
 
     suspend fun sendCallStatusToFirebase(sessionId: String,
-                                 status: CallStatus,
-                                 sendCallStatusCallBack : Utils.Companion.BasicCallBack)
+                                 status: CallStatus) : Boolean
 
     suspend fun deleteCallSession(
-        sessionId: String,
-        deleteCallBack : Utils.Companion.BasicCallBack
-    )
+        sessionId: String
+    ) : Boolean
 
     suspend fun acceptCallFromApp(sessionId: String, calleeId: String?)
 
-    suspend fun endCallFromApp()
+    suspend fun callerEndCallFromApp(currentUser : String)
+    suspend fun calleeEndCallFromApp(sessionId: String, currentUser : String)
 
     suspend fun rejectVideoCall()
 
@@ -118,6 +117,7 @@ interface CallRepository {
         currentUserId : String,
         phoneCallCallBack : (CallingRequestData) -> Unit,
         endCallSession: (Boolean) -> Unit,
+        whoEndCallCallBack : (String) -> Unit,
         iceCandidateCallBack : (iceCandidates : Map<String, IceCandidateData>?) -> Unit)
 
     suspend fun observePhoneCall(
@@ -125,10 +125,15 @@ interface CallRepository {
         currentUserId : String,
         phoneCallCallBack : (CallingRequestData) -> Unit,
         endCallSession: (Boolean) -> Unit,
+        whoEndCallCallBack : (String) -> Unit,
         iceCandidateCallBack : (iceCandidates : Map<String, IceCandidateData>?) -> Unit)
 
     suspend fun sendIceCandidateToFireBase(sessionId : String,
                                            iceCandidate: IceCandidateData,
                                            whichCandidate : String,
                                            sendIceCandidateCallBack : Utils.Companion.BasicCallBack)
+
+    suspend fun sendWhoEndCall(sessionId: String, whoEndCall: String): Boolean
+    suspend fun stopCallService()
+    fun stopObservePhoneCall()
 }

@@ -478,7 +478,7 @@ actual fun setupSignInLauncher(
                 signInViewModel.handleSignInResult(task)
             } catch (e: Exception) {
                 logMessage("SignIn") { "Exception: ${e.message}" }
-                signInViewModel.updateSignInStatus(SignInState(false, Constants.LOGIN_ERROR))
+                signInViewModel.updateSignInStatus(SignInState(false, null))
             }
         }
     )

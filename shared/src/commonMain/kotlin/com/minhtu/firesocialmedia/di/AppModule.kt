@@ -36,6 +36,8 @@ import com.minhtu.firesocialmedia.domain.usecases.call.RequestPermissionUseCase
 import com.minhtu.firesocialmedia.domain.usecases.call.SendSignalingDataUseCase
 import com.minhtu.firesocialmedia.domain.usecases.call.StartCallServiceUseCase
 import com.minhtu.firesocialmedia.domain.usecases.call.StartVideoCallServiceUseCase
+import com.minhtu.firesocialmedia.domain.usecases.call.StopCallServiceUseCase
+import com.minhtu.firesocialmedia.domain.usecases.call.StopObservePhoneCallUseCase
 import com.minhtu.firesocialmedia.domain.usecases.call.VideoCallUseCase
 import com.minhtu.firesocialmedia.domain.usecases.comment.DeleteCommentFromDatabaseUseCase
 import com.minhtu.firesocialmedia.domain.usecases.comment.DeleteSubCommentFromDatabaseUseCase
@@ -226,6 +228,12 @@ object AppModule {
     fun provideObservePhoneCallWithInCallUseCase(sendSignalingDataUseCase: SendSignalingDataUseCase) : ObservePhoneCallWithInCallUseCase {
         return ObservePhoneCallWithInCallUseCase(sendSignalingDataUseCase)
     }
+    fun provideStopObservePhoneCallUseCase(sendSignalingDataUseCase: SendSignalingDataUseCase) : StopObservePhoneCallUseCase {
+        return StopObservePhoneCallUseCase(sendSignalingDataUseCase)
+    }
+    fun provideStopCallServiceUseCase(callRepository: CallRepository) : StopCallServiceUseCase {
+        return StopCallServiceUseCase(callRepository)
+    }
     fun provideSearchUserByNameUseCase(userRepository: UserRepository) : SearchUserByNameUseCase {
         return SearchUserByNameUseCase(userRepository)
     }
@@ -273,9 +281,13 @@ object AppModule {
     }
     fun provideCallInteractor(
         observePhoneCallWithInCallUseCase: ObservePhoneCallWithInCallUseCase,
+        stopObservePhoneCallUseCase: StopObservePhoneCallUseCase,
+        stopCallServiceUseCase: StopCallServiceUseCase
     ) : CallInteractor {
         return CallInteractorImpl(
-            observePhoneCallWithInCallUseCase
+            observePhoneCallWithInCallUseCase,
+            stopObservePhoneCallUseCase,
+            stopCallServiceUseCase
         )
     }
     fun provideHomeViewModel(
