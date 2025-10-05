@@ -22,6 +22,7 @@ import com.minhtu.firesocialmedia.domain.entity.call.SharedCallData
 import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.platform.generateImageLoader
+import com.minhtu.firesocialmedia.platform.logMessage
 import com.minhtu.firesocialmedia.platform.platformViewModel
 import com.minhtu.firesocialmedia.platform.rememberPlatformImagePicker
 import com.minhtu.firesocialmedia.platform.setupSignInLauncher
@@ -208,11 +209,11 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                         selectedNew = new
                         navController.navigate(route = Comment.getScreenName())
                     },
-                    onNavigateToCallingScreen = { sessionID, callerId, calleeId, offer ->
-                        sessionId = sessionID
-                        remoteOffer = offer
-                        caller = if(callerId == homeViewModel.currentUser?.uid) homeViewModel.currentUser else homeViewModel.findUserById(callerId)
-                        callee = if(calleeId == homeViewModel.currentUser?.uid) homeViewModel.currentUser else homeViewModel.findUserById(calleeId)
+                    onNavigateToCallingScreen = { callingRequestData ->
+                        sessionId = callingRequestData.sessionId
+                        remoteOffer = callingRequestData.offer
+                        caller = if(callingRequestData.callerId == homeViewModel.currentUser?.uid) homeViewModel.currentUser else homeViewModel.findUserById(callingRequestData.callerId)
+                        callee = if(callingRequestData.calleeId == homeViewModel.currentUser?.uid) homeViewModel.currentUser else homeViewModel.findUserById(callingRequestData.calleeId)
                         navController.navigate(route = Calling.getScreenName())
                     },
                     onNavigateToCallingScreenWithUI = {
@@ -220,8 +221,7 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                         caller = if(SharedCallData.callerId == homeViewModel.currentUser?.uid) homeViewModel.currentUser else homeViewModel.findUserById(SharedCallData.callerId)
                         callee = if(SharedCallData.calleeId == homeViewModel.currentUser?.uid) homeViewModel.currentUser else homeViewModel.findUserById(SharedCallData.calleeId)
                         navController.navigate(route = Calling.getScreenName())
-                    },
-                    navigationHandler
+                    }
                 )
             }
             composable(
@@ -313,7 +313,6 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                     onVideoPicked = {}
                 )
                 UserInformation.UserInformationScreen(
-                    platform = platformContext,
                     imagePicker = picker,
                     user = selectedUser,
                     isCurrentUser = selectedUser == homeViewModel.currentUser,
@@ -346,6 +345,10 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                             callee = user
                             navController.navigate(route = Calling.getScreenName())
                         }
+                    },
+                    onNavigateToCommentScreen = { new ->
+                        selectedNew = new
+                        navController.navigate(route = Comment.getScreenName())
                     }
                 )
             }
@@ -504,9 +507,7 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                 popEnterTransition = DefaultNavAnimations.popEnter,
                 exitTransition = DefaultNavAnimations.exit,
                 popExitTransition = DefaultNavAnimations.popExit) {
-                homeViewModel.updateIsInCall(true)
                 Calling.CallingScreen(
-                    platformContext,
                     localImageLoaderValue = localImageLoaderValue,
                     sessionId,
                     callee,
@@ -515,10 +516,18 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                     remoteOffer,
                     SharedCallData.navigateToCallingScreenFromNotification,
                     callingViewModel,
+                    homeViewModel,
                     navigationHandler,
-                    onStopCall = { homeViewModel.updateIsInCall(false) },
+                    onStopCallAndNavigateBack = {
+                        if(navigationHandler.getCurrentRoute() != Home.getScreenName()) {
+                            logMessage("onStopCallAndNavigateBack",
+                                { navigationHandler.getCurrentRoute().toString() })
+                            navigationHandler.navigateBack()
+                        }
+                        homeViewModel.resetCallEvent() },
                     onNavigateToVideoCall = { sessionID, videoOffer ->
                         sessionId = sessionID
+                        remoteVideoOffer = videoOffer
                         remoteVideoOffer = videoOffer
                         navController.navigate(route = VideoCall.getScreenName())
                     },

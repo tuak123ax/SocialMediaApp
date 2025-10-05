@@ -11,6 +11,7 @@ import com.minhtu.firesocialmedia.domain.repository.AuthenticationRepository
 import com.minhtu.firesocialmedia.data.remote.service.auth.AuthService
 import com.minhtu.firesocialmedia.data.remote.service.crypto.CryptoService
 import com.minhtu.firesocialmedia.data.remote.service.database.DatabaseService
+import com.minhtu.firesocialmedia.domain.error.signin.SignInError
 
 class AuthenticationRepositoryImpl(
     private val authService: AuthService,
@@ -20,7 +21,7 @@ class AuthenticationRepositoryImpl(
     override suspend fun signInWithEmailAndPassword(
         email: String,
         password: String
-    ): Result<Unit> {
+    ): SignInError? {
         return authService.signInWithEmailAndPassword(email, password)
     }
 

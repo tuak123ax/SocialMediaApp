@@ -1,6 +1,7 @@
 package com.minhtu.firesocialmedia.data.remote.service.database
 
 import com.minhtu.firesocialmedia.data.dto.call.AudioCallSessionDTO
+import com.minhtu.firesocialmedia.data.dto.call.CallingRequestDTO
 import com.minhtu.firesocialmedia.data.dto.call.IceCandidateDTO
 import com.minhtu.firesocialmedia.data.dto.call.OfferAnswerDTO
 import com.minhtu.firesocialmedia.data.dto.comment.CommentDTO
@@ -41,7 +42,7 @@ interface DatabaseService {
     )
 
     suspend fun saveInstanceToDatabase(
-        id : String,
+        commentId : String,
         path : String,
         instance : BaseNewsInstance
     ) : Boolean
@@ -86,7 +87,7 @@ interface DatabaseService {
     suspend fun sendOfferToFireBase(
         sessionId : String,
         offer: OfferAnswerDTO,
-        sendIceCandidateCallBack : Utils.Companion.BasicCallBack
+        sendOfferCallBack : Utils.Companion.BasicCallBack
     )
 
     suspend fun sendIceCandidateToFireBase(sessionId : String,
@@ -96,26 +97,24 @@ interface DatabaseService {
     suspend fun sendCallSessionToFirebase(session: AudioCallSessionDTO,
                                           sendCallSessionCallBack : Utils.Companion.BasicCallBack)
 
-    fun sendCallStatusToFirebase(sessionId: String,
-                                 status: CallStatus,
-                                 sendCallStatusCallBack : Utils.Companion.BasicCallBack)
+    suspend fun sendCallStatusToFirebase(sessionId: String,
+                                 status: CallStatus) : Boolean
 
-    suspend fun deleteCallSession(
-        sessionId: String,
-        deleteCallBack : Utils.Companion.BasicCallBack
-    )
+    suspend fun deleteCallSession(sessionId: String) : Boolean
 
     suspend fun observePhoneCall(
         isInCall : MutableStateFlow<Boolean>,
         currentUserId : String,
-        phoneCallCallBack : (String, String, String, OfferAnswerDTO) -> Unit,
+        phoneCallCallBack : (CallingRequestDTO) -> Unit,
         endCallSession: (Boolean) -> Unit,
+        whoEndCallCallBack : (String) -> Unit,
         iceCandidateCallBack : (iceCandidates : Map<String, IceCandidateDTO>?) -> Unit)
 
     suspend fun observePhoneCallWithoutCheckingInCall(
         currentUserId : String,
-        phoneCallCallBack : (String, String, String, OfferAnswerDTO) -> Unit,
+        phoneCallCallBack : (CallingRequestDTO) -> Unit,
         endCallSession: (Boolean) -> Unit,
+        whoEndCallCallBack : (String) -> Unit,
         iceCandidateCallBack : (iceCandidates : Map<String, IceCandidateDTO>?) -> Unit)
 
     suspend fun sendAnswerToFirebase(
@@ -170,4 +169,6 @@ interface DatabaseService {
     )
 
     suspend fun searchUserByName(name: String, path: String) : List<UserDTO>?
+    suspend fun sendWhoEndCall(sessionId: String, whoEndCall: String): Boolean
+    fun stopObservePhoneCall()
 }

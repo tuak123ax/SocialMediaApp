@@ -56,24 +56,21 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.minhtu.firesocialmedia.constants.Constants
 import com.minhtu.firesocialmedia.constants.TestTag
+import com.minhtu.firesocialmedia.data.remote.service.imagepicker.ImagePicker
 import com.minhtu.firesocialmedia.di.PlatformContext
 import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
-import com.minhtu.firesocialmedia.data.remote.service.imagepicker.ImagePicker
-import com.minhtu.firesocialmedia.platform.generateImageLoader
 import com.minhtu.firesocialmedia.platform.getImageBytesFromDrawable
 import com.minhtu.firesocialmedia.platform.showToast
 import com.minhtu.firesocialmedia.presentation.home.HomeViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.friend.FriendViewModel
 import com.minhtu.firesocialmedia.utils.UiUtils
-import com.seiko.imageloader.LocalImageLoader
 import com.seiko.imageloader.ui.AutoSizeImage
 
 class UserInformation {
     companion object{
         @Composable
         fun UserInformationScreen(
-            platform : PlatformContext,
             imagePicker: ImagePicker,
             user: UserInstance?,
             isCurrentUser : Boolean,
@@ -87,7 +84,8 @@ class UserInformation {
             onNavigateToUserInformation : (user : UserInstance?) -> Unit,
             onNavigateBack : () -> Unit,
             onNavigateToUploadNewsfeed: (updateNew : NewsInstance?) -> Unit,
-            onNavigateToCallingScreen : (user : UserInstance?) -> Unit
+            onNavigateToCallingScreen : (user : UserInstance?) -> Unit,
+            onNavigateToCommentScreen: (selectedNew : NewsInstance) -> Unit,
         ){
             val listState = rememberLazyListState()
             val newsList = homeViewModel.allNews.collectAsState()
@@ -101,6 +99,30 @@ class UserInformation {
             LaunchedEffect(Unit) {
                 friendViewModel.updateFriendRequests(homeViewModel.currentUser!!.friendRequests)
                 friendViewModel.updateFriends(homeViewModel.currentUser!!.friends)
+            }
+
+            val calleeCurrentState by userInformationViewModel.calleeCurrentState.collectAsState()
+            LaunchedEffect(calleeCurrentState) {
+                if(calleeCurrentState != null) {
+                    if(calleeCurrentState!!) {
+                        if(isCurrentUser) {
+                            showToast("Cannot call for yourself")
+                        } else {
+                            onNavigateToCallingScreen(user)
+                        }
+                    } else {
+                        showToast("This user is having another call! Please recall after a few minutes.")
+                    }
+                    userInformationViewModel.resetCalleeState()
+                }
+            }
+
+            val commentStatus by homeViewModel.commentStatus.collectAsState()
+            LaunchedEffect(commentStatus) {
+                commentStatus?.let { selectedNew ->
+                    onNavigateToCommentScreen(selectedNew)
+                    homeViewModel.resetCommentStatus()
+                }
             }
 
             Box(modifier = modifier.padding(paddingValues)) {
@@ -220,22 +242,7 @@ class UserInformation {
                             IconButton(
                                 onClick = {
                                     if(user != null) {
-                                        userInformationViewModel.checkCalleeAvailable(user,
-                                            onResult = { available ->
-                                                if(available == null) {
-                                                    showToast("This feature is not available now!")
-                                                } else {
-                                                    if(available) {
-                                                        if(isCurrentUser) {
-                                                            showToast("Cannot call for yourself.")
-                                                        } else {
-                                                            onNavigateToCallingScreen(user)
-                                                        }
-                                                    } else {
-                                                        showToast("This user is having another call! Please recall after a few minutes.")
-                                                    }
-                                                }
-                                            })
+                                        userInformationViewModel.checkCalleeAvailable(user)
                                     }
                                 },
                                 modifier = Modifier.Companion.border(
@@ -313,7 +320,6 @@ class UserInformation {
                                     )
                                 }
                                 DropdownMenuForResponse(
-                                    platform,
                                     showMenu,
                                     friendViewModel,
                                     userInformationViewModel,
@@ -346,7 +352,7 @@ class UserInformation {
         }
 
         @Composable
-        fun DropdownMenuForResponse(platform : PlatformContext,
+        fun DropdownMenuForResponse(
                                     expanded : Boolean,
                                     friendViewModel: FriendViewModel,
                                     userInformationViewModel: UserInformationViewModel,

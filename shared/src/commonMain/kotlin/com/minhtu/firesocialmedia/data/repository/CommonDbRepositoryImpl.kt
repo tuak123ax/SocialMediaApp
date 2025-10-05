@@ -31,12 +31,13 @@ class CommonDbRepositoryImpl(
     }
 
     override suspend fun saveCommentToDatabase(
-        id: String,
-        instance: BaseNewsInstance
+        selectedNewId: String,
+        commentId : String,
+        instance : BaseNewsInstance
     ): Boolean {
         return databaseService.saveInstanceToDatabase(
-            id,
-            DataConstant.NEWS_PATH+"/"+id+"/"+ DataConstant.COMMENT_PATH,
+            commentId,
+            DataConstant.NEWS_PATH+"/"+selectedNewId+"/"+ DataConstant.COMMENT_PATH,
             instance
         )
     }

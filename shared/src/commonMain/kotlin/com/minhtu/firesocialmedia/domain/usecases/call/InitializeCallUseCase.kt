@@ -5,6 +5,7 @@ import com.minhtu.firesocialmedia.domain.entity.call.CallType
 import com.minhtu.firesocialmedia.domain.entity.call.IceCandidateData
 import com.minhtu.firesocialmedia.domain.entity.call.OfferAnswer
 import com.minhtu.firesocialmedia.domain.repository.CallRepository
+import com.minhtu.firesocialmedia.platform.logMessage
 import com.minhtu.firesocialmedia.utils.Utils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -79,6 +80,14 @@ class InitializeCallUseCase(
         )
     }
 
+    suspend fun createOffer(createOfferCallBack: (offer : OfferAnswer) -> Unit) {
+        callRepository.createOffer(
+            onOfferCreated = { offer ->
+                createOfferCallBack(offer)
+            }
+        )
+    }
+
     suspend fun createAndSendAnswer(sessionId : String,
                                     callType : CallType,
                                     currentUserId : String?,
@@ -91,6 +100,9 @@ class InitializeCallUseCase(
                     answer.initiator = currentUserId
                 }
                 coroutineScope.launch {
+                    // Slight delay to ensure remote SDP and candidates are applied on caller
+                    // before we send our answer, avoiding race in signaling/storage
+                    kotlinx.coroutines.delay(50)
                     //Send offer to DB after created
                     callRepository.sendAnswerToFirebase(
                         sessionId,
@@ -115,5 +127,15 @@ class InitializeCallUseCase(
 
     suspend fun setRemoteDescription(offerAnswer : OfferAnswer) {
         callRepository.setRemoteDescription(offerAnswer)
+    }
+
+    suspend fun addIceCandidates(iceCandidates : Map<String, IceCandidateData>) {
+        for(candidate in iceCandidates.values) {
+            if(candidate.candidate != null && candidate.sdpMid != null && candidate.sdpMLineIndex != null) {
+                logMessage("iceCandidateCallBack",
+                    { "add ice candidate for callee" })
+                callRepository.addIceCandidate(candidate.candidate!!, candidate.sdpMid!!, candidate.sdpMLineIndex!!)
+            }
+        }
     }
 }

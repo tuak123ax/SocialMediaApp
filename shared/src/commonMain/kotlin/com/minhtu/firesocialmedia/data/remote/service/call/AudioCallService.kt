@@ -62,11 +62,13 @@ interface AudioCallService{
 
     /**
      * This function is called when user end call from app instead of notification.
-     * @Param:
-     * sessionId: session id of the call.
-     * calleeId: id of callee.
      * */
-    suspend fun endCallFromApp()
+    suspend fun callerEndCallFromApp(currentUser : String)
+
+    /**
+     * This function is called when user end call from app instead of notification.
+     * */
+    suspend fun calleeEndCallFromApp(sessionId: String, currentUser : String)
 
     /**
      * This function is used to reject video call.

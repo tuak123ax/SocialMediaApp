@@ -5,11 +5,13 @@ import com.minhtu.firesocialmedia.constants.Constants
 import com.minhtu.firesocialmedia.domain.entity.crypto.Credentials
 import com.minhtu.firesocialmedia.domain.entity.signin.SignInState
 import com.minhtu.firesocialmedia.data.remote.service.signinlauncher.SignInLauncher
+import com.minhtu.firesocialmedia.domain.error.signin.SignInError
 import com.minhtu.firesocialmedia.domain.usecases.signin.CheckLocalAccountUseCase
 import com.minhtu.firesocialmedia.domain.usecases.signin.CheckUserExistsUseCase
 import com.minhtu.firesocialmedia.domain.usecases.signin.HandleSignInGoogleResultUseCase
 import com.minhtu.firesocialmedia.domain.usecases.signin.RememberPasswordUseCase
 import com.minhtu.firesocialmedia.domain.usecases.signin.SignInUseCase
+import com.minhtu.firesocialmedia.platform.logMessage
 import com.rickclephas.kmp.observableviewmodel.ViewModel
 import com.rickclephas.kmp.observableviewmodel.launch
 import kotlinx.coroutines.CoroutineDispatcher
@@ -33,14 +35,14 @@ class SignInViewModel(
         this.launcher = launcher
     }
 
-    private var _signInStatus = MutableStateFlow(SignInState())
+    private var _signInStatus = MutableStateFlow(SignInState(false,null))
     var signInState = _signInStatus.asStateFlow()
 
     fun updateSignInStatus(state : SignInState) {
         _signInStatus.value = state
     }
     fun resetSignInStatus() {
-        _signInStatus.value = SignInState()
+        _signInStatus.value = SignInState(false, null)
     }
     var _rememberPassword = MutableStateFlow(false)
     var rememberPassword = _rememberPassword.asStateFlow()
@@ -61,18 +63,19 @@ class SignInViewModel(
         viewModelScope.launch {
             withContext(ioDispatcher) {
                 if (email.value.isBlank() || password.value.isBlank()) {
-                    _signInStatus.value = SignInState(false, Constants.DATA_EMPTY)
+                    _signInStatus.value = SignInState(false, SignInError.DataEmpty)
                 } else {
                     showLoading()
                     email.value = email.value.lowercase()
-                    val result = signInUseCase.invoke(email.value, password.value)
-                    if (result.isSuccess) {
+                    val signInError = signInUseCase.invoke(email.value, password.value)
+                    if (signInError == null) {
                         if (rememberPassword.value) {
                             rememberPasswordUseCase.invoke(email.value, password.value)
                         }
                         checkEmailInDatabase(email.value)
                     } else {
-                        _signInStatus.value = SignInState(false, Constants.LOGIN_ERROR)
+                        logMessage("signIn", { "Error when sign in" })
+                        _signInStatus.value = SignInState(false, signInError)
                     }
                 }
             }
@@ -109,7 +112,7 @@ class SignInViewModel(
                 if(!result.isNullOrEmpty()) {
                     checkEmailInDatabase(result)
                 } else {
-                    _signInStatus.value = SignInState(false, Constants.LOGIN_ERROR)
+                    _signInStatus.value = SignInState(false, null)
                 }
             }
         }

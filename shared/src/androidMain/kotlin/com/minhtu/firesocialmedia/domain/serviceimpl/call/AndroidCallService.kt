@@ -36,16 +36,20 @@ import org.webrtc.SessionDescription
 import org.webrtc.SurfaceTextureHelper
 import org.webrtc.VideoSource
 import org.webrtc.VideoTrack
+import org.webrtc.audio.AudioDeviceModule
 import org.webrtc.audio.JavaAudioDeviceModule
 
 object WebRTCManager {
     var eglBase: EglBase = EglBase.create()
 }
 class AndroidAudioCallService(
-    private val context : Context
+    context : Context
     ) : AudioCallService {
+    private val appContext: Context = context.applicationContext
     private var peerConnectionFactory: PeerConnectionFactory
     private var peerConnection : PeerConnection? = null
+    private var isRemoteDescriptionSet: Boolean = false
+    private val pendingRemoteIceCandidates: MutableList<IceCandidate> = mutableListOf()
     private var localAudioSource : AudioSource? = null
     private var localAudioTrack : AudioTrack? = null
     private var localVideoSource : VideoSource? = null
@@ -55,16 +59,17 @@ class AndroidAudioCallService(
     private var surfaceTextureHelper : SurfaceTextureHelper? = null
     private var hasStarted = false
     private var localVideoSender: RtpSender? = null
+    private lateinit var audioDeviceModule: AudioDeviceModule
 
     init {
         // 1. Initialize WebRTC global settings
-        val options = PeerConnectionFactory.InitializationOptions.builder(context)
+        val options = PeerConnectionFactory.InitializationOptions.builder(appContext)
             .setEnableInternalTracer(true)
             .createInitializationOptions()
         PeerConnectionFactory.initialize(options)
 
         // 2. Audio device module (for microphone and speaker access)
-        val audioDeviceModule = JavaAudioDeviceModule.builder(context)
+        audioDeviceModule = JavaAudioDeviceModule.builder(appContext)
             .setUseHardwareAcousticEchoCanceler(true)
             .setUseHardwareNoiseSuppressor(true)
             .createAudioDeviceModule()
@@ -261,6 +266,16 @@ class AndroidAudioCallService(
 
             override fun onSetSuccess() {
                 logMessage("setRemoteDescription", { "onSetSuccess" })
+                isRemoteDescriptionSet = true
+                val pendingCount = pendingRemoteIceCandidates.size
+                if (pendingCount > 0) {
+                    Log.d("WebRTC", "Flushing $pendingCount pending remote ICE candidates")
+                    pendingRemoteIceCandidates.forEach { candidate ->
+                        val added = peerConnection?.addIceCandidate(candidate) ?: false
+                        Log.d("WebRTC", "Flushed ICE candidate added=$added: ${candidate.sdpMid}:${candidate.sdpMLineIndex}")
+                    }
+                    pendingRemoteIceCandidates.clear()
+                }
             }
 
             override fun onCreateFailure(p0: String?) {
@@ -281,23 +296,35 @@ class AndroidAudioCallService(
      * calleeId: id of callee.
      * */
     override suspend fun acceptCallFromApp(sessionId: String, calleeId: String?) {
-        val acceptIntent = Intent(context, CallActionBroadcastReceiver::class.java).apply {
+        val acceptIntent = Intent(appContext, CallActionBroadcastReceiver::class.java).apply {
             action = CallAction.ACCEPT_CALL_ACTION
             putExtra(Constants.KEY_SESSION_ID, sessionId)
             putExtra(Constants.KEY_CALLEE_ID, calleeId)
             putExtra(Constants.FROM_NOTIFICATION, false)
         }
 
-        context.sendBroadcast(acceptIntent)
+        appContext.sendBroadcast(acceptIntent)
     }
 
-    override suspend fun endCallFromApp() {
-        val acceptIntent = Intent(context, CallActionBroadcastReceiver::class.java).apply {
+    override suspend fun callerEndCallFromApp(currentUser : String) {
+        val acceptIntent = Intent(appContext, CallActionBroadcastReceiver::class.java).apply {
             action = CallAction.STOP_CALL_ACTION_FROM_CALLER
             putExtra(Constants.FROM_NOTIFICATION, false)
+            putExtra(Constants.KEY_CALLER_ID, currentUser)
         }
 
-        context.sendBroadcast(acceptIntent)
+        appContext.sendBroadcast(acceptIntent)
+    }
+
+    override suspend fun calleeEndCallFromApp(sessionId: String, currentUser : String) {
+        val acceptIntent = Intent(appContext, CallActionBroadcastReceiver::class.java).apply {
+            action = CallAction.STOP_CALL_ACTION_FROM_CALLEE
+            putExtra(Constants.KEY_SESSION_ID, sessionId)
+            putExtra(Constants.FROM_NOTIFICATION, false)
+            putExtra(Constants.KEY_CALLEE_ID, currentUser)
+        }
+
+        appContext.sendBroadcast(acceptIntent)
     }
 
     /**
@@ -310,7 +337,14 @@ class AndroidAudioCallService(
     ) {
         logMessage("addIceCandidate", { "addIceCandidate" })
         val candidate = IceCandidate(sdpMid, sdpMLineIndex, sdp)
-        peerConnection?.addIceCandidate(candidate)
+        Log.d("WebRTC", "addIceCandidate called. isRemoteDescriptionSet=$isRemoteDescriptionSet")
+        if (isRemoteDescriptionSet) {
+            val added = peerConnection?.addIceCandidate(candidate) ?: false
+            Log.d("WebRTC", "Applied ICE candidate added=$added: ${candidate.sdpMid}:${candidate.sdpMLineIndex}")
+        } else {
+            pendingRemoteIceCandidates.add(candidate)
+            Log.d("WebRTC", "Queued ICE candidate. Pending size=${pendingRemoteIceCandidates.size}")
+        }
     }
 
     /**
@@ -324,6 +358,8 @@ class AndroidAudioCallService(
         onIceCandidateCreated : (iceCandidateData : IceCandidateDTO) -> Unit,
         onRemoteVideoTrackReceived: (remoteVideoTrack :WebRTCVideoTrack) -> Unit) {
         logMessage("initialize", { "start initialize" })
+        isRemoteDescriptionSet = false
+        pendingRemoteIceCandidates.clear()
         //Setup audio manager
         setupAudioManager()
         //Setup ice servers.
@@ -410,7 +446,7 @@ class AndroidAudioCallService(
      * This function is used to setup audio manager.
      * */
     private fun setupAudioManager() {
-        val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+        val audioManager = appContext.getSystemService(Context.AUDIO_SERVICE) as AudioManager
         audioManager.mode = AudioManager.MODE_IN_COMMUNICATION
         audioManager.isSpeakerphoneOn = true
     }
@@ -464,7 +500,7 @@ class AndroidAudioCallService(
         localVideoSource = peerConnectionFactory.createVideoSource(videoCapturer!!.isScreencast)
 
         try {
-            videoCapturer?.initialize(surfaceTextureHelper, context, localVideoSource?.capturerObserver)
+            videoCapturer?.initialize(surfaceTextureHelper, appContext, localVideoSource?.capturerObserver)
             videoCapturer?.startCapture(720, 1280, 30)
         } catch (e: Exception) {
             Log.e("WebRTC", "Capturer start failed: ${e.message}")
@@ -491,7 +527,7 @@ class AndroidAudioCallService(
      * This function is used to create camera capturer.
      * */
     fun createCameraCapturer() : CameraVideoCapturer? {
-        val enumerator = Camera2Enumerator(context)
+        val enumerator = Camera2Enumerator(appContext)
         val devicesName = enumerator.deviceNames
         //Find front camera
         for(deviceName in devicesName) {
@@ -520,12 +556,12 @@ class AndroidAudioCallService(
      * callee: information of callee.
      * */
     override suspend fun startCallService(sessionId : String, caller : UserDTO, callee : UserDTO) {
-        callForegroundServiceIntent = Intent(context, CallForegroundService::class.java)
+        callForegroundServiceIntent = Intent(appContext, CallForegroundService::class.java)
         callForegroundServiceIntent?.putExtra("sessionId", sessionId)
         callForegroundServiceIntent?.putExtra("caller", Json.encodeToString(caller))
         callForegroundServiceIntent?.putExtra("callee", Json.encodeToString(callee))
         if(callForegroundServiceIntent != null) {
-            AndroidUtils.startForegroundService(context, callForegroundServiceIntent!!)
+            AndroidUtils.startForegroundService(appContext, callForegroundServiceIntent!!)
         }
     }
 
@@ -544,7 +580,7 @@ class AndroidAudioCallService(
                                                callee : UserDTO,
                                                currentUserId : String?,
                                                remoteVideoOffer : OfferAnswerDTO?) {
-        videoCallForegroundServiceIntent = Intent(context, CallForegroundService::class.java).apply {
+        videoCallForegroundServiceIntent = Intent(appContext, CallForegroundService::class.java).apply {
             action = CallAction.START_VIDEO_CALL
         }
         videoCallForegroundServiceIntent?.putExtra("sessionId", sessionId)
@@ -555,7 +591,7 @@ class AndroidAudioCallService(
         }
         videoCallForegroundServiceIntent?.putExtra("currentUserId", currentUserId)
         if(videoCallForegroundServiceIntent != null) {
-            AndroidUtils.startForegroundService(context, videoCallForegroundServiceIntent!!)
+            AndroidUtils.startForegroundService(appContext, videoCallForegroundServiceIntent!!)
         }
     }
 
@@ -563,11 +599,11 @@ class AndroidAudioCallService(
      * This function is used to reject video call.
      * */
     override suspend fun rejectVideoCall() {
-        videoCallForegroundServiceIntent = Intent(context, CallForegroundService::class.java).apply {
+        videoCallForegroundServiceIntent = Intent(appContext, CallForegroundService::class.java).apply {
             action = CallAction.REJECT_VIDEO_CALL
         }
         if(videoCallForegroundServiceIntent != null) {
-            AndroidUtils.startForegroundService(context, videoCallForegroundServiceIntent!!)
+            AndroidUtils.startForegroundService(appContext, videoCallForegroundServiceIntent!!)
         }
     }
 
@@ -586,7 +622,7 @@ class AndroidAudioCallService(
      * */
     override suspend fun stopCall() {
         if(callForegroundServiceIntent != null) {
-            context.stopService(callForegroundServiceIntent)
+            appContext.stopService(callForegroundServiceIntent)
         }
     }
 
@@ -610,8 +646,10 @@ class AndroidAudioCallService(
             videoCapturer = null
 
             // Dispose local sources
-            localVideoSource?.dispose(); localVideoSource = null
-            localAudioSource?.dispose(); localAudioSource = null
+            localVideoSource?.dispose()
+            localVideoSource = null
+            localAudioSource?.dispose()
+            localAudioSource = null
 
             surfaceTextureHelper?.stopListening()
             surfaceTextureHelper?.dispose()
@@ -640,6 +678,14 @@ class AndroidAudioCallService(
             // EGL & Tracer
             WebRTCManager.eglBase.release()
             PeerConnectionFactory.shutdownInternalTracer()
+
+            // Reset audio routing and release AudioDeviceModule
+            runCatching {
+                val am = appContext.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+                am.mode = AudioManager.MODE_NORMAL
+                am.isSpeakerphoneOn = false
+            }
+            runCatching { audioDeviceModule.release() }
 
             logMessage("CallForegroundService") { "WebRTC resources released successfully" }
 

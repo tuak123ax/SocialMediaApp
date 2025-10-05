@@ -2,6 +2,7 @@ package com.minhtu.firesocialmedia.domain.usecases.call
 
 import com.minhtu.firesocialmedia.domain.entity.call.AudioCallSession
 import com.minhtu.firesocialmedia.domain.entity.call.CallStatus
+import com.minhtu.firesocialmedia.domain.entity.call.CallingRequestData
 import com.minhtu.firesocialmedia.domain.entity.call.IceCandidateData
 import com.minhtu.firesocialmedia.domain.entity.call.OfferAnswer
 import com.minhtu.firesocialmedia.domain.repository.CallRepository
@@ -159,20 +160,19 @@ class SendSignalingDataUseCase(
 
     suspend fun observePhoneCallWithoutCheckingInCall(
         calleeIdFromFCM : String,
-        onReceivePhoneCallRequest : suspend (sessionId : String,
-                                             offer : OfferAnswer,
-                                             callerId : String,
-                                             calleeId : String) -> Unit,
-        onEndCall: suspend () -> Unit) {
+        onReceivePhoneCallRequest : suspend (CallingRequestData) -> Unit,
+        iceCandidateCallBack : suspend (iceCandidates : Map<String, IceCandidateData>?) -> Unit,
+        onEndCall: suspend () -> Unit,
+        whoEndCallCallBack : suspend (String) -> Unit) {
         callRepository.observePhoneCallWithoutCheckingInCall(
             calleeIdFromFCM,
-            phoneCallCallBack = { remoteSessionId,remoteCallerId, remoteCalleeId, remoteOffer ->
+            phoneCallCallBack = { callingRequestData ->
                 //Received phone call request.
                 logMessage("observePhoneCallWithoutCheckingInCall",
                     { "phoneCallCallBack" })
-                if(remoteCalleeId == calleeIdFromFCM) {
+                if(callingRequestData.calleeId == calleeIdFromFCM) {
                     coroutineScope.launch {
-                        onReceivePhoneCallRequest(remoteSessionId, remoteOffer, remoteCallerId, remoteCalleeId)
+                        onReceivePhoneCallRequest(callingRequestData)
                     }
                 }
             },
@@ -184,20 +184,17 @@ class SendSignalingDataUseCase(
                     }
                 }
             },
+            whoEndCallCallBack = { whoEndCall ->
+                coroutineScope.launch {
+                    whoEndCallCallBack(whoEndCall)
+                }
+            },
             iceCandidateCallBack = { iceCandidates ->
                 //Add ice candidates to peer connection.
-                logMessage("observePhoneCallWithoutCheckingInCall",
-                    { "iceCandidateCallBack" })
-                if(iceCandidates != null) {
-                    for(candidate in iceCandidates.values) {
-                        if(candidate.candidate != null && candidate.sdpMid != null && candidate.sdpMLineIndex != null) {
-                            coroutineScope.launch {
-                                logMessage("iceCandidateCallBack",
-                                    { "add ice candidate for callee" })
-                                callRepository.addIceCandidate(candidate.candidate!!, candidate.sdpMid!!, candidate.sdpMLineIndex!!)
-                            }
-                        }
-                    }
+                coroutineScope.launch{
+                    logMessage("observePhoneCallWithoutCheckingInCall",
+                        { "iceCandidateCallBack" })
+                    iceCandidateCallBack(iceCandidates)
                 }
             }
         )
@@ -206,18 +203,16 @@ class SendSignalingDataUseCase(
     suspend fun observePhoneCallWithCheckingInCall(
         isInCall :  MutableStateFlow<Boolean>,
         currentUserId : String,
-        onReceivePhoneCallRequest : suspend (sessionId : String,
-                                             offer : OfferAnswer,
-                                             callerId : String,
-                                             calleeId : String) -> Unit,
-        onEndCall: suspend () -> Unit) {
+        onReceivePhoneCallRequest : suspend (CallingRequestData) -> Unit,
+        onEndCall: suspend () -> Unit,
+        whoEndCallCallBack : suspend (String) -> Unit) {
         callRepository.observePhoneCall(
             isInCall,
             currentUserId,
-            phoneCallCallBack = { sessionId,callerId, calleeId, offer ->
-                if(calleeId == currentUserId) {
+            phoneCallCallBack = { callingRequestData ->
+                if(callingRequestData.calleeId == currentUserId) {
                     coroutineScope.launch {
-                        onReceivePhoneCallRequest(sessionId, offer, callerId, calleeId)
+                        onReceivePhoneCallRequest(callingRequestData)
                     }
                 }
             },
@@ -227,6 +222,11 @@ class SendSignalingDataUseCase(
                     coroutineScope.launch {
                         onEndCall()
                     }
+                }
+            },
+            whoEndCallCallBack = { whoEndCall ->
+                coroutineScope.launch {
+                    whoEndCallCallBack(whoEndCall)
                 }
             },
             iceCandidateCallBack = { iceCandidates ->
@@ -269,5 +269,9 @@ class SendSignalingDataUseCase(
             whichCandidate,
             sendIceCandidateCallBack
         )
+    }
+
+    fun stopObservePhoneCall() {
+        callRepository.stopObservePhoneCall()
     }
 }

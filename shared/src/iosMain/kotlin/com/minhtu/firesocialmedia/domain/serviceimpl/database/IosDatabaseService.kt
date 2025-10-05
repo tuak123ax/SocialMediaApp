@@ -10,6 +10,7 @@ import cocoapods.FirebaseStorage.FIRStorageReference
 import com.minhtu.firesocialmedia.constants.Constants
 import com.minhtu.firesocialmedia.data.constant.DataConstant
 import com.minhtu.firesocialmedia.data.dto.call.AudioCallSessionDTO
+import com.minhtu.firesocialmedia.data.dto.call.CallingRequestDTO
 import com.minhtu.firesocialmedia.data.dto.call.IceCandidateDTO
 import com.minhtu.firesocialmedia.data.dto.call.OfferAnswerDTO
 import com.minhtu.firesocialmedia.data.dto.comment.CommentDTO
@@ -442,7 +443,7 @@ class IosDatabaseService() : DatabaseService {
     override suspend fun sendOfferToFireBase(
         sessionId: String,
         offer: OfferAnswerDTO,
-        sendIceCandidateCallBack: Utils.Companion.BasicCallBack
+        sendOfferCallBack: Utils.Companion.BasicCallBack
     ) {
         // iOS implementation will be added later
     }
@@ -463,26 +464,27 @@ class IosDatabaseService() : DatabaseService {
         // iOS implementation will be added later
     }
 
-    override fun sendCallStatusToFirebase(
+    override suspend fun sendCallStatusToFirebase(
         sessionId: String,
-        status: CallStatus,
-        sendCallStatusCallBack: Utils.Companion.BasicCallBack
-    ) {
+        status: CallStatus
+    ): Boolean {
         // iOS implementation will be added later
+        return false
     }
 
     override suspend fun deleteCallSession(
-        sessionId: String,
-        deleteCallBack: Utils.Companion.BasicCallBack
-    ) {
+        sessionId: String
+    ): Boolean {
         // iOS implementation will be added later
+        return false
     }
 
     override suspend fun observePhoneCall(
         isInCall: MutableStateFlow<Boolean>,
         currentUserId: String,
-        phoneCallCallBack: (String, String, String, OfferAnswerDTO) -> Unit,
+        phoneCallCallBack: (CallingRequestDTO) -> Unit,
         endCallSession: (Boolean) -> Unit,
+        whoEndCallCallBack: (String) -> Unit,
         iceCandidateCallBack: (Map<String, IceCandidateDTO>?) -> Unit
     ) {
         // iOS implementation will be added later
@@ -490,8 +492,9 @@ class IosDatabaseService() : DatabaseService {
 
     override suspend fun observePhoneCallWithoutCheckingInCall(
         currentUserId: String,
-        phoneCallCallBack: (String, String, String, OfferAnswerDTO) -> Unit,
+        phoneCallCallBack: (CallingRequestDTO) -> Unit,
         endCallSession: (Boolean) -> Unit,
+        whoEndCallCallBack: (String) -> Unit,
         iceCandidateCallBack: (Map<String, IceCandidateDTO>?) -> Unit
     ) {
         // iOS implementation will be added later
@@ -564,6 +567,15 @@ class IosDatabaseService() : DatabaseService {
         sessionId: String,
         videoCallCallBack: (OfferAnswerDTO) -> Unit
     ) {
+        // iOS implementation will be added later
+    }
+
+    override suspend fun sendWhoEndCall(sessionId: String, whoEndCall: String): Boolean {
+        // iOS implementation will be added later
+        return false
+    }
+
+    override fun stopObservePhoneCall() {
         // iOS implementation will be added later
     }
 

@@ -45,11 +45,18 @@ class IosAudioCallService : AudioCallService {
         // iOS implementation will be added later
     }
 
-    override suspend fun endCallFromApp() {
+    // This class previously had an obsolete override signature 'endCallFromApp'.
+    // The common interface now defines two explicit methods below; implement stubs accordingly.
+
+    override suspend fun rejectVideoCall() {
         // iOS implementation will be added later
     }
 
-    override suspend fun rejectVideoCall() {
+    override suspend fun callerEndCallFromApp(currentUser: String) {
+        // iOS implementation will be added later
+    }
+
+    override suspend fun calleeEndCallFromApp(sessionId: String, currentUser: String) {
         // iOS implementation will be added later
     }
 

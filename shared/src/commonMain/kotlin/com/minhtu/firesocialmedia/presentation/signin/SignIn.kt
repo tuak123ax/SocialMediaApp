@@ -45,6 +45,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.minhtu.firesocialmedia.constants.Constants
 import com.minhtu.firesocialmedia.constants.TestTag
+import com.minhtu.firesocialmedia.domain.error.signin.SignInError
 import com.minhtu.firesocialmedia.platform.CommonBackHandler
 import com.minhtu.firesocialmedia.platform.CrossPlatformIcon
 import com.minhtu.firesocialmedia.platform.PasswordVisibilityIcon
@@ -84,15 +85,27 @@ class SignIn{
             LaunchedEffect(signInStatus.value) {
                 loadingViewModel.hideLoading()
                 if (signInStatus.value.signInStatus) {
-                    if (signInStatus.value.message == Constants.Companion.ACCOUNT_NOT_EXISTED) {
+                    if (signInStatus.value.error == SignInError.AccountNotExist) {
                         onNavigateToInformationScreen()
                     } else {
                         onNavigateToHomeScreen()
                     }
                 } else {
-                    when (signInStatus.value.message) {
-                        Constants.Companion.DATA_EMPTY -> showToast("Please fill all information!")
-                        Constants.Companion.LOGIN_ERROR -> showToast("Error happened!")
+                    when (signInStatus.value.error) {
+                        SignInError.DataEmpty -> showToast("Please fill all information!")
+                        SignInError.InvalidCredentials -> showToast("Your email or password is invalid!")
+                        SignInError.InvalidEmail -> showToast("Your email is invalid!")
+                        SignInError.InvalidUser -> showToast("Your user is invalid!")
+                        SignInError.MultiFactor -> showToast("Multi factor error happened!")
+                        SignInError.NetworkError -> showToast("Please recheck your network!")
+                        SignInError.TooManyRequests -> showToast("Too many requests! Slow down please!")
+                        SignInError.UserDisabled -> showToast("User is disable!")
+                        SignInError.UserNotFound -> showToast("User is not found!")
+                        SignInError.WrongPassword -> showToast("Your password is wrong!")
+                        is SignInError.Unknown -> showToast("Error happened!")
+                        else -> {
+                            //Do nothing
+                        }
                     }
                 }
                 signInViewModel.resetSignInStatus()

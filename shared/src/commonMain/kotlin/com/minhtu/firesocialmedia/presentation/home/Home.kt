@@ -1,7 +1,6 @@
 package com.minhtu.firesocialmedia.presentation.home
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -36,6 +35,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.ProvidedValue
 import androidx.compose.runtime.collectAsState
@@ -66,8 +66,11 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.minhtu.firesocialmedia.constants.TestTag
-import com.minhtu.firesocialmedia.domain.entity.call.OfferAnswer
+import com.minhtu.firesocialmedia.domain.entity.call.CallingRequestData
 import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.platform.CrossPlatformIcon
@@ -97,9 +100,9 @@ class Home {
                        onNavigateToSignIn: () -> Unit,
                        onNavigateToUserInformation: (user: UserInstance?) -> Unit,
                        onNavigateToCommentScreen: (selectedNew : NewsInstance) -> Unit,
-                       onNavigateToCallingScreen : suspend (sessionId : String, caller : String, callee : String, offer: OfferAnswer ) -> Unit,
-                       onNavigateToCallingScreenWithUI : suspend () -> Unit,
-                       navHandler : NavigationHandler){
+                       onNavigateToCallingScreen : suspend (CallingRequestData) -> Unit,
+                       onNavigateToCallingScreenWithUI : suspend () -> Unit){
+            val lifecycleOwner = LocalLifecycleOwner.current
             val isLoading by loadingViewModel.isLoading.collectAsState()
             val commentStatus by homeViewModel.commentStatus.collectAsState()
 
@@ -147,21 +150,58 @@ class Home {
                 }
             }
 
+//            val endCallStatus by homeViewModel.endCallStatus.collectAsState()
+//            LaunchedEffect(endCallStatus) {
+//                if(endCallStatus) {
+//                    navHandler.navigateBack()
+//                    homeViewModel.resetEndCallStatus()
+//                }
+//            }
             val getCurrentUserStatus by homeViewModel.getCurrentUserStatus
+
+            // Start/stop observing as the screen STARTs/STOPs
+//            DisposableEffect(lifecycleOwner, getCurrentUserStatus) {
+//                if(!getCurrentUserStatus) return@DisposableEffect onDispose {}
+//                val observer = LifecycleEventObserver { _, event ->
+//                    when(event) {
+//                        Lifecycle.Event.ON_START -> {
+//                            logMessage("observePhoneCall", { "start observe phone call" })
+//                            homeViewModel.observePhoneCall()
+//                        }
+//                        Lifecycle.Event.ON_STOP -> {
+//                            logMessage("observePhoneCall", { "stop observe phone call" })
+//                            homeViewModel.stopObservePhoneCall()
+//                        }
+//                        else -> Unit
+//                    }
+//                }
+//                lifecycleOwner.lifecycle.addObserver(observer)
+//                onDispose {
+//                    lifecycleOwner.lifecycle.removeObserver(observer)
+//                    homeViewModel.stopObservePhoneCall()
+//                }
+//            }
             LaunchedEffect(getCurrentUserStatus) {
                 if(getCurrentUserStatus) {
                     logMessage("observePhoneCall", { "start observe phone call" })
-                    homeViewModel.observePhoneCall(
-                        onNavigateToCallingScreen,
-                        onNavigateBack = {
-                            logMessage("NavStack",
-                                { "Current destination: ${navHandler.getCurrentRoute()}" })
-                            navHandler.navigateBack()
-                        })
+                    homeViewModel.observePhoneCall()
                     if(navigateToCallingScreen) {
                         logMessage("navigateToCallingScreen", { "onNavigateToCallingScreenWithUI" })
                         onNavigateToCallingScreenWithUI()
                     }
+                }
+            }
+            LaunchedEffect(Unit) {
+                if(navigateToCallingScreen) {
+                    logMessage("navigateToCallingScreen", { "onNavigateToCallingScreenWithUI" })
+                    onNavigateToCallingScreenWithUI()
+                }
+            }
+
+            val phoneCallRequestStatus by homeViewModel.phoneCallRequestStatus.collectAsState()
+            LaunchedEffect(phoneCallRequestStatus) {
+                if(phoneCallRequestStatus != null) {
+                    onNavigateToCallingScreen(phoneCallRequestStatus!!)
                 }
             }
 

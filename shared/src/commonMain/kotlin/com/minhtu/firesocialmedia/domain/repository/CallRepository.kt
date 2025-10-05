@@ -2,6 +2,7 @@ package com.minhtu.firesocialmedia.domain.repository
 
 import com.minhtu.firesocialmedia.domain.entity.call.AudioCallSession
 import com.minhtu.firesocialmedia.domain.entity.call.CallStatus
+import com.minhtu.firesocialmedia.domain.entity.call.CallingRequestData
 import com.minhtu.firesocialmedia.domain.entity.call.IceCandidateData
 import com.minhtu.firesocialmedia.domain.entity.call.OfferAnswer
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
@@ -52,17 +53,16 @@ interface CallRepository {
     )
 
     suspend fun sendCallStatusToFirebase(sessionId: String,
-                                 status: CallStatus,
-                                 sendCallStatusCallBack : Utils.Companion.BasicCallBack)
+                                 status: CallStatus) : Boolean
 
     suspend fun deleteCallSession(
-        sessionId: String,
-        deleteCallBack : Utils.Companion.BasicCallBack
-    )
+        sessionId: String
+    ) : Boolean
 
     suspend fun acceptCallFromApp(sessionId: String, calleeId: String?)
 
-    suspend fun endCallFromApp()
+    suspend fun callerEndCallFromApp(currentUser : String)
+    suspend fun calleeEndCallFromApp(sessionId: String, currentUser : String)
 
     suspend fun rejectVideoCall()
 
@@ -115,19 +115,25 @@ interface CallRepository {
 
     suspend fun observePhoneCallWithoutCheckingInCall(
         currentUserId : String,
-        phoneCallCallBack : (String, String, String, OfferAnswer) -> Unit,
+        phoneCallCallBack : (CallingRequestData) -> Unit,
         endCallSession: (Boolean) -> Unit,
+        whoEndCallCallBack : (String) -> Unit,
         iceCandidateCallBack : (iceCandidates : Map<String, IceCandidateData>?) -> Unit)
 
     suspend fun observePhoneCall(
         isInCall : MutableStateFlow<Boolean>,
         currentUserId : String,
-        phoneCallCallBack : (String, String, String, OfferAnswer) -> Unit,
+        phoneCallCallBack : (CallingRequestData) -> Unit,
         endCallSession: (Boolean) -> Unit,
+        whoEndCallCallBack : (String) -> Unit,
         iceCandidateCallBack : (iceCandidates : Map<String, IceCandidateData>?) -> Unit)
 
     suspend fun sendIceCandidateToFireBase(sessionId : String,
                                            iceCandidate: IceCandidateData,
                                            whichCandidate : String,
                                            sendIceCandidateCallBack : Utils.Companion.BasicCallBack)
+
+    suspend fun sendWhoEndCall(sessionId: String, whoEndCall: String): Boolean
+    suspend fun stopCallService()
+    fun stopObservePhoneCall()
 }

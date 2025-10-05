@@ -26,6 +26,7 @@ class CallActionBroadcastReceiver : BroadcastReceiver() {
                 val serviceIntent = Intent(context, CallForegroundService::class.java).apply {
                     action = CallAction.REJECT_CALL_ACTION
                     putExtra(Constants.KEY_SESSION_ID, intent.getStringExtra(Constants.KEY_SESSION_ID))
+                    putExtra(Constants.KEY_CALLEE_ID, intent.getStringExtra(Constants.KEY_CALLEE_ID))
                 }
 
                 CallSoundManager.stopRingtone()
@@ -35,6 +36,17 @@ class CallActionBroadcastReceiver : BroadcastReceiver() {
             CallAction.STOP_CALL_ACTION_FROM_CALLER -> {
                 val serviceIntent = Intent(context, CallForegroundService::class.java).apply {
                     action = CallAction.STOP_CALL_ACTION_FROM_CALLER
+                    putExtra(Constants.KEY_CALLER_ID, intent.getStringExtra(Constants.KEY_CALLER_ID))
+                }
+
+                context.startService(serviceIntent)
+            }
+
+            CallAction.STOP_CALL_ACTION_FROM_CALLEE -> {
+                val serviceIntent = Intent(context, CallForegroundService::class.java).apply {
+                    action = CallAction.STOP_CALL_ACTION_FROM_CALLEE
+                    putExtra(Constants.KEY_SESSION_ID, intent.getStringExtra(Constants.KEY_SESSION_ID))
+                    putExtra(Constants.KEY_CALLEE_ID, intent.getStringExtra(Constants.KEY_CALLEE_ID))
                 }
 
                 context.startService(serviceIntent)

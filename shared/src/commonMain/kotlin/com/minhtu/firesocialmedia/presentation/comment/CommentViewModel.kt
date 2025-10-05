@@ -82,6 +82,7 @@ class CommentViewModel(
                             listComments.add(commentInstance)
                             updateComments(listComments)
                             _createCommentStatus.value = commentInteractor.saveComment(
+                                selectedNew.id,
                                 commentRandomId,
                                 commentInstance
                             )
@@ -95,6 +96,7 @@ class CommentViewModel(
                             //Save and send notification
                             saveAndSendNotification(currentUser, selectedNew)
                         } catch(e: Exception) {
+                            logMessage("sendComment", { "Error when sendComment: "+ e.message })
                         }
                     }
                 } else {

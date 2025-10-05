@@ -7,10 +7,12 @@ class SaveCommentToDatabaseUseCase(
     private val commonDbRepository: CommonDbRepository
 ) {
     suspend operator fun invoke(
-        id : String,
+        selectedNewId: String,
+        commentId : String,
         instance : BaseNewsInstance) : Boolean {
         return commonDbRepository.saveCommentToDatabase(
-            id,
+            selectedNewId,
+            commentId,
             instance
         )
     }

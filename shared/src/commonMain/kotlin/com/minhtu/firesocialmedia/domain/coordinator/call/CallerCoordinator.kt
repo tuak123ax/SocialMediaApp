@@ -17,24 +17,15 @@ class CallerCoordinator(
 ) {
     suspend fun startCall(
         audioCallSession : AudioCallSession,
-        onSendOfferResult: (Boolean) -> Unit,
         onSendCallSessionResult : (Boolean) -> Unit,
         onRejectVideoCall : suspend () -> Unit,
         onAcceptCall : suspend () -> Unit,
-        onEndCall : suspend () -> Unit,
-        onReceiveVideoCall : suspend (OfferAnswer) -> Unit
+        onReceiveVideoCall : suspend (OfferAnswer) -> Unit,
+        onEndCall : suspend () -> Unit
     ) {
         //Caller starts call
         callerUseCases.startCall.invoke(
             audioCallSession,
-            onInitializeFinished = {
-                //Create offer
-                callerUseCases.sendOffer.invoke(
-                    audioCallSession.sessionId,
-                    onSendOfferResult = { result ->
-                        onSendOfferResult(result)
-                    })
-            },
             onIceCandidateCreated = { iceCandidateData ->
                 callerUseCases.sendIceCandidate.invoke(
                     audioCallSession.sessionId,
@@ -80,8 +71,10 @@ class CallerCoordinator(
                 onAcceptCall()
             },
             onEndCall = {
-                callerUseCases.endCall.invoke(audioCallSession.sessionId)
-                onEndCall()
+                val deleteCallSessionResult = callerUseCases.endCall.invoke(audioCallSession.sessionId)
+                if(deleteCallSessionResult) {
+                    onEndCall()
+                }
             }
         )
     }

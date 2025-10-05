@@ -1,11 +1,14 @@
 package com.minhtu.firesocialmedia.data.mapper.call
 
 import com.minhtu.firesocialmedia.data.dto.call.AudioCallSessionDTO
+import com.minhtu.firesocialmedia.data.dto.call.CallingRequestDTO
 import com.minhtu.firesocialmedia.data.dto.call.IceCandidateDTO
 import com.minhtu.firesocialmedia.data.dto.call.OfferAnswerDTO
 import com.minhtu.firesocialmedia.domain.entity.call.AudioCallSession
+import com.minhtu.firesocialmedia.domain.entity.call.CallingRequestData
 import com.minhtu.firesocialmedia.domain.entity.call.IceCandidateData
 import com.minhtu.firesocialmedia.domain.entity.call.OfferAnswer
+import kotlin.String
 
 fun AudioCallSessionDTO.toDomain() : AudioCallSession {
     return AudioCallSession(
@@ -69,5 +72,23 @@ fun OfferAnswer.toDto() : OfferAnswerDTO {
         sdp,
         type,
         initiator
+    )
+}
+
+fun CallingRequestDTO.toDomain() : CallingRequestData {
+    return CallingRequestData(
+        sessionId,
+        callerId,
+        calleeId,
+        offer?.toDomain()
+    )
+}
+
+fun CallingRequestData.toDto() : CallingRequestDTO {
+    return CallingRequestDTO(
+        sessionId,
+        callerId,
+        calleeId,
+        offer?.toDto()
     )
 }

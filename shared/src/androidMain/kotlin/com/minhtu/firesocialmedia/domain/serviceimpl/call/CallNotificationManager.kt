@@ -33,12 +33,14 @@ class CallNotificationManager(private val context: Context) {
     fun startTimerNotification(
         sessionId: String,
         callerId: String,
-        calleeId: String
+        calleeId: String,
+        isCaller : Boolean
     ): Notification {
         var seconds = 0
 
         val stopIntent = Intent(context, CallActionBroadcastReceiver::class.java).apply {
-            action = CallAction.REJECT_CALL_ACTION
+            action = if(isCaller) CallAction.STOP_CALL_ACTION_FROM_CALLER
+            else CallAction.REJECT_CALL_ACTION
         }
         val stopPendingIntent = PendingIntent.getBroadcast(
             context,
@@ -136,7 +138,7 @@ class CallNotificationManager(private val context: Context) {
         context.getSystemService(NotificationManager::class.java).notify(PERMISSION_ID, notification)
     }
 
-    fun buildCallNotification(calleeName : String) : Notification {
+    fun buildCallNotification(calleeName : String, callerId : String) : Notification {
         val channelName = "Call Service"
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -146,6 +148,7 @@ class CallNotificationManager(private val context: Context) {
 
         val rejectIntent = Intent(context, CallActionBroadcastReceiver::class.java).apply {
             action = CallAction.STOP_CALL_ACTION_FROM_CALLER
+            putExtra(Constants.KEY_CALLER_ID, callerId)
         }
 
         val rejectPendingIntent = PendingIntent.getBroadcast(

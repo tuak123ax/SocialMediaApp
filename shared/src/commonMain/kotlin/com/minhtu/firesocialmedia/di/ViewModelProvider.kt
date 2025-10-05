@@ -86,9 +86,11 @@ object ViewModelProvider {
         val deleteNewsFromDatabaseUseCase = AppModule.provideDeleteNewsFromDatabaseUseCase(newsRepository)
         val sendSignalingDataUseCase = AppModule.provideSendSignalingDataUseCase(callRepository)
         val observePhoneCallWithInCallUseCase = AppModule.provideObservePhoneCallWithInCallUseCase(sendSignalingDataUseCase)
+        val stopObservePhoneCallUseCase = AppModule.provideStopObservePhoneCallUseCase(sendSignalingDataUseCase)
         val saveNotificationToDatabaseUseCase = AppModule.provideSaveNotificationToDatabaseUseCase(notificationRepository)
         val deleteNotificationFromDatabaseUseCase = AppModule.provideDeleteNotificationFromDatabaseUseCase(notificationRepository)
         val searchUserByNameUseCase = AppModule.provideSearchUserByNameUseCase(userRepository)
+        val stopCallServiceUseCase = AppModule.provideStopCallServiceUseCase(callRepository)
         val userInteractor = AppModule.provideUserInteractor(
             getCurrentUserUidUseCase,
             getUserUseCase,
@@ -108,7 +110,9 @@ object ViewModelProvider {
             deleteNotificationFromDatabaseUseCase
         )
         val callInteractor = AppModule.provideCallInteractor(
-            observePhoneCallWithInCallUseCase
+            observePhoneCallWithInCallUseCase,
+            stopObservePhoneCallUseCase,
+            stopCallServiceUseCase
         )
         return AppModule.provideHomeViewModel(
             userInteractor,
