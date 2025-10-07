@@ -1,7 +1,7 @@
 package com.minhtu.firesocialmedia.domain.serviceimpl.crypto
 
 import com.minhtu.firesocialmedia.constants.Constants
-import com.minhtu.firesocialmedia.data.dto.crypto.CredentialsDTO
+import com.minhtu.firesocialmedia.data.remote.dto.crypto.CredentialsDTO
 import com.minhtu.firesocialmedia.data.remote.service.crypto.CryptoService
 
 class IosCryptoService() : CryptoService {

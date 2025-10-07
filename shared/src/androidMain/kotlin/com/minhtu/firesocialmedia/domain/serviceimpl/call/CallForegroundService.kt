@@ -11,10 +11,10 @@ import android.os.Build
 import android.os.IBinder
 import androidx.core.content.ContextCompat
 import com.minhtu.firesocialmedia.constants.Constants
-import com.minhtu.firesocialmedia.data.dto.call.OfferAnswerDTO
-import com.minhtu.firesocialmedia.data.dto.user.UserDTO
-import com.minhtu.firesocialmedia.data.mapper.call.toDomain
-import com.minhtu.firesocialmedia.data.mapper.user.toDomain
+import com.minhtu.firesocialmedia.data.remote.dto.call.OfferAnswerDTO
+import com.minhtu.firesocialmedia.data.remote.dto.user.UserDTO
+import com.minhtu.firesocialmedia.data.remote.mapper.call.toDomain
+import com.minhtu.firesocialmedia.data.remote.mapper.user.toDomain
 import com.minhtu.firesocialmedia.data.remote.service.call.AudioCallService
 import com.minhtu.firesocialmedia.data.remote.service.database.DatabaseService
 import com.minhtu.firesocialmedia.di.AndroidPlatformContext

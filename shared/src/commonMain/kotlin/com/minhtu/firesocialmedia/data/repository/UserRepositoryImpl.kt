@@ -1,8 +1,8 @@
 package com.minhtu.firesocialmedia.data.repository
 
-import com.minhtu.firesocialmedia.data.constant.DataConstant
-import com.minhtu.firesocialmedia.data.mapper.user.toDomain
-import com.minhtu.firesocialmedia.data.mapper.user.toDto
+import com.minhtu.firesocialmedia.data.remote.constant.DataConstant
+import com.minhtu.firesocialmedia.data.remote.mapper.user.toDomain
+import com.minhtu.firesocialmedia.data.remote.mapper.user.toDto
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.domain.repository.UserRepository
 import com.minhtu.firesocialmedia.data.remote.service.auth.AuthService

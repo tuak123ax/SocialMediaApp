@@ -1,8 +1,8 @@
 package com.minhtu.firesocialmedia.data.repository
 
-import com.minhtu.firesocialmedia.data.mapper.crypto.toDomain
-import com.minhtu.firesocialmedia.data.mapper.signin.toDomain
-import com.minhtu.firesocialmedia.data.mapper.user.toDto
+import com.minhtu.firesocialmedia.data.remote.mapper.crypto.toDomain
+import com.minhtu.firesocialmedia.data.remote.mapper.signin.toDomain
+import com.minhtu.firesocialmedia.data.remote.mapper.user.toDto
 import com.minhtu.firesocialmedia.domain.entity.crypto.Credentials
 import com.minhtu.firesocialmedia.domain.entity.forgotpassword.EmailExistResult
 import com.minhtu.firesocialmedia.domain.entity.signin.SignInState

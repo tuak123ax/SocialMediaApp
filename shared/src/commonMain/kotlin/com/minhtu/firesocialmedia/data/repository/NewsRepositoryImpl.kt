@@ -1,9 +1,9 @@
 package com.minhtu.firesocialmedia.data.repository
 
-import com.minhtu.firesocialmedia.data.constant.DataConstant
-import com.minhtu.firesocialmedia.data.mapper.home.toDomain
-import com.minhtu.firesocialmedia.data.mapper.news.toDomain
-import com.minhtu.firesocialmedia.data.mapper.news.toDto
+import com.minhtu.firesocialmedia.data.remote.constant.DataConstant
+import com.minhtu.firesocialmedia.data.remote.mapper.home.toDomain
+import com.minhtu.firesocialmedia.data.remote.mapper.news.toDomain
+import com.minhtu.firesocialmedia.data.remote.mapper.news.toDto
 import com.minhtu.firesocialmedia.domain.entity.home.LatestNewsResult
 import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
 import com.minhtu.firesocialmedia.domain.repository.NewsRepository

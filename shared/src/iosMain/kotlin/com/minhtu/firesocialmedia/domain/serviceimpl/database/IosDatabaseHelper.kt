@@ -9,10 +9,10 @@ import cocoapods.FirebaseStorage.FIRStorageMetadata
 import cocoapods.FirebaseStorage.FIRStorageReference
 import cocoapods.FirebaseStorage.FIRStorageTaskStatusFailure
 import cocoapods.FirebaseStorage.FIRStorageTaskStatusSuccess
-import com.minhtu.firesocialmedia.data.dto.news.NewsDTO
-import com.minhtu.firesocialmedia.data.dto.notification.NotificationDTO
-import com.minhtu.firesocialmedia.data.dto.notification.fromMap
-import com.minhtu.firesocialmedia.data.dto.notification.toMap
+import com.minhtu.firesocialmedia.data.remote.dto.news.NewsDTO
+import com.minhtu.firesocialmedia.data.remote.dto.notification.NotificationDTO
+import com.minhtu.firesocialmedia.data.remote.dto.notification.fromMap
+import com.minhtu.firesocialmedia.data.remote.dto.notification.toMap
 import com.minhtu.firesocialmedia.domain.entity.base.BaseNewsInstance
 import com.minhtu.firesocialmedia.platform.logMessage
 import com.minhtu.firesocialmedia.platform.toNSData

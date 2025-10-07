@@ -102,7 +102,6 @@ class Home {
                        onNavigateToCommentScreen: (selectedNew : NewsInstance) -> Unit,
                        onNavigateToCallingScreen : suspend (CallingRequestData) -> Unit,
                        onNavigateToCallingScreenWithUI : suspend () -> Unit){
-            val lifecycleOwner = LocalLifecycleOwner.current
             val isLoading by loadingViewModel.isLoading.collectAsState()
             val commentStatus by homeViewModel.commentStatus.collectAsState()
 
@@ -150,37 +149,8 @@ class Home {
                 }
             }
 
-//            val endCallStatus by homeViewModel.endCallStatus.collectAsState()
-//            LaunchedEffect(endCallStatus) {
-//                if(endCallStatus) {
-//                    navHandler.navigateBack()
-//                    homeViewModel.resetEndCallStatus()
-//                }
-//            }
             val getCurrentUserStatus by homeViewModel.getCurrentUserStatus
 
-            // Start/stop observing as the screen STARTs/STOPs
-//            DisposableEffect(lifecycleOwner, getCurrentUserStatus) {
-//                if(!getCurrentUserStatus) return@DisposableEffect onDispose {}
-//                val observer = LifecycleEventObserver { _, event ->
-//                    when(event) {
-//                        Lifecycle.Event.ON_START -> {
-//                            logMessage("observePhoneCall", { "start observe phone call" })
-//                            homeViewModel.observePhoneCall()
-//                        }
-//                        Lifecycle.Event.ON_STOP -> {
-//                            logMessage("observePhoneCall", { "stop observe phone call" })
-//                            homeViewModel.stopObservePhoneCall()
-//                        }
-//                        else -> Unit
-//                    }
-//                }
-//                lifecycleOwner.lifecycle.addObserver(observer)
-//                onDispose {
-//                    lifecycleOwner.lifecycle.removeObserver(observer)
-//                    homeViewModel.stopObservePhoneCall()
-//                }
-//            }
             LaunchedEffect(getCurrentUserStatus) {
                 if(getCurrentUserStatus) {
                     logMessage("observePhoneCall", { "start observe phone call" })

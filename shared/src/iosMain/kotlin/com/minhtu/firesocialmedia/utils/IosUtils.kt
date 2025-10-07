@@ -1,10 +1,10 @@
 package com.minhtu.firesocialmedia.utils
 
-import com.minhtu.firesocialmedia.data.dto.comment.CommentDTO
-import com.minhtu.firesocialmedia.data.dto.news.NewsDTO
-import com.minhtu.firesocialmedia.data.dto.notification.NotificationDTO
-import com.minhtu.firesocialmedia.data.dto.notification.fromMap
-import com.minhtu.firesocialmedia.data.dto.user.UserDTO
+import com.minhtu.firesocialmedia.data.remote.dto.comment.CommentDTO
+import com.minhtu.firesocialmedia.data.remote.dto.news.NewsDTO
+import com.minhtu.firesocialmedia.data.remote.dto.notification.NotificationDTO
+import com.minhtu.firesocialmedia.data.remote.dto.notification.fromMap
+import com.minhtu.firesocialmedia.data.remote.dto.user.UserDTO
 
 
 class IosUtils {

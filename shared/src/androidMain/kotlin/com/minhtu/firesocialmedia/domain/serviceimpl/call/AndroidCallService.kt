@@ -5,9 +5,9 @@ import android.content.Intent
 import android.media.AudioManager
 import android.util.Log
 import com.minhtu.firesocialmedia.constants.Constants
-import com.minhtu.firesocialmedia.data.dto.call.IceCandidateDTO
-import com.minhtu.firesocialmedia.data.dto.call.OfferAnswerDTO
-import com.minhtu.firesocialmedia.data.dto.user.UserDTO
+import com.minhtu.firesocialmedia.data.remote.dto.call.IceCandidateDTO
+import com.minhtu.firesocialmedia.data.remote.dto.call.OfferAnswerDTO
+import com.minhtu.firesocialmedia.data.remote.dto.user.UserDTO
 import com.minhtu.firesocialmedia.data.remote.service.call.AudioCallService
 import com.minhtu.firesocialmedia.domain.entity.call.CallAction
 import com.minhtu.firesocialmedia.platform.WebRTCVideoTrack
