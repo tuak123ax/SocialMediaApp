@@ -5,12 +5,14 @@ import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
 import com.minhtu.firesocialmedia.domain.interactor.home.NewsInteractor
 import com.minhtu.firesocialmedia.domain.usecases.home.DeleteNewsFromDatabaseUseCase
 import com.minhtu.firesocialmedia.domain.usecases.home.GetLatestNewsUseCase
+import com.minhtu.firesocialmedia.domain.usecases.home.StoreNewsToRoomUseCase
 import com.minhtu.firesocialmedia.domain.usecases.home.UpdateLikeCountForNewUseCase
 
 class NewsInteractorImpl(
     private val getLatestNewsUseCase: GetLatestNewsUseCase,
     private val updateLikeCountForNewUseCase : UpdateLikeCountForNewUseCase,
-    private val deleteNewsFromDatabaseUseCase: DeleteNewsFromDatabaseUseCase
+    private val deleteNewsFromDatabaseUseCase: DeleteNewsFromDatabaseUseCase,
+    private val storeNewsToRoomUseCase: StoreNewsToRoomUseCase
 ) : NewsInteractor {
     override suspend fun pageLatest(
         number : Int,
@@ -48,5 +50,9 @@ class NewsInteractorImpl(
         new: NewsInstance
     ) {
         deleteNewsFromDatabaseUseCase.invoke(new)
+    }
+
+    override suspend fun storeNewsToRoom(news: List<NewsInstance>) {
+        storeNewsToRoomUseCase.invoke(news)
     }
 }

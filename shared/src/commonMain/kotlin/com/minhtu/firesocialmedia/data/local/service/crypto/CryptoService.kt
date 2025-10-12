@@ -1,4 +1,4 @@
-package com.minhtu.firesocialmedia.data.remote.service.crypto
+package com.minhtu.firesocialmedia.data.local.service.crypto
 
 import com.minhtu.firesocialmedia.data.remote.dto.crypto.CredentialsDTO
 import io.mockative.Mockable

@@ -10,4 +10,5 @@ interface UserInteractor {
     suspend fun saveLikedPost(id : String,
                               value : HashMap<String, Int>) : Boolean
     suspend fun searchUserByName(name: String): List<UserInstance>?
+    suspend fun storeUserFriendsToRoom(friends : List<UserInstance?>)
 }

@@ -8,4 +8,5 @@ interface NotificationInteractor {
                                            instance : ArrayList<NotificationInstance>)
     suspend fun deleteNotificationFromDatabase(id : String,
                                                notification: NotificationInstance)
+    suspend fun storeNotificationsToRoom(notifications : List<NotificationInstance>)
 }
