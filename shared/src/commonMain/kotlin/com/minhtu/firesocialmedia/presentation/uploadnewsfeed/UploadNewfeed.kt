@@ -34,23 +34,21 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.minhtu.firesocialmedia.constants.TestTag
-import com.minhtu.firesocialmedia.data.model.NewsInstance
-import com.minhtu.firesocialmedia.di.PlatformContext
+import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
+import com.minhtu.firesocialmedia.data.remote.service.imagepicker.ImagePicker
 import com.minhtu.firesocialmedia.platform.CommonBackHandler
-import com.minhtu.firesocialmedia.platform.ImagePicker
 import com.minhtu.firesocialmedia.platform.VideoPlayer
 import com.minhtu.firesocialmedia.platform.logMessage
 import com.minhtu.firesocialmedia.platform.showToast
 import com.minhtu.firesocialmedia.presentation.home.HomeViewModel
-import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
 import com.minhtu.firesocialmedia.presentation.loading.Loading
+import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
 import com.minhtu.firesocialmedia.utils.UiUtils
 
 class UploadNewsfeed {
     companion object{
         @Composable
         fun UploadNewsfeedScreen(modifier: Modifier,
-                                 platform : PlatformContext,
                                  imagePicker: ImagePicker,
                                  homeViewModel: HomeViewModel,
                                  uploadNewsfeedViewModel: UploadNewfeedViewModel,
@@ -59,7 +57,6 @@ class UploadNewsfeed {
                                  onNavigateToHomeScreen: () -> Unit){
             val isLoading by loadingViewModel.isLoading.collectAsState()
             uploadNewsfeedViewModel.updateCurrentUser(homeViewModel.currentUser!!)
-            uploadNewsfeedViewModel.updateListUsers(homeViewModel.listUsers)
 
             imagePicker.RegisterLauncher({loadingViewModel.hideLoading()})
             val postStatus = uploadNewsfeedViewModel.createPostStatus.collectAsState()
@@ -221,7 +218,7 @@ class UploadNewsfeed {
                             ) {
                                 val video = uploadNewsfeedViewModel.video
                                 if(video.isNotEmpty()) {
-                                    logMessage("VideoPlayer", video)
+                                    logMessage("VideoPlayer", { video })
                                     VideoPlayer(video,
                                         modifier = Modifier
                                             .height(300.dp)
@@ -261,8 +258,8 @@ class UploadNewsfeed {
                         Button(
                             onClick = {
                                 loadingViewModel.showLoading()
-                                if(isUpdated) uploadNewsfeedViewModel.updateNewInformation(updateNew!!, platform)
-                                else uploadNewsfeedViewModel.createPost(uploadNewsfeedViewModel.currentUser!!, platform)
+                                if(isUpdated) uploadNewsfeedViewModel.updateNewInformation(updateNew!!)
+                                else uploadNewsfeedViewModel.createPost(uploadNewsfeedViewModel.currentUser!!)
                             },
                             modifier = Modifier.testTag(TestTag.TAG_BUTTON_POST)
                                 .semantics{

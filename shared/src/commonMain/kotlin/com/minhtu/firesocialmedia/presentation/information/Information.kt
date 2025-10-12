@@ -19,6 +19,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -34,13 +35,12 @@ import androidx.compose.ui.unit.sp
 import com.minhtu.firesocialmedia.constants.Constants
 import com.minhtu.firesocialmedia.constants.TestTag
 import com.minhtu.firesocialmedia.di.PlatformContext
-import com.minhtu.firesocialmedia.platform.ImagePicker
+import com.minhtu.firesocialmedia.data.remote.service.imagepicker.ImagePicker
 import com.minhtu.firesocialmedia.platform.getImageBytesFromDrawable
 import com.minhtu.firesocialmedia.platform.showToast
+import com.minhtu.firesocialmedia.presentation.loading.Loading
 import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
 import com.minhtu.firesocialmedia.presentation.signup.SignUpViewModel
-import com.minhtu.firesocialmedia.presentation.loading.Loading
-import androidx.compose.runtime.getValue
 
 class Information {
     companion object{
@@ -149,7 +149,7 @@ class Information {
                         Button(
                             onClick = {
                                 loadingViewModel.showLoading()
-                                informationViewModel.finishSignUpStage(platform)
+                                informationViewModel.finishSignUpStage()
                             },
                             modifier = Modifier.Companion.testTag(TestTag.Companion.TAG_BUTTON_NEXT)
                                 .semantics {

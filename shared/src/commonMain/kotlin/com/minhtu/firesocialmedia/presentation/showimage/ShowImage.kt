@@ -16,7 +16,7 @@ import androidx.compose.material.icons.filled.Download
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.ProvidedValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -26,17 +26,14 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.minhtu.firesocialmedia.constants.TestTag
-import com.minhtu.firesocialmedia.di.PlatformContext
 import com.minhtu.firesocialmedia.platform.CrossPlatformIcon
-import com.minhtu.firesocialmedia.platform.generateImageLoader
-import com.seiko.imageloader.LocalImageLoader
 import com.seiko.imageloader.ui.AutoSizeImage
 
 class ShowImage {
     companion object {
         @Composable
-        fun ShowImageScreen(platform : PlatformContext,
-                            image: String,
+        fun ShowImageScreen(image: String,
+                            localImageLoaderValue : ProvidedValue<*>,
                             showImageViewModel: ShowImageViewModel,
                             modifier: Modifier,
                             onNavigateToHomeScreen: () -> Unit) {
@@ -66,8 +63,7 @@ class ShowImage {
                                 .clickable {
                                     showImageViewModel.downloadImage(
                                         image,
-                                        generateRandomImageName(16),
-                                        platform
+                                        generateRandomImageName(16)
                                     )
                                 }
                                 .testTag(TestTag.Companion.TAG_BUTTON_DOWNLOAD)
@@ -78,7 +74,7 @@ class ShowImage {
                         Spacer(modifier = Modifier.Companion.width(10.dp))
                         CrossPlatformIcon(
                             icon = "white_close",
-                            color = "#000000",
+                            backgroundColor = "#000000",
                             contentDescription = "Close Icon",
                             contentScale = ContentScale.Companion.Fit,
                             modifier = Modifier.Companion
@@ -97,7 +93,7 @@ class ShowImage {
 
                     // Centered Image
                     CompositionLocalProvider(
-                        LocalImageLoader provides remember { generateImageLoader() },
+                        localImageLoaderValue
                     ) {
                         AutoSizeImage(
                             image,

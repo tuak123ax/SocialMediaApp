@@ -24,10 +24,14 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.UIKitView
+import androidx.navigation.NavHostController
 import com.minhtu.firesocialmedia.constants.Constants
-import com.minhtu.firesocialmedia.data.model.UserInstance
-import com.minhtu.firesocialmedia.services.crypto.IosCryptoHelper
-import com.minhtu.firesocialmedia.services.notification.KtorProvider
+import com.minhtu.firesocialmedia.di.PlatformContext
+import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
+import com.minhtu.firesocialmedia.data.remote.service.imagepicker.ImagePicker
+import com.minhtu.firesocialmedia.domain.serviceimpl.crypto.IosCryptoHelper
+import com.minhtu.firesocialmedia.domain.serviceimpl.notification.KtorProvider
+import com.minhtu.firesocialmedia.presentation.signin.SignInViewModel
 import com.minhtu.firesocialmedia.utils.NavigationHandler
 import com.russhwolf.settings.ExperimentalSettingsImplementation
 import com.russhwolf.settings.KeychainSettings
@@ -37,22 +41,20 @@ import com.seiko.imageloader.component.setupDefaultComponents
 import com.seiko.imageloader.intercept.bitmapMemoryCacheConfig
 import com.seiko.imageloader.intercept.imageMemoryCacheConfig
 import com.seiko.imageloader.intercept.painterMemoryCacheConfig
-import io.ktor.client.request.get
 import io.ktor.client.request.post
+import io.ktor.client.request.request
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.readBytes
 import io.ktor.http.ContentType
+import io.ktor.http.HttpMethod
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import kotlinx.cinterop.BetaInteropApi
-import kotlinx.cinterop.ByteVar
 import kotlinx.cinterop.ObjCAction
 import kotlinx.cinterop.addressOf
-import kotlinx.cinterop.get
 import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.readValue
 import kotlinx.cinterop.refTo
-import kotlinx.cinterop.reinterpret
 import kotlinx.cinterop.useContents
 import kotlinx.cinterop.usePinned
 import kotlinx.coroutines.CoroutineScope
@@ -163,13 +165,17 @@ actual fun showToast(message: String) {
     ToastController.show(message)
 }
 
+
 @Composable
 actual fun getIconPainter(icon: String): Painter? {
     return null // iOS will use the composable fallback instead
 }
 
 @Composable
-actual fun getIconComposable(icon: String, color : String, tint : String?, modifier : Modifier): (@Composable () -> Unit)? {
+actual fun getIconComposable(icon: String,
+                             bgColor : String,
+                             tint : String?,
+                             modifier : Modifier): (@Composable () -> Unit)? {
     val uiImage = UIImage.imageNamed(icon)
     return {
         if(uiImage != null) {
@@ -181,23 +187,45 @@ actual fun getIconComposable(icon: String, color : String, tint : String?, modif
                     modifier = Modifier.fillMaxSize(),
                     factory = {
                         UIImageView().apply {
-                            image = renderUiImage
-                            backgroundColor = if(tint != null) UIColor.fromHex("#FFFFFF") else UIColor.fromHex(color)
-                            tintColor = if(tint != null) UIColor.fromHex(tint) else UIColor.blackColor
+                            val isTinted = tint != null
+
+                            image = if (isTinted)
+                                renderUiImage.imageWithRenderingMode(UIImageRenderingMode.UIImageRenderingModeAlwaysTemplate)
+                            else
+                                renderUiImage.imageWithRenderingMode(UIImageRenderingMode.UIImageRenderingModeAlwaysOriginal)
+
+                            backgroundColor = UIColor.fromHex(bgColor)
+
+                            if (isTinted) {
+                                tintColor = UIColor.fromHex(tint)
+                            }
+
                             opaque = false
                             clipsToBounds = true
                             contentMode = UIViewContentMode.UIViewContentModeScaleAspectFit
                         }
                     },
                     update = { imageView ->
-                        imageView.image = renderUiImage
-                        imageView.backgroundColor = if(tint != null) UIColor.fromHex("#FFFFFF") else UIColor.fromHex(color)
-                        imageView.tintColor = if(tint != null) UIColor.fromHex(tint) else UIColor.blackColor
+                        val isTinted = tint != null
+
+                        imageView.image = if (isTinted)
+                            renderUiImage.imageWithRenderingMode(UIImageRenderingMode.UIImageRenderingModeAlwaysTemplate)
+                        else
+                            renderUiImage.imageWithRenderingMode(UIImageRenderingMode.UIImageRenderingModeAlwaysOriginal)
+
+                        imageView.backgroundColor = UIColor.fromHex(bgColor)
+
+                        if (isTinted) {
+                            imageView.tintColor = UIColor.fromHex(tint)
+                        }
+                        // If tint becomes null later, we don't touch tintColor; renderingMode=Original keeps the original colors.
+
                         imageView.opaque = false
                         imageView.contentMode = UIViewContentMode.UIViewContentModeScaleAspectFit
                         imageView.clipsToBounds = true
                     }
                 )
+
             }
 
         }
@@ -237,7 +265,7 @@ actual fun PasswordVisibilityIcon(passwordVisibility: Boolean) {
     val descriptionOfIcon = if(passwordVisibility) "Hide password" else "Show password"
     CrossPlatformIcon(
         icon = iconName,
-        color = "#FF132026",
+        backgroundColor = "#FF132026",
         contentDescription = descriptionOfIcon,
         Modifier.size(24.dp)
     )
@@ -247,7 +275,7 @@ actual fun exitApp() {
 
 }
 
-actual fun createMessageForServer(message: String, tokenList : ArrayList<String>, sender : UserInstance): String {
+actual fun createMessageForServer(message: String, tokenList : ArrayList<String>, sender : UserInstance, type : String): String {
     try {
         val body = buildJsonObject {
             putJsonObject(Constants.REMOTE_MSG_DATA) {
@@ -257,6 +285,7 @@ actual fun createMessageForServer(message: String, tokenList : ArrayList<String>
                 put(Constants.KEY_EMAIL, JsonPrimitive(sender.email))
                 put(Constants.REMOTE_MSG_TITLE, JsonPrimitive(sender.name))
                 put(Constants.REMOTE_MSG_BODY, JsonPrimitive(message))
+                put(Constants.REMOTE_MSG_TYPE, JsonPrimitive(type))
             }
             putJsonArray(Constants.REMOTE_MSG_TOKENS) {
                 for(token in tokenList) {
@@ -272,7 +301,7 @@ actual fun createMessageForServer(message: String, tokenList : ArrayList<String>
 }
 
 actual fun sendMessageToServer(request: String) {
-    logMessage("sendMessageToServer", "request: $request")
+    logMessage("sendMessageToServer", { "request: $request" })
     CoroutineScope(Dispatchers.Default).launch {
         try {
             val response = KtorProvider.client.post(Constants.APP_SCRIPT_URL + Constants.APP_SCRIPT_ENDPOINT){
@@ -280,12 +309,13 @@ actual fun sendMessageToServer(request: String) {
                 setBody(request)
             }
             if (response.status.isSuccess()) {
-                logMessage("sendMessageToServer", "Notification sent successfully")
+                logMessage("sendMessageToServer", { "Notification sent successfully" })
             } else {
-                logMessage("sendMessageToServer", "Failed to send notification: ${response.status}")
+                logMessage("sendMessageToServer",
+                    { "Failed to send notification: ${response.status}" })
             }
         } catch (e: Exception) {
-            logMessage("sendMessageToServer", e.message.toString())
+            logMessage("sendMessageToServer", { e.message.toString() })
         }
     }
 }
@@ -300,8 +330,8 @@ actual object TokenStorage {
     }
 }
 
-actual fun logMessage(tag: String, message: String) {
-    NSLog("[$tag] $message")
+actual inline fun logMessage(tag: String, message: () -> String) {
+    NSLog("[$tag] ${message()}")
 }
 
 actual fun generateRandomId(): String {
@@ -410,7 +440,9 @@ class IosImagePicker(
         }
 
         suspend fun downloadImageAsByteArray(url: String): ByteArray {
-            val response = KtorProvider.client.get(url)
+            val response = KtorProvider.client.request(url) {
+                method = HttpMethod.Get
+            }
             return response.readBytes()
         }
 
@@ -476,11 +508,11 @@ class IosImagePicker(
 
     fun NSData.toByteArray(): ByteArray {
         val length = this.length.toInt()
-        val bytesPointer = this.bytes?.reinterpret<ByteVar>() ?: return ByteArray(0)
-
-        return ByteArray(length) { index ->
-            bytesPointer[index]
+        val bytes = ByteArray(length)
+        bytes.usePinned { pinned ->
+            this.getBytes(pinned.addressOf(0))
         }
+        return bytes
     }
 
     // Convert ByteArray to Compose ImageBitmap
@@ -540,7 +572,7 @@ fun ByteArray.toNSData(): NSData {
 }
 
 actual fun onPushNotificationReceived(data: Map<String, Any?>) {
-    logMessage("onPushNotificationReceived", data.toString())
+    logMessage("onPushNotificationReceived", { data.toString() })
 
     val fcmToken = data[Constants.KEY_FCM_TOKEN] as? String
     val userId = data[Constants.KEY_USER_ID] as? String
@@ -563,22 +595,27 @@ actual fun onPushNotificationReceived(data: Map<String, Any?>) {
 
     UNUserNotificationCenter.currentNotificationCenter().addNotificationRequest(request) { error ->
         if (error != null) {
-            logMessage("iOS Notification", "Failed to schedule notification: $error")
+            logMessage("iOS Notification", { "Failed to schedule notification: $error" })
         } else {
-            logMessage("iOS Notification", "Notification scheduled")
+            logMessage("iOS Notification", { "Notification scheduled" })
         }
     }
 }
 
 fun getBottomSafeAreaInset(): Dp {
-    val keyWindow = UIApplication.sharedApplication.connectedScenes
-        .filterIsInstance<UIWindowScene>()
-        .firstOrNull()
-        ?.windows
-        ?.firstOrNull { (it as? UIWindow)?.isKeyWindow() == true } as? UIWindow
+	val candidateWindows: List<UIWindow> = UIApplication.sharedApplication.connectedScenes
+		.filterIsInstance<UIWindowScene>()
+		.flatMap { scene ->
+			(scene.windows as? List<UIWindow>) ?: emptyList()
+		}
 
-    val bottomInset = keyWindow?.safeAreaInsets?.useContents { bottom } ?: 0.0
-    return bottomInset.dp
+	// Prefer key window, else fall back to the first window
+	val window = candidateWindows.firstOrNull { it.isKeyWindow() } ?: candidateWindows.firstOrNull()
+
+	val bottomInsetPoints = window?.safeAreaInsets?.useContents { bottom } ?: 0.0
+	val insetDp = bottomInsetPoints.dp
+	// Typical iPhone home indicator inset is ~34pt; cap conservatively
+	return insetDp.coerceIn(0.dp, 36.dp)
 }
 
 const val serviceName: String = "iosLocalStorage"
@@ -704,5 +741,66 @@ actual fun VideoPlayer(uri: String, modifier: Modifier) {
         update = { view -> view.updateVideo(uri) },
         modifier = modifier
     )
+}
+
+actual fun createCallMessage(message: String, tokenList: ArrayList<String>, sessionId: String, sender: UserInstance, receiver: UserInstance, type: String): String {
+    // iOS implementation will be added later
+    return ""
+}
+
+actual class WebRTCVideoTrack
+
+@Composable
+actual fun WebRTCVideoView(
+    localTrack: WebRTCVideoTrack?,
+    remoteTrack: WebRTCVideoTrack?,
+    modifier: Modifier
+) {
+    // iOS implementation will be added later
+    Box(modifier = modifier) {
+        Text("WebRTC Video View - iOS implementation coming soon")
+    }
+}
+
+@Composable
+actual fun rememberNavigationHandler(navController: Any): NavigationHandler {
+    val controller = navController as NavHostController
+    return remember(controller) {
+        object : NavigationHandler {
+            override fun navigateTo(route: String) {
+                controller.navigate(route)
+            }
+            override fun navigateBack() {
+                controller.popBackStack()
+            }
+            override fun getCurrentRoute(): String? {
+                return controller.currentBackStackEntry?.destination?.route
+            }
+        }
+    }
+}
+
+@Composable
+actual fun <T : Any> platformViewModel(key: String?, factory: () -> T): T {
+    // iOS: just remember an instance; there’s no default ViewModelStore
+    return remember(key) { factory() }
+}
+
+@Composable
+actual fun rememberPlatformImagePicker(
+    context: Any?,
+    onImagePicked: (String) -> Unit,
+    onVideoPicked: (String) -> Unit
+): ImagePicker {
+    return remember { IosImagePicker(onImagePicked, onVideoPicked).imagePicker }
+}
+
+@Composable
+actual fun setupSignInLauncher(
+    context: Any?,
+    signInViewModel: SignInViewModel,
+    platformContext: PlatformContext
+) {
+    // No-op on iOS for Google Sign-In in this project setup
 }
 

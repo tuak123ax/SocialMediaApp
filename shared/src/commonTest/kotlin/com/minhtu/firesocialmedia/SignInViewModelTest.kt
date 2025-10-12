@@ -5,13 +5,12 @@ import com.minhtu.firesocialmedia.di.AuthServiceMock
 import com.minhtu.firesocialmedia.di.Credentials
 import com.minhtu.firesocialmedia.di.CryptoServiceMock
 import com.minhtu.firesocialmedia.di.DatabaseServiceMock
-import com.minhtu.firesocialmedia.di.FirebaseServiceMock
+
 import com.minhtu.firesocialmedia.di.PlatformContextMock
 import com.minhtu.firesocialmedia.platform.SignInLauncherMock
-import com.minhtu.firesocialmedia.presentation.signin.SignInState
+import com.minhtu.firesocialmedia.data.dto.signin.SignInState
 import com.minhtu.firesocialmedia.presentation.signin.SignInViewModel
 import com.minhtu.firesocialmedia.utils.Utils
-import io.mockative.any
 import io.mockative.coEvery
 import io.mockative.eq
 import io.mockative.every
@@ -35,7 +34,7 @@ class SignInViewModelTest {
     private lateinit var platform: PlatformContextMock
     private lateinit var authServiceMock : AuthServiceMock
     private lateinit var cryptoServiceMock : CryptoServiceMock
-    private lateinit var firebaseServiceMock : FirebaseServiceMock
+
     private lateinit var databaseServiceMock : DatabaseServiceMock
     private lateinit var signInLauncher: SignInLauncherMock
     @BeforeTest
@@ -44,7 +43,7 @@ class SignInViewModelTest {
         platform = PlatformContextMock()
         authServiceMock = AuthServiceMock()
         cryptoServiceMock = CryptoServiceMock()
-        firebaseServiceMock = FirebaseServiceMock()
+
         databaseServiceMock = DatabaseServiceMock()
         signInLauncher = SignInLauncherMock()
     }
@@ -118,12 +117,11 @@ class SignInViewModelTest {
         // Stub methods
         every { platform.auth } returns authServiceMock
         every { platform.crypto } returns cryptoServiceMock
-        every { platform.firebase } returns firebaseServiceMock
         every { platform.database } returns databaseServiceMock
 
         coEvery { authServiceMock.signInWithEmailAndPassword(viewModel.email.value, password) } returns Result.success(Unit)
         every { cryptoServiceMock.saveAccount(email, password) } returns Unit
-        every { firebaseServiceMock.checkUserExists(eq(email), any()) }
+        every { databaseServiceMock.checkUserExists(eq(email), any()) }
             .invokes { args ->
                 val callback = args[1] as (SignInState) -> Unit
                 callback(SignInState(true, ""))
@@ -155,7 +153,6 @@ class SignInViewModelTest {
 
         every { platform.auth } returns authServiceMock
         every { platform.crypto } returns cryptoServiceMock
-        every { platform.firebase } returns firebaseServiceMock
         every { platform.database } returns databaseServiceMock
 
         coEvery { authServiceMock.signInWithEmailAndPassword(viewModel.email.value, password) } returns Result.failure(
@@ -177,7 +174,6 @@ class SignInViewModelTest {
 
         every { platform.auth } returns authServiceMock
         every { platform.crypto } returns cryptoServiceMock
-        every { platform.firebase } returns firebaseServiceMock
         every { platform.database } returns databaseServiceMock
 
         val correctCredentials = Credentials("correctuser@gmail.com", "123321")
@@ -187,7 +183,7 @@ class SignInViewModelTest {
         viewModel.updatePassword(correctCredentials.password)
         coEvery { authServiceMock.signInWithEmailAndPassword(viewModel.email.value, viewModel.password.value) } returns Result.success(Unit)
         every { cryptoServiceMock.saveAccount(viewModel.email.value, viewModel.password.value) } returns Unit
-        every { firebaseServiceMock.checkUserExists(eq(viewModel.email.value), any()) }
+        every { databaseServiceMock.checkUserExists(eq(viewModel.email.value), any()) }
             .invokes { args ->
                 val callback = args[1] as (SignInState) -> Unit
                 callback(SignInState(true, ""))
@@ -207,7 +203,6 @@ class SignInViewModelTest {
 
         every { platform.auth } returns authServiceMock
         every { platform.crypto } returns cryptoServiceMock
-        every { platform.firebase } returns firebaseServiceMock
         every { platform.database } returns databaseServiceMock
 
         viewModel.setSignInLauncher(signInLauncher)
@@ -222,7 +217,7 @@ class SignInViewModelTest {
                 callback.onSuccess("correctemail@gmail.com")
             }
 
-        every { firebaseServiceMock.checkUserExists(eq("correctemail@gmail.com"), any()) }
+        every { databaseServiceMock.checkUserExists(eq("correctemail@gmail.com"), any()) }
             .invokes { args ->
                 val callback = args[1] as (SignInState) -> Unit
                 callback(SignInState(true, ""))
@@ -243,7 +238,6 @@ class SignInViewModelTest {
 
         every { platform.auth } returns authServiceMock
         every { platform.crypto } returns cryptoServiceMock
-        every { platform.firebase } returns firebaseServiceMock
         every { platform.database } returns databaseServiceMock
 
         viewModel.setSignInLauncher(signInLauncher)

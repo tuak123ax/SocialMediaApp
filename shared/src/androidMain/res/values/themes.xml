@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="Theme.FireNotebook" parent="android:Theme.Material.Light.NoActionBar" />
+    <style name="Theme.FireSocialMedia" parent="android:Theme.Material.Light.NoActionBar" />
 </resources>

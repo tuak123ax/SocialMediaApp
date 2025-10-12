@@ -25,9 +25,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -43,7 +45,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.minhtu.firesocialmedia.constants.Constants
 import com.minhtu.firesocialmedia.constants.TestTag
-import com.minhtu.firesocialmedia.di.PlatformContext
+import com.minhtu.firesocialmedia.domain.error.signin.SignInError
 import com.minhtu.firesocialmedia.platform.CommonBackHandler
 import com.minhtu.firesocialmedia.platform.CrossPlatformIcon
 import com.minhtu.firesocialmedia.platform.PasswordVisibilityIcon
@@ -51,14 +53,11 @@ import com.minhtu.firesocialmedia.platform.exitApp
 import com.minhtu.firesocialmedia.platform.showToast
 import com.minhtu.firesocialmedia.presentation.loading.Loading
 import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 
 class SignIn{
     companion object{
         @Composable
         fun SignInScreen(
-            platform : PlatformContext,
             signInViewModel: SignInViewModel,
             loadingViewModel: LoadingViewModel,
             modifier: Modifier,
@@ -68,23 +67,45 @@ class SignIn{
             onNavigateToForgotPasswordScreen:() -> Unit) {
             val isLoading = loadingViewModel.isLoading.collectAsState()
 
+            val localCredentials = signInViewModel.localCredentials
             LaunchedEffect(Unit) {
                 //Check login information in storage
-                signInViewModel.checkLocalAccount(platform, { loadingViewModel.showLoading() })
+                signInViewModel.checkLocalAccount()
+            }
+            LaunchedEffect(localCredentials.value) {
+                if(localCredentials.value != null) {
+                    signInViewModel.signIn(
+                        showLoading = {
+                            loadingViewModel.showLoading()
+                        }
+                    )
+                }
             }
             val signInStatus = signInViewModel.signInState.collectAsState()
             LaunchedEffect(signInStatus.value) {
                 loadingViewModel.hideLoading()
                 if (signInStatus.value.signInStatus) {
-                    if (signInStatus.value.message == Constants.Companion.ACCOUNT_NOT_EXISTED) {
+                    if (signInStatus.value.error == SignInError.AccountNotExist) {
                         onNavigateToInformationScreen()
                     } else {
                         onNavigateToHomeScreen()
                     }
                 } else {
-                    when (signInStatus.value.message) {
-                        Constants.Companion.DATA_EMPTY -> showToast("Please fill all information!")
-                        Constants.Companion.LOGIN_ERROR -> showToast("Error happened!")
+                    when (signInStatus.value.error) {
+                        SignInError.DataEmpty -> showToast("Please fill all information!")
+                        SignInError.InvalidCredentials -> showToast("Your email or password is invalid!")
+                        SignInError.InvalidEmail -> showToast("Your email is invalid!")
+                        SignInError.InvalidUser -> showToast("Your user is invalid!")
+                        SignInError.MultiFactor -> showToast("Multi factor error happened!")
+                        SignInError.NetworkError -> showToast("Please recheck your network!")
+                        SignInError.TooManyRequests -> showToast("Too many requests! Slow down please!")
+                        SignInError.UserDisabled -> showToast("User is disable!")
+                        SignInError.UserNotFound -> showToast("User is not found!")
+                        SignInError.WrongPassword -> showToast("Your password is wrong!")
+                        is SignInError.Unknown -> showToast("Error happened!")
+                        else -> {
+                            //Do nothing
+                        }
                     }
                 }
                 signInViewModel.resetSignInStatus()
@@ -166,8 +187,7 @@ class SignIn{
                         Button(
                             onClick = {
                                 signInViewModel.signIn(
-                                    showLoading = { loadingViewModel.showLoading() },
-                                    platform
+                                    showLoading = { loadingViewModel.showLoading() }
                                 )
                             },
                             modifier = Modifier.Companion.testTag(TestTag.Companion.TAG_BUTTON_SIGNIN)
@@ -221,7 +241,7 @@ class SignIn{
                         ) {
                             CrossPlatformIcon(
                                 "google",
-                                color = "#FFFFFFFF",
+                                backgroundColor = "#FFFFFFFF",
                                 "Google",
                                 Modifier.Companion
                                     .size(25.dp)

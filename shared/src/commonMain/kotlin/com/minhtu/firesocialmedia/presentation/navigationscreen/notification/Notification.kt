@@ -37,9 +37,13 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.ProvidedValue
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -57,34 +61,55 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.minhtu.firesocialmedia.constants.TestTag
-import com.minhtu.firesocialmedia.data.model.NewsInstance
-import com.minhtu.firesocialmedia.data.model.NotificationInstance
-import com.minhtu.firesocialmedia.data.model.NotificationType
-import com.minhtu.firesocialmedia.data.model.UserInstance
-import com.minhtu.firesocialmedia.di.PlatformContext
+import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
+import com.minhtu.firesocialmedia.domain.entity.notification.NotificationInstance
+import com.minhtu.firesocialmedia.domain.entity.notification.NotificationType
+import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.platform.generateImageLoader
 import com.minhtu.firesocialmedia.platform.logMessage
 import com.minhtu.firesocialmedia.platform.showToast
 import com.minhtu.firesocialmedia.presentation.home.HomeViewModel
+import com.minhtu.firesocialmedia.presentation.loading.Loading
+import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
 import com.minhtu.firesocialmedia.presentation.search.SearchViewModel
-import com.minhtu.firesocialmedia.utils.Utils
 import com.seiko.imageloader.LocalImageLoader
 import com.seiko.imageloader.ui.AutoSizeImage
 import kotlinx.coroutines.delay
 import kotlin.math.roundToInt
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 
 class Notification {
     companion object{
         @Composable
         fun NotificationScreen(modifier: Modifier,
-                               platform : PlatformContext,
                                paddingValues: PaddingValues,
+                               localImageLoaderValue : ProvidedValue<*>,
                                searchViewModel: SearchViewModel,
                                homeViewModel: HomeViewModel,
-                               onNavigateToPostInformation: (new : NewsInstance?) -> Unit,
+                               notificationViewModel : NotificationViewModel,
+                               loadingViewModel: LoadingViewModel,
+                               onNavigateToPostInformation: (new : NewsInstance) -> Unit,
                                onNavigateToUserInformation: (user : UserInstance?) -> Unit){
+            val isLoading by loadingViewModel.isLoading.collectAsState()
+            val getNeededUsersStatus by notificationViewModel.getNeededUsersStatus.collectAsState()
+            val getAllNotificationsStatus = homeViewModel.getAllNotificationsOfCurrentUser.value
+            
+            LaunchedEffect(Unit) {
+                // Only show loading if notifications haven't been loaded yet
+                if (!getAllNotificationsStatus) {
+                    loadingViewModel.showLoading()
+                }
+                //Get more users to show notification information
+                notificationViewModel.checkUsersInCacheAndGetMore(
+                    homeViewModel.loadedUsersCache,
+                    homeViewModel.listNotificationOfCurrentUser)
+            }
+            
+            // Hide loading when both notifications are loaded and users are ready
+            LaunchedEffect(getAllNotificationsStatus, getNeededUsersStatus) {
+                if (getAllNotificationsStatus && getNeededUsersStatus) {
+                    loadingViewModel.hideLoading()
+                }
+            }
             Column(
                 verticalArrangement = Arrangement.Top,
                 horizontalAlignment = Alignment.Companion.CenterHorizontally,
@@ -106,44 +131,68 @@ class Notification {
                         .testTag(TestTag.Companion.TAG_NOTIFICATION_LIST)
                         .semantics {
                             contentDescription = TestTag.Companion.TAG_NOTIFICATION_LIST
-                        }) {
-                    items(notificationList, key = { it.id }) { notification ->
-                        //State to track visibility of a notification
-                        var visible by remember { mutableStateOf(true) }
-                        //State to track to delay before delete data from db
-                        var pendingDelete by remember { mutableStateOf(false) }
-                        val user = Utils.Companion.findUserById(
-                            notification.sender,
-                            homeViewModel.listUsers
-                        )
-                        if (user != null) {
+                        }
+                ) {
+                    if(getNeededUsersStatus && homeViewModel.listNotificationOfCurrentUser.isNotEmpty()) {
+                        items(notificationList, key = { it.id }) { notification ->
+                            //State to track visibility of a notification
+                            var visible by remember { mutableStateOf(true) }
+                            //State to track to delay before delete data from db
+                            var pendingDelete by remember { mutableStateOf(false) }
                             if (pendingDelete) {
                                 // wait for animation before removing
                                 LaunchedEffect(Unit) {
                                     delay(200)
                                     homeViewModel.removeNotificationInList(notification)
-                                    homeViewModel.deleteNotification(notification, platform)
+                                    homeViewModel.deleteNotification(notification)
                                 }
                             }
-                            AnimatedVisibility(
-                                visible = visible,
-                                exit = slideOutHorizontally(
-                                    targetOffsetX = { fullWidth -> fullWidth },
-                                    animationSpec = tween(durationMillis = 200)
-                                )
+
+                            val user = notificationViewModel.findLoadedUserInSet(notification.sender)
+
+                            if(user != null) {
+                                AnimatedVisibility(
+                                    visible = visible,
+                                    exit = slideOutHorizontally(
+                                        targetOffsetX = { fullWidth -> fullWidth },
+                                        animationSpec = tween(durationMillis = 200)
+                                    )
+                                ) {
+                                    NotificationHasSwipeToDelete(
+                                        notification,
+                                        user,
+                                        localImageLoaderValue,
+                                        homeViewModel,
+                                        notificationViewModel,
+                                        onDelete = {
+                                            visible = false
+                                            pendingDelete = true
+                                        },
+                                        onNavigateToPostInformation,
+                                        onNavigateToUserInformation
+                                    )
+                                }
+                            }
+                        }
+                    } else if (getNeededUsersStatus && homeViewModel.listNotificationOfCurrentUser.isEmpty()) {
+                        item {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(32.dp),
+                                contentAlignment = Alignment.Center
                             ) {
-                                NotificationHasSwipeToDelete(
-                                    notification, user, homeViewModel,
-                                    onDelete = {
-                                        visible = false
-                                        pendingDelete = true
-                                    },
-                                    onNavigateToPostInformation,
-                                    onNavigateToUserInformation
+                                Text(
+                                    text = "No notifications yet",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
                         }
                     }
+                }
+                if (isLoading) {
+                    Loading.Companion.LoadingScreen()
                 }
             }
         }
@@ -151,9 +200,11 @@ class Notification {
         @Composable
         fun NotificationHasSwipeToDelete(notification: NotificationInstance,
                                          user: UserInstance,
+                                         localImageLoaderValue : ProvidedValue<*>,
                                          homeViewModel: HomeViewModel,
+                                         notificationViewModel: NotificationViewModel,
                                          onDelete: () -> Unit,
-                                         onNavigateToPostInformation: (new : NewsInstance?) -> Unit,
+                                         onNavigateToPostInformation: (new : NewsInstance) -> Unit,
                                          onNavigateToUserInformation: (user : UserInstance?) -> Unit) {
             val swipeDistancePx = with(LocalDensity.current) { 70.dp.toPx() }
             var offsetX by remember { mutableFloatStateOf(0f) }
@@ -225,24 +276,21 @@ class Notification {
                                 ) {
                                     logMessage(
                                         "onNavigateToPostInformation",
-                                        notification.relatedInfo
+                                        { notification.relatedInfo }
                                     )
-                                    val relatedNew = Utils.Companion.findNewById(
-                                        notification.relatedInfo,
-                                        homeViewModel.listNews
-                                    )
-                                    if (relatedNew != null) {
-                                        onNavigateToPostInformation(relatedNew)
-                                    } else {
-                                        showToast("Cannot find the related post!")
-                                    }
+                                    notificationViewModel.onNotificationClick(
+                                        notification,
+                                        homeViewModel.listNews,
+                                        onNavigateToPostInformation = { relatedNew ->
+                                            onNavigateToPostInformation(relatedNew)
+                                        },
+                                        onError = {
+                                            showToast("Cannot find the related post!")
+                                        })
                                 } else {
                                     if (notification.type == NotificationType.ADD_FRIEND) {
                                         onNavigateToUserInformation(
-                                            Utils.Companion.findUserById(
-                                                notification.relatedInfo,
-                                                homeViewModel.listUsers
-                                            )
+                                            user
                                         )
                                     }
                                 }
@@ -251,13 +299,15 @@ class Notification {
                             }
                         }
                 ) {
-                    NotificationRow(notification, user)
+                    NotificationRow(notification, user, localImageLoaderValue)
                 }
             }
 
         }
         @Composable
-        fun NotificationRow(notification: NotificationInstance, user: UserInstance) {
+        fun NotificationRow(notification: NotificationInstance,
+                            user: UserInstance,
+                            localImageLoaderValue : ProvidedValue<*>) {
             Row(
                 horizontalArrangement = Arrangement.Start,
                 verticalAlignment = Alignment.Companion.CenterVertically,
@@ -266,7 +316,7 @@ class Notification {
                     .padding(horizontal = 10.dp, vertical = 8.dp)
             ) {
                 CompositionLocalProvider(
-                    LocalImageLoader provides remember { generateImageLoader() },
+                    localImageLoaderValue
                 ) {
                     AutoSizeImage(
                         notification.avatar,

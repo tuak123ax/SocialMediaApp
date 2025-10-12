@@ -19,8 +19,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.ProvidedValue
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -31,9 +35,9 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.minhtu.firesocialmedia.constants.TestTag
-import com.minhtu.firesocialmedia.data.model.NewsInstance
-import com.minhtu.firesocialmedia.data.model.UserInstance
 import com.minhtu.firesocialmedia.di.PlatformContext
+import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
+import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.platform.CrossPlatformIcon
 import com.minhtu.firesocialmedia.platform.convertTimeToDateString
 import com.minhtu.firesocialmedia.platform.generateImageLoader
@@ -42,43 +46,46 @@ import com.minhtu.firesocialmedia.presentation.comment.CommentViewModel
 import com.minhtu.firesocialmedia.presentation.home.HomeViewModel
 import com.minhtu.firesocialmedia.utils.NavigationHandler
 import com.minhtu.firesocialmedia.utils.UiUtils
-import com.minhtu.firesocialmedia.utils.Utils
 import com.seiko.imageloader.LocalImageLoader
 import com.seiko.imageloader.ui.AutoSizeImage
-import kotlin.collections.contains
-import androidx.compose.runtime.getValue
 
 class PostInformation {
     companion object{
         @Composable
-        fun PostInformationScreen(platform : PlatformContext,
+        fun PostInformationScreen(modifier : Modifier,
+                                  platform : PlatformContext,
+                                  localImageLoaderValue : ProvidedValue<*>,
                                   news: NewsInstance,
                                   onNavigateToShowImageScreen: (image: String) -> Unit,
                                   onNavigateToUserInformation: (user: UserInstance?) -> Unit,
-                                  onNavigateToHomeScreen: () -> Unit,
+                                  onNavigateToHomeScreen: (numberOfComments : Int) -> Unit,
+                                  onNavigateBack : () -> Unit,
                                   homeViewModel: HomeViewModel,
-                                  commentViewModel : CommentViewModel,
-                                  navController : NavigationHandler
+                                  commentViewModel : CommentViewModel
         ) {
             val likeStatus by homeViewModel.likedPosts.collectAsState()
-            val isLiked = likeStatus.contains(news.id)
-            LaunchedEffect(likeStatus) {
+            val isLiked = likeStatus.containsKey(news.id)
+            LaunchedEffect(Unit) {
                 homeViewModel.updateLikeStatus()
             }
             val likeCountList = homeViewModel.likeCountList.collectAsState()
             val commentCountList = homeViewModel.commentCountList.collectAsState()
+
+            var user by remember { mutableStateOf<UserInstance?>(null) }
+
+            LaunchedEffect(news.posterId) {
+                user = homeViewModel.findUserById(news.posterId)
+            }
             Column(
-                modifier = Modifier.Companion.fillMaxSize().background(Color.Companion.White),
+                modifier = modifier,
                 verticalArrangement = Arrangement.spacedBy(1.dp)
             ) {
-                UiUtils.Companion.BackAndMoreOptionsRow(navController)
+                UiUtils.Companion.BackAndMoreOptionsRow(onNavigateBack)
                 Row(
                     horizontalArrangement = Arrangement.Start,
                     modifier = Modifier.Companion.background(color = Color.Companion.White)
                         .padding(10.dp).fillMaxWidth()
                         .clickable {
-                            var user =
-                                Utils.Companion.findUserById(news.posterId, homeViewModel.listUsers)
                             if (user == null) {
                                 user = homeViewModel.currentUser
                             }
@@ -87,7 +94,7 @@ class PostInformation {
                             }
                         }) {
                     CompositionLocalProvider(
-                        LocalImageLoader provides remember { generateImageLoader() },
+                        localImageLoaderValue
                     ) {
                         AutoSizeImage(
                             news.avatar,
@@ -120,7 +127,7 @@ class PostInformation {
                 UiUtils.Companion.ExpandableText(news.message)
                 if (news.image.isNotEmpty()) {
                     CompositionLocalProvider(
-                        LocalImageLoader provides remember { generateImageLoader() },
+                        localImageLoaderValue
                     ) {
                         AutoSizeImage(
                             news.image,
@@ -164,7 +171,7 @@ class PostInformation {
                 ) {
                     Button(
                         onClick = {
-                            homeViewModel.clickLikeButton(news, platform)
+                            homeViewModel.clickLikeButton(news)
                         },
                         elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp),
                         colors = if (isLiked) ButtonDefaults.buttonColors(Color.Companion.Cyan)
@@ -176,7 +183,7 @@ class PostInformation {
                             }) {
                         CrossPlatformIcon(
                             icon = "like",
-                            color = if (isLiked) "#00FFFF" else "#FFFFFFFF",
+                            backgroundColor = if (isLiked) "#00FFFF" else "#FFFFFFFF",
                             contentDescription = "Like",
                             modifier = Modifier.Companion
                                 .size(25.dp)
@@ -198,7 +205,7 @@ class PostInformation {
                             }) {
                         CrossPlatformIcon(
                             icon = "comment",
-                            color = "#FFFFFFFF",
+                            backgroundColor = "#FFFFFFFF",
                             contentDescription = "Comment",
                             modifier = Modifier.Companion
                                 .size(25.dp)
@@ -214,11 +221,11 @@ class PostInformation {
                         .fillMaxSize()
                         .background(color = Color.Companion.White),
                     platform,
+                    localImageLoaderValue,
                     showCloseIcon = false,
                     commentViewModel = commentViewModel,
                     currentUser = homeViewModel.currentUser!!,
                     selectedNew = news,
-                    listUsers = homeViewModel.listUsers,
                     onNavigateToShowImageScreen = onNavigateToShowImageScreen,
                     onNavigateToUserInformation = onNavigateToUserInformation,
                     onNavigateToHomeScreen = onNavigateToHomeScreen

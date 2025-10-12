@@ -2,18 +2,6 @@ package com.minhtu.firesocialmedia.constants
 
 class Constants {
     companion object{
-        val TOKEN_PATH = "token"
-        const val USER_PATH = "users"
-        const val NEWS_PATH = "news"
-        const val COMMENT_PATH = "comments"
-        const val LIST_REPLIES_PATH = "listReplies"
-        const val LIKED_POSTS_PATH = "likedPosts"
-        const val LIKED_COMMENT_PATH = "likedComments"
-        const val FRIEND_REQUESTS_PATH = "friendRequests"
-        const val NOTIFICATION_PATH = "notifications"
-        const val FRIENDS_PATH = "friends"
-        const val LIKED_COUNT_PATH = "likeCount"
-        const val COMMENT_COUNT_PATH = "commentCount"
         const val CHANNEL_ID = "NotificationID"
         const val PASSWORD = "Password"
         const val CONFIRM_PASSWORD = "Confirm Password"
@@ -31,6 +19,7 @@ class Constants {
         const val EMAIL_SERVER_ERROR = "EMAIL_SERVER_ERROR"
         const val EMAIL_NOT_EXISTED = "EMAIL_NOT_EXISTED"
         const val EMAIL_EXISTED = "EMAIL_EXISTED"
+
         const val DEFAULT_AVATAR_URL = "https://firebasestorage.googleapis.com/v0/b/firechat-aa433.appspot.com/o/unknownavatar.png?alt=media&token=9a49ff27-e5fa-4813-97d4-47bd15281550"
         const val REMOTE_MSG_AUTHORIZATION = "Authorization"
         const val REMOTE_MSG_CONTENT_TYPE = "Content-Type"
@@ -38,9 +27,11 @@ class Constants {
         const val REMOTE_MSG_NOTIFICATION = "notification"
 
         const val REMOTE_MSG_TOKENS = "tokens"
+        const val REMOTE_MSG_TYPE = "type"
         const val REMOTE_MSG_DATA = "data"
         const val REMOTE_MSG_TITLE = "title"
         const val REMOTE_MSG_BODY = "body"
+        const val KEY_FCM_PRIORITY = "priority"
 
         const val FCM_URL = "https://fcm.googleapis.com/"
 
@@ -64,5 +55,14 @@ class Constants {
             remoteMsgHeaders[REMOTE_MSG_CONTENT_TYPE] = "application/json"
             return remoteMsgHeaders
         }
+
+        const val KEY_SESSION_ID = "session_id"
+        const val KEY_CALLER_NAME = "caller_name"
+        const val KEY_CALLER_ID = "caller_id"
+        const val KEY_CALLER_AVATAR = "caller_avatar"
+        const val KEY_CALLEE_NAME = "callee_name"
+        const val KEY_CALLEE_ID = "callee_id"
+        const val KEY_CALLEE_AVATAR = "callee_avatar"
+        const val FROM_NOTIFICATION = "FROM_NOTIFICATION"
     }
 }

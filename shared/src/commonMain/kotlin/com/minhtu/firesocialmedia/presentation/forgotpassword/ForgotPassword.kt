@@ -25,16 +25,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.minhtu.firesocialmedia.constants.Constants
 import com.minhtu.firesocialmedia.constants.TestTag
-import com.minhtu.firesocialmedia.di.PlatformContext
 import com.minhtu.firesocialmedia.platform.showToast
-import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
 import com.minhtu.firesocialmedia.presentation.loading.Loading
+import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
 
 class ForgotPassword{
     companion object{
         @Composable
         fun ForgotPasswordScreen(
-            platform: PlatformContext,
             forgotPasswordViewModel: ForgotPasswordViewModel,
             loadingViewModel: LoadingViewModel,
             modifier: Modifier,
@@ -44,10 +42,10 @@ class ForgotPassword{
             val emailSent = forgotPasswordViewModel.emailSent.collectAsState()
             LaunchedEffect(emailExisted.value) {
                 if (emailExisted.value != null) {
-                    if (emailExisted.value!!.first) {
-                        forgotPasswordViewModel.sendEmailResetPassword(platform)
+                    if (emailExisted.value!!.exist) {
+                        forgotPasswordViewModel.sendEmailResetPassword()
                     } else {
-                        when (emailExisted.value!!.second) {
+                        when (emailExisted.value!!.message) {
                             Constants.Companion.EMAIL_EMPTY -> {
                                 showToast("Please input your email!")
                             }
@@ -115,7 +113,7 @@ class ForgotPassword{
                         }
                         Spacer(modifier = Modifier.Companion.padding(horizontal = 20.dp))
                         //Reset button
-                        Button(onClick = { forgotPasswordViewModel.checkIfEmailExists(platform) }) {
+                        Button(onClick = { forgotPasswordViewModel.checkIfEmailExists() }) {
                             Text(text = "Reset Password")
                         }
                     }

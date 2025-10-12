@@ -16,10 +16,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Message
+import androidx.compose.material.icons.filled.Call
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenu
@@ -30,11 +31,14 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.ProvidedValue
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -52,40 +56,38 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.minhtu.firesocialmedia.constants.Constants
 import com.minhtu.firesocialmedia.constants.TestTag
-import com.minhtu.firesocialmedia.data.model.NewsInstance
-import com.minhtu.firesocialmedia.data.model.UserInstance
+import com.minhtu.firesocialmedia.data.remote.service.imagepicker.ImagePicker
 import com.minhtu.firesocialmedia.di.PlatformContext
-import com.minhtu.firesocialmedia.platform.ImagePicker
-import com.minhtu.firesocialmedia.platform.generateImageLoader
+import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
+import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.platform.getImageBytesFromDrawable
+import com.minhtu.firesocialmedia.platform.showToast
 import com.minhtu.firesocialmedia.presentation.home.HomeViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.friend.FriendViewModel
-import com.minhtu.firesocialmedia.utils.NavigationHandler
 import com.minhtu.firesocialmedia.utils.UiUtils
-import com.minhtu.firesocialmedia.utils.Utils
-import com.seiko.imageloader.LocalImageLoader
 import com.seiko.imageloader.ui.AutoSizeImage
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 
 class UserInformation {
     companion object{
         @Composable
         fun UserInformationScreen(
-            platform : PlatformContext,
             imagePicker: ImagePicker,
             user: UserInstance?,
             isCurrentUser : Boolean,
             paddingValues: PaddingValues,
+            localImageLoaderValue : ProvidedValue<*>,
             modifier: Modifier,
             homeViewModel : HomeViewModel,
             friendViewModel: FriendViewModel,
             userInformationViewModel: UserInformationViewModel,
             onNavigateToShowImageScreen : (image : String) -> Unit,
             onNavigateToUserInformation : (user : UserInstance?) -> Unit,
-            navController : NavigationHandler,
-            onNavigateToUploadNewsfeed: (updateNew : NewsInstance?) -> Unit
+            onNavigateBack : () -> Unit,
+            onNavigateToUploadNewsfeed: (updateNew : NewsInstance?) -> Unit,
+            onNavigateToCallingScreen : (user : UserInstance?) -> Unit,
+            onNavigateToCommentScreen: (selectedNew : NewsInstance) -> Unit,
         ){
+            val listState = rememberLazyListState()
             val newsList = homeViewModel.allNews.collectAsState()
             val addFriendStatus by userInformationViewModel.addFriendStatus.collectAsState()
             LaunchedEffect(Unit) {
@@ -97,6 +99,30 @@ class UserInformation {
             LaunchedEffect(Unit) {
                 friendViewModel.updateFriendRequests(homeViewModel.currentUser!!.friendRequests)
                 friendViewModel.updateFriends(homeViewModel.currentUser!!.friends)
+            }
+
+            val calleeCurrentState by userInformationViewModel.calleeCurrentState.collectAsState()
+            LaunchedEffect(calleeCurrentState) {
+                if(calleeCurrentState != null) {
+                    if(calleeCurrentState!!) {
+                        if(isCurrentUser) {
+                            showToast("Cannot call for yourself")
+                        } else {
+                            onNavigateToCallingScreen(user)
+                        }
+                    } else {
+                        showToast("This user is having another call! Please recall after a few minutes.")
+                    }
+                    userInformationViewModel.resetCalleeState()
+                }
+            }
+
+            val commentStatus by homeViewModel.commentStatus.collectAsState()
+            LaunchedEffect(commentStatus) {
+                commentStatus?.let { selectedNew ->
+                    onNavigateToCommentScreen(selectedNew)
+                    homeViewModel.resetCommentStatus()
+                }
             }
 
             Box(modifier = modifier.padding(paddingValues)) {
@@ -157,7 +183,7 @@ class UserInformation {
                         ) {
                             // User avatar
                             CompositionLocalProvider(
-                                LocalImageLoader provides remember { generateImageLoader() },
+                                localImageLoaderValue
                             ) {
                                 AutoSizeImage(
                                     user!!.image,
@@ -197,8 +223,28 @@ class UserInformation {
                             modifier = Modifier.Companion.offset(y = (-20).dp) // Moves buttons up
                         ) {
                             // Chat button
+//                            IconButton(
+//                                onClick = { /* Handle click */ },
+//                                modifier = Modifier.Companion.border(
+//                                    1.dp,
+//                                    Color.Companion.Black,
+//                                    CircleShape
+//                                )
+//                            ) {
+//                                Icon(
+//                                    imageVector = Icons.Default.Message,
+//                                    contentDescription = "Chat",
+//                                    tint = Color.Companion.Gray
+//                                )
+//                            }
+
+                            //Call button
                             IconButton(
-                                onClick = { /* Handle click */ },
+                                onClick = {
+                                    if(user != null) {
+                                        userInformationViewModel.checkCalleeAvailable(user)
+                                    }
+                                },
                                 modifier = Modifier.Companion.border(
                                     1.dp,
                                     Color.Companion.Black,
@@ -206,8 +252,8 @@ class UserInformation {
                                 )
                             ) {
                                 Icon(
-                                    imageVector = Icons.Default.Message,
-                                    contentDescription = "Chat",
+                                    imageVector = Icons.Default.Call,
+                                    contentDescription = "Call",
                                     tint = Color.Companion.Gray
                                 )
                             }
@@ -241,8 +287,7 @@ class UserInformation {
                                             userInformationViewModel.updateRelationship(relationship)
                                             userInformationViewModel.clickAddFriendButton(
                                                 friend = user,
-                                                currentUser = homeViewModel.currentUser,
-                                                platform
+                                                currentUser = homeViewModel.currentUser
                                             )
                                         } else {
                                             showMenu = true
@@ -275,7 +320,6 @@ class UserInformation {
                                     )
                                 }
                                 DropdownMenuForResponse(
-                                    platform,
                                     showMenu,
                                     friendViewModel,
                                     userInformationViewModel,
@@ -293,8 +337,9 @@ class UserInformation {
                             }
                         }
                     }
-                    UiUtils.Companion.LazyColumnOfNewsWithSlideOutAnimation(
-                        platform,
+                    UiUtils.Companion.LazyColumnOfNewsWithSlideOutAnimationAndLoadMore(
+                        localImageLoaderValue,
+                        listState,
                         homeViewModel,
                         filterList,
                         onNavigateToUploadNewsfeed,
@@ -302,12 +347,12 @@ class UserInformation {
                         onNavigateToUserInformation
                     )
                 }
-                UiUtils.Companion.BackAndMoreOptionsRow(navController)
+                UiUtils.Companion.BackAndMoreOptionsRow(onNavigateBack)
             }
         }
 
         @Composable
-        fun DropdownMenuForResponse(platform : PlatformContext,
+        fun DropdownMenuForResponse(
                                     expanded : Boolean,
                                     friendViewModel: FriendViewModel,
                                     userInformationViewModel: UserInformationViewModel,
@@ -322,7 +367,7 @@ class UserInformation {
                     text = { Text("Accept") },
                     onClick = {
                         // Handle Accept action
-                        friendViewModel.acceptFriendRequest(requester, currentUser, platform)
+                        friendViewModel.acceptFriendRequest(requester, currentUser)
                         userInformationViewModel.updateRelationship(Relationship.FRIEND)
                         onDismissRequest()
                     },
@@ -336,7 +381,7 @@ class UserInformation {
                     text = { Text("Reject") },
                     onClick = {
                         // Handle Reject action
-                        friendViewModel.rejectFriendRequest(requester, currentUser, platform)
+                        friendViewModel.rejectFriendRequest(requester, currentUser)
                         userInformationViewModel.updateRelationship(Relationship.NONE)
                         onDismissRequest()
                     },
@@ -380,18 +425,6 @@ class UserInformation {
 //                    )
 //                }
             }
-        }
-
-        private fun getAllFriendTokens(homeViewModel: HomeViewModel) : ArrayList<String> {
-            val friendTokens = ArrayList<String>()
-            val friendIds = homeViewModel.currentUser!!.friends
-            for(friendId in friendIds) {
-                val friend = Utils.Companion.findUserById(friendId, homeViewModel.listUsers)
-                if(friend != null) {
-                    friendTokens.add(friend.token)
-                }
-            }
-            return friendTokens
         }
     }
 }

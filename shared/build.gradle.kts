@@ -5,13 +5,12 @@ plugins {
     alias(libs.plugins.kotlinCocoapods)
     alias(libs.plugins.androidLibrary)
     id("org.jetbrains.compose") version "1.7.3"
-//    id("com.google.dagger.hilt.android") //  Added Hilt plugin
-//    id("org.jetbrains.kotlin.kapt")
     id("org.jetbrains.kotlin.plugin.compose")
 
     id("org.jetbrains.kotlinx.kover")
     id("io.mockative") version "3.0.1"
-    id("com.google.devtools.ksp") version "1.9.23-1.0.20"
+    id("com.google.devtools.ksp") version "2.1.10-1.0.29"
+    id("kotlinx-serialization")
 }
 
 kotlin {
@@ -52,27 +51,28 @@ kotlin {
         summary = "Shared module for iOS and Android"
         homepage = "https://github.com/tuak123ax/SocialMediaApp"
         version = "2.0"
-        ios.deploymentTarget = "13.0"
+        ios.deploymentTarget = "16.0"
         podfile = project.file("../Fire_Social_Media/Podfile")
-        pod("FirebaseAuth"){
+        // Use direct pod names to generate correct cinterop modules
+        pod("FirebaseAuth") {
             extraOpts += listOf("-compiler-option", "-fmodules")
         }
-        pod("FirebaseDatabase"){
+        pod("FirebaseDatabase") {
             extraOpts += listOf("-compiler-option", "-fmodules")
         }
-        pod("FirebaseStorage"){
+        pod("FirebaseStorage") {
             extraOpts += listOf("-compiler-option", "-fmodules")
         }
-        pod("FirebaseMessaging"){
+        pod("FirebaseMessaging") {
             extraOpts += listOf("-compiler-option", "-fmodules")
         }
         framework {
             baseName = "shared"
-            isStatic = false
+            isStatic = true
         }
     }
-
     val ktorVersion = "3.0.3"
+    val kotlinVersion = "1.7.3"
 
     sourceSets {
         all {
@@ -83,7 +83,9 @@ kotlin {
             implementation(compose.runtime)
             implementation(compose.foundation)
             implementation(compose.material3)
-            implementation("org.jetbrains.compose.components:components-resources:1.7.3")
+            implementation(compose.animation)
+            implementation("org.jetbrains.androidx.navigation:navigation-compose:2.8.0-alpha12")
+            implementation("org.jetbrains.compose.components:components-resources:$kotlinVersion")
             api("com.rickclephas.kmp:kmp-observableviewmodel-core:1.0.0-BETA-10")
             implementation("io.ktor:ktor-client-core:$ktorVersion")
 
@@ -96,7 +98,7 @@ kotlin {
             implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:1.5.1")
             implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.1")
 
-            implementation("org.jetbrains.compose.material:material-icons-extended:1.5.10")
+            implementation("org.jetbrains.compose.material:material-icons-extended:$kotlinVersion")
             implementation("com.russhwolf:multiplatform-settings:1.3.0")
 
             implementation("org.javassist:javassist:3.29.2-GA")
@@ -106,19 +108,20 @@ kotlin {
             dependencies{
                 implementation(kotlin("test"))
                 implementation("io.mockative:mockative:3.0.1")
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:$kotlinVersion")
             }
         }
         androidMain.dependencies {
-            implementation(libs.compose.ui)
-            implementation(libs.compose.ui.tooling.preview)
-            implementation(libs.compose.material3)
+            implementation(platform("androidx.compose:compose-bom:2025.02.00"))
+            implementation("androidx.compose.ui:ui")
+            implementation("androidx.compose.ui:ui-tooling-preview")
+            implementation("androidx.compose.material3:material3")
             implementation(libs.androidx.activity.compose)
             implementation("androidx.core:core-ktx:1.13.1")
             implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.6")
-            implementation(libs.androidx.lifecycle.viewmodel.compose)
-            implementation("androidx.navigation:navigation-compose:2.7.7")
-            implementation(libs.androidx.foundation)
+            implementation("androidx.lifecycle:lifecycle-process:2.9.0")
+            implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.6")
+            implementation("androidx.compose.foundation:foundation")
 
             //  Firebase BoM
             implementation(platform("com.google.firebase:firebase-bom:33.5.1"))
@@ -131,7 +134,6 @@ kotlin {
             implementation("com.google.firebase:firebase-config")
             implementation("com.google.android.gms:play-services-auth:21.2.0")
 
-            implementation(platform("androidx.compose:compose-bom:2025.02.00"))
             implementation("androidx.compose.material:material-icons-extended")
             implementation("androidx.compose.runtime:runtime-livedata")
             implementation("io.coil-kt.coil3:coil-compose:3.1.0")
@@ -148,9 +150,7 @@ kotlin {
 //    implementation("com.google.dagger:hilt-android:2.51.1") //  Core Hilt
 //    kapt("com.google.dagger:hilt-compiler:2.51.1") // Hilt Annotation Processor
 
-            implementation("androidx.compose.runtime:runtime:1.6.0")
-            implementation("androidx.compose.foundation:foundation:1.6.0")
-            implementation("androidx.compose.material3:material3:1.2.0")
+            // Use BOM-managed Compose versions
 
             implementation("com.squareup.retrofit2:retrofit:2.9.0")
             implementation("com.squareup.retrofit2:converter-gson:2.9.0")
@@ -160,11 +160,14 @@ kotlin {
 
             implementation("androidx.media3:media3-exoplayer:1.7.1")
             implementation("androidx.media3:media3-ui:1.7.1")
+
+            //webRTC
+            implementation("io.getstream:stream-webrtc-android:1.3.8")
         }
 
         androidUnitTest.dependencies {
             implementation("io.mockk:mockk:1.14.2")
-            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
+            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:$kotlinVersion")
             implementation("junit:junit:4.13.2")
         }
 
@@ -197,5 +200,22 @@ android {
     compileSdk = 35
     defaultConfig {
         minSdk = 24
+    }
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
+    }
+}
+
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(21))
+    }
+}
+
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
+    kotlinOptions {
+        jvmTarget = "21"
     }
 }

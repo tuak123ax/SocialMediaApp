@@ -4,8 +4,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.minhtu.firesocialmedia.constants.Constants
-import com.minhtu.firesocialmedia.di.PlatformContext
-import com.minhtu.firesocialmedia.utils.Utils
+import com.minhtu.firesocialmedia.domain.entity.forgotpassword.EmailExistResult
+import com.minhtu.firesocialmedia.domain.usecases.forgotpassword.CheckIfEmailExistsUseCase
+import com.minhtu.firesocialmedia.domain.usecases.forgotpassword.SendEmailResetPasswordUseCase
 import com.rickclephas.kmp.observableviewmodel.ViewModel
 import com.rickclephas.kmp.observableviewmodel.launch
 import kotlinx.coroutines.CoroutineDispatcher
@@ -16,6 +17,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.withContext
 
 class ForgotPasswordViewModel(
+    private val checkIfEmailExistsUseCase: CheckIfEmailExistsUseCase,
+    private val sendEmailResetPasswordUseCase : SendEmailResetPasswordUseCase,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : ViewModel() {
     var email by mutableStateOf("")
@@ -23,25 +26,16 @@ class ForgotPasswordViewModel(
         email = input
     }
 
-    private var _emailExisted = MutableStateFlow<Pair<Boolean, String>?>(null)
+    private var _emailExisted = MutableStateFlow<EmailExistResult?>(null)
     var emailExisted = _emailExisted.asStateFlow()
-    fun checkIfEmailExists(platform: PlatformContext) {
+    fun checkIfEmailExists() {
         viewModelScope.launch {
             withContext(ioDispatcher) {
                 if(email.isNotEmpty()) {
-                    platform.auth.fetchSignInMethodsForEmail(email,
-                        object : Utils.Companion.FetchSignInMethodCallback{
-                            override fun onSuccess(result: Pair<Boolean, String>) {
-                                _emailExisted.value = result
-                            }
-
-                            override fun onFailure(result: Pair<Boolean, String>) {
-                                _emailExisted.value = result
-                            }
-
-                        })
+                    val result = checkIfEmailExistsUseCase.invoke(email)
+                    _emailExisted.value = result
                 } else {
-                    _emailExisted.value = Pair(false, Constants.EMAIL_EMPTY)
+                    _emailExisted.value = EmailExistResult(false, Constants.EMAIL_EMPTY)
                 }
             }
         }
@@ -49,22 +43,9 @@ class ForgotPasswordViewModel(
 
     private var _emailSent = MutableStateFlow<Boolean?>(null)
     var emailSent = _emailSent.asStateFlow()
-    fun sendEmailResetPassword(platform: PlatformContext) {
-        viewModelScope.launch {
-            withContext(ioDispatcher) {
-                platform.auth.sendPasswordResetEmail(email,
-                    object : Utils.Companion.SendPasswordResetEmailCallback{
-                        override fun onSuccess() {
-                            _emailSent.value = true
-                        }
-
-                        override fun onFailure() {
-                            _emailSent.value = false
-                        }
-
-                    })
-            }
-        }
+    suspend fun sendEmailResetPassword() {
+        val result = sendEmailResetPasswordUseCase.invoke(email)
+        _emailSent.value = result
     }
     fun resetEmailResetPassword(){
         _emailExisted.value = null

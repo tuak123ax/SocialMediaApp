@@ -1,14 +1,13 @@
 package com.minhtu.firesocialmedia
 
-import com.minhtu.firesocialmedia.data.model.UserInstance
+import com.minhtu.firesocialmedia.data.dto.user.UserInstance
 import com.minhtu.firesocialmedia.di.AuthServiceMock
 import com.minhtu.firesocialmedia.di.CryptoServiceMock
 import com.minhtu.firesocialmedia.di.DatabaseServiceMock
-import com.minhtu.firesocialmedia.di.FirebaseServiceMock
+
 import com.minhtu.firesocialmedia.di.PlatformContextMock
 import com.minhtu.firesocialmedia.presentation.information.InformationViewModel
 import com.minhtu.firesocialmedia.utils.Utils
-import io.mockative.any
 import io.mockative.coEvery
 import io.mockative.eq
 import io.mockative.every
@@ -30,7 +29,7 @@ class InformationViewModelTest {
     private lateinit var platform: PlatformContextMock
     private lateinit var authServiceMock : AuthServiceMock
     private lateinit var cryptoServiceMock : CryptoServiceMock
-    private lateinit var firebaseServiceMock : FirebaseServiceMock
+
     private lateinit var databaseServiceMock : DatabaseServiceMock
 
     @BeforeTest
@@ -39,7 +38,7 @@ class InformationViewModelTest {
         platform = PlatformContextMock()
         authServiceMock = AuthServiceMock()
         cryptoServiceMock = CryptoServiceMock()
-        firebaseServiceMock = FirebaseServiceMock()
+
         databaseServiceMock = DatabaseServiceMock()
     }
 

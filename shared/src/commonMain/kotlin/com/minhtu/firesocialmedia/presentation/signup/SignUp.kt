@@ -17,8 +17,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
@@ -33,19 +35,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.minhtu.firesocialmedia.constants.Constants
 import com.minhtu.firesocialmedia.constants.TestTag
-import com.minhtu.firesocialmedia.di.PlatformContext
 import com.minhtu.firesocialmedia.platform.PasswordVisibilityIcon
 import com.minhtu.firesocialmedia.platform.showToast
 import com.minhtu.firesocialmedia.presentation.loading.Loading
 import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 
 class SignUp {
     companion object{
         @Composable
         fun SignUpScreen(
-            platform : PlatformContext,
             signUpViewModel: SignUpViewModel,
             loadingViewModel: LoadingViewModel,
             modifier: Modifier,
@@ -74,7 +72,7 @@ class SignUp {
                     //Title
                     Text(
                         text = "Sign Up",
-                        color = Color.Companion.White,
+                        color = Color.Companion.Red,
                         fontSize = 30.sp,
                         textAlign = TextAlign.Companion.Center,
                         modifier = Modifier.Companion.fillMaxWidth()
@@ -129,7 +127,7 @@ class SignUp {
                         Button(
                             onClick = {
                                 loadingViewModel.showLoading()
-                                signUpViewModel.signUp(platform)
+                                signUpViewModel.signUp()
                             },
                             modifier = Modifier.Companion
                                 .testTag(TestTag.Companion.TAG_BUTTON_SIGNUP)
