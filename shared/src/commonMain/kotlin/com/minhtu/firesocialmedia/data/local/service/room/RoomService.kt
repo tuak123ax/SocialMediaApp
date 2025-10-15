@@ -1,11 +1,11 @@
 package com.minhtu.firesocialmedia.data.local.service.room
 
-import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
-import com.minhtu.firesocialmedia.domain.entity.notification.NotificationInstance
-import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
+import com.minhtu.firesocialmedia.data.local.entity.NewEntity
+import com.minhtu.firesocialmedia.data.local.entity.NotificationEntity
+import com.minhtu.firesocialmedia.data.local.entity.UserEntity
 
 interface RoomService {
-    suspend fun storeUserFriendsToRoom(friends: List<UserInstance?>)
-    suspend fun storeNewsToRoom(news: List<NewsInstance>)
-    suspend fun storeNotificationsToRoom(notifications: List<NotificationInstance>)
+    suspend fun storeUserFriendsToRoom(friends: List<UserEntity?>)
+    suspend fun storeNewsToRoom(news: List<NewEntity>)
+    suspend fun storeNotificationsToRoom(notifications: List<NotificationEntity>)
 }

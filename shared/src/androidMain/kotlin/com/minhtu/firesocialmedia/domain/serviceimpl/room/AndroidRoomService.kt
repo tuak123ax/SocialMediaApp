@@ -1,21 +1,35 @@
 package com.minhtu.firesocialmedia.domain.serviceimpl.room
 
-import android.content.Context
+import com.minhtu.firesocialmedia.data.local.dao.NewDao
+import com.minhtu.firesocialmedia.data.local.dao.NotificationDao
+import com.minhtu.firesocialmedia.data.local.dao.UserDao
+import com.minhtu.firesocialmedia.data.local.entity.NewEntity
+import com.minhtu.firesocialmedia.data.local.entity.NotificationEntity
+import com.minhtu.firesocialmedia.data.local.entity.UserEntity
 import com.minhtu.firesocialmedia.data.local.service.room.RoomService
-import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
-import com.minhtu.firesocialmedia.domain.entity.notification.NotificationInstance
-import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 
 class AndroidRoomService(
-    private val context: Context
+    private val userDao: UserDao,
+    private val newDao: NewDao,
+    private val notificationDao: NotificationDao
 ) : RoomService {
-    override suspend fun storeUserFriendsToRoom(friends: List<UserInstance?>) {
-
+    override suspend fun storeUserFriendsToRoom(friends: List<UserEntity?>) {
+        val entities = friends.mapNotNull { it }
+        if(entities.isNotEmpty()) {
+            userDao.addAll(entities)
+        }
     }
 
-    override suspend fun storeNewsToRoom(news: List<NewsInstance>) {
+    override suspend fun storeNewsToRoom(news: List<NewEntity>) {
+        if(news.isNotEmpty()) {
+            newDao.addAll(news)
+        }
     }
 
-    override suspend fun storeNotificationsToRoom(notifications: List<NotificationInstance>) {
+    override suspend fun storeNotificationsToRoom(notifications: List<NotificationEntity>) {
+        if(notifications.isNotEmpty()) {
+            notificationDao.addAll(notifications)
+        }
     }
+
 }

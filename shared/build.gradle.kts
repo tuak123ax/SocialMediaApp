@@ -239,10 +239,6 @@ dependencies {
     add("kspCommonMainMetadata", libs.androidx.room.compiler)
 }
 
-ksp {
-    arg("room.schemaLocation", "$projectDir/schemas")
-}
-
 room {
     schemaDirectory("$projectDir/schemas")
 }
