@@ -120,6 +120,7 @@ class Home {
             val currentUserState = homeViewModel.currentUserState
 
             var isAllUsersVisible by remember { mutableStateOf(true) }
+            var userInteracted by remember { mutableStateOf(false) }
 
             LaunchedEffect(Unit) {
                 loadingViewModel.showLoading()
@@ -329,13 +330,23 @@ class Home {
                             val firstVisible = layoutInfo.visibleItemsInfo.firstOrNull()?.index ?: 0
                             val lastVisible = layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
                             val totalItems = layoutInfo.totalItemsCount
+                            val inProgress = listState.isScrollInProgress
 
-                            Triple(firstVisible, lastVisible, totalItems)
+                            Triple(firstVisible, lastVisible, totalItems) to inProgress
                         }
                             .distinctUntilChanged()
-                            .collectLatest { (firstVisible, lastVisible, totalItems) ->
+                            .collectLatest { (triple, state) ->
+                                val (firstVisible, lastVisible, totalItems) = triple
+                                val inProgress = state
+                                if(inProgress && firstVisible > 0) {
+                                    userInteracted = true
+                                }
                                 // Show/hide top bar
-                                isAllUsersVisible = firstVisible == 0
+                                isAllUsersVisible = if(!userInteracted) {
+                                    true
+                                } else {
+                                    firstVisible == 0
+                                }
 
                                 // Trigger load more when near bottom
                                 if (
