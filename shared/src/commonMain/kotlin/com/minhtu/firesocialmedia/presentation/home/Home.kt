@@ -65,6 +65,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.minhtu.firesocialmedia.constants.TestTag
 import com.minhtu.firesocialmedia.domain.entity.call.CallingRequestData
 import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
@@ -114,7 +115,7 @@ class Home {
 
             val numberOfLists by remember { derivedStateOf { homeViewModel.numberOfListNeedToLoad } }
 
-            val newsList = homeViewModel.allNews.collectAsState()
+            val newsList = homeViewModel.allNews.collectAsStateWithLifecycle()
 
             val currentUserState = homeViewModel.currentUserState
 

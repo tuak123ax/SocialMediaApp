@@ -880,6 +880,7 @@ class UiUtils {
             val likeStatus by homeViewModel.likedPosts.collectAsState()
             val likeCountList = homeViewModel.likeCountList.collectAsState()
             val commentCountList = homeViewModel.commentCountList.collectAsState()
+            val loadedUsers by homeViewModel.loadedUserState.collectAsState()
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
@@ -903,7 +904,7 @@ class UiUtils {
                             animationSpec = tween(durationMillis = 200)
                         )
                     ) {
-                        val user = homeViewModel.findUserByIdInCache(news.posterId)
+                        val user = loadedUsers[news.posterId]
                         if(user != null) {
                             NewsCard(
                                 news = news,

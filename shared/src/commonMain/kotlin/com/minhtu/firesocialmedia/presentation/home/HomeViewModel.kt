@@ -35,6 +35,7 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.sync.Mutex
@@ -53,6 +54,8 @@ class HomeViewModel(
     var listNotificationOfCurrentUser = mutableStateListOf<NotificationInstance>()
     //Cache loaded users, only fetch new user if that user is not in this cache
     var loadedUsersCache : HashMap<String,UserInstance?> = HashMap()
+    val _loadedUserState = MutableStateFlow<Map<String, UserInstance?>>(emptyMap())
+    var loadedUserState = _loadedUserState.asStateFlow()
     var currentUser: UserInstance? = null
     var currentUserState by mutableStateOf(currentUser)
     suspend fun updateCurrentUser(user: UserInstance) {
@@ -193,6 +196,7 @@ class HomeViewModel(
                     for ((id, user) in newUsers) {
                         if (user != null) loadedUsersCache[id] = user
                     }
+                    _loadedUserState.value = loadedUsersCache.toMap()
                 }
             } catch (e: Exception) {
                 logMessage("checkUsersInCacheAndGetMore") { "Exception when get more users: ${e.message}" }
@@ -241,13 +245,16 @@ class HomeViewModel(
 
         if (loadedFriendsMap.isNotEmpty()) {
             loadedUsersCache.putAll(loadedFriendsMap)
+            _loadedUserState.value = loadedUsersCache.toMap()
         }
     }
 
-    private var _allNews = MutableStateFlow<ArrayList<NewsInstance>>(ArrayList())
+    private val _allNews = MutableStateFlow<List<NewsInstance>>(emptyList())
     val allNews = _allNews.asStateFlow()
     fun addNews(news: ArrayList<NewsInstance>) {
-        _allNews.value.addAll(news)
+        _allNews.update { old ->
+            (old + news).distinctBy(NewsInstance::id)
+        }
     }
     fun updateNews(news: ArrayList<NewsInstance>) {
         _allNews.value = news
