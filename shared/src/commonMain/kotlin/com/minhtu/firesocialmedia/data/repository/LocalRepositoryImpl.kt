@@ -1,5 +1,6 @@
 package com.minhtu.firesocialmedia.data.repository
 
+import com.minhtu.firesocialmedia.data.local.mapper.room.toDomain
 import com.minhtu.firesocialmedia.data.local.mapper.room.toNewEntity
 import com.minhtu.firesocialmedia.data.local.mapper.room.toNotificationEntity
 import com.minhtu.firesocialmedia.data.local.mapper.room.toUserEntity
@@ -28,5 +29,9 @@ class LocalRepositoryImpl(
 
     override suspend fun storeNotificationsToRoom(notifications: List<NotificationInstance>) {
         roomService.storeNotificationsToRoom(notifications.toNotificationEntity())
+    }
+
+    override suspend fun getUserFromRoom(userId: String): UserInstance? {
+        return roomService.getUserFromRoom(userId)?.toDomain()
     }
 }

@@ -35,7 +35,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.ProvidedValue
 import androidx.compose.runtime.collectAsState
@@ -66,9 +65,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.minhtu.firesocialmedia.constants.TestTag
 import com.minhtu.firesocialmedia.domain.entity.call.CallingRequestData
 import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
@@ -78,7 +74,6 @@ import com.minhtu.firesocialmedia.platform.logMessage
 import com.minhtu.firesocialmedia.platform.toHex
 import com.minhtu.firesocialmedia.presentation.loading.Loading
 import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
-import com.minhtu.firesocialmedia.utils.NavigationHandler
 import com.minhtu.firesocialmedia.utils.UiUtils
 import com.seiko.imageloader.ui.AutoSizeImage
 import kotlinx.coroutines.flow.collectLatest

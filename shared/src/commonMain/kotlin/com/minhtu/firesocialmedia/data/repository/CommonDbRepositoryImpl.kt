@@ -1,9 +1,9 @@
 package com.minhtu.firesocialmedia.data.repository
 
 import com.minhtu.firesocialmedia.data.remote.constant.DataConstant
+import com.minhtu.firesocialmedia.data.remote.service.database.DatabaseService
 import com.minhtu.firesocialmedia.domain.entity.base.BaseNewsInstance
 import com.minhtu.firesocialmedia.domain.repository.CommonDbRepository
-import com.minhtu.firesocialmedia.data.remote.service.database.DatabaseService
 
 class CommonDbRepositoryImpl(
     private val databaseService: DatabaseService

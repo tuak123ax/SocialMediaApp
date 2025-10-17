@@ -1,7 +1,6 @@
 package com.minhtu.firesocialmedia.application.interactor
 
 import com.minhtu.firesocialmedia.domain.entity.call.CallingRequestData
-import com.minhtu.firesocialmedia.domain.entity.call.OfferAnswer
 import com.minhtu.firesocialmedia.domain.interactor.home.CallInteractor
 import com.minhtu.firesocialmedia.domain.usecases.call.ObservePhoneCallWithInCallUseCase
 import com.minhtu.firesocialmedia.domain.usecases.call.StopCallServiceUseCase

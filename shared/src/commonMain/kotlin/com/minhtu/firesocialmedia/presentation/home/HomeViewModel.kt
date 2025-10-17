@@ -8,7 +8,6 @@ import androidx.compose.runtime.setValue
 import com.minhtu.firesocialmedia.domain.entity.call.CallEvent
 import com.minhtu.firesocialmedia.domain.entity.call.CallEventFlow
 import com.minhtu.firesocialmedia.domain.entity.call.CallingRequestData
-import com.minhtu.firesocialmedia.domain.entity.call.OfferAnswer
 import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
 import com.minhtu.firesocialmedia.domain.entity.notification.NotificationInstance
 import com.minhtu.firesocialmedia.domain.entity.notification.NotificationType
@@ -114,7 +113,6 @@ class HomeViewModel(
             }
 
             updateUserFriends(ArrayList(friends))
-            storeUserFriendsToRoom(friends)
         }
     }
 
@@ -148,7 +146,6 @@ class HomeViewModel(
                         lastTimePosted = latestNewsResult.lastTimePostedValue
                         lastKey = latestNewsResult.lastKeyValue
                         checkUsersInCacheAndGetMore()
-                        storeNewsToRoom(latestNewsResult.news)
                     }
                 } else {
                     _getAllNewsStatus.value = false
@@ -217,7 +214,6 @@ class HomeViewModel(
                         listNotificationOfCurrentUser.addAll(notifications)
                         updateNotifications(ArrayList(listNotificationOfCurrentUser.toList()))
                         _getAllNotificationsOfCurrentUser.value = true
-                        storeNotificationsToRoom(notifications)
                     } else {
                         _getAllNotificationsOfCurrentUser.value = false
                     }
@@ -552,17 +548,5 @@ class HomeViewModel(
         if(name.isBlank()) return emptyList()
         val resultList = userInteractor.searchUserByName(name)
         return resultList ?: emptyList()
-    }
-
-    suspend fun storeUserFriendsToRoom(friends : List<UserInstance?>) {
-        userInteractor.storeUserFriendsToRoom(friends)
-    }
-
-    suspend fun storeNewsToRoom(news : List<NewsInstance>) {
-        newsInteractor.storeNewsToRoom(news)
-    }
-
-    suspend fun storeNotificationsToRoom(notifications : List<NotificationInstance>) {
-        notificationInteractor.storeNotificationsToRoom(notifications)
     }
 }

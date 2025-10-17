@@ -1,19 +1,35 @@
 package com.minhtu.firesocialmedia.data.repository
 
+import com.minhtu.firesocialmedia.data.local.mapper.room.toDomain
+import com.minhtu.firesocialmedia.data.local.mapper.room.toRoomEntity
+import com.minhtu.firesocialmedia.data.local.service.room.RoomService
 import com.minhtu.firesocialmedia.data.remote.constant.DataConstant
 import com.minhtu.firesocialmedia.data.remote.mapper.user.toDomain
 import com.minhtu.firesocialmedia.data.remote.mapper.user.toDto
-import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
-import com.minhtu.firesocialmedia.domain.repository.UserRepository
 import com.minhtu.firesocialmedia.data.remote.service.auth.AuthService
 import com.minhtu.firesocialmedia.data.remote.service.database.DatabaseService
+import com.minhtu.firesocialmedia.domain.core.NetworkMonitor
+import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
+import com.minhtu.firesocialmedia.domain.repository.UserRepository
+import kotlinx.coroutines.flow.first
 
 class UserRepositoryImpl(
     private val authService: AuthService,
-    private val databaseService: DatabaseService
+    private val databaseService: DatabaseService,
+    private val localDatabaseService : RoomService,
+    private val networkMonitor: NetworkMonitor
 ) : UserRepository {
     override suspend fun getUser(userId: String): UserInstance? {
-        return databaseService.getUser(userId)?.toDomain()
+        val isOnline = networkMonitor.isOnline.first()
+        if(isOnline) {
+            val user = databaseService.getUser(userId)?.toDomain()
+            if(user != null) {
+                localDatabaseService.storeUserFriendToRoom(user.toRoomEntity())
+            }
+            return user
+        } else {
+            return localDatabaseService.getUserFromRoom(userId)?.toDomain()
+        }
     }
 
     override suspend fun getCurrentUserUid(): String? {

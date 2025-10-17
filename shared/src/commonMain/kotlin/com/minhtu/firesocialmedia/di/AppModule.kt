@@ -109,7 +109,7 @@ object AppModule {
         return SaveLikedCommentsUseCase(commonDbRepository)
     }
     fun provideNotificationRepository(platformContext: PlatformContext) : NotificationRepository {
-        return NotificationRepositoryImpl(platformContext.database)
+        return NotificationRepositoryImpl(platformContext.database, platformContext.room, platformContext.networkMonitor)
     }
     fun provideCommonDbRepository(platformContext: PlatformContext) : CommonDbRepository{
         return CommonDbRepositoryImpl(platformContext.database)
@@ -458,10 +458,17 @@ object AppModule {
 
     //---------------------------Notification----------------------------------------//
     fun provideUserRepository(platformContext: PlatformContext) : UserRepository {
-        return UserRepositoryImpl(platformContext.auth,platformContext.database)
+        return UserRepositoryImpl(
+            platformContext.auth,
+            platformContext.database,
+            platformContext.room,
+            platformContext.networkMonitor)
     }
     fun provideNewsRepository(platformContext: PlatformContext) : NewsRepository {
-        return NewsRepositoryImpl(platformContext.database)
+        return NewsRepositoryImpl(
+            platformContext.database,
+            platformContext.room,
+            platformContext.networkMonitor)
     }
     fun provideGetUserUseCase(userRepository: UserRepository) : GetUserUseCase {
         return GetUserUseCase(userRepository)

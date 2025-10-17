@@ -8,7 +8,6 @@ import com.minhtu.firesocialmedia.domain.entity.call.AudioCallSession
 import com.minhtu.firesocialmedia.domain.entity.call.CallingRequestData
 import com.minhtu.firesocialmedia.domain.entity.call.IceCandidateData
 import com.minhtu.firesocialmedia.domain.entity.call.OfferAnswer
-import kotlin.String
 
 fun AudioCallSessionDTO.toDomain() : AudioCallSession {
     return AudioCallSession(

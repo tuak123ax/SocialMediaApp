@@ -6,11 +6,9 @@ import androidx.room.PrimaryKey
 
 @Entity(
     tableName = "News",
-    indices = [
-        Index("id", unique = true)
-    ]
+    indices = [Index(value = ["timePosted", "id"])]
 )
-data class NewEntity(
+data class NewsEntity(
     @PrimaryKey var id: String = "",
     var posterId : String = "",
     var posterName: String = "",

@@ -35,11 +35,11 @@ import com.google.android.gms.auth.api.identity.BeginSignInRequest
 import com.google.android.gms.auth.api.identity.Identity
 import com.minhtu.firesocialmedia.R
 import com.minhtu.firesocialmedia.constants.Constants
+import com.minhtu.firesocialmedia.data.remote.service.imagepicker.ImagePicker
+import com.minhtu.firesocialmedia.data.remote.service.signinlauncher.SignInLauncher
 import com.minhtu.firesocialmedia.di.PlatformContext
 import com.minhtu.firesocialmedia.domain.entity.signin.SignInState
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
-import com.minhtu.firesocialmedia.data.remote.service.imagepicker.ImagePicker
-import com.minhtu.firesocialmedia.data.remote.service.signinlauncher.SignInLauncher
 import com.minhtu.firesocialmedia.domain.serviceimpl.call.WebRTCManager
 import com.minhtu.firesocialmedia.domain.serviceimpl.crypto.AndroidCryptoHelper
 import com.minhtu.firesocialmedia.domain.serviceimpl.imagepicker.AndroidImagePicker

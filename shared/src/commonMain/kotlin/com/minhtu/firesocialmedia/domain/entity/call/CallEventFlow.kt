@@ -1,7 +1,6 @@
 package com.minhtu.firesocialmedia.domain.entity.call
 
 import com.minhtu.firesocialmedia.platform.WebRTCVideoTrack
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 
 object CallEventFlow {

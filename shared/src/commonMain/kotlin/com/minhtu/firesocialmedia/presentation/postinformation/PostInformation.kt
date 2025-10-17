@@ -40,13 +40,10 @@ import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.platform.CrossPlatformIcon
 import com.minhtu.firesocialmedia.platform.convertTimeToDateString
-import com.minhtu.firesocialmedia.platform.generateImageLoader
 import com.minhtu.firesocialmedia.presentation.comment.Comment
 import com.minhtu.firesocialmedia.presentation.comment.CommentViewModel
 import com.minhtu.firesocialmedia.presentation.home.HomeViewModel
-import com.minhtu.firesocialmedia.utils.NavigationHandler
 import com.minhtu.firesocialmedia.utils.UiUtils
-import com.seiko.imageloader.LocalImageLoader
 import com.seiko.imageloader.ui.AutoSizeImage
 
 class PostInformation {

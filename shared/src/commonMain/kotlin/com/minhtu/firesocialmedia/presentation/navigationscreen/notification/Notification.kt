@@ -65,14 +65,12 @@ import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
 import com.minhtu.firesocialmedia.domain.entity.notification.NotificationInstance
 import com.minhtu.firesocialmedia.domain.entity.notification.NotificationType
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
-import com.minhtu.firesocialmedia.platform.generateImageLoader
 import com.minhtu.firesocialmedia.platform.logMessage
 import com.minhtu.firesocialmedia.platform.showToast
 import com.minhtu.firesocialmedia.presentation.home.HomeViewModel
 import com.minhtu.firesocialmedia.presentation.loading.Loading
 import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
 import com.minhtu.firesocialmedia.presentation.search.SearchViewModel
-import com.seiko.imageloader.LocalImageLoader
 import com.seiko.imageloader.ui.AutoSizeImage
 import kotlinx.coroutines.delay
 import kotlin.math.roundToInt

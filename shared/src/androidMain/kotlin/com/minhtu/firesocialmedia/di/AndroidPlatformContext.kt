@@ -1,23 +1,23 @@
 package com.minhtu.firesocialmedia.di
 
 import android.content.Context
-import androidx.room.Room
 import androidx.room.Room.databaseBuilder
+import com.minhtu.firesocialmedia.core.connectivity.NetworkMonitorImpl
+import com.minhtu.firesocialmedia.data.local.room.LocalDatabase
+import com.minhtu.firesocialmedia.data.local.service.crypto.CryptoService
+import com.minhtu.firesocialmedia.data.local.service.room.RoomService
 import com.minhtu.firesocialmedia.data.remote.service.auth.AuthService
 import com.minhtu.firesocialmedia.data.remote.service.call.AudioCallService
 import com.minhtu.firesocialmedia.data.remote.service.clipboard.ClipboardService
-import com.minhtu.firesocialmedia.data.local.service.crypto.CryptoService
-import com.minhtu.firesocialmedia.data.local.service.room.RoomService
 import com.minhtu.firesocialmedia.data.remote.service.database.DatabaseService
 import com.minhtu.firesocialmedia.data.remote.service.permission.PermissionManager
-import com.minhtu.firesocialmedia.data.local.room.LocalDatabase
+import com.minhtu.firesocialmedia.domain.core.NetworkMonitor
 import com.minhtu.firesocialmedia.domain.serviceimpl.auth.AndroidAuthService
 import com.minhtu.firesocialmedia.domain.serviceimpl.call.AndroidAudioCallService
 import com.minhtu.firesocialmedia.domain.serviceimpl.clipboard.AndroidClipboardService
 import com.minhtu.firesocialmedia.domain.serviceimpl.crypto.AndroidCryptoService
 import com.minhtu.firesocialmedia.domain.serviceimpl.database.AndroidDatabaseService
 import com.minhtu.firesocialmedia.domain.serviceimpl.room.AndroidRoomService
-import kotlin.getValue
 
 class AndroidPlatformContext(
     context : Context,
@@ -40,4 +40,5 @@ class AndroidPlatformContext(
         localDatabase.newsDao(),
         localDatabase.notificationDao()
     )
+    override val networkMonitor: NetworkMonitor = NetworkMonitorImpl(context)
 }

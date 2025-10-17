@@ -2,9 +2,9 @@ package com.minhtu.firesocialmedia.data.repository
 
 import com.minhtu.firesocialmedia.data.remote.constant.DataConstant
 import com.minhtu.firesocialmedia.data.remote.mapper.comment.toDomain
+import com.minhtu.firesocialmedia.data.remote.service.database.DatabaseService
 import com.minhtu.firesocialmedia.domain.entity.comment.CommentInstance
 import com.minhtu.firesocialmedia.domain.repository.CommentRepository
-import com.minhtu.firesocialmedia.data.remote.service.database.DatabaseService
 
 class CommentRepositoryImpl(
     private val databaseService: DatabaseService

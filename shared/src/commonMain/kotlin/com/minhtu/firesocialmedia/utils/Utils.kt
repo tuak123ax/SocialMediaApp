@@ -1,7 +1,6 @@
 package com.minhtu.firesocialmedia.utils
 
 import androidx.compose.ui.graphics.Color
-import com.minhtu.firesocialmedia.di.PlatformContext
 import com.minhtu.firesocialmedia.domain.entity.call.CallStatus
 import com.minhtu.firesocialmedia.domain.entity.call.CallType
 import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
@@ -11,12 +10,6 @@ import com.minhtu.firesocialmedia.domain.usecases.notification.DeleteNotificatio
 import com.minhtu.firesocialmedia.domain.usecases.notification.SaveNotificationToDatabaseUseCase
 import com.minhtu.firesocialmedia.platform.createCallMessage
 import com.minhtu.firesocialmedia.platform.sendMessageToServer
-import com.minhtu.firesocialmedia.presentation.calling.audiocall.CallingViewModel
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
 
 class Utils {
     companion object{

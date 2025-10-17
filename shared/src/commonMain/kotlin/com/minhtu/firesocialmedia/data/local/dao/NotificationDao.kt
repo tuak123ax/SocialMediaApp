@@ -21,6 +21,9 @@ interface NotificationDao {
     @Query("SELECT * FROM Notifications WHERE id = :id")
     suspend fun getById(id: String): NotificationEntity?
 
+    @Query("SELECT * FROM `Notifications`")
+    suspend fun getAll(): List<NotificationEntity>
+
     // --- READ (reactive) ---
     @Query("SELECT * FROM Notifications WHERE id = :id")
     fun observeById(id: String): Flow<NotificationEntity?>
