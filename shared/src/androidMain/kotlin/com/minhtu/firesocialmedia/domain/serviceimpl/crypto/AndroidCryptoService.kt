@@ -4,6 +4,7 @@ import android.content.Context
 import com.minhtu.firesocialmedia.constants.Constants
 import com.minhtu.firesocialmedia.data.local.service.crypto.CryptoService
 import com.minhtu.firesocialmedia.data.remote.dto.crypto.CredentialsDTO
+import com.minhtu.firesocialmedia.data.remote.dto.user.UserDTO
 
 class AndroidCryptoService(private val context: Context) : CryptoService {
     override fun saveAccount(email: String, password: String) {
@@ -28,5 +29,13 @@ class AndroidCryptoService(private val context: Context) : CryptoService {
     override suspend fun getFCMToken(): String {
         val secureSharedPreferences = AndroidCryptoHelper.getEncryptedSharedPreferences(context)
         return secureSharedPreferences.getString(Constants.KEY_FCM_TOKEN, "")!!
+    }
+
+    override suspend fun saveCurrentUserInfo(user: UserDTO) {
+        AndroidCryptoHelper.saveCurrentUserInfo(context,user)
+    }
+
+    override suspend fun getCurrentUserInfo(): UserDTO? {
+        return AndroidCryptoHelper.getCurrentUserInfo(context)
     }
 }

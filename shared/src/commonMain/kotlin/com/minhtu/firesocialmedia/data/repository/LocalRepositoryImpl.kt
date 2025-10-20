@@ -6,6 +6,7 @@ import com.minhtu.firesocialmedia.data.local.mapper.room.toNotificationEntity
 import com.minhtu.firesocialmedia.data.local.mapper.room.toUserEntity
 import com.minhtu.firesocialmedia.data.local.service.crypto.CryptoService
 import com.minhtu.firesocialmedia.data.local.service.room.RoomService
+import com.minhtu.firesocialmedia.data.remote.mapper.user.toDto
 import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
 import com.minhtu.firesocialmedia.domain.entity.notification.NotificationInstance
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
@@ -33,5 +34,9 @@ class LocalRepositoryImpl(
 
     override suspend fun getUserFromRoom(userId: String): UserInstance? {
         return roomService.getUserFromRoom(userId)?.toDomain()
+    }
+
+    override suspend fun saveCurrentUserInfo(user: UserInstance) {
+        cryptoService.saveCurrentUserInfo(user.toDto())
     }
 }

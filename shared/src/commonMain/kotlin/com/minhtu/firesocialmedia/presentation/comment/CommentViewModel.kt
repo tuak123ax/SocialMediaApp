@@ -124,7 +124,7 @@ class CommentViewModel(
             NotificationType.COMMENT,
             selectedNew.id)
         //Save notification to db
-        val poster = getUserUseCase.invoke(selectedNew.posterId)
+        val poster = getUserUseCase.invoke(selectedNew.posterId, false)
         saveNotification(notification, poster!!, saveNotificationToDatabaseUseCase)
         //Send notification to poster
         val tokenList = ArrayList<String>()
@@ -322,7 +322,7 @@ class CommentViewModel(
     }
 
     suspend fun findUserById(userId: String) : UserInstance?{
-        return getUserUseCase.invoke(userId)
+        return getUserUseCase.invoke(userId, false)
     }
 
     suspend fun getAllCommentsOfNew(newsId : String) {

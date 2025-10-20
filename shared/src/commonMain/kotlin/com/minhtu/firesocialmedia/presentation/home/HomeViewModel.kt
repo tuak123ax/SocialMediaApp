@@ -62,6 +62,7 @@ class HomeViewModel(
         currentUser = user
         currentUserState = currentUser
         updateFCMTokenForCurrentUser(user)
+        userInteractor.saveCurrentUserInfo(user)
         likeCache = currentUser!!.likedPosts
     }
 
@@ -71,7 +72,7 @@ class HomeViewModel(
         try{
             val currentUserId = userInteractor.getCurrentUserId()
             if(currentUserId != null) {
-                val user = userInteractor.getUser(currentUserId)
+                val user = userInteractor.getUser(currentUserId, true)
                 if(user != null) {
                     updateCurrentUser(user)
                     _getCurrentUserStatus.value = true
@@ -97,7 +98,7 @@ class HomeViewModel(
                 // Fetch all in parallel
                 friendIds.map { friendId ->
                     async {
-                        userInteractor.getUser(friendId)
+                        userInteractor.getUser(friendId, false)
                     }
                 }.awaitAll()
             } else {
@@ -107,7 +108,7 @@ class HomeViewModel(
                 for (batch in batches) {
                     val batchResults = batch.map { id ->
                         async {
-                            userInteractor.getUser(id)
+                            userInteractor.getUser(id, false)
                         }
                     }.awaitAll().filterNotNull()
                     resultList.addAll(batchResults)
@@ -188,7 +189,7 @@ class HomeViewModel(
             try {
                 val newUsers: List<Pair<String, UserInstance?>> = supervisorScope {
                     missingIds.map { id ->
-                        async { id to runCatching { userInteractor.getUser(id) }.getOrNull() }
+                        async { id to runCatching { userInteractor.getUser(id, false) }.getOrNull() }
                     }.awaitAll()
                 }
 
@@ -237,6 +238,7 @@ class HomeViewModel(
     private val _allUserFriends = MutableStateFlow<List<UserInstance?>>(emptyList())
     val allUserFriends = _allUserFriends.asStateFlow()
     fun updateUserFriends(users: ArrayList<UserInstance?>) {
+        logMessage("updateUserFriends", { "number: "+ users.size })
         _allUserFriends.value = users
         //Add loaded user friends to cache
         val loadedFriendsMap = users
@@ -400,7 +402,7 @@ class HomeViewModel(
             selectedNew.id
         )
         //Save notification to db
-        val poster = userInteractor.getUser(selectedNew.posterId)
+        val poster = userInteractor.getUser(selectedNew.posterId, false)
         if(poster != null) {
             poster.addNotification(notification)
             notificationInteractor.saveNotificationToDatabase(
@@ -544,7 +546,7 @@ class HomeViewModel(
     }
 
     suspend fun findUserById(userId: String) : UserInstance? {
-        return userInteractor.getUser(userId)
+        return userInteractor.getUser(userId, false)
     }
 
     fun findUserByIdInCache(userId: String) : UserInstance? {

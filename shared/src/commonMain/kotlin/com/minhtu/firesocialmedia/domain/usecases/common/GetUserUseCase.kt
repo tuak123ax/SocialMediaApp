@@ -6,7 +6,8 @@ import com.minhtu.firesocialmedia.domain.repository.UserRepository
 class GetUserUseCase(
     private val userRepository: UserRepository
 ) {
-    suspend operator fun invoke(userId : String) : UserInstance? {
-        return userRepository.getUser(userId)
+    suspend operator fun invoke(userId : String,
+                                isCurrentUser: Boolean) : UserInstance? {
+        return userRepository.getUser(userId, isCurrentUser)
     }
 }

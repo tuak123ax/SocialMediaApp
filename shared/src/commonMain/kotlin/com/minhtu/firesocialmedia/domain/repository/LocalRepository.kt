@@ -10,4 +10,5 @@ interface LocalRepository {
     suspend fun storeNewsToRoom(news: List<NewsInstance>)
     suspend fun storeNotificationsToRoom(notifications: List<NotificationInstance>)
     suspend fun getUserFromRoom(userId: String) : UserInstance?
+    suspend fun saveCurrentUserInfo(user: UserInstance)
 }

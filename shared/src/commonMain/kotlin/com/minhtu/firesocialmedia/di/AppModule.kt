@@ -59,6 +59,7 @@ import com.minhtu.firesocialmedia.domain.usecases.friend.SaveFriendUseCase
 import com.minhtu.firesocialmedia.domain.usecases.home.ClearAccountUseCase
 import com.minhtu.firesocialmedia.domain.usecases.home.DeleteNewsFromDatabaseUseCase
 import com.minhtu.firesocialmedia.domain.usecases.home.GetLatestNewsUseCase
+import com.minhtu.firesocialmedia.domain.usecases.home.SaveCurrentUserInfoUseCase
 import com.minhtu.firesocialmedia.domain.usecases.home.SaveLikedPostUseCase
 import com.minhtu.firesocialmedia.domain.usecases.home.SearchUserByNameUseCase
 import com.minhtu.firesocialmedia.domain.usecases.home.StoreNewsToRoomUseCase
@@ -250,7 +251,8 @@ object AppModule {
         clearAccountUseCase: ClearAccountUseCase,
         saveValueToDatabaseUseCase: SaveLikedPostUseCase,
         searchUserByNameUseCase: SearchUserByNameUseCase,
-        storeUserFriendsToRoomUseCase: StoreUserFriendsToRoomUseCase
+        storeUserFriendsToRoomUseCase: StoreUserFriendsToRoomUseCase,
+        saveCurrentUserInfoUseCase: SaveCurrentUserInfoUseCase
     ) : UserInteractor {
         return UserInteractorImpl(
             getCurrentUserUidUseCase,
@@ -259,7 +261,8 @@ object AppModule {
             clearAccountUseCase,
             saveValueToDatabaseUseCase,
             searchUserByNameUseCase,
-            storeUserFriendsToRoomUseCase
+            storeUserFriendsToRoomUseCase,
+            saveCurrentUserInfoUseCase
         )
     }
     fun provideNewsInteractor(
@@ -461,6 +464,7 @@ object AppModule {
         return UserRepositoryImpl(
             platformContext.auth,
             platformContext.database,
+            platformContext.crypto,
             platformContext.room,
             platformContext.networkMonitor)
     }
@@ -522,5 +526,9 @@ object AppModule {
     }
     fun provideStoreUserFriendsToRoomUseCase(localRepository: LocalRepository) : StoreUserFriendsToRoomUseCase {
         return StoreUserFriendsToRoomUseCase(localRepository)
+    }
+
+    fun provideSaveCurrentUserInfoUseCase(localRepository: LocalRepository) : SaveCurrentUserInfoUseCase {
+        return SaveCurrentUserInfoUseCase(localRepository)
     }
 }
