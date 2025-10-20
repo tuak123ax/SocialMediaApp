@@ -82,14 +82,12 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.minhtu.firesocialmedia.constants.TestTag
-import com.minhtu.firesocialmedia.di.PlatformContext
 import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.platform.CommonBackHandler
 import com.minhtu.firesocialmedia.platform.CrossPlatformIcon
 import com.minhtu.firesocialmedia.platform.VideoPlayer
 import com.minhtu.firesocialmedia.platform.convertTimeToDateString
-import com.minhtu.firesocialmedia.platform.generateImageLoader
 import com.minhtu.firesocialmedia.presentation.home.Home
 import com.minhtu.firesocialmedia.presentation.home.HomeViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.Screen
@@ -98,7 +96,6 @@ import com.minhtu.firesocialmedia.presentation.navigationscreen.friend.FriendVie
 import com.minhtu.firesocialmedia.presentation.navigationscreen.notification.Notification
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.Settings
 import com.minhtu.firesocialmedia.presentation.search.SearchViewModel
-import com.seiko.imageloader.LocalImageLoader
 import com.seiko.imageloader.ui.AutoSizeImage
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -883,6 +880,7 @@ class UiUtils {
             val likeStatus by homeViewModel.likedPosts.collectAsState()
             val likeCountList = homeViewModel.likeCountList.collectAsState()
             val commentCountList = homeViewModel.commentCountList.collectAsState()
+            val loadedUsers by homeViewModel.loadedUserState.collectAsState()
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
@@ -906,7 +904,7 @@ class UiUtils {
                             animationSpec = tween(durationMillis = 200)
                         )
                     ) {
-                        val user = homeViewModel.findUserByIdInCache(news.posterId)
+                        val user = loadedUsers[news.posterId]
                         if(user != null) {
                             NewsCard(
                                 news = news,

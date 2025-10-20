@@ -12,4 +12,6 @@ interface NewsInteractor {
     suspend fun unlike(id: String,
                        value: Int)
     suspend fun delete(new: NewsInstance)
+
+    suspend fun storeNewsToRoom(news : List<NewsInstance>)
 }

@@ -5,4 +5,5 @@
 # For more details, see
 #   http://developer.android.com/guide/developing/tools/proguard.html
 
--keep class com.minhtu.firesocialmedia.data.dto.** { *; }
+-keep class com.minhtu.firesocialmedia.data.remote.dto.** { *; }
+-keep class com.minhtu.firesocialmedia.data.local.entity.** { *; }

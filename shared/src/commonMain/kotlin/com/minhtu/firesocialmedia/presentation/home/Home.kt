@@ -35,7 +35,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.ProvidedValue
 import androidx.compose.runtime.collectAsState
@@ -66,9 +65,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.minhtu.firesocialmedia.constants.TestTag
 import com.minhtu.firesocialmedia.domain.entity.call.CallingRequestData
 import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
@@ -78,7 +75,6 @@ import com.minhtu.firesocialmedia.platform.logMessage
 import com.minhtu.firesocialmedia.platform.toHex
 import com.minhtu.firesocialmedia.presentation.loading.Loading
 import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
-import com.minhtu.firesocialmedia.utils.NavigationHandler
 import com.minhtu.firesocialmedia.utils.UiUtils
 import com.seiko.imageloader.ui.AutoSizeImage
 import kotlinx.coroutines.flow.collectLatest
@@ -102,7 +98,6 @@ class Home {
                        onNavigateToCommentScreen: (selectedNew : NewsInstance) -> Unit,
                        onNavigateToCallingScreen : suspend (CallingRequestData) -> Unit,
                        onNavigateToCallingScreenWithUI : suspend () -> Unit){
-            val lifecycleOwner = LocalLifecycleOwner.current
             val isLoading by loadingViewModel.isLoading.collectAsState()
             val commentStatus by homeViewModel.commentStatus.collectAsState()
 
@@ -120,11 +115,12 @@ class Home {
 
             val numberOfLists by remember { derivedStateOf { homeViewModel.numberOfListNeedToLoad } }
 
-            val newsList = homeViewModel.allNews.collectAsState()
+            val newsList = homeViewModel.allNews.collectAsStateWithLifecycle()
 
             val currentUserState = homeViewModel.currentUserState
 
             var isAllUsersVisible by remember { mutableStateOf(true) }
+            var userInteracted by remember { mutableStateOf(false) }
 
             LaunchedEffect(Unit) {
                 loadingViewModel.showLoading()
@@ -150,37 +146,8 @@ class Home {
                 }
             }
 
-//            val endCallStatus by homeViewModel.endCallStatus.collectAsState()
-//            LaunchedEffect(endCallStatus) {
-//                if(endCallStatus) {
-//                    navHandler.navigateBack()
-//                    homeViewModel.resetEndCallStatus()
-//                }
-//            }
             val getCurrentUserStatus by homeViewModel.getCurrentUserStatus
 
-            // Start/stop observing as the screen STARTs/STOPs
-//            DisposableEffect(lifecycleOwner, getCurrentUserStatus) {
-//                if(!getCurrentUserStatus) return@DisposableEffect onDispose {}
-//                val observer = LifecycleEventObserver { _, event ->
-//                    when(event) {
-//                        Lifecycle.Event.ON_START -> {
-//                            logMessage("observePhoneCall", { "start observe phone call" })
-//                            homeViewModel.observePhoneCall()
-//                        }
-//                        Lifecycle.Event.ON_STOP -> {
-//                            logMessage("observePhoneCall", { "stop observe phone call" })
-//                            homeViewModel.stopObservePhoneCall()
-//                        }
-//                        else -> Unit
-//                    }
-//                }
-//                lifecycleOwner.lifecycle.addObserver(observer)
-//                onDispose {
-//                    lifecycleOwner.lifecycle.removeObserver(observer)
-//                    homeViewModel.stopObservePhoneCall()
-//                }
-//            }
             LaunchedEffect(getCurrentUserStatus) {
                 if(getCurrentUserStatus) {
                     logMessage("observePhoneCall", { "start observe phone call" })
@@ -363,13 +330,23 @@ class Home {
                             val firstVisible = layoutInfo.visibleItemsInfo.firstOrNull()?.index ?: 0
                             val lastVisible = layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
                             val totalItems = layoutInfo.totalItemsCount
+                            val inProgress = listState.isScrollInProgress
 
-                            Triple(firstVisible, lastVisible, totalItems)
+                            Triple(firstVisible, lastVisible, totalItems) to inProgress
                         }
                             .distinctUntilChanged()
-                            .collectLatest { (firstVisible, lastVisible, totalItems) ->
+                            .collectLatest { (triple, state) ->
+                                val (firstVisible, lastVisible, totalItems) = triple
+                                val inProgress = state
+                                if(inProgress && firstVisible > 0) {
+                                    userInteracted = true
+                                }
                                 // Show/hide top bar
-                                isAllUsersVisible = firstVisible == 0
+                                isAllUsersVisible = if(!userInteracted) {
+                                    true
+                                } else {
+                                    firstVisible == 0
+                                }
 
                                 // Trigger load more when near bottom
                                 if (

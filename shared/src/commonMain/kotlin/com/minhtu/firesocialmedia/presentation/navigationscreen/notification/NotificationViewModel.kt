@@ -46,7 +46,7 @@ class NotificationViewModel (
                 try{
                     val newUsers: List<Pair<String, UserInstance?>> = supervisorScope {
                         missingSenderIds.map { senderId ->
-                            async { senderId to runCatching { getUserUseCase.invoke(senderId) }.getOrNull() }
+                            async { senderId to runCatching { getUserUseCase.invoke(senderId, false) }.getOrNull() }
                         }.awaitAll()
                     }
 

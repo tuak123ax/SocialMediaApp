@@ -46,6 +46,9 @@ class Constants {
         const val KEY_USER_ID = "user_id"
         const val KEY_NAME = "name"
         const val KEY_AVATAR = "avatar"
+        const val KEY_STATUS = "status"
+        const val KEY_FRIENDS = "friends"
+        const val KEY_FRIEND_REQUEST = "friend_request"
         const val KEY_EMAIL = "email"
         const val KEY_PASSWORD = "password"
         fun getRemoteMsgHeaders(): HashMap<String, String> {

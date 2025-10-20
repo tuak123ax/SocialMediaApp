@@ -3,7 +3,6 @@ package com.minhtu.firesocialmedia.domain.usecases.call
 import com.minhtu.firesocialmedia.domain.entity.call.CallStatus
 import com.minhtu.firesocialmedia.domain.repository.CallRepository
 import com.minhtu.firesocialmedia.platform.logMessage
-import com.minhtu.firesocialmedia.utils.Utils
 
 class ManageCallStateUseCase(
     val callRepository: CallRepository

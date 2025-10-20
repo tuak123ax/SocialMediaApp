@@ -1,7 +1,6 @@
 package com.minhtu.firesocialmedia.domain.coordinator.call
 
 import com.minhtu.firesocialmedia.domain.entity.call.CallingRequestData
-import com.minhtu.firesocialmedia.domain.entity.call.IceCandidateData
 import com.minhtu.firesocialmedia.domain.entity.call.OfferAnswer
 import com.minhtu.firesocialmedia.domain.usecases.call.CalleeUseCases
 import com.minhtu.firesocialmedia.domain.usecases.call.InitializeCallUseCase

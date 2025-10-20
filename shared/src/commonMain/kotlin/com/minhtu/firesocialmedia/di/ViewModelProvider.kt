@@ -75,6 +75,7 @@ object ViewModelProvider {
         val userRepository = AppModule.provideUserRepository(platformContext)
         val newsRepository = AppModule.provideNewsRepository(platformContext)
         val callRepository = AppModule.provideCallRepository(platformContext)
+        val localRepository = AppModule.provideLocalRepository(platformContext)
         val getCurrentUserUidUseCase = AppModule.provideGetCurrentUserUidUseCase(userRepository)
         val getUserUseCase = AppModule.provideGetUserUseCase(userRepository)
         val getLatestNewsUseCase = AppModule.provideGetLatestNewsUseCase(newsRepository)
@@ -91,23 +92,31 @@ object ViewModelProvider {
         val deleteNotificationFromDatabaseUseCase = AppModule.provideDeleteNotificationFromDatabaseUseCase(notificationRepository)
         val searchUserByNameUseCase = AppModule.provideSearchUserByNameUseCase(userRepository)
         val stopCallServiceUseCase = AppModule.provideStopCallServiceUseCase(callRepository)
+        val storeUserFriendsToRoomUseCase = AppModule.provideStoreUserFriendsToRoomUseCase(localRepository)
+        val storeNewsToRoomUseCase = AppModule.provideStoreNewsToRoomUseCase(localRepository)
+        val storeNotificationsToRoomUseCase = AppModule.provideStoreNotificationsToRoomUseCase(localRepository)
+        val saveCurrentUserInfoUseCase = AppModule.provideSaveCurrentUserInfoUseCase(localRepository)
         val userInteractor = AppModule.provideUserInteractor(
             getCurrentUserUidUseCase,
             getUserUseCase,
             updateFCMTokenUseCase,
             clearAccountUseCase,
             saveValueToDatabaseUseCase,
-            searchUserByNameUseCase
+            searchUserByNameUseCase,
+            storeUserFriendsToRoomUseCase,
+            saveCurrentUserInfoUseCase
         )
         val newsInteractor = AppModule.provideNewsInteractor(
             getLatestNewsUseCase,
             updateCountValueInDatabase,
-            deleteNewsFromDatabaseUseCase
+            deleteNewsFromDatabaseUseCase,
+            storeNewsToRoomUseCase
         )
         val notificationInteractor = AppModule.provideNotificationInteractor(
             getAllNotificationOfUserUseCase,
             saveNotificationToDatabaseUseCase,
-            deleteNotificationFromDatabaseUseCase
+            deleteNotificationFromDatabaseUseCase,
+            storeNotificationsToRoomUseCase
         )
         val callInteractor = AppModule.provideCallInteractor(
             observePhoneCallWithInCallUseCase,

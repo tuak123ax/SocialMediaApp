@@ -182,6 +182,6 @@ class UploadNewfeedViewModel(
     }
 
     suspend fun findUserById(userId: String) : UserInstance? {
-        return getUserUseCase.invoke(userId)
+        return getUserUseCase.invoke(userId, false)
     }
 }

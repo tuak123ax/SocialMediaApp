@@ -60,13 +60,11 @@ import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.platform.CommonBackHandler
 import com.minhtu.firesocialmedia.platform.CrossPlatformIcon
 import com.minhtu.firesocialmedia.platform.convertTimeToDateString
-import com.minhtu.firesocialmedia.platform.generateImageLoader
 import com.minhtu.firesocialmedia.platform.logMessage
 import com.minhtu.firesocialmedia.platform.showToast
 import com.minhtu.firesocialmedia.utils.UiUtils
 import com.minhtu.firesocialmedia.utils.Utils
 import com.rickclephas.kmp.observableviewmodel.launch
-import com.seiko.imageloader.LocalImageLoader
 import com.seiko.imageloader.ui.AutoSizeImage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO

@@ -1,10 +1,10 @@
 package com.minhtu.firesocialmedia.data.repository
 
-import com.minhtu.firesocialmedia.data.constant.DataConstant
-import com.minhtu.firesocialmedia.data.mapper.call.toDomain
-import com.minhtu.firesocialmedia.data.mapper.call.toDomainCandidates
-import com.minhtu.firesocialmedia.data.mapper.call.toDto
-import com.minhtu.firesocialmedia.data.mapper.user.toDto
+import com.minhtu.firesocialmedia.data.remote.constant.DataConstant
+import com.minhtu.firesocialmedia.data.remote.mapper.call.toDomain
+import com.minhtu.firesocialmedia.data.remote.mapper.call.toDomainCandidates
+import com.minhtu.firesocialmedia.data.remote.mapper.call.toDto
+import com.minhtu.firesocialmedia.data.remote.mapper.user.toDto
 import com.minhtu.firesocialmedia.data.remote.service.call.AudioCallService
 import com.minhtu.firesocialmedia.data.remote.service.database.DatabaseService
 import com.minhtu.firesocialmedia.data.remote.service.permission.PermissionManager

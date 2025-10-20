@@ -18,5 +18,5 @@ plugins {
 
     //Code coverage tool
     id("org.jetbrains.kotlinx.kover") version "0.9.1"
-    id("com.google.devtools.ksp") version "2.1.10-1.0.29"
+    id("com.google.devtools.ksp") version "2.2.10-2.0.2"
 }

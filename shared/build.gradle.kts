@@ -9,8 +9,10 @@ plugins {
 
     id("org.jetbrains.kotlinx.kover")
     id("io.mockative") version "3.0.1"
-    id("com.google.devtools.ksp") version "2.1.10-1.0.29"
+    alias(libs.plugins.ksp)
     id("kotlinx-serialization")
+    //Room
+    alias(libs.plugins.androidx.room)
 }
 
 kotlin {
@@ -20,6 +22,11 @@ kotlin {
     val iosX64 = iosX64()
     val iosArm64 = iosArm64()
     val iosSimulatorArm64 = iosSimulatorArm64("iosSimulator")
+
+    // Link sqlite on Native/iOS
+    targets.withType<org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget>().configureEach {
+        binaries.all { linkerOpts("-lsqlite3") }
+    }
 
     val xcf = XCFramework()
 
@@ -103,6 +110,10 @@ kotlin {
 
             implementation("org.javassist:javassist:3.29.2-GA")
             implementation("org.objenesis:objenesis:3.3")
+
+            //Room
+            implementation(libs.androidx.room.runtime)
+            implementation(libs.androidx.sqlite.bundled)
         }
         commonTest {
             dependencies{
@@ -163,6 +174,9 @@ kotlin {
 
             //webRTC
             implementation("io.getstream:stream-webrtc-android:1.3.8")
+
+            //Room
+            implementation(libs.androidx.room.sqlite.wrapper)
         }
 
         androidUnitTest.dependencies {
@@ -218,4 +232,13 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
     kotlinOptions {
         jvmTarget = "21"
     }
+}
+
+dependencies {
+    add("kspAndroid", libs.androidx.room.compiler)
+    add("kspCommonMainMetadata", libs.androidx.room.compiler)
+}
+
+room {
+    schemaDirectory("$projectDir/schemas")
 }

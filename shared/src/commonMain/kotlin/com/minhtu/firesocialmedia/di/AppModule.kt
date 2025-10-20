@@ -59,8 +59,12 @@ import com.minhtu.firesocialmedia.domain.usecases.friend.SaveFriendUseCase
 import com.minhtu.firesocialmedia.domain.usecases.home.ClearAccountUseCase
 import com.minhtu.firesocialmedia.domain.usecases.home.DeleteNewsFromDatabaseUseCase
 import com.minhtu.firesocialmedia.domain.usecases.home.GetLatestNewsUseCase
+import com.minhtu.firesocialmedia.domain.usecases.home.SaveCurrentUserInfoUseCase
 import com.minhtu.firesocialmedia.domain.usecases.home.SaveLikedPostUseCase
 import com.minhtu.firesocialmedia.domain.usecases.home.SearchUserByNameUseCase
+import com.minhtu.firesocialmedia.domain.usecases.home.StoreNewsToRoomUseCase
+import com.minhtu.firesocialmedia.domain.usecases.home.StoreNotificationsToRoomUseCase
+import com.minhtu.firesocialmedia.domain.usecases.home.StoreUserFriendsToRoomUseCase
 import com.minhtu.firesocialmedia.domain.usecases.home.UpdateFCMTokenUseCase
 import com.minhtu.firesocialmedia.domain.usecases.home.UpdateLikeCountForNewUseCase
 import com.minhtu.firesocialmedia.domain.usecases.information.CheckCalleeAvailableUseCase
@@ -106,7 +110,7 @@ object AppModule {
         return SaveLikedCommentsUseCase(commonDbRepository)
     }
     fun provideNotificationRepository(platformContext: PlatformContext) : NotificationRepository {
-        return NotificationRepositoryImpl(platformContext.database)
+        return NotificationRepositoryImpl(platformContext.database, platformContext.room, platformContext.networkMonitor)
     }
     fun provideCommonDbRepository(platformContext: PlatformContext) : CommonDbRepository{
         return CommonDbRepositoryImpl(platformContext.database)
@@ -180,7 +184,7 @@ object AppModule {
         return AuthenticationRepositoryImpl(platformContext.auth, platformContext.database, platformContext.crypto)
     }
     fun provideLocalRepository(platformContext: PlatformContext) : LocalRepository {
-        return LocalRepositoryImpl(platformContext.crypto)
+        return LocalRepositoryImpl(platformContext.crypto, platformContext.room)
     }
     fun provideSaveSignUpInformationUseCase(authenticationRepository: AuthenticationRepository) : SaveSignUpInformationUseCase {
         return SaveSignUpInformationUseCase(authenticationRepository)
@@ -246,7 +250,9 @@ object AppModule {
         updateFCMTokenUseCase: UpdateFCMTokenUseCase,
         clearAccountUseCase: ClearAccountUseCase,
         saveValueToDatabaseUseCase: SaveLikedPostUseCase,
-        searchUserByNameUseCase: SearchUserByNameUseCase
+        searchUserByNameUseCase: SearchUserByNameUseCase,
+        storeUserFriendsToRoomUseCase: StoreUserFriendsToRoomUseCase,
+        saveCurrentUserInfoUseCase: SaveCurrentUserInfoUseCase
     ) : UserInteractor {
         return UserInteractorImpl(
             getCurrentUserUidUseCase,
@@ -254,29 +260,35 @@ object AppModule {
             updateFCMTokenUseCase,
             clearAccountUseCase,
             saveValueToDatabaseUseCase,
-            searchUserByNameUseCase
+            searchUserByNameUseCase,
+            storeUserFriendsToRoomUseCase,
+            saveCurrentUserInfoUseCase
         )
     }
     fun provideNewsInteractor(
         getLatestNewsUseCase: GetLatestNewsUseCase,
         updateCountValueInDatabase: UpdateLikeCountForNewUseCase,
-        deleteNewsFromDatabaseUseCase: DeleteNewsFromDatabaseUseCase
+        deleteNewsFromDatabaseUseCase: DeleteNewsFromDatabaseUseCase,
+        storeNewsToRoomUseCase: StoreNewsToRoomUseCase
     ) : NewsInteractor {
         return NewsInteractorImpl(
             getLatestNewsUseCase,
             updateCountValueInDatabase,
-            deleteNewsFromDatabaseUseCase
+            deleteNewsFromDatabaseUseCase,
+            storeNewsToRoomUseCase
         )
     }
     fun provideNotificationInteractor(
         getAllNotificationOfUserUseCase: GetAllNotificationOfUserUseCase,
         saveNotificationToDatabaseUseCase: SaveNotificationToDatabaseUseCase,
-        deleteNotificationFromDatabaseUseCase: DeleteNotificationFromDatabaseUseCase
+        deleteNotificationFromDatabaseUseCase: DeleteNotificationFromDatabaseUseCase,
+        storeNotificationsToRoomUseCase: StoreNotificationsToRoomUseCase
     ) : NotificationInteractor {
         return NotificationInteractorImpl(
             getAllNotificationOfUserUseCase,
             saveNotificationToDatabaseUseCase,
-            deleteNotificationFromDatabaseUseCase
+            deleteNotificationFromDatabaseUseCase,
+            storeNotificationsToRoomUseCase
         )
     }
     fun provideCallInteractor(
@@ -449,10 +461,18 @@ object AppModule {
 
     //---------------------------Notification----------------------------------------//
     fun provideUserRepository(platformContext: PlatformContext) : UserRepository {
-        return UserRepositoryImpl(platformContext.auth,platformContext.database)
+        return UserRepositoryImpl(
+            platformContext.auth,
+            platformContext.database,
+            platformContext.crypto,
+            platformContext.room,
+            platformContext.networkMonitor)
     }
     fun provideNewsRepository(platformContext: PlatformContext) : NewsRepository {
-        return NewsRepositoryImpl(platformContext.database)
+        return NewsRepositoryImpl(
+            platformContext.database,
+            platformContext.room,
+            platformContext.networkMonitor)
     }
     fun provideGetUserUseCase(userRepository: UserRepository) : GetUserUseCase {
         return GetUserUseCase(userRepository)
@@ -495,5 +515,20 @@ object AppModule {
 
     fun provideVideoCallUseCase(callRepository: CallRepository) : VideoCallUseCase {
         return VideoCallUseCase(callRepository)
+    }
+
+    //---------------------------Room----------------------------------------//
+    fun provideStoreNewsToRoomUseCase(localRepository: LocalRepository) : StoreNewsToRoomUseCase {
+        return StoreNewsToRoomUseCase(localRepository)
+    }
+    fun provideStoreNotificationsToRoomUseCase(localRepository: LocalRepository) : StoreNotificationsToRoomUseCase {
+        return StoreNotificationsToRoomUseCase(localRepository)
+    }
+    fun provideStoreUserFriendsToRoomUseCase(localRepository: LocalRepository) : StoreUserFriendsToRoomUseCase {
+        return StoreUserFriendsToRoomUseCase(localRepository)
+    }
+
+    fun provideSaveCurrentUserInfoUseCase(localRepository: LocalRepository) : SaveCurrentUserInfoUseCase {
+        return SaveCurrentUserInfoUseCase(localRepository)
     }
 }

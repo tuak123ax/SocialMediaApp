@@ -1,15 +1,15 @@
 package com.minhtu.firesocialmedia.data.remote.service.database
 
-import com.minhtu.firesocialmedia.data.dto.call.AudioCallSessionDTO
-import com.minhtu.firesocialmedia.data.dto.call.CallingRequestDTO
-import com.minhtu.firesocialmedia.data.dto.call.IceCandidateDTO
-import com.minhtu.firesocialmedia.data.dto.call.OfferAnswerDTO
-import com.minhtu.firesocialmedia.data.dto.comment.CommentDTO
-import com.minhtu.firesocialmedia.data.dto.home.LatestNewsDTO
-import com.minhtu.firesocialmedia.data.dto.news.NewsDTO
-import com.minhtu.firesocialmedia.data.dto.notification.NotificationDTO
-import com.minhtu.firesocialmedia.data.dto.signin.SignInDTO
-import com.minhtu.firesocialmedia.data.dto.user.UserDTO
+import com.minhtu.firesocialmedia.data.remote.dto.call.AudioCallSessionDTO
+import com.minhtu.firesocialmedia.data.remote.dto.call.CallingRequestDTO
+import com.minhtu.firesocialmedia.data.remote.dto.call.IceCandidateDTO
+import com.minhtu.firesocialmedia.data.remote.dto.call.OfferAnswerDTO
+import com.minhtu.firesocialmedia.data.remote.dto.comment.CommentDTO
+import com.minhtu.firesocialmedia.data.remote.dto.home.LatestNewsDTO
+import com.minhtu.firesocialmedia.data.remote.dto.news.NewsDTO
+import com.minhtu.firesocialmedia.data.remote.dto.notification.NotificationDTO
+import com.minhtu.firesocialmedia.data.remote.dto.signin.SignInDTO
+import com.minhtu.firesocialmedia.data.remote.dto.user.UserDTO
 import com.minhtu.firesocialmedia.domain.entity.base.BaseNewsInstance
 import com.minhtu.firesocialmedia.domain.entity.call.CallStatus
 import com.minhtu.firesocialmedia.utils.Utils
