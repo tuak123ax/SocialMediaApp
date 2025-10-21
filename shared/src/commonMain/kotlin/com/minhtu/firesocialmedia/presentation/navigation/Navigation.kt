@@ -5,14 +5,20 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -24,7 +30,6 @@ import com.minhtu.firesocialmedia.domain.entity.call.SharedCallData
 import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.platform.generateImageLoader
-import com.minhtu.firesocialmedia.platform.logMessage
 import com.minhtu.firesocialmedia.platform.platformViewModel
 import com.minhtu.firesocialmedia.platform.rememberPlatformImagePicker
 import com.minhtu.firesocialmedia.platform.setupSignInLauncher
@@ -60,6 +65,7 @@ import com.minhtu.firesocialmedia.presentation.uploadnewsfeed.UploadNewfeedViewM
 import com.minhtu.firesocialmedia.presentation.uploadnewsfeed.UploadNewsfeed
 import com.minhtu.firesocialmedia.presentation.userinformation.UserInformation
 import com.minhtu.firesocialmedia.presentation.userinformation.UserInformationViewModel
+import com.minhtu.firesocialmedia.utils.UiUtils
 import com.minhtu.firesocialmedia.utils.UiUtils.Companion.BottomNavigationBar
 import com.seiko.imageloader.LocalImageLoader
 import kotlinx.coroutines.Dispatchers
@@ -105,6 +111,41 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
     // Platform-specific helpers
     setupSignInLauncher(context, signInViewModel, platformContext)
 
+    val snackBarHostState = remember { SnackbarHostState() }
+    val networkStatus by platformContext.networkMonitor.isOnline.collectAsStateWithLifecycle(initialValue = null)
+
+    // Track previous value
+    var wasOffline by remember { mutableStateOf<Boolean?>(null) }
+
+    LaunchedEffect(networkStatus) {
+        if(networkStatus != null) {
+            // Figure out previous state (null on first run)
+            val prev = wasOffline
+            wasOffline = !networkStatus!!
+
+            if (!networkStatus!!) {
+                // Now offline → show persistent banner
+                snackBarHostState.showSnackbar(
+                    message = "You are offline. Check your internet!",
+                    withDismissAction = true,
+                    duration = SnackbarDuration.Indefinite
+                )
+            } else {
+                // Now online → only show if we were actually offline before
+                if (prev == true) {
+                    snackBarHostState.currentSnackbarData?.dismiss()
+                    snackBarHostState.showSnackbar(
+                        message = "You are back online",
+                        duration = SnackbarDuration.Short
+                    )
+                } else {
+                    // If we never showed the offline snackbar, just make sure nothing is stuck
+                    snackBarHostState.currentSnackbarData?.dismiss()
+                }
+            }
+        }
+    }
+
     val listScreenNeedBottomBar = listOf(Screen.Home.route, Screen.Friend.route, Screen.Notification.route, Screen.Settings.route)
 
     Scaffold(
@@ -125,7 +166,8 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                         .background(Color.White)
                 )
             }
-        }
+        },
+        snackbarHost = { UiUtils.MySnackBarHost(snackBarHostState, networkStatus) }
     ) { paddingValues ->
         val startDestination by produceState<String?>(initialValue = null) {
             value = if (platformContext.crypto.loadAccount() == null) SignIn.getScreenName() else Home.getScreenName()
@@ -525,8 +567,6 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                         navigationHandler,
                         onStopCallAndNavigateBack = {
                             if(navigationHandler.getCurrentRoute() != Home.getScreenName()) {
-                                logMessage("onStopCallAndNavigateBack",
-                                    { navigationHandler.getCurrentRoute().toString() })
                                 navigationHandler.navigateBack()
                             }
                             homeViewModel.resetCallEvent() },

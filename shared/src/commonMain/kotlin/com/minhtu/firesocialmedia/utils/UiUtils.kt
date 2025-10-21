@@ -46,6 +46,9 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.Snackbar
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.TabRowDefaults
@@ -992,5 +995,18 @@ class UiUtils {
             }
         }
 
+        @Composable
+        fun MySnackBarHost(hostState: SnackbarHostState, positive: Boolean?) {
+            if(positive != null) {
+                SnackbarHost(hostState = hostState) { data ->
+                    Snackbar(
+                        snackbarData = data,
+                        containerColor = Color.White,
+                        contentColor = if (positive) Color.Green else Color.Red,
+                        dismissActionContentColor = Color.Black
+                    )
+                }
+            }
+        }
     }
 }
