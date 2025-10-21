@@ -64,4 +64,6 @@ interface CommonDbRepository {
                                   value : ArrayList<String>)
 
     suspend fun syncData(currentUserId : String) : Boolean
+    suspend fun clearLikedPosts()
+    suspend fun clearComments()
 }

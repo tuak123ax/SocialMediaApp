@@ -105,6 +105,7 @@ class Home {
             UiUtils.Companion.ShowAlertDialogToLogout(
                 onClickConfirm = {
                     homeViewModel.clearAccountInStorage()
+                    homeViewModel.clearLocalData()
                 },
                 onNavigateToSignIn,
                 showDialog

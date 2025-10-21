@@ -96,6 +96,7 @@ object ViewModelProvider {
         val storeNewsToRoomUseCase = AppModule.provideStoreNewsToRoomUseCase(localRepository)
         val storeNotificationsToRoomUseCase = AppModule.provideStoreNotificationsToRoomUseCase(localRepository)
         val saveCurrentUserInfoUseCase = AppModule.provideSaveCurrentUserInfoUseCase(localRepository)
+        val clearLocalDataUseCase = AppModule.provideClearLocalDataUseCase(commonDbRepository)
         val userInteractor = AppModule.provideUserInteractor(
             getCurrentUserUidUseCase,
             getUserUseCase,
@@ -104,7 +105,8 @@ object ViewModelProvider {
             saveValueToDatabaseUseCase,
             searchUserByNameUseCase,
             storeUserFriendsToRoomUseCase,
-            saveCurrentUserInfoUseCase
+            saveCurrentUserInfoUseCase,
+            clearLocalDataUseCase
         )
         val newsInteractor = AppModule.provideNewsInteractor(
             getLatestNewsUseCase,

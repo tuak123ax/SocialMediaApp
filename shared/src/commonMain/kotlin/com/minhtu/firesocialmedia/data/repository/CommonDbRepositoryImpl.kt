@@ -9,6 +9,7 @@ import com.minhtu.firesocialmedia.domain.core.NetworkMonitor
 import com.minhtu.firesocialmedia.domain.entity.base.BaseNewsInstance
 import com.minhtu.firesocialmedia.domain.entity.comment.CommentInstance
 import com.minhtu.firesocialmedia.domain.repository.CommonDbRepository
+import com.minhtu.firesocialmedia.platform.logMessage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.async
@@ -214,44 +215,58 @@ class CommonDbRepositoryImpl(
         currentUserId: String
     ): Boolean = supervisorScope {
         var allOk = true
+        try{
+            // 1) Liked posts: single batched write
+            if (localDatabaseService.hasLikedPost()) {
+                //Has liked posts in local, sync with remote server
+                val likedMap = localDatabaseService.getAllLikedPosts().toDto()
+                val likedOk = runCatching {
+                    databaseService.saveValueToDatabase(
+                        currentUserId,
+                        DataConstant.USER_PATH,
+                        likedMap,
+                        DataConstant.LIKED_POSTS_PATH
+                    )
+                }.getOrElse { false } // treat exception as failure
+                allOk = allOk && likedOk
+                clearLikedPosts()
+            }
 
-        // 1) Liked posts: single batched write
-        if (localDatabaseService.hasLikedPost()) {
-            //Has liked posts in local, sync with remote server
-            val likedMap = localDatabaseService.getAllLikedPosts().toDto()
-            val likedOk = runCatching {
-                databaseService.saveValueToDatabase(
-                    currentUserId,
-                    DataConstant.USER_PATH,
-                    likedMap,
-                    DataConstant.LIKED_POSTS_PATH
-                )
-            }.getOrElse { false } // treat exception as failure
-            allOk = allOk && likedOk
-        }
+            // 2) Comments: fan out with bounded concurrency
+            if (localDatabaseService.hasComment()) {
+                //Has comments in local, sync with remote server
+                val comments = localDatabaseService.getAllComments().toDto()
+                val gate = Semaphore(5)
 
-        // 2) Comments: fan out with bounded concurrency
-        if (localDatabaseService.hasComment()) {
-            //Has comments in local, sync with remote server
-            val comments = localDatabaseService.getAllComments().toDto()
-            val gate = Semaphore(5)
-
-            val results: List<Boolean> = comments.map { commentDTO ->
-                async(Dispatchers.IO) {
-                    gate.withPermit {
-                        runCatching {
-                            val path = "${DataConstant.NEWS_PATH}/${commentDTO.selectedNewId}/${DataConstant.COMMENT_PATH}"
-                            databaseService.saveInstanceToDatabase(commentDTO.id, path, commentDTO)
-                            true
-                        }.getOrElse { false }
+                val results: List<Boolean> = comments.map { commentDTO ->
+                    async(Dispatchers.IO) {
+                        gate.withPermit {
+                            runCatching {
+                                val path = "${DataConstant.NEWS_PATH}/${commentDTO.selectedNewId}/${DataConstant.COMMENT_PATH}"
+                                databaseService.saveInstanceToDatabase(commentDTO.id, path, commentDTO)
+                                true
+                            }.getOrElse { false }
+                        }
                     }
-                }
-            }.awaitAll()
+                }.awaitAll()
 
-            val commentsOk = results.all { it }
-            allOk = allOk && commentsOk
+                val commentsOk = results.all { it }
+                allOk = allOk && commentsOk
+                clearComments()
+            }
+
+            allOk
+        } catch(ex : Exception) {
+            logMessage("syncData", { "Exception when sync data: ${ex.message}" })
+            false
         }
+    }
 
-        allOk
+    override suspend fun clearLikedPosts() {
+        localDatabaseService.clearLikedPosts()
+    }
+
+    override suspend fun clearComments() {
+        localDatabaseService.clearComments()
     }
 }

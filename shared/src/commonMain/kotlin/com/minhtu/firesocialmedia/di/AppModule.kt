@@ -57,6 +57,7 @@ import com.minhtu.firesocialmedia.domain.usecases.forgotpassword.SendEmailResetP
 import com.minhtu.firesocialmedia.domain.usecases.friend.SaveFriendRequestUseCase
 import com.minhtu.firesocialmedia.domain.usecases.friend.SaveFriendUseCase
 import com.minhtu.firesocialmedia.domain.usecases.home.ClearAccountUseCase
+import com.minhtu.firesocialmedia.domain.usecases.home.ClearLocalDataUseCase
 import com.minhtu.firesocialmedia.domain.usecases.home.DeleteNewsFromDatabaseUseCase
 import com.minhtu.firesocialmedia.domain.usecases.home.GetLatestNewsUseCase
 import com.minhtu.firesocialmedia.domain.usecases.home.SaveCurrentUserInfoUseCase
@@ -253,7 +254,8 @@ object AppModule {
         saveValueToDatabaseUseCase: SaveLikedPostUseCase,
         searchUserByNameUseCase: SearchUserByNameUseCase,
         storeUserFriendsToRoomUseCase: StoreUserFriendsToRoomUseCase,
-        saveCurrentUserInfoUseCase: SaveCurrentUserInfoUseCase
+        saveCurrentUserInfoUseCase: SaveCurrentUserInfoUseCase,
+        clearLocalDataUseCase: ClearLocalDataUseCase
     ) : UserInteractor {
         return UserInteractorImpl(
             getCurrentUserUidUseCase,
@@ -263,7 +265,8 @@ object AppModule {
             saveValueToDatabaseUseCase,
             searchUserByNameUseCase,
             storeUserFriendsToRoomUseCase,
-            saveCurrentUserInfoUseCase
+            saveCurrentUserInfoUseCase,
+            clearLocalDataUseCase
         )
     }
     fun provideNewsInteractor(
@@ -535,5 +538,9 @@ object AppModule {
 
     fun provideSyncDataUseCase(commonDbRepository: CommonDbRepository) : SyncDataUseCase {
         return SyncDataUseCase(commonDbRepository)
+    }
+
+    fun provideClearLocalDataUseCase(commonDbRepository: CommonDbRepository) : ClearLocalDataUseCase{
+        return ClearLocalDataUseCase(commonDbRepository)
     }
 }

@@ -70,4 +70,7 @@ interface NewsDao {
 
     @Query("SELECT EXISTS(SELECT 1 FROM likedPosts LIMIT 1)")
     suspend fun hasAnyLikedPosts(): Boolean
+
+    @Query("DELETE FROM likedPosts")
+    suspend fun clearLikedPosts()
 }

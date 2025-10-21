@@ -18,8 +18,10 @@ interface RoomService {
     suspend fun getNewById(newId: String): NewsEntity?
     suspend fun saveLikedPost(value: List<LikedPostEntity>)
     suspend fun getAllLikedPosts() : List<LikedPostEntity>
+    suspend fun clearLikedPosts()
     suspend fun saveComment(commentEntity : CommentEntity)
     suspend fun getAllComments() : List<CommentEntity>
+    suspend fun clearComments()
     suspend fun hasLikedPost() : Boolean
     suspend fun hasComment() : Boolean
 }

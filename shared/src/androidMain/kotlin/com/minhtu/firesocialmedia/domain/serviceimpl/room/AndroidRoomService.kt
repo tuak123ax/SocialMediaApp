@@ -75,6 +75,10 @@ class AndroidRoomService(
         return newsDao.getAllLikedPosts()
     }
 
+    override suspend fun clearLikedPosts() {
+        newsDao.clearLikedPosts()
+    }
+
     override suspend fun saveComment(
         commentEntity : CommentEntity
     ) {
@@ -85,6 +89,10 @@ class AndroidRoomService(
 
     override suspend fun getAllComments(): List<CommentEntity> {
         return commentDao.getAllComments()
+    }
+
+    override suspend fun clearComments() {
+        commentDao.clear()
     }
 
     override suspend fun hasLikedPost(): Boolean {
