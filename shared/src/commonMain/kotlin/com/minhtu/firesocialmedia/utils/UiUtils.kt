@@ -929,6 +929,11 @@ class UiUtils {
                                 },
                                 onNavigateToUploadNews
                             )
+                        } else {
+                            NewsCardPlaceholder(
+                                news = news,
+                                localImageLoaderValue = localImageLoaderValue
+                            )
                         }
                     }
                 }
@@ -950,6 +955,93 @@ class UiUtils {
                             )
                         }
                     }
+                }
+            }
+        }
+
+        @Composable
+        private fun NewsCardPlaceholder(
+            news: NewsInstance,
+            localImageLoaderValue : ProvidedValue<*>
+        ) {
+            Card(
+                modifier = Modifier
+                    .padding(start = 10.dp, end = 10.dp, top = 5.dp)
+                    .fillMaxWidth(),
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.White)
+                        .padding(10.dp)
+                ) {
+                    // Header skeleton (avatar + lines)
+                    Row(
+                        horizontalArrangement = Arrangement.Start,
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(CircleShape)
+                                .background(Color(0xFFEAEAEA))
+                        )
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Box(
+                                modifier = Modifier
+                                    .height(14.dp)
+                                    .fillMaxWidth(0.4f)
+                                    .background(Color(0xFFEAEAEA), RoundedCornerShape(4.dp))
+                            )
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Box(
+                                modifier = Modifier
+                                    .height(12.dp)
+                                    .fillMaxWidth(0.3f)
+                                    .background(Color(0xFFF0F0F0), RoundedCornerShape(4.dp))
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    // Message placeholder
+                    Box(
+                        modifier = Modifier
+                            .height(14.dp)
+                            .fillMaxWidth(0.9f)
+                            .background(Color(0xFFEAEAEA), RoundedCornerShape(4.dp))
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    // Media placeholder
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(300.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(Color(0xFFEAEAEA))
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+                    // Footer placeholders
+                    Row(modifier = Modifier.fillMaxWidth()) {
+                        Box(
+                            modifier = Modifier
+                                .height(12.dp)
+                                .fillMaxWidth(0.2f)
+                                .background(Color(0xFFF0F0F0), RoundedCornerShape(4.dp))
+                        )
+                        Spacer(modifier = Modifier.weight(1f))
+                        Box(
+                            modifier = Modifier
+                                .height(12.dp)
+                                .fillMaxWidth(0.2f)
+                                .background(Color(0xFFF0F0F0), RoundedCornerShape(4.dp))
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(10.dp))
                 }
             }
         }

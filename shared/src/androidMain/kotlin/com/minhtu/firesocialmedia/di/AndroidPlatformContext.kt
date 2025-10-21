@@ -38,7 +38,8 @@ class AndroidPlatformContext(
     override val room: RoomService = AndroidRoomService(
         localDatabase.userDao(),
         localDatabase.newsDao(),
-        localDatabase.notificationDao()
+        localDatabase.notificationDao(),
+        localDatabase.commentDao()
     )
     override val networkMonitor: NetworkMonitor = NetworkMonitorImpl(context)
 }

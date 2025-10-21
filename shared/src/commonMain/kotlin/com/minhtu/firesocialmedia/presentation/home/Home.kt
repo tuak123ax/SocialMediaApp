@@ -172,7 +172,10 @@ class Home {
                 }
             }
 
-            val listState = rememberLazyListState()
+            // Recreate list state exactly once when content first becomes available
+            val hasInitialContent = remember { derivedStateOf { newsList.value.isNotEmpty() } }
+            val listState = remember(hasInitialContent.value) { LazyListState(0, 0) }
+            var didInitialScroll by remember { mutableStateOf(false) }
             Box(modifier = Modifier.Companion
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)) {
@@ -338,6 +341,10 @@ class Home {
                             .collectLatest { (triple, state) ->
                                 val (firstVisible, lastVisible, totalItems) = triple
                                 val inProgress = state
+                                if(!didInitialScroll && totalItems > 0 && !userInteracted) {
+                                    listState.scrollToItem(0, 0)
+                                    didInitialScroll = true
+                                }
                                 if(inProgress && firstVisible > 0) {
                                     userInteracted = true
                                 }
@@ -368,11 +375,14 @@ class Home {
                         },
                         canRefresh = {listState.isAtTop()}
                     ) {
+                        val sortedNews by remember(newsList.value) {
+                            derivedStateOf { newsList.value.sortedByDescending { it.timePosted } }
+                        }
                         UiUtils.Companion.LazyColumnOfNewsWithSlideOutAnimationAndLoadMore(
                             localImageLoaderValue,
                             listState,
                             homeViewModel,
-                            newsList.value,
+                            sortedNews,
                             onNavigateToUploadNews,
                             onNavigateToShowImageScreen,
                             onNavigateToUserInformation

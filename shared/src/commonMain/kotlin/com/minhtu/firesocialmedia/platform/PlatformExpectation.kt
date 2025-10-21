@@ -20,6 +20,8 @@ expect fun showToast(message: String)
 @Composable
 expect fun getIconPainter(icon : String): Painter?
 
+expect fun getResId(icon : String): Int
+
 @Composable
 expect fun getIconComposable(icon: String, bgColor : String, tint : String?, modifier: Modifier): (@Composable () -> Unit)?
 

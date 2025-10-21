@@ -82,6 +82,7 @@ import com.minhtu.firesocialmedia.domain.usecases.signin.HandleSignInGoogleResul
 import com.minhtu.firesocialmedia.domain.usecases.signin.RememberPasswordUseCase
 import com.minhtu.firesocialmedia.domain.usecases.signin.SignInUseCase
 import com.minhtu.firesocialmedia.domain.usecases.signup.SignUpUseCase
+import com.minhtu.firesocialmedia.domain.usecases.sync.SyncDataUseCase
 import com.minhtu.firesocialmedia.presentation.comment.CommentViewModel
 import com.minhtu.firesocialmedia.presentation.forgotpassword.ForgotPasswordViewModel
 import com.minhtu.firesocialmedia.presentation.home.HomeViewModel
@@ -113,7 +114,7 @@ object AppModule {
         return NotificationRepositoryImpl(platformContext.database, platformContext.room, platformContext.networkMonitor)
     }
     fun provideCommonDbRepository(platformContext: PlatformContext) : CommonDbRepository{
-        return CommonDbRepositoryImpl(platformContext.database)
+        return CommonDbRepositoryImpl(platformContext.database, platformContext.room, platformContext.networkMonitor)
     }
     //---------------------------Sign in----------------------------------------//
     fun provideSignInUseCase(authenticationRepository: AuthenticationRepository) : SignInUseCase {
@@ -530,5 +531,9 @@ object AppModule {
 
     fun provideSaveCurrentUserInfoUseCase(localRepository: LocalRepository) : SaveCurrentUserInfoUseCase {
         return SaveCurrentUserInfoUseCase(localRepository)
+    }
+
+    fun provideSyncDataUseCase(commonDbRepository: CommonDbRepository) : SyncDataUseCase {
+        return SyncDataUseCase(commonDbRepository)
     }
 }

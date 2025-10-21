@@ -5,6 +5,7 @@ import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import com.minhtu.firesocialmedia.data.local.entity.LikedPostEntity
 import com.minhtu.firesocialmedia.data.local.entity.NewsEntity
 import kotlinx.coroutines.flow.Flow
 
@@ -61,4 +62,12 @@ interface NewsDao {
         lastTimePosted: Long?,
         lastKey: String?
     ): List<NewsEntity>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun storeAllLikedPosts(likedPosts: List<LikedPostEntity>)
+    @Query("SELECT * FROM likedPosts")
+    suspend fun getAllLikedPosts(): List<LikedPostEntity>
+
+    @Query("SELECT EXISTS(SELECT 1 FROM likedPosts LIMIT 1)")
+    suspend fun hasAnyLikedPosts(): Boolean
 }

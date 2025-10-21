@@ -100,6 +100,13 @@ actual fun getIconPainter(icon : String): Painter? {
     }
 }
 
+actual fun getResId(icon : String): Int {
+    return when(icon) {
+        "loading_gif" -> R.raw.loading_gif
+        else -> {0}
+    }
+}
+
 @Composable
 actual fun getIconComposable(icon: String, bgColor : String, tint : String?, modifier : Modifier): (@Composable () -> Unit)? = null
 

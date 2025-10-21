@@ -15,7 +15,8 @@ data class CommentDTO(override var id: String = "",
                       var listReplies : HashMap<String, CommentDTO> = HashMap(),
                       override var likeCount: Int = 0,
                       override var commentCount: Int = 0,
-                      override var timePosted: Long = 0): BaseNewsInstance,
+                      override var timePosted: Long = 0,
+                      var selectedNewId : String = ""): BaseNewsInstance,
     CountInterface {
     fun updateListReplies(list : HashMap<String, CommentDTO>) {
         listReplies = list
