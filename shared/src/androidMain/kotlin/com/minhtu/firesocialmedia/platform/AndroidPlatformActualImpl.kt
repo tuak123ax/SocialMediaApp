@@ -26,6 +26,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.edit
+import androidx.core.uri.Uri
 import androidx.media3.common.MediaItem
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
@@ -66,6 +67,7 @@ import org.webrtc.EglBase
 import org.webrtc.SurfaceViewRenderer
 import org.webrtc.VideoTrack
 import java.io.ByteArrayOutputStream
+import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.UUID
@@ -96,6 +98,8 @@ actual fun getIconPainter(icon : String): Painter? {
         "google" -> painterResource(id = R.drawable.google)
         "more_horiz" -> painterResource(id = R.drawable.more_horiz_24)
         "arrow_back" -> painterResource(id = R.drawable.arrow_back)
+        "draft" -> painterResource(id = R.drawable.draft)
+        "nothing_here" -> painterResource(id = R.drawable.nothing_here)
         else -> null
     }
 }
@@ -517,3 +521,6 @@ actual fun setupSignInLauncher(
     }
 }
 
+actual fun getUriStringFromLocalPath(localPath : String) : String {
+    return Uri.fromFile(File(localPath)).toString()
+}

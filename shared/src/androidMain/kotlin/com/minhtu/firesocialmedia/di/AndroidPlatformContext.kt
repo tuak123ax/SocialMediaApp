@@ -36,6 +36,7 @@ class AndroidPlatformContext(
     override val clipboard : ClipboardService = AndroidClipboardService(context)
     override val audioCall: AudioCallService = AndroidAudioCallService(context)
     override val room: RoomService = AndroidRoomService(
+        context,
         localDatabase.userDao(),
         localDatabase.newsDao(),
         localDatabase.notificationDao(),

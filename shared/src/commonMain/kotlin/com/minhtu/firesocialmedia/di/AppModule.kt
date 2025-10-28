@@ -83,6 +83,7 @@ import com.minhtu.firesocialmedia.domain.usecases.signin.HandleSignInGoogleResul
 import com.minhtu.firesocialmedia.domain.usecases.signin.RememberPasswordUseCase
 import com.minhtu.firesocialmedia.domain.usecases.signin.SignInUseCase
 import com.minhtu.firesocialmedia.domain.usecases.signup.SignUpUseCase
+import com.minhtu.firesocialmedia.domain.usecases.sync.LoadNewsPostedWhenOfflineUseCase
 import com.minhtu.firesocialmedia.domain.usecases.sync.SyncDataUseCase
 import com.minhtu.firesocialmedia.presentation.comment.CommentViewModel
 import com.minhtu.firesocialmedia.presentation.forgotpassword.ForgotPasswordViewModel
@@ -399,12 +400,14 @@ object AppModule {
         getUserUseCase: GetUserUseCase,
         saveNotificationToDatabaseUseCase: SaveNotificationToDatabaseUseCase,
         saveNewToDatabaseUseCase: SaveNewToDatabaseUseCase,
-        updateNewsFromDatabaseUseCase: UpdateNewsFromDatabaseUseCase): UploadNewfeedViewModel {
+        updateNewsFromDatabaseUseCase: UpdateNewsFromDatabaseUseCase,
+        loadNewsPostedWhenOfflineUseCase: LoadNewsPostedWhenOfflineUseCase): UploadNewfeedViewModel {
         return UploadNewfeedViewModel(
             getUserUseCase,
             saveNotificationToDatabaseUseCase,
             saveNewToDatabaseUseCase,
-            updateNewsFromDatabaseUseCase
+            updateNewsFromDatabaseUseCase,
+            loadNewsPostedWhenOfflineUseCase
         )
     }
 
@@ -542,5 +545,9 @@ object AppModule {
 
     fun provideClearLocalDataUseCase(commonDbRepository: CommonDbRepository) : ClearLocalDataUseCase{
         return ClearLocalDataUseCase(commonDbRepository)
+    }
+
+    fun provideLoadNewsPostedWhenOfflineUseCase(commonDbRepository: CommonDbRepository) : LoadNewsPostedWhenOfflineUseCase {
+        return LoadNewsPostedWhenOfflineUseCase(commonDbRepository)
     }
 }

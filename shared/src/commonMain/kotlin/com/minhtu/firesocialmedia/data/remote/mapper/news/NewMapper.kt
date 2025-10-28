@@ -15,7 +15,8 @@ fun NewsDTO.toDomain() : NewsInstance {
         isVisible,
         likeCount,
         commentCount,
-        timePosted
+        timePosted,
+        localPath
     )
 }
 fun NewsInstance.toDto() : NewsDTO {
@@ -30,6 +31,7 @@ fun NewsInstance.toDto() : NewsDTO {
         isVisible,
         likeCount,
         commentCount,
-        timePosted
+        timePosted,
+        localPath
     )
 }

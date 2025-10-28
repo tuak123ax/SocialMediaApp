@@ -68,5 +68,6 @@ class TestTag {
         const val TAG_REJECT_CALL_BUTTON : String = "TAG_REJECT_CALL_BUTTON"
         const val TAG_VIDEO_CALL_BUTTON : String = "TAG_VIDEO_CALL_BUTTON"
         const val SCROLL_TO_TOP_BUTTON : String = "SCROLL_TO_TOP_BUTTON"
+        const val TAG_BUTTON_DRAFTPOST : String = "TAG_BUTTON_DRAFTPOST"
     }
 }

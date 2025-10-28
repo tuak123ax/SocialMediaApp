@@ -18,6 +18,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
@@ -61,15 +62,17 @@ class MainActivity : ComponentActivity() {
                         val sessionId = intent.getStringExtra("sessionId")
                         val callerId = intent.getStringExtra("callerId")
                         val calleeId = intent.getStringExtra("calleeId")
+                        val platformContext = remember { AndroidPlatformContext(applicationContext, permissionManager) }
                         MainApplication.MainAppFromNotification(
                             this,
-                            AndroidPlatformContext(this, permissionManager),
+                            platformContext,
                             sessionId,
                             callerId,
                             calleeId
                         )
                     } else {
-                        MainApplication.MainApp(this, AndroidPlatformContext(this, permissionManager))
+                        val platformContext = remember { AndroidPlatformContext(applicationContext, permissionManager) }
+                        MainApplication.MainApp(this, platformContext)
                     }
                     checkFCMToken()
                     askNotificationPermission()

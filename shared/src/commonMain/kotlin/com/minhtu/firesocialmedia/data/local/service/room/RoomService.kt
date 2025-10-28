@@ -24,4 +24,6 @@ interface RoomService {
     suspend fun clearComments()
     suspend fun hasLikedPost() : Boolean
     suspend fun hasComment() : Boolean
+    suspend fun saveNews(new: NewsEntity)
+    suspend fun loadNewsPostedWhenOffline() : List<NewsEntity>
 }

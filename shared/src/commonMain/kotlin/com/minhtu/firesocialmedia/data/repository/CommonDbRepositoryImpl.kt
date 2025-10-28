@@ -1,13 +1,16 @@
 package com.minhtu.firesocialmedia.data.repository
 
+import com.minhtu.firesocialmedia.data.local.mapper.room.toDomain
 import com.minhtu.firesocialmedia.data.local.mapper.room.toDto
 import com.minhtu.firesocialmedia.data.local.mapper.room.toRoomEntity
 import com.minhtu.firesocialmedia.data.local.service.room.RoomService
 import com.minhtu.firesocialmedia.data.remote.constant.DataConstant
+import com.minhtu.firesocialmedia.data.remote.mapper.news.toDto
 import com.minhtu.firesocialmedia.data.remote.service.database.DatabaseService
 import com.minhtu.firesocialmedia.domain.core.NetworkMonitor
 import com.minhtu.firesocialmedia.domain.entity.base.BaseNewsInstance
 import com.minhtu.firesocialmedia.domain.entity.comment.CommentInstance
+import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
 import com.minhtu.firesocialmedia.domain.repository.CommonDbRepository
 import com.minhtu.firesocialmedia.platform.logMessage
 import kotlinx.coroutines.Dispatchers
@@ -37,21 +40,40 @@ class CommonDbRepositoryImpl(
                 DataConstant.LIKED_POSTS_PATH
             )
         } else {
-            localDatabaseService.saveLikedPost(
-                value.toRoomEntity()
-            )
-            return true
+            try{
+                localDatabaseService.saveLikedPost(
+                    value.toRoomEntity()
+                )
+                return true
+            } catch(ex : Exception) {
+                logMessage("saveLikedPost", { "Exception when saveLikedPost: ${ex.message}" })
+                return false
+            }
         }
     }
 
-    override suspend fun saveInstanceToDatabase(
-        id: String,
-        instance: BaseNewsInstance) : Boolean {
-        return databaseService.saveInstanceToDatabase(
-            id,
-            DataConstant.NEWS_PATH,
-            instance
-        )
+    override suspend fun saveNewToDatabase(
+        instance: NewsInstance) : Boolean {
+        val isOnline = networkMonitor.isOnline.first()
+        if(isOnline) {
+            return databaseService.saveNewToDatabase(
+                instance.id,
+                DataConstant.NEWS_PATH,
+                instance.toDto()
+            )
+        } else {
+            try{
+                val newRoomEntity = instance.toRoomEntity()
+                newRoomEntity.isNewPost = true
+                localDatabaseService.saveNews(
+                    newRoomEntity
+                )
+                return true
+            } catch (ex : Exception) {
+                logMessage("saveInstanceToDatabase", { "Exception when saveInstanceToDatabase: ${ex.message}" })
+                return false
+            }
+        }
     }
 
     override suspend fun saveCommentToDatabase(
@@ -67,10 +89,15 @@ class CommonDbRepositoryImpl(
                 instance
             )
         } else {
-            localDatabaseService.saveComment(
-                instance.toRoomEntity(selectedNewId)
-            )
-            return true
+            try{
+                localDatabaseService.saveComment(
+                    instance.toRoomEntity(selectedNewId)
+                )
+                return true
+            } catch (ex : Exception) {
+                logMessage("saveCommentToDatabase", { "Exception when saveCommentToDatabase: ${ex.message}" })
+                return false
+            }
         }
     }
 
@@ -163,8 +190,8 @@ class CommonDbRepositoryImpl(
 
     override suspend fun updateLikeCountForSubCommentInDatabase(
         selectedNewId: String,
+        likedComment : String,
         parentCommentId : String,
-        likedComment: String,
         value: Int
     ) {
         databaseService.updateCountValueInDatabase(
@@ -268,5 +295,9 @@ class CommonDbRepositoryImpl(
 
     override suspend fun clearComments() {
         localDatabaseService.clearComments()
+    }
+
+    override suspend fun loadNewsPostedWhenOffline(): List<NewsInstance> {
+        return localDatabaseService.loadNewsPostedWhenOffline().toDomain()
     }
 }

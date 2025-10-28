@@ -9,6 +9,7 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -16,6 +17,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -45,6 +47,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarDefaults
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarHost
@@ -91,6 +94,7 @@ import com.minhtu.firesocialmedia.platform.CommonBackHandler
 import com.minhtu.firesocialmedia.platform.CrossPlatformIcon
 import com.minhtu.firesocialmedia.platform.VideoPlayer
 import com.minhtu.firesocialmedia.platform.convertTimeToDateString
+import com.minhtu.firesocialmedia.platform.getUriStringFromLocalPath
 import com.minhtu.firesocialmedia.presentation.home.Home
 import com.minhtu.firesocialmedia.presentation.home.HomeViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.Screen
@@ -498,7 +502,7 @@ class UiUtils {
                 return
             }
             Box(modifier = modifier){
-                val barInsets = if (useDefaultInsets) androidx.compose.material3.NavigationBarDefaults.windowInsets else androidx.compose.foundation.layout.WindowInsets(0)
+                val barInsets = if (useDefaultInsets) NavigationBarDefaults.windowInsets else WindowInsets(0)
                 NavigationBar(
                     containerColor = Color.White,
                     windowInsets = barInsets
@@ -1089,14 +1093,119 @@ class UiUtils {
 
         @Composable
         fun MySnackBarHost(hostState: SnackbarHostState, positive: Boolean?) {
-            if(positive != null) {
-                SnackbarHost(hostState = hostState) { data ->
-                    Snackbar(
-                        snackbarData = data,
-                        containerColor = Color.White,
-                        contentColor = if (positive) Color.Green else Color.Red,
-                        dismissActionContentColor = Color.Black
-                    )
+            SnackbarHost(hostState = hostState) { data ->
+                val contentColor = when (positive) {
+                    true -> Color.Green
+                    false -> Color.Red
+                    null -> MaterialTheme.colorScheme.onSurface
+                }
+                Snackbar(
+                    snackbarData = data,
+                    containerColor = Color.White,
+                    contentColor = contentColor,
+                    dismissActionContentColor = Color.Black
+                )
+            }
+        }
+
+        @Composable
+        fun SimpleNewsCard(
+            news: NewsInstance,
+            localImageLoaderValue : ProvidedValue<*>,
+            onSelected : () -> Unit) {
+            Card(
+                modifier = Modifier
+                    .padding(horizontal = 10.dp, vertical = 10.dp)
+                    .fillMaxWidth()
+                    .testTag(TestTag.TAG_POST_IN_COLUMN)
+                    .semantics { contentDescription = TestTag.TAG_POST_IN_COLUMN },
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                elevation = CardDefaults.cardElevation(
+                    defaultElevation = 2.dp,
+                    pressedElevation = 4.dp
+                ),
+                onClick = onSelected
+            ) {
+                Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(1.dp)) {
+                    Row(horizontalArrangement = Arrangement.Start,
+                        modifier = Modifier
+                            .background(color = Color.White)
+                            .padding(10.dp)
+                            .fillMaxWidth()){
+                        CompositionLocalProvider(
+                            localImageLoaderValue
+                        ) {
+                            AutoSizeImage(
+                                news.avatar,
+                                contentDescription = "Poster Avatar",
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .clip(CircleShape)
+                                    .testTag(TestTag.TAG_POSTER_AVATAR)
+                                    .semantics{
+                                        contentDescription = TestTag.TAG_POSTER_AVATAR
+                                    }
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Column {
+                            Text(
+                                text = news.posterName,
+                                color = Color.Black,
+                                modifier = Modifier.padding(horizontal = 2.dp)
+                            )
+                            Text(
+                                text = convertTimeToDateString(news.timePosted),
+                                color = Color.Gray,
+                                modifier = Modifier.padding(horizontal = 2.dp)
+                            )
+                        }
+                    }
+                    ExpandableText(news.message)
+                    if(news.image.isNotEmpty()){
+                        CompositionLocalProvider(
+                            localImageLoaderValue
+                        ) {
+                            AutoSizeImage(
+                                news.image,
+                                contentDescription = "Image",
+                                contentScale = ContentScale.Fit,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(200.dp)
+                                    .padding(5.dp)
+                                    .testTag(TestTag.TAG_POST_IMAGE)
+                                    .semantics{
+                                        contentDescription = TestTag.TAG_POST_IMAGE
+                                    }
+                            )
+                        }
+                    } else {
+                        if(news.video.isNotEmpty()) {
+                            val videoUri: String = if(news.localPath.isNotEmpty()) {
+                                //Load video from local storage
+                                getUriStringFromLocalPath(news.localPath)
+                            } else {
+                                news.video
+                            }
+                            if(videoUri.isNotEmpty()) {
+                                VideoPlayer(
+                                    videoUri,
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .height(200.dp)
+                                        .padding(5.dp)
+                                        .testTag(TestTag.TAG_POST_VIDEO)
+                                        .semantics{
+                                            contentDescription = TestTag.TAG_POST_VIDEO
+                                        })
+                            }
+                        }
+                    }
                 }
             }
         }

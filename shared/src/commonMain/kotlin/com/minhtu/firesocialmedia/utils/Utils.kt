@@ -9,7 +9,10 @@ import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.domain.usecases.notification.DeleteNotificationFromDatabaseUseCase
 import com.minhtu.firesocialmedia.domain.usecases.notification.SaveNotificationToDatabaseUseCase
 import com.minhtu.firesocialmedia.platform.createCallMessage
+import com.minhtu.firesocialmedia.platform.logMessage
 import com.minhtu.firesocialmedia.platform.sendMessageToServer
+import kotlin.io.encoding.Base64
+import kotlin.io.encoding.ExperimentalEncodingApi
 
 class Utils {
     companion object{
@@ -129,6 +132,27 @@ class Utils {
         interface CallStatusCallBack{
             fun onSuccess(status : CallStatus)
             fun onFailure()
+        }
+
+        @OptIn(ExperimentalEncodingApi::class)
+        fun decodeBase64ToBytes(b64: String): ByteArray? {
+            try{
+                logMessage("decodeBase64ToBytes", { b64 })
+                // 1) strip possible data URI prefix
+                val cleaned = b64.substringAfter(",")
+                    // 2) remove any accidental whitespace/newlines
+                    .replace("\\s".toRegex(), "")
+                // 3) fix missing padding if transport trimmed trailing '='
+                val padded = when (cleaned.length % 4) {
+                    2 -> "$cleaned=="
+                    3 -> "$cleaned="
+                    else -> cleaned
+                }
+                return Base64.decode(padded) // standard (not URL-safe)
+            } catch (ex : Exception) {
+                logMessage("decodeBase64ToBytes", { ex.message.toString() })
+                return null
+            }
         }
     }
 }

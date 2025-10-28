@@ -79,7 +79,8 @@ fun NewsEntity.toDomain() : NewsInstance {
         isVisible,
         likeCount,
         commentCount,
-        timePosted
+        timePosted,
+        localPath
     )
 }
 

@@ -73,4 +73,6 @@ interface NewsDao {
 
     @Query("DELETE FROM likedPosts")
     suspend fun clearLikedPosts()
+    @Query("SELECT * FROM News WHERE isNewPost = 1")
+    suspend fun loadNewsPostedWhenOffline(): List<NewsEntity>
 }

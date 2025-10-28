@@ -293,6 +293,7 @@ class Home {
                                     modifier = Modifier.Companion
                                         .fillMaxWidth()
                                         .padding(horizontal = 12.dp, vertical = 10.dp)
+                                        .clip(RoundedCornerShape(28.dp))
                                         .clickable { onNavigateToUploadNews(null) }
                                         .testTag(TestTag.Companion.TAG_CREATE_POST)
                                         .semantics { contentDescription = TestTag.Companion.TAG_CREATE_POST },

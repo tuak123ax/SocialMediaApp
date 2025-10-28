@@ -34,6 +34,7 @@ import com.minhtu.firesocialmedia.domain.entity.call.SharedCallData
 import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.platform.generateImageLoader
+import com.minhtu.firesocialmedia.platform.logMessage
 import com.minhtu.firesocialmedia.platform.platformViewModel
 import com.minhtu.firesocialmedia.platform.rememberPlatformImagePicker
 import com.minhtu.firesocialmedia.platform.setupSignInLauncher
@@ -120,7 +121,7 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
     setupSignInLauncher(context, signInViewModel, platformContext)
 
     val snackBarHostState = remember { SnackbarHostState() }
-    val networkStatus by platformContext.networkMonitor.isOnline.collectAsStateWithLifecycle(initialValue = null)
+    val networkStatus by platformContext.networkMonitor.isOnline.collectAsState(initial = null)
 
     // Track previous value
     var wasOffline by remember { mutableStateOf<Boolean?>(null) }
@@ -141,6 +142,7 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
             } else {
                 // Now online → only show if we were actually offline before
                 if (prev == true) {
+                    logMessage("networkStatus", { "online" })
                     snackBarHostState.currentSnackbarData?.dismiss()
                     snackBarHostState.showSnackbar(
                         message = "You are back online",
@@ -307,6 +309,7 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                                 .fillMaxSize()
                                 .background(Color.White),
                             imagePicker = picker,
+                            localImageLoaderValue,
                             homeViewModel = homeViewModel,
                             uploadNewsfeedViewModel = uploadNewsfeedViewModel,
                             loadingViewModel = loadingViewModel,

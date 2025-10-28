@@ -2,14 +2,14 @@ package com.minhtu.firesocialmedia.domain.repository
 
 import com.minhtu.firesocialmedia.domain.entity.base.BaseNewsInstance
 import com.minhtu.firesocialmedia.domain.entity.comment.CommentInstance
+import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
 
 interface CommonDbRepository {
     suspend fun saveLikedPost(id : String,
                               value : HashMap<String, Int>) : Boolean
 
-    suspend fun saveInstanceToDatabase(
-        id : String,
-        instance : BaseNewsInstance) : Boolean
+    suspend fun saveNewToDatabase(
+        instance : NewsInstance) : Boolean
 
     suspend fun saveCommentToDatabase(
         selectedNewId: String,
@@ -66,4 +66,5 @@ interface CommonDbRepository {
     suspend fun syncData(currentUserId : String) : Boolean
     suspend fun clearLikedPosts()
     suspend fun clearComments()
+    suspend fun loadNewsPostedWhenOffline(): List<NewsInstance>
 }

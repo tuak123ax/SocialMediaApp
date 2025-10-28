@@ -179,11 +179,13 @@ object ViewModelProvider {
         val getUserUseCase = AppModule.provideGetUserUseCase(userRepository)
         val saveNewToDatabaseUseCase = AppModule.provideSaveNewToDatabaseUseCase(commonDbRepository)
         val updateNewsFromDatabaseUseCase = AppModule.provideUpdateNewsFromDatabaseUseCase(newsRepository)
+        val loadNewsPostedWhenOfflineUseCase = AppModule.provideLoadNewsPostedWhenOfflineUseCase(commonDbRepository)
         return AppModule.provideUploadNewfeedViewModel(
             getUserUseCase,
             saveNotificationToDatabaseUseCase,
             saveNewToDatabaseUseCase,
-            updateNewsFromDatabaseUseCase)
+            updateNewsFromDatabaseUseCase,
+            loadNewsPostedWhenOfflineUseCase)
     }
 
     fun createUserInformationViewModel(platformContext : PlatformContext): UserInformationViewModel {

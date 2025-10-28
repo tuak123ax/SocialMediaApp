@@ -12,6 +12,8 @@ import com.minhtu.firesocialmedia.domain.serviceimpl.clipboard.IosClipboardServi
 import com.minhtu.firesocialmedia.domain.serviceimpl.crypto.IosCryptoService
 import com.minhtu.firesocialmedia.domain.serviceimpl.database.IosDatabaseService
 import com.minhtu.firesocialmedia.domain.serviceimpl.permission.IosPermissionManager
+import com.minhtu.firesocialmedia.domain.core.NetworkMonitor
+import com.minhtu.firesocialmedia.core.connectivity.IosNetworkMonitor
 
 open class IosPlatformContext(
 ) : PlatformContext {
@@ -21,5 +23,6 @@ open class IosPlatformContext(
     override val clipboard : ClipboardService = IosClipboardService()
     override val audioCall: AudioCallService = IosAudioCallService()
     override val permissionManager: PermissionManager = IosPermissionManager()
+    override val networkMonitor: NetworkMonitor = IosNetworkMonitor()
 }
 

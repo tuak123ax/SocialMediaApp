@@ -12,6 +12,7 @@ import com.minhtu.firesocialmedia.domain.usecases.common.GetUserUseCase
 import com.minhtu.firesocialmedia.domain.usecases.newsfeed.SaveNewToDatabaseUseCase
 import com.minhtu.firesocialmedia.domain.usecases.newsfeed.UpdateNewsFromDatabaseUseCase
 import com.minhtu.firesocialmedia.domain.usecases.notification.SaveNotificationToDatabaseUseCase
+import com.minhtu.firesocialmedia.domain.usecases.sync.LoadNewsPostedWhenOfflineUseCase
 import com.minhtu.firesocialmedia.platform.createMessageForServer
 import com.minhtu.firesocialmedia.platform.generateRandomId
 import com.minhtu.firesocialmedia.platform.getCurrentTime
@@ -34,6 +35,7 @@ class UploadNewfeedViewModel(
     private val saveNotificationToDatabaseUseCase: SaveNotificationToDatabaseUseCase,
     private val saveNewToDatabase : SaveNewToDatabaseUseCase,
     private val updateNewsFromDatabaseUseCase: UpdateNewsFromDatabaseUseCase,
+    private val loadNewsPostedWhenOfflineUseCase : LoadNewsPostedWhenOfflineUseCase,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : ViewModel() {
     var currentUser : UserInstance? = null
@@ -85,8 +87,10 @@ class UploadNewfeedViewModel(
                     //Save post to db
                     val newsInstance = NewsInstance(newsRandomId,user.uid, user.name,user.image,message,image,video)
                     newsInstance.timePosted = getCurrentTime()
+                    if(localPathOfSelectedDraft.value.isNotEmpty()) {
+                        newsInstance.localPath = localPathOfSelectedDraft.value
+                    }
                     _createPostStatus.value = saveNewToDatabase.invoke(
-                        newsRandomId,
                         newsInstance
                     )
 
@@ -152,6 +156,8 @@ class UploadNewfeedViewModel(
         _updatePostStatus.value = null
         message = ""
         image = ""
+        video = ""
+        localPathOfSelectedDraft.value = ""
     }
 
     suspend fun getFriendTokens(): ArrayList<String> {
@@ -183,5 +189,26 @@ class UploadNewfeedViewModel(
 
     suspend fun findUserById(userId: String) : UserInstance? {
         return getUserUseCase.invoke(userId, false)
+    }
+
+    private val _newsPostedWhenOffline = MutableStateFlow<List<NewsInstance>>(emptyList())
+    var newsPostedWhenOffline = _newsPostedWhenOffline.asStateFlow()
+    val localPathOfSelectedDraft = mutableStateOf("")
+    suspend fun loadNewsPostedWhenOffline() {
+        _newsPostedWhenOffline.value = loadNewsPostedWhenOfflineUseCase.invoke()
+    }
+
+    fun updatePostData(message: String, image: String, video: String) {
+        updateMessage(message)
+        if(image.isNotEmpty()){
+            updateImage(image)
+        }
+        if(video.isNotEmpty()) {
+            updateVideo(video)
+        }
+    }
+
+    fun updateLocalPath(localPath: String) {
+        localPathOfSelectedDraft.value = localPath
     }
 }
