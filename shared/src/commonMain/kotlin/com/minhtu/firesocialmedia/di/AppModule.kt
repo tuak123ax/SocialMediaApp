@@ -70,6 +70,7 @@ import com.minhtu.firesocialmedia.domain.usecases.home.UpdateFCMTokenUseCase
 import com.minhtu.firesocialmedia.domain.usecases.home.UpdateLikeCountForNewUseCase
 import com.minhtu.firesocialmedia.domain.usecases.information.CheckCalleeAvailableUseCase
 import com.minhtu.firesocialmedia.domain.usecases.information.SaveSignUpInformationUseCase
+import com.minhtu.firesocialmedia.domain.usecases.newsfeed.DeleteAllDraftPostsUseCase
 import com.minhtu.firesocialmedia.domain.usecases.newsfeed.SaveNewToDatabaseUseCase
 import com.minhtu.firesocialmedia.domain.usecases.newsfeed.UpdateNewsFromDatabaseUseCase
 import com.minhtu.firesocialmedia.domain.usecases.notification.DeleteNotificationFromDatabaseUseCase
@@ -401,13 +402,15 @@ object AppModule {
         saveNotificationToDatabaseUseCase: SaveNotificationToDatabaseUseCase,
         saveNewToDatabaseUseCase: SaveNewToDatabaseUseCase,
         updateNewsFromDatabaseUseCase: UpdateNewsFromDatabaseUseCase,
-        loadNewsPostedWhenOfflineUseCase: LoadNewsPostedWhenOfflineUseCase): UploadNewfeedViewModel {
+        loadNewsPostedWhenOfflineUseCase: LoadNewsPostedWhenOfflineUseCase,
+        deleteAllDraftPostsUseCase: DeleteAllDraftPostsUseCase): UploadNewfeedViewModel {
         return UploadNewfeedViewModel(
             getUserUseCase,
             saveNotificationToDatabaseUseCase,
             saveNewToDatabaseUseCase,
             updateNewsFromDatabaseUseCase,
-            loadNewsPostedWhenOfflineUseCase
+            loadNewsPostedWhenOfflineUseCase,
+            deleteAllDraftPostsUseCase
         )
     }
 
@@ -549,5 +552,9 @@ object AppModule {
 
     fun provideLoadNewsPostedWhenOfflineUseCase(commonDbRepository: CommonDbRepository) : LoadNewsPostedWhenOfflineUseCase {
         return LoadNewsPostedWhenOfflineUseCase(commonDbRepository)
+    }
+
+    fun provideDeleteAllDraftPostsUseCase(commonDbRepository: CommonDbRepository) : DeleteAllDraftPostsUseCase{
+        return DeleteAllDraftPostsUseCase(commonDbRepository)
     }
 }

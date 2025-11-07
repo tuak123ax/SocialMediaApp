@@ -132,6 +132,16 @@ class AndroidRoomService(
         return newsDao.loadNewsPostedWhenOffline()
     }
 
+    override suspend fun deleteDraftPost(id: String) {
+        return newsDao.deleteDraftPost(id)
+    }
+
+    override suspend fun deleteAllDraftPosts() {
+        val numberDeletedFiles = deleteAllPickedFiles()
+        logMessage("deleteAllDraftPosts", { "Number deleted files: $numberDeletedFiles" })
+        return newsDao.deleteAllDraftPosts()
+    }
+
     suspend fun copyPickedFileToAppStorage(
         imageUri: Uri,
         directory: File = context.filesDir): File = withContext(Dispatchers.IO) {
@@ -143,4 +153,15 @@ class AndroidRoomService(
         dst
     }
 
+    suspend fun deleteAllPickedFiles(
+        directory: File = context.filesDir
+    ): Int = withContext(Dispatchers.IO) {
+        var deletedCount = 0
+        directory.listFiles()
+            ?.filter { it.name.startsWith("picked_") }
+            ?.forEach { file ->
+                if (file.delete()) deletedCount++
+            }
+        deletedCount
+    }
 }

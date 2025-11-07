@@ -300,4 +300,8 @@ class CommonDbRepositoryImpl(
     override suspend fun loadNewsPostedWhenOffline(): List<NewsInstance> {
         return localDatabaseService.loadNewsPostedWhenOffline().toDomain()
     }
+
+    override suspend fun deleteAllDraftPosts() {
+        return localDatabaseService.deleteAllDraftPosts()
+    }
 }

@@ -9,6 +9,7 @@ import com.minhtu.firesocialmedia.domain.entity.notification.NotificationInstanc
 import com.minhtu.firesocialmedia.domain.entity.notification.NotificationType
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.domain.usecases.common.GetUserUseCase
+import com.minhtu.firesocialmedia.domain.usecases.newsfeed.DeleteAllDraftPostsUseCase
 import com.minhtu.firesocialmedia.domain.usecases.newsfeed.SaveNewToDatabaseUseCase
 import com.minhtu.firesocialmedia.domain.usecases.newsfeed.UpdateNewsFromDatabaseUseCase
 import com.minhtu.firesocialmedia.domain.usecases.notification.SaveNotificationToDatabaseUseCase
@@ -26,6 +27,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -36,6 +38,7 @@ class UploadNewfeedViewModel(
     private val saveNewToDatabase : SaveNewToDatabaseUseCase,
     private val updateNewsFromDatabaseUseCase: UpdateNewsFromDatabaseUseCase,
     private val loadNewsPostedWhenOfflineUseCase : LoadNewsPostedWhenOfflineUseCase,
+    private val deleteAllDraftPostsUseCase : DeleteAllDraftPostsUseCase,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : ViewModel() {
     var currentUser : UserInstance? = null
@@ -210,5 +213,12 @@ class UploadNewfeedViewModel(
 
     fun updateLocalPath(localPath: String) {
         localPathOfSelectedDraft.value = localPath
+    }
+
+    fun deleteAllDraftPosts() {
+        viewModelScope.launch(ioDispatcher) {
+            deleteAllDraftPostsUseCase.invoke()
+            loadNewsPostedWhenOffline()
+        }
     }
 }

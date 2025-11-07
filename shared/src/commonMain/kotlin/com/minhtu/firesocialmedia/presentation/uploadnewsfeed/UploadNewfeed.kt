@@ -371,6 +371,9 @@ class UploadNewsfeed {
                             uploadNewsfeedViewModel.updateLocalPath(draft.localPath)
                         }
                         showDraftPickerDialog = false
+                    },
+                    onDeleteAll = {
+                        uploadNewsfeedViewModel.deleteAllDraftPosts()
                     }
                 )
                 if (isLoading) {
@@ -423,7 +426,8 @@ class UploadNewsfeed {
             visible: Boolean,
             drafts: List<NewsInstance>,
             onDismiss: () -> Unit,
-            onSelect: (NewsInstance) -> Unit
+            onSelect: (NewsInstance) -> Unit,
+            onDeleteAll : () -> Unit
         ) {
             if (!visible) return
 
@@ -438,7 +442,18 @@ class UploadNewsfeed {
                         .fillMaxHeight(0.8f) // cap at 80% of window height
                 ) {
                     Column(Modifier.padding(16.dp)) {
-                        Text("Choose your draft", style = MaterialTheme.typography.titleMedium)
+                        Row(horizontalArrangement = Arrangement.SpaceEvenly,
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.fillMaxWidth()) {
+                            Text("Choose your draft",
+                                style = MaterialTheme.typography.titleMedium)
+                            if(drafts.isNotEmpty()) {
+                                TextButton(onClick = onDeleteAll) {
+                                    Text("Delete All",
+                                        style = MaterialTheme.typography.titleMedium)
+                                }
+                            }
+                        }
                         Spacer(Modifier.height(8.dp))
 
                         val listState = rememberLazyListState()

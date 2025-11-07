@@ -28,7 +28,7 @@ interface NewsDao {
 
     // --- DELETE ---
     @Delete
-    suspend fun delete(user: NewsEntity)
+    suspend fun delete(new: NewsEntity)
 
     @Query("DELETE FROM News WHERE id = :id")
     suspend fun deleteById(id: String)
@@ -38,6 +38,11 @@ interface NewsDao {
 
     @Query("DELETE FROM News")
     suspend fun clear()
+
+    @Query("DELETE FROM News WHERE id = :id")
+    suspend fun deleteDraftPost(id : String)
+    @Query("DELETE FROM News WHERE isNewPost = 1")
+    suspend fun deleteAllDraftPosts()
 
     // Page 1 (no cursor)
     @Query("""
@@ -75,4 +80,6 @@ interface NewsDao {
     suspend fun clearLikedPosts()
     @Query("SELECT * FROM News WHERE isNewPost = 1")
     suspend fun loadNewsPostedWhenOffline(): List<NewsEntity>
+
+
 }
