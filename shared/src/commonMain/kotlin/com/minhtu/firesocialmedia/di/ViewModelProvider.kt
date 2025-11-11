@@ -96,6 +96,7 @@ object ViewModelProvider {
         val storeNewsToRoomUseCase = AppModule.provideStoreNewsToRoomUseCase(localRepository)
         val storeNotificationsToRoomUseCase = AppModule.provideStoreNotificationsToRoomUseCase(localRepository)
         val saveCurrentUserInfoUseCase = AppModule.provideSaveCurrentUserInfoUseCase(localRepository)
+        val clearLocalDataUseCase = AppModule.provideClearLocalDataUseCase(commonDbRepository)
         val userInteractor = AppModule.provideUserInteractor(
             getCurrentUserUidUseCase,
             getUserUseCase,
@@ -104,7 +105,8 @@ object ViewModelProvider {
             saveValueToDatabaseUseCase,
             searchUserByNameUseCase,
             storeUserFriendsToRoomUseCase,
-            saveCurrentUserInfoUseCase
+            saveCurrentUserInfoUseCase,
+            clearLocalDataUseCase
         )
         val newsInteractor = AppModule.provideNewsInteractor(
             getLatestNewsUseCase,
@@ -177,11 +179,17 @@ object ViewModelProvider {
         val getUserUseCase = AppModule.provideGetUserUseCase(userRepository)
         val saveNewToDatabaseUseCase = AppModule.provideSaveNewToDatabaseUseCase(commonDbRepository)
         val updateNewsFromDatabaseUseCase = AppModule.provideUpdateNewsFromDatabaseUseCase(newsRepository)
+        val loadNewsPostedWhenOfflineUseCase = AppModule.provideLoadNewsPostedWhenOfflineUseCase(commonDbRepository)
+        val deleteAllDraftPostsUseCase = AppModule.provideDeleteAllDraftPostsUseCase(commonDbRepository)
+        val deleteDraftPostUseCase = AppModule.provideDeleteDraftPostUseCase(commonDbRepository)
         return AppModule.provideUploadNewfeedViewModel(
             getUserUseCase,
             saveNotificationToDatabaseUseCase,
             saveNewToDatabaseUseCase,
-            updateNewsFromDatabaseUseCase)
+            updateNewsFromDatabaseUseCase,
+            loadNewsPostedWhenOfflineUseCase,
+            deleteAllDraftPostsUseCase,
+            deleteDraftPostUseCase)
     }
 
     fun createUserInformationViewModel(platformContext : PlatformContext): UserInformationViewModel {

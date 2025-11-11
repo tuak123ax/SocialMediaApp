@@ -1,6 +1,5 @@
 package com.minhtu.firesocialmedia.presentation.signin
 
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
@@ -229,11 +228,6 @@ class SignIn{
                                 contentColor = Color.Companion.Black
                             ),
                             modifier = Modifier.Companion
-                                .border(
-                                    1.dp,
-                                    Color.Companion.Black,
-                                    androidx.compose.foundation.shape.RoundedCornerShape(30.dp)
-                                )
                                 .testTag(TestTag.Companion.TAG_BUTTON_SIGNINGOOGLE)
                                 .semantics {
                                     contentDescription = TestTag.Companion.TAG_BUTTON_SIGNINGOOGLE

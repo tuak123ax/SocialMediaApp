@@ -2,9 +2,9 @@ package com.minhtu.firesocialmedia.domain.serviceimpl.auth
 
 import cocoapods.FirebaseAuth.FIRAuth
 import com.minhtu.firesocialmedia.constants.Constants
+import com.minhtu.firesocialmedia.data.remote.service.auth.AuthService
 import com.minhtu.firesocialmedia.domain.entity.forgotpassword.EmailExistResult
 import com.minhtu.firesocialmedia.domain.error.signin.SignInError
-import com.minhtu.firesocialmedia.data.remote.service.auth.AuthService
 import kotlinx.coroutines.suspendCancellableCoroutine
 
 class IosAuthService() : AuthService{

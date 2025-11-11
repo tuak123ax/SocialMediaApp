@@ -19,5 +19,7 @@ data class NewsEntity(
     var isVisible: Boolean = true,
     var likeCount: Int = 0,
     var commentCount: Int = 0,
-    var timePosted: Long = 0
+    var timePosted: Long = 0,
+    var isNewPost : Boolean = false,
+    var localPath : String = ""
 )

@@ -5,11 +5,9 @@ import android.content.SharedPreferences
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.util.Log
-import androidx.compose.ui.unit.Constraints
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
 import com.minhtu.firesocialmedia.constants.Constants
-import com.minhtu.firesocialmedia.data.remote.dto.crypto.CredentialsDTO
 import com.minhtu.firesocialmedia.data.remote.dto.user.UserDTO
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

@@ -5,17 +5,22 @@ import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -30,6 +35,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
@@ -45,7 +51,11 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarDefaults
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.Snackbar
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.TabRowDefaults
@@ -59,6 +69,7 @@ import androidx.compose.runtime.ProvidedValue
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -71,7 +82,9 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -79,6 +92,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.minhtu.firesocialmedia.constants.TestTag
@@ -88,6 +102,7 @@ import com.minhtu.firesocialmedia.platform.CommonBackHandler
 import com.minhtu.firesocialmedia.platform.CrossPlatformIcon
 import com.minhtu.firesocialmedia.platform.VideoPlayer
 import com.minhtu.firesocialmedia.platform.convertTimeToDateString
+import com.minhtu.firesocialmedia.platform.getUriStringFromLocalPath
 import com.minhtu.firesocialmedia.presentation.home.Home
 import com.minhtu.firesocialmedia.presentation.home.HomeViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.Screen
@@ -99,6 +114,7 @@ import com.minhtu.firesocialmedia.presentation.search.SearchViewModel
 import com.seiko.imageloader.ui.AutoSizeImage
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
 
 class UiUtils {
     companion object{
@@ -213,15 +229,23 @@ class UiUtils {
                         }
                     } else {
                         if(news.video.isNotEmpty()) {
-                            VideoPlayer(news.video,
-                                Modifier
-                                    .fillMaxWidth()
-                                    .height(300.dp)
-                                    .padding(5.dp)
-                                    .testTag(TestTag.TAG_POST_VIDEO)
-                                    .semantics{
-                                        contentDescription = TestTag.TAG_POST_VIDEO
-                                    })
+                            val videoUri: String = if(news.localPath.isNotEmpty()) {
+                                //Load video from local storage
+                                getUriStringFromLocalPath(news.localPath)
+                            } else {
+                                news.video
+                            }
+                            if(videoUri.isNotEmpty()) {
+                                VideoPlayer(videoUri,
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .height(300.dp)
+                                        .padding(5.dp)
+                                        .testTag(TestTag.TAG_POST_VIDEO)
+                                        .semantics{
+                                            contentDescription = TestTag.TAG_POST_VIDEO
+                                        })
+                            }
                         }
                     }
                     Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp),
@@ -495,7 +519,7 @@ class UiUtils {
                 return
             }
             Box(modifier = modifier){
-                val barInsets = if (useDefaultInsets) androidx.compose.material3.NavigationBarDefaults.windowInsets else androidx.compose.foundation.layout.WindowInsets(0)
+                val barInsets = if (useDefaultInsets) NavigationBarDefaults.windowInsets else WindowInsets(0)
                 NavigationBar(
                     containerColor = Color.White,
                     windowInsets = barInsets
@@ -926,6 +950,11 @@ class UiUtils {
                                 },
                                 onNavigateToUploadNews
                             )
+                        } else {
+                            NewsCardPlaceholder(
+                                news = news,
+                                localImageLoaderValue = localImageLoaderValue
+                            )
                         }
                     }
                 }
@@ -947,6 +976,93 @@ class UiUtils {
                             )
                         }
                     }
+                }
+            }
+        }
+
+        @Composable
+        private fun NewsCardPlaceholder(
+            news: NewsInstance,
+            localImageLoaderValue : ProvidedValue<*>
+        ) {
+            Card(
+                modifier = Modifier
+                    .padding(start = 10.dp, end = 10.dp, top = 5.dp)
+                    .fillMaxWidth(),
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.White)
+                        .padding(10.dp)
+                ) {
+                    // Header skeleton (avatar + lines)
+                    Row(
+                        horizontalArrangement = Arrangement.Start,
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(CircleShape)
+                                .background(Color(0xFFEAEAEA))
+                        )
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Box(
+                                modifier = Modifier
+                                    .height(14.dp)
+                                    .fillMaxWidth(0.4f)
+                                    .background(Color(0xFFEAEAEA), RoundedCornerShape(4.dp))
+                            )
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Box(
+                                modifier = Modifier
+                                    .height(12.dp)
+                                    .fillMaxWidth(0.3f)
+                                    .background(Color(0xFFF0F0F0), RoundedCornerShape(4.dp))
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    // Message placeholder
+                    Box(
+                        modifier = Modifier
+                            .height(14.dp)
+                            .fillMaxWidth(0.9f)
+                            .background(Color(0xFFEAEAEA), RoundedCornerShape(4.dp))
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    // Media placeholder
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(300.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(Color(0xFFEAEAEA))
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+                    // Footer placeholders
+                    Row(modifier = Modifier.fillMaxWidth()) {
+                        Box(
+                            modifier = Modifier
+                                .height(12.dp)
+                                .fillMaxWidth(0.2f)
+                                .background(Color(0xFFF0F0F0), RoundedCornerShape(4.dp))
+                        )
+                        Spacer(modifier = Modifier.weight(1f))
+                        Box(
+                            modifier = Modifier
+                                .height(12.dp)
+                                .fillMaxWidth(0.2f)
+                                .background(Color(0xFFF0F0F0), RoundedCornerShape(4.dp))
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(10.dp))
                 }
             }
         }
@@ -992,5 +1108,205 @@ class UiUtils {
             }
         }
 
+        @Composable
+        fun MySnackBarHost(hostState: SnackbarHostState, positive: Boolean?) {
+            SnackbarHost(hostState = hostState) { data ->
+                val contentColor = when (positive) {
+                    true -> Color.Green
+                    false -> Color.Red
+                    null -> MaterialTheme.colorScheme.onSurface
+                }
+                Snackbar(
+                    snackbarData = data,
+                    containerColor = Color.White,
+                    contentColor = contentColor,
+                    dismissActionContentColor = Color.Black
+                )
+            }
+        }
+
+        @Composable
+        fun SimpleNewsCard(
+            news: NewsInstance,
+            localImageLoaderValue : ProvidedValue<*>,
+            modifier: Modifier = Modifier
+        ) {
+            Card(
+                modifier = Modifier
+                    .padding(horizontal = 10.dp, vertical = 10.dp)
+                    .fillMaxWidth()
+                    .testTag(TestTag.TAG_POST_IN_COLUMN)
+                    .semantics { contentDescription = TestTag.TAG_POST_IN_COLUMN }
+                    .then(modifier),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                elevation = CardDefaults.cardElevation(
+                    defaultElevation = 2.dp,
+                    pressedElevation = 4.dp
+                )
+            ) {
+                Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(1.dp)) {
+                    Row(horizontalArrangement = Arrangement.Start,
+                        modifier = Modifier
+                            .background(color = Color.White)
+                            .padding(10.dp)
+                            .fillMaxWidth()){
+                        CompositionLocalProvider(
+                            localImageLoaderValue
+                        ) {
+                            AutoSizeImage(
+                                news.avatar,
+                                contentDescription = "Poster Avatar",
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .clip(CircleShape)
+                                    .testTag(TestTag.TAG_POSTER_AVATAR)
+                                    .semantics{
+                                        contentDescription = TestTag.TAG_POSTER_AVATAR
+                                    }
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Column {
+                            Text(
+                                text = news.posterName,
+                                color = Color.Black,
+                                modifier = Modifier.padding(horizontal = 2.dp)
+                            )
+                            Text(
+                                text = convertTimeToDateString(news.timePosted),
+                                color = Color.Gray,
+                                modifier = Modifier.padding(horizontal = 2.dp)
+                            )
+                        }
+                    }
+                    ExpandableText(news.message)
+                    if(news.image.isNotEmpty()){
+                        CompositionLocalProvider(
+                            localImageLoaderValue
+                        ) {
+                            AutoSizeImage(
+                                news.image,
+                                contentDescription = "Image",
+                                contentScale = ContentScale.Fit,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(200.dp)
+                                    .padding(5.dp)
+                                    .testTag(TestTag.TAG_POST_IMAGE)
+                                    .semantics{
+                                        contentDescription = TestTag.TAG_POST_IMAGE
+                                    }
+                            )
+                        }
+                    } else {
+                        if(news.video.isNotEmpty()) {
+                            val videoUri: String = if(news.localPath.isNotEmpty()) {
+                                //Load video from local storage
+                                getUriStringFromLocalPath(news.localPath)
+                            } else {
+                                news.video
+                            }
+                            if(videoUri.isNotEmpty()) {
+                                VideoPlayer(
+                                    videoUri,
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .height(200.dp)
+                                        .padding(5.dp)
+                                        .testTag(TestTag.TAG_POST_VIDEO)
+                                        .semantics{
+                                            contentDescription = TestTag.TAG_POST_VIDEO
+                                        })
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        @Composable
+        fun SimpleNewsCardSlideable(
+            news: NewsInstance,
+            localImageLoaderValue : ProvidedValue<*>,
+            onSelected : (NewsInstance) -> Unit,
+            onDelete : () -> Unit
+        ) {
+            val swipeDistancePx = with(LocalDensity.current) { 70.dp.toPx() }
+            var offsetX by remember { mutableFloatStateOf(0f) }
+            val animatedOffsetX by animateFloatAsState(targetValue = offsetX)
+            val swipeThreshold = -swipeDistancePx / 2
+
+            Box(
+                modifier = Modifier.Companion
+                    .fillMaxWidth()
+                    .height(IntrinsicSize.Min)
+                    .testTag(TestTag.Companion.TAG_DRAFT)
+                    .semantics {
+                        contentDescription = TestTag.Companion.TAG_DRAFT
+                    }
+            ) {
+                //Row contains delete button
+                Row(
+                    modifier = Modifier.Companion
+                        .fillMaxSize()
+                        .background(Color.Companion.White)
+                        .testTag(TestTag.Companion.TAG_BUTTON_DELETE)
+                        .semantics {
+                            contentDescription = TestTag.Companion.TAG_BUTTON_DELETE
+                        },
+                    horizontalArrangement = Arrangement.End,
+                    verticalAlignment = Alignment.Companion.CenterVertically
+                ) {
+                    Box(
+                        modifier = Modifier.Companion
+                            .padding(end = 16.dp)
+                            .size(48.dp)
+                            .clip(CircleShape)
+                            .background(Color.Companion.Red)
+                            .clickable { onDelete() },
+                        contentAlignment = Alignment.Companion.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Delete,
+                            contentDescription = "Delete",
+                            tint = Color.Companion.White,
+                            modifier = Modifier.Companion.size(24.dp)
+                        )
+                    }
+                }
+
+                // Foreground content (slidable)
+                Box(
+                    modifier = Modifier.Companion
+                        .offset { IntOffset(animatedOffsetX.roundToInt(), 0) }
+                        .pointerInput(news.id) {
+                            detectHorizontalDragGestures(
+                                onHorizontalDrag = { _, dragAmount ->
+                                    val newOffset =
+                                        (offsetX + dragAmount).coerceIn(-swipeDistancePx, 0f)
+                                    offsetX = newOffset
+                                },
+                                onDragEnd = {
+                                    offsetX = if (offsetX < swipeThreshold) -swipeDistancePx else 0f
+                                }
+                            )
+                        }
+                ) {
+                    SimpleNewsCard(
+                        news,
+                        localImageLoaderValue,
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(16.dp))
+                            .clickable {
+                                onSelected(news)
+                            }
+                    )
+                }
+            }
+        }
     }
 }

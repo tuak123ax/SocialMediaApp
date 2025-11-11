@@ -5,6 +5,7 @@ import android.content.Context
 import android.os.Environment
 import android.util.Log
 import androidx.core.net.toUri
+import androidx.core.uri.Uri
 import com.google.firebase.database.ChildEventListener
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
@@ -13,6 +14,8 @@ import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.GenericTypeIndicator
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.storage.FirebaseStorage
+import com.google.firebase.storage.StorageMetadata
+import com.google.firebase.storage.StorageReference
 import com.minhtu.firesocialmedia.data.remote.constant.DataConstant
 import com.minhtu.firesocialmedia.data.remote.dto.call.AudioCallSessionDTO
 import com.minhtu.firesocialmedia.data.remote.dto.call.CallingRequestDTO
@@ -22,12 +25,14 @@ import com.minhtu.firesocialmedia.data.remote.dto.news.NewsDTO
 import com.minhtu.firesocialmedia.data.remote.dto.notification.NotificationDTO
 import com.minhtu.firesocialmedia.domain.entity.base.BaseNewsInstance
 import com.minhtu.firesocialmedia.domain.entity.call.CallStatus
+import com.minhtu.firesocialmedia.platform.logMessage
 import com.minhtu.firesocialmedia.utils.Utils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
+import java.io.File
 
 class AndroidDatabaseHelper {
     companion object {
@@ -40,27 +45,35 @@ class AndroidDatabaseHelper {
             val databaseReference = FirebaseDatabase.getInstance().getReference()
                 .child(path).child(commentId)
             if(instance.image.isNotEmpty()){
-                storageReference.putFile(instance.image.toUri()).addOnCompleteListener{ putFileTask ->
-                    if(putFileTask.isSuccessful){
-                        storageReference.downloadUrl.addOnSuccessListener { dataUrl ->
-                            instance.updateImage(dataUrl.toString())
-                            databaseReference.setValue(instance).addOnCompleteListener{addUserTask ->
-                                if(continuation.isActive) continuation.resume(addUserTask.isSuccessful, onCancellation = {})
-                            }
-                        }
-                    }
-                }
-            } else {
-                if(instance.video.isNotEmpty()) {
-                    storageReference.putFile(instance.video.toUri()).addOnCompleteListener{ putFileTask ->
+                try{
+                    storageReference.putFile(instance.image.toUri()).addOnCompleteListener{ putFileTask ->
                         if(putFileTask.isSuccessful){
                             storageReference.downloadUrl.addOnSuccessListener { dataUrl ->
-                                instance.updateVideo(dataUrl.toString())
+                                instance.updateImage(dataUrl.toString())
                                 databaseReference.setValue(instance).addOnCompleteListener{addUserTask ->
                                     if(continuation.isActive) continuation.resume(addUserTask.isSuccessful, onCancellation = {})
                                 }
                             }
                         }
+                    }
+                } catch(ex : Exception) {
+                    logMessage("saveInstanceToDatabase", { "Exception when send image to Firebase: " + ex.message.toString() })
+                }
+            } else {
+                if(instance.video.isNotEmpty()) {
+                    try{
+                        storageReference.putFile(instance.video.toUri()).addOnCompleteListener{ putFileTask ->
+                            if(putFileTask.isSuccessful){
+                                storageReference.downloadUrl.addOnSuccessListener { dataUrl ->
+                                    instance.updateVideo(dataUrl.toString())
+                                    databaseReference.setValue(instance).addOnCompleteListener{addUserTask ->
+                                        if(continuation.isActive) continuation.resume(addUserTask.isSuccessful, onCancellation = {})
+                                    }
+                                }
+                            }
+                        }
+                    } catch (ex : Exception) {
+                        logMessage("saveInstanceToDatabase", { "Exception when send video to Firebase: " + ex.message.toString() })
                     }
                 } else {
                     databaseReference.setValue(instance).addOnCompleteListener{addNewsTask ->
@@ -859,6 +872,80 @@ class AndroidDatabaseHelper {
             callListener?.let { l -> firebaseDatabase?.removeEventListener(l) }
             callListener = null
             firebaseDatabase = null
+        }
+
+        suspend fun uploadMediaAndGetUrl(
+            storageRef: StorageReference,
+            originalUriStr: String?,
+            localPath: String?,
+            contentType: String? = null
+        ): String {
+            val metadata = contentType?.let { StorageMetadata.Builder().setContentType(it).build() }
+
+            // Attempt 1: original URI string (if parseable)
+            val firstUri = originalUriStr?.let {
+                runCatching { Uri.parse(it) }.getOrNull()
+            }
+
+            if (firstUri != null) {
+                runCatching {
+                    if (metadata != null) storageRef.putFile(firstUri, metadata).await()
+                    else storageRef.putFile(firstUri).await()
+                }.onSuccess {
+                    return storageRef.downloadUrl.await().toString()
+                }
+            }
+
+            // Attempt 2: local file path
+            val localFile = localPath?.let { File(it) }
+            if (localFile != null && localFile.exists()) {
+                val fileUri = Uri.fromFile(localFile)
+                if (metadata != null) storageRef.putFile(fileUri, metadata).await()
+                else storageRef.putFile(fileUri).await()
+                return storageRef.downloadUrl.await().toString()
+            }
+
+            // Nothing worked
+            error("No readable source for upload (uri=$originalUriStr, localPath=$localPath)")
+        }
+
+        suspend fun saveNewToDatabase(
+            commentId: String,
+            path: String,
+            instance: NewsDTO
+        ): Boolean {
+            return runCatching {
+                val storageRef = FirebaseStorage.getInstance().getReference().child(path).child(commentId)
+                val dbRef = FirebaseDatabase.getInstance().getReference().child(path).child(commentId)
+
+                when {
+                    instance.image.isNotEmpty() -> {
+                        val url = uploadMediaAndGetUrl(
+                            storageRef = storageRef,
+                            originalUriStr = instance.image,
+                            localPath = instance.localPath
+                        )
+                        instance.updateImage(url)
+                    }
+                    instance.video.isNotEmpty() -> {
+                        val url = uploadMediaAndGetUrl(
+                            storageRef = storageRef,
+                            originalUriStr = instance.video,
+                            localPath = instance.localPath
+                        )
+                        instance.updateVideo(url)
+                    }
+                    else -> {
+                        // No media, just write the post
+                    }
+                }
+
+                dbRef.setValue(instance).await()
+                true
+            }.getOrElse { e ->
+                // optional: log e
+                false
+            }
         }
     }
 }

@@ -15,4 +15,14 @@ class LoadingViewModel : ViewModel() {
     fun hideLoading() {
         _isLoading.value = false
     }
+
+    private val _syncLoading = MutableStateFlow(false)
+    val syncLoading = _syncLoading.asStateFlow()
+
+    fun showSyncLoading() {
+        _syncLoading.value = true
+    }
+    fun hideSyncLoading() {
+        _syncLoading.value = false
+    }
 }

@@ -12,4 +12,5 @@ interface UserInteractor {
                               value : HashMap<String, Int>) : Boolean
     suspend fun searchUserByName(name: String): List<UserInstance>?
     suspend fun storeUserFriendsToRoom(friends : List<UserInstance?>)
+    suspend fun clearLocalData()
 }

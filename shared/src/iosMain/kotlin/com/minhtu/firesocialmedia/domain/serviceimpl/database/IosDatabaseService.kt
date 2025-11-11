@@ -136,6 +136,18 @@ class IosDatabaseService() : DatabaseService {
             instance)
     }
 
+    override suspend fun saveNewToDatabase(
+        commentId: String,
+        path: String,
+        instance: NewsDTO
+    ): Boolean {
+        return IosDatabaseHelper.saveInstanceToDatabase(
+            commentId,
+            path,
+            instance
+        )
+    }
+
     override suspend fun getAllUsers(path: String): ArrayList<UserDTO>? = suspendCancellableCoroutine{ continuation ->
         val result = ArrayList<UserDTO>()
         val databaseReference = FIRDatabase.database().reference().child(path)

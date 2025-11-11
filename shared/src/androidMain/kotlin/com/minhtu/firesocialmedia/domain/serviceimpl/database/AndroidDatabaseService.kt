@@ -119,6 +119,17 @@ class AndroidDatabaseService(private val context: Context) : DatabaseService {
             instance)
     }
 
+    override suspend fun saveNewToDatabase(
+        commentId: String,
+        path: String,
+        instance: NewsDTO
+    ): Boolean {
+        return AndroidDatabaseHelper.saveNewToDatabase(
+            commentId,
+            path,
+            instance)
+    }
+
     override suspend fun getAllUsers(path: String) : ArrayList<UserDTO>? = suspendCancellableCoroutine{ continuation ->
         val result = ArrayList<UserDTO>()
         val database = FirebaseDatabase.getInstance()

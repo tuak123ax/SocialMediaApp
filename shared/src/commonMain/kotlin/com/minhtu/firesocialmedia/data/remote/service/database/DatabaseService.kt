@@ -47,6 +47,12 @@ interface DatabaseService {
         instance : BaseNewsInstance
     ) : Boolean
 
+    suspend fun saveNewToDatabase(
+        commentId : String,
+        path : String,
+        instance : NewsDTO
+    ) : Boolean
+
     suspend fun getAllUsers(path: String) : ArrayList<UserDTO>?
     suspend fun getUser(userId: String) : UserDTO?
     suspend fun getNew(newId: String) : NewsDTO?

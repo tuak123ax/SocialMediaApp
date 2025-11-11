@@ -1,8 +1,12 @@
 package com.minhtu.firesocialmedia.data.local.mapper.room
 
+import com.minhtu.firesocialmedia.data.local.entity.CommentEntity
+import com.minhtu.firesocialmedia.data.local.entity.LikedPostEntity
 import com.minhtu.firesocialmedia.data.local.entity.NewsEntity
 import com.minhtu.firesocialmedia.data.local.entity.NotificationEntity
 import com.minhtu.firesocialmedia.data.local.entity.UserEntity
+import com.minhtu.firesocialmedia.data.remote.dto.comment.CommentDTO
+import com.minhtu.firesocialmedia.domain.entity.comment.CommentInstance
 import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
 import com.minhtu.firesocialmedia.domain.entity.notification.NotificationInstance
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
@@ -74,7 +78,8 @@ fun NewsEntity.toDomain() : NewsInstance {
         isVisible,
         likeCount,
         commentCount,
-        timePosted
+        timePosted,
+        localPath
     )
 }
 
@@ -112,3 +117,40 @@ fun NotificationEntity.toDomain() : NotificationInstance {
         relatedInfo
     )
 }
+
+fun HashMap<String, Int>.toRoomEntity() : List<LikedPostEntity> {
+    return this.mapNotNull { it -> LikedPostEntity(it.key, it.value) }
+}
+
+fun List<LikedPostEntity>.toDto(): HashMap<String, Int> =
+    associateTo(HashMap()) { it.id to it.isLiked }
+
+fun List<CommentEntity>.toDto() : List<CommentDTO> {
+    return this.map { it -> CommentDTO(
+        it.id,
+        it.posterId,
+        it.posterName,
+        it.avatar,
+        it.message,
+        it.video,
+        it.image,
+        likeCount = it.likeCount,
+        commentCount = it.commentCount,
+        timePosted = it.timePosted,
+        selectedNewId = it.selectedNewId
+    ) }
+}
+
+fun CommentInstance.toRoomEntity(selectedNewId : String) : CommentEntity = CommentEntity(
+    id,
+    posterId,
+    posterName,
+    avatar,
+    message,
+    video,
+    image,
+    likeCount,
+    commentCount,
+    timePosted,
+    selectedNewId
+)

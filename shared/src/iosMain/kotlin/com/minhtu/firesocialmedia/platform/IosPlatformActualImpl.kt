@@ -26,9 +26,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.UIKitView
 import androidx.navigation.NavHostController
 import com.minhtu.firesocialmedia.constants.Constants
+import com.minhtu.firesocialmedia.data.remote.service.imagepicker.ImagePicker
 import com.minhtu.firesocialmedia.di.PlatformContext
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
-import com.minhtu.firesocialmedia.data.remote.service.imagepicker.ImagePicker
 import com.minhtu.firesocialmedia.domain.serviceimpl.crypto.IosCryptoHelper
 import com.minhtu.firesocialmedia.domain.serviceimpl.notification.KtorProvider
 import com.minhtu.firesocialmedia.presentation.signin.SignInViewModel
@@ -169,6 +169,11 @@ actual fun showToast(message: String) {
 @Composable
 actual fun getIconPainter(icon: String): Painter? {
     return null // iOS will use the composable fallback instead
+}
+
+actual fun getResId(icon: String): Int {
+    // iOS does not use integer resource IDs like Android; return a sentinel value.
+    return 0
 }
 
 @Composable
@@ -802,5 +807,10 @@ actual fun setupSignInLauncher(
     platformContext: PlatformContext
 ) {
     // No-op on iOS for Google Sign-In in this project setup
+}
+
+actual fun getUriStringFromLocalPath(localPath: String): String {
+    val url = NSURL.fileURLWithPath(localPath)
+    return url.absoluteString ?: ""
 }
 

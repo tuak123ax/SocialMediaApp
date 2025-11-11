@@ -9,9 +9,12 @@ import com.minhtu.firesocialmedia.domain.entity.notification.NotificationInstanc
 import com.minhtu.firesocialmedia.domain.entity.notification.NotificationType
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.domain.usecases.common.GetUserUseCase
+import com.minhtu.firesocialmedia.domain.usecases.newsfeed.DeleteAllDraftPostsUseCase
+import com.minhtu.firesocialmedia.domain.usecases.newsfeed.DeleteDraftPostUseCase
 import com.minhtu.firesocialmedia.domain.usecases.newsfeed.SaveNewToDatabaseUseCase
 import com.minhtu.firesocialmedia.domain.usecases.newsfeed.UpdateNewsFromDatabaseUseCase
 import com.minhtu.firesocialmedia.domain.usecases.notification.SaveNotificationToDatabaseUseCase
+import com.minhtu.firesocialmedia.domain.usecases.sync.LoadNewsPostedWhenOfflineUseCase
 import com.minhtu.firesocialmedia.platform.createMessageForServer
 import com.minhtu.firesocialmedia.platform.generateRandomId
 import com.minhtu.firesocialmedia.platform.getCurrentTime
@@ -34,6 +37,9 @@ class UploadNewfeedViewModel(
     private val saveNotificationToDatabaseUseCase: SaveNotificationToDatabaseUseCase,
     private val saveNewToDatabase : SaveNewToDatabaseUseCase,
     private val updateNewsFromDatabaseUseCase: UpdateNewsFromDatabaseUseCase,
+    private val loadNewsPostedWhenOfflineUseCase : LoadNewsPostedWhenOfflineUseCase,
+    private val deleteAllDraftPostsUseCase : DeleteAllDraftPostsUseCase,
+    private val deleteDraftPostUseCase: DeleteDraftPostUseCase,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : ViewModel() {
     var currentUser : UserInstance? = null
@@ -85,8 +91,10 @@ class UploadNewfeedViewModel(
                     //Save post to db
                     val newsInstance = NewsInstance(newsRandomId,user.uid, user.name,user.image,message,image,video)
                     newsInstance.timePosted = getCurrentTime()
+                    if(localPathOfSelectedDraft.value.isNotEmpty()) {
+                        newsInstance.localPath = localPathOfSelectedDraft.value
+                    }
                     _createPostStatus.value = saveNewToDatabase.invoke(
-                        newsRandomId,
                         newsInstance
                     )
 
@@ -152,6 +160,8 @@ class UploadNewfeedViewModel(
         _updatePostStatus.value = null
         message = ""
         image = ""
+        video = ""
+        localPathOfSelectedDraft.value = ""
     }
 
     suspend fun getFriendTokens(): ArrayList<String> {
@@ -183,5 +193,70 @@ class UploadNewfeedViewModel(
 
     suspend fun findUserById(userId: String) : UserInstance? {
         return getUserUseCase.invoke(userId, false)
+    }
+
+    private val _newsPostedWhenOffline = MutableStateFlow<List<NewsInstance>>(emptyList())
+    var newsPostedWhenOffline = _newsPostedWhenOffline.asStateFlow()
+    val localPathOfSelectedDraft = mutableStateOf("")
+    suspend fun loadNewsPostedWhenOffline() {
+        _newsPostedWhenOffline.value = loadNewsPostedWhenOfflineUseCase.invoke()
+    }
+
+    fun removeOfflineNewsById(id: String) {
+        _newsPostedWhenOffline.value =
+            _newsPostedWhenOffline.value.filterNot { it.id == id }
+    }
+
+    fun clearAllOfflineNews() {
+        _newsPostedWhenOffline.value = emptyList()
+    }
+
+    fun updatePostData(message: String, image: String, video: String) {
+        updateMessage(message)
+        if(image.isNotEmpty()){
+            updateImage(image)
+        }
+        if(video.isNotEmpty()) {
+            updateVideo(video)
+        }
+    }
+
+    fun updateLocalPath(localPath: String) {
+        localPathOfSelectedDraft.value = localPath
+    }
+
+    private val _deleteDraftStatus = MutableStateFlow<Boolean?>(null)
+    val deleteDraftStatus = _deleteDraftStatus.asStateFlow()
+    fun resetDeleteDraftStatus() {
+        _deleteDraftStatus.value = null
+    }
+    fun deleteAllDraftPosts() {
+        viewModelScope.launch(ioDispatcher) {
+            //Reset delete state before execute new delete operation
+            resetDeleteDraftStatus()
+            //Execute delete all drafts
+            val result = deleteAllDraftPostsUseCase.invoke()
+            _deleteDraftStatus.value = result
+            if(result) {
+                clearAllOfflineNews()
+            } else {
+                loadNewsPostedWhenOffline()
+            }
+        }
+    }
+
+    fun deleteDraftPost(newId : String) {
+        viewModelScope.launch(ioDispatcher) {
+            //Reset delete state before execute new delete operation
+            resetDeleteDraftStatus()
+            //Execute delete draft
+            val result = deleteDraftPostUseCase.invoke(newId)
+            _deleteDraftStatus.value = result
+            if(result) {
+                removeOfflineNewsById(newId)
+            } else {
+                loadNewsPostedWhenOffline()
+            }
+        }
     }
 }

@@ -56,6 +56,7 @@ class Settings {
                 val showDialog = remember { mutableStateOf(false) }
                 UiUtils.Companion.ShowAlertDialogToLogout(onClickConfirm = {
                     homeViewModel.clearAccountInStorage()
+                    homeViewModel.clearLocalData()
                 }, onNavigateToSignIn, showDialog)
                 //Fire chat button
                 Button(

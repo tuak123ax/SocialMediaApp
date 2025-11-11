@@ -6,7 +6,7 @@ import com.minhtu.firesocialmedia.domain.entity.comment.CommentInstance
 interface CommentInteractor {
     suspend fun saveComment(selectedNewId: String,
                             commentId : String,
-                            instance : BaseNewsInstance) : Boolean
+                            instance : CommentInstance) : Boolean
     suspend fun saveSubComment(id : String,
                                selectedNewId : String,
                                parentCommentId : String,

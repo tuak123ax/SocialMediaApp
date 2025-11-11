@@ -22,7 +22,7 @@ class NetworkMonitorImpl(context: Context) : NetworkMonitor {
         trySend(current())
 
         val cb = object : ConnectivityManager.NetworkCallback() {
-            override fun onAvailable(network: Network) { trySend(true) }
+            override fun onAvailable(network: Network) { trySend(current()) }
             override fun onLost(network: Network) { trySend(current()) }
             override fun onCapabilitiesChanged(n: Network, caps: NetworkCapabilities) {
                 trySend(

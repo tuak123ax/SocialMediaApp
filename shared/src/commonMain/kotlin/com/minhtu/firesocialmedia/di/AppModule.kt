@@ -57,6 +57,7 @@ import com.minhtu.firesocialmedia.domain.usecases.forgotpassword.SendEmailResetP
 import com.minhtu.firesocialmedia.domain.usecases.friend.SaveFriendRequestUseCase
 import com.minhtu.firesocialmedia.domain.usecases.friend.SaveFriendUseCase
 import com.minhtu.firesocialmedia.domain.usecases.home.ClearAccountUseCase
+import com.minhtu.firesocialmedia.domain.usecases.home.ClearLocalDataUseCase
 import com.minhtu.firesocialmedia.domain.usecases.home.DeleteNewsFromDatabaseUseCase
 import com.minhtu.firesocialmedia.domain.usecases.home.GetLatestNewsUseCase
 import com.minhtu.firesocialmedia.domain.usecases.home.SaveCurrentUserInfoUseCase
@@ -69,6 +70,8 @@ import com.minhtu.firesocialmedia.domain.usecases.home.UpdateFCMTokenUseCase
 import com.minhtu.firesocialmedia.domain.usecases.home.UpdateLikeCountForNewUseCase
 import com.minhtu.firesocialmedia.domain.usecases.information.CheckCalleeAvailableUseCase
 import com.minhtu.firesocialmedia.domain.usecases.information.SaveSignUpInformationUseCase
+import com.minhtu.firesocialmedia.domain.usecases.newsfeed.DeleteAllDraftPostsUseCase
+import com.minhtu.firesocialmedia.domain.usecases.newsfeed.DeleteDraftPostUseCase
 import com.minhtu.firesocialmedia.domain.usecases.newsfeed.SaveNewToDatabaseUseCase
 import com.minhtu.firesocialmedia.domain.usecases.newsfeed.UpdateNewsFromDatabaseUseCase
 import com.minhtu.firesocialmedia.domain.usecases.notification.DeleteNotificationFromDatabaseUseCase
@@ -82,6 +85,8 @@ import com.minhtu.firesocialmedia.domain.usecases.signin.HandleSignInGoogleResul
 import com.minhtu.firesocialmedia.domain.usecases.signin.RememberPasswordUseCase
 import com.minhtu.firesocialmedia.domain.usecases.signin.SignInUseCase
 import com.minhtu.firesocialmedia.domain.usecases.signup.SignUpUseCase
+import com.minhtu.firesocialmedia.domain.usecases.sync.LoadNewsPostedWhenOfflineUseCase
+import com.minhtu.firesocialmedia.domain.usecases.sync.SyncDataUseCase
 import com.minhtu.firesocialmedia.presentation.comment.CommentViewModel
 import com.minhtu.firesocialmedia.presentation.forgotpassword.ForgotPasswordViewModel
 import com.minhtu.firesocialmedia.presentation.home.HomeViewModel
@@ -113,7 +118,7 @@ object AppModule {
         return NotificationRepositoryImpl(platformContext.database, platformContext.room, platformContext.networkMonitor)
     }
     fun provideCommonDbRepository(platformContext: PlatformContext) : CommonDbRepository{
-        return CommonDbRepositoryImpl(platformContext.database)
+        return CommonDbRepositoryImpl(platformContext.database, platformContext.room, platformContext.networkMonitor)
     }
     //---------------------------Sign in----------------------------------------//
     fun provideSignInUseCase(authenticationRepository: AuthenticationRepository) : SignInUseCase {
@@ -252,7 +257,8 @@ object AppModule {
         saveValueToDatabaseUseCase: SaveLikedPostUseCase,
         searchUserByNameUseCase: SearchUserByNameUseCase,
         storeUserFriendsToRoomUseCase: StoreUserFriendsToRoomUseCase,
-        saveCurrentUserInfoUseCase: SaveCurrentUserInfoUseCase
+        saveCurrentUserInfoUseCase: SaveCurrentUserInfoUseCase,
+        clearLocalDataUseCase: ClearLocalDataUseCase
     ) : UserInteractor {
         return UserInteractorImpl(
             getCurrentUserUidUseCase,
@@ -262,7 +268,8 @@ object AppModule {
             saveValueToDatabaseUseCase,
             searchUserByNameUseCase,
             storeUserFriendsToRoomUseCase,
-            saveCurrentUserInfoUseCase
+            saveCurrentUserInfoUseCase,
+            clearLocalDataUseCase
         )
     }
     fun provideNewsInteractor(
@@ -395,12 +402,18 @@ object AppModule {
         getUserUseCase: GetUserUseCase,
         saveNotificationToDatabaseUseCase: SaveNotificationToDatabaseUseCase,
         saveNewToDatabaseUseCase: SaveNewToDatabaseUseCase,
-        updateNewsFromDatabaseUseCase: UpdateNewsFromDatabaseUseCase): UploadNewfeedViewModel {
+        updateNewsFromDatabaseUseCase: UpdateNewsFromDatabaseUseCase,
+        loadNewsPostedWhenOfflineUseCase: LoadNewsPostedWhenOfflineUseCase,
+        deleteAllDraftPostsUseCase: DeleteAllDraftPostsUseCase,
+        deleteDraftPostUseCase: DeleteDraftPostUseCase): UploadNewfeedViewModel {
         return UploadNewfeedViewModel(
             getUserUseCase,
             saveNotificationToDatabaseUseCase,
             saveNewToDatabaseUseCase,
-            updateNewsFromDatabaseUseCase
+            updateNewsFromDatabaseUseCase,
+            loadNewsPostedWhenOfflineUseCase,
+            deleteAllDraftPostsUseCase,
+            deleteDraftPostUseCase
         )
     }
 
@@ -530,5 +543,25 @@ object AppModule {
 
     fun provideSaveCurrentUserInfoUseCase(localRepository: LocalRepository) : SaveCurrentUserInfoUseCase {
         return SaveCurrentUserInfoUseCase(localRepository)
+    }
+
+    fun provideSyncDataUseCase(commonDbRepository: CommonDbRepository) : SyncDataUseCase {
+        return SyncDataUseCase(commonDbRepository)
+    }
+
+    fun provideClearLocalDataUseCase(commonDbRepository: CommonDbRepository) : ClearLocalDataUseCase{
+        return ClearLocalDataUseCase(commonDbRepository)
+    }
+
+    fun provideLoadNewsPostedWhenOfflineUseCase(commonDbRepository: CommonDbRepository) : LoadNewsPostedWhenOfflineUseCase {
+        return LoadNewsPostedWhenOfflineUseCase(commonDbRepository)
+    }
+
+    fun provideDeleteAllDraftPostsUseCase(commonDbRepository: CommonDbRepository) : DeleteAllDraftPostsUseCase{
+        return DeleteAllDraftPostsUseCase(commonDbRepository)
+    }
+
+    fun provideDeleteDraftPostUseCase(commonDbRepository: CommonDbRepository) : DeleteDraftPostUseCase {
+        return DeleteDraftPostUseCase(commonDbRepository)
     }
 }

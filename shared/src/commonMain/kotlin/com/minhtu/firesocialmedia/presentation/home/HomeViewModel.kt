@@ -283,6 +283,14 @@ class HomeViewModel(
         }
     }
 
+    fun clearLocalData() {
+        viewModelScope.launch {
+            withContext(ioDispatcher) {
+                userInteractor.clearLocalData()
+            }
+        }
+    }
+
     //-----------------------------Like and comment function-----------------------------//
     // StateFlow to update UI in Compose
     private var _likedPosts = MutableStateFlow<HashMap<String, Int>>(HashMap())

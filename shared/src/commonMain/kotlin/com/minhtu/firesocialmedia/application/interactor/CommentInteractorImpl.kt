@@ -19,7 +19,7 @@ class CommentInteractorImpl(
     override suspend fun saveComment(
         selectedNewId: String,
         commentId : String,
-        instance : BaseNewsInstance) : Boolean {
+        instance : CommentInstance) : Boolean {
         return saveCommentToDatabaseUseCase.invoke(
             selectedNewId,
             commentId,
