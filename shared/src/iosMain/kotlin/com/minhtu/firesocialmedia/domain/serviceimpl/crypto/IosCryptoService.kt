@@ -3,6 +3,10 @@ package com.minhtu.firesocialmedia.domain.serviceimpl.crypto
 import com.minhtu.firesocialmedia.constants.Constants
 import com.minhtu.firesocialmedia.data.local.service.crypto.CryptoService
 import com.minhtu.firesocialmedia.data.remote.dto.crypto.CredentialsDTO
+import com.minhtu.firesocialmedia.data.remote.dto.user.UserDTO
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.decodeFromString
 
 class IosCryptoService() : CryptoService {
     override fun saveAccount(email: String, password: String) {
@@ -25,5 +29,17 @@ class IosCryptoService() : CryptoService {
 
     override suspend fun getFCMToken(): String {
         return IosCryptoHelper.getFromKeychain(Constants.KEY_FCM_TOKEN) ?: ""
+    }
+
+    override suspend fun saveCurrentUserInfo(user: UserDTO) {
+        val json = Json.encodeToString(user)
+        IosCryptoHelper.saveToKeychain("current_user_info", json)
+    }
+
+    override suspend fun getCurrentUserInfo(): UserDTO? {
+        val json = IosCryptoHelper.getFromKeychain("current_user_info")
+        return json?.takeIf { it.isNotEmpty() }?.let {
+            runCatching { Json.decodeFromString<UserDTO>(it) }.getOrNull()
+        }
     }
 }

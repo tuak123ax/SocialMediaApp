@@ -171,6 +171,11 @@ actual fun getIconPainter(icon: String): Painter? {
     return null // iOS will use the composable fallback instead
 }
 
+actual fun getResId(icon: String): Int {
+    // iOS does not use integer resource IDs like Android; return a sentinel value.
+    return 0
+}
+
 @Composable
 actual fun getIconComposable(icon: String,
                              bgColor : String,
@@ -802,5 +807,10 @@ actual fun setupSignInLauncher(
     platformContext: PlatformContext
 ) {
     // No-op on iOS for Google Sign-In in this project setup
+}
+
+actual fun getUriStringFromLocalPath(localPath: String): String {
+    val url = NSURL.fileURLWithPath(localPath)
+    return url.absoluteString ?: ""
 }
 
