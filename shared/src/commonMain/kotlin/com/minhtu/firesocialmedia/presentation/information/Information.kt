@@ -53,7 +53,7 @@ class Information {
                               loadingViewModel: LoadingViewModel,
                               onNavigateToHomeScreen: () -> Unit){
             val isLoading by loadingViewModel.isLoading.collectAsState()
-            imagePicker.RegisterLauncher { loadingViewModel.hideLoading() }
+            imagePicker.RegisterLauncher({loadingViewModel.hideLoading()})
 
             val addInformationStatus = informationViewModel.addInformationStatus.collectAsState()
             LaunchedEffect(Unit) {
@@ -102,7 +102,7 @@ class Information {
                             .padding(20.dp)
                     )
                     Spacer(modifier = Modifier.Companion.padding(20.dp))
-                    var imageBytes =
+                    val imageBytes =
                         produceState<ByteArray?>(initialValue = null, informationViewModel.avatar) {
                             if (informationViewModel.avatar == Constants.Companion.DEFAULT_AVATAR_URL) {
                                 value = getImageBytesFromDrawable("unknownavatar")
@@ -115,6 +115,7 @@ class Information {
                             imageBytes.value,
                             modifier = avatarModifier
                         )
+                        loadingViewModel.hideLoading()
                     }
                     Spacer(modifier = Modifier.Companion.padding(20.dp))
                     Text(

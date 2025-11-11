@@ -69,6 +69,7 @@ interface CallRepository {
     suspend fun requestCameraAndAudioPermissions(): Boolean
 
     suspend fun requestAudioPermission(): Boolean
+    suspend fun requestCameraPermission() : Boolean
 
     suspend fun sendCallSessionToFirebase(session: AudioCallSession,
                                           sendCallSessionCallBack : Utils.Companion.BasicCallBack)

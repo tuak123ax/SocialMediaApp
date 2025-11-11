@@ -11,6 +11,7 @@ import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.domain.usecases.common.GetUserUseCase
 import com.minhtu.firesocialmedia.domain.usecases.newsfeed.DeleteAllDraftPostsUseCase
 import com.minhtu.firesocialmedia.domain.usecases.newsfeed.DeleteDraftPostUseCase
+import com.minhtu.firesocialmedia.domain.usecases.newsfeed.RequestCameraPermissionUseCase
 import com.minhtu.firesocialmedia.domain.usecases.newsfeed.SaveNewToDatabaseUseCase
 import com.minhtu.firesocialmedia.domain.usecases.newsfeed.UpdateNewsFromDatabaseUseCase
 import com.minhtu.firesocialmedia.domain.usecases.notification.SaveNotificationToDatabaseUseCase
@@ -40,6 +41,7 @@ class UploadNewfeedViewModel(
     private val loadNewsPostedWhenOfflineUseCase : LoadNewsPostedWhenOfflineUseCase,
     private val deleteAllDraftPostsUseCase : DeleteAllDraftPostsUseCase,
     private val deleteDraftPostUseCase: DeleteDraftPostUseCase,
+    private val requestCameraPermissionUseCase: RequestCameraPermissionUseCase,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : ViewModel() {
     var currentUser : UserInstance? = null
@@ -256,6 +258,19 @@ class UploadNewfeedViewModel(
                 removeOfflineNewsById(newId)
             } else {
                 loadNewsPostedWhenOffline()
+            }
+        }
+    }
+
+    fun requestCameraPermission(
+        onGranted: () -> Unit,
+        onDenied: () -> Unit) {
+        viewModelScope.launch(ioDispatcher) {
+            val granted = requestCameraPermissionUseCase.invoke()
+            if(granted) {
+                onGranted()
+            } else {
+                onDenied()
             }
         }
     }

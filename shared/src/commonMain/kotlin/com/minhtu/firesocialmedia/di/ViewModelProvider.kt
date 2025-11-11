@@ -174,6 +174,7 @@ object ViewModelProvider {
         val userRepository = AppModule.provideUserRepository(platformContext)
         val commonDbRepository = AppModule.provideCommonDbRepository(platformContext)
         val newsRepository = AppModule.provideNewsRepository(platformContext)
+        val callRepository = AppModule.provideCallRepository(platformContext)
 
         val saveNotificationToDatabaseUseCase = AppModule.provideSaveNotificationToDatabaseUseCase(notificationRepository)
         val getUserUseCase = AppModule.provideGetUserUseCase(userRepository)
@@ -182,6 +183,7 @@ object ViewModelProvider {
         val loadNewsPostedWhenOfflineUseCase = AppModule.provideLoadNewsPostedWhenOfflineUseCase(commonDbRepository)
         val deleteAllDraftPostsUseCase = AppModule.provideDeleteAllDraftPostsUseCase(commonDbRepository)
         val deleteDraftPostUseCase = AppModule.provideDeleteDraftPostUseCase(commonDbRepository)
+        val requestCameraPermissionUseCase = AppModule.provideRequestCameraPermissionUseCase(callRepository)
         return AppModule.provideUploadNewfeedViewModel(
             getUserUseCase,
             saveNotificationToDatabaseUseCase,
@@ -189,7 +191,8 @@ object ViewModelProvider {
             updateNewsFromDatabaseUseCase,
             loadNewsPostedWhenOfflineUseCase,
             deleteAllDraftPostsUseCase,
-            deleteDraftPostUseCase)
+            deleteDraftPostUseCase,
+            requestCameraPermissionUseCase)
     }
 
     fun createUserInformationViewModel(platformContext : PlatformContext): UserInformationViewModel {

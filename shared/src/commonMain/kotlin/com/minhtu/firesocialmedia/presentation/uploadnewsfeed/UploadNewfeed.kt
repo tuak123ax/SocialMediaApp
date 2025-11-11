@@ -226,7 +226,29 @@ class UploadNewsfeed {
                                 onUploadVideo = {
                                     imagePicker.pickVideo()
                                 },
-                                onDismissRequest = {showMenu = false}
+                                onDismissRequest = {showMenu = false},
+                                onCaptureImage = {
+                                    uploadNewsfeedViewModel.requestCameraPermission(
+                                        onGranted = {
+                                            loadingViewModel.showLoading()
+                                            imagePicker.captureImage()
+                                        },
+                                        onDenied = {
+                                            showToast("Permission denied! Cannot capture image!")
+                                        }
+                                    )
+                                },
+                                onCaptureVideo = {
+                                    uploadNewsfeedViewModel.requestCameraPermission(
+                                        onGranted = {
+                                            loadingViewModel.showLoading()
+                                            imagePicker.captureVideo()
+                                        },
+                                        onDenied = {
+                                            showToast("Permission denied! Cannot capture video!")
+                                        }
+                                    )
+                                }
                             )
                         }
                     }
@@ -269,6 +291,10 @@ class UploadNewsfeed {
                                     }
                                 }
                             }
+                            LaunchedEffect(imageBytes.value) {
+                                //Hide loading after rendered image
+                                loadingViewModel.hideLoading()
+                            }
                         }
                     } else {
                         if(uploadNewsfeedViewModel.video.isNotEmpty()) {
@@ -283,7 +309,7 @@ class UploadNewsfeed {
                                     //Load video from local storage
                                     getUriStringFromLocalPath(uploadNewsfeedViewModel.localPathOfSelectedDraft.value)
                                 } else {
-                                    uploadNewsfeedViewModel.video
+                                    video
                                 }
                                 if(video.isNotEmpty()) {
                                     VideoPlayer(videoUri,
@@ -291,6 +317,10 @@ class UploadNewsfeed {
                                             .height(300.dp)
                                             .fillMaxWidth()
                                             .padding(20.dp))
+                                }
+                                LaunchedEffect(videoUri) {
+                                    //Hide loading after rendered video
+                                    loadingViewModel.hideLoading()
                                 }
                             }
                         }
@@ -410,7 +440,9 @@ class UploadNewsfeed {
         fun DropdownMenuForUpload(expanded : Boolean,
                                   onUploadImage : () -> Unit,
                                   onUploadVideo : () -> Unit,
-                                  onDismissRequest: () -> Unit) {
+                                  onDismissRequest: () -> Unit,
+                                  onCaptureImage : () -> Unit,
+                                  onCaptureVideo : () -> Unit) {
             DropdownMenu(
                 expanded = expanded,
                 onDismissRequest = onDismissRequest
@@ -427,6 +459,17 @@ class UploadNewsfeed {
                         }
                 )
                 DropdownMenuItem(
+                    text = { Text("Capture Image") },
+                    onClick = {
+                        onCaptureImage()
+                        onDismissRequest()
+                    },
+                    modifier = Modifier.testTag(TestTag.TAG_BUTTON_CAPTUREIMAGE)
+                        .semantics{
+                            contentDescription = TestTag.TAG_BUTTON_CAPTUREIMAGE
+                        }
+                )
+                DropdownMenuItem(
                     text = { Text("Upload Video") },
                     onClick = {
                         onUploadVideo()
@@ -435,6 +478,17 @@ class UploadNewsfeed {
                     modifier = Modifier.testTag(TestTag.TAG_BUTTON_SELECTVIDEO)
                         .semantics{
                             contentDescription = TestTag.TAG_BUTTON_SELECTVIDEO
+                        }
+                )
+                DropdownMenuItem(
+                    text = { Text("Capture Video") },
+                    onClick = {
+                        onCaptureVideo()
+                        onDismissRequest()
+                    },
+                    modifier = Modifier.testTag(TestTag.TAG_BUTTON_CAPTUREVIDEO)
+                        .semantics{
+                            contentDescription = TestTag.TAG_BUTTON_CAPTUREVIDEO
                         }
                 )
             }

@@ -72,6 +72,7 @@ import com.minhtu.firesocialmedia.domain.usecases.information.CheckCalleeAvailab
 import com.minhtu.firesocialmedia.domain.usecases.information.SaveSignUpInformationUseCase
 import com.minhtu.firesocialmedia.domain.usecases.newsfeed.DeleteAllDraftPostsUseCase
 import com.minhtu.firesocialmedia.domain.usecases.newsfeed.DeleteDraftPostUseCase
+import com.minhtu.firesocialmedia.domain.usecases.newsfeed.RequestCameraPermissionUseCase
 import com.minhtu.firesocialmedia.domain.usecases.newsfeed.SaveNewToDatabaseUseCase
 import com.minhtu.firesocialmedia.domain.usecases.newsfeed.UpdateNewsFromDatabaseUseCase
 import com.minhtu.firesocialmedia.domain.usecases.notification.DeleteNotificationFromDatabaseUseCase
@@ -398,6 +399,9 @@ object AppModule {
     fun provideUpdateNewsFromDatabaseUseCase(newsRepository: NewsRepository) : UpdateNewsFromDatabaseUseCase {
         return UpdateNewsFromDatabaseUseCase(newsRepository)
     }
+    fun provideRequestCameraPermissionUseCase(callRepository: CallRepository) : RequestCameraPermissionUseCase {
+        return RequestCameraPermissionUseCase(callRepository)
+    }
     fun provideUploadNewfeedViewModel(
         getUserUseCase: GetUserUseCase,
         saveNotificationToDatabaseUseCase: SaveNotificationToDatabaseUseCase,
@@ -405,7 +409,8 @@ object AppModule {
         updateNewsFromDatabaseUseCase: UpdateNewsFromDatabaseUseCase,
         loadNewsPostedWhenOfflineUseCase: LoadNewsPostedWhenOfflineUseCase,
         deleteAllDraftPostsUseCase: DeleteAllDraftPostsUseCase,
-        deleteDraftPostUseCase: DeleteDraftPostUseCase): UploadNewfeedViewModel {
+        deleteDraftPostUseCase: DeleteDraftPostUseCase,
+        requestCameraPermissionUseCase: RequestCameraPermissionUseCase): UploadNewfeedViewModel {
         return UploadNewfeedViewModel(
             getUserUseCase,
             saveNotificationToDatabaseUseCase,
@@ -413,7 +418,8 @@ object AppModule {
             updateNewsFromDatabaseUseCase,
             loadNewsPostedWhenOfflineUseCase,
             deleteAllDraftPostsUseCase,
-            deleteDraftPostUseCase
+            deleteDraftPostUseCase,
+            requestCameraPermissionUseCase
         )
     }
 

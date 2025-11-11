@@ -188,6 +188,10 @@ class CallRepositoryImpl(
         return permissionManager.requestAudioPermission()
     }
 
+    override suspend fun requestCameraPermission(): Boolean {
+        return permissionManager.requestCameraPermission()
+    }
+
     override suspend fun sendCallSessionToFirebase(
         session: AudioCallSession,
         sendCallSessionCallBack: Utils.Companion.BasicCallBack

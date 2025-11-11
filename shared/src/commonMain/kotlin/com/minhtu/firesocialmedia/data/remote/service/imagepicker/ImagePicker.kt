@@ -11,4 +11,6 @@ interface ImagePicker {
     suspend fun loadImageBytes(uri: String): ByteArray?
     @Composable
     fun ByteArrayImage(byteArray: ByteArray?, modifier: Modifier)
+    fun captureImage()
+    fun captureVideo()
 }

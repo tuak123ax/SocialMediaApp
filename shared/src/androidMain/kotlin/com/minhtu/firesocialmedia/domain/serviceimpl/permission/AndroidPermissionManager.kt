@@ -25,6 +25,11 @@ class AndroidPermissionManager(private val activity: Activity?) : PermissionMana
             Manifest.permission.RECORD_AUDIO))
     }
 
+    override suspend fun requestCameraPermission(): Boolean {
+        return requestPermissions(arrayOf(
+            Manifest.permission.CAMERA))
+    }
+
     private suspend fun requestPermissions(permissions: Array<String>): Boolean {
         return suspendCancellableCoroutine { cont ->
             continuation = cont
