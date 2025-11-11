@@ -301,7 +301,21 @@ class CommonDbRepositoryImpl(
         return localDatabaseService.loadNewsPostedWhenOffline().toDomain()
     }
 
-    override suspend fun deleteAllDraftPosts() {
-        return localDatabaseService.deleteAllDraftPosts()
+    override suspend fun deleteAllDraftPosts() : Boolean {
+        return try {
+            localDatabaseService.deleteAllDraftPosts()
+            true
+        } catch (ex : Exception) {
+            false
+        }
+    }
+
+    override suspend fun deleteDraftPost(newId : String) : Boolean{
+         return try{
+             localDatabaseService.deleteDraftPost(newId)
+             true
+         } catch (ex : Exception) {
+             false
+         }
     }
 }

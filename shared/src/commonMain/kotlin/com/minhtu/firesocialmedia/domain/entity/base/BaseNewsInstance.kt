@@ -1,8 +1,5 @@
 package com.minhtu.firesocialmedia.domain.entity.base
 
-import com.minhtu.firesocialmedia.data.local.entity.CommentEntity
-import kotlin.String
-
 interface BaseNewsInstance {
     val id: String
     val posterId : String

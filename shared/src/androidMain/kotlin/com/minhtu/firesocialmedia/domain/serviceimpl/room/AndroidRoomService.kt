@@ -2,7 +2,6 @@ package com.minhtu.firesocialmedia.domain.serviceimpl.room
 
 import android.content.Context
 import androidx.core.uri.Uri
-import coil3.toUri
 import com.minhtu.firesocialmedia.data.local.dao.CommentDao
 import com.minhtu.firesocialmedia.data.local.dao.NewsDao
 import com.minhtu.firesocialmedia.data.local.dao.NotificationDao

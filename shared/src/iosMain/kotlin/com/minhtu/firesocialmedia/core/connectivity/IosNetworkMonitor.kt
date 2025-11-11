@@ -1,13 +1,10 @@
 package com.minhtu.firesocialmedia.core.connectivity
 
 import com.minhtu.firesocialmedia.domain.core.NetworkMonitor
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.launch
 import platform.Network.*
 
 class IosNetworkMonitor : NetworkMonitor {
@@ -26,5 +23,6 @@ class IosNetworkMonitor : NetworkMonitor {
         }
     }.distinctUntilChanged()
 }
+
 
 

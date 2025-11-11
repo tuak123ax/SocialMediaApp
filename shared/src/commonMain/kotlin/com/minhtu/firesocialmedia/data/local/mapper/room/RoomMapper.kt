@@ -10,7 +10,6 @@ import com.minhtu.firesocialmedia.domain.entity.comment.CommentInstance
 import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
 import com.minhtu.firesocialmedia.domain.entity.notification.NotificationInstance
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
-import kotlin.String
 
 fun List<UserInstance?>.toUserEntity() : List<UserEntity> {
     return this.mapNotNull {

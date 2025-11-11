@@ -1,7 +1,6 @@
 package com.minhtu.firesocialmedia.domain.usecases.sync
 
 import com.minhtu.firesocialmedia.domain.repository.CommonDbRepository
-import kotlinx.coroutines.delay
 
 class SyncDataUseCase(
     private val commonDbRepository: CommonDbRepository

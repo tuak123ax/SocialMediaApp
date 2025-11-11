@@ -1,5 +1,8 @@
 package com.minhtu.firesocialmedia.presentation.uploadnewsfeed
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -35,6 +38,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.ProvidedValue
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
@@ -64,6 +68,7 @@ import com.minhtu.firesocialmedia.presentation.loading.Loading
 import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
 import com.minhtu.firesocialmedia.utils.UiUtils
 import com.seiko.imageloader.ui.AutoSizeImage
+import kotlinx.coroutines.delay
 
 class UploadNewsfeed {
     companion object{
@@ -127,6 +132,18 @@ class UploadNewsfeed {
             }
 
             val newsPostedWhenOffline by uploadNewsfeedViewModel.newsPostedWhenOffline.collectAsState()
+
+            val deleteDraftState by uploadNewsfeedViewModel.deleteDraftStatus.collectAsState()
+            LaunchedEffect(deleteDraftState) {
+                if(deleteDraftState != null) {
+                    if(deleteDraftState!!) {
+                        showToast("Delete successfully!!!")
+                    } else {
+                        showToast("Error happened! Load draft posts again!")
+                    }
+                    uploadNewsfeedViewModel.resetDeleteDraftStatus()
+                }
+            }
 
             val clickBackButton by uploadNewsfeedViewModel.clickBackButton.collectAsState()
             val showDialog = remember { mutableStateOf(false) }
@@ -374,6 +391,9 @@ class UploadNewsfeed {
                     },
                     onDeleteAll = {
                         uploadNewsfeedViewModel.deleteAllDraftPosts()
+                    },
+                    onDeleteANew = { new ->
+                        uploadNewsfeedViewModel.deleteDraftPost(new.id)
                     }
                 )
                 if (isLoading) {
@@ -427,7 +447,8 @@ class UploadNewsfeed {
             drafts: List<NewsInstance>,
             onDismiss: () -> Unit,
             onSelect: (NewsInstance) -> Unit,
-            onDeleteAll : () -> Unit
+            onDeleteAll : () -> Unit,
+            onDeleteANew : (NewsInstance) -> Unit
         ) {
             if (!visible) return
 
@@ -458,6 +479,9 @@ class UploadNewsfeed {
 
                         val listState = rememberLazyListState()
                         if(drafts.isNotEmpty()) {
+                            val sortedDrafts by remember(drafts) {
+                                derivedStateOf { drafts.sortedByDescending { it.timePosted } }
+                            }
                             LazyColumn(
                                 state = listState,
                                 modifier = Modifier
@@ -465,12 +489,37 @@ class UploadNewsfeed {
                                     .weight(1f, fill = true), // list scrolls within remaining space
                                 contentPadding = PaddingValues(vertical = 8.dp)
                             ) {
-                                items(drafts, key = { it.id }) { draft ->
-                                    UiUtils.SimpleNewsCard(
-                                        draft,
-                                        localImageLoaderValue,
-                                        onSelected = { onSelect(draft) }
-                                    )
+                                items(sortedDrafts, key = { it.id }) { draft ->
+                                    //State to track visibility of a notification
+                                    var visible by remember { mutableStateOf(true) }
+                                    //State to track to delay before delete data from db
+                                    var pendingDelete by remember { mutableStateOf(false) }
+                                    if (pendingDelete) {
+                                        // wait for animation before removing
+                                        LaunchedEffect(Unit) {
+                                            delay(200)
+                                            onDeleteANew(draft)
+                                        }
+                                    }
+                                    AnimatedVisibility(
+                                        visible = visible,
+                                        exit = slideOutHorizontally(
+                                            targetOffsetX = { fullWidth -> fullWidth },
+                                            animationSpec = tween(durationMillis = 200)
+                                        )
+                                    ) {
+                                        UiUtils.SimpleNewsCardSlideable(
+                                            draft,
+                                            localImageLoaderValue,
+                                            onSelected = {
+                                                onSelect(draft)
+                                            },
+                                            onDelete = {
+                                                visible = false
+                                                pendingDelete = true
+                                            }
+                                        )
+                                    }
                                 }
                             }
                         } else {

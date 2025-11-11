@@ -2,10 +2,10 @@ package com.minhtu.firesocialmedia.domain.usecases.newsfeed
 
 import com.minhtu.firesocialmedia.domain.repository.CommonDbRepository
 
-class DeleteAllDraftPostsUseCase(
+class DeleteDraftPostUseCase(
     private val commonDbRepository: CommonDbRepository
 ) {
-    suspend operator fun invoke() : Boolean {
-        return commonDbRepository.deleteAllDraftPosts()
+    suspend operator fun invoke(newId : String) : Boolean {
+        return commonDbRepository.deleteDraftPost(newId)
     }
 }

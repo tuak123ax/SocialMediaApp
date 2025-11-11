@@ -71,6 +71,7 @@ import com.minhtu.firesocialmedia.domain.usecases.home.UpdateLikeCountForNewUseC
 import com.minhtu.firesocialmedia.domain.usecases.information.CheckCalleeAvailableUseCase
 import com.minhtu.firesocialmedia.domain.usecases.information.SaveSignUpInformationUseCase
 import com.minhtu.firesocialmedia.domain.usecases.newsfeed.DeleteAllDraftPostsUseCase
+import com.minhtu.firesocialmedia.domain.usecases.newsfeed.DeleteDraftPostUseCase
 import com.minhtu.firesocialmedia.domain.usecases.newsfeed.SaveNewToDatabaseUseCase
 import com.minhtu.firesocialmedia.domain.usecases.newsfeed.UpdateNewsFromDatabaseUseCase
 import com.minhtu.firesocialmedia.domain.usecases.notification.DeleteNotificationFromDatabaseUseCase
@@ -403,14 +404,16 @@ object AppModule {
         saveNewToDatabaseUseCase: SaveNewToDatabaseUseCase,
         updateNewsFromDatabaseUseCase: UpdateNewsFromDatabaseUseCase,
         loadNewsPostedWhenOfflineUseCase: LoadNewsPostedWhenOfflineUseCase,
-        deleteAllDraftPostsUseCase: DeleteAllDraftPostsUseCase): UploadNewfeedViewModel {
+        deleteAllDraftPostsUseCase: DeleteAllDraftPostsUseCase,
+        deleteDraftPostUseCase: DeleteDraftPostUseCase): UploadNewfeedViewModel {
         return UploadNewfeedViewModel(
             getUserUseCase,
             saveNotificationToDatabaseUseCase,
             saveNewToDatabaseUseCase,
             updateNewsFromDatabaseUseCase,
             loadNewsPostedWhenOfflineUseCase,
-            deleteAllDraftPostsUseCase
+            deleteAllDraftPostsUseCase,
+            deleteDraftPostUseCase
         )
     }
 
@@ -556,5 +559,9 @@ object AppModule {
 
     fun provideDeleteAllDraftPostsUseCase(commonDbRepository: CommonDbRepository) : DeleteAllDraftPostsUseCase{
         return DeleteAllDraftPostsUseCase(commonDbRepository)
+    }
+
+    fun provideDeleteDraftPostUseCase(commonDbRepository: CommonDbRepository) : DeleteDraftPostUseCase {
+        return DeleteDraftPostUseCase(commonDbRepository)
     }
 }
