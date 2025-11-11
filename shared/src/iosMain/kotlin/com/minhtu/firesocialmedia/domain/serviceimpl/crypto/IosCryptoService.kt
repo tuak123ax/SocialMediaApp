@@ -4,9 +4,8 @@ import com.minhtu.firesocialmedia.constants.Constants
 import com.minhtu.firesocialmedia.data.local.service.crypto.CryptoService
 import com.minhtu.firesocialmedia.data.remote.dto.crypto.CredentialsDTO
 import com.minhtu.firesocialmedia.data.remote.dto.user.UserDTO
-import kotlinx.serialization.json.Json
 import kotlinx.serialization.encodeToString
-import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
 
 class IosCryptoService() : CryptoService {
     override fun saveAccount(email: String, password: String) {

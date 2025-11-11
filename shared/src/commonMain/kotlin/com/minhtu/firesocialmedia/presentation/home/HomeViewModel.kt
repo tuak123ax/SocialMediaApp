@@ -238,6 +238,7 @@ class HomeViewModel(
     private val _allUserFriends = MutableStateFlow<List<UserInstance?>>(emptyList())
     val allUserFriends = _allUserFriends.asStateFlow()
     fun updateUserFriends(users: ArrayList<UserInstance?>) {
+        logMessage("updateUserFriends", { "number: "+ users.size })
         _allUserFriends.value = users
         //Add loaded user friends to cache
         val loadedFriendsMap = users
