@@ -12,4 +12,9 @@ class IosPermissionManager : PermissionManager {
         // iOS implementation will be added later
         return true
     }
+    
+    override suspend fun requestCameraPermission(): Boolean {
+        // iOS implementation will be added later
+        return true
+    }
 }

@@ -470,6 +470,20 @@ class IosImagePicker(
                 }
             }
         }
+        
+        override fun captureImage() {
+            // Placeholder: camera capture not implemented on iOS yet.
+            showToast("Camera capture not implemented on iOS yet")
+            // Fallback to picking from photo library
+            pickImage()
+        }
+        
+        override fun captureVideo() {
+            // Placeholder: video capture not implemented on iOS yet.
+            showToast("Video capture not implemented on iOS yet")
+            // Fallback to picking from photo library
+            pickVideo()
+        }
     }
 
     private val mainScope = MainScope()
