@@ -58,53 +58,68 @@ jobs:
           if-no-files-found: error
 
   ios:
-    if: ${{ github.event.inputs.platform == 'ios' || github.event.inputs.platform == 'both' }}
-    name: iOS IPA
-    runs-on: macos-14
-    env:
-      WORKSPACE: Fire_Social_Media/Fire_Social_Media.xcworkspace
-      SCHEME: Fire_Social_Media                        
-      CONFIGURATION: Release
-      ARCHIVE_PATH: build/ios/App.xcarchive
-      EXPORT_PATH: build/ios/export
-    steps:
-      - name: Checkout selected ref
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.inputs.branch }}
+  if: ${{ github.event.inputs.platform == 'ios' || github.event.inputs.platform == 'both' }}
+  name: iOS IPA
+  runs-on: macos-14
+  env:
+    WORKSPACE: Fire_Social_Media.xcworkspace   # <- only the name now
+    SCHEME: Fire_Social_Media                        
+    CONFIGURATION: Release
+    ARCHIVE_PATH: build/ios/App.xcarchive
+    EXPORT_PATH: build/ios/export
 
-      - uses: actions/setup-java@v4
-        with: { distribution: temurin, java-version: '21' }
+  steps:
+    - name: Checkout selected ref
+    # Make sure this IS the latest version in `main`
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ github.event.inputs.branch }}
 
-      - name: Install CocoaPods
-        run: |
-          sudo gem install cocoapods
-          pod --version
+    - uses: actions/setup-java@v4
+      with:
+        distribution: temurin
+        java-version: '21'
 
-      - name: Pod install
-        working-directory: Fire_Social_Media
-        run: pod install --repo-update
+    - name: Install CocoaPods
+      run: |
+        sudo gem install cocoapods
+        pod --version
 
-      # 👉 add your signing steps here (import certs/profiles or fastlane match)
+    - name: Debug repo structure
+      run: |
+        pwd
+        ls
+        ls Fire_Social_Media || echo "Fire_Social_Media not found"
 
-      - name: Archive
-        run: |
-          xcodebuild \
-            -workspace "$WORKSPACE" \
-            -scheme "$SCHEME" \
-            -configuration "$CONFIGURATION" \
-            -archivePath "$ARCHIVE_PATH" \
-            clean archive -quiet
+    - name: Pod install
+      working-directory: Fire_Social_Media
+      run: pod install --repo-update
 
-      - name: Export IPA (requires exportOptions.plist/signing)
-        run: |
-          mkdir -p "$EXPORT_PATH"
-          # replace with your export command + plist
-          # xcodebuild -exportArchive -archivePath "$ARCHIVE_PATH" -exportOptionsPlist path/to/exportOptions.plist -exportPath "$EXPORT_PATH" -quiet
+    - name: Archive
+      working-directory: Fire_Social_Media
+      run: |
+        xcodebuild \
+          -workspace "$WORKSPACE" \
+          -scheme "$SCHEME" \
+          -configuration "$CONFIGURATION" \
+          -archivePath "$ARCHIVE_PATH" \
+          clean archive -quiet
 
-      - name: Upload IPA
-        uses: actions/upload-artifact@v4
-        with:
-          name: ios-ipa
-          path: build/ios/export/*.ipa
-          if-no-files-found: warn
+    - name: Export IPA
+      working-directory: Fire_Social_Media
+      run: |
+        mkdir -p "$EXPORT_PATH"
+        # You MUST provide a real exportOptions.plist here
+        # Example (adjust path & content yourself):
+        # xcodebuild -exportArchive \
+        #   -archivePath "$ARCHIVE_PATH" \
+        #   -exportOptionsPlist ./exportOptions.plist \
+        #   -exportPath "$EXPORT_PATH" \
+        #   -quiet
+
+    - name: Upload IPA
+      uses: actions/upload-artifact@v4
+      with:
+        name: ios-ipa
+        path: Fire_Social_Media/build/ios/export/*.ipa
+        if-no-files-found: warn
