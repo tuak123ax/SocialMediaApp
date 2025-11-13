@@ -42,23 +42,6 @@ jobs:
       - name: Accept licenses
         run: yes | sdkmanager --licenses
 
-      - name: Debug PNG resources
-        run: |
-          echo "Searching for problematic PNGs..."
-          find . -name "more_horiz.png" -o -name "visibility.png" -o -name "arrow_back.png" || true
-
-          echo ""
-          echo "Details:"
-          for f in $(find . -name "more_horiz.png" -o -name "visibility.png" -o -name "arrow_back.png"); do
-            echo "---- $f ----"
-            ls -l "$f"
-            echo "file type:"
-            file "$f" || true
-            echo "first lines (if it is a text / LFS pointer):"
-            head -n 5 "$f" || true
-            echo ""
-          done
-
       - name: Build
         run: |
           if [ "${{ github.event.inputs.build_type }}" = "release" ]; then
@@ -79,8 +62,8 @@ jobs:
     name: iOS IPA
     runs-on: macos-14
     env:
-      WORKSPACE: iosApp/YourApp.xcworkspace   # TODO: set real path
-      SCHEME: YourApp                         # TODO: set real scheme
+      WORKSPACE: Fire_Social_Media/Fire_Social_Media.xcworkspace
+      SCHEME: Fire_Social_Media                        
       CONFIGURATION: Release
       ARCHIVE_PATH: build/ios/App.xcarchive
       EXPORT_PATH: build/ios/export
@@ -88,10 +71,10 @@ jobs:
       - name: Checkout selected ref
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.inputs.branch }}   # 👈 key line
+          ref: ${{ github.event.inputs.branch }}
 
       - uses: actions/setup-java@v4
-        with: { distribution: temurin, java-version: '17' }
+        with: { distribution: temurin, java-version: '21' }
 
       - name: Install CocoaPods
         run: |
