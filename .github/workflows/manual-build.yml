@@ -112,7 +112,7 @@ jobs:
       - name: Pod install
         working-directory: Fire_Social_Media
         run: |
-          ./gradlew :shared:generateDummyFramework
+          ../gradlew :shared:generateDummyFramework
           pod install --repo-update
 
       - name: Archive
