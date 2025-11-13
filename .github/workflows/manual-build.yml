@@ -115,6 +115,12 @@ jobs:
           ../gradlew :shared:generateDummyFramework
           pod install --repo-update
 
+      - name: Import signing certs
+        uses: apple-actions/import-codesign-certs@v2
+        with:
+          p12-file-base64: ${{ secrets.IOS_CERT_BASE64 }}
+          p12-password: ${{ secrets.IOS_CERT_PASSWORD }}
+          mobileprovision-base64: ${{ secrets.IOS_PROFILE_BASE64 }}
       - name: Archive
         working-directory: Fire_Social_Media
         run: |
