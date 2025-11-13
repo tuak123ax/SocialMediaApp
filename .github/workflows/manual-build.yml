@@ -82,7 +82,7 @@ jobs:
           pod --version
 
       - name: Pod install
-        working-directory: iosApp
+        working-directory: Fire_Social_Media
         run: pod install --repo-update
 
       # 👉 add your signing steps here (import certs/profiles or fastlane match)
