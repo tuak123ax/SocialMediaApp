@@ -213,7 +213,8 @@ actual object TokenStorage {
 
 actual inline fun logMessage(tag: String, message: () -> String) {
     if (BuildConfig.DEBUG) {
-        Log.e(tag, message())
+        // Use println to avoid android.util.Log which isn't available in unit tests
+        println("$tag: ${message()}")
     }
 }
 

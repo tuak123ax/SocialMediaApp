@@ -44,22 +44,13 @@ jobs:
       - name: Accept licenses
         run: yes | sdkmanager --licenses
 
-      - name: Debug PNG resources
+      - name: Run unit tests
         run: |
-          echo "Searching for problematic PNGs..."
-          find . -name "more_horiz.png" -o -name "visibility.png" -o -name "arrow_back.png" || true
-
-          echo ""
-          echo "Details:"
-          for f in $(find . -name "more_horiz.png" -o -name "visibility.png" -o -name "arrow_back.png"); do
-            echo "---- $f ----"
-            ls -l "$f"
-            echo "file type:"
-            file "$f" || true
-            echo "first lines (if it is a text / LFS pointer):"
-            head -n 5 "$f" || true
-            echo ""
-          done
+          echo "Start running unit tests"
+          echo "Running unit tests for shared module"
+          ./gradlew :shared:testDebugUnitTest --no-daemon
+          echo "Running unit tests for android app (skip kapt to avoid processor errors)"
+          ./gradlew :Fire_Social_Media:testDebugUnitTest -x :Fire_Social_Media:kaptDebugKotlin -x :Fire_Social_Media:kaptDebugUnitTestKotlin -x :Fire_Social_Media:kaptGenerateStubsDebugKotlin -x :Fire_Social_Media:kaptGenerateStubsDebugUnitTestKotlin --no-daemon
 
       - name: Build
         run: |
