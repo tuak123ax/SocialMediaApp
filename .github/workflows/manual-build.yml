@@ -1,0 +1,141 @@
+name: Manual KMM Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: "Which branch/tag/SHA to build"
+        default: "main"
+      platform:
+        description: "What to build?"
+        type: choice
+        options: [android, ios, both]
+        default: both
+      build_type:
+        description: "Debug or Release"
+        type: choice
+        options: [debug, release]
+        default: release
+
+jobs:
+  android:
+    if: ${{ github.event.inputs.platform == 'android' || github.event.inputs.platform == 'both' }}
+    name: Android APK
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout selected ref
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.branch }}
+          lfs: true
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Accept licenses
+        run: yes | sdkmanager --licenses
+
+      - name: Run unit tests
+        run: |
+          echo "Start running unit tests"
+          echo "Running unit tests for shared module"
+          ./gradlew :shared:testDebugUnitTest --no-daemon
+          echo "Running unit tests for android app (skip kapt to avoid processor errors)"
+          ./gradlew :Fire_Social_Media:testDebugUnitTest -x :Fire_Social_Media:kaptDebugKotlin -x :Fire_Social_Media:kaptDebugUnitTestKotlin -x :Fire_Social_Media:kaptGenerateStubsDebugKotlin -x :Fire_Social_Media:kaptGenerateStubsDebugUnitTestKotlin --no-daemon
+
+      - name: Build
+        run: |
+          if [ "${{ github.event.inputs.build_type }}" = "release" ]; then
+            ./gradlew assembleRelease --stacktrace
+          else
+            ./gradlew assembleDebug --stacktrace
+          fi
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-${{ github.event.inputs.build_type }}-apk
+          path: '**/build/outputs/apk/${{ github.event.inputs.build_type }}/*.apk'
+          if-no-files-found: error
+
+  ios:
+    if: ${{ github.event.inputs.platform == 'ios' || github.event.inputs.platform == 'both' }}
+    name: iOS IPA
+    runs-on: macos-14
+    env:
+      WORKSPACE: Fire_Social_Media.xcworkspace   # workspace name only
+      SCHEME: Fire_Social_Media
+      CONFIGURATION: Release
+      ARCHIVE_PATH: build/ios/App.xcarchive
+      EXPORT_PATH: build/ios/export
+
+    steps:
+      - name: Checkout selected ref
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.branch }}
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Install CocoaPods
+        run: |
+          sudo gem install cocoapods
+          pod --version
+
+      - name: Debug repo structure
+        run: |
+          pwd
+          ls
+          ls Fire_Social_Media || echo "Fire_Social_Media not found"
+
+      - name: Pod install
+        working-directory: Fire_Social_Media
+        run: |
+          ../gradlew :shared:generateDummyFramework
+          pod install --repo-update
+
+      - name: Import signing certs
+        uses: apple-actions/import-codesign-certs@v2
+        with:
+          p12-file-base64: ${{ secrets.IOS_CERT_BASE64 }}
+          p12-password: ${{ secrets.IOS_CERT_PASSWORD }}
+          mobileprovision-base64: ${{ secrets.IOS_PROFILE_BASE64 }}
+      - name: Archive
+        working-directory: Fire_Social_Media
+        run: |
+          xcodebuild \
+            -workspace "$WORKSPACE" \
+            -scheme "$SCHEME" \
+            -configuration "$CONFIGURATION" \
+            -archivePath "$ARCHIVE_PATH" \
+            clean archive -quiet
+
+      - name: Export IPA
+        working-directory: Fire_Social_Media
+        run: |
+          mkdir -p "$EXPORT_PATH"
+          # TODO: add real exportOptions.plist and uncomment:
+          # xcodebuild -exportArchive \
+          #   -archivePath "$ARCHIVE_PATH" \
+          #   -exportOptionsPlist ./exportOptions.plist \
+          #   -exportPath "$EXPORT_PATH" \
+          #   -quiet
+
+      - name: Upload IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-ipa
+          path: Fire_Social_Media/build/ios/export/*.ipa
+          if-no-files-found: warn

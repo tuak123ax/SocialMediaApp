@@ -1,13 +1,11 @@
 package com.minhtu.firesocialmedia
 
 import com.minhtu.firesocialmedia.constants.Constants
-import com.minhtu.firesocialmedia.di.AuthServiceMock
-import com.minhtu.firesocialmedia.di.PlatformContextMock
+import com.minhtu.firesocialmedia.domain.entity.forgotpassword.EmailExistResult
+import com.minhtu.firesocialmedia.domain.repository.AuthenticationRepository
+import com.minhtu.firesocialmedia.domain.usecases.forgotpassword.CheckIfEmailExistsUseCase
+import com.minhtu.firesocialmedia.domain.usecases.forgotpassword.SendEmailResetPasswordUseCase
 import com.minhtu.firesocialmedia.presentation.forgotpassword.ForgotPasswordViewModel
-import com.minhtu.firesocialmedia.utils.Utils
-import io.mockative.any
-import io.mockative.eq
-import io.mockative.every
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -20,17 +18,37 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
+private class ForgotFakeAuthRepository : AuthenticationRepository {
+    var emailExistResult: EmailExistResult = EmailExistResult(false, Constants.EMAIL_NOT_EXISTED)
+    var sendResetResult: Boolean = false
+
+    override suspend fun signInWithEmailAndPassword(email: String, password: String) = null
+    override suspend fun saveAccountToLocalStorage(email: String, password: String) {}
+    override suspend fun checkUserExists(email: String) = com.minhtu.firesocialmedia.domain.entity.signin.SignInState(false, null)
+    override suspend fun checkLocalAccount() = null
+    override suspend fun handleSignInGoogleResult(credential: Any) = null
+    override suspend fun signUpWithEmailAndPassword(email: String, password: String) = Result.success(Unit)
+    override suspend fun fetchSignInMethodsForEmail(email: String) = emailExistResult
+    override suspend fun sendPasswordResetEmail(email: String) = sendResetResult
+    override suspend fun clearAccount() {}
+    override suspend fun saveSignUpInformation(userInstance: com.minhtu.firesocialmedia.domain.entity.user.UserInstance) = true
+}
+
 @OptIn(ExperimentalCoroutinesApi::class)
 class ForgotPasswordViewModelTest {
     private val testDispatcher = StandardTestDispatcher()
-    private lateinit var platformContext: PlatformContextMock
-    private lateinit var authService: AuthServiceMock
+    private lateinit var repo: ForgotFakeAuthRepository
+    private lateinit var viewModel: ForgotPasswordViewModel
 
     @BeforeTest
     fun setup() {
         Dispatchers.setMain(testDispatcher)
-        platformContext = PlatformContextMock()
-        authService = AuthServiceMock()
+        repo = ForgotFakeAuthRepository()
+        viewModel = ForgotPasswordViewModel(
+            CheckIfEmailExistsUseCase(repo),
+            SendEmailResetPasswordUseCase(repo),
+            testDispatcher
+        )
     }
 
     @AfterTest
@@ -40,112 +58,75 @@ class ForgotPasswordViewModelTest {
 
     @Test
     fun `test check email exists with empty email trigger fail flow`() = runTest(testDispatcher) {
-        val forgotPasswordViewModel = ForgotPasswordViewModel(testDispatcher)
-        forgotPasswordViewModel.updateEmail("")
-
-        forgotPasswordViewModel.checkIfEmailExists(platformContext)
-
+        viewModel.updateEmail("")
+        viewModel.checkIfEmailExists()
         advanceUntilIdle()
-        val status = forgotPasswordViewModel.emailExisted.value
-        assertEquals(false, status?.first)
-        assertEquals(Constants.EMAIL_EMPTY, status?.second)
+
+        val status = viewModel.emailExisted.value
+        assertEquals(false, status?.exist)
+        assertEquals(Constants.EMAIL_EMPTY, status?.message)
     }
 
     @Test
     fun `test check email exists with email not exist trigger fail flow`() = runTest(testDispatcher) {
-        val forgotPasswordViewModel = ForgotPasswordViewModel(testDispatcher)
-        forgotPasswordViewModel.updateEmail("test@gmail.com")
+        viewModel.updateEmail("test@gmail.com")
+        repo.emailExistResult = EmailExistResult(false, Constants.EMAIL_NOT_EXISTED)
 
-        every { platformContext.auth } returns authService
-        every { authService.fetchSignInMethodsForEmail(eq(forgotPasswordViewModel.email), any()) }
-            .invokes { args ->
-                val callback = args[1] as Utils.Companion.FetchSignInMethodCallback
-                callback.onFailure(Pair(false, Constants.EMAIL_NOT_EXISTED))
-            }
-
-        forgotPasswordViewModel.checkIfEmailExists(platformContext)
-
+        viewModel.checkIfEmailExists()
         advanceUntilIdle()
-        val status = forgotPasswordViewModel.emailExisted.value
-        assertEquals(false, status?.first)
-        assertEquals(Constants.EMAIL_NOT_EXISTED, status?.second)
+
+        val status = viewModel.emailExisted.value
+        assertEquals(false, status?.exist)
+        assertEquals(Constants.EMAIL_NOT_EXISTED, status?.message)
     }
 
     @Test
     fun `test check email exists with server error trigger fail flow`() = runTest(testDispatcher) {
-        val forgotPasswordViewModel = ForgotPasswordViewModel(testDispatcher)
-        forgotPasswordViewModel.updateEmail("test@gmail.com")
+        viewModel.updateEmail("test@gmail.com")
+        repo.emailExistResult = EmailExistResult(false, Constants.EMAIL_SERVER_ERROR)
 
-        every { platformContext.auth } returns authService
-        every { authService.fetchSignInMethodsForEmail(eq(forgotPasswordViewModel.email), any()) }
-            .invokes { args ->
-                val callback = args[1] as Utils.Companion.FetchSignInMethodCallback
-                callback.onFailure(Pair(false, Constants.EMAIL_SERVER_ERROR))
-            }
-
-        forgotPasswordViewModel.checkIfEmailExists(platformContext)
-
+        viewModel.checkIfEmailExists()
         advanceUntilIdle()
-        val status = forgotPasswordViewModel.emailExisted.value
-        assertEquals(false, status?.first)
-        assertEquals(Constants.EMAIL_SERVER_ERROR, status?.second)
+
+        val status = viewModel.emailExisted.value
+        assertEquals(false, status?.exist)
+        assertEquals(Constants.EMAIL_SERVER_ERROR, status?.message)
     }
 
     @Test
     fun `test check email exists trigger success flow`() = runTest(testDispatcher) {
-        val forgotPasswordViewModel = ForgotPasswordViewModel(testDispatcher)
-        forgotPasswordViewModel.updateEmail("test@gmail.com")
+        viewModel.updateEmail("test@gmail.com")
+        repo.emailExistResult = EmailExistResult(true, Constants.EMAIL_EXISTED)
 
-        every { platformContext.auth } returns authService
-        every { authService.fetchSignInMethodsForEmail(eq(forgotPasswordViewModel.email), any()) }
-            .invokes { args ->
-                val callback = args[1] as Utils.Companion.FetchSignInMethodCallback
-                callback.onSuccess(Pair(true, Constants.EMAIL_EXISTED))
-            }
-
-        forgotPasswordViewModel.checkIfEmailExists(platformContext)
-
+        viewModel.checkIfEmailExists()
         advanceUntilIdle()
-        val status = forgotPasswordViewModel.emailExisted.value
-        assertEquals(true, status?.first)
-        assertEquals(Constants.EMAIL_EXISTED, status?.second)
+
+        val status = viewModel.emailExisted.value
+        assertEquals(true, status?.exist)
+        assertEquals(Constants.EMAIL_EXISTED, status?.message)
     }
 
     @Test
     fun `test send email reset password trigger success flow`() = runTest(testDispatcher) {
-        val forgotPasswordViewModel = ForgotPasswordViewModel(testDispatcher)
-        forgotPasswordViewModel.updateEmail("test@gmail.com")
+        viewModel.updateEmail("test@gmail.com")
+        repo.sendResetResult = true
 
-        every { platformContext.auth } returns authService
-        every { authService.sendPasswordResetEmail(eq(forgotPasswordViewModel.email), any()) }
-            .invokes { args ->
-                val callback = args[1] as Utils.Companion.SendPasswordResetEmailCallback
-                callback.onSuccess()
-            }
-
-        forgotPasswordViewModel.sendEmailResetPassword(platformContext)
-
+        viewModel.sendEmailResetPassword()
         advanceUntilIdle()
-        val status = forgotPasswordViewModel.emailSent.value
+
+        val status = viewModel.emailSent.value
         assertEquals(true, status)
     }
 
     @Test
     fun `test send email reset password trigger fail flow`() = runTest(testDispatcher) {
-        val forgotPasswordViewModel = ForgotPasswordViewModel(testDispatcher)
-        forgotPasswordViewModel.updateEmail("test@gmail.com")
+        viewModel.updateEmail("test@gmail.com")
+        repo.sendResetResult = false
 
-        every { platformContext.auth } returns authService
-        every { authService.sendPasswordResetEmail(eq(forgotPasswordViewModel.email), any()) }
-            .invokes { args ->
-                val callback = args[1] as Utils.Companion.SendPasswordResetEmailCallback
-                callback.onFailure()
-            }
-
-        forgotPasswordViewModel.sendEmailResetPassword(platformContext)
-
+        viewModel.sendEmailResetPassword()
         advanceUntilIdle()
-        val status = forgotPasswordViewModel.emailSent.value
+
+        val status = viewModel.emailSent.value
         assertEquals(false, status)
     }
 }
