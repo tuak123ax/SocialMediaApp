@@ -234,10 +234,16 @@ class AndroidDatabaseService(private val context: Context) : DatabaseService {
             .getReference(path)
             .orderByChild("timePosted")
             .let { query ->
-                if (lastTimePosted != null && lastKey != null) {
-                    query.endBefore(lastTimePosted, lastKey)
-                } else {
-                    query
+                when {
+                    lastTimePosted != null && !lastKey.isNullOrBlank() -> {
+                        // Use both value and key for stable pagination when key is valid
+                        query.endBefore(lastTimePosted, lastKey)
+                    }
+                    lastTimePosted != null -> {
+                        // Fallback: paginate by value only when key is null/blank
+                        query.endBefore(lastTimePosted)
+                    }
+                    else -> query
                 }
             }
             .limitToLast(number)

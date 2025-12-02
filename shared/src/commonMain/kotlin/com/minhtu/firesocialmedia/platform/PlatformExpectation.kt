@@ -9,6 +9,7 @@ import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import com.minhtu.firesocialmedia.data.remote.service.imagepicker.ImagePicker
 import com.minhtu.firesocialmedia.di.PlatformContext
+import com.minhtu.firesocialmedia.domain.entity.home.deeplinks.ShareApp
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.presentation.signin.SignInViewModel
 import com.russhwolf.settings.Settings
@@ -113,6 +114,9 @@ expect object MainApplication {
     fun MainApp(context: Any, platformContext: PlatformContext)
 
     @Composable
+    fun MainAppWithDeepLink(context: Any, deepLink : String, platformContext: PlatformContext)
+
+    @Composable
     fun MainAppFromNotification(context: Any,
                                 platformContext: PlatformContext,
                                 sessionId : String?,
@@ -130,6 +134,11 @@ expect fun SetUpNavigation(context : Any,
                            sessionId : String?,
                            callerId : String?,
                            calleeId : String?)
+
+@Composable
+expect fun SetUpNavigationWithDeepLink(context : Any,
+                                       deepLink: String,
+                                        platformContext: PlatformContext)
 
 object SharedPushHandler {
     fun handlePushNotification(payload: Map<String, Any?>) {
@@ -175,3 +184,7 @@ expect fun rememberNavigationHandler(navController: Any): com.minhtu.firesocialm
 expect fun <T : Any> platformViewModel(key: String? = null, factory: () -> T): T
 
 expect fun getUriStringFromLocalPath(localPath : String) : String
+
+expect suspend fun queryShareApps(text: String): MutableList<ShareApp>
+
+expect fun launchShareAppWithDeepLink(app : ShareApp, deepLink : String)

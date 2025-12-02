@@ -207,22 +207,18 @@ class HomeViewModel(
 
     val _getAllNotificationsOfCurrentUser = mutableStateOf(false)
     val getAllNotificationsOfCurrentUser = _getAllNotificationsOfCurrentUser
-    fun getAllNotificationsOfUser() {
-        viewModelScope.launch {
-            withContext(ioDispatcher) {
-                val currentUserId = userInteractor.getCurrentUserId()
-                if(currentUserId != null) {
-                    val notifications = notificationInteractor.allNotificationsOf(
-                        currentUserId)
-                    if(notifications != null) {
-                        listNotificationOfCurrentUser.clear()
-                        listNotificationOfCurrentUser.addAll(notifications)
-                        updateNotifications(ArrayList(listNotificationOfCurrentUser.toList()))
-                        _getAllNotificationsOfCurrentUser.value = true
-                    } else {
-                        _getAllNotificationsOfCurrentUser.value = false
-                    }
-                }
+    suspend fun getAllNotificationsOfUser() {
+        val currentUserId = userInteractor.getCurrentUserId()
+        if(currentUserId != null) {
+            val notifications = notificationInteractor.allNotificationsOf(
+                currentUserId)
+            if(notifications != null) {
+                listNotificationOfCurrentUser.clear()
+                listNotificationOfCurrentUser.addAll(notifications)
+                updateNotifications(ArrayList(listNotificationOfCurrentUser.toList()))
+                _getAllNotificationsOfCurrentUser.value = true
+            } else {
+                _getAllNotificationsOfCurrentUser.value = false
             }
         }
     }
@@ -565,5 +561,10 @@ class HomeViewModel(
         if(name.isBlank()) return emptyList()
         val resultList = userInteractor.searchUserByName(name)
         return resultList ?: emptyList()
+    }
+
+    //*********************Share**************************//
+    fun clickShareButton(news : NewsInstance) {
+
     }
 }

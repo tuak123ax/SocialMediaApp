@@ -39,6 +39,14 @@ actual object MainApplication {
         // iOS implementation for notification handling
         // This will be implemented when notification handling is needed
     }
+
+    @Composable
+    actual fun MainAppWithDeepLink(
+        context: Any,
+        deepLink: String,
+        platformContext: PlatformContext
+    ) {
+    }
 }
 
 

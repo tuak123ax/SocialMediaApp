@@ -25,11 +25,13 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.eygraber.uri.Uri
 import com.minhtu.firesocialmedia.di.AppModule
 import com.minhtu.firesocialmedia.di.PlatformContext
 import com.minhtu.firesocialmedia.di.ViewModelProvider
 import com.minhtu.firesocialmedia.domain.entity.call.OfferAnswer
 import com.minhtu.firesocialmedia.domain.entity.call.SharedCallData
+import com.minhtu.firesocialmedia.domain.entity.home.deeplinks.DeepLinksData
 import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.platform.generateImageLoader
@@ -58,6 +60,7 @@ import com.minhtu.firesocialmedia.presentation.navigationscreen.notification.Not
 import com.minhtu.firesocialmedia.presentation.navigationscreen.notification.NotificationViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.Settings
 import com.minhtu.firesocialmedia.presentation.postinformation.PostInformation
+import com.minhtu.firesocialmedia.presentation.postinformation.PostInformationViewModel
 import com.minhtu.firesocialmedia.presentation.search.Search
 import com.minhtu.firesocialmedia.presentation.search.SearchViewModel
 import com.minhtu.firesocialmedia.presentation.showimage.ShowImage
@@ -102,6 +105,7 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
     val showImageViewModel : ShowImageViewModel = platformViewModel { ViewModelProvider.createShowImageViewModel(platformContext) }
     val notificationViewModel : NotificationViewModel = platformViewModel { ViewModelProvider.createNotificationViewModel(platformContext) }
     val homeViewModel: HomeViewModel = platformViewModel { ViewModelProvider.createHomeViewModel(platformContext) }
+    val postInformationViewModel : PostInformationViewModel = platformViewModel { ViewModelProvider.createPostInformationViewModel(platformContext) }
     val syncDataUseCase = AppModule.provideSyncDataUseCase(AppModule.provideCommonDbRepository(platformContext))
 
     var updateNew : NewsInstance? = null
@@ -190,368 +194,481 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
             },
             snackbarHost = { UiUtils.MySnackBarHost(snackBarHostState, networkStatus) }
         ) { paddingValues ->
-            val startDestination by produceState<String?>(initialValue = null) {
-                value = if (platformContext.crypto.loadAccount() == null) SignIn.getScreenName() else Home.getScreenName()
-            }
-            if(startDestination != null) {
-                NavHost(navController = navController, startDestination = startDestination!!){
-                    composable(
-                        route = SignIn.getScreenName()){
-                        SignIn.SignInScreen(
-                            signInViewModel,
-                            loadingViewModel,
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .background(Color(0xFF132026)),
-                            onNavigateToSignUpScreen = { navController.navigate(route = SignUp.getScreenName()) },
-                            onNavigateToHomeScreen = { navController.navigate(route = Home.getScreenName()) },
-                            onNavigateToInformationScreen = { navController.navigate(route = Information.getScreenName()) },
-                            onNavigateToForgotPasswordScreen = { navController.navigate(route = ForgotPassword.getScreenName()) }
-                        )
+            NavHost(navController = navController, startDestination = "router"){
+                composable(
+                    route = "router"
+                ) {
+                    val startDestination by produceState<String?>(initialValue = null) {
+                        value = if (platformContext.crypto.loadAccount() == null) SignIn.getScreenName() else Home.getScreenName()
                     }
-                    composable(
-                        route = SignUp.getScreenName()){
-                        SignUp.SignUpScreen(
-                            signUpViewModel,
-                            loadingViewModel,
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .background(Color(0xFF132026)),
-                            onNavigateToSignInScreen = {
-                                navController.popBackStack() },
-                            onNavigateToInformationScreen = { navController.navigate(route = Information.getScreenName()) }
-                        )
-                    }
-                    composable(
-                        route = Information.getScreenName()){
-                        val picker = rememberPlatformImagePicker(
-                            context = context,
-                            onImagePicked = { uri -> informationViewModel.updateAvatar(uri) },
-                            onVideoPicked = {}
-                        )
-                        Information.InformationScreen(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .background(Color(0xFF132026)),
-                            platform = platformContext,
-                            imagePicker = picker,
-                            signUpViewModel = signUpViewModel,
-                            informationViewModel = informationViewModel,
-                            loadingViewModel = loadingViewModel,
-                            onNavigateToHomeScreen = { navController.navigate(route = Home.getScreenName()) }
-                        )
-                    }
-                    composable(
-                        route = Home.getScreenName(),
-                        enterTransition = DefaultNavAnimations.enter,
-                        popEnterTransition = DefaultNavAnimations.popEnter,
-                        exitTransition = DefaultNavAnimations.exit,
-                        popExitTransition = DefaultNavAnimations.popExit){
-                        Home.HomeScreen(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .background(Color.White),
-                            homeViewModel,
-                            loadingViewModel,
-                            SharedCallData.navigateToCallingScreenFromNotification,
-                            paddingValues = paddingValues,
-                            localImageLoaderValue = localImageLoaderValue,
-                            onNavigateToUploadNews = { new ->
-                                updateNew = new
-                                navController.navigate(route = UploadNewsfeed.getScreenName())
-                            },
-                            onNavigateToShowImageScreen = { image ->
-                                selectedImage = image
-                                navController.navigate(route = ShowImage.getScreenName())
-                            },
-                            onNavigateToSearch = { navController.navigate(route = Search.getScreenName()) },
-                            onNavigateToSignIn = {
-                                //Clear email/password before navigate
-                                signInViewModel.reset()
-                                navController.navigate(route = SignIn.getScreenName()) },
-                            onNavigateToUserInformation = { user ->
-                                selectedUser = user
-                                navController.navigate(route = UserInformation.getScreenName())
-                            },
-                            onNavigateToCommentScreen = { new ->
-                                selectedNew = new
-                                navController.navigate(route = Comment.getScreenName())
-                            },
-                            onNavigateToCallingScreen = { callingRequestData ->
-                                sessionId = callingRequestData.sessionId
-                                remoteOffer = callingRequestData.offer
-                                caller = if(callingRequestData.callerId == homeViewModel.currentUser?.uid) homeViewModel.currentUser else homeViewModel.findUserById(callingRequestData.callerId)
-                                callee = if(callingRequestData.calleeId == homeViewModel.currentUser?.uid) homeViewModel.currentUser else homeViewModel.findUserById(callingRequestData.calleeId)
-                                navController.navigate(route = Calling.getScreenName())
-                            },
-                            onNavigateToCallingScreenWithUI = {
-                                sessionId = SharedCallData.sessionId
-                                caller = if(SharedCallData.callerId == homeViewModel.currentUser?.uid) homeViewModel.currentUser else homeViewModel.findUserById(SharedCallData.callerId)
-                                callee = if(SharedCallData.calleeId == homeViewModel.currentUser?.uid) homeViewModel.currentUser else homeViewModel.findUserById(SharedCallData.calleeId)
-                                navController.navigate(route = Calling.getScreenName())
-                            }
-                        )
-                    }
-                    composable(
-                        route = UploadNewsfeed.getScreenName(),
-                        enterTransition = DefaultNavAnimations.enter,
-                        popEnterTransition = DefaultNavAnimations.popEnter,
-                        exitTransition = DefaultNavAnimations.exit,
-                        popExitTransition = DefaultNavAnimations.popExit){
-                        val picker = rememberPlatformImagePicker(
-                            context = context,
-                            onImagePicked = { uri -> uploadNewsfeedViewModel.updateImage(uri) },
-                            onVideoPicked = { uri -> uploadNewsfeedViewModel.updateVideo(uri) }
-                        )
-                        UploadNewsfeed.UploadNewsfeedScreen(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .background(Color.White),
-                            imagePicker = picker,
-                            localImageLoaderValue,
-                            homeViewModel = homeViewModel,
-                            uploadNewsfeedViewModel = uploadNewsfeedViewModel,
-                            loadingViewModel = loadingViewModel,
-                            updateNew = updateNew,
-                            onNavigateToHomeScreen = { navController.navigate(route = Home.getScreenName()) }
-                        )
-                    }
-                    composable(
-                        route = ShowImage.getScreenName(),
-                        enterTransition = DefaultNavAnimations.enter,
-                        popEnterTransition = DefaultNavAnimations.popEnter,
-                        exitTransition = DefaultNavAnimations.exit,
-                        popExitTransition = DefaultNavAnimations.popExit) {
-                        ShowImage.ShowImageScreen(
-                            selectedImage,
-                            localImageLoaderValue = localImageLoaderValue,
-                            showImageViewModel = showImageViewModel,
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .background(color = Color.Black),
-                            onNavigateToHomeScreen = { navController.navigate(route = Home.getScreenName()) }
-                        )
-                    }
-                    composable(
-                        route = Search.getScreenName(),
-                        enterTransition = DefaultNavAnimations.enter,
-                        popEnterTransition = DefaultNavAnimations.popEnter,
-                        exitTransition = DefaultNavAnimations.exit,
-                        popExitTransition = DefaultNavAnimations.popExit) {
-                        coroutineScope.launch(Dispatchers.IO) {
-                            delay(700)
-                            //Reset search text
-                            searchViewModel.updateQuery("")
+                    if (startDestination != null) {
+                        navController.navigate(startDestination!!) {
+                            popUpTo("router") { inclusive = true }
+                            launchSingleTop = true
                         }
-                        Search.SearchScreen(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .background(color = Color.White),
-                            searchViewModel,
-                            homeViewModel,
-                            localImageLoaderValue = localImageLoaderValue,
-                            onNavigateBack = {
-                                navController.popBackStack()
-                            },
-                            onNavigateToUserInformation = { user ->
-                                selectedUser = user
-                                navController.navigate(route = UserInformation.getScreenName())
-                            },
-                            onNavigateToShowImageScreen = { image ->
-                                selectedImage = image
-                                navController.navigate(route = ShowImage.getScreenName())
-                            },
-                            onNavigateToCommentScreen = { new ->
-                                selectedNew = new
-                                navController.navigate(route = Comment.getScreenName())
-                            },
-                            onNavigateToUploadNewsFeed = { _ ->
-                                navController.navigate(route = UploadNewsfeed.getScreenName())
-                            }
-                        )
                     }
-                    composable(
-                        route = UserInformation.getScreenName(),
-                        enterTransition = DefaultNavAnimations.enter,
-                        popEnterTransition = DefaultNavAnimations.popEnter,
-                        exitTransition = DefaultNavAnimations.exit,
-                        popExitTransition = DefaultNavAnimations.popExit){
-                        val picker = rememberPlatformImagePicker(
-                            context = context,
-                            onImagePicked = { uri -> userInformationViewModel.updateCover(uri) },
-                            onVideoPicked = {}
-                        )
-                        UserInformation.UserInformationScreen(
-                            imagePicker = picker,
-                            user = selectedUser,
-                            isCurrentUser = selectedUser == homeViewModel.currentUser,
-                            paddingValues = paddingValues,
-                            localImageLoaderValue = localImageLoaderValue,
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .background(color = Color.White),
-                            homeViewModel = homeViewModel,
-                            friendViewModel = friendViewModel,
-                            userInformationViewModel = userInformationViewModel,
-                            onNavigateToShowImageScreen = { image ->
-                                selectedImage = image
-                                navController.navigate(route = ShowImage.getScreenName())
-                            },
-                            onNavigateToUserInformation = { user ->
-                                selectedUser = user
-                                navController.navigate(route = UserInformation.getScreenName())
-                            },
-                            onNavigateBack = {
-                                navController.popBackStack()
-                            },
-                            onNavigateToUploadNewsfeed = { new ->
-                                updateNew = new
-                                navController.navigate(route = UploadNewsfeed.getScreenName())
-                            },
-                            onNavigateToCallingScreen = { user ->
-                                if(user != null) {
-                                    caller = homeViewModel.currentUser
-                                    callee = user
-                                    navController.navigate(route = Calling.getScreenName())
+                }
+                composable(
+                    route = SignIn.getScreenName()){
+                    SignIn.SignInScreen(
+                        signInViewModel,
+                        loadingViewModel,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Color(0xFF132026)),
+                        onNavigateToSignUpScreen = { navController.navigate(route = SignUp.getScreenName()) },
+                        onNavigateToHomeScreen = { navController.navigate(route = Home.getScreenName()) },
+                        onNavigateToInformationScreen = { navController.navigate(route = Information.getScreenName()) },
+                        onNavigateToForgotPasswordScreen = { navController.navigate(route = ForgotPassword.getScreenName()) }
+                    )
+                }
+                composable(
+                    route = SignUp.getScreenName()){
+                    SignUp.SignUpScreen(
+                        signUpViewModel,
+                        loadingViewModel,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Color(0xFF132026)),
+                        onNavigateToSignInScreen = {
+                            navController.popBackStack() },
+                        onNavigateToInformationScreen = { navController.navigate(route = Information.getScreenName()) }
+                    )
+                }
+                composable(
+                    route = Information.getScreenName()){
+                    val picker = rememberPlatformImagePicker(
+                        context = context,
+                        onImagePicked = { uri -> informationViewModel.updateAvatar(uri) },
+                        onVideoPicked = {}
+                    )
+                    Information.InformationScreen(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Color(0xFF132026)),
+                        platform = platformContext,
+                        imagePicker = picker,
+                        signUpViewModel = signUpViewModel,
+                        informationViewModel = informationViewModel,
+                        loadingViewModel = loadingViewModel,
+                        onNavigateToHomeScreen = { navController.navigate(route = Home.getScreenName()) }
+                    )
+                }
+                composable(
+                    route = Home.getScreenName(),
+                    enterTransition = DefaultNavAnimations.enter,
+                    popEnterTransition = DefaultNavAnimations.popEnter,
+                    exitTransition = DefaultNavAnimations.exit,
+                    popExitTransition = DefaultNavAnimations.popExit){
+                    Home.HomeScreen(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Color.White),
+                        homeViewModel,
+                        loadingViewModel,
+                        SharedCallData.navigateToCallingScreenFromNotification,
+                        paddingValues = paddingValues,
+                        localImageLoaderValue = localImageLoaderValue,
+                        onNavigateToUploadNews = { new ->
+                            updateNew = new
+                            navController.navigate(route = UploadNewsfeed.getScreenName())
+                        },
+                        onNavigateToShowImageScreen = { image ->
+                            selectedImage = image
+                            navController.navigate(route = ShowImage.getScreenName())
+                        },
+                        onNavigateToSearch = { navController.navigate(route = Search.getScreenName()) },
+                        onNavigateToSignIn = {
+                            //Clear email/password before navigate
+                            signInViewModel.reset()
+                            navController.navigate(route = SignIn.getScreenName()) },
+                        onNavigateToUserInformation = { user ->
+                            selectedUser = user
+                            navController.navigate(route = UserInformation.getScreenName())
+                        },
+                        onNavigateToCommentScreen = { new ->
+                            selectedNew = new
+                            navController.navigate(route = Comment.getScreenName())
+                        },
+                        onNavigateToCallingScreen = { callingRequestData ->
+                            sessionId = callingRequestData.sessionId
+                            remoteOffer = callingRequestData.offer
+                            caller = if(callingRequestData.callerId == homeViewModel.currentUser?.uid) homeViewModel.currentUser else homeViewModel.findUserById(callingRequestData.callerId)
+                            callee = if(callingRequestData.calleeId == homeViewModel.currentUser?.uid) homeViewModel.currentUser else homeViewModel.findUserById(callingRequestData.calleeId)
+                            navController.navigate(route = Calling.getScreenName())
+                        },
+                        onNavigateToCallingScreenWithUI = {
+                            sessionId = SharedCallData.sessionId
+                            caller = if(SharedCallData.callerId == homeViewModel.currentUser?.uid) homeViewModel.currentUser else homeViewModel.findUserById(SharedCallData.callerId)
+                            callee = if(SharedCallData.calleeId == homeViewModel.currentUser?.uid) homeViewModel.currentUser else homeViewModel.findUserById(SharedCallData.calleeId)
+                            navController.navigate(route = Calling.getScreenName())
+                        },
+                        onNavigateToPostInformation = {
+                            val uri = Uri.parse(DeepLinksData.deepLink)
+                            val segments = uri.pathSegments
+                            if (segments.isNotEmpty() && segments[0] == "news" && segments.size >= 2) {
+                                val newsId = segments[1]
+                                navController.navigate("news/$newsId") {
+                                    popUpTo("router") { inclusive = true }
+                                    launchSingleTop = true
                                 }
-                            },
-                            onNavigateToCommentScreen = { new ->
-                                selectedNew = new
-                                navController.navigate(route = Comment.getScreenName())
+                                // Clear deep link after handling to prevent repeated navigation
+                                DeepLinksData.deepLink = ""
                             }
-                        )
+                        }
+                    )
+                }
+                composable(
+                    route = UploadNewsfeed.getScreenName(),
+                    enterTransition = DefaultNavAnimations.enter,
+                    popEnterTransition = DefaultNavAnimations.popEnter,
+                    exitTransition = DefaultNavAnimations.exit,
+                    popExitTransition = DefaultNavAnimations.popExit){
+                    val picker = rememberPlatformImagePicker(
+                        context = context,
+                        onImagePicked = { uri -> uploadNewsfeedViewModel.updateImage(uri) },
+                        onVideoPicked = { uri -> uploadNewsfeedViewModel.updateVideo(uri) }
+                    )
+                    UploadNewsfeed.UploadNewsfeedScreen(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Color.White),
+                        imagePicker = picker,
+                        localImageLoaderValue,
+                        homeViewModel = homeViewModel,
+                        uploadNewsfeedViewModel = uploadNewsfeedViewModel,
+                        loadingViewModel = loadingViewModel,
+                        updateNew = updateNew,
+                        onNavigateToHomeScreen = { navController.navigate(route = Home.getScreenName()) }
+                    )
+                }
+                composable(
+                    route = ShowImage.getScreenName(),
+                    enterTransition = DefaultNavAnimations.enter,
+                    popEnterTransition = DefaultNavAnimations.popEnter,
+                    exitTransition = DefaultNavAnimations.exit,
+                    popExitTransition = DefaultNavAnimations.popExit) {
+                    ShowImage.ShowImageScreen(
+                        selectedImage,
+                        localImageLoaderValue = localImageLoaderValue,
+                        showImageViewModel = showImageViewModel,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(color = Color.Black),
+                        onNavigateToHomeScreen = { navController.navigate(route = Home.getScreenName()) }
+                    )
+                }
+                composable(
+                    route = Search.getScreenName(),
+                    enterTransition = DefaultNavAnimations.enter,
+                    popEnterTransition = DefaultNavAnimations.popEnter,
+                    exitTransition = DefaultNavAnimations.exit,
+                    popExitTransition = DefaultNavAnimations.popExit) {
+                    coroutineScope.launch(Dispatchers.IO) {
+                        delay(700)
+                        //Reset search text
+                        searchViewModel.updateQuery("")
                     }
-                    composable(
-                        route = Comment.getScreenName(),
-                        enterTransition = DefaultNavAnimations.enter,
-                        popEnterTransition = DefaultNavAnimations.popEnter,
-                        exitTransition = DefaultNavAnimations.exit,
-                        popExitTransition = DefaultNavAnimations.popExit) {
-                        Comment.CommentScreen(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .background(color = Color.White),
-                            platform = platformContext,
-                            localImageLoaderValue = localImageLoaderValue,
-                            showCloseIcon = true,
-                            commentViewModel = commentViewModel,
-                            currentUser = homeViewModel.currentUser!!,
-                            selectedNew = selectedNew,
-                            onNavigateToShowImageScreen = { image ->
-                                selectedImage = image
-                                navController.navigate(route = ShowImage.getScreenName())
-                            },
-                            onNavigateToUserInformation = { user ->
-                                selectedUser = user
-                                navController.navigate(route = UserInformation.getScreenName())
+                    Search.SearchScreen(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(color = Color.White),
+                        searchViewModel,
+                        homeViewModel,
+                        localImageLoaderValue = localImageLoaderValue,
+                        onNavigateBack = {
+                            navController.popBackStack()
+                        },
+                        onNavigateToUserInformation = { user ->
+                            selectedUser = user
+                            navController.navigate(route = UserInformation.getScreenName())
+                        },
+                        onNavigateToShowImageScreen = { image ->
+                            selectedImage = image
+                            navController.navigate(route = ShowImage.getScreenName())
+                        },
+                        onNavigateToCommentScreen = { new ->
+                            selectedNew = new
+                            navController.navigate(route = Comment.getScreenName())
+                        },
+                        onNavigateToUploadNewsFeed = { _ ->
+                            navController.navigate(route = UploadNewsfeed.getScreenName())
+                        }
+                    )
+                }
+                composable(
+                    route = UserInformation.getScreenName(),
+                    enterTransition = DefaultNavAnimations.enter,
+                    popEnterTransition = DefaultNavAnimations.popEnter,
+                    exitTransition = DefaultNavAnimations.exit,
+                    popExitTransition = DefaultNavAnimations.popExit){
+                    val picker = rememberPlatformImagePicker(
+                        context = context,
+                        onImagePicked = { uri -> userInformationViewModel.updateCover(uri) },
+                        onVideoPicked = {}
+                    )
+                    UserInformation.UserInformationScreen(
+                        imagePicker = picker,
+                        user = selectedUser,
+                        isCurrentUser = selectedUser == homeViewModel.currentUser,
+                        paddingValues = paddingValues,
+                        localImageLoaderValue = localImageLoaderValue,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(color = Color.White),
+                        homeViewModel = homeViewModel,
+                        friendViewModel = friendViewModel,
+                        userInformationViewModel = userInformationViewModel,
+                        onNavigateToShowImageScreen = { image ->
+                            selectedImage = image
+                            navController.navigate(route = ShowImage.getScreenName())
+                        },
+                        onNavigateToUserInformation = { user ->
+                            selectedUser = user
+                            navController.navigate(route = UserInformation.getScreenName())
+                        },
+                        onNavigateBack = {
+                            navController.popBackStack()
+                        },
+                        onNavigateToUploadNewsfeed = { new ->
+                            updateNew = new
+                            navController.navigate(route = UploadNewsfeed.getScreenName())
+                        },
+                        onNavigateToCallingScreen = { user ->
+                            if(user != null) {
+                                caller = homeViewModel.currentUser
+                                callee = user
+                                navController.navigate(route = Calling.getScreenName())
                             }
-                        ) { numberOfComments ->
-                            homeViewModel.addCommentCountData(selectedNew.id, numberOfComments)
+                        },
+                        onNavigateToCommentScreen = { new ->
+                            selectedNew = new
+                            navController.navigate(route = Comment.getScreenName())
+                        }
+                    )
+                }
+                composable(
+                    route = Comment.getScreenName(),
+                    enterTransition = DefaultNavAnimations.enter,
+                    popEnterTransition = DefaultNavAnimations.popEnter,
+                    exitTransition = DefaultNavAnimations.exit,
+                    popExitTransition = DefaultNavAnimations.popExit) {
+                    Comment.CommentScreen(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(color = Color.White),
+                        platform = platformContext,
+                        localImageLoaderValue = localImageLoaderValue,
+                        showCloseIcon = true,
+                        commentViewModel = commentViewModel,
+                        currentUser = homeViewModel.currentUser!!,
+                        selectedNew = selectedNew,
+                        onNavigateToShowImageScreen = { image ->
+                            selectedImage = image
+                            navController.navigate(route = ShowImage.getScreenName())
+                        },
+                        onNavigateToUserInformation = { user ->
+                            selectedUser = user
+                            navController.navigate(route = UserInformation.getScreenName())
+                        }
+                    ) { numberOfComments ->
+                        homeViewModel.addCommentCountData(selectedNew.id, numberOfComments)
+                        navController.popBackStack()
+                    }
+                }
+                composable(
+                    route = ForgotPassword.getScreenName()) {
+                    ForgotPassword.ForgotPasswordScreen(
+                        forgotPasswordViewModel,
+                        loadingViewModel,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Color(0xFF132026)),
+                        onNavigateToSignInScreen = {
                             navController.popBackStack()
                         }
+                    )
+                }
+                composable(
+                    route = Screen.Friend.route,
+                    enterTransition = DefaultNavAnimations.enter,
+                    popEnterTransition = DefaultNavAnimations.popEnter,
+                    exitTransition = DefaultNavAnimations.exit,
+                    popExitTransition = DefaultNavAnimations.popExit){
+                    coroutineScope.launch(Dispatchers.IO) {
+                        delay(700)
+                        //Reset search text
+                        searchViewModel.updateQuery("")
                     }
-                    composable(
-                        route = ForgotPassword.getScreenName()) {
-                        ForgotPassword.ForgotPasswordScreen(
-                            forgotPasswordViewModel,
-                            loadingViewModel,
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .background(Color(0xFF132026)),
-                            onNavigateToSignInScreen = {
-                                navController.popBackStack()
-                            }
-                        )
-                    }
-                    composable(
-                        route = Screen.Friend.route,
-                        enterTransition = DefaultNavAnimations.enter,
-                        popEnterTransition = DefaultNavAnimations.popEnter,
-                        exitTransition = DefaultNavAnimations.exit,
-                        popExitTransition = DefaultNavAnimations.popExit){
-                        coroutineScope.launch(Dispatchers.IO) {
-                            delay(700)
-                            //Reset search text
-                            searchViewModel.updateQuery("")
+                    Friend.FriendScreen(
+                        platformContext,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Color.White),
+                        paddingValues = paddingValues,
+                        localImageLoaderValue = localImageLoaderValue,
+                        searchViewModel,
+                        homeViewModel = homeViewModel,
+                        friendViewModel,
+                        onNavigateToUserInformation = { user ->
+                            selectedUser = user
+                            navController.navigate(route = UserInformation.getScreenName())
+                        },
+                        onNavigateToShowImageScreen = { image ->
+                            selectedImage = image
+                            navController.navigate(route = ShowImage.getScreenName())
                         }
-                        Friend.FriendScreen(
-                            platformContext,
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .background(Color.White),
-                            paddingValues = paddingValues,
-                            localImageLoaderValue = localImageLoaderValue,
-                            searchViewModel,
-                            homeViewModel = homeViewModel,
-                            friendViewModel,
-                            onNavigateToUserInformation = { user ->
-                                selectedUser = user
-                                navController.navigate(route = UserInformation.getScreenName())
-                            },
-                            onNavigateToShowImageScreen = { image ->
-                                selectedImage = image
-                                navController.navigate(route = ShowImage.getScreenName())
+                    )
+                }
+                composable(
+                    route = Screen.Notification.route,
+                    enterTransition = DefaultNavAnimations.enter,
+                    popEnterTransition = DefaultNavAnimations.popEnter,
+                    exitTransition = DefaultNavAnimations.exit,
+                    popExitTransition = DefaultNavAnimations.popExit){
+                    Notification.NotificationScreen(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Color.White),
+                        paddingValues = paddingValues,
+                        localImageLoaderValue = localImageLoaderValue,
+                        searchViewModel = searchViewModel,
+                        homeViewModel = homeViewModel,
+                        notificationViewModel = notificationViewModel,
+                        loadingViewModel = loadingViewModel,
+                        onNavigateToPostInformation = { new ->
+                            relatedNew = new
+                            navController.navigate(route = PostInformation.getScreenName())
+                        },
+                        onNavigateToUserInformation = { user ->
+                            selectedUser = user
+                            navController.navigate(route = UserInformation.getScreenName())
+                        }
+                    )
+                }
+                composable(
+                    route = Screen.Settings.route,
+                    enterTransition = DefaultNavAnimations.enter,
+                    popEnterTransition = DefaultNavAnimations.popEnter,
+                    exitTransition = DefaultNavAnimations.exit,
+                    popExitTransition = DefaultNavAnimations.popExit){
+                    Settings.SettingsScreen(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Color.White),
+                        paddingValues = paddingValues,
+                        homeViewModel = homeViewModel,
+                        onNavigateToSignIn = {
+                            //Clear email/password before navigate
+                            signInViewModel.reset()
+                            navController.navigate(route = SignIn.getScreenName())
+                        }
+                    )
+                }
+                composable(
+                    route = PostInformation.getScreenName(),
+                    enterTransition = DefaultNavAnimations.enter,
+                    popEnterTransition = DefaultNavAnimations.popEnter,
+                    exitTransition = DefaultNavAnimations.exit,
+                    popExitTransition = DefaultNavAnimations.popExit) {
+                    PostInformation.PostInformationScreen(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Color.White),
+                        platformContext,
+                        localImageLoaderValue = localImageLoaderValue,
+                        relatedNew,
+                        onNavigateToShowImageScreen = { image ->
+                            selectedImage = image
+                            navController.navigate(route = ShowImage.getScreenName())
+                        },
+                        onNavigateToUserInformation = { user ->
+                            selectedUser = user
+                            navController.navigate(route = UserInformation.getScreenName())
+                        },
+                        onNavigateToHomeScreen = { numberOfComments ->
+                            homeViewModel.addCommentCountData(relatedNew.id, numberOfComments)
+                            navController.navigate(route = Home.getScreenName()) },
+                        onNavigateBack = {
+                            navController.popBackStack()
+                        },
+                        homeViewModel,
+                        commentViewModel,
+                        postInformationViewModel
+                    )
+                }
+                composable(
+                    route = Calling.getScreenName(),
+                    enterTransition = DefaultNavAnimations.enter,
+                    popEnterTransition = DefaultNavAnimations.popEnter,
+                    exitTransition = DefaultNavAnimations.exit,
+                    popExitTransition = DefaultNavAnimations.popExit) {
+                    Calling.CallingScreen(
+                        localImageLoaderValue = localImageLoaderValue,
+                        sessionId,
+                        callee,
+                        caller,
+                        homeViewModel.currentUser,
+                        remoteOffer,
+                        SharedCallData.navigateToCallingScreenFromNotification,
+                        callingViewModel,
+                        homeViewModel,
+                        navigationHandler,
+                        onStopCallAndNavigateBack = {
+                            if(navigationHandler.getCurrentRoute() != Home.getScreenName()) {
+                                navigationHandler.navigateBack()
                             }
-                        )
+                            homeViewModel.resetCallEvent() },
+                        onNavigateToVideoCall = { sessionID, videoOffer ->
+                            sessionId = sessionID
+                            remoteVideoOffer = videoOffer
+                            remoteVideoOffer = videoOffer
+                            navController.navigate(route = VideoCall.getScreenName())
+                        },
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Color.White)
+                    )
+                }
+                composable(
+                    route = VideoCall.getScreenName(),
+                    enterTransition = DefaultNavAnimations.enter,
+                    popEnterTransition = DefaultNavAnimations.popEnter,
+                    exitTransition = DefaultNavAnimations.exit,
+                    popExitTransition = DefaultNavAnimations.popExit) {
+                    VideoCall.VideoCallScreen(
+                        sessionId,
+                        caller,
+                        callee,
+                        homeViewModel.currentUser?.uid,
+                        remoteVideoOffer,
+                        videoCallViewModel,
+                        loadingViewModel,
+                        navigationHandler,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Color.White)
+                    )
+                }
+                composable(
+                    route = "news/{newsId}"
+                ) { backStackEntry ->
+                    val newsId = backStackEntry.arguments?.getString("newsId")!!
+
+                    val newsState by postInformationViewModel.newFromDeepLink.collectAsState()
+
+                    LaunchedEffect(newsId) {
+                        postInformationViewModel.requestFindNewById(newsId)
                     }
-                    composable(
-                        route = Screen.Notification.route,
-                        enterTransition = DefaultNavAnimations.enter,
-                        popEnterTransition = DefaultNavAnimations.popEnter,
-                        exitTransition = DefaultNavAnimations.exit,
-                        popExitTransition = DefaultNavAnimations.popExit){
-                        Notification.NotificationScreen(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .background(Color.White),
-                            paddingValues = paddingValues,
-                            localImageLoaderValue = localImageLoaderValue,
-                            searchViewModel = searchViewModel,
-                            homeViewModel = homeViewModel,
-                            notificationViewModel = notificationViewModel,
-                            loadingViewModel = loadingViewModel,
-                            onNavigateToPostInformation = { new ->
-                                relatedNew = new
-                                navController.navigate(route = PostInformation.getScreenName())
-                            },
-                            onNavigateToUserInformation = { user ->
-                                selectedUser = user
-                                navController.navigate(route = UserInformation.getScreenName())
-                            }
-                        )
-                    }
-                    composable(
-                        route = Screen.Settings.route,
-                        enterTransition = DefaultNavAnimations.enter,
-                        popEnterTransition = DefaultNavAnimations.popEnter,
-                        exitTransition = DefaultNavAnimations.exit,
-                        popExitTransition = DefaultNavAnimations.popExit){
-                        Settings.SettingsScreen(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .background(Color.White),
-                            paddingValues = paddingValues,
-                            homeViewModel = homeViewModel,
-                            onNavigateToSignIn = {
-                                //Clear email/password before navigate
-                                signInViewModel.reset()
-                                navController.navigate(route = SignIn.getScreenName())
-                            }
-                        )
-                    }
-                    composable(
-                        route = PostInformation.getScreenName(),
-                        enterTransition = DefaultNavAnimations.enter,
-                        popEnterTransition = DefaultNavAnimations.popEnter,
-                        exitTransition = DefaultNavAnimations.exit,
-                        popExitTransition = DefaultNavAnimations.popExit) {
+
+                    if(newsState != null) {
                         PostInformation.PostInformationScreen(
                             modifier = Modifier
                                 .fillMaxSize()
                                 .background(Color.White),
                             platformContext,
                             localImageLoaderValue = localImageLoaderValue,
-                            relatedNew,
+                            newsState!!,
                             onNavigateToShowImageScreen = { image ->
                                 selectedImage = image
                                 navController.navigate(route = ShowImage.getScreenName())
@@ -561,66 +678,15 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                                 navController.navigate(route = UserInformation.getScreenName())
                             },
                             onNavigateToHomeScreen = { numberOfComments ->
-                                homeViewModel.addCommentCountData(relatedNew.id, numberOfComments)
-                                navController.navigate(route = Home.getScreenName()) },
+                                homeViewModel.addCommentCountData(newsState!!.id, numberOfComments)
+                                navController.navigate(route = Home.getScreenName())
+                            },
                             onNavigateBack = {
                                 navController.popBackStack()
                             },
                             homeViewModel,
-                            commentViewModel
-                        )
-                    }
-                    composable(
-                        route = Calling.getScreenName(),
-                        enterTransition = DefaultNavAnimations.enter,
-                        popEnterTransition = DefaultNavAnimations.popEnter,
-                        exitTransition = DefaultNavAnimations.exit,
-                        popExitTransition = DefaultNavAnimations.popExit) {
-                        Calling.CallingScreen(
-                            localImageLoaderValue = localImageLoaderValue,
-                            sessionId,
-                            callee,
-                            caller,
-                            homeViewModel.currentUser,
-                            remoteOffer,
-                            SharedCallData.navigateToCallingScreenFromNotification,
-                            callingViewModel,
-                            homeViewModel,
-                            navigationHandler,
-                            onStopCallAndNavigateBack = {
-                                if(navigationHandler.getCurrentRoute() != Home.getScreenName()) {
-                                    navigationHandler.navigateBack()
-                                }
-                                homeViewModel.resetCallEvent() },
-                            onNavigateToVideoCall = { sessionID, videoOffer ->
-                                sessionId = sessionID
-                                remoteVideoOffer = videoOffer
-                                remoteVideoOffer = videoOffer
-                                navController.navigate(route = VideoCall.getScreenName())
-                            },
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .background(Color.White)
-                        )
-                    }
-                    composable(
-                        route = VideoCall.getScreenName(),
-                        enterTransition = DefaultNavAnimations.enter,
-                        popEnterTransition = DefaultNavAnimations.popEnter,
-                        exitTransition = DefaultNavAnimations.exit,
-                        popExitTransition = DefaultNavAnimations.popExit) {
-                        VideoCall.VideoCallScreen(
-                            sessionId,
-                            caller,
-                            callee,
-                            homeViewModel.currentUser?.uid,
-                            remoteVideoOffer,
-                            videoCallViewModel,
-                            loadingViewModel,
-                            navigationHandler,
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .background(Color.White)
+                            commentViewModel,
+                            postInformationViewModel
                         )
                     }
                 }

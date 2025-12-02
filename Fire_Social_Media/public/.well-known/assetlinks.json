@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.minhtu.firesocialmedia",
+      "sha256_cert_fingerprints": [
+        "00:8C:87:8A:71:04:6C:77:C7:7D:6A:97:2F:69:C5:E8:44:A2:CA:17:16:3E:05:02:7B:8F:20:69:4D:F2:50:86", "E6:28:BE:4F:C0:19:01:4E:93:72:93:AD:30:F1:EB:C8:26:B7:7D:25:45:50:09:0B:7F:BB:43:1D:FA:AA:5F:16"
+      ]
+    }
+  }
+]

@@ -38,6 +38,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var permissionManager: AndroidPermissionManager
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val deepLink = intent.data.toString()
         //Check if activity is started from notification
         val fromNotification = intent.getBooleanExtra(Constants.FROM_NOTIFICATION, false)
         permissionManager = AndroidPermissionManager(this)
@@ -72,7 +73,11 @@ class MainActivity : ComponentActivity() {
                         )
                     } else {
                         val platformContext = remember { AndroidPlatformContext(applicationContext, permissionManager) }
-                        MainApplication.MainApp(this, platformContext)
+                        if(deepLink.isNotEmpty()) {
+                            MainApplication.MainAppWithDeepLink(this, deepLink,platformContext)
+                        } else {
+                            MainApplication.MainApp(this, platformContext)
+                        }
                     }
                     checkFCMToken()
                     askNotificationPermission()
@@ -81,6 +86,11 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+        setIntent(intent)
     }
 
     override fun onDestroy() {

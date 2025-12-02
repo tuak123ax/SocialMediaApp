@@ -44,6 +44,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -67,6 +68,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.minhtu.firesocialmedia.constants.TestTag
 import com.minhtu.firesocialmedia.domain.entity.call.CallingRequestData
+import com.minhtu.firesocialmedia.domain.entity.home.deeplinks.DeepLinksData
 import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.platform.CrossPlatformIcon
@@ -96,10 +98,12 @@ class Home {
                        onNavigateToUserInformation: (user: UserInstance?) -> Unit,
                        onNavigateToCommentScreen: (selectedNew : NewsInstance) -> Unit,
                        onNavigateToCallingScreen : suspend (CallingRequestData) -> Unit,
-                       onNavigateToCallingScreenWithUI : suspend () -> Unit){
+                       onNavigateToCallingScreenWithUI : suspend () -> Unit,
+                       onNavigateToPostInformation : () -> Unit){
             val isLoading by loadingViewModel.isLoading.collectAsState()
             val commentStatus by homeViewModel.commentStatus.collectAsState()
-
+            var showBottomSheet by rememberSaveable { mutableStateOf(false) }
+            var newToBeShared by remember { mutableStateOf<NewsInstance?>(null) }
             val showDialog = remember { mutableStateOf(false) }
             UiUtils.Companion.ShowAlertDialogToLogout(
                 onClickConfirm = {
@@ -131,6 +135,10 @@ class Home {
                 homeViewModel.decreaseNumberOfListNeedToLoad(1)
                 if (numberOfLists == 0) {
                     loadingViewModel.hideLoading()
+                }
+                //Check deeplink after loading necessary data
+                if(DeepLinksData.deepLink.isNotEmpty()) {
+                    onNavigateToPostInformation()
                 }
             }
             LaunchedEffect(newsList.value) {
@@ -172,10 +180,8 @@ class Home {
                 }
             }
 
-            // Recreate list state exactly once when content first becomes available
-            val hasInitialContent = remember { derivedStateOf { newsList.value.isNotEmpty() } }
-            val listState = remember(hasInitialContent.value) { LazyListState(0, 0) }
-            var didInitialScroll by remember { mutableStateOf(false) }
+            // Preserve scroll position across navigation/back stack using rememberSaveable
+            val listState = rememberSaveable(saver = LazyListState.Saver) { LazyListState(0, 0) }
             Box(modifier = Modifier.Companion
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)) {
@@ -342,10 +348,6 @@ class Home {
                             .collectLatest { (triple, state) ->
                                 val (firstVisible, lastVisible, totalItems) = triple
                                 val inProgress = state
-                                if(!didInitialScroll && totalItems > 0 && !userInteracted) {
-                                    listState.scrollToItem(0, 0)
-                                    didInitialScroll = true
-                                }
                                 if(inProgress && firstVisible > 0) {
                                     userInteracted = true
                                 }
@@ -386,11 +388,26 @@ class Home {
                             sortedNews,
                             onNavigateToUploadNews,
                             onNavigateToShowImageScreen,
-                            onNavigateToUserInformation
+                            onNavigateToUserInformation,
+                            showBottomSheet = { news ->
+                                newToBeShared = news
+                                showBottomSheet = true
+                            }
                         )
                     }
                 }
                 ScrollToTopButton(listState, Modifier.align(Alignment.BottomEnd).padding(end = 16.dp, bottom = 80.dp))
+                if(showBottomSheet) {
+                    UiUtils.ShareBottomSheet(
+                        deepLink = "https://firechat-aa433.web.app/news/${newToBeShared?.id}",
+                        onDismiss = {
+                            showBottomSheet = false
+                        },
+                        onClick = {
+                            showBottomSheet = false
+                        }
+                    )
+                }
                 if (isLoading) {
                     Loading.Companion.LoadingScreen()
                 }

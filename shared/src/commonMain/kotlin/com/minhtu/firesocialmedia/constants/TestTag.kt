@@ -28,6 +28,7 @@ class TestTag {
         const val TAG_POST_VIDEO: String = "TAG_POST_VIDEO"
         const val TAG_BUTTON_LIKE: String = "TAG_BUTTON_LIKE"
         const val TAG_BUTTON_COMMENT: String = "TAG_BUTTON_COMMENT"
+        const val TAG_BUTTON_SHARE: String = "TAG_BUTTON_SHARE"
         const val TAG_COMMENTS_LIST: String = "TAG_COMMENTS_LIST"
         const val TAG_REPLIES_LIST: String = "TAG_REPLIES_LIST"
         const val TAG_INPUT_COMMENT: String = "TAG_INPUT_COMMENT"
