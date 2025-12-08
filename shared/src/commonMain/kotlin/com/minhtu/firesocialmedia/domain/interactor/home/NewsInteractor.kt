@@ -14,4 +14,5 @@ interface NewsInteractor {
     suspend fun delete(new: NewsInstance)
 
     suspend fun storeNewsToRoom(news : List<NewsInstance>)
+    suspend fun saveNews(news : NewsInstance) : Boolean
 }

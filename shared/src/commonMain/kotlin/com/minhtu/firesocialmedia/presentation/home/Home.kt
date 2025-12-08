@@ -73,6 +73,7 @@ import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.platform.CrossPlatformIcon
 import com.minhtu.firesocialmedia.platform.logMessage
+import com.minhtu.firesocialmedia.platform.showToast
 import com.minhtu.firesocialmedia.platform.toHex
 import com.minhtu.firesocialmedia.presentation.loading.Loading
 import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
@@ -99,7 +100,8 @@ class Home {
                        onNavigateToCommentScreen: (selectedNew : NewsInstance) -> Unit,
                        onNavigateToCallingScreen : suspend (CallingRequestData) -> Unit,
                        onNavigateToCallingScreenWithUI : suspend () -> Unit,
-                       onNavigateToPostInformation : () -> Unit){
+                       onNavigateToPostInformation : () -> Unit,
+                       onShareNews : (String, NewsInstance) -> Unit){
             val isLoading by loadingViewModel.isLoading.collectAsState()
             val commentStatus by homeViewModel.commentStatus.collectAsState()
             var showBottomSheet by rememberSaveable { mutableStateOf(false) }
@@ -177,6 +179,26 @@ class Home {
             LaunchedEffect(phoneCallRequestStatus) {
                 if(phoneCallRequestStatus != null) {
                     onNavigateToCallingScreen(phoneCallRequestStatus!!)
+                }
+            }
+
+            //Observe share post status
+            val sharePostStatus by homeViewModel.sharePostStatus.collectAsState()
+            val sharePostError by homeViewModel.shareError.collectAsState()
+            LaunchedEffect(sharePostStatus) {
+                //Share post result
+                if(sharePostStatus != null) {
+                    if(sharePostStatus!!) {
+                        showToast("Share successfully!!!")
+                    } else {
+                        showToast("Error happened. Please try again!!!")
+                    }
+                }
+            }
+            LaunchedEffect(sharePostError) {
+                //Error when share post
+                if(sharePostError != null) {
+                    showToast("Cannot get content to share. Please try again!!!")
                 }
             }
 
@@ -403,8 +425,14 @@ class Home {
                         onDismiss = {
                             showBottomSheet = false
                         },
-                        onClick = {
+                        onClick = { message ->
                             showBottomSheet = false
+                            //Continue with share process
+                            if(newToBeShared != null) {
+                                onShareNews(message, newToBeShared!!)
+                            } else {
+                                showToast("Cannot share now. Please try again!!!")
+                            }
                         }
                     )
                 }

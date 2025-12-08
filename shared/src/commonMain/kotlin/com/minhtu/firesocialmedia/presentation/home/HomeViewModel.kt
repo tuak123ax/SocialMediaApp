@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.minhtu.firesocialmedia.constants.Constants
 import com.minhtu.firesocialmedia.domain.entity.call.CallEvent
 import com.minhtu.firesocialmedia.domain.entity.call.CallEventFlow
 import com.minhtu.firesocialmedia.domain.entity.call.CallingRequestData
@@ -16,7 +17,9 @@ import com.minhtu.firesocialmedia.domain.interactor.home.CallInteractor
 import com.minhtu.firesocialmedia.domain.interactor.home.NewsInteractor
 import com.minhtu.firesocialmedia.domain.interactor.home.NotificationInteractor
 import com.minhtu.firesocialmedia.domain.interactor.home.UserInteractor
+import com.minhtu.firesocialmedia.domain.usecases.notification.SaveNotificationToDatabaseUseCase
 import com.minhtu.firesocialmedia.platform.createMessageForServer
+import com.minhtu.firesocialmedia.platform.generateRandomId
 import com.minhtu.firesocialmedia.platform.getCurrentTime
 import com.minhtu.firesocialmedia.platform.getRandomIdForNotification
 import com.minhtu.firesocialmedia.platform.logMessage
@@ -562,9 +565,97 @@ class HomeViewModel(
         val resultList = userInteractor.searchUserByName(name)
         return resultList ?: emptyList()
     }
+    //---------------------------Share news--------------------------------//
+    private val _shareMessage = MutableStateFlow("")
+    private val _shareContent = MutableStateFlow<NewsInstance?>(null)
+    private var _sharePostStatus = MutableStateFlow<Boolean?>(null)
+    var sharePostStatus = _sharePostStatus.asStateFlow()
+    private var _shareError = MutableStateFlow<String?>(null)
+    var shareError = _shareError.asStateFlow()
+    fun updateShareMessage(message : String) {
+        _shareMessage.value = message
+    }
+    fun updateShareContent(news : NewsInstance) {
+        _shareContent.value = news
+    }
 
-    //*********************Share**************************//
-    fun clickShareButton(news : NewsInstance) {
+    fun sharePost(user : UserInstance){
+        viewModelScope.launch {
+            withContext(ioDispatcher) {
+                val newsRandomId = generateRandomId()
+                if(_shareContent.value != null) {
+                    //Save post to db
+                    val newsInstance = NewsInstance(
+                        newsRandomId,
+                        user.uid,
+                        user.name,
+                        user.image,
+                        _shareMessage.value,
+                        shareContentId = _shareContent.value!!.id)
+                    newsInstance.timePosted = getCurrentTime()
+//                    if(localPathOfSelectedDraft.value.isNotEmpty()) {
+//                        newsInstance.localPath = localPathOfSelectedDraft.value
+//                    }
+                    _sharePostStatus.value = newsInteractor.saveNews(
+                        newsInstance
+                    )
 
+                    //Create noti object
+                    val notiContent = _shareMessage.value
+                    val notification = NotificationInstance(getRandomIdForNotification(),
+                        notiContent,user.image,
+                        user.uid,
+                        getCurrentTime(),
+                        NotificationType.SHARE_NEW,
+                        newsInstance.id)
+                    //Send Notification
+                    val friendTokens = getFriendTokens(currentUser!!)
+                    if(friendTokens.isNotEmpty()){
+                        if(notification.content.isNotEmpty()) {
+                            sendMessageToServer(createMessageForServer(notification.content, friendTokens, user, "BASIC"))
+                        } else {
+                            val content = "Shared a post!"
+                            notification.updateContent(content)
+                            sendMessageToServer(createMessageForServer(content, friendTokens, user, "BASIC"))
+                        }
+                    }
+
+                    //Save notification to db
+                    for(friend in user.friends) {
+                        val friendsOfCurrentUser = findUserById(friend)
+                        saveNotification(
+                            notification,
+                            friendsOfCurrentUser!!)
+                    }
+                } else {
+                    _shareError.value = Constants.POST_NEWS_EMPTY_ERROR
+                }
+            }
+        }
+    }
+
+    suspend fun getFriendTokens(currentUser : UserInstance): ArrayList<String> {
+        val friendTokens = ArrayList<String>()
+        for(friend in currentUser.friends) {
+            val user = findUserById(friend)
+            if(user != null) {
+                friendTokens.add(user.token)
+            }
+        }
+        return friendTokens
+    }
+
+    suspend fun saveNotification(
+        notification: NotificationInstance,
+        friend : UserInstance) {
+        //Save notification to friend's notification list
+        try{
+            friend.addNotification(notification)
+            notificationInteractor.saveNotificationToDatabase(
+                friend.uid,
+                friend.notifications
+            )
+        } catch(_: Exception) {
+        }
     }
 }

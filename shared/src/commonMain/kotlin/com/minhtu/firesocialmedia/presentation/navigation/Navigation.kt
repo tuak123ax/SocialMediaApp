@@ -39,6 +39,7 @@ import com.minhtu.firesocialmedia.platform.logMessage
 import com.minhtu.firesocialmedia.platform.platformViewModel
 import com.minhtu.firesocialmedia.platform.rememberPlatformImagePicker
 import com.minhtu.firesocialmedia.platform.setupSignInLauncher
+import com.minhtu.firesocialmedia.platform.showToast
 import com.minhtu.firesocialmedia.presentation.calling.audiocall.Calling
 import com.minhtu.firesocialmedia.presentation.calling.audiocall.CallingViewModel
 import com.minhtu.firesocialmedia.presentation.calling.videocall.VideoCall
@@ -314,6 +315,16 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                                 }
                                 // Clear deep link after handling to prevent repeated navigation
                                 DeepLinksData.deepLink = ""
+                            }
+                        },
+                        onShareNews = { message, newToBeShared ->
+                            //Basically, share news is similar to post news to newsfeed
+                            if(homeViewModel.currentUser != null) {
+                                homeViewModel.updateShareMessage(message)
+                                homeViewModel.updateShareContent(newToBeShared)
+                                homeViewModel.sharePost(homeViewModel.currentUser!!)
+                            } else {
+                                showToast("Cannot get your information to share now. Please try again!!!")
                             }
                         }
                     )

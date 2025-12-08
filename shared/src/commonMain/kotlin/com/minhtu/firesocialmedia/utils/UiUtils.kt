@@ -1369,7 +1369,7 @@ class UiUtils {
         fun ShareBottomSheet(
             deepLink : String,
             onDismiss: () -> Unit,
-            onClick: () -> Unit
+            onClick: (message : String) -> Unit
         ) {
             var message by remember { mutableStateOf("") }
             ModalBottomSheet(
@@ -1401,7 +1401,7 @@ class UiUtils {
                         label = { Text(text = "Say something...") }
                     )
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                        Button(onClick = { onClick() }) {
+                        Button(onClick = { onClick(message) }) {
                             Text("Share")
                         }
                     }
