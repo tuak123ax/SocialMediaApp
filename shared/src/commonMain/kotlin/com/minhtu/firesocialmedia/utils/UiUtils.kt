@@ -13,6 +13,7 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -113,6 +114,7 @@ import com.minhtu.firesocialmedia.platform.VideoPlayer
 import com.minhtu.firesocialmedia.platform.convertTimeToDateString
 import com.minhtu.firesocialmedia.platform.getUriStringFromLocalPath
 import com.minhtu.firesocialmedia.platform.launchShareAppWithDeepLink
+import com.minhtu.firesocialmedia.platform.logMessage
 import com.minhtu.firesocialmedia.platform.queryShareApps
 import com.minhtu.firesocialmedia.presentation.home.Home
 import com.minhtu.firesocialmedia.presentation.home.HomeViewModel
@@ -133,6 +135,230 @@ class UiUtils {
         @Composable
         fun NewsCard(
             news: NewsInstance,
+            user : UserInstance,
+            isLiked : Boolean,
+            likeCountList : HashMap<String, Int>,
+            commentCountList : HashMap<String, Int>,
+            localImageLoaderValue : ProvidedValue<*>,
+            likeCommentAndShareButtonEnable : Boolean,
+            hasDropdownMenu : Boolean,
+            onNavigateToShowImageScreen: (image: String) -> Unit,
+            onNavigateToUserInformation: (user: UserInstance) -> Unit,
+            homeViewModel: HomeViewModel,
+            listState : LazyListState,
+            onDelete: (action : String, new : NewsInstance) -> Unit,
+            onNavigateToCreatePost : (updateNew : NewsInstance) -> Unit,
+            showBottomSheet : (NewsInstance) -> Unit) {
+            LaunchedEffect(Unit) {
+                homeViewModel.updateLikeStatus()
+            }
+            Card(
+                modifier = Modifier
+                    .padding(start = 10.dp, end = 10.dp, top = 5.dp)
+                    .fillMaxWidth()
+                    .testTag(TestTag.TAG_POST_IN_COLUMN)
+                    .semantics{
+                        contentDescription = TestTag.TAG_POST_IN_COLUMN
+                    },
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White)
+            ) {
+                Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(1.dp)) {
+                    Row(horizontalArrangement = Arrangement.Start,
+                        modifier = Modifier.background(color = Color.White).padding(10.dp).fillMaxWidth()
+                            .clickable {
+                                onNavigateToUserInformation(user)
+                            }){
+                        CompositionLocalProvider(
+                            localImageLoaderValue
+                        ) {
+                            AutoSizeImage(
+                                news.avatar,
+                                contentDescription = "Poster Avatar",
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .clip(CircleShape)
+                                    .testTag(TestTag.TAG_POSTER_AVATAR)
+                                    .semantics{
+                                        contentDescription = TestTag.TAG_POSTER_AVATAR
+                                    }
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Column {
+                            Text(
+                                text = news.posterName,
+                                color = Color.Black,
+                                modifier = Modifier.padding(horizontal = 2.dp)
+                            )
+                            Text(
+                                text = convertTimeToDateString(news.timePosted),
+                                color = Color.Gray,
+                                modifier = Modifier.padding(horizontal = 2.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.weight(1f))
+                        //Box to add three dot icon and dropdownMenu when clicking the icon
+                        if(hasDropdownMenu) {
+                            Box{
+                                var showMenu by remember { mutableStateOf(false) }
+                                IconButton(onClick = {
+                                    showMenu = true
+                                }) {
+                                    CrossPlatformIcon(
+                                        icon = "more_horiz",
+                                        backgroundColor = "#FFFFFFFF",
+                                        contentDescription = "More Options",
+                                        tint = Color.Gray,
+                                        modifier = Modifier
+                                            .testTag(TestTag.TAG_BUTTON_MOREOPTIONS)
+                                            .semantics {
+                                                contentDescription = TestTag.TAG_BUTTON_MOREOPTIONS
+                                            }
+                                    )
+                                }
+                                DropdownMenuForResponse(showMenu, homeViewModel, news,{showMenu = false}, listState , onDelete, onNavigateToCreatePost)
+                            }
+                        }
+                    }
+                    ExpandableText(news.message)
+                    if(news.image.isNotEmpty()){
+                        CompositionLocalProvider(
+                            localImageLoaderValue
+                        ) {
+                            AutoSizeImage(
+                                news.image,
+                                contentDescription = "Image",
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(300.dp)
+                                    .padding(5.dp)
+                                    .clickable {
+                                        onNavigateToShowImageScreen(news.image)
+                                    }
+                                    .testTag(TestTag.TAG_POST_IMAGE)
+                                    .semantics{
+                                        contentDescription = TestTag.TAG_POST_IMAGE
+                                    }
+                            )
+                        }
+                    } else {
+                        if(news.video.isNotEmpty()) {
+                            val videoUri: String = if(news.localPath.isNotEmpty()) {
+                                //Load video from local storage
+                                getUriStringFromLocalPath(news.localPath)
+                            } else {
+                                news.video
+                            }
+                            if(videoUri.isNotEmpty()) {
+                                VideoPlayer(videoUri,
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .height(300.dp)
+                                        .padding(5.dp)
+                                        .testTag(TestTag.TAG_POST_VIDEO)
+                                        .semantics{
+                                            contentDescription = TestTag.TAG_POST_VIDEO
+                                        })
+                            }
+                        }
+                    }
+                    if(likeCommentAndShareButtonEnable) {
+                        Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp),
+                            horizontalArrangement = Arrangement.Start) {
+                            Text(
+                                text = "Like: ${likeCountList[news.id] ?: 0}",
+                                fontSize = 12.sp,
+                                color = Color.Black,
+                                modifier = Modifier.padding(2.dp)
+                            )
+                            Spacer(modifier = Modifier.weight(1f))
+                            Text(
+                                text = "Comment: ${commentCountList[news.id] ?: 0}",
+                                fontSize = 12.sp,
+                                color = Color.Black,
+                                modifier = Modifier.padding(2.dp)
+                            )
+                        }
+                        Row(modifier = Modifier.fillMaxWidth().padding(bottom = 5.dp, start = 10.dp, end = 10.dp)) {
+                            Button(onClick = {
+                                homeViewModel.clickLikeButton(news)
+                            },
+                                elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp),
+                                colors = if(isLiked) ButtonDefaults.buttonColors(Color.Cyan)
+                                else ButtonDefaults.buttonColors(Color.White),
+                                modifier = Modifier.height(35.dp).weight(1f)
+                                    .testTag(TestTag.TAG_BUTTON_LIKE)
+                                    .semantics{
+                                        contentDescription = TestTag.TAG_BUTTON_LIKE
+                                    }){
+                                CrossPlatformIcon(
+                                    icon = "like",
+                                    backgroundColor = if(isLiked) "#00FFFF" else "#FFFFFFFF",
+                                    contentDescription = "Like",
+                                    modifier = Modifier
+                                        .size(25.dp)
+                                        .padding(end = 5.dp)
+                                )
+                                Text(text = if(isLiked) "Liked" else "Like", color = Color.Black)
+                            }
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Button(onClick = {
+                                homeViewModel.clickCommentButton(news)
+                            },
+                                elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp),
+                                colors = ButtonDefaults.buttonColors(Color.White),
+                                modifier = Modifier.height(35.dp).weight(1f)
+                                    .testTag(TestTag.TAG_BUTTON_COMMENT)
+                                    .semantics{
+                                        contentDescription = TestTag.TAG_BUTTON_COMMENT
+                                    }){
+                                CrossPlatformIcon(
+                                    icon = "comment",
+                                    backgroundColor = "#FFFFFFFF",
+                                    contentDescription = "Comment",
+                                    modifier = Modifier
+                                        .size(25.dp)
+                                        .padding(end = 5.dp)
+                                )
+                                Text(text = "Comment", color = Color.Black)
+                            }
+                        }
+                        Row(modifier = Modifier.fillMaxWidth().padding(bottom = 5.dp, start = 10.dp, end = 10.dp)) {
+                            Button(onClick = {
+                                //Show bottom sheet
+                                showBottomSheet(news)
+                            },
+                                elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp),
+                                colors = ButtonDefaults.buttonColors(Color.White),
+                                modifier = Modifier.height(35.dp).weight(1f)
+                                    .testTag(TestTag.TAG_BUTTON_SHARE)
+                                    .semantics{
+                                        contentDescription = TestTag.TAG_BUTTON_SHARE
+                                    }){
+                                CrossPlatformIcon(
+                                    icon = "share",
+                                    backgroundColor = "#FFFFFFFF",
+                                    contentDescription = "Share",
+                                    modifier = Modifier
+                                        .size(25.dp)
+                                        .padding(end = 5.dp)
+                                )
+                                Text(text = "Share", color = Color.Black)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        @Composable
+        fun NewsCardWithSharedContent(
+            news: NewsInstance,
+            sharedNew : NewsInstance,
             user : UserInstance,
             isLiked : Boolean,
             likeCountList : HashMap<String, Int>,
@@ -159,7 +385,7 @@ class UiUtils {
                 shape = RoundedCornerShape(20.dp),
                 colors = CardDefaults.cardColors(containerColor = Color.White)
             ) {
-                Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(1.dp)) {
+                Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(1.dp)) {
                     Row(horizontalArrangement = Arrangement.Start,
                         modifier = Modifier.background(color = Color.White).padding(10.dp).fillMaxWidth()
                             .clickable {
@@ -217,49 +443,34 @@ class UiUtils {
                             DropdownMenuForResponse(showMenu, homeViewModel, news,{showMenu = false}, listState , onDelete, onNavigateToCreatePost)
                         }
                     }
+                    //Message
                     ExpandableText(news.message)
-                    if(news.image.isNotEmpty()){
-                        CompositionLocalProvider(
-                            localImageLoaderValue
-                        ) {
-                            AutoSizeImage(
-                                news.image,
-                                contentDescription = "Image",
-                                contentScale = ContentScale.Crop,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(300.dp)
-                                    .padding(5.dp)
-                                    .clickable {
-                                        onNavigateToShowImageScreen(news.image)
-                                    }
-                                    .testTag(TestTag.TAG_POST_IMAGE)
-                                    .semantics{
-                                        contentDescription = TestTag.TAG_POST_IMAGE
-                                    }
-                            )
-                        }
-                    } else {
-                        if(news.video.isNotEmpty()) {
-                            val videoUri: String = if(news.localPath.isNotEmpty()) {
-                                //Load video from local storage
-                                getUriStringFromLocalPath(news.localPath)
-                            } else {
-                                news.video
-                            }
-                            if(videoUri.isNotEmpty()) {
-                                VideoPlayer(videoUri,
-                                    Modifier
-                                        .fillMaxWidth()
-                                        .height(300.dp)
-                                        .padding(5.dp)
-                                        .testTag(TestTag.TAG_POST_VIDEO)
-                                        .semantics{
-                                            contentDescription = TestTag.TAG_POST_VIDEO
-                                        })
-                            }
-                        }
+                    //Shared content
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(10.dp)
+                            .border(1.dp, Color.Black)
+                    ) {
+                        NewsCard(
+                            sharedNew,
+                            user,
+                            isLiked,
+                            likeCountList,
+                            commentCountList,
+                            localImageLoaderValue,
+                            likeCommentAndShareButtonEnable = false,
+                            hasDropdownMenu = false,
+                            onNavigateToShowImageScreen,
+                            onNavigateToUserInformation,
+                            homeViewModel,
+                            listState,
+                            onDelete,
+                            onNavigateToCreatePost,
+                            showBottomSheet
+                        )
                     }
+                    //Like and comment part
                     Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp),
                         horizontalArrangement = Arrangement.Start) {
                         Text(
@@ -974,7 +1185,10 @@ class UiUtils {
                     key = { it.id }
                 ) { news ->
                     var isVisible by remember(news.id) { mutableStateOf(true) }
-
+                    val sharedNewMap by homeViewModel.sharedNewsById.collectAsState()
+                    LaunchedEffect(news.shareContentId) {
+                        homeViewModel.ensureSharedNew(news.shareContentId)
+                    }
                     AnimatedVisibility(
                         visible = isVisible,
                         exit = slideOutHorizontally(
@@ -984,32 +1198,61 @@ class UiUtils {
                     ) {
                         val user = loadedUsers[news.posterId]
                         if(user != null) {
-                            NewsCard(
-                                news = news,
-                                user = user,
-                                isLiked = likeStatus.containsKey(news.id),
-                                likeCountList.value,
-                                commentCountList.value,
-                                localImageLoaderValue,
-                                onNavigateToShowImageScreen = onNavigateToShowImageScreen,
-                                onNavigateToUserInformation = onNavigateToUserInformation,
-                                homeViewModel = homeViewModel,
-                                listState = listState,
-                                onDelete = { action, deletedNews ->
-                                    isVisible = false
-                                    coroutineScope.launch {
-                                        delay(250)
-                                        homeViewModel.deleteOrHideNew(action, deletedNews)
-                                    }
-                                },
-                                onNavigateToUploadNews,
-                                showBottomSheet
-                            )
+                            if(news.shareContentId.isEmpty()) {
+                                NewsCard(
+                                    news = news,
+                                    user = user,
+                                    isLiked = likeStatus.containsKey(news.id),
+                                    likeCountList.value,
+                                    commentCountList.value,
+                                    localImageLoaderValue,
+                                    likeCommentAndShareButtonEnable = true,
+                                    hasDropdownMenu = true,
+                                    onNavigateToShowImageScreen = onNavigateToShowImageScreen,
+                                    onNavigateToUserInformation = onNavigateToUserInformation,
+                                    homeViewModel = homeViewModel,
+                                    listState = listState,
+                                    onDelete = { action, deletedNews ->
+                                        isVisible = false
+                                        coroutineScope.launch {
+                                            delay(250)
+                                            homeViewModel.deleteOrHideNew(action, deletedNews)
+                                        }
+                                    },
+                                    onNavigateToUploadNews,
+                                    showBottomSheet
+                                )
+                            } else {
+                                val sharedNew = sharedNewMap[news.shareContentId]
+                                if(sharedNew != null) {
+                                    NewsCardWithSharedContent(
+                                        news = news,
+                                        sharedNew = sharedNew,
+                                        user = user,
+                                        isLiked = likeStatus.containsKey(news.id),
+                                        likeCountList.value,
+                                        commentCountList.value,
+                                        localImageLoaderValue,
+                                        onNavigateToShowImageScreen = onNavigateToShowImageScreen,
+                                        onNavigateToUserInformation = onNavigateToUserInformation,
+                                        homeViewModel = homeViewModel,
+                                        listState = listState,
+                                        onDelete = { action, deletedNews ->
+                                            isVisible = false
+                                            coroutineScope.launch {
+                                                delay(250)
+                                                homeViewModel.deleteOrHideNew(action, deletedNews)
+                                            }
+                                        },
+                                        onNavigateToUploadNews,
+                                        showBottomSheet
+                                    )
+                                } else {
+                                    NewsCardPlaceholder()
+                                }
+                            }
                         } else {
-                            NewsCardPlaceholder(
-                                news = news,
-                                localImageLoaderValue = localImageLoaderValue
-                            )
+                            NewsCardPlaceholder()
                         }
                     }
                 }
@@ -1036,10 +1279,7 @@ class UiUtils {
         }
 
         @Composable
-        private fun NewsCardPlaceholder(
-            news: NewsInstance,
-            localImageLoaderValue : ProvidedValue<*>
-        ) {
+        private fun NewsCardPlaceholder() {
             Card(
                 modifier = Modifier
                     .padding(start = 10.dp, end = 10.dp, top = 5.dp)
@@ -1201,7 +1441,7 @@ class UiUtils {
                     pressedElevation = 4.dp
                 )
             ) {
-                Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(1.dp)) {
+                Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(1.dp)) {
                     Row(horizontalArrangement = Arrangement.Start,
                         modifier = Modifier
                             .background(color = Color.White)
@@ -1296,47 +1536,47 @@ class UiUtils {
             val swipeThreshold = -swipeDistancePx / 2
 
             Box(
-                modifier = Modifier.Companion
+                modifier = Modifier
                     .fillMaxWidth()
                     .height(IntrinsicSize.Min)
-                    .testTag(TestTag.Companion.TAG_DRAFT)
+                    .testTag(TestTag.TAG_DRAFT)
                     .semantics {
-                        contentDescription = TestTag.Companion.TAG_DRAFT
+                        contentDescription = TestTag.TAG_DRAFT
                     }
             ) {
                 //Row contains delete button
                 Row(
-                    modifier = Modifier.Companion
+                    modifier = Modifier
                         .fillMaxSize()
-                        .background(Color.Companion.White)
-                        .testTag(TestTag.Companion.TAG_BUTTON_DELETE)
+                        .background(Color.White)
+                        .testTag(TestTag.TAG_BUTTON_DELETE)
                         .semantics {
-                            contentDescription = TestTag.Companion.TAG_BUTTON_DELETE
+                            contentDescription = TestTag.TAG_BUTTON_DELETE
                         },
                     horizontalArrangement = Arrangement.End,
-                    verticalAlignment = Alignment.Companion.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Box(
-                        modifier = Modifier.Companion
+                        modifier = Modifier
                             .padding(end = 16.dp)
                             .size(48.dp)
                             .clip(CircleShape)
-                            .background(Color.Companion.Red)
+                            .background(Color.Red)
                             .clickable { onDelete() },
-                        contentAlignment = Alignment.Companion.Center
+                        contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = Icons.Default.Delete,
                             contentDescription = "Delete",
-                            tint = Color.Companion.White,
-                            modifier = Modifier.Companion.size(24.dp)
+                            tint = Color.White,
+                            modifier = Modifier.size(24.dp)
                         )
                     }
                 }
 
                 // Foreground content (slidable)
                 Box(
-                    modifier = Modifier.Companion
+                    modifier = Modifier
                         .offset { IntOffset(animatedOffsetX.roundToInt(), 0) }
                         .pointerInput(news.id) {
                             detectHorizontalDragGestures(

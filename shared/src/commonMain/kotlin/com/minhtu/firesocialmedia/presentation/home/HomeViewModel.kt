@@ -17,7 +17,6 @@ import com.minhtu.firesocialmedia.domain.interactor.home.CallInteractor
 import com.minhtu.firesocialmedia.domain.interactor.home.NewsInteractor
 import com.minhtu.firesocialmedia.domain.interactor.home.NotificationInteractor
 import com.minhtu.firesocialmedia.domain.interactor.home.UserInteractor
-import com.minhtu.firesocialmedia.domain.usecases.notification.SaveNotificationToDatabaseUseCase
 import com.minhtu.firesocialmedia.platform.createMessageForServer
 import com.minhtu.firesocialmedia.platform.generateRandomId
 import com.minhtu.firesocialmedia.platform.getCurrentTime
@@ -237,7 +236,6 @@ class HomeViewModel(
     private val _allUserFriends = MutableStateFlow<List<UserInstance?>>(emptyList())
     val allUserFriends = _allUserFriends.asStateFlow()
     fun updateUserFriends(users: ArrayList<UserInstance?>) {
-        logMessage("updateUserFriends", { "number: "+ users.size })
         _allUserFriends.value = users
         //Add loaded user friends to cache
         val loadedFriendsMap = users
@@ -477,12 +475,10 @@ class HomeViewModel(
                         isInCall,
                         currentUser!!.uid,
                         onReceivePhoneCallRequest = {callingRequestData ->
-                            logMessage("observePhoneCall", { "onReceivePhoneCallRequest" })
                             _phoneCallRequestStatus.value = callingRequestData
                         },
                         whoEndCallCallBack = { whoEndCall ->
                             whoStopCall = whoEndCall
-                            logMessage("observePhoneCall", { "whoEndCallCallBack:$whoStopCall" })
                         },
                         onEndCall = {
                             logMessage("observePhoneCall", { "onEndCall" })
@@ -576,6 +572,7 @@ class HomeViewModel(
         _shareMessage.value = message
     }
     fun updateShareContent(news : NewsInstance) {
+        logMessage("updateShareContent", { "id: "+news.id + " message:" + news.message })
         _shareContent.value = news
     }
 
@@ -584,6 +581,7 @@ class HomeViewModel(
             withContext(ioDispatcher) {
                 val newsRandomId = generateRandomId()
                 if(_shareContent.value != null) {
+                    logMessage("sharePost", { "id: ${_shareContent.value!!.id}" })
                     //Save post to db
                     val newsInstance = NewsInstance(
                         newsRandomId,
@@ -657,5 +655,23 @@ class HomeViewModel(
             )
         } catch(_: Exception) {
         }
+    }
+
+    fun resetShareContentAndStatus() {
+        _shareMessage.value = ""
+        _shareContent.value = null
+        _sharePostStatus.value = null
+        _shareError.value = null
+    }
+
+    // Per-id cache to avoid global shared state updates thrashing item layout
+    private val _sharedNewsById = MutableStateFlow<Map<String, NewsInstance?>>(emptyMap())
+    val sharedNewsById: StateFlow<Map<String, NewsInstance?>> = _sharedNewsById.asStateFlow()
+    suspend fun ensureSharedNew(sharedNewId: String) {
+        if (sharedNewId.isBlank()) return
+        if (_sharedNewsById.value.containsKey(sharedNewId)) return
+        val local = listNews.firstOrNull { it.id == sharedNewId }
+        val value = local ?: runCatching { newsInteractor.findNewById(sharedNewId) }.getOrNull()
+        _sharedNewsById.update { old -> old + (sharedNewId to value) }
     }
 }

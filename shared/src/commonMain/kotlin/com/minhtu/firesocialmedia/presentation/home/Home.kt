@@ -107,7 +107,7 @@ class Home {
             var showBottomSheet by rememberSaveable { mutableStateOf(false) }
             var newToBeShared by remember { mutableStateOf<NewsInstance?>(null) }
             val showDialog = remember { mutableStateOf(false) }
-            UiUtils.Companion.ShowAlertDialogToLogout(
+            UiUtils.ShowAlertDialogToLogout(
                 onClickConfirm = {
                     homeViewModel.clearAccountInStorage()
                     homeViewModel.clearLocalData()
@@ -193,6 +193,7 @@ class Home {
                     } else {
                         showToast("Error happened. Please try again!!!")
                     }
+                    homeViewModel.resetShareContentAndStatus()
                 }
             }
             LaunchedEffect(sharePostError) {
@@ -200,11 +201,12 @@ class Home {
                 if(sharePostError != null) {
                     showToast("Cannot get content to share. Please try again!!!")
                 }
+                homeViewModel.resetShareContentAndStatus()
             }
 
             // Preserve scroll position across navigation/back stack using rememberSaveable
             val listState = rememberSaveable(saver = LazyListState.Saver) { LazyListState(0, 0) }
-            Box(modifier = Modifier.Companion
+            Box(modifier = Modifier
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)) {
                 Column(
@@ -213,7 +215,7 @@ class Home {
                 ) {
                     //App name and buttons
                     Row(
-                        horizontalArrangement = Arrangement.Start, modifier = Modifier.Companion
+                        horizontalArrangement = Arrangement.Start, modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 16.dp, vertical = 12.dp)
                     ) {
@@ -221,39 +223,39 @@ class Home {
                             text = "FireSocialMedia",
                             color = MaterialTheme.colorScheme.primary,
                             style = MaterialTheme.typography.titleLarge,
-                            textAlign = TextAlign.Companion.Center,
+                            textAlign = TextAlign.Center,
                         )
-                        Spacer(modifier = Modifier.Companion.weight(1f))
+                        Spacer(modifier = Modifier.weight(1f))
                         Box(
-                            modifier = Modifier.Companion
+                            modifier = Modifier
                                 .size(40.dp)
                                 .clip(CircleShape)
                                 .background(MaterialTheme.colorScheme.primaryContainer)
                                 .clickable {
                                     onNavigateToSearch()
                                 },
-                            contentAlignment = Alignment.Companion.Center
+                            contentAlignment = Alignment.Center
                         ) {
                             CrossPlatformIcon(
                                 icon = "search",
                                 backgroundColor = MaterialTheme.colorScheme.primaryContainer.toHex(),
                                 contentDescription = "Search Icon",
-                                contentScale = ContentScale.Companion.Fit,
-                                modifier = Modifier.Companion
+                                contentScale = ContentScale.Fit,
+                                modifier = Modifier
                                     .size(22.dp)
-                                    .testTag(TestTag.Companion.TAG_ICON_BUTTON_SEARCH)
+                                    .testTag(TestTag.TAG_ICON_BUTTON_SEARCH)
                                     .semantics {
                                         contentDescription =
-                                            TestTag.Companion.TAG_ICON_BUTTON_SEARCH
+                                            TestTag.TAG_ICON_BUTTON_SEARCH
                                     }
                             )
                         }
 
-                        Spacer(modifier = Modifier.Companion.width(15.dp))
+                        Spacer(modifier = Modifier.width(15.dp))
 
                         Box(
-                            contentAlignment = Alignment.Companion.Center,
-                            modifier = Modifier.Companion
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier
                                 .size(40.dp)
                                 .clip(CircleShape)
                                 .background(MaterialTheme.colorScheme.errorContainer)
@@ -265,13 +267,13 @@ class Home {
                                 icon = "logout",
                                 backgroundColor = MaterialTheme.colorScheme.errorContainer.toHex(),
                                 contentDescription = "Logout Icon",
-                                contentScale = ContentScale.Companion.Fit,
-                                modifier = Modifier.Companion
+                                contentScale = ContentScale.Fit,
+                                modifier = Modifier
                                     .size(22.dp)
-                                    .testTag(TestTag.Companion.TAG_ICON_BUTTON_LOGOUT)
+                                    .testTag(TestTag.TAG_ICON_BUTTON_LOGOUT)
                                     .semantics {
                                         contentDescription =
-                                            TestTag.Companion.TAG_ICON_BUTTON_LOGOUT
+                                            TestTag.TAG_ICON_BUTTON_LOGOUT
                                     }
                             )
                         }
@@ -282,8 +284,8 @@ class Home {
                         Column(verticalArrangement = Arrangement.Top) {
                             Row(
                                 horizontalArrangement = Arrangement.Center,
-                                verticalAlignment = Alignment.Companion.CenterVertically,
-                                modifier = Modifier.Companion.fillMaxWidth()
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.fillMaxWidth()
                             ) {
                                 //Current user avatar
                                 if (currentUserState != null) {
@@ -295,8 +297,8 @@ class Home {
                                         AutoSizeImage(
                                             userImage,
                                             contentDescription = "Poster Avatar",
-                                            contentScale = ContentScale.Companion.Crop,
-                                            modifier = Modifier.Companion
+                                            contentScale = ContentScale.Crop,
+                                            modifier = Modifier
                                                 .size(60.dp)
                                                 .padding(vertical = 5.dp)
                                                 .padding(start = 10.dp)
@@ -304,10 +306,10 @@ class Home {
                                                 .clickable {
                                                     onNavigateToUserInformation(homeViewModel.currentUser)
                                                 }
-                                                .testTag(TestTag.Companion.TAG_CURRENT_USER)
+                                                .testTag(TestTag.TAG_CURRENT_USER)
                                                 .semantics {
                                                     contentDescription =
-                                                        TestTag.Companion.TAG_CURRENT_USER
+                                                        TestTag.TAG_CURRENT_USER
                                                 }
                                         )
                                     }
@@ -317,13 +319,13 @@ class Home {
                                 OutlinedTextField(
                                     value = "",
                                     onValueChange = { },
-                                    modifier = Modifier.Companion
+                                    modifier = Modifier
                                         .fillMaxWidth()
                                         .padding(horizontal = 12.dp, vertical = 10.dp)
                                         .clip(RoundedCornerShape(28.dp))
                                         .clickable { onNavigateToUploadNews(null) }
-                                        .testTag(TestTag.Companion.TAG_CREATE_POST)
-                                        .semantics { contentDescription = TestTag.Companion.TAG_CREATE_POST },
+                                        .testTag(TestTag.TAG_CREATE_POST)
+                                        .semantics { contentDescription = TestTag.TAG_CREATE_POST },
                                     placeholder = { Text(text = "What are you thinking?", color = MaterialTheme.colorScheme.onSurfaceVariant) },
                                     enabled = false,    // Disables the TextField
                                     singleLine = true,
@@ -332,12 +334,12 @@ class Home {
                             }
                             LazyRow(
                                 horizontalArrangement = Arrangement.spacedBy(10.dp),
-                                modifier = Modifier.Companion
+                                modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(10.dp)
-                                    .testTag(TestTag.Companion.TAG_USERS_ROW)
+                                    .testTag(TestTag.TAG_USERS_ROW)
                                     .semantics {
-                                        contentDescription = TestTag.Companion.TAG_USERS_ROW
+                                        contentDescription = TestTag.TAG_USERS_ROW
                                     }
                             ) {
                                 usersList.forEach { user ->
@@ -403,7 +405,7 @@ class Home {
                         val sortedNews by remember(newsList.value) {
                             derivedStateOf { newsList.value.sortedByDescending { it.timePosted } }
                         }
-                        UiUtils.Companion.LazyColumnOfNewsWithSlideOutAnimationAndLoadMore(
+                        UiUtils.LazyColumnOfNewsWithSlideOutAnimationAndLoadMore(
                             localImageLoaderValue,
                             listState,
                             homeViewModel,
@@ -437,7 +439,7 @@ class Home {
                     )
                 }
                 if (isLoading) {
-                    Loading.Companion.LoadingScreen()
+                    Loading.LoadingScreen()
                 }
             }
         }
@@ -447,18 +449,18 @@ class Home {
                              localImageLoaderValue : ProvidedValue<*>,
                              onNavigateToUserInformation: (user: UserInstance) -> Unit) {
             Card(
-                modifier = Modifier.Companion.size(70.dp, 90.dp)
-                    .testTag(TestTag.Companion.TAG_ITEM_IN_ROW)
+                modifier = Modifier.size(70.dp, 90.dp)
+                    .testTag(TestTag.TAG_ITEM_IN_ROW)
                     .semantics {
-                        contentDescription = TestTag.Companion.TAG_ITEM_IN_ROW
+                        contentDescription = TestTag.TAG_ITEM_IN_ROW
                     },
                 colors = CardDefaults.cardColors(containerColor = Color.White),
                 shape = RoundedCornerShape(16.dp)
             ) {
                 Column(
                     verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.Companion.CenterHorizontally,
-                    modifier = Modifier.Companion.fillMaxSize()
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.fillMaxSize()
                 ) {
                     CompositionLocalProvider(
                         localImageLoaderValue
@@ -466,8 +468,8 @@ class Home {
                         AutoSizeImage(
                             user.image,
                             contentDescription = "User Avatar",
-                            contentScale = ContentScale.Companion.Crop,
-                            modifier = Modifier.Companion
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier
                                 .weight(1f) // Allocates equal space to the image and text
                                 .clip(CircleShape)
                                 .clickable {
@@ -476,14 +478,14 @@ class Home {
                                 }
                         )
                     }
-                    Spacer(modifier = Modifier.Companion.height(1.dp)) // Optional spacing between image and text
+                    Spacer(modifier = Modifier.height(1.dp)) // Optional spacing between image and text
                     Text(
                         text = user.name,
-                        color = Color.Companion.Black,
+                        color = Color.Black,
                         maxLines = 1,
-                        textAlign = TextAlign.Companion.Center,
-                        overflow = TextOverflow.Companion.Ellipsis, // Adds "..." at the end if the text overflows
-                        modifier = Modifier.Companion.padding(horizontal = 4.dp) // Adds padding around text
+                        textAlign = TextAlign.Center,
+                        overflow = TextOverflow.Ellipsis, // Adds "..." at the end if the text overflows
+                        modifier = Modifier.padding(horizontal = 4.dp) // Adds padding around text
                     )
                 }
             }

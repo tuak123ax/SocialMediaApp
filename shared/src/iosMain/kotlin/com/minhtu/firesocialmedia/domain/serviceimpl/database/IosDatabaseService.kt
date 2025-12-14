@@ -326,7 +326,6 @@ class IosDatabaseService() : DatabaseService {
 
                         try {
                             val comment = value.toCommentDTO()
-                            logMessage("allComment") { comment.id + ": "+ comment.listReplies.size }
                             result.add(comment)
                         } catch (e: Exception) {
                             e.printStackTrace()

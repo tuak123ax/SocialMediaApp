@@ -98,6 +98,8 @@ object ViewModelProvider {
         val storeNotificationsToRoomUseCase = AppModule.provideStoreNotificationsToRoomUseCase(localRepository)
         val saveCurrentUserInfoUseCase = AppModule.provideSaveCurrentUserInfoUseCase(localRepository)
         val clearLocalDataUseCase = AppModule.provideClearLocalDataUseCase(commonDbRepository)
+        val saveNewToDatabaseUseCase = AppModule.provideSaveNewToDatabaseUseCase(commonDbRepository)
+        val findNewByIdInDbUseCase = AppModule.provideFindNewByIdInDbUseCase(newsRepository)
         val userInteractor = AppModule.provideUserInteractor(
             getCurrentUserUidUseCase,
             getUserUseCase,
@@ -113,7 +115,9 @@ object ViewModelProvider {
             getLatestNewsUseCase,
             updateCountValueInDatabase,
             deleteNewsFromDatabaseUseCase,
-            storeNewsToRoomUseCase
+            storeNewsToRoomUseCase,
+            saveNewToDatabaseUseCase,
+            findNewByIdInDbUseCase
         )
         val notificationInteractor = AppModule.provideNotificationInteractor(
             getAllNotificationOfUserUseCase,

@@ -15,4 +15,5 @@ interface NewsInteractor {
 
     suspend fun storeNewsToRoom(news : List<NewsInstance>)
     suspend fun saveNews(news : NewsInstance) : Boolean
+    suspend fun findNewById(newsId : String) : NewsInstance?
 }

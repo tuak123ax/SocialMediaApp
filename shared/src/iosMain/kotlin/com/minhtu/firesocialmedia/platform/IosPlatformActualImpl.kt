@@ -307,7 +307,6 @@ actual fun createMessageForServer(message: String, tokenList : ArrayList<String>
 }
 
 actual fun sendMessageToServer(request: String) {
-    logMessage("sendMessageToServer", { "request: $request" })
     CoroutineScope(Dispatchers.Default).launch {
         try {
             val response = KtorProvider.client.post(Constants.APP_SCRIPT_URL + Constants.APP_SCRIPT_ENDPOINT){
