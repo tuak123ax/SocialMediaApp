@@ -14,7 +14,8 @@ data class NewsInstance(override var id: String = "",
                         override var likeCount: Int = 0,
                         override var commentCount: Int = 0,
                         override var timePosted: Long = 0,
-                        var localPath : String = ""): BaseNewsInstance,
+                        var localPath : String = "",
+                        var shareContentId : String = ""): BaseNewsInstance,
     CountInterface {
     fun updateNews(id: String, posterId: String, posterName: String, avatar: String,
                    message: String, image: String, video : String){

@@ -5,7 +5,8 @@ enum class NotificationType{
     COMMENT,
     LIKE,
     ADD_FRIEND,
-    UPLOAD_NEW
+    UPLOAD_NEW,
+    SHARE_NEW
 }
 data class NotificationInstance(
     val id : String = "",

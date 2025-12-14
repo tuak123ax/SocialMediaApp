@@ -16,6 +16,13 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+    <!-- Query apps that can share messages-->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.SEND" />
+            <data android:mimeType="text/plain" />
+        </intent>
+    </queries>
     <application
         android:name=".AppApplication"
         android:allowBackup="true"
@@ -32,6 +39,15 @@
             android:exported="true"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.FireSocialMedia">
+            <!-- Deep links for HTTPS -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <data android:scheme="https"
+                    android:host="firechat-aa433.web.app"
+                    android:pathPrefix="/news"/>
+            </intent-filter>
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.minhtu.firesocialmedia.constants.Constants
 import com.minhtu.firesocialmedia.domain.entity.call.CallEvent
 import com.minhtu.firesocialmedia.domain.entity.call.CallEventFlow
 import com.minhtu.firesocialmedia.domain.entity.call.CallingRequestData
@@ -17,6 +18,7 @@ import com.minhtu.firesocialmedia.domain.interactor.home.NewsInteractor
 import com.minhtu.firesocialmedia.domain.interactor.home.NotificationInteractor
 import com.minhtu.firesocialmedia.domain.interactor.home.UserInteractor
 import com.minhtu.firesocialmedia.platform.createMessageForServer
+import com.minhtu.firesocialmedia.platform.generateRandomId
 import com.minhtu.firesocialmedia.platform.getCurrentTime
 import com.minhtu.firesocialmedia.platform.getRandomIdForNotification
 import com.minhtu.firesocialmedia.platform.logMessage
@@ -207,22 +209,18 @@ class HomeViewModel(
 
     val _getAllNotificationsOfCurrentUser = mutableStateOf(false)
     val getAllNotificationsOfCurrentUser = _getAllNotificationsOfCurrentUser
-    fun getAllNotificationsOfUser() {
-        viewModelScope.launch {
-            withContext(ioDispatcher) {
-                val currentUserId = userInteractor.getCurrentUserId()
-                if(currentUserId != null) {
-                    val notifications = notificationInteractor.allNotificationsOf(
-                        currentUserId)
-                    if(notifications != null) {
-                        listNotificationOfCurrentUser.clear()
-                        listNotificationOfCurrentUser.addAll(notifications)
-                        updateNotifications(ArrayList(listNotificationOfCurrentUser.toList()))
-                        _getAllNotificationsOfCurrentUser.value = true
-                    } else {
-                        _getAllNotificationsOfCurrentUser.value = false
-                    }
-                }
+    suspend fun getAllNotificationsOfUser() {
+        val currentUserId = userInteractor.getCurrentUserId()
+        if(currentUserId != null) {
+            val notifications = notificationInteractor.allNotificationsOf(
+                currentUserId)
+            if(notifications != null) {
+                listNotificationOfCurrentUser.clear()
+                listNotificationOfCurrentUser.addAll(notifications)
+                updateNotifications(ArrayList(listNotificationOfCurrentUser.toList()))
+                _getAllNotificationsOfCurrentUser.value = true
+            } else {
+                _getAllNotificationsOfCurrentUser.value = false
             }
         }
     }
@@ -238,7 +236,6 @@ class HomeViewModel(
     private val _allUserFriends = MutableStateFlow<List<UserInstance?>>(emptyList())
     val allUserFriends = _allUserFriends.asStateFlow()
     fun updateUserFriends(users: ArrayList<UserInstance?>) {
-        logMessage("updateUserFriends", { "number: "+ users.size })
         _allUserFriends.value = users
         //Add loaded user friends to cache
         val loadedFriendsMap = users
@@ -478,12 +475,10 @@ class HomeViewModel(
                         isInCall,
                         currentUser!!.uid,
                         onReceivePhoneCallRequest = {callingRequestData ->
-                            logMessage("observePhoneCall", { "onReceivePhoneCallRequest" })
                             _phoneCallRequestStatus.value = callingRequestData
                         },
                         whoEndCallCallBack = { whoEndCall ->
                             whoStopCall = whoEndCall
-                            logMessage("observePhoneCall", { "whoEndCallCallBack:$whoStopCall" })
                         },
                         onEndCall = {
                             logMessage("observePhoneCall", { "onEndCall" })
@@ -565,5 +560,118 @@ class HomeViewModel(
         if(name.isBlank()) return emptyList()
         val resultList = userInteractor.searchUserByName(name)
         return resultList ?: emptyList()
+    }
+    //---------------------------Share news--------------------------------//
+    private val _shareMessage = MutableStateFlow("")
+    private val _shareContent = MutableStateFlow<NewsInstance?>(null)
+    private var _sharePostStatus = MutableStateFlow<Boolean?>(null)
+    var sharePostStatus = _sharePostStatus.asStateFlow()
+    private var _shareError = MutableStateFlow<String?>(null)
+    var shareError = _shareError.asStateFlow()
+    fun updateShareMessage(message : String) {
+        _shareMessage.value = message
+    }
+    fun updateShareContent(news : NewsInstance) {
+        logMessage("updateShareContent", { "id: "+news.id + " message:" + news.message })
+        _shareContent.value = news
+    }
+
+    fun sharePost(user : UserInstance){
+        viewModelScope.launch {
+            withContext(ioDispatcher) {
+                val newsRandomId = generateRandomId()
+                if(_shareContent.value != null) {
+                    logMessage("sharePost", { "id: ${_shareContent.value!!.id}" })
+                    //Save post to db
+                    val newsInstance = NewsInstance(
+                        newsRandomId,
+                        user.uid,
+                        user.name,
+                        user.image,
+                        _shareMessage.value,
+                        shareContentId = _shareContent.value!!.id)
+                    newsInstance.timePosted = getCurrentTime()
+//                    if(localPathOfSelectedDraft.value.isNotEmpty()) {
+//                        newsInstance.localPath = localPathOfSelectedDraft.value
+//                    }
+                    _sharePostStatus.value = newsInteractor.saveNews(
+                        newsInstance
+                    )
+
+                    //Create noti object
+                    val notiContent = _shareMessage.value
+                    val notification = NotificationInstance(getRandomIdForNotification(),
+                        notiContent,user.image,
+                        user.uid,
+                        getCurrentTime(),
+                        NotificationType.SHARE_NEW,
+                        newsInstance.id)
+                    //Send Notification
+                    val friendTokens = getFriendTokens(currentUser!!)
+                    if(friendTokens.isNotEmpty()){
+                        if(notification.content.isNotEmpty()) {
+                            sendMessageToServer(createMessageForServer(notification.content, friendTokens, user, "BASIC"))
+                        } else {
+                            val content = "Shared a post!"
+                            notification.updateContent(content)
+                            sendMessageToServer(createMessageForServer(content, friendTokens, user, "BASIC"))
+                        }
+                    }
+
+                    //Save notification to db
+                    for(friend in user.friends) {
+                        val friendsOfCurrentUser = findUserById(friend)
+                        saveNotification(
+                            notification,
+                            friendsOfCurrentUser!!)
+                    }
+                } else {
+                    _shareError.value = Constants.POST_NEWS_EMPTY_ERROR
+                }
+            }
+        }
+    }
+
+    suspend fun getFriendTokens(currentUser : UserInstance): ArrayList<String> {
+        val friendTokens = ArrayList<String>()
+        for(friend in currentUser.friends) {
+            val user = findUserById(friend)
+            if(user != null) {
+                friendTokens.add(user.token)
+            }
+        }
+        return friendTokens
+    }
+
+    suspend fun saveNotification(
+        notification: NotificationInstance,
+        friend : UserInstance) {
+        //Save notification to friend's notification list
+        try{
+            friend.addNotification(notification)
+            notificationInteractor.saveNotificationToDatabase(
+                friend.uid,
+                friend.notifications
+            )
+        } catch(_: Exception) {
+        }
+    }
+
+    fun resetShareContentAndStatus() {
+        _shareMessage.value = ""
+        _shareContent.value = null
+        _sharePostStatus.value = null
+        _shareError.value = null
+    }
+
+    // Per-id cache to avoid global shared state updates thrashing item layout
+    private val _sharedNewsById = MutableStateFlow<Map<String, NewsInstance?>>(emptyMap())
+    val sharedNewsById: StateFlow<Map<String, NewsInstance?>> = _sharedNewsById.asStateFlow()
+    suspend fun ensureSharedNew(sharedNewId: String) {
+        if (sharedNewId.isBlank()) return
+        if (_sharedNewsById.value.containsKey(sharedNewId)) return
+        val local = listNews.firstOrNull { it.id == sharedNewId }
+        val value = local ?: runCatching { newsInteractor.findNewById(sharedNewId) }.getOrNull()
+        _sharedNewsById.update { old -> old + (sharedNewId to value) }
     }
 }

@@ -28,6 +28,7 @@ import androidx.navigation.NavHostController
 import com.minhtu.firesocialmedia.constants.Constants
 import com.minhtu.firesocialmedia.data.remote.service.imagepicker.ImagePicker
 import com.minhtu.firesocialmedia.di.PlatformContext
+import com.minhtu.firesocialmedia.domain.entity.home.deeplinks.ShareApp
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.domain.serviceimpl.crypto.IosCryptoHelper
 import com.minhtu.firesocialmedia.domain.serviceimpl.notification.KtorProvider
@@ -306,7 +307,6 @@ actual fun createMessageForServer(message: String, tokenList : ArrayList<String>
 }
 
 actual fun sendMessageToServer(request: String) {
-    logMessage("sendMessageToServer", { "request: $request" })
     CoroutineScope(Dispatchers.Default).launch {
         try {
             val response = KtorProvider.client.post(Constants.APP_SCRIPT_URL + Constants.APP_SCRIPT_ENDPOINT){
@@ -812,5 +812,18 @@ actual fun setupSignInLauncher(
 actual fun getUriStringFromLocalPath(localPath: String): String {
     val url = NSURL.fileURLWithPath(localPath)
     return url.absoluteString ?: ""
+}
+
+actual suspend fun queryShareApps(text: String): MutableList<ShareApp> {
+    // iOS doesn't expose a direct list of share targets; return empty placeholder
+    return mutableListOf()
+}
+
+actual fun launchShareAppWithDeepLink(app: ShareApp, deepLink: String) {
+    // Minimal attempt to open the deep link; fallback is no-op
+    val url = NSURL.URLWithString(deepLink)
+    if (url != null) {
+        UIApplication.sharedApplication.openURL(url)
+    }
 }
 

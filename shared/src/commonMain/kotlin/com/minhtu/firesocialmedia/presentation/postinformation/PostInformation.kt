@@ -58,12 +58,16 @@ class PostInformation {
                                   onNavigateToHomeScreen: (numberOfComments : Int) -> Unit,
                                   onNavigateBack : () -> Unit,
                                   homeViewModel: HomeViewModel,
-                                  commentViewModel : CommentViewModel
+                                  commentViewModel : CommentViewModel,
+                                  postInformationViewModel: PostInformationViewModel
         ) {
             val likeStatus by homeViewModel.likedPosts.collectAsState()
             val isLiked = likeStatus.containsKey(news.id)
             LaunchedEffect(Unit) {
                 homeViewModel.updateLikeStatus()
+                if(homeViewModel.currentUser == null) {
+                    homeViewModel.getCurrentUserAndFriends()
+                }
             }
             val likeCountList = homeViewModel.likeCountList.collectAsState()
             val commentCountList = homeViewModel.commentCountList.collectAsState()
@@ -213,20 +217,22 @@ class PostInformation {
                 }
 
                 //Show comment screen at the end of this page
-                Comment.Companion.CommentScreen(
-                    modifier = Modifier.Companion
-                        .fillMaxSize()
-                        .background(color = Color.Companion.White),
-                    platform,
-                    localImageLoaderValue,
-                    showCloseIcon = false,
-                    commentViewModel = commentViewModel,
-                    currentUser = homeViewModel.currentUser!!,
-                    selectedNew = news,
-                    onNavigateToShowImageScreen = onNavigateToShowImageScreen,
-                    onNavigateToUserInformation = onNavigateToUserInformation,
-                    onNavigateToHomeScreen = onNavigateToHomeScreen
-                )
+                if(homeViewModel.currentUser != null) {
+                    Comment.Companion.CommentScreen(
+                        modifier = Modifier.Companion
+                            .fillMaxSize()
+                            .background(color = Color.Companion.White),
+                        platform,
+                        localImageLoaderValue,
+                        showCloseIcon = false,
+                        commentViewModel = commentViewModel,
+                        currentUser = homeViewModel.currentUser!!,
+                        selectedNew = news,
+                        onNavigateToShowImageScreen = onNavigateToShowImageScreen,
+                        onNavigateToUserInformation = onNavigateToUserInformation,
+                        onNavigateToHomeScreen = onNavigateToHomeScreen
+                    )
+                }
             }
         }
 

@@ -38,6 +38,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -89,6 +90,8 @@ class UserInformation {
             val listState = rememberLazyListState()
             val newsList = homeViewModel.allNews.collectAsState()
             val addFriendStatus by userInformationViewModel.addFriendStatus.collectAsState()
+            var showBottomSheet by rememberSaveable { mutableStateOf(false) }
+            var newToBeShared by remember { mutableStateOf<NewsInstance?>(null) }
             LaunchedEffect(Unit) {
                 val relationship =
                     userInformationViewModel.checkRelationship(user!!, homeViewModel.currentUser!!)
@@ -343,10 +346,25 @@ class UserInformation {
                         filterList,
                         onNavigateToUploadNewsfeed,
                         onNavigateToShowImageScreen,
-                        onNavigateToUserInformation
+                        onNavigateToUserInformation,
+                        showBottomSheet = { news ->
+                            newToBeShared = news
+                            showBottomSheet = true
+                        }
                     )
                 }
                 UiUtils.Companion.BackAndMoreOptionsRow(onNavigateBack)
+                if(showBottomSheet) {
+                    UiUtils.ShareBottomSheet(
+                        deepLink = "https://firechat-aa433.web.app/news/${newToBeShared?.id}",
+                        onDismiss = {
+                            showBottomSheet = false
+                        },
+                        onClick = {
+                            showBottomSheet = false
+                        }
+                    )
+                }
             }
         }
 

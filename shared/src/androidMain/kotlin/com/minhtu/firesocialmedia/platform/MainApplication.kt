@@ -17,4 +17,13 @@ actual object MainApplication {
                                 calleeId : String?) {
         SetUpNavigation(context, platformContext, sessionId, callerId, calleeId)
     }
+
+    @Composable
+    actual fun MainAppWithDeepLink(
+        context: Any,
+        deepLink: String,
+        platformContext: PlatformContext
+    ) {
+        SetUpNavigationWithDeepLink(context, deepLink, platformContext)
+    }
 }

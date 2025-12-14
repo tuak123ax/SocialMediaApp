@@ -36,8 +36,17 @@ actual object MainApplication {
 
     @Composable
     actual fun MainAppFromNotification(context: Any, platformContext: PlatformContext, sessionId: String?, callerId: String?, calleeId: String?) {
-        // iOS implementation for notification handling
-        // This will be implemented when notification handling is needed
+        // For now, ignore call params and route to common navigation
+        SetUpNavigation(context, platformContext)
+    }
+
+    @Composable
+    actual fun MainAppWithDeepLink(
+        context: Any,
+        deepLink: String,
+        platformContext: PlatformContext
+    ) {
+        SetUpNavigationWithDeepLink(context, deepLink, platformContext)
     }
 }
 

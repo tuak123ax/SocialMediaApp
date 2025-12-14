@@ -9,6 +9,7 @@ import com.minhtu.firesocialmedia.presentation.information.InformationViewModel
 import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.friend.FriendViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.notification.NotificationViewModel
+import com.minhtu.firesocialmedia.presentation.postinformation.PostInformationViewModel
 import com.minhtu.firesocialmedia.presentation.search.SearchViewModel
 import com.minhtu.firesocialmedia.presentation.showimage.ShowImageViewModel
 import com.minhtu.firesocialmedia.presentation.signin.SignInViewModel
@@ -97,6 +98,8 @@ object ViewModelProvider {
         val storeNotificationsToRoomUseCase = AppModule.provideStoreNotificationsToRoomUseCase(localRepository)
         val saveCurrentUserInfoUseCase = AppModule.provideSaveCurrentUserInfoUseCase(localRepository)
         val clearLocalDataUseCase = AppModule.provideClearLocalDataUseCase(commonDbRepository)
+        val saveNewToDatabaseUseCase = AppModule.provideSaveNewToDatabaseUseCase(commonDbRepository)
+        val findNewByIdInDbUseCase = AppModule.provideFindNewByIdInDbUseCase(newsRepository)
         val userInteractor = AppModule.provideUserInteractor(
             getCurrentUserUidUseCase,
             getUserUseCase,
@@ -112,7 +115,9 @@ object ViewModelProvider {
             getLatestNewsUseCase,
             updateCountValueInDatabase,
             deleteNewsFromDatabaseUseCase,
-            storeNewsToRoomUseCase
+            storeNewsToRoomUseCase,
+            saveNewToDatabaseUseCase,
+            findNewByIdInDbUseCase
         )
         val notificationInteractor = AppModule.provideNotificationInteractor(
             getAllNotificationOfUserUseCase,
@@ -258,5 +263,11 @@ object ViewModelProvider {
             startVideoCallServiceUseCase,
             requestCameraAndAudioPermissionsUseCase
         )
+    }
+
+    fun createPostInformationViewModel(platformContext: PlatformContext): PostInformationViewModel {
+        val newsRepository = AppModule.provideNewsRepository(platformContext)
+        val findNewByIdInDbUseCase = AppModule.provideFindNewByIdInDbUseCase(newsRepository)
+        return PostInformationViewModel(findNewByIdInDbUseCase)
     }
 }

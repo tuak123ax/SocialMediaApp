@@ -44,6 +44,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -67,10 +68,12 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.minhtu.firesocialmedia.constants.TestTag
 import com.minhtu.firesocialmedia.domain.entity.call.CallingRequestData
+import com.minhtu.firesocialmedia.domain.entity.home.deeplinks.DeepLinksData
 import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.platform.CrossPlatformIcon
 import com.minhtu.firesocialmedia.platform.logMessage
+import com.minhtu.firesocialmedia.platform.showToast
 import com.minhtu.firesocialmedia.platform.toHex
 import com.minhtu.firesocialmedia.presentation.loading.Loading
 import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
@@ -96,12 +99,15 @@ class Home {
                        onNavigateToUserInformation: (user: UserInstance?) -> Unit,
                        onNavigateToCommentScreen: (selectedNew : NewsInstance) -> Unit,
                        onNavigateToCallingScreen : suspend (CallingRequestData) -> Unit,
-                       onNavigateToCallingScreenWithUI : suspend () -> Unit){
+                       onNavigateToCallingScreenWithUI : suspend () -> Unit,
+                       onNavigateToPostInformation : () -> Unit,
+                       onShareNews : (String, NewsInstance) -> Unit){
             val isLoading by loadingViewModel.isLoading.collectAsState()
             val commentStatus by homeViewModel.commentStatus.collectAsState()
-
+            var showBottomSheet by rememberSaveable { mutableStateOf(false) }
+            var newToBeShared by remember { mutableStateOf<NewsInstance?>(null) }
             val showDialog = remember { mutableStateOf(false) }
-            UiUtils.Companion.ShowAlertDialogToLogout(
+            UiUtils.ShowAlertDialogToLogout(
                 onClickConfirm = {
                     homeViewModel.clearAccountInStorage()
                     homeViewModel.clearLocalData()
@@ -131,6 +137,10 @@ class Home {
                 homeViewModel.decreaseNumberOfListNeedToLoad(1)
                 if (numberOfLists == 0) {
                     loadingViewModel.hideLoading()
+                }
+                //Check deeplink after loading necessary data
+                if(DeepLinksData.deepLink.isNotEmpty()) {
+                    onNavigateToPostInformation()
                 }
             }
             LaunchedEffect(newsList.value) {
@@ -172,11 +182,31 @@ class Home {
                 }
             }
 
-            // Recreate list state exactly once when content first becomes available
-            val hasInitialContent = remember { derivedStateOf { newsList.value.isNotEmpty() } }
-            val listState = remember(hasInitialContent.value) { LazyListState(0, 0) }
-            var didInitialScroll by remember { mutableStateOf(false) }
-            Box(modifier = Modifier.Companion
+            //Observe share post status
+            val sharePostStatus by homeViewModel.sharePostStatus.collectAsState()
+            val sharePostError by homeViewModel.shareError.collectAsState()
+            LaunchedEffect(sharePostStatus) {
+                //Share post result
+                if(sharePostStatus != null) {
+                    if(sharePostStatus!!) {
+                        showToast("Share successfully!!!")
+                    } else {
+                        showToast("Error happened. Please try again!!!")
+                    }
+                    homeViewModel.resetShareContentAndStatus()
+                }
+            }
+            LaunchedEffect(sharePostError) {
+                //Error when share post
+                if(sharePostError != null) {
+                    showToast("Cannot get content to share. Please try again!!!")
+                }
+                homeViewModel.resetShareContentAndStatus()
+            }
+
+            // Preserve scroll position across navigation/back stack using rememberSaveable
+            val listState = rememberSaveable(saver = LazyListState.Saver) { LazyListState(0, 0) }
+            Box(modifier = Modifier
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)) {
                 Column(
@@ -185,7 +215,7 @@ class Home {
                 ) {
                     //App name and buttons
                     Row(
-                        horizontalArrangement = Arrangement.Start, modifier = Modifier.Companion
+                        horizontalArrangement = Arrangement.Start, modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 16.dp, vertical = 12.dp)
                     ) {
@@ -193,39 +223,39 @@ class Home {
                             text = "FireSocialMedia",
                             color = MaterialTheme.colorScheme.primary,
                             style = MaterialTheme.typography.titleLarge,
-                            textAlign = TextAlign.Companion.Center,
+                            textAlign = TextAlign.Center,
                         )
-                        Spacer(modifier = Modifier.Companion.weight(1f))
+                        Spacer(modifier = Modifier.weight(1f))
                         Box(
-                            modifier = Modifier.Companion
+                            modifier = Modifier
                                 .size(40.dp)
                                 .clip(CircleShape)
                                 .background(MaterialTheme.colorScheme.primaryContainer)
                                 .clickable {
                                     onNavigateToSearch()
                                 },
-                            contentAlignment = Alignment.Companion.Center
+                            contentAlignment = Alignment.Center
                         ) {
                             CrossPlatformIcon(
                                 icon = "search",
                                 backgroundColor = MaterialTheme.colorScheme.primaryContainer.toHex(),
                                 contentDescription = "Search Icon",
-                                contentScale = ContentScale.Companion.Fit,
-                                modifier = Modifier.Companion
+                                contentScale = ContentScale.Fit,
+                                modifier = Modifier
                                     .size(22.dp)
-                                    .testTag(TestTag.Companion.TAG_ICON_BUTTON_SEARCH)
+                                    .testTag(TestTag.TAG_ICON_BUTTON_SEARCH)
                                     .semantics {
                                         contentDescription =
-                                            TestTag.Companion.TAG_ICON_BUTTON_SEARCH
+                                            TestTag.TAG_ICON_BUTTON_SEARCH
                                     }
                             )
                         }
 
-                        Spacer(modifier = Modifier.Companion.width(15.dp))
+                        Spacer(modifier = Modifier.width(15.dp))
 
                         Box(
-                            contentAlignment = Alignment.Companion.Center,
-                            modifier = Modifier.Companion
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier
                                 .size(40.dp)
                                 .clip(CircleShape)
                                 .background(MaterialTheme.colorScheme.errorContainer)
@@ -237,13 +267,13 @@ class Home {
                                 icon = "logout",
                                 backgroundColor = MaterialTheme.colorScheme.errorContainer.toHex(),
                                 contentDescription = "Logout Icon",
-                                contentScale = ContentScale.Companion.Fit,
-                                modifier = Modifier.Companion
+                                contentScale = ContentScale.Fit,
+                                modifier = Modifier
                                     .size(22.dp)
-                                    .testTag(TestTag.Companion.TAG_ICON_BUTTON_LOGOUT)
+                                    .testTag(TestTag.TAG_ICON_BUTTON_LOGOUT)
                                     .semantics {
                                         contentDescription =
-                                            TestTag.Companion.TAG_ICON_BUTTON_LOGOUT
+                                            TestTag.TAG_ICON_BUTTON_LOGOUT
                                     }
                             )
                         }
@@ -254,8 +284,8 @@ class Home {
                         Column(verticalArrangement = Arrangement.Top) {
                             Row(
                                 horizontalArrangement = Arrangement.Center,
-                                verticalAlignment = Alignment.Companion.CenterVertically,
-                                modifier = Modifier.Companion.fillMaxWidth()
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.fillMaxWidth()
                             ) {
                                 //Current user avatar
                                 if (currentUserState != null) {
@@ -267,8 +297,8 @@ class Home {
                                         AutoSizeImage(
                                             userImage,
                                             contentDescription = "Poster Avatar",
-                                            contentScale = ContentScale.Companion.Crop,
-                                            modifier = Modifier.Companion
+                                            contentScale = ContentScale.Crop,
+                                            modifier = Modifier
                                                 .size(60.dp)
                                                 .padding(vertical = 5.dp)
                                                 .padding(start = 10.dp)
@@ -276,10 +306,10 @@ class Home {
                                                 .clickable {
                                                     onNavigateToUserInformation(homeViewModel.currentUser)
                                                 }
-                                                .testTag(TestTag.Companion.TAG_CURRENT_USER)
+                                                .testTag(TestTag.TAG_CURRENT_USER)
                                                 .semantics {
                                                     contentDescription =
-                                                        TestTag.Companion.TAG_CURRENT_USER
+                                                        TestTag.TAG_CURRENT_USER
                                                 }
                                         )
                                     }
@@ -289,13 +319,13 @@ class Home {
                                 OutlinedTextField(
                                     value = "",
                                     onValueChange = { },
-                                    modifier = Modifier.Companion
+                                    modifier = Modifier
                                         .fillMaxWidth()
                                         .padding(horizontal = 12.dp, vertical = 10.dp)
                                         .clip(RoundedCornerShape(28.dp))
                                         .clickable { onNavigateToUploadNews(null) }
-                                        .testTag(TestTag.Companion.TAG_CREATE_POST)
-                                        .semantics { contentDescription = TestTag.Companion.TAG_CREATE_POST },
+                                        .testTag(TestTag.TAG_CREATE_POST)
+                                        .semantics { contentDescription = TestTag.TAG_CREATE_POST },
                                     placeholder = { Text(text = "What are you thinking?", color = MaterialTheme.colorScheme.onSurfaceVariant) },
                                     enabled = false,    // Disables the TextField
                                     singleLine = true,
@@ -304,12 +334,12 @@ class Home {
                             }
                             LazyRow(
                                 horizontalArrangement = Arrangement.spacedBy(10.dp),
-                                modifier = Modifier.Companion
+                                modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(10.dp)
-                                    .testTag(TestTag.Companion.TAG_USERS_ROW)
+                                    .testTag(TestTag.TAG_USERS_ROW)
                                     .semantics {
-                                        contentDescription = TestTag.Companion.TAG_USERS_ROW
+                                        contentDescription = TestTag.TAG_USERS_ROW
                                     }
                             ) {
                                 usersList.forEach { user ->
@@ -342,10 +372,6 @@ class Home {
                             .collectLatest { (triple, state) ->
                                 val (firstVisible, lastVisible, totalItems) = triple
                                 val inProgress = state
-                                if(!didInitialScroll && totalItems > 0 && !userInteracted) {
-                                    listState.scrollToItem(0, 0)
-                                    didInitialScroll = true
-                                }
                                 if(inProgress && firstVisible > 0) {
                                     userInteracted = true
                                 }
@@ -379,20 +405,41 @@ class Home {
                         val sortedNews by remember(newsList.value) {
                             derivedStateOf { newsList.value.sortedByDescending { it.timePosted } }
                         }
-                        UiUtils.Companion.LazyColumnOfNewsWithSlideOutAnimationAndLoadMore(
+                        UiUtils.LazyColumnOfNewsWithSlideOutAnimationAndLoadMore(
                             localImageLoaderValue,
                             listState,
                             homeViewModel,
                             sortedNews,
                             onNavigateToUploadNews,
                             onNavigateToShowImageScreen,
-                            onNavigateToUserInformation
+                            onNavigateToUserInformation,
+                            showBottomSheet = { news ->
+                                newToBeShared = news
+                                showBottomSheet = true
+                            }
                         )
                     }
                 }
                 ScrollToTopButton(listState, Modifier.align(Alignment.BottomEnd).padding(end = 16.dp, bottom = 80.dp))
+                if(showBottomSheet) {
+                    UiUtils.ShareBottomSheet(
+                        deepLink = "https://firechat-aa433.web.app/news/${newToBeShared?.id}",
+                        onDismiss = {
+                            showBottomSheet = false
+                        },
+                        onClick = { message ->
+                            showBottomSheet = false
+                            //Continue with share process
+                            if(newToBeShared != null) {
+                                onShareNews(message, newToBeShared!!)
+                            } else {
+                                showToast("Cannot share now. Please try again!!!")
+                            }
+                        }
+                    )
+                }
                 if (isLoading) {
-                    Loading.Companion.LoadingScreen()
+                    Loading.LoadingScreen()
                 }
             }
         }
@@ -402,18 +449,18 @@ class Home {
                              localImageLoaderValue : ProvidedValue<*>,
                              onNavigateToUserInformation: (user: UserInstance) -> Unit) {
             Card(
-                modifier = Modifier.Companion.size(70.dp, 90.dp)
-                    .testTag(TestTag.Companion.TAG_ITEM_IN_ROW)
+                modifier = Modifier.size(70.dp, 90.dp)
+                    .testTag(TestTag.TAG_ITEM_IN_ROW)
                     .semantics {
-                        contentDescription = TestTag.Companion.TAG_ITEM_IN_ROW
+                        contentDescription = TestTag.TAG_ITEM_IN_ROW
                     },
                 colors = CardDefaults.cardColors(containerColor = Color.White),
                 shape = RoundedCornerShape(16.dp)
             ) {
                 Column(
                     verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.Companion.CenterHorizontally,
-                    modifier = Modifier.Companion.fillMaxSize()
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.fillMaxSize()
                 ) {
                     CompositionLocalProvider(
                         localImageLoaderValue
@@ -421,8 +468,8 @@ class Home {
                         AutoSizeImage(
                             user.image,
                             contentDescription = "User Avatar",
-                            contentScale = ContentScale.Companion.Crop,
-                            modifier = Modifier.Companion
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier
                                 .weight(1f) // Allocates equal space to the image and text
                                 .clip(CircleShape)
                                 .clickable {
@@ -431,14 +478,14 @@ class Home {
                                 }
                         )
                     }
-                    Spacer(modifier = Modifier.Companion.height(1.dp)) // Optional spacing between image and text
+                    Spacer(modifier = Modifier.height(1.dp)) // Optional spacing between image and text
                     Text(
                         text = user.name,
-                        color = Color.Companion.Black,
+                        color = Color.Black,
                         maxLines = 1,
-                        textAlign = TextAlign.Companion.Center,
-                        overflow = TextOverflow.Companion.Ellipsis, // Adds "..." at the end if the text overflows
-                        modifier = Modifier.Companion.padding(horizontal = 4.dp) // Adds padding around text
+                        textAlign = TextAlign.Center,
+                        overflow = TextOverflow.Ellipsis, // Adds "..." at the end if the text overflows
+                        modifier = Modifier.padding(horizontal = 4.dp) // Adds padding around text
                     )
                 }
             }

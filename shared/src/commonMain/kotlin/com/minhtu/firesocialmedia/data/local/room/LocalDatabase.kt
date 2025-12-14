@@ -22,7 +22,7 @@ import com.minhtu.firesocialmedia.data.local.entity.UserEntity
         LikedPostEntity::class,
         CommentEntity::class
     ],
-    version = 3,
+    version = 4,
     exportSchema = true
 )
 @TypeConverters(EnumConverters::class)

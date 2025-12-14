@@ -49,7 +49,6 @@ class AppFirebaseNotificationService: FirebaseMessagingService() {
         val user : UserInstance?
         if (message.data.isNotEmpty()) {
             val notificationType = message.data[Constants.REMOTE_MSG_TYPE]
-            logMessage("notificationType", {"$notificationType"})
             //Notification of foreground service to make audio call
             when(notificationType) {
                 "CALL" -> {
@@ -137,8 +136,6 @@ class AppFirebaseNotificationService: FirebaseMessagingService() {
                                       calleeId : String,
                                       callerName : String,
                                       callerAvatar : String) {
-        logMessage("buildCallNotification", { "buildCallNotification" })
-        logMessage("buildCallNotification", { "callerAvatar: $callerAvatar" })
         val channelName = "Call Service"
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {

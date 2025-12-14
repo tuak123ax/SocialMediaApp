@@ -1,7 +1,10 @@
 package com.minhtu.firesocialmedia.platform
 
 import android.app.Activity
+import android.app.ActivityManager
 import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.drawable.BitmapDrawable
 import android.util.Log
@@ -26,6 +29,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.edit
+import androidx.core.graphics.drawable.toBitmap
 import androidx.core.uri.Uri
 import androidx.media3.common.MediaItem
 import androidx.media3.exoplayer.ExoPlayer
@@ -39,6 +43,7 @@ import com.minhtu.firesocialmedia.constants.Constants
 import com.minhtu.firesocialmedia.data.remote.service.imagepicker.ImagePicker
 import com.minhtu.firesocialmedia.data.remote.service.signinlauncher.SignInLauncher
 import com.minhtu.firesocialmedia.di.PlatformContext
+import com.minhtu.firesocialmedia.domain.entity.home.deeplinks.ShareApp
 import com.minhtu.firesocialmedia.domain.entity.signin.SignInState
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.domain.serviceimpl.call.WebRTCManager
@@ -71,11 +76,12 @@ import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.UUID
+import kotlin.system.exitProcess
 import androidx.activity.compose.BackHandler as AndroidBackHandler
 
 private lateinit var appContext: Context
 fun initPlatformContext(context: Context) {
-    appContext = context.applicationContext
+    appContext = context
 }
 actual fun showToast(message: String) {
     Toast.makeText(appContext, message, Toast.LENGTH_SHORT).show()
@@ -100,6 +106,7 @@ actual fun getIconPainter(icon : String): Painter? {
         "arrow_back" -> painterResource(id = R.drawable.arrow_back)
         "draft" -> painterResource(id = R.drawable.draft)
         "nothing_here" -> painterResource(id = R.drawable.nothing_here)
+        "share" -> painterResource(id = R.drawable.share)
         else -> null
     }
 }
@@ -132,8 +139,25 @@ actual fun PasswordVisibilityIcon(passwordVisibility : Boolean) {
 }
 
 actual fun exitApp() {
-    (appContext as Activity).finish()
+    // Finish and remove app task
+    val am = appContext.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+    val appTaskList = am.appTasks
+
+    if (!appTaskList.isNullOrEmpty()) {
+        val appTask = appTaskList[0]
+        appTask.finishAndRemoveTask()
+    }
+
+    // Kill process and exit
+    try {
+        android.os.Process.killProcess(android.os.Process.myPid())
+        exitProcess(0)
+    } catch (_: Exception) {
+        android.os.Process.killProcess(android.os.Process.myPid())
+        exitProcess(0)
+    }
 }
+
 
 actual fun createMessageForServer(message: String, tokenList : ArrayList<String>, sender : UserInstance, type : String): String {
     val body = JSONObject()
@@ -524,4 +548,35 @@ actual fun setupSignInLauncher(
 
 actual fun getUriStringFromLocalPath(localPath : String) : String {
     return Uri.fromFile(File(localPath)).toString()
+}
+
+actual suspend fun queryShareApps(text: String): MutableList<ShareApp> {
+    val pm = appContext.packageManager
+
+    val sendIntent = Intent(Intent.ACTION_SEND).apply {
+        type = "text/plain"
+        putExtra(Intent.EXTRA_TEXT, text)
+    }
+
+    val resolveInfos = pm.queryIntentActivities(sendIntent, PackageManager.MATCH_DEFAULT_ONLY)
+
+    return resolveInfos.map { ri ->
+        ShareApp(
+            name = ri.loadLabel(pm).toString(),
+            packageName = ri.activityInfo.packageName,
+            activityName = ri.activityInfo.name,
+            icon = ri.loadIcon(pm).toBitmap()
+        )
+    }.toMutableList()
+}
+
+actual fun launchShareAppWithDeepLink(app : ShareApp, deepLink : String) {
+    val intent = Intent(Intent.ACTION_SEND).apply {
+        type = "text/plain"
+        putExtra(Intent.EXTRA_TEXT, deepLink)
+        `package` = app.packageName
+        setClassName(app.packageName, app.activityName)
+        flags = Intent.FLAG_ACTIVITY_NEW_TASK
+    }
+    appContext.startActivity(intent)
 }

@@ -16,7 +16,8 @@ fun NewsDTO.toDomain() : NewsInstance {
         likeCount,
         commentCount,
         timePosted,
-        localPath
+        localPath,
+        shareContentId
     )
 }
 fun NewsInstance.toDto() : NewsDTO {
@@ -32,6 +33,7 @@ fun NewsInstance.toDto() : NewsDTO {
         likeCount,
         commentCount,
         timePosted,
-        localPath
+        localPath,
+        shareContentId
     )
 }

@@ -21,5 +21,6 @@ data class NewsEntity(
     var commentCount: Int = 0,
     var timePosted: Long = 0,
     var isNewPost : Boolean = false,
-    var localPath : String = ""
+    var localPath : String = "",
+    var shareContentId : String = ""
 )

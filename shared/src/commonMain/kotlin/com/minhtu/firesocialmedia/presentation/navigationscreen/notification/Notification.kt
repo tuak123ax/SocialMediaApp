@@ -27,6 +27,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.IosShare
 import androidx.compose.material.icons.filled.ModeComment
 import androidx.compose.material.icons.filled.PersonAddAlt1
 import androidx.compose.material.icons.filled.PostAdd
@@ -110,25 +111,25 @@ class Notification {
             }
             Column(
                 verticalArrangement = Arrangement.Top,
-                horizontalAlignment = Alignment.Companion.CenterHorizontally,
+                horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = modifier.padding(paddingValues)
             ) {
                 Text(
                     text = "Notifications",
                     fontSize = 20.sp,
-                    fontWeight = FontWeight.Companion.Bold,
-                    textAlign = TextAlign.Companion.Center,
-                    modifier = Modifier.Companion.fillMaxWidth().padding(vertical = 20.dp)
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 20.dp)
                 )
                 //Sort notification list by timeSend
                 val notificationList = remember(homeViewModel.listNotificationOfCurrentUser) {
                     homeViewModel.listNotificationOfCurrentUser.sortedByDescending { it.timeSend }
                 }
                 LazyColumn(
-                    modifier = Modifier.Companion
-                        .testTag(TestTag.Companion.TAG_NOTIFICATION_LIST)
+                    modifier = Modifier
+                        .testTag(TestTag.TAG_NOTIFICATION_LIST)
                         .semantics {
-                            contentDescription = TestTag.Companion.TAG_NOTIFICATION_LIST
+                            contentDescription = TestTag.TAG_NOTIFICATION_LIST
                         }
                 ) {
                     if(getNeededUsersStatus && homeViewModel.listNotificationOfCurrentUser.isNotEmpty()) {
@@ -190,7 +191,7 @@ class Notification {
                     }
                 }
                 if (isLoading) {
-                    Loading.Companion.LoadingScreen()
+                    Loading.LoadingScreen()
                 }
             }
         }
@@ -210,50 +211,50 @@ class Notification {
             val swipeThreshold = -swipeDistancePx / 2
 
             Box(
-                modifier = Modifier.Companion
+                modifier = Modifier
                     .fillMaxWidth()
                     .height(IntrinsicSize.Min)
-                    .testTag(TestTag.Companion.TAG_NOTIFICATION)
+                    .testTag(TestTag.TAG_NOTIFICATION)
                     .semantics {
-                        contentDescription = TestTag.Companion.TAG_NOTIFICATION
+                        contentDescription = TestTag.TAG_NOTIFICATION
                     }
             ) {
                 //Row contains delete button
                 Row(
-                    modifier = Modifier.Companion
+                    modifier = Modifier
                         .fillMaxSize()
-                        .background(Color.Companion.White)
-                        .testTag(TestTag.Companion.TAG_BUTTON_DELETE)
+                        .background(Color.White)
+                        .testTag(TestTag.TAG_BUTTON_DELETE)
                         .semantics {
-                            contentDescription = TestTag.Companion.TAG_BUTTON_DELETE
+                            contentDescription = TestTag.TAG_BUTTON_DELETE
                         },
                     horizontalArrangement = Arrangement.End,
-                    verticalAlignment = Alignment.Companion.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Box(
-                        modifier = Modifier.Companion
+                        modifier = Modifier
                             .padding(end = 16.dp)
                             .size(48.dp)
                             .clip(CircleShape)
-                            .background(Color.Companion.Red)
+                            .background(Color.Red)
                             .clickable { onDelete() },
-                        contentAlignment = Alignment.Companion.Center
+                        contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = Icons.Default.Delete,
                             contentDescription = "Delete",
-                            tint = Color.Companion.White,
-                            modifier = Modifier.Companion.size(24.dp)
+                            tint = Color.White,
+                            modifier = Modifier.size(24.dp)
                         )
                     }
                 }
 
                 // Foreground content (slidable)
                 Box(
-                    modifier = Modifier.Companion
+                    modifier = Modifier
                         .offset { IntOffset(animatedOffsetX.roundToInt(), 0) }
                         .fillMaxWidth()
-                        .background(Color.Companion.White)
+                        .background(Color.White)
                         .pointerInput(notification.id) {
                             detectHorizontalDragGestures(
                                 onHorizontalDrag = { _, dragAmount ->
@@ -308,8 +309,8 @@ class Notification {
                             localImageLoaderValue : ProvidedValue<*>) {
             Row(
                 horizontalArrangement = Arrangement.Start,
-                verticalAlignment = Alignment.Companion.CenterVertically,
-                modifier = Modifier.Companion
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 10.dp, vertical = 8.dp)
             ) {
@@ -319,25 +320,25 @@ class Notification {
                     AutoSizeImage(
                         notification.avatar,
                         contentDescription = "Avatar",
-                        contentScale = ContentScale.Companion.Crop,
-                        modifier = Modifier.Companion
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
                             .size(60.dp)
                             .clip(CircleShape)
                     )
                 }
 
-                Spacer(modifier = Modifier.Companion.width(10.dp))
+                Spacer(modifier = Modifier.width(10.dp))
 
                 Column(
-                    modifier = Modifier.Companion
+                    modifier = Modifier
                         .weight(1f) // Take up remaining space
                         .padding(end = 8.dp)
                 ) {
                     Text(
                         text = user.name,
-                        color = Color.Companion.Black,
+                        color = Color.Black,
                         maxLines = 1,
-                        overflow = TextOverflow.Companion.Ellipsis,
+                        overflow = TextOverflow.Ellipsis,
                         style = MaterialTheme.typography.bodyLarge
                     )
                     Text(
@@ -347,10 +348,11 @@ class Notification {
                             NotificationType.COMMENT -> "commented in your post!"
                             NotificationType.ADD_FRIEND -> "sent you a friend request!"
                             NotificationType.UPLOAD_NEW -> "uploaded a new post!"
+                            NotificationType.SHARE_NEW -> "shared a post!"
                         },
-                        color = Color.Companion.Gray,
+                        color = Color.Gray,
                         maxLines = 1,
-                        overflow = TextOverflow.Companion.Ellipsis,
+                        overflow = TextOverflow.Ellipsis,
                         style = MaterialTheme.typography.bodyMedium
                     )
                 }
@@ -380,7 +382,7 @@ class Notification {
                         Icon(
                             imageVector = Icons.Filled.ModeComment,
                             contentDescription = "Comment",
-                            tint = Color.Companion.Black
+                            tint = Color.Black
                         )
                     }
                 }
@@ -389,7 +391,7 @@ class Notification {
                         Icon(
                             imageVector = Icons.Filled.PersonAddAlt1,
                             contentDescription = "Add friend",
-                            tint = Color.Companion.Blue
+                            tint = Color.Blue
                         )
                     }
                 }
@@ -399,7 +401,17 @@ class Notification {
                         Icon(
                             imageVector = Icons.Filled.PostAdd,
                             contentDescription = "Upload new",
-                            tint = Color.Companion.Green
+                            tint = Color.Green
+                        )
+                    }
+                }
+
+                NotificationType.SHARE_NEW -> {
+                    IconButton(onClick = { /* Handle click */ }) {
+                        Icon(
+                            imageVector = Icons.Filled.IosShare,
+                            contentDescription = "Shared Post",
+                            tint = Color.Green
                         )
                     }
                 }

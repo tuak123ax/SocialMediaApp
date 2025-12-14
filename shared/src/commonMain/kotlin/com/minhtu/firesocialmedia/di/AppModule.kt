@@ -276,13 +276,17 @@ object AppModule {
         getLatestNewsUseCase: GetLatestNewsUseCase,
         updateCountValueInDatabase: UpdateLikeCountForNewUseCase,
         deleteNewsFromDatabaseUseCase: DeleteNewsFromDatabaseUseCase,
-        storeNewsToRoomUseCase: StoreNewsToRoomUseCase
+        storeNewsToRoomUseCase: StoreNewsToRoomUseCase,
+        saveNewToDatabaseUseCase: SaveNewToDatabaseUseCase,
+        findNewByIdInDbUseCase: FindNewByIdInDbUseCase
     ) : NewsInteractor {
         return NewsInteractorImpl(
             getLatestNewsUseCase,
             updateCountValueInDatabase,
             deleteNewsFromDatabaseUseCase,
-            storeNewsToRoomUseCase
+            storeNewsToRoomUseCase,
+            saveNewToDatabaseUseCase,
+            findNewByIdInDbUseCase
         )
     }
     fun provideNotificationInteractor(

@@ -3,6 +3,7 @@ package com.minhtu.firesocialmedia.platform
 import androidx.compose.runtime.Composable
 import com.minhtu.firesocialmedia.di.PlatformContext
 import com.minhtu.firesocialmedia.domain.entity.call.SharedCallData
+import com.minhtu.firesocialmedia.domain.entity.home.deeplinks.DeepLinksData
 import com.minhtu.firesocialmedia.presentation.navigation.SetUpNavigation as CommonSetUpNavigation
 
 @Composable
@@ -22,5 +23,13 @@ actual fun SetUpNavigation(context : Any,
         SharedCallData.calleeId = calleeId
         SharedCallData.navigateToCallingScreenFromNotification = true
     }
+    CommonSetUpNavigation(context = context, platformContext = platformContext)
+}
+
+@Composable
+actual fun SetUpNavigationWithDeepLink(context : Any,
+                                       deepLink : String,
+                                       platformContext: PlatformContext) {
+    DeepLinksData.deepLink = deepLink
     CommonSetUpNavigation(context = context, platformContext = platformContext)
 }
