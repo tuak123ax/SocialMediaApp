@@ -4,14 +4,11 @@ import com.minhtu.firesocialmedia.constants.Constants
 import com.minhtu.firesocialmedia.domain.repository.AuthenticationRepository
 import com.minhtu.firesocialmedia.domain.usecases.signup.SignUpUseCase
 import com.minhtu.firesocialmedia.presentation.signup.SignUpViewModel
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
-import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -31,27 +28,21 @@ class SignUpFakeAuthRepository : AuthenticationRepository {
 }
 
 class SignUpViewModelTest {
-    private val testDispatcher = StandardTestDispatcher()
     private lateinit var repo: SignUpFakeAuthRepository
 
     @OptIn(ExperimentalCoroutinesApi::class)
     @BeforeTest
     fun setup() {
-        Dispatchers.setMain(testDispatcher)
         repo = SignUpFakeAuthRepository()
     }
 
-    @AfterTest
-    fun tearDown() {
-        Dispatchers.resetMain()
-    }
-
-    private fun vm(): SignUpViewModel = SignUpViewModel(SignUpUseCase(repo), testDispatcher)
+    private fun vm(dispatcher: CoroutineDispatcher): SignUpViewModel = SignUpViewModel(SignUpUseCase(repo), dispatcher)
 
     @OptIn(ExperimentalCoroutinesApi::class)
     @Test
-    fun `signUp with all fields blank trigger fail flow`() = runTest(testDispatcher) {
-        val signUpViewModel = vm()
+    fun `signUp with all fields blank trigger fail flow`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val signUpViewModel = vm(dispatcher)
         signUpViewModel.email = ""
         signUpViewModel.password = ""
         signUpViewModel.confirmPassword = ""
@@ -65,8 +56,9 @@ class SignUpViewModelTest {
 
     @OptIn(ExperimentalCoroutinesApi::class)
     @Test
-    fun `signUp with email blank trigger fail flow`() = runTest(testDispatcher) {
-        val signUpViewModel = vm()
+    fun `signUp with email blank trigger fail flow`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val signUpViewModel = vm(dispatcher)
         signUpViewModel.email = ""
         signUpViewModel.password = "123321"
         signUpViewModel.confirmPassword = "123321"
@@ -80,8 +72,9 @@ class SignUpViewModelTest {
 
     @OptIn(ExperimentalCoroutinesApi::class)
     @Test
-    fun `signUp with password blank trigger fail flow`() = runTest(testDispatcher) {
-        val signUpViewModel = vm()
+    fun `signUp with password blank trigger fail flow`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val signUpViewModel = vm(dispatcher)
         signUpViewModel.email = "test@gmail.com"
         signUpViewModel.password = ""
         signUpViewModel.confirmPassword = "123321"
@@ -95,8 +88,9 @@ class SignUpViewModelTest {
 
     @OptIn(ExperimentalCoroutinesApi::class)
     @Test
-    fun `signUp with confirm password blank trigger fail flow`() = runTest(testDispatcher) {
-        val signUpViewModel = vm()
+    fun `signUp with confirm password blank trigger fail flow`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val signUpViewModel = vm(dispatcher)
         signUpViewModel.email = "test@gmail.com"
         signUpViewModel.password = "123321"
         signUpViewModel.confirmPassword = ""
@@ -110,8 +104,9 @@ class SignUpViewModelTest {
 
     @OptIn(ExperimentalCoroutinesApi::class)
     @Test
-    fun `signUp with different password and confirm password trigger fail flow`() = runTest(testDispatcher) {
-        val signUpViewModel = vm()
+    fun `signUp with different password and confirm password trigger fail flow`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val signUpViewModel = vm(dispatcher)
         signUpViewModel.email = "test@gmail.com"
         signUpViewModel.password = "123321"
         signUpViewModel.confirmPassword = "123456"
@@ -125,8 +120,9 @@ class SignUpViewModelTest {
 
     @OptIn(ExperimentalCoroutinesApi::class)
     @Test
-    fun `signUp with short password trigger fail flow`() = runTest(testDispatcher) {
-        val signUpViewModel = vm()
+    fun `signUp with short password trigger fail flow`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val signUpViewModel = vm(dispatcher)
         signUpViewModel.email = "test@gmail.com"
         signUpViewModel.password = "123"
         signUpViewModel.confirmPassword = "123"
@@ -140,8 +136,9 @@ class SignUpViewModelTest {
 
     @OptIn(ExperimentalCoroutinesApi::class)
     @Test
-    fun `signUp with correct info trigger success flow`() = runTest(testDispatcher) {
-        val signUpViewModel = vm()
+    fun `signUp with correct info trigger success flow`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val signUpViewModel = vm(dispatcher)
         signUpViewModel.email = "test@gmail.com"
         signUpViewModel.password = "123321"
         signUpViewModel.confirmPassword = "123321"
@@ -157,8 +154,9 @@ class SignUpViewModelTest {
 
     @OptIn(ExperimentalCoroutinesApi::class)
     @Test
-    fun `signUp with correct info but fail on server trigger fail flow`() = runTest(testDispatcher) {
-        val signUpViewModel = vm()
+    fun `signUp with correct info but fail on server trigger fail flow`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val signUpViewModel = vm(dispatcher)
         signUpViewModel.updateEmail("test@gmail.com")
         signUpViewModel.updatePassword("123321")
         signUpViewModel.updateConfirmPassword("123321")
