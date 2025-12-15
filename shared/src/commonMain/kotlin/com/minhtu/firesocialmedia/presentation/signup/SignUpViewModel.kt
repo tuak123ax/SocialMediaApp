@@ -42,24 +42,22 @@ class SignUpViewModel(
     }
 
     fun signUp(){
-        viewModelScope.launch {
-            withContext(ioDispatcher) {
-                if(email.isEmpty() || password.isEmpty() || confirmPassword.isEmpty())
-                {
-                    _signUpStatus.value = SignUpState(false, Constants.DATA_EMPTY)
+        viewModelScope.launch(ioDispatcher) {
+            if(email.isEmpty() || password.isEmpty() || confirmPassword.isEmpty())
+            {
+                _signUpStatus.value = SignUpState(false, Constants.DATA_EMPTY)
+            } else{
+                if(password != confirmPassword){
+                    _signUpStatus.value = SignUpState(false, Constants.PASSWORD_MISMATCH)
                 } else{
-                    if(password != confirmPassword){
-                        _signUpStatus.value = SignUpState(false, Constants.PASSWORD_MISMATCH)
+                    if(password.length < 6){
+                        _signUpStatus.value = SignUpState(false, Constants.PASSWORD_SHORT)
                     } else{
-                        if(password.length < 6){
-                            _signUpStatus.value = SignUpState(false, Constants.PASSWORD_SHORT)
-                        } else{
-                            val result = signUpUseCase.invoke(email, password)
-                            if(result.isSuccess) {
-                                _signUpStatus.value = SignUpState(true, "")
-                            } else {
-                                _signUpStatus.value = SignUpState(false, Constants.SIGNUP_FAIL)
-                            }
+                        val result = signUpUseCase.invoke(email, password)
+                        if(result.isSuccess) {
+                            _signUpStatus.value = SignUpState(true, "")
+                        } else {
+                            _signUpStatus.value = SignUpState(false, Constants.SIGNUP_FAIL)
                         }
                     }
                 }

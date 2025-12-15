@@ -47,17 +47,22 @@ class InformationViewModel(
     }
 
     fun finishSignUpStage(){
-        viewModelScope.launch {
-            withContext(ioDispatcher) {
-                if(username.isEmpty()) {
-                    _addInformationStatus.value = false
-                } else {
-                    val uid = getCurrentUserUidUseCase.invoke()
-                    val userInstance = UserInstance(email, avatar,username,"",
-                        getFCMTokenUseCase.invoke(),uid!!, HashMap())
-                    val result = saveSignUpInformationUseCase.invoke(userInstance)
-                    _addInformationStatus.value = result
-                }
+        viewModelScope.launch(ioDispatcher) {
+            if(username.isEmpty()) {
+                _addInformationStatus.value = false
+            } else {
+                val uid = getCurrentUserUidUseCase.invoke()
+                val userInstance = UserInstance(
+                    email,
+                    avatar,
+                    username,
+                    "",
+                    getFCMTokenUseCase.invoke(),
+                    uid!!,
+                    HashMap()
+                )
+                val result = saveSignUpInformationUseCase.invoke(userInstance)
+                _addInformationStatus.value = result
             }
         }
     }

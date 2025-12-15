@@ -29,14 +29,12 @@ class ForgotPasswordViewModel(
     private var _emailExisted = MutableStateFlow<EmailExistResult?>(null)
     var emailExisted = _emailExisted.asStateFlow()
     fun checkIfEmailExists() {
-        viewModelScope.launch {
-            withContext(ioDispatcher) {
-                if(email.isNotEmpty()) {
-                    val result = checkIfEmailExistsUseCase.invoke(email)
-                    _emailExisted.value = result
-                } else {
-                    _emailExisted.value = EmailExistResult(false, Constants.EMAIL_EMPTY)
-                }
+        viewModelScope.launch(ioDispatcher) {
+            if(email.isNotEmpty()) {
+                val result = checkIfEmailExistsUseCase.invoke(email)
+                _emailExisted.value = result
+            } else {
+                _emailExisted.value = EmailExistResult(false, Constants.EMAIL_EMPTY)
             }
         }
     }
