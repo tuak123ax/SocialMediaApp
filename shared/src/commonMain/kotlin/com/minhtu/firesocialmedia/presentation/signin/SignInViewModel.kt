@@ -59,24 +59,22 @@ class SignInViewModel(
     }
 
     fun signIn(showLoading : () -> Unit) {
-        viewModelScope.launch {
-            withContext(ioDispatcher) {
-                if (email.value.isBlank() || password.value.isBlank()) {
-                    _signInStatus.value = SignInState(false, SignInError.DataEmpty)
-                } else {
-                    showLoading()
-                    email.value = email.value.lowercase()
-                    val signInError = signInUseCase.invoke(email.value, password.value)
-                    if (signInError == null) {
-                        if (rememberPassword.value) {
-                            rememberPasswordUseCase.invoke(email.value, password.value)
-                        }
-                        checkEmailInDatabase(email.value)
-                    } else {
-                        logMessage("signIn", { "Error when sign in" })
-                        _signInStatus.value = SignInState(false, signInError)
-                    }
+        viewModelScope.launch(ioDispatcher) {
+            if (email.value.isBlank() || password.value.isBlank()) {
+                _signInStatus.value = SignInState(false, SignInError.DataEmpty)
+                return@launch
+            }
+            showLoading()
+            email.value = email.value.lowercase()
+            val signInError = signInUseCase.invoke(email.value, password.value)
+            if (signInError == null) {
+                if (rememberPassword.value) {
+                    rememberPasswordUseCase.invoke(email.value, password.value)
                 }
+                checkEmailInDatabase(email.value)
+            } else {
+                logMessage("signIn", { "Error when sign in" })
+                _signInStatus.value = SignInState(false, signInError)
             }
         }
     }
@@ -97,22 +95,16 @@ class SignInViewModel(
 
     //-----------Sign in with Google------------//
     fun signInWithGoogle(){
-        viewModelScope.launch {
-            withContext(ioDispatcher) {
-                launcher?.launchGoogleSignIn()
-            }
-        }
+        viewModelScope.launch(ioDispatcher) { launcher?.launchGoogleSignIn() }
     }
 
     fun handleSignInResult(credential : Any) {
-        viewModelScope.launch {
-            withContext(ioDispatcher) {
-                val result = handleSignInGoogleResult.invoke(credential)
-                if(!result.isNullOrEmpty()) {
-                    checkEmailInDatabase(result)
-                } else {
-                    _signInStatus.value = SignInState(false, null)
-                }
+        viewModelScope.launch(ioDispatcher) {
+            val result = handleSignInGoogleResult.invoke(credential)
+            if(!result.isNullOrEmpty()) {
+                checkEmailInDatabase(result)
+            } else {
+                _signInStatus.value = SignInState(false, null)
             }
         }
     }
