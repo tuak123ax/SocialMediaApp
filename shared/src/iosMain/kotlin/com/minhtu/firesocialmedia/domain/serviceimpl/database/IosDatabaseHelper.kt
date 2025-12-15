@@ -62,7 +62,10 @@ class IosDatabaseHelper {
                     instance.image.isNotEmpty() -> {
                         // Upload image, set URL back
                         val data = Base64.decode(instance.image).toNSData()
-                        val metadata = FIRStorageMetadata().apply { setContentType("image/jpeg") }
+                        val metadata = FIRStorageMetadata().apply {
+                            setContentType("image/jpeg")
+                            setCacheControl("public,max-age=604800,immutable")
+                        }
                         val imageUrl = uploadAndGetRemoteURL(storageRef, data, metadata)
                         logMessage("saveInstanceToDatabase") { "imageUrl=$imageUrl" }
                         instance.updateImage(imageUrl)
@@ -75,7 +78,10 @@ class IosDatabaseHelper {
                     instance.video.isNotEmpty() -> {
                         // Upload video, set URL back
                         val data = Base64.decode(instance.video).toNSData()
-                        val metadata = FIRStorageMetadata().apply { setContentType("video/mp4") }
+                        val metadata = FIRStorageMetadata().apply {
+                            setContentType("video/mp4")
+                            setCacheControl("public,max-age=604800,immutable")
+                        }
                         val videoUrl = uploadAndGetRemoteURL(storageRef, data, metadata)
                         logMessage("saveInstanceToDatabase") { "videoUrl=$videoUrl" }
                         instance.updateVideo(videoUrl)
@@ -310,6 +316,7 @@ class IosDatabaseHelper {
                         val nsDataImage = Base64.decode(newImage).toNSData()
                         val metadata = FIRStorageMetadata().apply {
                             setContentType("image/jpeg")
+                            setCacheControl("public,max-age=604800,immutable")
                         }
 
                         val imageUrl = uploadAndGetRemoteURL(storageReference, nsDataImage, metadata)
@@ -327,6 +334,7 @@ class IosDatabaseHelper {
                             val nsDataVideo = Base64.decode(newVideo).toNSData()
                             val metadata = FIRStorageMetadata().apply {
                                 setContentType("video/mp4")
+                                setCacheControl("public,max-age=604800,immutable")
                             }
 
                             val videoUrl = uploadAndGetRemoteURL(storageReference, nsDataVideo, metadata)

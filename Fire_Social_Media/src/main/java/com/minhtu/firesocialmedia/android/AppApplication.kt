@@ -4,12 +4,17 @@ import android.app.Application
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.os.Build
+import com.google.firebase.database.FirebaseDatabase
 import com.minhtu.firesocialmedia.constants.Constants
 import com.minhtu.firesocialmedia.platform.initPlatformContext
 
 class AppApplication : Application() {
     override fun onCreate() {
         super.onCreate()
+        // Enable disk persistence for Firebase Realtime Database before any reference is created
+        runCatching {
+            FirebaseDatabase.getInstance().setPersistenceEnabled(true)
+        }
         initPlatformContext(this)
         createChannelNotification()
     }

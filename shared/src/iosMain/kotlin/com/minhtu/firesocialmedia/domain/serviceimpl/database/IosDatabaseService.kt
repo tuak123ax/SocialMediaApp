@@ -413,6 +413,7 @@ class IosDatabaseService() : DatabaseService {
                 val nsDataAvatar = Base64.decode(user.image).toNSData()
                 val metadata = FIRStorageMetadata().apply {
                     setContentType("image/jpeg")
+                    setCacheControl("public,max-age=604800,immutable")
                 }
 
                 try{

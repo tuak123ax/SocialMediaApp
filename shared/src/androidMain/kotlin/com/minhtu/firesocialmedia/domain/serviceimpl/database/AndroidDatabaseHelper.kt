@@ -46,7 +46,10 @@ class AndroidDatabaseHelper {
                 .child(path).child(commentId)
             if(instance.image.isNotEmpty()){
                 try{
-                    storageReference.putFile(instance.image.toUri()).addOnCompleteListener{ putFileTask ->
+                    val metadata = StorageMetadata.Builder()
+                        .setCacheControl("public,max-age=604800,immutable")
+                        .build()
+                    storageReference.putFile(instance.image.toUri(), metadata).addOnCompleteListener{ putFileTask ->
                         if(putFileTask.isSuccessful){
                             storageReference.downloadUrl.addOnSuccessListener { dataUrl ->
                                 instance.updateImage(dataUrl.toString())
@@ -62,7 +65,10 @@ class AndroidDatabaseHelper {
             } else {
                 if(instance.video.isNotEmpty()) {
                     try{
-                        storageReference.putFile(instance.video.toUri()).addOnCompleteListener{ putFileTask ->
+                        val metadata = StorageMetadata.Builder()
+                            .setCacheControl("public,max-age=604800,immutable")
+                            .build()
+                        storageReference.putFile(instance.video.toUri(), metadata).addOnCompleteListener{ putFileTask ->
                             if(putFileTask.isSuccessful){
                                 storageReference.downloadUrl.addOnSuccessListener { dataUrl ->
                                     instance.updateVideo(dataUrl.toString())
@@ -242,7 +248,10 @@ class AndroidDatabaseHelper {
                     // Image branch
                     newImage.isNotEmpty() -> {
                         if (newImage != new.image) {
-                            storageRef.putFile(newImage.toUri()).await()
+                            val metadata = StorageMetadata.Builder()
+                                .setCacheControl("public,max-age=604800,immutable")
+                                .build()
+                            storageRef.putFile(newImage.toUri(), metadata).await()
                             val imageUrl = storageRef.downloadUrl.await().toString()
                             updates["image"] = imageUrl
                             updates["video"] = ""
@@ -255,7 +264,10 @@ class AndroidDatabaseHelper {
                     // Video branch
                     newVideo.isNotEmpty() -> {
                         if (newVideo != new.video) {
-                            storageRef.putFile(newVideo.toUri()).await()
+                            val metadata = StorageMetadata.Builder()
+                                .setCacheControl("public,max-age=604800,immutable")
+                                .build()
+                            storageRef.putFile(newVideo.toUri(), metadata).await()
                             val videoUrl = storageRef.downloadUrl.await().toString()
                             updates["video"] = videoUrl
                             updates["image"] = ""
@@ -880,7 +892,12 @@ class AndroidDatabaseHelper {
             localPath: String?,
             contentType: String? = null
         ): String {
-            val metadata = contentType?.let { StorageMetadata.Builder().setContentType(it).build() }
+            val metaBuilder = StorageMetadata.Builder()
+                .setCacheControl("public,max-age=604800,immutable")
+            if (contentType != null) {
+                metaBuilder.setContentType(contentType)
+            }
+            val metadata = metaBuilder.build()
 
             // Attempt 1: original URI string (if parseable)
             val firstUri = originalUriStr?.let {
@@ -889,8 +906,7 @@ class AndroidDatabaseHelper {
 
             if (firstUri != null) {
                 runCatching {
-                    if (metadata != null) storageRef.putFile(firstUri, metadata).await()
-                    else storageRef.putFile(firstUri).await()
+                    storageRef.putFile(firstUri, metadata).await()
                 }.onSuccess {
                     return storageRef.downloadUrl.await().toString()
                 }
@@ -900,8 +916,7 @@ class AndroidDatabaseHelper {
             val localFile = localPath?.let { File(it) }
             if (localFile != null && localFile.exists()) {
                 val fileUri = Uri.fromFile(localFile)
-                if (metadata != null) storageRef.putFile(fileUri, metadata).await()
-                else storageRef.putFile(fileUri).await()
+                storageRef.putFile(fileUri, metadata).await()
                 return storageRef.downloadUrl.await().toString()
             }
 

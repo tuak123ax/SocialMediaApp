@@ -1,5 +1,6 @@
 package com.minhtu.firesocialmedia.platform
 
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.ActivityManager
 import android.content.Context
@@ -12,6 +13,7 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.OptIn
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -32,7 +34,14 @@ import androidx.core.content.edit
 import androidx.core.graphics.drawable.toBitmap
 import androidx.core.uri.Uri
 import androidx.media3.common.MediaItem
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.source.ProgressiveMediaSource
+import androidx.media3.datasource.DefaultDataSource
+import androidx.media3.datasource.DefaultHttpDataSource
+import androidx.media3.datasource.cache.CacheDataSource
+import androidx.media3.datasource.cache.LeastRecentlyUsedCacheEvictor
+import androidx.media3.datasource.cache.SimpleCache
 import androidx.media3.ui.PlayerView
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -82,6 +91,31 @@ import androidx.activity.compose.BackHandler as AndroidBackHandler
 private lateinit var appContext: Context
 fun initPlatformContext(context: Context) {
     appContext = context
+}
+
+@SuppressLint("UnsafeOptInUsageError")
+@Volatile
+private var videoSimpleCache: SimpleCache? = null
+
+// Lock object for synchronization
+private val videoCacheLock = Any()
+
+@OptIn(UnstableApi::class)
+private fun getVideoCache(context: Context): SimpleCache {
+    // First fast path (no lock)
+    videoSimpleCache?.let { return it }
+
+    synchronized(videoCacheLock) {
+        // Second check inside lock
+        videoSimpleCache?.let { return it }
+
+        val cacheDir = File(context.cacheDir, "video_cache")
+        val evictor = LeastRecentlyUsedCacheEvictor(512L * 1024L * 1024L) // 512MB
+        val created = SimpleCache(cacheDir, evictor)
+
+        videoSimpleCache = created
+        return created
+    }
 }
 actual fun showToast(message: String) {
     Toast.makeText(appContext, message, Toast.LENGTH_SHORT).show()
@@ -328,11 +362,20 @@ actual fun onPushNotificationReceived(data: Map<String, Any?>) {
 
 actual val settings: Settings? = null
 
+@OptIn(UnstableApi::class)
 @Composable
 actual fun VideoPlayer(uri: String, modifier: Modifier) {
     val context = LocalContext.current
     val player = remember {
         ExoPlayer.Builder(context).build()
+    }
+    val cacheFactory = remember {
+        val httpFactory = DefaultHttpDataSource.Factory()
+        val upstreamFactory = DefaultDataSource.Factory(context, httpFactory)
+        CacheDataSource.Factory()
+            .setCache(getVideoCache(context))
+            .setUpstreamDataSourceFactory(upstreamFactory)
+            .setFlags(CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR)
     }
 
     DisposableEffect(Unit) {
@@ -343,7 +386,9 @@ actual fun VideoPlayer(uri: String, modifier: Modifier) {
 
     LaunchedEffect(uri) {
         val mediaItem = MediaItem.fromUri(uri)
-        player.setMediaItem(mediaItem)
+        val mediaSource = ProgressiveMediaSource.Factory(cacheFactory)
+            .createMediaSource(mediaItem)
+        player.setMediaSource(mediaSource)
         player.prepare()
         player.playWhenReady = false
     }
