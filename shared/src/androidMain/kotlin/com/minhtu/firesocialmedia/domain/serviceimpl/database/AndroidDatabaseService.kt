@@ -8,6 +8,7 @@ import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.storage.FirebaseStorage
+import com.google.firebase.storage.StorageMetadata
 import com.minhtu.firesocialmedia.constants.Constants
 import com.minhtu.firesocialmedia.data.remote.constant.DataConstant
 import com.minhtu.firesocialmedia.data.remote.dto.call.AudioCallSessionDTO
@@ -354,7 +355,10 @@ class AndroidDatabaseService(private val context: Context) : DatabaseService {
             .child("users").child(user.uid)
 
         if(user.image != Constants.DEFAULT_AVATAR_URL){
-            storageReference.putFile(user.image.toUri()).addOnCompleteListener{ putFileTask ->
+            val metadata = StorageMetadata.Builder()
+                .setCacheControl("public,max-age=604800,immutable")
+                .build()
+            storageReference.putFile(user.image.toUri(), metadata).addOnCompleteListener{ putFileTask ->
                 if(putFileTask.isSuccessful){
                     storageReference.downloadUrl.addOnSuccessListener { avatarUrl ->
                         user.updateImage(avatarUrl.toString())

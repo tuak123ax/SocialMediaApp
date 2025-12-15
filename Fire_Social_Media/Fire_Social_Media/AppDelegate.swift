@@ -1,5 +1,6 @@
 import UIKit
 import FirebaseCore
+import FirebaseDatabase
 import FirebaseMessaging
 import UserNotifications
 import shared
@@ -14,6 +15,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
         // Configure Firebase
         FirebaseConfiguration.shared.setLoggerLevel(.debug)
         FirebaseApp.configure()
+        Database.database().isPersistenceEnabled = true
 
         // Set Messaging delegate
         Messaging.messaging().delegate = self
