@@ -14,16 +14,13 @@ import com.minhtu.firesocialmedia.di.PlatformContext
 import com.minhtu.firesocialmedia.domain.core.NetworkMonitor
 import com.minhtu.firesocialmedia.domain.error.signin.SignInError
 import com.minhtu.firesocialmedia.presentation.signin.SignInViewModel
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
-import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -31,8 +28,6 @@ import kotlin.test.assertEquals
 @Suppress("UNCHECKED_CAST")
 @OptIn(ExperimentalCoroutinesApi::class)
 class SignInViewModelTest {
-
-    private val testDispatcher = StandardTestDispatcher()
 
     // Simple fakes instead of mockative to avoid runtime NoSuchMethodError
     private class FakeAuthService : AuthService {
@@ -162,20 +157,14 @@ class SignInViewModelTest {
 
     @BeforeTest
     fun setup() {
-        Dispatchers.setMain(testDispatcher)
         authService = FakeAuthService()
         cryptoService = FakeCryptoService()
         databaseService = FakeDatabaseService()
         platform = FakePlatformContext(authService, cryptoService, databaseService)
     }
 
-    @AfterTest
-    fun tearDown() {
-        Dispatchers.resetMain()
-    }
-
     // Helper to create VM with test dispatcher, wiring use cases via AppModule
-    private fun vm(): SignInViewModel {
+    private fun vm(dispatcher: CoroutineDispatcher): SignInViewModel {
         val repo = com.minhtu.firesocialmedia.di.AppModule.provideAuthenticationRepository(platform)
         val signInUseCase = com.minhtu.firesocialmedia.di.AppModule.provideSignInUseCase(repo)
         val rememberPasswordUseCase = com.minhtu.firesocialmedia.di.AppModule.provideRememberPasswordUseCase(repo)
@@ -188,13 +177,14 @@ class SignInViewModelTest {
             checkUserExistsUseCase,
             checkLocalAccountUseCase,
             handleSignInGoogleResultUseCase,
-            testDispatcher
+            dispatcher
         )
     }
 
     @Test
-    fun `signIn with blank email shows error`() = runTest(testDispatcher) {
-        val viewModel: SignInViewModel = vm()
+    fun `signIn with blank email shows error`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val viewModel: SignInViewModel = vm(dispatcher)
         viewModel.resetSignInStatus()
         viewModel.updateEmail("")
         viewModel.updatePassword("somepassword")
@@ -208,8 +198,9 @@ class SignInViewModelTest {
     }
 
     @Test
-    fun `signIn with blank password shows error`() = runTest(testDispatcher) {
-        val viewModel: SignInViewModel = vm()
+    fun `signIn with blank password shows error`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val viewModel: SignInViewModel = vm(dispatcher)
         viewModel.resetSignInStatus()
         viewModel.updateEmail("test1234@gmail.com")
         viewModel.updatePassword("")
@@ -223,8 +214,9 @@ class SignInViewModelTest {
     }
 
     @Test
-    fun `signIn with both email and password are blank shows error`() = runTest(testDispatcher) {
-        val viewModel: SignInViewModel = vm()
+    fun `signIn with both email and password are blank shows error`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val viewModel: SignInViewModel = vm(dispatcher)
         viewModel.resetSignInStatus()
         viewModel.updateEmail("")
         viewModel.updatePassword("")
@@ -238,14 +230,15 @@ class SignInViewModelTest {
     }
 
     @Test
-    fun `signIn with valid email and password triggers success flow`() = runTest(testDispatcher) {
+    fun `signIn with valid email and password triggers success flow`() = runTest {
         val email = "test@gmail.com"
         val password = "securepassword"
 
         authService.signInError = null
         databaseService.userExists = true
 
-        val viewModel: SignInViewModel = vm()
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val viewModel: SignInViewModel = vm(dispatcher)
         viewModel.resetSignInStatus()
         viewModel.updateEmail(email.lowercase())
         viewModel.updatePassword(password)
@@ -259,13 +252,14 @@ class SignInViewModelTest {
     }
 
     @Test
-    fun `signIn with invalid email and password triggers fail flow`() = runTest(testDispatcher) {
+    fun `signIn with invalid email and password triggers fail flow`() = runTest {
         val email = "wrongTestAccount@gmail.com"
         val password = "securepassword"
 
         authService.signInError = SignInError.Unknown("Login failed")
 
-        val viewModel: SignInViewModel = vm()
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val viewModel: SignInViewModel = vm(dispatcher)
         viewModel.resetSignInStatus()
         viewModel.updateEmail(email.lowercase())
         viewModel.updatePassword(password)
@@ -278,13 +272,14 @@ class SignInViewModelTest {
     }
 
     @Test
-    fun `login with account that is in local storage triggers success flow`() = runTest(testDispatcher) {
+    fun `login with account that is in local storage triggers success flow`() = runTest {
         val correctCredentials = CredentialsDTO("correctuser@gmail.com", "123321")
         cryptoService.load = correctCredentials
         authService.signInError = null
         databaseService.userExists = true
 
-        val viewModel: SignInViewModel = vm()
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val viewModel: SignInViewModel = vm(dispatcher)
 
         viewModel.checkLocalAccount()
         advanceUntilIdle()
@@ -296,8 +291,9 @@ class SignInViewModelTest {
     }
 
     @Test
-    fun `login with Google triggers success flow`() = runTest(testDispatcher) {
-        val viewModel: SignInViewModel = vm()
+    fun `login with Google triggers success flow`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val viewModel: SignInViewModel = vm(dispatcher)
         viewModel.setSignInLauncher(object : SignInLauncher { override fun launchGoogleSignIn() {} })
 
         authService.googleResult = "correctemail@gmail.com"
@@ -312,8 +308,9 @@ class SignInViewModelTest {
     }
 
     @Test
-    fun `login with Google triggers fail flow`() = runTest(testDispatcher) {
-        val viewModel: SignInViewModel = vm()
+    fun `login with Google triggers fail flow`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val viewModel: SignInViewModel = vm(dispatcher)
         viewModel.setSignInLauncher(object : SignInLauncher { override fun launchGoogleSignIn() {} })
 
         authService.googleResult = null

@@ -6,14 +6,11 @@ import com.minhtu.firesocialmedia.domain.repository.AuthenticationRepository
 import com.minhtu.firesocialmedia.domain.usecases.forgotpassword.CheckIfEmailExistsUseCase
 import com.minhtu.firesocialmedia.domain.usecases.forgotpassword.SendEmailResetPasswordUseCase
 import com.minhtu.firesocialmedia.presentation.forgotpassword.ForgotPasswordViewModel
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
-import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -36,28 +33,21 @@ private class ForgotFakeAuthRepository : AuthenticationRepository {
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ForgotPasswordViewModelTest {
-    private val testDispatcher = StandardTestDispatcher()
     private lateinit var repo: ForgotFakeAuthRepository
-    private lateinit var viewModel: ForgotPasswordViewModel
 
     @BeforeTest
     fun setup() {
-        Dispatchers.setMain(testDispatcher)
         repo = ForgotFakeAuthRepository()
-        viewModel = ForgotPasswordViewModel(
-            CheckIfEmailExistsUseCase(repo),
-            SendEmailResetPasswordUseCase(repo),
-            testDispatcher
-        )
-    }
-
-    @AfterTest
-    fun tearDown() {
-        Dispatchers.resetMain()
     }
 
     @Test
-    fun `test check email exists with empty email trigger fail flow`() = runTest(testDispatcher) {
+    fun `test check email exists with empty email trigger fail flow`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val viewModel = ForgotPasswordViewModel(
+            CheckIfEmailExistsUseCase(repo),
+            SendEmailResetPasswordUseCase(repo),
+            dispatcher
+        )
         viewModel.updateEmail("")
         viewModel.checkIfEmailExists()
         advanceUntilIdle()
@@ -68,7 +58,13 @@ class ForgotPasswordViewModelTest {
     }
 
     @Test
-    fun `test check email exists with email not exist trigger fail flow`() = runTest(testDispatcher) {
+    fun `test check email exists with email not exist trigger fail flow`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val viewModel = ForgotPasswordViewModel(
+            CheckIfEmailExistsUseCase(repo),
+            SendEmailResetPasswordUseCase(repo),
+            dispatcher
+        )
         viewModel.updateEmail("test@gmail.com")
         repo.emailExistResult = EmailExistResult(false, Constants.EMAIL_NOT_EXISTED)
 
@@ -81,7 +77,13 @@ class ForgotPasswordViewModelTest {
     }
 
     @Test
-    fun `test check email exists with server error trigger fail flow`() = runTest(testDispatcher) {
+    fun `test check email exists with server error trigger fail flow`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val viewModel = ForgotPasswordViewModel(
+            CheckIfEmailExistsUseCase(repo),
+            SendEmailResetPasswordUseCase(repo),
+            dispatcher
+        )
         viewModel.updateEmail("test@gmail.com")
         repo.emailExistResult = EmailExistResult(false, Constants.EMAIL_SERVER_ERROR)
 
@@ -94,7 +96,13 @@ class ForgotPasswordViewModelTest {
     }
 
     @Test
-    fun `test check email exists trigger success flow`() = runTest(testDispatcher) {
+    fun `test check email exists trigger success flow`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val viewModel = ForgotPasswordViewModel(
+            CheckIfEmailExistsUseCase(repo),
+            SendEmailResetPasswordUseCase(repo),
+            dispatcher
+        )
         viewModel.updateEmail("test@gmail.com")
         repo.emailExistResult = EmailExistResult(true, Constants.EMAIL_EXISTED)
 
@@ -107,7 +115,13 @@ class ForgotPasswordViewModelTest {
     }
 
     @Test
-    fun `test send email reset password trigger success flow`() = runTest(testDispatcher) {
+    fun `test send email reset password trigger success flow`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val viewModel = ForgotPasswordViewModel(
+            CheckIfEmailExistsUseCase(repo),
+            SendEmailResetPasswordUseCase(repo),
+            dispatcher
+        )
         viewModel.updateEmail("test@gmail.com")
         repo.sendResetResult = true
 
@@ -119,7 +133,13 @@ class ForgotPasswordViewModelTest {
     }
 
     @Test
-    fun `test send email reset password trigger fail flow`() = runTest(testDispatcher) {
+    fun `test send email reset password trigger fail flow`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val viewModel = ForgotPasswordViewModel(
+            CheckIfEmailExistsUseCase(repo),
+            SendEmailResetPasswordUseCase(repo),
+            dispatcher
+        )
         viewModel.updateEmail("test@gmail.com")
         repo.sendResetResult = false
 

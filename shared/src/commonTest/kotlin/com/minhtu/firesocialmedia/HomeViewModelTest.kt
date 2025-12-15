@@ -10,15 +10,11 @@ import com.minhtu.firesocialmedia.domain.interactor.home.NewsInteractor
 import com.minhtu.firesocialmedia.domain.interactor.home.NotificationInteractor
 import com.minhtu.firesocialmedia.domain.interactor.home.UserInteractor
 import com.minhtu.firesocialmedia.presentation.home.HomeViewModel
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
-import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -28,18 +24,10 @@ class HomeViewModelTest {
     private val testDispatcher = StandardTestDispatcher()
 
     @BeforeTest
-    fun setup() {
-        Dispatchers.setMain(testDispatcher)
-        // no-op
-    }
-
-    @AfterTest
-    fun tearDown() {
-        Dispatchers.resetMain()
-    }
+    fun setup() { /* no-op */ }
 
     @Test
-    fun `test get current user and friends success`() = runTest(testDispatcher) {
+    fun `test get current user and friends success`() = runTest {
         val currentUser = UserInstance(email = "email", image = "avatar", name = "me", uid = "currentUserUid", token = "token").apply {
             friends = arrayListOf("friend1", "friend2")
         }
@@ -75,7 +63,7 @@ class HomeViewModelTest {
             override fun stopObservePhoneCall() {}
             override suspend fun stopCallService() {}
         }
-        val homeViewModel = HomeViewModel(fakeUserInteractor, fakeNewsInteractor, fakeNotificationInteractor, fakeCallInteractor, testDispatcher)
+        val homeViewModel = HomeViewModel(fakeUserInteractor, fakeNewsInteractor, fakeNotificationInteractor, fakeCallInteractor, StandardTestDispatcher(testScheduler))
         homeViewModel.getCurrentUserAndFriends()
         advanceUntilIdle()
 
@@ -84,7 +72,7 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `test get current user and friends fail`() = runTest(testDispatcher) {
+    fun `test get current user and friends fail`() = runTest {
         val fakeUserInteractor = object : UserInteractor {
             override suspend fun getCurrentUserId(): String? = null
             override suspend fun getUser(userId: String, isCurrentUser: Boolean): UserInstance? = null
@@ -116,7 +104,7 @@ class HomeViewModelTest {
                 override fun stopObservePhoneCall() {}
                 override suspend fun stopCallService() {}
             },
-            testDispatcher
+            StandardTestDispatcher(testScheduler)
         )
         homeViewModel.getCurrentUserAndFriends()
         advanceUntilIdle()
@@ -126,7 +114,7 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `test get latest news success`() = runTest(testDispatcher) {
+    fun `test get latest news success`() = runTest {
         val news = listOf(NewsInstance(id = "testNew1", posterId = "p1"), NewsInstance(id = "testNew2", posterId = "p2"))
         val homeViewModel = HomeViewModel(
             object : UserInteractor {
@@ -158,7 +146,7 @@ class HomeViewModelTest {
                 override fun stopObservePhoneCall() {}
                 override suspend fun stopCallService() {}
             },
-            testDispatcher
+            StandardTestDispatcher(testScheduler)
         )
         homeViewModel.getLatestNews()
         advanceUntilIdle()
@@ -168,7 +156,7 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `test get latest news fail`() = runTest(testDispatcher) {
+    fun `test get latest news fail`() = runTest {
         val homeViewModel = HomeViewModel(
             object : UserInteractor {
                 override suspend fun getCurrentUserId(): String? = null
@@ -199,7 +187,7 @@ class HomeViewModelTest {
                 override fun stopObservePhoneCall() {}
                 override suspend fun stopCallService() {}
             },
-            testDispatcher
+            StandardTestDispatcher(testScheduler)
         )
         homeViewModel.getLatestNews()
         advanceUntilIdle()
@@ -209,7 +197,7 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `test get all notification success`() = runTest(testDispatcher) {
+    fun `test get all notification success`() = runTest {
         val notifications = listOf(
             NotificationInstance(id = "n1", content = "", avatar = "", sender = "s1", timeSend = 0L, type = NotificationType.LIKE, relatedInfo = "r1"),
             NotificationInstance(id = "n2", content = "", avatar = "", sender = "s2", timeSend = 0L, type = NotificationType.LIKE, relatedInfo = "r2")
@@ -245,7 +233,7 @@ class HomeViewModelTest {
                 override fun stopObservePhoneCall() {}
                 override suspend fun stopCallService() {}
             },
-            testDispatcher
+            StandardTestDispatcher(testScheduler)
         )
         homeViewModel.getAllNotificationsOfUser()
         advanceUntilIdle()
@@ -255,7 +243,7 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `test get all notification fail`() = runTest(testDispatcher) {
+    fun `test get all notification fail`() = runTest {
         val fakeUserInteractor = object : UserInteractor {
             override suspend fun getCurrentUserId(): String? = "currentUser"
             override suspend fun getUser(userId: String, isCurrentUser: Boolean): UserInstance? = null
@@ -287,7 +275,7 @@ class HomeViewModelTest {
                 override fun stopObservePhoneCall() {}
                 override suspend fun stopCallService() {}
             },
-            testDispatcher
+            StandardTestDispatcher(testScheduler)
         )
         homeViewModel.getAllNotificationsOfUser()
         advanceUntilIdle()

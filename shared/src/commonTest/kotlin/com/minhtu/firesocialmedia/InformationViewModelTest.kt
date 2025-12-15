@@ -10,14 +10,11 @@ import com.minhtu.firesocialmedia.domain.usecases.common.GetCurrentUserUidUseCas
 import com.minhtu.firesocialmedia.domain.usecases.common.GetFCMTokenUseCase
 import com.minhtu.firesocialmedia.domain.usecases.information.SaveSignUpInformationUseCase
 import com.minhtu.firesocialmedia.presentation.information.InformationViewModel
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
-import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -61,27 +58,22 @@ class InformationViewModelTest {
 
     @BeforeTest
     fun setup() {
-        Dispatchers.setMain(testDispatcher)
         authRepo = InfoFakeAuthRepository()
         userRepo = InfoFakeUserRepository("testUid")
         localRepo = InfoFakeLocalRepository("testToken")
     }
 
-    @AfterTest
-    fun tearDown() {
-        Dispatchers.resetMain()
-    }
-
-    private fun vm(): InformationViewModel = InformationViewModel(
+    private fun vm(dispatcher: CoroutineDispatcher): InformationViewModel = InformationViewModel(
         SaveSignUpInformationUseCase(authRepo),
         GetCurrentUserUidUseCase(userRepo),
         GetFCMTokenUseCase(localRepo),
-        testDispatcher
+        dispatcher
     )
 
     @Test
-    fun `finish sign up with username blank`() = runTest(testDispatcher) {
-        val informationViewModel = vm()
+    fun `finish sign up with username blank`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val informationViewModel = vm(dispatcher)
         informationViewModel.updateUsername("")
         informationViewModel.finishSignUpStage()
         advanceUntilIdle()
@@ -91,9 +83,10 @@ class InformationViewModelTest {
     }
 
     @Test
-    fun `finish sign up with error from server`() = runTest(testDispatcher) {
+    fun `finish sign up with error from server`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
         authRepo.saveResult = false
-        val informationViewModel = vm()
+        val informationViewModel = vm(dispatcher)
         informationViewModel.updateEmail("email")
         informationViewModel.updateAvatar("avatar")
         informationViewModel.updateUsername("username")
@@ -106,9 +99,10 @@ class InformationViewModelTest {
     }
 
     @Test
-    fun `finish sign up success`() = runTest(testDispatcher) {
+    fun `finish sign up success`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
         authRepo.saveResult = true
-        val informationViewModel = vm()
+        val informationViewModel = vm(dispatcher)
         informationViewModel.updateEmail("email")
         informationViewModel.updateAvatar("avatar")
         informationViewModel.updateUsername("username")
