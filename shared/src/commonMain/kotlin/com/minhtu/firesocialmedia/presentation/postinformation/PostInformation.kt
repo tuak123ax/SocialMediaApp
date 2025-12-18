@@ -81,10 +81,10 @@ class PostInformation {
                 modifier = modifier,
                 verticalArrangement = Arrangement.spacedBy(1.dp)
             ) {
-                UiUtils.Companion.BackAndMoreOptionsRow(onNavigateBack)
+                UiUtils.BackAndMoreOptionsRow(onNavigateBack)
                 Row(
                     horizontalArrangement = Arrangement.Start,
-                    modifier = Modifier.Companion.background(color = Color.Companion.White)
+                    modifier = Modifier.background(color = Color.White)
                         .padding(10.dp).fillMaxWidth()
                         .clickable {
                             if (user == null) {
@@ -100,32 +100,32 @@ class PostInformation {
                         AutoSizeImage(
                             news.avatar,
                             contentDescription = "Poster Avatar",
-                            contentScale = ContentScale.Companion.Crop,
-                            modifier = Modifier.Companion
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier
                                 .size(40.dp)
                                 .clip(CircleShape)
-                                .testTag(TestTag.Companion.TAG_POSTER_AVATAR)
+                                .testTag(TestTag.TAG_POSTER_AVATAR)
                                 .semantics {
-                                    contentDescription = TestTag.Companion.TAG_POSTER_AVATAR
+                                    contentDescription = TestTag.TAG_POSTER_AVATAR
                                 }
                         )
                     }
-                    Spacer(modifier = Modifier.Companion.width(10.dp))
+                    Spacer(modifier = Modifier.width(10.dp))
                     Column {
                         Text(
-                            text = news.posterName,
-                            color = Color.Companion.Black,
-                            modifier = Modifier.Companion.padding(horizontal = 2.dp)
+                        text = news.posterName,
+                        color = Color.Black,
+                        modifier = Modifier.padding(horizontal = 2.dp)
                         )
                         Text(
-                            text = convertTimeToDateString(news.timePosted),
-                            color = Color.Companion.Gray,
-                            modifier = Modifier.Companion.padding(horizontal = 2.dp)
+                        text = convertTimeToDateString(news.timePosted),
+                        color = Color.Gray,
+                        modifier = Modifier.padding(horizontal = 2.dp)
                         )
                     }
-                    Spacer(modifier = Modifier.Companion.weight(1f))
+                Spacer(modifier = Modifier.weight(1f))
                 }
-                UiUtils.Companion.ExpandableText(news.message)
+                UiUtils.ExpandableText(news.message)
                 if (news.image.isNotEmpty()) {
                     CompositionLocalProvider(
                         localImageLoaderValue
@@ -133,41 +133,41 @@ class PostInformation {
                         AutoSizeImage(
                             news.image,
                             contentDescription = "Image",
-                            contentScale = ContentScale.Companion.Fit,
-                            modifier = Modifier.Companion
+                            contentScale = ContentScale.Fit,
+                            modifier = Modifier
                                 .fillMaxWidth()
                                 .height(250.dp)
                                 .padding(5.dp)
                                 .clickable {
                                     onNavigateToShowImageScreen(news.image)
                                 }
-                                .testTag(TestTag.Companion.TAG_POST_IMAGE)
+                                .testTag(TestTag.TAG_POST_IMAGE)
                                 .semantics {
-                                    contentDescription = TestTag.Companion.TAG_POST_IMAGE
+                                    contentDescription = TestTag.TAG_POST_IMAGE
                                 }
                         )
                     }
                 }
                 Row(
-                    modifier = Modifier.Companion.fillMaxWidth().padding(horizontal = 10.dp),
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp),
                     horizontalArrangement = Arrangement.Start
                 ) {
                     Text(
                         text = "Like: ${likeCountList.value[news.id] ?: 0}",
                         fontSize = 12.sp,
-                        color = Color.Companion.Black,
-                        modifier = Modifier.Companion.padding(2.dp)
+                        color = Color.Black,
+                        modifier = Modifier.padding(2.dp)
                     )
-                    Spacer(modifier = Modifier.Companion.weight(1f))
+                    Spacer(modifier = Modifier.weight(1f))
                     Text(
                         text = "Comment: ${commentCountList.value[news.id] ?: 0}",
                         fontSize = 12.sp,
-                        color = Color.Companion.Black,
-                        modifier = Modifier.Companion.padding(2.dp)
+                        color = Color.Black,
+                        modifier = Modifier.padding(2.dp)
                     )
                 }
                 Row(
-                    modifier = Modifier.Companion.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth()
                         .padding(bottom = 5.dp, start = 10.dp, end = 10.dp)
                 ) {
                     Button(
@@ -175,53 +175,53 @@ class PostInformation {
                             homeViewModel.clickLikeButton(news)
                         },
                         elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp),
-                        colors = if (isLiked) ButtonDefaults.buttonColors(Color.Companion.Cyan)
-                        else ButtonDefaults.buttonColors(Color.Companion.White),
-                        modifier = Modifier.Companion.height(35.dp).weight(1f)
-                            .testTag(TestTag.Companion.TAG_BUTTON_LIKE)
+                        colors = if (isLiked) ButtonDefaults.buttonColors(Color.Cyan)
+                        else ButtonDefaults.buttonColors(Color.White),
+                        modifier = Modifier.height(35.dp).weight(1f)
+                            .testTag(TestTag.TAG_BUTTON_LIKE)
                             .semantics {
-                                contentDescription = TestTag.Companion.TAG_BUTTON_LIKE
+                                contentDescription = TestTag.TAG_BUTTON_LIKE
                             }) {
                         CrossPlatformIcon(
                             icon = "like",
                             backgroundColor = if (isLiked) "#00FFFF" else "#FFFFFFFF",
                             contentDescription = "Like",
-                            modifier = Modifier.Companion
+                            modifier = Modifier
                                 .size(25.dp)
                                 .padding(end = 5.dp)
                         )
-                        Text(text = if (isLiked) "Liked" else "Like", color = Color.Companion.Black)
+                        Text(text = if (isLiked) "Liked" else "Like", color = Color.Black)
                     }
-                    Spacer(modifier = Modifier.Companion.width(10.dp))
+                    Spacer(modifier = Modifier.width(10.dp))
                     Button(
                         onClick = {
                             homeViewModel.clickCommentButton(news)
                         },
                         elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp),
-                        colors = ButtonDefaults.buttonColors(Color.Companion.White),
-                        modifier = Modifier.Companion.height(35.dp).weight(1f)
-                            .testTag(TestTag.Companion.TAG_BUTTON_COMMENT)
+                        colors = ButtonDefaults.buttonColors(Color.White),
+                        modifier = Modifier.height(35.dp).weight(1f)
+                            .testTag(TestTag.TAG_BUTTON_COMMENT)
                             .semantics {
-                                contentDescription = TestTag.Companion.TAG_BUTTON_COMMENT
+                                contentDescription = TestTag.TAG_BUTTON_COMMENT
                             }) {
                         CrossPlatformIcon(
                             icon = "comment",
                             backgroundColor = "#FFFFFFFF",
                             contentDescription = "Comment",
-                            modifier = Modifier.Companion
+                            modifier = Modifier
                                 .size(25.dp)
                                 .padding(end = 5.dp)
                         )
-                        Text(text = "Comment", color = Color.Companion.Black)
+                        Text(text = "Comment", color = Color.Black)
                     }
                 }
 
                 //Show comment screen at the end of this page
                 if(homeViewModel.currentUser != null) {
-                    Comment.Companion.CommentScreen(
-                        modifier = Modifier.Companion
+                    Comment.CommentScreen(
+                        modifier = Modifier
                             .fillMaxSize()
-                            .background(color = Color.Companion.White),
+                            .background(color = Color.White),
                         platform,
                         localImageLoaderValue,
                         showCloseIcon = false,

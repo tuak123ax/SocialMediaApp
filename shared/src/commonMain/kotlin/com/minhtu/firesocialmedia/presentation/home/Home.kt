@@ -67,6 +67,7 @@ import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.minhtu.firesocialmedia.constants.TestTag
+import com.minhtu.firesocialmedia.domain.core.DecentralizationType
 import com.minhtu.firesocialmedia.domain.entity.call.CallingRequestData
 import com.minhtu.firesocialmedia.domain.entity.home.deeplinks.DeepLinksData
 import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
@@ -403,8 +404,22 @@ class Home {
                         canRefresh = {listState.isAtTop()}
                     ) {
                         val sortedNews by remember(newsList.value) {
-                            derivedStateOf { newsList.value.sortedByDescending { it.timePosted } }
+                            derivedStateOf {
+                                newsList.value
+                                    .asSequence()
+                                    .filter { item ->
+                                        when (item.decentralizationType) {
+                                            DecentralizationType.Public -> true
+                                            DecentralizationType.OnlyFriends -> homeViewModel.isFriendOf(item.posterId)
+                                            DecentralizationType.Private -> false
+                                            null -> true
+                                        }
+                                    }
+                                    .sortedByDescending { it.timePosted }
+                                    .toList()
+                            }
                         }
+
                         UiUtils.LazyColumnOfNewsWithSlideOutAnimationAndLoadMore(
                             localImageLoaderValue,
                             listState,

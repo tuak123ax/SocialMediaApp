@@ -1,6 +1,7 @@
 package com.minhtu.firesocialmedia.data.remote.mapper.news
 
 import com.minhtu.firesocialmedia.data.remote.dto.news.NewsDTO
+import com.minhtu.firesocialmedia.domain.core.DecentralizationType
 import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
 
 fun NewsDTO.toDomain() : NewsInstance {
@@ -17,7 +18,8 @@ fun NewsDTO.toDomain() : NewsInstance {
         commentCount,
         timePosted,
         localPath,
-        shareContentId
+        shareContentId,
+        convertDecentralizationTypeToDomain(decentralizationType)
     )
 }
 fun NewsInstance.toDto() : NewsDTO {
@@ -34,6 +36,16 @@ fun NewsInstance.toDto() : NewsDTO {
         commentCount,
         timePosted,
         localPath,
-        shareContentId
+        shareContentId,
+        decentralizationType?.toString() ?: ""
     )
+}
+
+fun convertDecentralizationTypeToDomain(decentralizationType : String) : DecentralizationType? {
+    return when(decentralizationType) {
+        "Public" -> DecentralizationType.Public
+        "Private" -> DecentralizationType.Private
+        "OnlyFriends" -> DecentralizationType.OnlyFriends
+        else -> null
+    }
 }

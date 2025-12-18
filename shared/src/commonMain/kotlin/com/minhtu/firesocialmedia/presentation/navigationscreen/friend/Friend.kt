@@ -58,7 +58,7 @@ class Friend {
                          onNavigateToShowImageScreen: (image : String) -> Unit){
             Column(
                 verticalArrangement = Arrangement.Top,
-                horizontalAlignment = Alignment.Companion.CenterHorizontally,
+                horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = modifier.padding(paddingValues)
             ) {
                 val friendRequestsStatus =
@@ -69,21 +69,21 @@ class Friend {
                     friendViewModel.updateFriendRequests(homeViewModel.currentUser!!.friendRequests)
                     friendViewModel.updateFriends(homeViewModel.currentUser!!.friends)
                 }
-                Search.Companion.SearchBar(
+                Search.SearchBar(
                     query = searchViewModel.query,
                     onQueryChange = { query -> searchViewModel.updateQuery(query) },
-                    modifier = Modifier.Companion.height(80.dp).padding(vertical = 10.dp)
-                        .testTag(TestTag.Companion.TAG_SEARCH_BAR)
+                    modifier = Modifier.height(80.dp).padding(vertical = 10.dp)
+                        .testTag(TestTag.TAG_SEARCH_BAR)
                         .semantics {
-                            contentDescription = TestTag.Companion.TAG_SEARCH_BAR
+                            contentDescription = TestTag.TAG_SEARCH_BAR
                         }
                 )
                 Text(
                     text = "Friends",
                     fontSize = 20.sp,
-                    fontWeight = FontWeight.Companion.Bold,
-                    textAlign = TextAlign.Companion.Center,
-                    modifier = Modifier.Companion.fillMaxWidth().padding(vertical = 20.dp)
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 20.dp)
                 )
                 TabLayoutForFriendScreen(
                     platform,
@@ -115,15 +115,15 @@ class Friend {
                                      onNavigateToUserInformation: (user: UserInstance) -> Unit){
             var selectedTabIndex by remember { mutableIntStateOf(0) }
 
-            Column(modifier = Modifier.Companion.fillMaxSize()) {
+            Column(modifier = Modifier.fillMaxSize()) {
                 TabRow(
                     selectedTabIndex = selectedTabIndex,
-                    containerColor = Color.Companion.White,
-                    contentColor = Color.Companion.Black,
+                    containerColor = Color.White,
+                    contentColor = Color.Black,
                     indicator = { tabPositions ->
                         TabRowDefaults.Indicator(
-                            Modifier.Companion.tabIndicatorOffset(tabPositions[selectedTabIndex]),
-                            color = Color.Companion.Red
+                            Modifier.tabIndicatorOffset(tabPositions[selectedTabIndex]),
+                            color = Color.Red
                         )
                     }
                 ) {
@@ -185,7 +185,7 @@ class Friend {
                                 .semantics { contentDescription = TestTag.TAG_FRIEND_REQUEST_TAB_LIST }
                         ) {
                             items(filterList) { user ->
-                                UiUtils.Companion.FriendRequest(
+                                UiUtils.FriendRequest(
                                     localImageLoaderValue,
                                     user,
                                     homeViewModel.currentUser!!,

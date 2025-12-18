@@ -113,72 +113,72 @@ class SignIn{
             //Back button
             QuitAlertDialog()
 
-            Box(modifier = Modifier.Companion.fillMaxSize()) {
+            Box(modifier = Modifier.fillMaxSize()) {
                 Column(modifier = modifier, verticalArrangement = Arrangement.Center) {
                     //Title
                     Text(
                         text = "FireSocialMedia",
-                        color = Color.Companion.Red,
+                        color = Color.Red,
                         fontSize = 30.sp,
-                        textAlign = TextAlign.Companion.Center,
-                        modifier = Modifier.Companion.fillMaxWidth()
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
                     )
-                    Spacer(modifier = Modifier.Companion.padding(bottom = 50.dp))
+                    Spacer(modifier = Modifier.padding(bottom = 50.dp))
                     //Username textfield
                     OutlinedTextField(
                         value = signInViewModel.email.collectAsState().value,
                         onValueChange = { text ->
                             signInViewModel.updateEmail(text)
-                        }, modifier = Modifier.Companion
+                        }, modifier = Modifier
                             .fillMaxWidth()
                             .padding(20.dp)
                             .focusable(true)
-                            .testTag(TestTag.Companion.TAG_USERNAME)
+                            .testTag(TestTag.TAG_USERNAME)
                             .semantics {
-                                contentDescription = TestTag.Companion.TAG_USERNAME
+                                contentDescription = TestTag.TAG_USERNAME
                             },
                         shape = RoundedCornerShape(30.dp),
                         label = { Text(text = "Username") },
                         singleLine = true,
-                        textStyle = TextStyle(Color.Companion.White)
+                        textStyle = TextStyle(Color.White)
                     )
                     //Password textfield
                     PasswordTextField(
-                        Constants.Companion.PASSWORD,
+                        Constants.PASSWORD,
                         signInViewModel,
-                        TestTag.Companion.TAG_PASSWORD
+                        TestTag.TAG_PASSWORD
                     )
 
                     Row(
-                        modifier = Modifier.Companion
+                        modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 20.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.Companion.CenterVertically
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
                         //Forgot password
                         Text(
                             text = "Forgot password?",
-                            color = Color.Companion.White,
+                            color = Color.White,
                             fontSize = 15.sp,
-                            textAlign = TextAlign.Companion.Start,
-                            modifier = Modifier.Companion
+                            textAlign = TextAlign.Start,
+                            modifier = Modifier
                                 .clickable {
                                     onNavigateToForgotPasswordScreen()
                                 }
-                                .testTag(TestTag.Companion.TAG_FORGOTPASSWORD)
+                                .testTag(TestTag.TAG_FORGOTPASSWORD)
                                 .semantics {
-                                    contentDescription = TestTag.Companion.TAG_FORGOTPASSWORD
+                                    contentDescription = TestTag.TAG_FORGOTPASSWORD
                                 }
                         )
-                        Spacer(modifier = Modifier.Companion.weight(1f))
+                        Spacer(modifier = Modifier.weight(1f))
                         //Remember password
                         MyCheckbox(signInViewModel)
 
                     }
                     //Row contains buttons
                     Row(
-                        modifier = Modifier.Companion
+                        modifier = Modifier
                             .fillMaxWidth()
                             .padding(20.dp), horizontalArrangement = Arrangement.Center
                     ) {
@@ -189,32 +189,32 @@ class SignIn{
                                     showLoading = { loadingViewModel.showLoading() }
                                 )
                             },
-                            modifier = Modifier.Companion.testTag(TestTag.Companion.TAG_BUTTON_SIGNIN)
+                            modifier = Modifier.testTag(TestTag.TAG_BUTTON_SIGNIN)
                                 .semantics {
-                                    contentDescription = TestTag.Companion.TAG_BUTTON_SIGNIN
+                                    contentDescription = TestTag.TAG_BUTTON_SIGNIN
                                 }) {
                             Text(text = "Sign In")
                         }
-                        Spacer(modifier = Modifier.Companion.padding(horizontal = 20.dp))
+                        Spacer(modifier = Modifier.padding(horizontal = 20.dp))
                         //SignUp button
                         Button(
                             onClick = { onNavigateToSignUpScreen() },
-                            modifier = Modifier.Companion
-                                .testTag(TestTag.Companion.TAG_BUTTON_SIGNUP)
+                            modifier = Modifier
+                                .testTag(TestTag.TAG_BUTTON_SIGNUP)
                                 .semantics {
-                                    contentDescription = TestTag.Companion.TAG_BUTTON_SIGNUP
+                                    contentDescription = TestTag.TAG_BUTTON_SIGNUP
                                 }) {
                             Text(text = "Sign Up")
                         }
                     }
                     Text(
-                        textAlign = TextAlign.Companion.Center,
-                        color = Color.Companion.White,
+                        textAlign = TextAlign.Center,
+                        color = Color.White,
                         text = "Or register with",
-                        modifier = Modifier.Companion.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth()
                     )
                     Row(
-                        modifier = Modifier.Companion
+                        modifier = Modifier
                             .fillMaxWidth()
                             .padding(20.dp), horizontalArrangement = Arrangement.Center
                     ) {
@@ -224,29 +224,29 @@ class SignIn{
                                 signInViewModel.signInWithGoogle()
                             },
                             colors = ButtonDefaults.outlinedButtonColors(
-                                containerColor = Color.Companion.White,
-                                contentColor = Color.Companion.Black
+                                containerColor = Color.White,
+                                contentColor = Color.Black
                             ),
-                            modifier = Modifier.Companion
-                                .testTag(TestTag.Companion.TAG_BUTTON_SIGNINGOOGLE)
+                            modifier = Modifier
+                                .testTag(TestTag.TAG_BUTTON_SIGNINGOOGLE)
                                 .semantics {
-                                    contentDescription = TestTag.Companion.TAG_BUTTON_SIGNINGOOGLE
+                                    contentDescription = TestTag.TAG_BUTTON_SIGNINGOOGLE
                                 }
                         ) {
                             CrossPlatformIcon(
                                 "google",
                                 backgroundColor = "#FFFFFFFF",
                                 "Google",
-                                Modifier.Companion
+                                Modifier
                                     .size(25.dp)
                                     .padding(end = 5.dp)
                             )
-                            Text(text = "Sign In With Google", color = Color.Companion.Black)
+                            Text(text = "Sign In With Google", color = Color.Black)
                         }
                     }
                 }
                 if (isLoading.value) {
-                    Loading.Companion.LoadingScreen()
+                    Loading.LoadingScreen()
                 }
             }
         }
@@ -280,22 +280,22 @@ class SignIn{
         @Composable
         fun MyCheckbox(signInViewModel: SignInViewModel) {
             Row(
-                verticalAlignment = Alignment.Companion.CenterVertically
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Checkbox(
                     checked = signInViewModel.rememberPassword.collectAsState().value,
                     onCheckedChange = { signInViewModel.updateRememberPassword(it) },
-                    modifier = Modifier.Companion
-                        .testTag(TestTag.Companion.TAG_REMEMBERPASSWORD)
+                    modifier = Modifier
+                        .testTag(TestTag.TAG_REMEMBERPASSWORD)
                         .semantics {
-                            contentDescription = TestTag.Companion.TAG_REMEMBERPASSWORD
+                            contentDescription = TestTag.TAG_REMEMBERPASSWORD
                         }
                 )
                 Text(
-                    color = Color.Companion.White,
+                    color = Color.White,
                     text = "Remember password",
                     fontSize = 10.sp,
-                    modifier = Modifier.Companion.padding(start = 5.dp)
+                    modifier = Modifier.padding(start = 5.dp)
                 )
             }
         }
@@ -310,7 +310,7 @@ class SignIn{
                 onValueChange = { password ->
                     signInViewModel.updatePassword(password)
                 },
-                modifier = Modifier.Companion
+                modifier = Modifier
                     .fillMaxWidth()
                     .padding(20.dp)
                     .testTag(testTag)
@@ -320,9 +320,9 @@ class SignIn{
                 shape = androidx.compose.foundation.shape.RoundedCornerShape(30.dp),
                 label = { Text(text = label) },
                 singleLine = true,
-                textStyle = TextStyle(Color.Companion.White),
-                visualTransformation = if (passwordVisibility) VisualTransformation.Companion.None else PasswordVisualTransformation(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Companion.Password),
+                textStyle = TextStyle(Color.White),
+                visualTransformation = if (passwordVisibility) VisualTransformation.None else PasswordVisualTransformation(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                 trailingIcon = {
                     IconButton(onClick = { passwordVisibility = !passwordVisibility }) {
                         PasswordVisibilityIcon(passwordVisibility)

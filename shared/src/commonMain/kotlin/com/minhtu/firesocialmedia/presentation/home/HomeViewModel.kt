@@ -674,4 +674,8 @@ class HomeViewModel(
         val value = local ?: runCatching { newsInteractor.findNewById(sharedNewId) }.getOrNull()
         _sharedNewsById.update { old -> old + (sharedNewId to value) }
     }
+
+    fun isFriendOf(posterId: String): Boolean {
+        return _allUserFriends.value.any { it?.uid == posterId}
+    }
 }

@@ -42,23 +42,23 @@ class ShowImage {
             ) {
                 Column(
                     verticalArrangement = Arrangement.Center, // Centers children vertically
-                    horizontalAlignment = Alignment.Companion.CenterHorizontally, // Centers children horizontally
-                    modifier = Modifier.Companion
+                    horizontalAlignment = Alignment.CenterHorizontally, // Centers children horizontally
+                    modifier = Modifier
                         .fillMaxSize() // Makes the Column take full screen
                         .padding(16.dp)
                 ) {
                     // Close Button Row
                     Row(
                         horizontalArrangement = Arrangement.End,
-                        modifier = Modifier.Companion
+                        modifier = Modifier
                             .fillMaxWidth()
                             .padding(top = 8.dp) // Adjust padding if needed
                     ) {
                         Icon(
                             imageVector = Icons.Default.Download,
                             contentDescription = "Download Icon",
-                            tint = Color.Companion.White,
-                            modifier = Modifier.Companion
+                            tint = Color.White,
+                            modifier = Modifier
                                 .size(30.dp)
                                 .clickable {
                                     showImageViewModel.downloadImage(
@@ -66,30 +66,30 @@ class ShowImage {
                                         generateRandomImageName(16)
                                     )
                                 }
-                                .testTag(TestTag.Companion.TAG_BUTTON_DOWNLOAD)
+                                .testTag(TestTag.TAG_BUTTON_DOWNLOAD)
                                 .semantics {
-                                    contentDescription = TestTag.Companion.TAG_BUTTON_DOWNLOAD
+                                    contentDescription = TestTag.TAG_BUTTON_DOWNLOAD
                                 }
                         )
-                        Spacer(modifier = Modifier.Companion.width(10.dp))
+                        Spacer(modifier = Modifier.width(10.dp))
                         CrossPlatformIcon(
                             icon = "white_close",
                             backgroundColor = "#000000",
                             contentDescription = "Close Icon",
-                            contentScale = ContentScale.Companion.Fit,
-                            modifier = Modifier.Companion
+                            contentScale = ContentScale.Fit,
+                            modifier = Modifier
                                 .size(30.dp)
                                 .clickable {
                                     onNavigateToHomeScreen()
                                 }
-                                .testTag(TestTag.Companion.TAG_BUTTON_CLOSE)
+                                .testTag(TestTag.TAG_BUTTON_CLOSE)
                                 .semantics {
-                                    contentDescription = TestTag.Companion.TAG_BUTTON_CLOSE
+                                    contentDescription = TestTag.TAG_BUTTON_CLOSE
                                 }
                         )
                     }
 
-                    Spacer(modifier = Modifier.Companion.weight(1f)) // Pushes the image to the center
+                    Spacer(modifier = Modifier.weight(1f)) // Pushes the image to the center
 
                     // Centered Image
                     CompositionLocalProvider(
@@ -98,12 +98,12 @@ class ShowImage {
                         AutoSizeImage(
                             image,
                             contentDescription = "image",
-                            modifier = Modifier.Companion
+                            modifier = Modifier
                                 .fillMaxWidth()
                         )
                     }
 
-                    Spacer(modifier = Modifier.Companion.weight(1f)) // Pushes everything up/down evenly
+                    Spacer(modifier = Modifier.weight(1f)) // Pushes everything up/down evenly
                 }
             }
         }

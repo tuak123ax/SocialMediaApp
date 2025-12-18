@@ -9,7 +9,8 @@ class TestTag {
         const val TAG_REMEMBERPASSWORD: String = "TAG_REMEMBERPASSWORD"
         const val TAG_BUTTON_SIGNIN: String = "TAG_BUTTON_SIGNIN"
         const val TAG_BUTTON_SIGNUP: String = "TAG_BUTTON_SIGNUP"
-        const val TAG_BUTTON_SIGNINGOOGLE: String = "TAG_BUTTON_SIGNINGOOGLE"
+        const val TAG_BUTTON_ACCESS_MODIFIER: String = "TAG_BUTTON_ACCESS_MODIFIER"
+        const val TAG_BUTTON_SIGNINGOOGLE : String = "TAG_BUTTON_SIGNINGOOGLE"
         const val TAG_BUTTON_BACK: String = "TAG_BUTTON_BACK"
         const val TAG_SELECT_AVATAR: String = "TAG_SELECT_AVATAR"
         const val TAG_SELECT_NAME: String = "TAG_SELECT_NAME"
@@ -71,5 +72,8 @@ class TestTag {
         const val SCROLL_TO_TOP_BUTTON : String = "SCROLL_TO_TOP_BUTTON"
         const val TAG_BUTTON_DRAFTPOST : String = "TAG_BUTTON_DRAFTPOST"
         const val TAG_DRAFT: String = "TAG_DRAFT"
+        const val TAG_SELECT_PUBLIC: String = "TAG_SELECT_PUBLIC"
+        const val TAG_SELECT_PRIVATE: String = "TAG_SELECT_PRIVATE"
+        const val TAG_SELECT_ONLYFRIENDS: String = "TAG_SELECT_ONLYFRIENDS"
     }
 }

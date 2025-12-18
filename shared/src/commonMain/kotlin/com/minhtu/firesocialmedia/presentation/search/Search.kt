@@ -50,18 +50,18 @@ class Search {
                 }
             }
             Column(verticalArrangement = Arrangement.Top, modifier = modifier) {
-                UiUtils.Companion.BackAndMoreOptionsRow(onNavigateBack)
+                UiUtils.BackAndMoreOptionsRow(onNavigateBack)
                 SearchBar(
                     query = searchViewModel.query,
                     onQueryChange = { query -> searchViewModel.updateQuery(query) },
-                    modifier = Modifier.Companion
-                        .testTag(TestTag.Companion.TAG_SEARCH_BAR)
+                    modifier = Modifier
+                        .testTag(TestTag.TAG_SEARCH_BAR)
                         .semantics {
-                            contentDescription = TestTag.Companion.TAG_SEARCH_BAR
+                            contentDescription = TestTag.TAG_SEARCH_BAR
                         }
                 )
 
-                UiUtils.Companion.TabLayout(
+                UiUtils.TabLayout(
                     listState,
                     listOf("People", "Posts"),
                     localImageLoaderValue,
@@ -95,7 +95,7 @@ class Search {
                         contentDescription = "Search Icon"
                     )
                 },
-                textStyle = LocalTextStyle.current.copy(color = Color.Companion.Black),
+                textStyle = LocalTextStyle.current.copy(color = Color.Black),
                 singleLine = true,
                 shape = RoundedCornerShape(30.dp)
             )

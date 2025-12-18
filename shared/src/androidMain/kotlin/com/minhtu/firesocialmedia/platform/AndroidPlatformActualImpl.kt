@@ -141,6 +141,10 @@ actual fun getIconPainter(icon : String): Painter? {
         "draft" -> painterResource(id = R.drawable.draft)
         "nothing_here" -> painterResource(id = R.drawable.nothing_here)
         "share" -> painterResource(id = R.drawable.share)
+        "public" -> painterResource(id = R.drawable.public_access)
+        "private" -> painterResource(id = R.drawable.private_access)
+        "onlyFriends" -> painterResource(id = R.drawable.only_friends)
+        "down_arrow" -> painterResource(id = R.drawable.down_arrow)
         else -> null
     }
 }

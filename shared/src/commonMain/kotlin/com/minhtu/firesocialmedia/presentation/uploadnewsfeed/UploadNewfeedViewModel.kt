@@ -4,6 +4,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.minhtu.firesocialmedia.constants.Constants
+import com.minhtu.firesocialmedia.domain.core.DecentralizationType
 import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
 import com.minhtu.firesocialmedia.domain.entity.notification.NotificationInstance
 import com.minhtu.firesocialmedia.domain.entity.notification.NotificationType
@@ -82,7 +83,14 @@ class UploadNewfeedViewModel(
     fun resetBackValue() {
         _clickBackButton.value = false
     }
-
+    private val _accessPermission = MutableStateFlow<DecentralizationType>(DecentralizationType.Public)
+    var accessPermission = _accessPermission.asStateFlow()
+    fun updateAccessPermission(permission : DecentralizationType) {
+        _accessPermission.value = permission
+    }
+    fun resetAccessPermission() {
+        _accessPermission.value = DecentralizationType.Public
+    }
     fun createPost(user : UserInstance){
         viewModelScope.launch {
             withContext(ioDispatcher) {
@@ -94,49 +102,55 @@ class UploadNewfeedViewModel(
                     if(localPathOfSelectedDraft.value.isNotEmpty()) {
                         newsInstance.localPath = localPathOfSelectedDraft.value
                     }
+                    //Add access permission
+                    newsInstance.decentralizationType = _accessPermission.value
                     _createPostStatus.value = saveNewToDatabase.invoke(
                         newsInstance
                     )
 
-                    //Create noti object
-                    val notiContent = message
-                    val notification = NotificationInstance(getRandomIdForNotification(),
-                        notiContent,currentUser!!.image,
-                        currentUser!!.uid,
-                        getCurrentTime(),
-                        NotificationType.UPLOAD_NEW,
-                        newsInstance.id)
-                    //Send Notification
-                    val friendTokens = getFriendTokens()
-                    if(friendTokens.isNotEmpty()){
-                        if(notification.content.isNotEmpty()) {
-                            sendMessageToServer(createMessageForServer(notification.content, friendTokens, currentUser!!, "BASIC"))
-                        } else {
-                            if(image.isNotEmpty()) {
-                                val content = "Posted a picture!"
-                                notification.updateContent(content)
-                                sendMessageToServer(createMessageForServer(content, friendTokens, currentUser!!, "BASIC"))
+                    //Only send notification if the access permission is not private
+                    if(newsInstance.decentralizationType != DecentralizationType.Private) {
+                        //Create noti object
+                        val notiContent = message
+                        val notification = NotificationInstance(getRandomIdForNotification(),
+                            notiContent,currentUser!!.image,
+                            currentUser!!.uid,
+                            getCurrentTime(),
+                            NotificationType.UPLOAD_NEW,
+                            newsInstance.id)
+                        //Send Notification
+                        val friendTokens = getFriendTokens()
+                        if(friendTokens.isNotEmpty()){
+                            if(notification.content.isNotEmpty()) {
+                                sendMessageToServer(createMessageForServer(notification.content, friendTokens, currentUser!!, "BASIC"))
                             } else {
-                                if(video.isNotEmpty()) {
-                                    val content = "Posted a video!"
+                                if(image.isNotEmpty()) {
+                                    val content = "Posted a picture!"
                                     notification.updateContent(content)
                                     sendMessageToServer(createMessageForServer(content, friendTokens, currentUser!!, "BASIC"))
+                                } else {
+                                    if(video.isNotEmpty()) {
+                                        val content = "Posted a video!"
+                                        notification.updateContent(content)
+                                        sendMessageToServer(createMessageForServer(content, friendTokens, currentUser!!, "BASIC"))
+                                    }
                                 }
                             }
                         }
-                    }
 
-                    //Save notification to db
-                    for(friend in currentUser!!.friends) {
-                        val friendsOfCurrentUser = findUserById(friend)
-                        saveNotification(
-                            notification,
-                            friendsOfCurrentUser!!,
-                            saveNotificationToDatabaseUseCase)
+                        //Save notification to db
+                        for(friend in currentUser!!.friends) {
+                            val friendsOfCurrentUser = findUserById(friend)
+                            saveNotification(
+                                notification,
+                                friendsOfCurrentUser!!,
+                                saveNotificationToDatabaseUseCase)
+                        }
                     }
                 } else {
                     _postError.value = Constants.POST_NEWS_EMPTY_ERROR
                 }
+                resetAccessPermission()
             }
         }
     }
@@ -179,6 +193,7 @@ class UploadNewfeedViewModel(
         val backgroundScope = CoroutineScope(SupervisorJob() + ioDispatcher)
         backgroundScope.launch {
             if(message.isNotEmpty() || image.isNotEmpty() || video.isNotEmpty()) {
+                new.decentralizationType = _accessPermission.value
                 _updatePostStatus.value = updateNewsFromDatabaseUseCase.invoke(
                     message,
                     image,
@@ -188,6 +203,7 @@ class UploadNewfeedViewModel(
             } else {
                 _postError.value = Constants.POST_NEWS_EMPTY_ERROR
             }
+            resetAccessPermission()
         }
     }
 

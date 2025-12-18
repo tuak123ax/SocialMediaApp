@@ -171,7 +171,7 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
 
     val listScreenNeedBottomBar = listOf(Screen.Home.route, Screen.Friend.route, Screen.Notification.route, Screen.Settings.route)
 
-    Box(modifier = Modifier.Companion
+    Box(modifier = Modifier
         .fillMaxSize()
         .background(MaterialTheme.colorScheme.background)){
         Scaffold(

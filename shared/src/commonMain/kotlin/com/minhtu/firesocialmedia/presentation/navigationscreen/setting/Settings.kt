@@ -41,20 +41,20 @@ class Settings {
                            onNavigateToSignIn: () -> Unit){
             Column(
                 verticalArrangement = Arrangement.Top,
-                horizontalAlignment = Alignment.Companion.CenterHorizontally,
+                horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = modifier.padding(paddingValues)
             ) {
                 Text(
                     text = "Settings",
                     fontSize = 20.sp,
-                    fontWeight = FontWeight.Companion.Bold,
-                    textAlign = TextAlign.Companion.Center,
-                    modifier = Modifier.Companion.fillMaxWidth().padding(vertical = 20.dp)
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 20.dp)
                 )
 //                val openChatAppIntent = getChatAppIntent(context)
 //                val openChatAppLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()){}
                 val showDialog = remember { mutableStateOf(false) }
-                UiUtils.Companion.ShowAlertDialogToLogout(onClickConfirm = {
+                UiUtils.ShowAlertDialogToLogout(onClickConfirm = {
                     homeViewModel.clearAccountInStorage()
                     homeViewModel.clearLocalData()
                 }, onNavigateToSignIn, showDialog)
@@ -69,58 +69,58 @@ class Settings {
                     },
                     shape = RoundedCornerShape(10.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.Companion.White.copy(alpha = 0.95f),
-                        contentColor = Color.Companion.Black
+                        containerColor = Color.White.copy(alpha = 0.95f),
+                        contentColor = Color.Black
                     ),
-                    modifier = Modifier.Companion
+                    modifier = Modifier
                         .padding(horizontal = 10.dp)
                         .border(
                             1.dp,
-                            Color.Companion.Black,
+                            Color.Black,
                             androidx.compose.foundation.shape.RoundedCornerShape(10.dp)
                         )
                         .fillMaxWidth()
-                        .testTag(TestTag.Companion.TAG_FIRECHAT_BUTTON)
+                        .testTag(TestTag.TAG_FIRECHAT_BUTTON)
                         .semantics {
-                            contentDescription = TestTag.Companion.TAG_FIRECHAT_BUTTON
+                            contentDescription = TestTag.TAG_FIRECHAT_BUTTON
                         }
                 ) {
                     Row(
                         horizontalArrangement = Arrangement.Start,
-                        verticalAlignment = Alignment.Companion.CenterVertically,
-                        modifier = Modifier.Companion
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
                             .fillMaxWidth()
                     ) {
                         CrossPlatformIcon(
                             icon = "fire_chat_icon",
                             backgroundColor = "#00FFFFFF",
                             contentDescription = "FireChat",
-                            modifier = Modifier.Companion
+                            modifier = Modifier
                                 .size(30.dp)
                                 .padding(end = 5.dp)
                         )
-                        Text(text = "FireChat", color = Color.Companion.Black)
+                        Text(text = "FireChat", color = Color.Black)
                     }
                 }
 
-                Spacer(modifier = Modifier.Companion.weight(1f))
+                Spacer(modifier = Modifier.weight(1f))
                 Button(
                     onClick = {
                         showDialog.value = true
                     },
                     shape = androidx.compose.foundation.shape.RoundedCornerShape(10.dp),
-                    modifier = Modifier.Companion
+                    modifier = Modifier
                         .height(60.dp)
                         .fillMaxWidth()
                         .padding(10.dp)
-                        .testTag(TestTag.Companion.TAG_BUTTON_LOGOUT)
+                        .testTag(TestTag.TAG_BUTTON_LOGOUT)
                         .semantics {
-                            contentDescription = TestTag.Companion.TAG_BUTTON_LOGOUT
+                            contentDescription = TestTag.TAG_BUTTON_LOGOUT
                         },
                     elevation = ButtonDefaults.buttonElevation(
                         defaultElevation = 4.dp
                     ),
-                    colors = ButtonDefaults.buttonColors(Color.Companion.Gray)
+                    colors = ButtonDefaults.buttonColors(Color.Gray)
                 ) {
                     Text(text = "Logout")
                 }

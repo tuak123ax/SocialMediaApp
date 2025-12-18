@@ -1,5 +1,6 @@
 package com.minhtu.firesocialmedia.data.remote.dto.news
 
+import com.minhtu.firesocialmedia.domain.core.DecentralizationType
 import com.minhtu.firesocialmedia.domain.entity.base.BaseNewsInstance
 import com.minhtu.firesocialmedia.domain.entity.base.CountInterface
 import kotlinx.serialization.Serializable
@@ -17,7 +18,8 @@ data class NewsDTO(override var id: String = "",
                         override var commentCount: Int = 0,
                         override var timePosted: Long = 0,
                         var localPath : String = "",
-                        var shareContentId : String = ""): BaseNewsInstance,
+                        var shareContentId : String = "",
+                        var decentralizationType : String = ""): BaseNewsInstance,
     CountInterface {
     fun updateNews(id: String, posterId: String, posterName: String, avatar: String,
                    message: String, image: String, video : String){
