@@ -17,8 +17,11 @@ data class NewsInstance(override var id: String = "",
                         override var timePosted: Long = 0,
                         var localPath : String = "",
                         var shareContentId : String = "",
-                        var decentralizationType : DecentralizationType? = null): BaseNewsInstance,
+                        var decentralizationType : DecentralizationType? = null,
+                        var groupId : String = ""): BaseNewsInstance,
     CountInterface {
+
+
     fun updateNews(id: String, posterId: String, posterName: String, avatar: String,
                    message: String, image: String, video : String){
         this.id = id
@@ -59,4 +62,8 @@ data class NewsInstance(override var id: String = "",
         "commentCount" to commentCount,
         "timePosted" to timePosted
     )
+}
+
+fun NewsInstance.isDefaultNewsInstance() : Boolean {
+    return id.isEmpty() && posterId.isEmpty() && posterName.isEmpty() && avatar.isEmpty() && message.isEmpty()
 }

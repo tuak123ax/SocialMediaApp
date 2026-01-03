@@ -9,6 +9,9 @@ import com.minhtu.firesocialmedia.presentation.information.InformationViewModel
 import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.friend.FriendViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.notification.NotificationViewModel
+import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.CreateGroupViewModel
+import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.GroupPageViewModel
+import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.SelectGroupViewModel
 import com.minhtu.firesocialmedia.presentation.postinformation.PostInformationViewModel
 import com.minhtu.firesocialmedia.presentation.search.SearchViewModel
 import com.minhtu.firesocialmedia.presentation.showimage.ShowImageViewModel
@@ -269,5 +272,23 @@ object ViewModelProvider {
         val newsRepository = AppModule.provideNewsRepository(platformContext)
         val findNewByIdInDbUseCase = AppModule.provideFindNewByIdInDbUseCase(newsRepository)
         return PostInformationViewModel(findNewByIdInDbUseCase)
+    }
+
+    fun createCreateGroupViewModel(platformContext: PlatformContext): CreateGroupViewModel {
+        val groupRepository = AppModule.provideGroupRepository(platformContext)
+        val createGroupUseCase = AppModule.provideCreateGroupUseCase(groupRepository)
+        return CreateGroupViewModel(createGroupUseCase)
+    }
+
+    fun createGroupPageViewModel(platformContext: PlatformContext): GroupPageViewModel {
+        return GroupPageViewModel()
+    }
+
+    fun createSelectGroupViewModel(platformContext: PlatformContext): SelectGroupViewModel {
+        val groupRepository = AppModule.provideGroupRepository(platformContext)
+        val getAllGroupsUseCase = AppModule.provideGetAllGroupsUseCase(groupRepository)
+        return SelectGroupViewModel(
+            getAllGroupsUseCase
+        )
     }
 }

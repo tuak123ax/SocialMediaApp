@@ -9,6 +9,7 @@ import com.minhtu.firesocialmedia.data.repository.AuthenticationRepositoryImpl
 import com.minhtu.firesocialmedia.data.repository.CallRepositoryImpl
 import com.minhtu.firesocialmedia.data.repository.CommentRepositoryImpl
 import com.minhtu.firesocialmedia.data.repository.CommonDbRepositoryImpl
+import com.minhtu.firesocialmedia.data.repository.GroupRepositoryImpl
 import com.minhtu.firesocialmedia.data.repository.LocalRepositoryImpl
 import com.minhtu.firesocialmedia.data.repository.NewsRepositoryImpl
 import com.minhtu.firesocialmedia.data.repository.NotificationRepositoryImpl
@@ -23,6 +24,7 @@ import com.minhtu.firesocialmedia.domain.repository.AuthenticationRepository
 import com.minhtu.firesocialmedia.domain.repository.CallRepository
 import com.minhtu.firesocialmedia.domain.repository.CommentRepository
 import com.minhtu.firesocialmedia.domain.repository.CommonDbRepository
+import com.minhtu.firesocialmedia.domain.repository.GroupRepository
 import com.minhtu.firesocialmedia.domain.repository.LocalRepository
 import com.minhtu.firesocialmedia.domain.repository.NewsRepository
 import com.minhtu.firesocialmedia.domain.repository.NotificationRepository
@@ -56,6 +58,8 @@ import com.minhtu.firesocialmedia.domain.usecases.forgotpassword.CheckIfEmailExi
 import com.minhtu.firesocialmedia.domain.usecases.forgotpassword.SendEmailResetPasswordUseCase
 import com.minhtu.firesocialmedia.domain.usecases.friend.SaveFriendRequestUseCase
 import com.minhtu.firesocialmedia.domain.usecases.friend.SaveFriendUseCase
+import com.minhtu.firesocialmedia.domain.usecases.group.CreateGroupUseCase
+import com.minhtu.firesocialmedia.domain.usecases.group.GetAllGroupsUseCase
 import com.minhtu.firesocialmedia.domain.usecases.home.ClearAccountUseCase
 import com.minhtu.firesocialmedia.domain.usecases.home.ClearLocalDataUseCase
 import com.minhtu.firesocialmedia.domain.usecases.home.DeleteNewsFromDatabaseUseCase
@@ -567,5 +571,18 @@ object AppModule {
 
     fun provideDeleteDraftPostUseCase(commonDbRepository: CommonDbRepository) : DeleteDraftPostUseCase {
         return DeleteDraftPostUseCase(commonDbRepository)
+    }
+
+    //---------------------------Group----------------------------------------//
+    fun provideCreateGroupUseCase(groupRepository: GroupRepository) : CreateGroupUseCase{
+        return CreateGroupUseCase(groupRepository)
+    }
+
+    fun provideGroupRepository(platformContext: PlatformContext) : GroupRepository {
+        return GroupRepositoryImpl(platformContext.database, platformContext.networkMonitor)
+    }
+
+    fun provideGetAllGroupsUseCase(groupRepository: GroupRepository) : GetAllGroupsUseCase {
+        return GetAllGroupsUseCase(groupRepository)
     }
 }

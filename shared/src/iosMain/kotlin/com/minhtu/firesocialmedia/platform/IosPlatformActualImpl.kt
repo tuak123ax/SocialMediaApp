@@ -24,7 +24,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.UIKitView
-import androidx.navigation.NavHostController
 import com.minhtu.firesocialmedia.constants.Constants
 import com.minhtu.firesocialmedia.data.remote.service.imagepicker.ImagePicker
 import com.minhtu.firesocialmedia.di.PlatformContext
@@ -769,18 +768,11 @@ actual fun WebRTCVideoView(
 
 @Composable
 actual fun rememberNavigationHandler(navController: Any): NavigationHandler {
-    val controller = navController as NavHostController
-    return remember(controller) {
+    return remember {
         object : NavigationHandler {
-            override fun navigateTo(route: String) {
-                controller.navigate(route)
-            }
-            override fun navigateBack() {
-                controller.popBackStack()
-            }
-            override fun getCurrentRoute(): String? {
-                return controller.currentBackStackEntry?.destination?.route
-            }
+            override fun navigateTo(route: String) { /* no-op placeholder on iOS */ }
+            override fun navigateBack() { /* no-op placeholder on iOS */ }
+            override fun getCurrentRoute(): String? = null
         }
     }
 }

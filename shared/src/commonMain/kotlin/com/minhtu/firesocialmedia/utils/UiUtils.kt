@@ -39,6 +39,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.outlined.Block
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
@@ -447,7 +448,7 @@ class UiUtils {
                     //Shared content
                     Column(
                         modifier = Modifier
-                            .fillMaxSize()
+                            .fillMaxWidth()
                             .padding(10.dp)
                             .border(1.dp, Color.Black)
                     ) {
@@ -599,10 +600,6 @@ class UiUtils {
         ) {
             val coroutineScope = rememberCoroutineScope()
 
-            CommonBackHandler {
-                showDialog.value = true
-            }
-
             if (showDialog.value) {
                 AlertDialog(
                     onDismissRequest = { showDialog.value = false },
@@ -674,8 +671,7 @@ class UiUtils {
             homeViewModel: HomeViewModel,
             onNavigateToUploadNews: () -> Unit,
             modifier: Modifier,
-            useDefaultInsets: Boolean = true,
-            useCustomBar: Boolean = false
+            useDefaultInsets: Boolean = true
         ) {
             val items = listOf(
                 Screen.Home,
@@ -683,86 +679,6 @@ class UiUtils {
                 Screen.Notification,
                 Screen.Settings
             )
-            if (useCustomBar) {
-                // Lightweight custom bar (fixed height) to match Android visual size
-                Box(modifier = modifier) {
-                    val currentRoute = currentRoute
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(56.dp)
-                            .background(Color.White)
-                            .align(Alignment.BottomCenter),
-                        horizontalArrangement = Arrangement.SpaceAround,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        items.forEach { screen ->
-                            val notificationCount = homeViewModel.listNotificationOfCurrentUser.size
-                            val showBadge = screen.route == Notification.getScreenName() && notificationCount > 0
-                            val selected = currentRoute == screen.route
-                            val tint = if (selected) Color.Red else Color(0xFF666666)
-                            val testTag = when(screen.route) {
-                                Notification.getScreenName() -> TestTag.TAG_NOTIFICATION_BOTTOM
-                                Home.getScreenName() -> TestTag.TAG_HOME_BOTTOM
-                                Friend.getScreenName() -> TestTag.TAG_FRIEND_BOTTOM
-                                Settings.getScreenName() -> TestTag.TAG_SETTING_BOTTOM
-                                else -> ""
-                            }
-                            Box(
-                                modifier = Modifier
-                                    .size(56.dp)
-                                    .clip(CircleShape)
-                                    .testTag(testTag)
-                                    .semantics { contentDescription = testTag }
-                                    .clickable { onNavigate(screen.route) },
-                                contentAlignment = Alignment.Center
-                            ) {
-                                if (showBadge) {
-                                    BadgedBox(badge = { Badge { Text(notificationCount.toString()) } }) {
-                                        Icon(
-                                            screen.icon,
-                                            contentDescription = screen.title,
-                                            tint = tint,
-                                            modifier = Modifier.size(28.dp)
-                                        )
-                                    }
-                                } else {
-                                    Icon(
-                                        screen.icon,
-                                        contentDescription = screen.title,
-                                        tint = tint,
-                                        modifier = Modifier.size(28.dp)
-                                    )
-                                }
-                            }
-                        }
-                    }
-
-                    // Floating action button centered above the bar
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier
-                            .size(56.dp)
-                            .offset(y = (-30).dp)
-                            .shadow(8.dp, CircleShape)
-                            .clip(CircleShape)
-                            .background(
-                                Brush.linearGradient(colors = listOf(Color.Red, Color.White))
-                            )
-                            .align(Alignment.BottomCenter)
-                    ) {
-                        FloatingActionButton(
-                            onClick = { onNavigateToUploadNews() },
-                            shape = CircleShape,
-                            containerColor = Color.Transparent,
-                            elevation = FloatingActionButtonDefaults.elevation(0.dp)
-                        ) {
-                            Icon(Icons.Default.Add, contentDescription = "Add", tint = Color.Black)
-                        }
-                    }
-                }
-                return
-            }
             Box(modifier = modifier){
                 val barInsets = if (useDefaultInsets) NavigationBarDefaults.windowInsets else WindowInsets(0)
                 NavigationBar(
@@ -1278,7 +1194,7 @@ class UiUtils {
         }
 
         @Composable
-        private fun NewsCardPlaceholder() {
+        fun NewsCardPlaceholder() {
             Card(
                 modifier = Modifier
                     .padding(start = 10.dp, end = 10.dp, top = 5.dp)
@@ -1360,6 +1276,47 @@ class UiUtils {
                 }
             }
         }
+
+        @Composable
+        fun NewsCardUnavailable(
+            message: String = "This content is not available"
+        ) {
+            Card(
+                modifier = Modifier
+                    .padding(start = 10.dp, end = 10.dp, top = 5.dp)
+                    .fillMaxWidth(),
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 30.dp, horizontal = 20.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+
+                    // Icon
+                    Icon(
+                        imageVector = Icons.Outlined.Block,
+                        contentDescription = null,
+                        tint = Color(0xFFBDBDBD),
+                        modifier = Modifier.size(48.dp)
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // Title
+                    Text(
+                        text = message,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color(0xFF9E9E9E),
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
+        }
+
 
         @Composable
         fun ThreeDotsLoading(

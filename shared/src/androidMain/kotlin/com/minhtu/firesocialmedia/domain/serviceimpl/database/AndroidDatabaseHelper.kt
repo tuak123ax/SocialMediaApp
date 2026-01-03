@@ -21,6 +21,8 @@ import com.minhtu.firesocialmedia.data.remote.dto.call.AudioCallSessionDTO
 import com.minhtu.firesocialmedia.data.remote.dto.call.CallingRequestDTO
 import com.minhtu.firesocialmedia.data.remote.dto.call.IceCandidateDTO
 import com.minhtu.firesocialmedia.data.remote.dto.call.OfferAnswerDTO
+import com.minhtu.firesocialmedia.data.remote.dto.group.GroupDTO
+import com.minhtu.firesocialmedia.data.remote.dto.group.GroupSummaryDTO
 import com.minhtu.firesocialmedia.data.remote.dto.news.NewsDTO
 import com.minhtu.firesocialmedia.data.remote.dto.notification.NotificationDTO
 import com.minhtu.firesocialmedia.domain.entity.base.BaseNewsInstance
@@ -901,7 +903,7 @@ class AndroidDatabaseHelper {
 
             // Attempt 1: original URI string (if parseable)
             val firstUri = originalUriStr?.let {
-                runCatching { Uri.parse(it) }.getOrNull()
+                runCatching { it.toUri() }.getOrNull()
             }
 
             if (firstUri != null) {
@@ -962,5 +964,81 @@ class AndroidDatabaseHelper {
                 false
             }
         }
+
+        suspend fun saveGroupAndUserGroups(
+            groupRootPath: String,
+            userRootPath: String,
+            userGroupsField: String,
+            groupAvatarsStoragePath : String,
+            group: GroupDTO,
+            userId: String
+        ): Boolean = suspendCancellableCoroutine { continuation ->
+
+            val databaseRef = FirebaseDatabase.getInstance().reference
+            val storageRef = FirebaseStorage.getInstance().reference.child(groupAvatarsStoragePath).child(group.id)
+
+            //Store the avatar to the firebase storage first
+            try{
+                val metadata = StorageMetadata.Builder()
+                    .setCacheControl("public,max-age=604800,immutable")
+                    .build()
+                storageRef.putFile(group.avatar.toUri(), metadata).addOnCompleteListener{ putFileTask ->
+                    if(putFileTask.isSuccessful){
+                        storageRef.downloadUrl.addOnSuccessListener { dataUrl ->
+                            //Get the new url of avatar on remote
+                            group.avatar = dataUrl.toString()
+                            // Store only necessary fields under user
+                            val groupSummary = GroupSummaryDTO(
+                                id = group.id,
+                                name = group.name,
+                                avatar = group.avatar
+                            )
+
+                            val updates = hashMapOf<String, Any?>(
+                                "$groupRootPath/${group.id}" to group,
+
+                                "$userRootPath/$userId/$userGroupsField/${group.id}" to groupSummary
+                            )
+
+                            databaseRef.updateChildren(updates)
+                                .addOnCompleteListener { task ->
+                                    if (!continuation.isActive) return@addOnCompleteListener
+
+                                    if (!task.isSuccessful) {
+                                        Log.e("Task", "updateChildren FAILED", task.exception)
+                                        Log.e("Task", "updates=$updates")
+                                    } else {
+                                        Log.d("Task", "updateChildren SUCCESS")
+                                    }
+
+                                    continuation.resume(task.isSuccessful, onCancellation = {})
+                                }
+                        }
+                    }
+                }
+            } catch(ex : Exception) {
+                logMessage("saveGroupAndUserGroups", { "Exception when save Group And User Groups: " + ex.message.toString() })
+            }
+        }
+
+        suspend fun getAllGroups(
+            userPath: String,
+            groupPath: String,
+            userId: String
+        ): Set<GroupSummaryDTO> {
+            val snapshot = FirebaseDatabase
+                .getInstance()
+                .reference
+                .child(userPath)
+                .child(userId)
+                .child(groupPath)
+                .get()
+                .await()
+
+            return snapshot.children
+                .mapNotNull { it.getValue(GroupSummaryDTO::class.java) }
+                .toSet()
+        }
+
     }
 }

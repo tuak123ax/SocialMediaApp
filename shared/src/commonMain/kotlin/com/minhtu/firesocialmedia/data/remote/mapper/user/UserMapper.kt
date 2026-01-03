@@ -2,6 +2,10 @@ package com.minhtu.firesocialmedia.data.remote.mapper.user
 
 import com.minhtu.firesocialmedia.data.remote.dto.notification.NotificationDTO
 import com.minhtu.firesocialmedia.data.remote.dto.user.UserDTO
+import com.minhtu.firesocialmedia.data.remote.mapper.group.GroupSummaryDTO
+import com.minhtu.firesocialmedia.data.remote.mapper.group.toDomain
+import com.minhtu.firesocialmedia.data.remote.mapper.group.toDto
+import com.minhtu.firesocialmedia.data.remote.mapper.group.toGroupDTO
 import com.minhtu.firesocialmedia.data.remote.mapper.notification.toDomain
 import com.minhtu.firesocialmedia.data.remote.mapper.notification.toDto
 import com.minhtu.firesocialmedia.domain.entity.notification.NotificationInstance
@@ -19,7 +23,8 @@ fun UserDTO.toDomain() : UserInstance {
         friendRequests,
         notifications.toDomainNotifications(),
         friends,
-        likedComments
+        likedComments,
+        HashMap(groups.mapValues { (_,v) -> v.toGroupDTO().toDomain() })
     )
 }
 
@@ -35,7 +40,8 @@ fun UserInstance.toDto() : UserDTO {
         friendRequests,
         notifications.toDTONotifications(),
         friends,
-        likedComments
+        likedComments,
+        HashMap(groups.mapValues { (_,v) -> v.toDto().GroupSummaryDTO() })
     )
 }
 

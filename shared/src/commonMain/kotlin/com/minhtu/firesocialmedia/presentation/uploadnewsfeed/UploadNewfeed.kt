@@ -95,7 +95,7 @@ class UploadNewsfeed {
             val postError = uploadNewsfeedViewModel.postError.collectAsState()
             var isUpdated by remember { mutableStateOf(false) }
             var showAccessPermissionSheet by remember { mutableStateOf(false) }
-            var currentAccessPermission = uploadNewsfeedViewModel.accessPermission.collectAsState()
+            val currentAccessPermission = uploadNewsfeedViewModel.accessPermission.collectAsState()
             LaunchedEffect(Unit) {
                 if(updateNew != null) {
                     isUpdated = true
@@ -212,6 +212,7 @@ class UploadNewsfeed {
                             if(showAccessPermissionSheet) {
                                 //Access permission sheet
                                 AccessPermissionBottomSheet(
+                                    title = "Who can see your post?",
                                     currentAccessPermission.value,
                                     onDismiss = {
                                         showAccessPermissionSheet = false
@@ -629,6 +630,7 @@ class UploadNewsfeed {
         @OptIn(ExperimentalMaterial3Api::class)
         @Composable
         fun AccessPermissionBottomSheet(
+            title : String,
             currentAccess : DecentralizationType,
             onDismiss: () -> Unit,
             onSelected: (selectedAccess : DecentralizationType) -> Unit
@@ -640,7 +642,7 @@ class UploadNewsfeed {
             ) {
                 // Sheet Content
                 Column(Modifier.padding(16.dp)) {
-                    Text("Who can see your post?")
+                    Text(title)
                     Spacer(Modifier.height(10.dp))
                     AccessPermissionRow(currentAccess) { access ->
                         selectedAccess = access

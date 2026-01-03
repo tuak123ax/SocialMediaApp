@@ -47,8 +47,7 @@ import kotlinx.coroutines.coroutineScope
 class Friend {
     companion object{
         @Composable
-        fun FriendScreen(platform : PlatformContext,
-                         modifier: Modifier,
+        fun FriendScreen(modifier: Modifier,
                          paddingValues: PaddingValues,
                          localImageLoaderValue : ProvidedValue<*>,
                          searchViewModel: SearchViewModel,
@@ -86,7 +85,6 @@ class Friend {
                     modifier = Modifier.fillMaxWidth().padding(vertical = 20.dp)
                 )
                 TabLayoutForFriendScreen(
-                    platform,
                     listOf("Friends", "Friend Requests"),
                     localImageLoaderValue,
                     homeViewModel = homeViewModel,
@@ -104,8 +102,7 @@ class Friend {
         }
 
         @Composable
-        fun TabLayoutForFriendScreen(platform : PlatformContext,
-                                     tabTitles : List<String>,
+        fun TabLayoutForFriendScreen(tabTitles : List<String>,
                                      localImageLoaderValue : ProvidedValue<*>,
                                      homeViewModel: HomeViewModel,
                                      searchViewModel: SearchViewModel,

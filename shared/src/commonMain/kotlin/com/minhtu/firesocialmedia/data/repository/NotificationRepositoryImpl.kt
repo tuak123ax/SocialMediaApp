@@ -20,7 +20,7 @@ class NotificationRepositoryImpl(
 ) : NotificationRepository {
     override suspend fun getAllNotificationsOfUser(
         currentUserUid: String
-    ): List<NotificationInstance>? {
+    ): List<NotificationInstance> {
         val isOnline = networkMonitor.isOnline.first()
         if(isOnline) {
             val notifications = databaseService.getAllNotificationsOfUser(

@@ -145,6 +145,13 @@ actual fun getIconPainter(icon : String): Painter? {
         "private" -> painterResource(id = R.drawable.private_access)
         "onlyFriends" -> painterResource(id = R.drawable.only_friends)
         "down_arrow" -> painterResource(id = R.drawable.down_arrow)
+        "group" -> painterResource(id = R.drawable.group)
+        "group_background" -> painterResource(id = R.drawable.group_background)
+        "create_group" -> painterResource(id = R.drawable.create_group)
+        "explore_group" -> painterResource(id = R.drawable.explore_group)
+        "right" -> painterResource(id = R.drawable.right)
+        "select_group" -> painterResource(id = R.drawable.select_group)
+        "right_arrow" -> painterResource(id = R.drawable.right_arrow)
         else -> null
     }
 }

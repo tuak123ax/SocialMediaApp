@@ -66,7 +66,7 @@ class NewsInteractorImpl(
         )
     }
 
-    override suspend fun findNewById(newsId: String): NewsInstance? {
+    override suspend fun findNewById(newsId: String): NewsInstance {
         return findNewsByIdInDbUseCase.invoke(newsId)
     }
 }

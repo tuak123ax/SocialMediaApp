@@ -38,7 +38,8 @@ class Settings {
         fun SettingsScreen(modifier: Modifier,
                            paddingValues: PaddingValues,
                            homeViewModel: HomeViewModel,
-                           onNavigateToSignIn: () -> Unit){
+                           onNavigateToSignIn: () -> Unit,
+                           onNavigateToGroupScreen: () -> Unit){
             Column(
                 verticalArrangement = Arrangement.Top,
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -51,21 +52,15 @@ class Settings {
                     textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth().padding(vertical = 20.dp)
                 )
-//                val openChatAppIntent = getChatAppIntent(context)
-//                val openChatAppLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()){}
                 val showDialog = remember { mutableStateOf(false) }
                 UiUtils.ShowAlertDialogToLogout(onClickConfirm = {
                     homeViewModel.clearAccountInStorage()
                     homeViewModel.clearLocalData()
                 }, onNavigateToSignIn, showDialog)
-                //Fire chat button
+                //Group button
                 Button(
                     onClick = {
-//                    if (openChatAppIntent != null) {
-//                        openChatAppLauncher.launch(openChatAppIntent)
-//                    } else {
-//                        showToast("Can't find this app on your device!")
-//                    }
+                        onNavigateToGroupScreen()
                     },
                     shape = RoundedCornerShape(10.dp),
                     colors = ButtonDefaults.buttonColors(
@@ -80,9 +75,9 @@ class Settings {
                             androidx.compose.foundation.shape.RoundedCornerShape(10.dp)
                         )
                         .fillMaxWidth()
-                        .testTag(TestTag.TAG_FIRECHAT_BUTTON)
+                        .testTag(TestTag.TAG_GROUP_BUTTON)
                         .semantics {
-                            contentDescription = TestTag.TAG_FIRECHAT_BUTTON
+                            contentDescription = TestTag.TAG_GROUP_BUTTON
                         }
                 ) {
                     Row(
@@ -92,14 +87,22 @@ class Settings {
                             .fillMaxWidth()
                     ) {
                         CrossPlatformIcon(
-                            icon = "fire_chat_icon",
+                            icon = "group",
                             backgroundColor = "#00FFFFFF",
-                            contentDescription = "FireChat",
+                            contentDescription = "group",
                             modifier = Modifier
                                 .size(30.dp)
                                 .padding(end = 5.dp)
                         )
-                        Text(text = "FireChat", color = Color.Black)
+                        Text(text = "Group", color = Color.Black)
+                        Spacer(Modifier.weight(1f))
+                        CrossPlatformIcon(
+                            icon = "right",
+                            backgroundColor = "#00FFFFFF",
+                            contentDescription = "right",
+                            modifier = Modifier
+                                .size(35.dp)
+                        )
                     }
                 }
 
@@ -124,6 +127,7 @@ class Settings {
                 ) {
                     Text(text = "Logout")
                 }
+                Spacer(Modifier.height(20.dp))
             }
         }
 

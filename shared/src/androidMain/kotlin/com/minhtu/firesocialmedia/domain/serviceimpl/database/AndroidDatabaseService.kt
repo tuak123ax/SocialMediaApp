@@ -16,6 +16,8 @@ import com.minhtu.firesocialmedia.data.remote.dto.call.CallingRequestDTO
 import com.minhtu.firesocialmedia.data.remote.dto.call.IceCandidateDTO
 import com.minhtu.firesocialmedia.data.remote.dto.call.OfferAnswerDTO
 import com.minhtu.firesocialmedia.data.remote.dto.comment.CommentDTO
+import com.minhtu.firesocialmedia.data.remote.dto.group.GroupDTO
+import com.minhtu.firesocialmedia.data.remote.dto.group.GroupSummaryDTO
 import com.minhtu.firesocialmedia.data.remote.dto.home.LatestNewsDTO
 import com.minhtu.firesocialmedia.data.remote.dto.news.NewsDTO
 import com.minhtu.firesocialmedia.data.remote.dto.notification.NotificationDTO
@@ -465,6 +467,30 @@ class AndroidDatabaseService(private val context: Context) : DatabaseService {
 
     override fun stopObservePhoneCall() {
         AndroidDatabaseHelper.stopObservePhoneCall()
+    }
+
+    override suspend fun saveGroupAndUserGroups(
+        groupRootPath: String,
+        userRootPath: String,
+        userGroupsField: String,
+        groupAvatarsStoragePath : String,
+        group: GroupDTO,
+        userId: String): Boolean {
+        return AndroidDatabaseHelper.saveGroupAndUserGroups(
+            groupRootPath,
+            userRootPath,
+            userGroupsField,
+            groupAvatarsStoragePath,
+            group,
+            userId
+        )
+    }
+
+    override suspend fun getAllGroups(
+        userPath : String,
+        groupPath : String,
+        userId: String): Set<GroupSummaryDTO> {
+        return AndroidDatabaseHelper.getAllGroups(userPath, groupPath,userId)
     }
 
     override suspend fun observePhoneCallWithoutCheckingInCall(

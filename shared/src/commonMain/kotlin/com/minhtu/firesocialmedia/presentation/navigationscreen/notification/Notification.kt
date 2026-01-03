@@ -271,7 +271,8 @@ class Notification {
                             if (notification.relatedInfo.isNotEmpty()) {
                                 if (notification.type == NotificationType.LIKE ||
                                     notification.type == NotificationType.COMMENT ||
-                                    notification.type == NotificationType.UPLOAD_NEW
+                                    notification.type == NotificationType.UPLOAD_NEW||
+                                    notification.type == NotificationType.SHARE_NEW
                                 ) {
                                     logMessage(
                                         "onNavigateToPostInformation",

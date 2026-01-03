@@ -102,7 +102,7 @@ class Information {
                             .padding(20.dp)
                     )
                     Spacer(modifier = Modifier.padding(20.dp))
-                    var imageBytes =
+                    val imageBytes =
                         produceState<ByteArray?>(initialValue = null, informationViewModel.avatar) {
                             if (informationViewModel.avatar == Constants.DEFAULT_AVATAR_URL) {
                                 value = getImageBytesFromDrawable("unknownavatar")

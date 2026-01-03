@@ -56,7 +56,7 @@ class TestTag {
         const val TAG_FRIEND_REQUEST: String = "TAG_FRIEND_REQUEST"
         const val TAG_NOTIFICATION_LIST: String = "TAG_NOTIFICATION_LIST"
         const val TAG_NOTIFICATION: String = "TAG_NOTIFICATION"
-        const val TAG_FIRECHAT_BUTTON: String = "TAG_FIRECHAT_BUTTON"
+        const val TAG_GROUP_BUTTON: String = "TAG_GROUP_BUTTON"
         const val TAG_BUTTON_CLOSE: String = "TAG_BUTTON_CLOSE"
         const val TAG_BUTTON_DOWNLOAD: String = "TAG_BUTTON_DOWNLOAD"
         const val TAG_PEOPLE_COLUMN : String = "TAG_PEOPLE_COLUMN"
@@ -75,5 +75,12 @@ class TestTag {
         const val TAG_SELECT_PUBLIC: String = "TAG_SELECT_PUBLIC"
         const val TAG_SELECT_PRIVATE: String = "TAG_SELECT_PRIVATE"
         const val TAG_SELECT_ONLYFRIENDS: String = "TAG_SELECT_ONLYFRIENDS"
+        const val TAG_CREATE_GROUP_BUTTON: String = "TAG_CREATE_GROUP_BUTTON"
+        const val TAG_FIND_GROUP_BUTTON: String = "TAG_FIND_GROUP_BUTTON"
+        const val TAG_SELECT_GROUP_BUTTON: String = "TAG_SELECT_GROUP_BUTTON"
+        const val TAG_GROUP_NAME : String = "TAG_GROUP_NAME"
+        const val TAG_SELECT_GROUP_AVATAR: String = "TAG_SELECT_GROUP_AVATAR"
+        const val TAG_GROUP_PASSWORD : String = "TAG_GROUP_PASSWORD"
+        const val TAG_GROUP_CARD : String = "TAG_GROUP_CARD"
     }
 }

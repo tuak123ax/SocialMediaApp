@@ -5,6 +5,8 @@ import com.minhtu.firesocialmedia.data.remote.dto.call.CallingRequestDTO
 import com.minhtu.firesocialmedia.data.remote.dto.call.IceCandidateDTO
 import com.minhtu.firesocialmedia.data.remote.dto.call.OfferAnswerDTO
 import com.minhtu.firesocialmedia.data.remote.dto.comment.CommentDTO
+import com.minhtu.firesocialmedia.data.remote.dto.group.GroupDTO
+import com.minhtu.firesocialmedia.data.remote.dto.group.GroupSummaryDTO
 import com.minhtu.firesocialmedia.data.remote.dto.home.LatestNewsDTO
 import com.minhtu.firesocialmedia.data.remote.dto.news.NewsDTO
 import com.minhtu.firesocialmedia.data.remote.dto.notification.NotificationDTO
@@ -177,4 +179,15 @@ interface DatabaseService {
     suspend fun searchUserByName(name: String, path: String) : List<UserDTO>?
     suspend fun sendWhoEndCall(sessionId: String, whoEndCall: String): Boolean
     fun stopObservePhoneCall()
+    suspend fun saveGroupAndUserGroups(
+        groupRootPath: String,
+        userRootPath: String,
+        userGroupsField: String,
+        groupAvatarsStoragePath : String,
+        group: GroupDTO,
+        userId: String): Boolean
+    suspend fun getAllGroups(
+        userPath : String,
+        groupPath : String,
+        userId : String) : Set<GroupSummaryDTO>
 }

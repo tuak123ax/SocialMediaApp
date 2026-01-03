@@ -31,6 +31,7 @@ import com.minhtu.firesocialmedia.di.PlatformContext
 import com.minhtu.firesocialmedia.di.ViewModelProvider
 import com.minhtu.firesocialmedia.domain.entity.call.OfferAnswer
 import com.minhtu.firesocialmedia.domain.entity.call.SharedCallData
+import com.minhtu.firesocialmedia.domain.entity.group.GroupInstance
 import com.minhtu.firesocialmedia.domain.entity.home.deeplinks.DeepLinksData
 import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
@@ -60,6 +61,14 @@ import com.minhtu.firesocialmedia.presentation.navigationscreen.friend.FriendVie
 import com.minhtu.firesocialmedia.presentation.navigationscreen.notification.Notification
 import com.minhtu.firesocialmedia.presentation.navigationscreen.notification.NotificationViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.Settings
+import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.CreateGroup
+import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.CreateGroupViewModel
+import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.ExploreGroup
+import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.Group
+import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.GroupPage
+import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.GroupPageViewModel
+import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.SelectGroup
+import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.SelectGroupViewModel
 import com.minhtu.firesocialmedia.presentation.postinformation.PostInformation
 import com.minhtu.firesocialmedia.presentation.postinformation.PostInformationViewModel
 import com.minhtu.firesocialmedia.presentation.search.Search
@@ -107,7 +116,10 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
     val notificationViewModel : NotificationViewModel = platformViewModel { ViewModelProvider.createNotificationViewModel(platformContext) }
     val homeViewModel: HomeViewModel = platformViewModel { ViewModelProvider.createHomeViewModel(platformContext) }
     val postInformationViewModel : PostInformationViewModel = platformViewModel { ViewModelProvider.createPostInformationViewModel(platformContext) }
+    val createGroupViewModel : CreateGroupViewModel = platformViewModel { ViewModelProvider.createCreateGroupViewModel(platformContext) }
+    val groupPageViewModel : GroupPageViewModel = platformViewModel { ViewModelProvider.createGroupPageViewModel(platformContext) }
     val syncDataUseCase = AppModule.provideSyncDataUseCase(AppModule.provideCommonDbRepository(platformContext))
+    val selectGroupViewModel : SelectGroupViewModel = platformViewModel { ViewModelProvider.createSelectGroupViewModel(platformContext) }
 
     var updateNew : NewsInstance? = null
     lateinit var relatedNew : NewsInstance
@@ -129,6 +141,9 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
 
     // Track previous value
     var wasOffline by remember { mutableStateOf<Boolean?>(null) }
+
+    //Group
+    var selectedGroup : GroupInstance? = null
 
     LaunchedEffect(networkStatus) {
         if(networkStatus != null) {
@@ -512,7 +527,6 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                         searchViewModel.updateQuery("")
                     }
                     Friend.FriendScreen(
-                        platformContext,
                         modifier = Modifier
                             .fillMaxSize()
                             .background(Color.White),
@@ -573,6 +587,9 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                             //Clear email/password before navigate
                             signInViewModel.reset()
                             navController.navigate(route = SignIn.getScreenName())
+                        },
+                        onNavigateToGroupScreen = {
+                            navController.navigate(route = Group.getScreenName())
                         }
                     )
                 }
@@ -597,15 +614,26 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                             selectedUser = user
                             navController.navigate(route = UserInformation.getScreenName())
                         },
-                        onNavigateToHomeScreen = { numberOfComments ->
-                            homeViewModel.addCommentCountData(relatedNew.id, numberOfComments)
-                            navController.navigate(route = Home.getScreenName()) },
                         onNavigateBack = {
                             navController.popBackStack()
                         },
                         homeViewModel,
                         commentViewModel,
-                        postInformationViewModel
+                        postInformationViewModel,
+                        onNavigateToUploadNews = { new ->
+                            updateNew = new
+                            navController.navigate(route = UploadNewsfeed.getScreenName())
+                        },
+                        onShareNews = { message, newToBeShared ->
+                            //Basically, share news is similar to post news to newsfeed
+                            if(homeViewModel.currentUser != null) {
+                                homeViewModel.updateShareMessage(message)
+                                homeViewModel.updateShareContent(newToBeShared)
+                                homeViewModel.sharePost(homeViewModel.currentUser!!)
+                            } else {
+                                showToast("Cannot get your information to share now. Please try again!!!")
+                            }
+                        }
                     )
                 }
                 composable(
@@ -688,18 +716,156 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                                 selectedUser = user
                                 navController.navigate(route = UserInformation.getScreenName())
                             },
-                            onNavigateToHomeScreen = { numberOfComments ->
-                                homeViewModel.addCommentCountData(newsState!!.id, numberOfComments)
-                                navController.navigate(route = Home.getScreenName())
-                            },
                             onNavigateBack = {
                                 navController.popBackStack()
                             },
                             homeViewModel,
                             commentViewModel,
-                            postInformationViewModel
+                            postInformationViewModel,
+                            onNavigateToUploadNews = { new ->
+                                updateNew = new
+                                navController.navigate(route = UploadNewsfeed.getScreenName())
+                            },
+                            onShareNews = { message, newToBeShared ->
+                                //Basically, share news is similar to post news to newsfeed
+                                if(homeViewModel.currentUser != null) {
+                                    homeViewModel.updateShareMessage(message)
+                                    homeViewModel.updateShareContent(newToBeShared)
+                                    homeViewModel.sharePost(homeViewModel.currentUser!!)
+                                } else {
+                                    showToast("Cannot get your information to share now. Please try again!!!")
+                                }
+                            }
                         )
                     }
+                }
+                composable(
+                    route = Group.getScreenName(),
+                    enterTransition = DefaultNavAnimations.enter,
+                    popEnterTransition = DefaultNavAnimations.popEnter,
+                    exitTransition = DefaultNavAnimations.exit,
+                    popExitTransition = DefaultNavAnimations.popExit
+                ) {
+                    if(homeViewModel.currentUser != null) {
+                        Group.GroupScreen(
+                            homeViewModel.currentUser!!,
+                            onNavigateToCreateGroupScreen = {
+                                navController.navigate(route = CreateGroup.getScreenName())
+                            },
+                            onNavigateToExploreGroupScreen = {
+                                navController.navigate(route = ExploreGroup.getScreenName())
+                            },
+                            onNavigateToSelectGroupScreen = {
+                                navController.navigate(route = SelectGroup.getScreenName())
+                            }
+                        )
+                    } else {
+                        showToast("Cannot open group screen. Retry later!!!")
+                    }
+                }
+                composable(
+                    route = CreateGroup.getScreenName(),
+                    enterTransition = DefaultNavAnimations.enter,
+                    popEnterTransition = DefaultNavAnimations.popEnter,
+                    exitTransition = DefaultNavAnimations.exit,
+                    popExitTransition = DefaultNavAnimations.popExit
+                ) {
+                    val picker = rememberPlatformImagePicker(
+                        context = context,
+                        onImagePicked = { uri -> createGroupViewModel.updateAvatar(uri) },
+                        onVideoPicked = {}
+                    )
+                    if(homeViewModel.currentUser != null) {
+                        CreateGroup.CreateGroupScreen(
+                            createGroupViewModel,
+                            loadingViewModel,
+                            picker,
+                            homeViewModel.currentUser!!,
+                            onCreateGroupSuccess = { createdGroup ->
+                                selectedGroup = createdGroup
+                                navController.navigate(route = GroupPage.getScreenName())
+                            }
+                        )
+                    } else {
+                        showToast("Cannot get current user. Please retry later!!!")
+                    }
+                }
+                composable(
+                    route = ExploreGroup.getScreenName(),
+                    enterTransition = DefaultNavAnimations.enter,
+                    popEnterTransition = DefaultNavAnimations.popEnter,
+                    exitTransition = DefaultNavAnimations.exit,
+                    popExitTransition = DefaultNavAnimations.popExit
+                ) {
+                    ExploreGroup.ExploreGroupScreen()
+                }
+                composable(
+                    route = GroupPage.getScreenName(),
+                    enterTransition = DefaultNavAnimations.enter,
+                    popEnterTransition = DefaultNavAnimations.popEnter,
+                    exitTransition = DefaultNavAnimations.exit,
+                    popExitTransition = DefaultNavAnimations.popExit
+                ) {
+                    val picker = rememberPlatformImagePicker(
+                        context = context,
+                        onImagePicked = { uri -> userInformationViewModel.updateCover(uri) },
+                        onVideoPicked = {}
+                    )
+                    if(selectedGroup != null) {
+                        GroupPage.GroupPageScreen(
+                            picker,
+                            selectedGroup!!,
+                            paddingValues,
+                            localImageLoaderValue,
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(color = Color.White),
+                            homeViewModel,
+                            groupPageViewModel,
+                            onNavigateToShowImageScreen = { image ->
+                                selectedImage = image
+                                navController.navigate(route = ShowImage.getScreenName())
+                            },
+                            onNavigateToUserInformation = { user ->
+                                selectedUser = user
+                                navController.navigate(route = UserInformation.getScreenName())
+                            },
+                            onNavigateBack = {
+                                navController.popBackStack()
+                            },
+                            onNavigateToUploadNewsfeed = { new ->
+                                updateNew = new
+                                navController.navigate(route = UploadNewsfeed.getScreenName())
+                            },
+                            onNavigateToCommentScreen = { new ->
+                                selectedNew = new
+                                navController.navigate(route = Comment.getScreenName())
+                            }
+                        )
+                    } else {
+                        showToast("Cannot get group info this time. Please retry later!")
+                    }
+                }
+                composable(
+                    route = SelectGroup.getScreenName(),
+                    enterTransition = DefaultNavAnimations.enter,
+                    popEnterTransition = DefaultNavAnimations.popEnter,
+                    exitTransition = DefaultNavAnimations.exit,
+                    popExitTransition = DefaultNavAnimations.popExit
+                ) {
+                    SelectGroup.SelectGroupScreen(
+                        homeViewModel.currentUser!!,
+                        selectGroupViewModel,
+                        searchViewModel,
+                        localImageLoaderValue,
+                        onNavigateToCreateGroup = {
+                            navController.navigate(CreateGroup.getScreenName())
+                        },
+                        onNavigateToSelectedGroup = { group ->
+                            selectedGroup = group
+                            navController.navigate(route = GroupPage.getScreenName())
+                        }
+                    )
                 }
             }
         }

@@ -1,0 +1,218 @@
+package com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group
+
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.PushPin
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.FloatingActionButtonDefaults
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.ProvidedValue
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import com.minhtu.firesocialmedia.constants.TestTag
+import com.minhtu.firesocialmedia.domain.entity.group.GroupInstance
+import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
+import com.minhtu.firesocialmedia.platform.CrossPlatformIcon
+import com.minhtu.firesocialmedia.platform.showToast
+import com.minhtu.firesocialmedia.presentation.search.Search
+import com.minhtu.firesocialmedia.presentation.search.SearchViewModel
+import com.seiko.imageloader.ui.AutoSizeImage
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
+
+class SelectGroup {
+    companion object {
+        @Composable
+        fun SelectGroupScreen(
+            currentUser : UserInstance,
+            selectGroupViewModel: SelectGroupViewModel,
+            searchViewModel : SearchViewModel,
+            localImageLoaderValue : ProvidedValue<*>,
+            onNavigateToCreateGroup : () -> Unit,
+            onNavigateToSelectedGroup : (GroupInstance) -> Unit
+        ) {
+            val groupList = currentUser.groups.values
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+            ) {
+                Row(
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp).padding(top = 20.dp)
+                ) {
+                    Text(
+                        text = "My Groups",
+                        color = Color.Black,
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Start
+                    )
+                    FloatingActionButton(
+                        onClick = {
+                            if(groupList.size < 50) {
+                                onNavigateToCreateGroup()
+                            } else {
+                                showToast("You only can join 50 groups at the same time!")
+                            }
+                        },
+                        shape = CircleShape,
+                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                        elevation = FloatingActionButtonDefaults.elevation(0.dp),
+                        modifier = Modifier
+                            .size(32.dp)
+                    ) {
+                        Icon(Icons.Default.Add, contentDescription = "Add", tint = Color.Red)
+                    }
+                }
+                HorizontalDivider(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 20.dp),
+                    thickness = 1.dp,
+                    color = Color.LightGray
+                )
+                Search.SearchBar(
+                    query = searchViewModel.query,
+                    onQueryChange = { query -> searchViewModel.updateQuery(query) },
+                    modifier = Modifier.height(80.dp).padding(vertical = 10.dp)
+                        .testTag(TestTag.TAG_SEARCH_BAR)
+                        .semantics {
+                            contentDescription = TestTag.TAG_SEARCH_BAR
+                        }
+                )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(20.dp)
+                ) {
+                    Icon(Icons.Default.PushPin, contentDescription = "Pin", tint = Color.Red)
+                    Spacer(Modifier.width(10.dp))
+                    Text(
+                        text = "PINNED",
+                        color = Color.Gray
+                    )
+                }
+                //Pinned groups
+//                LazyColumn(
+//                    modifier = Modifier
+//                        .fillMaxSize()
+//                        .padding(20.dp)
+//                ) {
+//                    items(
+//                        items = groupList.toList(),
+//                        key = {it}
+//                    ) {
+//
+//                    }
+//                }
+
+                Text(
+                    text = "ALL GROUPS",
+                    color = Color.Gray,
+                    modifier = Modifier.fillMaxWidth().padding(20.dp)
+                )
+                //All groups
+                var filterList by remember { mutableStateOf<List<GroupInstance>>(emptyList()) }
+                // Run filtering when friend list or search query changes
+                LaunchedEffect( searchViewModel.query) {
+                    filterList = groupList.filter { it.name.contains(searchViewModel.query) }
+                }
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(10.dp)
+                ) {
+                    items(
+                        items = filterList,
+                        key = {it.id}
+                    ) {
+                        GroupCard(it,
+                            localImageLoaderValue,
+                            onNavigateToSelectedGroup)
+                    }
+                }
+            }
+        }
+        fun getScreenName() : String {
+            return "SelectGroupScreen"
+        }
+
+        @Composable
+        fun GroupCard(
+            group : GroupInstance,
+            localImageLoaderValue : ProvidedValue<*>,
+            onNavigateToSelectedGroup : (GroupInstance) -> Unit
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(10.dp)
+                    .clickable {
+                        // Handle image click
+                        onNavigateToSelectedGroup(group)
+                    }
+            ) {
+                CompositionLocalProvider(
+                    localImageLoaderValue
+                ) {
+                    AutoSizeImage(
+                        group.avatar,
+                        contentDescription = "Group Avatar",
+                        contentScale = ContentScale.Fit,
+                        modifier = Modifier
+                            .size(50.dp)
+                            .weight(1f) // Allocates equal space to the image and text
+                            .clip(CircleShape)
+                    )
+                }
+                Text(
+                    text = group.name,
+                    color = Color.Black,
+                    fontWeight = FontWeight.Bold,
+                    overflow = TextOverflow.Ellipsis)
+                Spacer(Modifier.weight(1f))
+                CrossPlatformIcon(
+                    icon = "right_arrow",
+                    backgroundColor = "#00FFFFFF",
+                    contentDescription = "right_arrow",
+                    tint = Color.LightGray,
+                    modifier = Modifier
+                        .size(10.dp)
+                )
+            }
+        }
+    }
+}

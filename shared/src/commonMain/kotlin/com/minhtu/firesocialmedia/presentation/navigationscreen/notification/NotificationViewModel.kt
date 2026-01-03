@@ -2,6 +2,7 @@ package com.minhtu.firesocialmedia.presentation.navigationscreen.notification
 
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
+import com.minhtu.firesocialmedia.domain.entity.news.isDefaultNewsInstance
 import com.minhtu.firesocialmedia.domain.entity.notification.NotificationInstance
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.domain.usecases.common.GetUserUseCase
@@ -90,7 +91,7 @@ class NotificationViewModel (
                 relatedNew = requestFindNewById(notification.relatedInfo)
             }
             withContext(Dispatchers.Main) {
-                if (relatedNew != null) {
+                if (relatedNew != null && !relatedNew.isDefaultNewsInstance()) {
                     onNavigateToPostInformation(relatedNew)
                 } else {
                     onError()
