@@ -975,7 +975,7 @@ class AndroidDatabaseHelper {
         ): Boolean = suspendCancellableCoroutine { continuation ->
 
             val databaseRef = FirebaseDatabase.getInstance().reference
-            val storageRef = FirebaseStorage.getInstance().reference.child(groupAvatarsStoragePath).child(group.id)
+            val storageRef = FirebaseStorage.getInstance().reference.child(groupRootPath).child(groupAvatarsStoragePath).child(group.id)
 
             //Store the avatar to the firebase storage first
             try{
@@ -1038,6 +1038,60 @@ class AndroidDatabaseHelper {
             return snapshot.children
                 .mapNotNull { it.getValue(GroupSummaryDTO::class.java) }
                 .toSet()
+        }
+
+        suspend fun fetchGroupInfo(groupId: String,
+                                   groupPath: String): GroupDTO? {
+            val snapshot = FirebaseDatabase
+                .getInstance()
+                .reference
+                .child(groupPath)
+                .child(groupId)
+                .get()
+                .await()
+
+            return snapshot.getValue(GroupDTO::class.java)
+        }
+
+        suspend fun saveNewToGroup(
+            newsDTO: NewsDTO,
+            groupId: String,
+            groupPath: String,
+            postsPath: String,
+            imagePath : String
+        ): Boolean {
+            return runCatching {
+                val storageRef = FirebaseStorage.getInstance().getReference().child(groupPath).child(groupId).child(imagePath).child(newsDTO.id)
+                val dbRef = FirebaseDatabase.getInstance().getReference().child(groupPath).child(groupId).child(postsPath).child(newsDTO.id)
+
+                when {
+                    newsDTO.image.isNotEmpty() -> {
+                        val url = uploadMediaAndGetUrl(
+                            storageRef = storageRef,
+                            originalUriStr = newsDTO.image,
+                            localPath = newsDTO.localPath
+                        )
+                        newsDTO.updateImage(url)
+                    }
+                    newsDTO.video.isNotEmpty() -> {
+                        val url = uploadMediaAndGetUrl(
+                            storageRef = storageRef,
+                            originalUriStr = newsDTO.video,
+                            localPath = newsDTO.localPath
+                        )
+                        newsDTO.updateVideo(url)
+                    }
+                    else -> {
+                        // No media, just write the post
+                    }
+                }
+
+                dbRef.setValue(newsDTO).await()
+                true
+            }.getOrElse { e ->
+                // optional: log e
+                false
+            }
         }
 
     }

@@ -82,5 +82,8 @@ class TestTag {
         const val TAG_SELECT_GROUP_AVATAR: String = "TAG_SELECT_GROUP_AVATAR"
         const val TAG_GROUP_PASSWORD : String = "TAG_GROUP_PASSWORD"
         const val TAG_GROUP_CARD : String = "TAG_GROUP_CARD"
+        const val TAG_FEED_TAB : String = "TAG_FEED_TAB"
+        const val TAG_MEMBERS_TAB : String = "TAG_MEMBERS_TAB"
+        const val TAG_PHOTOS_TAB : String = "TAG_PHOTOS_TAB"
     }
 }

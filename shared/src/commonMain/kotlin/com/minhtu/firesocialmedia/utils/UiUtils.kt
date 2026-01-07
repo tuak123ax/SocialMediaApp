@@ -765,6 +765,7 @@ class UiUtils {
                     tint = Color.Black,
                     modifier = Modifier
                         .size(30.dp)
+                        .clip(CircleShape)
                         .testTag(TestTag.TAG_BUTTON_BACK)
                         .semantics{
                             contentDescription = TestTag.TAG_BUTTON_BACK
@@ -782,6 +783,7 @@ class UiUtils {
                     tint = Color.Black,
                     modifier = Modifier
                         .size(30.dp)
+                        .clip(CircleShape)
                         .testTag(TestTag.TAG_BUTTON_MOREOPTIONS)
                         .semantics{
                             contentDescription = TestTag.TAG_BUTTON_MOREOPTIONS

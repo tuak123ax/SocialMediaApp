@@ -16,6 +16,8 @@ class DataConstant {
         const val LIKED_COUNT_PATH = "likeCount"
         const val COMMENT_COUNT_PATH = "commentCount"
         const val GROUP_PATH = "groups"
-        const val GROUP_AVATAR_STORAGE_PATH = "groupAvatars"
+        const val GROUP_AVATAR_STORAGE_PATH = "avatars"
+        const val POSTS_PATH = "posts"
+        const val IMAGE_PATH = "images"
     }
 }

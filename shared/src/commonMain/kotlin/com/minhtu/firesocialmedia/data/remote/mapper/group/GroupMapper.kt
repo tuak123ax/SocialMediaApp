@@ -2,6 +2,8 @@ package com.minhtu.firesocialmedia.data.remote.mapper.group
 
 import com.minhtu.firesocialmedia.data.remote.dto.group.GroupDTO
 import com.minhtu.firesocialmedia.data.remote.dto.group.GroupSummaryDTO
+import com.minhtu.firesocialmedia.data.remote.mapper.news.toDomain
+import com.minhtu.firesocialmedia.data.remote.mapper.news.toDto
 import com.minhtu.firesocialmedia.domain.entity.group.GroupInstance
 
 fun GroupInstance.toDto() : GroupDTO {
@@ -10,9 +12,10 @@ fun GroupInstance.toDto() : GroupDTO {
         name,
         avatar,
         password,
+        description,
         createdDate,
         members,
-        posts
+        HashMap(posts.mapValues { (_,v) -> v.toDto() })
     )
 }
 
@@ -22,9 +25,10 @@ fun GroupDTO.toDomain() : GroupInstance {
         name,
         avatar,
         password,
+        description,
         createdDate,
         members,
-        posts
+        HashMap(posts.mapValues { (_,v) -> v.toDomain() })
     )
 }
 fun GroupSummaryDTO.toGroupDTO() : GroupDTO {

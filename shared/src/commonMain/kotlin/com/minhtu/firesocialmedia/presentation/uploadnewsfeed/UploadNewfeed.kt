@@ -170,6 +170,7 @@ class UploadNewsfeed {
                         uploadNewsfeedViewModel.resetPostError()
                         uploadNewsfeedViewModel.resetBackValue()
                         uploadNewsfeedViewModel.resetPostStatus()
+                        uploadNewsfeedViewModel.resetGroupId()
                         onNavigateToHomeScreen()
                         showDialog.value = false // Close the dialog
                     },

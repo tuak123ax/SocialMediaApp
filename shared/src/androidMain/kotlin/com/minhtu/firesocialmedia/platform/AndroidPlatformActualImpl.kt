@@ -152,6 +152,7 @@ actual fun getIconPainter(icon : String): Painter? {
         "right" -> painterResource(id = R.drawable.right)
         "select_group" -> painterResource(id = R.drawable.select_group)
         "right_arrow" -> painterResource(id = R.drawable.right_arrow)
+        "global" -> painterResource(id = R.drawable.global)
         else -> null
     }
 }

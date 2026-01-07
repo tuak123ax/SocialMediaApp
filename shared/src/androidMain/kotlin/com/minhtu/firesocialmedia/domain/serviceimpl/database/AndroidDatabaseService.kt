@@ -493,6 +493,29 @@ class AndroidDatabaseService(private val context: Context) : DatabaseService {
         return AndroidDatabaseHelper.getAllGroups(userPath, groupPath,userId)
     }
 
+    override suspend fun fetchGroupInfo(
+        groupId: String,
+        groupPath: String
+    ): GroupDTO? {
+        return AndroidDatabaseHelper.fetchGroupInfo(groupId, groupPath)
+    }
+
+    override suspend fun saveNewToGroup(
+        newsDTO: NewsDTO,
+        groupId: String,
+        groupPath: String,
+        postsPath: String,
+        imagePath : String
+    ): Boolean {
+        return AndroidDatabaseHelper.saveNewToGroup(
+            newsDTO,
+            groupId,
+            groupPath,
+            postsPath,
+            imagePath
+        )
+    }
+
     override suspend fun observePhoneCallWithoutCheckingInCall(
         currentUserId: String,
         phoneCallCallBack : (CallingRequestDTO) -> Unit,

@@ -1,5 +1,7 @@
 package com.minhtu.firesocialmedia.di
 
+import com.minhtu.firesocialmedia.domain.repository.GroupRepository
+import com.minhtu.firesocialmedia.domain.usecases.group.FetchGroupInfoUseCase
 import com.minhtu.firesocialmedia.presentation.calling.audiocall.CallingViewModel
 import com.minhtu.firesocialmedia.presentation.calling.videocall.VideoCallViewModel
 import com.minhtu.firesocialmedia.presentation.comment.CommentViewModel
@@ -10,7 +12,7 @@ import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.friend.FriendViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.notification.NotificationViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.CreateGroupViewModel
-import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.GroupPageViewModel
+import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.GroupDetailsViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.SelectGroupViewModel
 import com.minhtu.firesocialmedia.presentation.postinformation.PostInformationViewModel
 import com.minhtu.firesocialmedia.presentation.search.SearchViewModel
@@ -182,6 +184,7 @@ object ViewModelProvider {
         val userRepository = AppModule.provideUserRepository(platformContext)
         val commonDbRepository = AppModule.provideCommonDbRepository(platformContext)
         val newsRepository = AppModule.provideNewsRepository(platformContext)
+        val groupRepository = AppModule.provideGroupRepository(platformContext)
 
         val saveNotificationToDatabaseUseCase = AppModule.provideSaveNotificationToDatabaseUseCase(notificationRepository)
         val getUserUseCase = AppModule.provideGetUserUseCase(userRepository)
@@ -190,6 +193,7 @@ object ViewModelProvider {
         val loadNewsPostedWhenOfflineUseCase = AppModule.provideLoadNewsPostedWhenOfflineUseCase(commonDbRepository)
         val deleteAllDraftPostsUseCase = AppModule.provideDeleteAllDraftPostsUseCase(commonDbRepository)
         val deleteDraftPostUseCase = AppModule.provideDeleteDraftPostUseCase(commonDbRepository)
+        val saveNewToGroupUseCase = AppModule.provideSaveNewToGroupUseCase(groupRepository)
         return AppModule.provideUploadNewfeedViewModel(
             getUserUseCase,
             saveNotificationToDatabaseUseCase,
@@ -197,7 +201,8 @@ object ViewModelProvider {
             updateNewsFromDatabaseUseCase,
             loadNewsPostedWhenOfflineUseCase,
             deleteAllDraftPostsUseCase,
-            deleteDraftPostUseCase)
+            deleteDraftPostUseCase,
+            saveNewToGroupUseCase)
     }
 
     fun createUserInformationViewModel(platformContext : PlatformContext): UserInformationViewModel {
@@ -280,8 +285,10 @@ object ViewModelProvider {
         return CreateGroupViewModel(createGroupUseCase)
     }
 
-    fun createGroupPageViewModel(platformContext: PlatformContext): GroupPageViewModel {
-        return GroupPageViewModel()
+    fun createGroupDetailsViewModel(platformContext: PlatformContext): GroupDetailsViewModel {
+        val groupRepository = AppModule.provideGroupRepository(platformContext)
+        val fetchGroupInfoUseCase = AppModule.provideFetchGroupInfoUseCase(groupRepository)
+        return GroupDetailsViewModel(fetchGroupInfoUseCase)
     }
 
     fun createSelectGroupViewModel(platformContext: PlatformContext): SelectGroupViewModel {

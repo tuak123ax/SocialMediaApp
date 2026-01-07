@@ -65,7 +65,7 @@ class CreateGroupViewModel(
                 password = if(_accessPermission.value == DecentralizationType.Private) password.value else "",
                 createdDate = getCurrentTime(),
                 members = memberMap,
-                posts = ArrayList()
+                posts = HashMap()
             )
             currentUser.groups[groupInstance.id] = groupInstance
             val result = createGroupUseCase.invoke(

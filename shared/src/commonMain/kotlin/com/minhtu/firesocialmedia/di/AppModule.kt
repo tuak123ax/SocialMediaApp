@@ -59,7 +59,9 @@ import com.minhtu.firesocialmedia.domain.usecases.forgotpassword.SendEmailResetP
 import com.minhtu.firesocialmedia.domain.usecases.friend.SaveFriendRequestUseCase
 import com.minhtu.firesocialmedia.domain.usecases.friend.SaveFriendUseCase
 import com.minhtu.firesocialmedia.domain.usecases.group.CreateGroupUseCase
+import com.minhtu.firesocialmedia.domain.usecases.group.FetchGroupInfoUseCase
 import com.minhtu.firesocialmedia.domain.usecases.group.GetAllGroupsUseCase
+import com.minhtu.firesocialmedia.domain.usecases.group.SaveNewToGroupUseCase
 import com.minhtu.firesocialmedia.domain.usecases.home.ClearAccountUseCase
 import com.minhtu.firesocialmedia.domain.usecases.home.ClearLocalDataUseCase
 import com.minhtu.firesocialmedia.domain.usecases.home.DeleteNewsFromDatabaseUseCase
@@ -413,7 +415,8 @@ object AppModule {
         updateNewsFromDatabaseUseCase: UpdateNewsFromDatabaseUseCase,
         loadNewsPostedWhenOfflineUseCase: LoadNewsPostedWhenOfflineUseCase,
         deleteAllDraftPostsUseCase: DeleteAllDraftPostsUseCase,
-        deleteDraftPostUseCase: DeleteDraftPostUseCase): UploadNewfeedViewModel {
+        deleteDraftPostUseCase: DeleteDraftPostUseCase,
+        saveNewToGroupUseCase: SaveNewToGroupUseCase): UploadNewfeedViewModel {
         return UploadNewfeedViewModel(
             getUserUseCase,
             saveNotificationToDatabaseUseCase,
@@ -421,7 +424,8 @@ object AppModule {
             updateNewsFromDatabaseUseCase,
             loadNewsPostedWhenOfflineUseCase,
             deleteAllDraftPostsUseCase,
-            deleteDraftPostUseCase
+            deleteDraftPostUseCase,
+            saveNewToGroupUseCase
         )
     }
 
@@ -577,12 +581,17 @@ object AppModule {
     fun provideCreateGroupUseCase(groupRepository: GroupRepository) : CreateGroupUseCase{
         return CreateGroupUseCase(groupRepository)
     }
-
     fun provideGroupRepository(platformContext: PlatformContext) : GroupRepository {
         return GroupRepositoryImpl(platformContext.database, platformContext.networkMonitor)
     }
-
     fun provideGetAllGroupsUseCase(groupRepository: GroupRepository) : GetAllGroupsUseCase {
         return GetAllGroupsUseCase(groupRepository)
+    }
+    fun provideFetchGroupInfoUseCase(groupRepository: GroupRepository) : FetchGroupInfoUseCase {
+        return FetchGroupInfoUseCase(groupRepository)
+    }
+
+    fun provideSaveNewToGroupUseCase(groupRepository: GroupRepository) : SaveNewToGroupUseCase {
+        return SaveNewToGroupUseCase(groupRepository)
     }
 }

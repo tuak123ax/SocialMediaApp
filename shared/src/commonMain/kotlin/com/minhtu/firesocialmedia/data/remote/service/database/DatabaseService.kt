@@ -190,4 +190,13 @@ interface DatabaseService {
         userPath : String,
         groupPath : String,
         userId : String) : Set<GroupSummaryDTO>
+
+    suspend fun fetchGroupInfo(groupId: String, groupPath: String): GroupDTO?
+    suspend fun saveNewToGroup(
+        newsDTO: NewsDTO,
+        groupId: String,
+        groupPath: String,
+        postsPath: String,
+        imagePath : String
+    ): Boolean
 }

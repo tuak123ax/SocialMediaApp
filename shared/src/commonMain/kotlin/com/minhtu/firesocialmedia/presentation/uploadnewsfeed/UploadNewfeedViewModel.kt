@@ -10,6 +10,7 @@ import com.minhtu.firesocialmedia.domain.entity.notification.NotificationInstanc
 import com.minhtu.firesocialmedia.domain.entity.notification.NotificationType
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.domain.usecases.common.GetUserUseCase
+import com.minhtu.firesocialmedia.domain.usecases.group.SaveNewToGroupUseCase
 import com.minhtu.firesocialmedia.domain.usecases.newsfeed.DeleteAllDraftPostsUseCase
 import com.minhtu.firesocialmedia.domain.usecases.newsfeed.DeleteDraftPostUseCase
 import com.minhtu.firesocialmedia.domain.usecases.newsfeed.SaveNewToDatabaseUseCase
@@ -36,11 +37,12 @@ import kotlinx.coroutines.withContext
 class UploadNewfeedViewModel(
     private val getUserUseCase: GetUserUseCase,
     private val saveNotificationToDatabaseUseCase: SaveNotificationToDatabaseUseCase,
-    private val saveNewToDatabase : SaveNewToDatabaseUseCase,
+    private val saveNewToDatabaseUseCase : SaveNewToDatabaseUseCase,
     private val updateNewsFromDatabaseUseCase: UpdateNewsFromDatabaseUseCase,
     private val loadNewsPostedWhenOfflineUseCase : LoadNewsPostedWhenOfflineUseCase,
     private val deleteAllDraftPostsUseCase : DeleteAllDraftPostsUseCase,
     private val deleteDraftPostUseCase: DeleteDraftPostUseCase,
+    private val saveNewToGroupUseCase : SaveNewToGroupUseCase,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : ViewModel() {
     var currentUser : UserInstance? = null
@@ -62,6 +64,14 @@ class UploadNewfeedViewModel(
     fun updateVideo(input : String) {
         video = input
         image = ""
+    }
+
+    var groupId by mutableStateOf("")
+    fun updateGroupId(input : String) {
+        groupId = input
+    }
+    fun resetGroupId() {
+        groupId = ""
     }
 
     private var _createPostStatus = MutableStateFlow<Boolean?>(null)
@@ -97,16 +107,31 @@ class UploadNewfeedViewModel(
                 val newsRandomId = generateRandomId()
                 if(message.isNotEmpty() || image.isNotEmpty() || video.isNotEmpty()) {
                     //Save post to db
-                    val newsInstance = NewsInstance(newsRandomId,user.uid, user.name,user.image,message,image,video)
+                    val newsInstance = NewsInstance(
+                        newsRandomId,
+                        user.uid,
+                        user.name,
+                        user.image,
+                        message,
+                        image,
+                        video,
+                        groupId = groupId)
                     newsInstance.timePosted = getCurrentTime()
                     if(localPathOfSelectedDraft.value.isNotEmpty()) {
                         newsInstance.localPath = localPathOfSelectedDraft.value
                     }
                     //Add access permission
                     newsInstance.decentralizationType = _accessPermission.value
-                    _createPostStatus.value = saveNewToDatabase.invoke(
-                        newsInstance
-                    )
+                    if(newsInstance.groupId.isEmpty()) {
+                        _createPostStatus.value = saveNewToDatabaseUseCase.invoke(
+                            newsInstance
+                        )
+                    } else{
+                        _createPostStatus.value = saveNewToGroupUseCase.invoke(
+                            newsInstance,
+                            groupId
+                        )
+                    }
 
                     //Only send notification if the access permission is not private
                     if(newsInstance.decentralizationType != DecentralizationType.Private) {
@@ -151,6 +176,7 @@ class UploadNewfeedViewModel(
                     _postError.value = Constants.POST_NEWS_EMPTY_ERROR
                 }
                 resetAccessPermission()
+                resetGroupId()
             }
         }
     }

@@ -4,9 +4,11 @@ import com.minhtu.firesocialmedia.data.remote.constant.DataConstant
 import com.minhtu.firesocialmedia.data.remote.mapper.group.toDomain
 import com.minhtu.firesocialmedia.data.remote.mapper.group.toDto
 import com.minhtu.firesocialmedia.data.remote.mapper.group.toGroupDTO
+import com.minhtu.firesocialmedia.data.remote.mapper.news.toDto
 import com.minhtu.firesocialmedia.data.remote.service.database.DatabaseService
 import com.minhtu.firesocialmedia.domain.core.NetworkMonitor
 import com.minhtu.firesocialmedia.domain.entity.group.GroupInstance
+import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
 import com.minhtu.firesocialmedia.domain.repository.GroupRepository
 import kotlinx.coroutines.flow.first
 
@@ -42,6 +44,34 @@ class GroupRepositoryImpl(
             ).map { it.toGroupDTO().toDomain() }.toSet()
         } else {
             emptySet()
+        }
+    }
+
+    override suspend fun fetchGroupInfo(groupId: String): GroupInstance {
+        val isOnline = networkMonitor.isOnline.first()
+        return if(isOnline) {
+            val groupDTO = databaseService.fetchGroupInfo(
+                groupId,
+                DataConstant.GROUP_PATH)?.toDomain()
+            groupDTO ?: GroupInstance()
+        } else {
+            GroupInstance()
+        }
+    }
+
+    override suspend fun saveNewToGroup(instance: NewsInstance,
+                                        groupId : String): Boolean {
+        val isOnline = networkMonitor.isOnline.first()
+        return if(isOnline) {
+            databaseService.saveNewToGroup(
+                instance.toDto(),
+                groupId,
+                DataConstant.GROUP_PATH,
+                DataConstant.POSTS_PATH,
+                DataConstant.IMAGE_PATH
+            )
+        } else {
+            false
         }
     }
 }

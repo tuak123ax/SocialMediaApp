@@ -65,8 +65,8 @@ import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.Cr
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.CreateGroupViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.ExploreGroup
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.Group
-import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.GroupPage
-import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.GroupPageViewModel
+import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.GroupDetails
+import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.GroupDetailsViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.SelectGroup
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.SelectGroupViewModel
 import com.minhtu.firesocialmedia.presentation.postinformation.PostInformation
@@ -117,7 +117,7 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
     val homeViewModel: HomeViewModel = platformViewModel { ViewModelProvider.createHomeViewModel(platformContext) }
     val postInformationViewModel : PostInformationViewModel = platformViewModel { ViewModelProvider.createPostInformationViewModel(platformContext) }
     val createGroupViewModel : CreateGroupViewModel = platformViewModel { ViewModelProvider.createCreateGroupViewModel(platformContext) }
-    val groupPageViewModel : GroupPageViewModel = platformViewModel { ViewModelProvider.createGroupPageViewModel(platformContext) }
+    val groupDetailsViewModel : GroupDetailsViewModel = platformViewModel { ViewModelProvider.createGroupDetailsViewModel(platformContext) }
     val syncDataUseCase = AppModule.provideSyncDataUseCase(AppModule.provideCommonDbRepository(platformContext))
     val selectGroupViewModel : SelectGroupViewModel = platformViewModel { ViewModelProvider.createSelectGroupViewModel(platformContext) }
 
@@ -783,7 +783,7 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                             homeViewModel.currentUser!!,
                             onCreateGroupSuccess = { createdGroup ->
                                 selectedGroup = createdGroup
-                                navController.navigate(route = GroupPage.getScreenName())
+                                navController.navigate(route = GroupDetails.getScreenName())
                             }
                         )
                     } else {
@@ -800,7 +800,7 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                     ExploreGroup.ExploreGroupScreen()
                 }
                 composable(
-                    route = GroupPage.getScreenName(),
+                    route = GroupDetails.getScreenName(),
                     enterTransition = DefaultNavAnimations.enter,
                     popEnterTransition = DefaultNavAnimations.popEnter,
                     exitTransition = DefaultNavAnimations.exit,
@@ -812,7 +812,8 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                         onVideoPicked = {}
                     )
                     if(selectedGroup != null) {
-                        GroupPage.GroupPageScreen(
+                        GroupDetails.GroupDetailsScreen(
+                            homeViewModel.currentUser!!,
                             picker,
                             selectedGroup!!,
                             paddingValues,
@@ -821,7 +822,8 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                                 .fillMaxSize()
                                 .background(color = Color.White),
                             homeViewModel,
-                            groupPageViewModel,
+                            searchViewModel,
+                            groupDetailsViewModel,
                             onNavigateToShowImageScreen = { image ->
                                 selectedImage = image
                                 navController.navigate(route = ShowImage.getScreenName())
@@ -835,6 +837,7 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                             },
                             onNavigateToUploadNewsfeed = { new ->
                                 updateNew = new
+                                uploadNewsfeedViewModel.updateGroupId(selectedGroup!!.id)
                                 navController.navigate(route = UploadNewsfeed.getScreenName())
                             },
                             onNavigateToCommentScreen = { new ->
@@ -863,7 +866,7 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                         },
                         onNavigateToSelectedGroup = { group ->
                             selectedGroup = group
-                            navController.navigate(route = GroupPage.getScreenName())
+                            navController.navigate(route = GroupDetails.getScreenName())
                         }
                     )
                 }
