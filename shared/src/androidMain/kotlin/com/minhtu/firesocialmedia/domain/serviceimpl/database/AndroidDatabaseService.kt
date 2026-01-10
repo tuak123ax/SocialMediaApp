@@ -141,22 +141,84 @@ class AndroidDatabaseService(private val context: Context) : DatabaseService {
         })
     }
 
+    private fun DataSnapshot.childString(key: String): String =
+        child(key).getValue(String::class.java) ?: ""
+
+    private fun DataSnapshot.childStringList(key: String): ArrayList<String> {
+        val out = ArrayList<String>()
+        val node = child(key)
+        if (!node.exists()) return out
+
+        for (c in node.children) {
+            c.getValue(String::class.java)?.let(out::add)
+        }
+        return out
+    }
+
+    private fun DataSnapshot.childStringIntMap(key: String): HashMap<String, Int> {
+        val out = HashMap<String, Int>()
+        val node = child(key)
+        if (!node.exists()) return out
+
+        for (c in node.children) {
+            val mapKey = c.key ?: continue
+
+            val intVal: Int? =
+                c.getValue(Long::class.java)?.toInt()
+                    ?: c.getValue(Int::class.java)
+                    ?: c.getValue(Double::class.java)?.toInt()
+
+            if (intVal != null) {
+                out[mapKey] = intVal
+            }
+        }
+        return out
+    }
+
     override suspend fun getUser(userId: String): UserDTO? =
         withTimeout(5000) {
             suspendCoroutine { continuation ->
-                val database = FirebaseDatabase.getInstance()
-                val databaseReference = database.getReference()
+                val databaseReference = FirebaseDatabase.getInstance()
+                    .reference
                     .child(DataConstant.USER_PATH)
                     .child(userId)
 
                 databaseReference.addListenerForSingleValueEvent(object : ValueEventListener {
                     override fun onDataChange(snapshot: DataSnapshot) {
-                        val user = snapshot.getValue(UserDTO::class.java)
-                        if (user != null) {
-                            continuation.resume(user)
-                        } else {
+                        if (!snapshot.exists()) {
                             continuation.resume(null)
+                            return
                         }
+
+                        // Parse notifications safely (skip unknown enum crash items)
+                        val safeNotifications = ArrayList<NotificationDTO>()
+                        val notiSnap = snapshot.child("notifications")
+                        for (child in notiSnap.children) {
+                            val dto = try {
+                                child.getValue(NotificationDTO::class.java)
+                            } catch (t: Throwable) {
+                                // old app crashes here due to unknown enum → skip
+                                null
+                            }
+                            if (dto != null) safeNotifications.add(dto)
+                        }
+
+                        // Build user with all other data intact
+                        val user = UserDTO(
+                            email = snapshot.childString("email"),
+                            image = snapshot.childString("image"),
+                            name = snapshot.childString("name"),
+                            status = snapshot.childString("status"),
+                            token = snapshot.childString("token"),
+                            uid = snapshot.childString("uid"),
+                            likedPosts = snapshot.childStringIntMap("likedPosts"),
+                            friendRequests = snapshot.childStringList("friendRequests"),
+                            notifications = safeNotifications,
+                            friends = snapshot.childStringList("friends"),
+                            likedComments = snapshot.childStringIntMap("likedComments")
+                        )
+
+                        continuation.resume(user)
                     }
 
                     override fun onCancelled(error: DatabaseError) {

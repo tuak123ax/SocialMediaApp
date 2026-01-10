@@ -5,6 +5,7 @@ import com.minhtu.firesocialmedia.data.remote.dto.user.UserDTO
 import com.minhtu.firesocialmedia.data.remote.mapper.notification.toDomain
 import com.minhtu.firesocialmedia.data.remote.mapper.notification.toDto
 import com.minhtu.firesocialmedia.domain.entity.notification.NotificationInstance
+import com.minhtu.firesocialmedia.domain.entity.notification.NotificationType
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 
 fun UserDTO.toDomain() : UserInstance {
@@ -39,8 +40,14 @@ fun UserInstance.toDto() : UserDTO {
     )
 }
 
-fun ArrayList<NotificationDTO>.toDomainNotifications() : ArrayList<NotificationInstance> =
-    ArrayList(this.map { item -> item.toDomain() })
+fun ArrayList<NotificationDTO>.toDomainNotifications(): ArrayList<NotificationInstance> =
+    this
+        .filter { dto ->
+            NotificationType.entries.any { it.name == dto.type.name }
+        }
+        .map { it.toDomain() }
+        .let { ArrayList(it) }
+
 
 fun ArrayList<NotificationInstance>.toDTONotifications() : ArrayList<NotificationDTO> =
     ArrayList(this.map { item -> item.toDto() })
