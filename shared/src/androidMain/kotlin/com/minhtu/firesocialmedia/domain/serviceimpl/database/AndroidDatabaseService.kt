@@ -23,6 +23,7 @@ import com.minhtu.firesocialmedia.data.remote.dto.user.UserDTO
 import com.minhtu.firesocialmedia.data.remote.service.database.DatabaseService
 import com.minhtu.firesocialmedia.domain.entity.base.BaseNewsInstance
 import com.minhtu.firesocialmedia.domain.entity.call.CallStatus
+import com.minhtu.firesocialmedia.domain.entity.notification.NotificationType
 import com.minhtu.firesocialmedia.domain.serviceimpl.crypto.AndroidCryptoHelper
 import com.minhtu.firesocialmedia.platform.logMessage
 import com.minhtu.firesocialmedia.utils.Utils
@@ -44,32 +45,50 @@ class AndroidDatabaseService(private val context: Context) : DatabaseService {
         }
     }
 
-    override suspend fun checkUserExists(email: String) : SignInDTO = suspendCancellableCoroutine{ continuation ->
-        val database = FirebaseDatabase.getInstance()
-        val databaseReference: DatabaseReference = database.getReference().child("users")
-        val listener = object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                if (!continuation.isActive) return
-                val exists = snapshot.children.any {
-                    it.getValue(UserDTO::class.java)?.email == email
+    override suspend fun checkUserExists(email: String): SignInDTO =
+        suspendCancellableCoroutine { continuation ->
+            val ref = FirebaseDatabase.getInstance()
+                .reference
+                .child("users")
+
+            val listener = object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    if (!continuation.isActive) return
+
+                    var exists = false
+
+                    for (userSnap in snapshot.children) {
+                        // Only read the email field; never parse UserDTO (avoids enum crash)
+                        val userEmail = userSnap.child("email").getValue(String::class.java)
+
+                        if (userEmail != null && userEmail.equals(email, ignoreCase = true)) {
+                            exists = true
+                            break
+                        }
+                    }
+
+                    continuation.resume(
+                        if (exists) SignInDTO(true, Constants.ACCOUNT_EXISTED)
+                        else SignInDTO(true, Constants.ACCOUNT_NOT_EXISTED)
+                    ) {}
                 }
-                val result = if (exists) {
-                    SignInDTO(true, Constants.ACCOUNT_EXISTED)
-                } else {
-                    SignInDTO(true, Constants.ACCOUNT_NOT_EXISTED)
+
+                override fun onCancelled(error: DatabaseError) {
+                    if (!continuation.isActive) return
+                    logMessage("checkUserExists") { "Error when checkUserExists: ${error.message}" }
+                    continuation.resume(SignInDTO(false, Constants.LOGIN_ERROR)) {}
                 }
-                continuation.resume(result)
             }
 
-            override fun onCancelled(error: DatabaseError) {
-                if (!continuation.isActive) return
-                logMessage("checkUserExists", { "Error when checkUserExists" })
-                continuation.resume(SignInDTO(false, Constants.LOGIN_ERROR))
+            // Single read (no continuous listener)
+            ref.addListenerForSingleValueEvent(listener)
+
+            continuation.invokeOnCancellation {
+                ref.removeEventListener(listener)
             }
         }
-        databaseReference.addValueEventListener(listener)
-        continuation.invokeOnCancellation { databaseReference.removeEventListener(listener) }
-    }
+
+
 
     override suspend fun saveValueToDatabase(
         id: String,
@@ -345,29 +364,63 @@ class AndroidDatabaseService(private val context: Context) : DatabaseService {
 
     override suspend fun getAllNotificationsOfUser(
         path: String,
-        currentUserUid : String
-    ) : List<NotificationDTO>? = suspendCancellableCoroutine { continuation ->
-        val result = ArrayList<NotificationDTO>()
-        val database = FirebaseDatabase.getInstance()
-        val databaseReference: DatabaseReference = database.getReference().child(DataConstant.USER_PATH)
-            .child(currentUserUid).child(path)
-        databaseReference.addValueEventListener(object : ValueEventListener {
+        currentUserUid: String
+    ): List<NotificationDTO>? = suspendCancellableCoroutine { continuation ->
+
+        val ref = FirebaseDatabase.getInstance()
+            .reference
+            .child(DataConstant.USER_PATH)
+            .child(currentUserUid)
+            .child(path)
+
+        val listener = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
-                result.clear()
-                for (dataSnapshot in snapshot.getChildren()) {
-                    val notification = dataSnapshot.getValue(NotificationDTO::class.java)
-                    if (notification != null) {
-                        result.add(notification)
-                    }
+                val result = ArrayList<NotificationDTO>()
+
+                val allowedTypes = NotificationType.entries.map { it.name }.toHashSet()
+
+                for (n in snapshot.children) {
+                    // Read enum as raw String
+                    val typeStr = n.child("type").getValue(String::class.java)
+                        ?: continue   // no type → skip
+
+                    // Skip unknown enum values (e.g. SHARE_NEW)
+                    if (typeStr !in allowedTypes) continue
+
+                    // Safe enum conversion (now guaranteed)
+                    val type = NotificationType.valueOf(typeStr)
+
+                    // Build DTO manually (primitives only)
+                    val dto = NotificationDTO(
+                        id = n.child("id").getValue(String::class.java)
+                            ?: n.key.orEmpty(),
+                        content = n.child("content").getValue(String::class.java).orEmpty(),
+                        avatar = n.child("avatar").getValue(String::class.java).orEmpty(),
+                        sender = n.child("sender").getValue(String::class.java).orEmpty(),
+                        timeSend = n.child("timeSend").getValue(Long::class.java) ?: 0L,
+                        type = type,
+                        relatedInfo = n.child("relatedInfo").getValue(String::class.java).orEmpty()
+                    )
+
+                    result.add(dto)
                 }
-                if(continuation.isActive) continuation.resume(result)
+
+                if (continuation.isActive) continuation.resume(result) {}
             }
 
             override fun onCancelled(error: DatabaseError) {
-                if(continuation.isActive) continuation.resume(null)
+                if (continuation.isActive) continuation.resume(null) {}
             }
-        })
+        }
+
+        // One-shot read (correct for suspend)
+        ref.addListenerForSingleValueEvent(listener)
+
+        continuation.invokeOnCancellation {
+            ref.removeEventListener(listener)
+        }
     }
+
 
     override suspend fun saveListToDatabase(
         id: String,
