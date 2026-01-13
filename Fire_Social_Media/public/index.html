@@ -1,17 +1,400 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-  <meta http-equiv="Content-Style-Type" content="text/css">
-  <title></title>
-  <meta name="Generator" content="Cocoa HTML Writer">
-  <meta name="CocoaVersion" content="2575.7">
-  <style type="text/css">
-    p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Times; -webkit-text-stroke: #000000}
-    span.s1 {font-kerning: none}
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Open in Fire Social Media</title>
+
+  <meta property="og:title" content="Open in Fire Social Media" />
+  <meta property="og:description" content="Tap to open the app. If it doesn’t work in Messenger, open in an external browser or copy the link." />
+  <meta property="og:type" content="website" />
+
+  <style>
+    :root{
+      --bg1:#0b0b0f;
+      --bg2:#120f14;
+
+      --border:rgba(255,255,255,.10);
+      --text:#f3f4f6;
+      --muted:#9ca3af;
+
+      /* 🔴 RED THEME */
+      --primary:#ef4444;
+      --primary-2:#f97316;
+
+      --shadow: 0 30px 80px rgba(0,0,0,.45);
+      --radius: 22px;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      color: var(--text);
+      overflow-x: hidden;
+      background:
+        radial-gradient(900px 500px at 15% 10%, rgba(239,68,68,.25), transparent 60%),
+        radial-gradient(700px 500px at 85% 20%, rgba(249,115,22,.22), transparent 55%),
+        radial-gradient(700px 500px at 40% 95%, rgba(239,68,68,.18), transparent 60%),
+        linear-gradient(180deg, var(--bg1), var(--bg2));
+      display: grid;
+      place-items: center;
+      padding: 28px 16px;
+    }
+
+    .wrap { width: 100%; max-width: 640px; }
+
+    .card {
+      position: relative;
+      border-radius: var(--radius);
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      padding: 22px;
+      overflow: hidden;
+      animation: pop .35s ease-out;
+    }
+
+    .card:before{
+      content:"";
+      position:absolute; inset:-2px;
+      background:
+        radial-gradient(500px 250px at 30% 0%, rgba(239,68,68,.22), transparent 60%),
+        radial-gradient(420px 220px at 95% 15%, rgba(249,115,22,.22), transparent 55%);
+      pointer-events:none;
+    }
+
+    @keyframes pop {
+      from { transform: translateY(8px); opacity: .0; }
+      to   { transform: translateY(0); opacity: 1; }
+    }
+
+    .top {
+      position: relative;
+      display: flex;
+      gap: 14px;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    .logo {
+      width: 46px;
+      height: 46px;
+      border-radius: 14px;
+      display: grid;
+      place-items: center;
+      background:
+        radial-gradient(20px 20px at 30% 30%, rgba(255,255,255,.35), transparent 60%),
+        linear-gradient(135deg, var(--primary), var(--primary-2));
+      box-shadow: 0 10px 25px rgba(239,68,68,.35);
+      border: 1px solid rgba(255,255,255,.22);
+      flex: 0 0 auto;
+    }
+
+    .logo svg { filter: drop-shadow(0 4px 10px rgba(0,0,0,.25)); }
+
+    h1 {
+      margin: 0;
+      font-size: 22px;
+      letter-spacing: .2px;
+      line-height: 1.2;
+    }
+
+    .subtitle {
+      margin: 6px 0 0;
+      color: var(--muted);
+      line-height: 1.4;
+      font-size: 14px;
+    }
+
+    .actions {
+      margin-top: 18px;
+      display: grid;
+      gap: 10px;
+    }
+
+    /* Use <a> as buttons for better compatibility in in-app browsers */
+    .btn {
+      width: 100%;
+      border: 0;
+      cursor: pointer;
+      padding: 14px 16px;
+      border-radius: 16px;
+      font-size: 16px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      transition: transform .08s ease, filter .18s ease, box-shadow .18s ease;
+      user-select: none;
+      text-decoration: none;
+    }
+
+    .btn:active { transform: translateY(1px) scale(.99); }
+
+    .btn.primary{
+      color: white;
+      background: linear-gradient(135deg, var(--primary), var(--primary-2));
+      box-shadow: 0 14px 35px rgba(239,68,68,.35);
+    }
+
+    .btn.secondary{
+      color: rgba(255,255,255,.92);
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.10);
+    }
+
+    .btn svg { flex: 0 0 auto; }
+
+    .meta {
+      margin-top: 14px;
+      padding: 12px;
+      border-radius: 14px;
+      border: 1px dashed rgba(255,255,255,.16);
+      background: rgba(0,0,0,.18);
+      color: rgba(229,231,235,.85);
+      font-size: 13px;
+      word-break: break-all;
+      display: none;
+    }
+
+    .hint {
+      margin-top: 12px;
+      color: rgba(156,163,175,.9);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .toast{
+      position: fixed;
+      left: 50%;
+      bottom: 22px;
+      transform: translateX(-50%);
+      background: rgba(17,24,39,.92);
+      border: 1px solid rgba(255,255,255,.14);
+      color: rgba(255,255,255,.92);
+      padding: 10px 12px;
+      border-radius: 999px;
+      font-size: 13px;
+      box-shadow: 0 16px 40px rgba(0,0,0,.35);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .18s ease, transform .18s ease;
+    }
+
+    .toast.show{
+      opacity: 1;
+      transform: translateX(-50%) translateY(-4px);
+    }
+
+    .notice {
+      margin-top: 12px;
+      padding: 10px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.16);
+      color: rgba(229,231,235,.85);
+      font-size: 13px;
+      line-height: 1.45;
+      display: none;
+    }
+    .notice strong { color: rgba(255,255,255,.92); }
   </style>
 </head>
+
 <body>
-<p class="p1"><span class="s1">Firebase Hosting for firesocialmedia app</span></p>
+  <div class="wrap">
+    <div class="card">
+      <div class="top">
+        <div class="logo" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+            <path d="M12 22c4.2 0 7-2.8 7-6.6 0-3.2-2.2-5.2-3.7-6.7-.7-.7-1.3-1.4-1.6-2.2-.2-.6-.3-1.2-.3-1.9 0-.5-.6-.8-1-.4-2.6 2.6-3.8 4.5-4.1 6.7-.1.9-.6 1.6-1.4 2.1-.7.5-1.5.9-2.2 1.6C4.8 14 4 15.6 4 17.2 4 19.9 7 22 12 22Z"
+                  fill="rgba(255,255,255,.92)"/>
+          </svg>
+        </div>
+
+        <div>
+          <h1>Open in Fire Social Media</h1>
+          <p class="subtitle" id="subtitle">
+            Tap to open the app. If it doesn’t work in Messenger, open in an external browser or copy the link.
+          </p>
+        </div>
+      </div>
+
+      <div class="actions">
+        <!-- Use anchor instead of button; some in-app browsers treat it better -->
+        <a class="btn primary" id="openAppLink" href="#" rel="nofollow">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M7 17L17 7" stroke="white" stroke-width="2" stroke-linecap="round"/>
+            <path d="M10 7h7v7" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Open the app
+        </a>
+
+        <a class="btn secondary" id="openBrowserLink" href="#" rel="nofollow">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" stroke="rgba(255,255,255,.85)" stroke-width="2"/>
+            <path d="M3 12h18" stroke="rgba(255,255,255,.55)" stroke-width="2" stroke-linecap="round"/>
+            <path d="M12 3c2.5 2.4 4 5.7 4 9s-1.5 6.6-4 9c-2.5-2.4-4-5.7-4-9s1.5-6.6 4-9Z"
+                  stroke="rgba(255,255,255,.55)" stroke-width="2"/>
+          </svg>
+          Open in browser
+        </a>
+
+        <a class="btn secondary" id="copyLinkBtn" href="#" rel="nofollow">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M9 9h10v10H9V9Z" stroke="rgba(255,255,255,.85)" stroke-width="2" />
+            <path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"
+                  stroke="rgba(255,255,255,.55)" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          Copy link
+        </a>
+      </div>
+
+      <div class="notice" id="notice"></div>
+      <div class="meta" id="info"></div>
+
+      <div class="hint" id="hint">
+        Tip: In Messenger/Facebook, use the menu (⋯) and select <b>Open in external browser</b> if available.
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast">Copied!</div>
+
+  <script>
+    // =========================
+    // CONFIG
+    // =========================
+    const APP_PACKAGE = "com.minhtu.firesocialmedia";
+    const FALLBACK_WEB_ORIGIN = "https://firechat-aa433.web.app"; // same as your hosting origin
+
+    // =========================
+    // HELPERS
+    // =========================
+    function ua() { return navigator.userAgent || ""; }
+    function isAndroid() { return /Android/i.test(ua()); }
+    function isIOS() { return /iPad|iPhone|iPod/i.test(ua()) && !window.MSStream; }
+    function isMetaInApp() {
+      // FB/Messenger in-app browser markers
+      return /FBAN|FBAV|FB_IAB|FB4A|FB4B|Messenger/i.test(ua());
+    }
+
+    function buildPath() {
+      const u = new URL(window.location.href);
+      return (u.pathname || "/") + (u.search || "") + (u.hash || "");
+    }
+
+    function buildAndroidIntentToOpenApp() {
+      const path = buildPath();
+      const fallback = FALLBACK_WEB_ORIGIN + path;
+      // IMPORTANT: host must match your app links host
+      return (
+        "intent://firechat-aa433.web.app" + path +
+        "#Intent;" +
+        "scheme=https;" +
+        "package=" + APP_PACKAGE + ";" +
+        "S.browser_fallback_url=" + encodeURIComponent(fallback) + ";" +
+        "end"
+      );
+    }
+
+    function buildAndroidIntentToOpenChrome() {
+      const u = new URL(window.location.href);
+      // Open the same URL in Chrome
+      return (
+        "intent://" + u.host + u.pathname + u.search +
+        "#Intent;scheme=https;package=com.android.chrome;" +
+        "S.browser_fallback_url=" + encodeURIComponent(u.href) + ";" +
+        "end"
+      );
+    }
+
+    function showToast(msg) {
+      const t = document.getElementById("toast");
+      t.textContent = msg;
+      t.classList.add("show");
+      setTimeout(() => t.classList.remove("show"), 1100);
+    }
+
+    async function copyText(text) {
+      try {
+        await navigator.clipboard.writeText(text);
+        showToast("Copied!");
+      } catch {
+        // Fallback for some in-app browsers
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        ta.style.position = "fixed";
+        ta.style.left = "-9999px";
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        document.execCommand("copy");
+        document.body.removeChild(ta);
+        showToast("Copied!");
+      }
+    }
+
+    function setDebugInfo() {
+      const info = document.getElementById("info");
+      info.style.display = "block";
+      info.textContent =
+        "UA: " + ua() + "\n" +
+        "Path: " + buildPath() + "\n" +
+        (isAndroid() ? ("Intent(open app): " + buildAndroidIntentToOpenApp()) : "");
+    }
+
+    // =========================
+    // INIT LINKS
+    // =========================
+    const openAppLink = document.getElementById("openAppLink");
+    const openBrowserLink = document.getElementById("openBrowserLink");
+    const copyLinkBtn = document.getElementById("copyLinkBtn");
+    const subtitle = document.getElementById("subtitle");
+    const notice = document.getElementById("notice");
+
+    // Build proper hrefs (anchors behave better than JS redirects in some in-app browsers)
+    if (isAndroid()) {
+      openAppLink.href = buildAndroidIntentToOpenApp();
+      openBrowserLink.href = buildAndroidIntentToOpenChrome();
+    } else {
+      // iOS/desktop: open app via https (App Links / Universal Links), or just open current page
+      openAppLink.href = window.location.href;
+      openBrowserLink.href = window.location.href;
+      openBrowserLink.target = "_blank";
+      openBrowserLink.rel = "noopener noreferrer";
+    }
+
+    // Copy link behavior
+    copyLinkBtn.addEventListener("click", async (e) => {
+      e.preventDefault();
+      await copyText(window.location.href);
+    });
+
+    // If inside Meta in-app browser, be honest: app open may be blocked
+    if (isMetaInApp()) {
+      notice.style.display = "block";
+      notice.innerHTML =
+        "<strong>Messenger in-app browser may block opening apps.</strong> " +
+        "Use the menu (⋯) → <strong>Open in browser</strong> (or <strong>Open with FireSocialMedia</strong>), " +
+        "then tap Open the app.";
+
+      subtitle.textContent =
+        "If app opening doesn’t work here, please open this link in an external browser or copy the link.";
+
+      // Optional: hide Open App button in Meta in-app browser to avoid “broken” feeling
+      // Comment this out if you still want to try.
+      // openAppLink.style.display = "none";
+    }
+
+    // Optional debug (comment out in production)
+    // setDebugInfo();
+  </script>
 </body>
 </html>
