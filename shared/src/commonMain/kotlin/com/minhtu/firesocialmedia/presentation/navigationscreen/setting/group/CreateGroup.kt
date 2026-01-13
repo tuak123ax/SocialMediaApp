@@ -95,6 +95,7 @@ class CreateGroup {
                         showToast("Create group failed. Please retry!!!")
                     }
                     createGroupViewModel.resetCreateGroupState()
+                    loadingViewModel.hideLoading()
                 }
             }
             Box(Modifier.fillMaxSize()) {
@@ -211,6 +212,7 @@ class CreateGroup {
                     ) {
                         Button(
                             onClick = {
+                                loadingViewModel.showLoading()
                                 createGroupViewModel.createGroup(currentUser)
                             },
                             modifier = Modifier

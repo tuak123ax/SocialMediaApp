@@ -199,4 +199,34 @@ interface DatabaseService {
         postsPath: String,
         imagePath : String
     ): Boolean
+
+    suspend fun updateNotificationStatus(
+        newStatus: Boolean,
+        groupId: String,
+        userId : String,
+        userPath: String,
+        groupPath: String,
+        notificationStatusPath: String
+    ): Boolean
+
+    suspend fun getAllMembersInGroup(
+        groupId: String,
+        groupPath: String,
+        membersPath: String
+    ): HashMap<String, String>
+
+    suspend fun getGroupConfigs(
+        userId: String,
+        groupId: String,
+        userPath: String,
+        groupPath: String
+    ): GroupSummaryDTO
+
+    suspend fun fetchNotificationState(
+        userId: String,
+        groupId: String,
+        userPath: String,
+        groupPath: String,
+        notificationStatusPath : String
+    ): Boolean
 }

@@ -19,5 +19,8 @@ class DataConstant {
         const val GROUP_AVATAR_STORAGE_PATH = "avatars"
         const val POSTS_PATH = "posts"
         const val IMAGE_PATH = "images"
+        const val NOTIFICATION_STATUS_PATH = "notificationOn"
+        const val MEMBERS_PATH = "members"
+        const val DEEP_LINK = "https://firechat-aa433.web.app"
     }
 }

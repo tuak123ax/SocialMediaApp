@@ -13,6 +13,7 @@ import com.minhtu.firesocialmedia.presentation.navigationscreen.friend.FriendVie
 import com.minhtu.firesocialmedia.presentation.navigationscreen.notification.NotificationViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.CreateGroupViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.GroupDetailsViewModel
+import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.InviteMemberViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.SelectGroupViewModel
 import com.minhtu.firesocialmedia.presentation.postinformation.PostInformationViewModel
 import com.minhtu.firesocialmedia.presentation.search.SearchViewModel
@@ -194,6 +195,8 @@ object ViewModelProvider {
         val deleteAllDraftPostsUseCase = AppModule.provideDeleteAllDraftPostsUseCase(commonDbRepository)
         val deleteDraftPostUseCase = AppModule.provideDeleteDraftPostUseCase(commonDbRepository)
         val saveNewToGroupUseCase = AppModule.provideSaveNewToGroupUseCase(groupRepository)
+        val getAllMembersInGroupUseCase = AppModule.provideGetAllMembersInGroupUseCase(groupRepository)
+        val getGroupConfigsUseCase = AppModule.provideGetGroupConfigsUseCase(groupRepository)
         return AppModule.provideUploadNewfeedViewModel(
             getUserUseCase,
             saveNotificationToDatabaseUseCase,
@@ -202,7 +205,9 @@ object ViewModelProvider {
             loadNewsPostedWhenOfflineUseCase,
             deleteAllDraftPostsUseCase,
             deleteDraftPostUseCase,
-            saveNewToGroupUseCase)
+            saveNewToGroupUseCase,
+            getAllMembersInGroupUseCase,
+            getGroupConfigsUseCase)
     }
 
     fun createUserInformationViewModel(platformContext : PlatformContext): UserInformationViewModel {
@@ -288,7 +293,14 @@ object ViewModelProvider {
     fun createGroupDetailsViewModel(platformContext: PlatformContext): GroupDetailsViewModel {
         val groupRepository = AppModule.provideGroupRepository(platformContext)
         val fetchGroupInfoUseCase = AppModule.provideFetchGroupInfoUseCase(groupRepository)
-        return GroupDetailsViewModel(fetchGroupInfoUseCase)
+        val updateNotificationStatusUseCase = AppModule.provideUpdateNotificationStatusUseCase(groupRepository)
+        val fetchNotificationStateUseCase = AppModule.provideFetchNotificationStateUseCase(groupRepository)
+        val findGroupByIdUseCase = AppModule.provideFindGroupByIdUseCase(groupRepository)
+        return GroupDetailsViewModel(
+            fetchGroupInfoUseCase,
+            updateNotificationStatusUseCase,
+            fetchNotificationStateUseCase,
+            findGroupByIdUseCase)
     }
 
     fun createSelectGroupViewModel(platformContext: PlatformContext): SelectGroupViewModel {
@@ -297,5 +309,11 @@ object ViewModelProvider {
         return SelectGroupViewModel(
             getAllGroupsUseCase
         )
+    }
+
+    fun createInviteMemberViewModel(platformContext: PlatformContext): InviteMemberViewModel {
+        val groupRepository = AppModule.provideGroupRepository(platformContext)
+        val copyLinkUseCase = AppModule.provideCopyLinkUseCase(groupRepository)
+        return InviteMemberViewModel(copyLinkUseCase)
     }
 }

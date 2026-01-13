@@ -10,6 +10,8 @@ import com.minhtu.firesocialmedia.domain.entity.notification.NotificationInstanc
 import com.minhtu.firesocialmedia.domain.entity.notification.NotificationType
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.domain.usecases.common.GetUserUseCase
+import com.minhtu.firesocialmedia.domain.usecases.group.GetAllMembersInGroupUseCase
+import com.minhtu.firesocialmedia.domain.usecases.group.GetGroupConfigsUseCase
 import com.minhtu.firesocialmedia.domain.usecases.group.SaveNewToGroupUseCase
 import com.minhtu.firesocialmedia.domain.usecases.newsfeed.DeleteAllDraftPostsUseCase
 import com.minhtu.firesocialmedia.domain.usecases.newsfeed.DeleteDraftPostUseCase
@@ -29,10 +31,14 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlin.let
 
 class UploadNewfeedViewModel(
     private val getUserUseCase: GetUserUseCase,
@@ -43,6 +49,8 @@ class UploadNewfeedViewModel(
     private val deleteAllDraftPostsUseCase : DeleteAllDraftPostsUseCase,
     private val deleteDraftPostUseCase: DeleteDraftPostUseCase,
     private val saveNewToGroupUseCase : SaveNewToGroupUseCase,
+    private val getAllMembersInGroupUseCase : GetAllMembersInGroupUseCase,
+    private val getGroupConfigsUseCase : GetGroupConfigsUseCase,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : ViewModel() {
     var currentUser : UserInstance? = null
@@ -144,32 +152,79 @@ class UploadNewfeedViewModel(
                             NotificationType.UPLOAD_NEW,
                             newsInstance.id)
                         //Send Notification
-                        val friendTokens = getFriendTokens()
-                        if(friendTokens.isNotEmpty()){
-                            if(notification.content.isNotEmpty()) {
-                                sendMessageToServer(createMessageForServer(notification.content, friendTokens, currentUser!!, "BASIC"))
-                            } else {
-                                if(image.isNotEmpty()) {
-                                    val content = "Posted a picture!"
-                                    notification.updateContent(content)
-                                    sendMessageToServer(createMessageForServer(content, friendTokens, currentUser!!, "BASIC"))
+                        if(newsInstance.groupId.isEmpty()) {
+                            //Run normal flow if the post is not in a group
+                            val friendTokens = getFriendTokens()
+                            if(friendTokens.isNotEmpty()){
+                                if(notification.content.isNotEmpty()) {
+                                    sendMessageToServer(createMessageForServer(notification.content, friendTokens, currentUser!!, "BASIC"))
                                 } else {
-                                    if(video.isNotEmpty()) {
-                                        val content = "Posted a video!"
+                                    if(image.isNotEmpty()) {
+                                        val content = "Posted a picture!"
                                         notification.updateContent(content)
                                         sendMessageToServer(createMessageForServer(content, friendTokens, currentUser!!, "BASIC"))
+                                    } else {
+                                        if(video.isNotEmpty()) {
+                                            val content = "Posted a video!"
+                                            notification.updateContent(content)
+                                            sendMessageToServer(createMessageForServer(content, friendTokens, currentUser!!, "BASIC"))
+                                        }
                                     }
                                 }
                             }
-                        }
 
-                        //Save notification to db
-                        for(friend in currentUser!!.friends) {
-                            val friendsOfCurrentUser = findUserById(friend)
-                            saveNotification(
-                                notification,
-                                friendsOfCurrentUser!!,
-                                saveNotificationToDatabaseUseCase)
+                            //Save notification to db
+                            if(currentUser != null) {
+                                saveNotificationsForUsers(
+                                    currentUser!!.friends,
+                                    notification
+                                )
+                            }
+                        } else {
+                            //You post in a group
+                            //First, need to get all members in group
+                            var allMembersInfo = HashMap<String, String>()
+                            //Check if we have that info already
+                            allMembersInfo = groupMembers.value.ifEmpty {
+                                //Try to fetch new data
+                                getAllMembersInGroupUseCase.invoke(newsInstance.groupId)
+                            }
+                            //Fetch group configs of each user based on userId
+                            val userIdsWithNotificationOn =
+                                allMembersInfo.keys
+                                    .map { userId ->
+                                        async {
+                                            val config = getGroupConfigsUseCase.invoke(userId, groupId)
+                                            if (config.notificationOn) userId else null
+                                        }
+                                    }
+                                    .awaitAll()
+                                    .filterNotNull()
+                            //Only send notification to members with notification is ON
+                            val memberTokens = getMemberTokens(userIdsWithNotificationOn)
+                            if(memberTokens.isNotEmpty()){
+                                if(notification.content.isNotEmpty()) {
+                                    sendMessageToServer(createMessageForServer(notification.content, memberTokens, currentUser!!, "BASIC"))
+                                } else {
+                                    if(image.isNotEmpty()) {
+                                        val content = "Posted a picture!"
+                                        notification.updateContent(content)
+                                        sendMessageToServer(createMessageForServer(content, memberTokens, currentUser!!, "BASIC"))
+                                    } else {
+                                        if(video.isNotEmpty()) {
+                                            val content = "Posted a video!"
+                                            notification.updateContent(content)
+                                            sendMessageToServer(createMessageForServer(content, memberTokens, currentUser!!, "BASIC"))
+                                        }
+                                    }
+                                }
+                            }
+
+                            //Save notification to db
+                            saveNotificationsForUsers(
+                                userIdsWithNotificationOn,
+                                notification
+                            )
                         }
                     }
                 } else {
@@ -195,6 +250,22 @@ class UploadNewfeedViewModel(
         }
     }
 
+    suspend fun saveNotificationsForUsers(
+        ids: List<String>,
+        notification: NotificationInstance
+    ) = coroutineScope {
+        ids
+            .chunked(10)
+            .forEach { chunk ->
+                chunk.map { memberId ->
+                    async {
+                        val user = findUserById(memberId) ?: return@async
+                        saveNotification(notification, user, saveNotificationToDatabaseUseCase)
+                    }
+                }.awaitAll()
+            }
+    }
+
     fun resetPostStatus() {
         _createPostStatus.value = null
         _updatePostStatus.value = null
@@ -204,15 +275,24 @@ class UploadNewfeedViewModel(
         localPathOfSelectedDraft.value = ""
     }
 
-    suspend fun getFriendTokens(): ArrayList<String> {
-        val friendTokens = ArrayList<String>()
-        for(friend in currentUser!!.friends) {
-            val user = findUserById(friend)
-            if(user != null) {
-                friendTokens.add(user.token)
+    suspend fun getFriendTokens(): ArrayList<String> = coroutineScope {
+        ArrayList(currentUser!!.friends.map { friend ->
+            async {
+                findUserById(friend)?.token
             }
-        }
-        return friendTokens
+        }.awaitAll()
+            .filterNotNull())
+    }
+
+    suspend fun getMemberTokens(memberIds: List<String>): ArrayList<String> = coroutineScope {
+        ArrayList(memberIds
+            .map { memberId ->
+                async {
+                    findUserById(memberId)?.token
+                }
+            }
+            .awaitAll()
+            .filterNotNull())
     }
 
     fun updateNewInformation(new: NewsInstance) {
@@ -300,5 +380,10 @@ class UploadNewfeedViewModel(
                 loadNewsPostedWhenOffline()
             }
         }
+    }
+
+    private val groupMembers = MutableStateFlow<HashMap<String, String>>(HashMap())
+    fun getGroupMembersFromGroupDetails(members: HashMap<String, String>) {
+        groupMembers.value = members
     }
 }

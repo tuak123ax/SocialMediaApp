@@ -58,10 +58,16 @@ import com.minhtu.firesocialmedia.domain.usecases.forgotpassword.CheckIfEmailExi
 import com.minhtu.firesocialmedia.domain.usecases.forgotpassword.SendEmailResetPasswordUseCase
 import com.minhtu.firesocialmedia.domain.usecases.friend.SaveFriendRequestUseCase
 import com.minhtu.firesocialmedia.domain.usecases.friend.SaveFriendUseCase
+import com.minhtu.firesocialmedia.domain.usecases.group.CopyLinkUseCase
 import com.minhtu.firesocialmedia.domain.usecases.group.CreateGroupUseCase
 import com.minhtu.firesocialmedia.domain.usecases.group.FetchGroupInfoUseCase
+import com.minhtu.firesocialmedia.domain.usecases.group.FetchNotificationStateUseCase
+import com.minhtu.firesocialmedia.domain.usecases.group.FindGroupByIdUseCase
 import com.minhtu.firesocialmedia.domain.usecases.group.GetAllGroupsUseCase
+import com.minhtu.firesocialmedia.domain.usecases.group.GetAllMembersInGroupUseCase
+import com.minhtu.firesocialmedia.domain.usecases.group.GetGroupConfigsUseCase
 import com.minhtu.firesocialmedia.domain.usecases.group.SaveNewToGroupUseCase
+import com.minhtu.firesocialmedia.domain.usecases.group.UpdateNotificationStatusUseCase
 import com.minhtu.firesocialmedia.domain.usecases.home.ClearAccountUseCase
 import com.minhtu.firesocialmedia.domain.usecases.home.ClearLocalDataUseCase
 import com.minhtu.firesocialmedia.domain.usecases.home.DeleteNewsFromDatabaseUseCase
@@ -416,7 +422,9 @@ object AppModule {
         loadNewsPostedWhenOfflineUseCase: LoadNewsPostedWhenOfflineUseCase,
         deleteAllDraftPostsUseCase: DeleteAllDraftPostsUseCase,
         deleteDraftPostUseCase: DeleteDraftPostUseCase,
-        saveNewToGroupUseCase: SaveNewToGroupUseCase): UploadNewfeedViewModel {
+        saveNewToGroupUseCase: SaveNewToGroupUseCase,
+        getAllMembersInGroupUseCase : GetAllMembersInGroupUseCase,
+        getGroupConfigsUseCase: GetGroupConfigsUseCase): UploadNewfeedViewModel {
         return UploadNewfeedViewModel(
             getUserUseCase,
             saveNotificationToDatabaseUseCase,
@@ -425,7 +433,9 @@ object AppModule {
             loadNewsPostedWhenOfflineUseCase,
             deleteAllDraftPostsUseCase,
             deleteDraftPostUseCase,
-            saveNewToGroupUseCase
+            saveNewToGroupUseCase,
+            getAllMembersInGroupUseCase,
+            getGroupConfigsUseCase
         )
     }
 
@@ -582,7 +592,10 @@ object AppModule {
         return CreateGroupUseCase(groupRepository)
     }
     fun provideGroupRepository(platformContext: PlatformContext) : GroupRepository {
-        return GroupRepositoryImpl(platformContext.database, platformContext.networkMonitor)
+        return GroupRepositoryImpl(
+            platformContext.database,
+            platformContext.networkMonitor,
+            platformContext.clipboard)
     }
     fun provideGetAllGroupsUseCase(groupRepository: GroupRepository) : GetAllGroupsUseCase {
         return GetAllGroupsUseCase(groupRepository)
@@ -593,5 +606,29 @@ object AppModule {
 
     fun provideSaveNewToGroupUseCase(groupRepository: GroupRepository) : SaveNewToGroupUseCase {
         return SaveNewToGroupUseCase(groupRepository)
+    }
+
+    fun provideUpdateNotificationStatusUseCase(groupRepository: GroupRepository) : UpdateNotificationStatusUseCase {
+        return UpdateNotificationStatusUseCase(groupRepository)
+    }
+
+    fun provideGetAllMembersInGroupUseCase(groupRepository: GroupRepository) : GetAllMembersInGroupUseCase{
+        return GetAllMembersInGroupUseCase(groupRepository)
+    }
+
+    fun provideGetGroupConfigsUseCase(groupRepository: GroupRepository) : GetGroupConfigsUseCase{
+        return GetGroupConfigsUseCase(groupRepository)
+    }
+
+    fun provideFetchNotificationStateUseCase(groupRepository: GroupRepository) : FetchNotificationStateUseCase {
+        return FetchNotificationStateUseCase(groupRepository)
+    }
+
+    fun provideCopyLinkUseCase(groupRepository: GroupRepository) : CopyLinkUseCase{
+        return CopyLinkUseCase(groupRepository)
+    }
+
+    fun provideFindGroupByIdUseCase(groupRepository: GroupRepository) : FindGroupByIdUseCase {
+        return FindGroupByIdUseCase(groupRepository)
     }
 }

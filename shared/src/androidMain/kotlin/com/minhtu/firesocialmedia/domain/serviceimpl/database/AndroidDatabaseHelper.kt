@@ -1094,5 +1094,103 @@ class AndroidDatabaseHelper {
             }
         }
 
+        suspend fun updateNotificationStatus(
+            newStatus: Boolean,
+            groupId: String,
+            userId : String,
+            userPath : String,
+            groupPath: String,
+            notificationStatusPath: String
+        ): Boolean  {
+            return runCatching {
+                val databaseRef = FirebaseDatabase
+                    .getInstance()
+                    .getReference()
+                    .child(userPath)
+                    .child(userId)
+                    .child(groupPath)
+                    .child(groupId)
+                    .child(notificationStatusPath)
+                databaseRef.setValue(newStatus).await()
+                true
+            }.getOrElse {
+                false
+            }
+        }
+
+        suspend fun getAllMembersInGroup(
+            groupId: String,
+            groupPath: String,
+            membersPath: String
+        ): HashMap<String, String> {
+            return runCatching {
+                val snapshot = FirebaseDatabase
+                    .getInstance()
+                    .getReference()
+                    .child(groupPath)
+                    .child(groupId)
+                    .child(membersPath)
+                    .get()
+                    .await()
+
+                val result = HashMap<String, String>()
+
+                for (child in snapshot.children) {
+                    val key = child.key ?: continue
+                    val value = child.getValue(String::class.java) ?: continue
+                    result[key] = value
+                }
+
+                result
+            }.getOrElse {
+                HashMap()
+            }
+        }
+
+        suspend fun getGroupConfigs(
+            userId: String,
+            groupId: String,
+            userPath: String,
+            groupPath: String
+        ): GroupSummaryDTO {
+            return runCatching {
+                val snapshot = FirebaseDatabase
+                    .getInstance()
+                    .getReference()
+                    .child(userPath)
+                    .child(userId)
+                    .child(groupPath)
+                    .child(groupId)
+                    .get()
+                    .await()
+                snapshot.getValue(GroupSummaryDTO::class.java) ?: GroupSummaryDTO()
+            }.getOrElse {
+                GroupSummaryDTO()
+            }
+        }
+
+        suspend fun fetchNotificationState(
+            userId: String,
+            groupId: String,
+            userPath: String,
+            groupPath: String,
+            notificationStatusPath : String
+        ): Boolean {
+            return runCatching {
+                val snapshot = FirebaseDatabase
+                    .getInstance()
+                    .getReference()
+                    .child(userPath)
+                    .child(userId)
+                    .child(groupPath)
+                    .child(groupId)
+                    .child(notificationStatusPath)
+                    .get()
+                    .await()
+                snapshot.getValue(Boolean::class.java) ?: false
+            }.getOrElse {
+                false
+            }
+        }
     }
 }

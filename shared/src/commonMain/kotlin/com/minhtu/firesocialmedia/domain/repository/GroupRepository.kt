@@ -1,5 +1,6 @@
 package com.minhtu.firesocialmedia.domain.repository
 
+import com.minhtu.firesocialmedia.domain.entity.group.GroupConfigs
 import com.minhtu.firesocialmedia.domain.entity.group.GroupInstance
 import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
 
@@ -11,4 +12,15 @@ interface GroupRepository {
     suspend fun fetchGroupInfo(groupId: String) : GroupInstance
     suspend fun saveNewToGroup(instance: NewsInstance,
                                groupId : String): Boolean
+
+    suspend fun updateNotificationStatus(newStatus: Boolean,
+                                         groupId : String,
+                                         userId : String): Boolean
+
+    suspend fun getAllMembersInGroup(groupId: String) : HashMap<String, String>
+    suspend fun getGroupConfigs(userId: String,
+                                groupId: String): GroupConfigs
+
+    suspend fun fetchNotificationState(userId: String, groupId: String): Boolean
+    suspend fun copyLink(copyData: String)
 }

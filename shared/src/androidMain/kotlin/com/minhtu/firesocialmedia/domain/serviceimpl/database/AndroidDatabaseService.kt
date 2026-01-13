@@ -516,6 +516,66 @@ class AndroidDatabaseService(private val context: Context) : DatabaseService {
         )
     }
 
+    override suspend fun updateNotificationStatus(
+        newStatus: Boolean,
+        groupId: String,
+        userId : String,
+        userPath : String,
+        groupPath: String,
+        notificationStatusPath: String
+    ): Boolean {
+        return AndroidDatabaseHelper.updateNotificationStatus(
+            newStatus,
+            groupId,
+            userId,
+            userPath,
+            groupPath,
+            notificationStatusPath
+        )
+    }
+
+    override suspend fun getAllMembersInGroup(
+        groupId: String,
+        groupPath: String,
+        membersPath: String
+    ): HashMap<String, String> {
+        return AndroidDatabaseHelper.getAllMembersInGroup(
+            groupId,
+            groupPath,
+            membersPath
+        )
+    }
+
+    override suspend fun getGroupConfigs(
+        userId: String,
+        groupId: String,
+        userPath: String,
+        groupPath: String
+    ): GroupSummaryDTO {
+        return AndroidDatabaseHelper.getGroupConfigs(
+            userId,
+            groupId,
+            userPath,
+            groupPath
+        )
+    }
+
+    override suspend fun fetchNotificationState(
+        userId: String,
+        groupId: String,
+        userPath: String,
+        groupPath: String,
+        notificationStatusPath : String
+    ): Boolean {
+        return AndroidDatabaseHelper.fetchNotificationState(
+            userId,
+            groupId,
+            userPath,
+            groupPath,
+            notificationStatusPath
+        )
+    }
+
     override suspend fun observePhoneCallWithoutCheckingInCall(
         currentUserId: String,
         phoneCallCallBack : (CallingRequestDTO) -> Unit,

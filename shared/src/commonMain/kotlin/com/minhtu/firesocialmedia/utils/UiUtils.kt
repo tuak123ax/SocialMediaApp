@@ -796,6 +796,60 @@ class UiUtils {
         }
 
         @Composable
+        fun BackAndTitleAndMoreOptionsRow(
+            title : String,
+            navigateBack : () -> Unit) {
+            Row(horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color.White)
+                    .padding(10.dp)){
+                CrossPlatformIcon(
+                    icon = "arrow_back",
+                    backgroundColor = "#FFFFFFFF",
+                    contentDescription = "Back",
+                    tint = Color.Black,
+                    modifier = Modifier
+                        .size(30.dp)
+                        .clip(CircleShape)
+                        .testTag(TestTag.TAG_BUTTON_BACK)
+                        .semantics{
+                            contentDescription = TestTag.TAG_BUTTON_BACK
+                        }
+                        .clickable {
+                            // Handle back button click
+                            navigateBack()
+                        }
+                )
+                Text(
+                    text = title,
+                    color = Color.Black,
+                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.titleMedium,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth().padding(top = 10.dp)
+                )
+                CrossPlatformIcon(
+                    icon = "more_horiz",
+                    backgroundColor = "#FFFFFFFF",
+                    contentDescription = "More Options",
+                    tint = Color.Black,
+                    modifier = Modifier
+                        .size(30.dp)
+                        .clip(CircleShape)
+                        .testTag(TestTag.TAG_BUTTON_MOREOPTIONS)
+                        .semantics{
+                            contentDescription = TestTag.TAG_BUTTON_MOREOPTIONS
+                        }
+                        .clickable {
+
+                        }
+                )
+            }
+        }
+
+        @Composable
         fun TabLayout(
             listState: LazyListState,
             tabTitles : List<String>,

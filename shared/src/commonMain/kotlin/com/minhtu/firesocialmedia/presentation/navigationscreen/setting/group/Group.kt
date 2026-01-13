@@ -94,7 +94,7 @@ class Group {
                                 .border(
                                     1.dp,
                                     Color.Black,
-                                    androidx.compose.foundation.shape.RoundedCornerShape(10.dp)
+                                    RoundedCornerShape(10.dp)
                                 )
                                 .fillMaxWidth()
                                 .testTag(TestTag.TAG_SELECT_GROUP_BUTTON)
@@ -158,7 +158,7 @@ class Group {
                             .border(
                                 1.dp,
                                 Color.Black,
-                                androidx.compose.foundation.shape.RoundedCornerShape(10.dp)
+                                RoundedCornerShape(10.dp)
                             )
                             .fillMaxWidth()
                             .testTag(TestTag.TAG_CREATE_GROUP_BUTTON)
@@ -211,7 +211,7 @@ class Group {
                             .border(
                                 1.dp,
                                 Color.Black,
-                                androidx.compose.foundation.shape.RoundedCornerShape(10.dp)
+                                RoundedCornerShape(10.dp)
                             )
                             .fillMaxWidth()
                             .testTag(TestTag.TAG_FIND_GROUP_BUTTON)

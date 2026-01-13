@@ -85,7 +85,7 @@ class UploadNewsfeed {
                                  uploadNewsfeedViewModel: UploadNewfeedViewModel,
                                  loadingViewModel: LoadingViewModel,
                                  updateNew : NewsInstance?,
-                                 onNavigateToHomeScreen: () -> Unit){
+                                 onNavigateBack: () -> Unit){
             val isLoading by loadingViewModel.isLoading.collectAsState()
             uploadNewsfeedViewModel.updateCurrentUser(homeViewModel.currentUser!!)
 
@@ -117,7 +117,7 @@ class UploadNewsfeed {
                     }
                     loadingViewModel.hideLoading()
                     uploadNewsfeedViewModel.resetPostStatus()
-                    onNavigateToHomeScreen()
+                    onNavigateBack()
                 }
             }
             LaunchedEffect(updateStatus.value) {
@@ -129,7 +129,7 @@ class UploadNewsfeed {
                     }
                     loadingViewModel.hideLoading()
                     uploadNewsfeedViewModel.resetPostStatus()
-                    onNavigateToHomeScreen()
+                    onNavigateBack()
                 }
             }
             LaunchedEffect(postError.value) {
@@ -171,7 +171,7 @@ class UploadNewsfeed {
                         uploadNewsfeedViewModel.resetBackValue()
                         uploadNewsfeedViewModel.resetPostStatus()
                         uploadNewsfeedViewModel.resetGroupId()
-                        onNavigateToHomeScreen()
+                        onNavigateBack()
                         showDialog.value = false // Close the dialog
                     },
                     showDialog = showDialog

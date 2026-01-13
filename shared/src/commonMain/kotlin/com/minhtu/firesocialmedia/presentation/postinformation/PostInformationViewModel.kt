@@ -1,6 +1,5 @@
 package com.minhtu.firesocialmedia.presentation.postinformation
 
-import androidx.compose.runtime.mutableStateOf
 import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
 import com.minhtu.firesocialmedia.domain.usecases.notification.FindNewByIdInDbUseCase
 import com.rickclephas.kmp.observableviewmodel.ViewModel

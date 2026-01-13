@@ -67,6 +67,8 @@ import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.Ex
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.Group
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.GroupDetails
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.GroupDetailsViewModel
+import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.InviteMember
+import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.InviteMemberViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.SelectGroup
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.SelectGroupViewModel
 import com.minhtu.firesocialmedia.presentation.postinformation.PostInformation
@@ -120,6 +122,7 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
     val groupDetailsViewModel : GroupDetailsViewModel = platformViewModel { ViewModelProvider.createGroupDetailsViewModel(platformContext) }
     val syncDataUseCase = AppModule.provideSyncDataUseCase(AppModule.provideCommonDbRepository(platformContext))
     val selectGroupViewModel : SelectGroupViewModel = platformViewModel { ViewModelProvider.createSelectGroupViewModel(platformContext) }
+    val inviteMemberViewModel : InviteMemberViewModel = platformViewModel { ViewModelProvider.createInviteMemberViewModel(platformContext) }
 
     var updateNew : NewsInstance? = null
     lateinit var relatedNew : NewsInstance
@@ -341,6 +344,19 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                             } else {
                                 showToast("Cannot get your information to share now. Please try again!!!")
                             }
+                        },
+                        onNavigateToJoinGroup = {
+                            val uri = Uri.parse(DeepLinksData.deepLink)
+                            val segments = uri.pathSegments
+                            if(segments.isNotEmpty() && segments[0] == "groups" && segments.size >= 2) {
+                                val groupId = segments[1]
+                                navController.navigate("groups/$groupId") {
+                                    popUpTo("router") { inclusive = true }
+                                    launchSingleTop = true
+                                }
+                                // Clear deep link after handling to prevent repeated navigation
+                                DeepLinksData.deepLink = ""
+                            }
                         }
                     )
                 }
@@ -365,7 +381,9 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                         uploadNewsfeedViewModel = uploadNewsfeedViewModel,
                         loadingViewModel = loadingViewModel,
                         updateNew = updateNew,
-                        onNavigateToHomeScreen = { navController.navigate(route = Home.getScreenName()) }
+                        onNavigateBack = {
+                            navController.popBackStack()
+                        }
                     )
                 }
                 composable(
@@ -815,7 +833,7 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                         GroupDetails.GroupDetailsScreen(
                             homeViewModel.currentUser!!,
                             picker,
-                            selectedGroup!!,
+                            selectedGroup!!.id,
                             paddingValues,
                             localImageLoaderValue,
                             modifier = Modifier
@@ -838,11 +856,17 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                             onNavigateToUploadNewsfeed = { new ->
                                 updateNew = new
                                 uploadNewsfeedViewModel.updateGroupId(selectedGroup!!.id)
+                                if(groupDetailsViewModel.fetchGroupInfoState.value != null) {
+                                    uploadNewsfeedViewModel.getGroupMembersFromGroupDetails(groupDetailsViewModel.fetchGroupInfoState.value!!.members)
+                                }
                                 navController.navigate(route = UploadNewsfeed.getScreenName())
                             },
                             onNavigateToCommentScreen = { new ->
                                 selectedNew = new
                                 navController.navigate(route = Comment.getScreenName())
+                            },
+                            onClickInviteButton = {
+                                navController.navigate(route = InviteMember.getScreenName())
                             }
                         )
                     } else {
@@ -867,6 +891,75 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                         onNavigateToSelectedGroup = { group ->
                             selectedGroup = group
                             navController.navigate(route = GroupDetails.getScreenName())
+                        }
+                    )
+                }
+                composable(
+                    route = InviteMember.getScreenName(),
+                    enterTransition = DefaultNavAnimations.enter,
+                    popEnterTransition = DefaultNavAnimations.popEnter,
+                    exitTransition = DefaultNavAnimations.exit,
+                    popExitTransition = DefaultNavAnimations.popExit
+                ) {
+                    if(selectedGroup != null) {
+                        InviteMember.InviteMemberScreen(
+                            selectedGroup,
+                            paddingValues,
+                            inviteMemberViewModel,
+                            searchViewModel,
+                            onNavigateBack = {
+                                navController.popBackStack()
+                            }
+                        )
+                    } else {
+                        showToast("Cannot get group info to share this time. Please retry later!")
+                    }
+                }
+                composable(
+                    route = "groups/{groupId}"
+                ) { backStackEntry ->
+                    val picker = rememberPlatformImagePicker(
+                        context = context,
+                        onImagePicked = { uri -> createGroupViewModel.updateAvatar(uri) },
+                        onVideoPicked = {}
+                    )
+
+                    val groupId = backStackEntry.arguments?.getString("groupId")!!
+
+                    GroupDetails.GroupDetailsScreen(
+                        currentUser = homeViewModel.currentUser!!,
+                        imagePicker = picker,
+                        groupId = groupId,
+                        paddingValues = paddingValues,
+                        localImageLoaderValue = localImageLoaderValue,
+                        homeViewModel = homeViewModel,
+                        searchViewModel = searchViewModel,
+                        groupDetailsViewModel = groupDetailsViewModel,
+                        onNavigateToShowImageScreen = { image ->
+                            selectedImage = image
+                            navController.navigate(route = ShowImage.getScreenName())
+                        },
+                        onNavigateToUserInformation = { user ->
+                            selectedUser = user
+                            navController.navigate(route = UserInformation.getScreenName())
+                        },
+                        onNavigateBack = {
+                            navController.popBackStack()
+                        },
+                        onNavigateToUploadNewsfeed = { new ->
+                            updateNew = new
+                            uploadNewsfeedViewModel.updateGroupId(selectedGroup!!.id)
+                            if(groupDetailsViewModel.fetchGroupInfoState.value != null) {
+                                uploadNewsfeedViewModel.getGroupMembersFromGroupDetails(groupDetailsViewModel.fetchGroupInfoState.value!!.members)
+                            }
+                            navController.navigate(route = UploadNewsfeed.getScreenName())
+                        },
+                        onNavigateToCommentScreen = { new ->
+                            selectedNew = new
+                            navController.navigate(route = Comment.getScreenName())
+                        },
+                        onClickInviteButton = {
+                            navController.navigate(route = InviteMember.getScreenName())
                         }
                     )
                 }

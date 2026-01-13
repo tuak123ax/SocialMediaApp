@@ -121,6 +121,7 @@ class SelectGroup {
                     Spacer(Modifier.width(10.dp))
                     Text(
                         text = "PINNED",
+                        fontWeight = FontWeight.Bold,
                         color = Color.Gray
                     )
                 }
@@ -141,6 +142,7 @@ class SelectGroup {
                 Text(
                     text = "ALL GROUPS",
                     color = Color.Gray,
+                    fontWeight = FontWeight.Bold,
                     modifier = Modifier.fillMaxWidth().padding(20.dp)
                 )
                 //All groups
@@ -152,7 +154,6 @@ class SelectGroup {
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(10.dp)
                 ) {
                     items(
                         items = filterList,
@@ -179,12 +180,13 @@ class SelectGroup {
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(10.dp)
+                    .padding(5.dp)
                     .clickable {
                         // Handle image click
                         onNavigateToSelectedGroup(group)
                     }
             ) {
+                Spacer(Modifier.width(20.dp))
                 CompositionLocalProvider(
                     localImageLoaderValue
                 ) {
@@ -194,7 +196,6 @@ class SelectGroup {
                         contentScale = ContentScale.Fit,
                         modifier = Modifier
                             .size(50.dp)
-                            .weight(1f) // Allocates equal space to the image and text
                             .clip(CircleShape)
                     )
                 }
@@ -202,7 +203,8 @@ class SelectGroup {
                     text = group.name,
                     color = Color.Black,
                     fontWeight = FontWeight.Bold,
-                    overflow = TextOverflow.Ellipsis)
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.padding(horizontal = 10.dp))
                 Spacer(Modifier.weight(1f))
                 CrossPlatformIcon(
                     icon = "right_arrow",
@@ -212,6 +214,7 @@ class SelectGroup {
                     modifier = Modifier
                         .size(10.dp)
                 )
+                Spacer(Modifier.width(20.dp))
             }
         }
     }

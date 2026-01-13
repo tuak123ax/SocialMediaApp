@@ -102,7 +102,8 @@ class Home {
                        onNavigateToCallingScreen : suspend (CallingRequestData) -> Unit,
                        onNavigateToCallingScreenWithUI : suspend () -> Unit,
                        onNavigateToPostInformation : () -> Unit,
-                       onShareNews : (String, NewsInstance) -> Unit){
+                       onShareNews : (String, NewsInstance) -> Unit,
+                       onNavigateToJoinGroup : () -> Unit){
             val isLoading by loadingViewModel.isLoading.collectAsState()
             val commentStatus by homeViewModel.commentStatus.collectAsState()
             var showBottomSheet by rememberSaveable { mutableStateOf(false) }
@@ -141,7 +142,11 @@ class Home {
                 }
                 //Check deeplink after loading necessary data
                 if(DeepLinksData.deepLink.isNotEmpty()) {
-                    onNavigateToPostInformation()
+                    if(DeepLinksData.deepLink.contains("news")) {
+                        onNavigateToPostInformation()
+                    } else if (DeepLinksData.deepLink.contains("groups")) {
+                        onNavigateToJoinGroup()
+                    }
                 }
             }
             LaunchedEffect(newsList.value) {

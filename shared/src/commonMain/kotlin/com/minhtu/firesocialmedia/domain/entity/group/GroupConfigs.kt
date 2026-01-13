@@ -1,9 +1,9 @@
-package com.minhtu.firesocialmedia.data.remote.dto.group
+package com.minhtu.firesocialmedia.domain.entity.group
 
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class GroupSummaryDTO(
+data class GroupConfigs(
     val id: String = "",
     val name: String = "",
     val avatar: String = "",
