@@ -2,6 +2,7 @@ package com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -9,11 +10,15 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -36,15 +41,21 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.ProvidedValue
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -52,20 +63,29 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.minhtu.firesocialmedia.constants.TestTag
 import com.minhtu.firesocialmedia.data.remote.constant.DataConstant
 import com.minhtu.firesocialmedia.domain.entity.group.GroupInstance
+import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
+import com.minhtu.firesocialmedia.platform.CrossPlatformIcon
 import com.minhtu.firesocialmedia.presentation.search.Search
 import com.minhtu.firesocialmedia.presentation.search.SearchViewModel
 import com.minhtu.firesocialmedia.utils.UiUtils
 import com.minhtu.firesocialmedia.utils.UiUtils.Companion.ShareAppRow
+import com.seiko.imageloader.ui.AutoSizeImage
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 
 class InviteMember {
     companion object {
         @Composable
         fun InviteMemberScreen(
             group : GroupInstance,
+            currentUser : UserInstance,
             paddingValues: PaddingValues,
+            localImageLoaderValue : ProvidedValue<*>,
             inviteMemberViewModel: InviteMemberViewModel,
             searchViewModel: SearchViewModel,
             onNavigateBack : () -> Unit
@@ -79,7 +99,7 @@ class InviteMember {
                 ) {
                     UiUtils.BackAndTitleAndMoreOptionsRow(
                         title = "Invite Members",
-                        onNavigateBack
+                        navigateBack = onNavigateBack
                     )
                     HorizontalDivider(
                         modifier = Modifier.fillMaxWidth().padding(vertical = 10.dp),
@@ -109,8 +129,41 @@ class InviteMember {
                         text = "ALL CONTACTS",
                         color = Color.Gray,
                         fontWeight = FontWeight.Bold,
-                        modifier = Modifier.fillMaxWidth().padding(20.dp)
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp)
                     )
+                    if(currentUser.friends.isNotEmpty()) {
+                        var memberList by remember { mutableStateOf<List<UserInstance>>(emptyList()) }
+                        // Run filtering when friend list or search query changes
+                        LaunchedEffect(Unit) {
+                            memberList = coroutineScope {
+                                currentUser.friends.map { userId ->
+                                    async {
+                                        inviteMemberViewModel.findUserById(userId)
+                                    }
+                                }.awaitAll().filterNotNull()
+                            }
+                        }
+                        LazyColumn(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(horizontal = 10.dp)
+                        ) {
+                            items(memberList) { friend ->
+                                InviteFriendCard(
+                                    friend,
+                                    localImageLoaderValue,
+                                    onInviteFriend = { invitedFriend ->
+                                        inviteMemberViewModel.inviteFriendToGroup(
+                                            currentUser,
+                                            invitedFriend,
+                                            group)
+                                    }
+                                    )
+                            }
+                        }
+                    }
                 }
                 if(showBottomSheet) {
                     ShareGroupBottomSheet(
@@ -372,6 +425,72 @@ class InviteMember {
                             modifier = Modifier.padding(horizontal = 10.dp)
                         )
                     }
+                }
+            }
+        }
+
+        @Composable
+        fun InviteFriendCard(
+            user : UserInstance,
+            localImageLoaderValue : ProvidedValue<*>,
+            onInviteFriend : (UserInstance) -> Unit
+        ) {
+            var inviteStatus by remember { mutableStateOf(false) }
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 10.dp)
+            ) {
+                Spacer(Modifier.width(20.dp))
+                CompositionLocalProvider(
+                    localImageLoaderValue
+                ) {
+                    AutoSizeImage(
+                        user.image,
+                        contentDescription = "Friend Avatar",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .size(50.dp)
+                            .clip(CircleShape)
+                            .blur(if(!inviteStatus) 0.dp else 1.dp)
+                    )
+                }
+                Text(
+                    text = user.name,
+                    color = if(!inviteStatus) Color.Black else Color.LightGray,
+                    fontWeight = FontWeight.Bold,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.padding(horizontal = 10.dp))
+                Spacer(Modifier.weight(1f))
+                OutlinedButton(
+                    onClick = {
+                        inviteStatus = true
+                        onInviteFriend(user)
+                              },
+                    enabled = !inviteStatus,
+                    shape = RoundedCornerShape(10.dp),
+                    border = BorderStroke(
+                        width = 0.5.dp,
+                        color = if (!inviteStatus) MaterialTheme.colorScheme.primary else Color.LightGray
+                    ),
+                    contentPadding = PaddingValues(
+                        horizontal = 18.dp,
+                        vertical = 6.dp
+                    ),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        containerColor = if (!inviteStatus) MaterialTheme.colorScheme.primary else Color.White,
+                        contentColor = if (!inviteStatus) Color.White else Color.LightGray,
+                        disabledContainerColor = Color.White,
+                        disabledContentColor = Color.LightGray
+                    ),
+                    modifier = Modifier
+                        .defaultMinSize(minHeight = 0.dp, minWidth = 0.dp)
+                ) {
+                    Text(
+                        text = if (!inviteStatus) "Invite" else "Sent ✓",
+                        fontSize = 14.sp
+                    )
                 }
             }
         }

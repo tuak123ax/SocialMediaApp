@@ -53,10 +53,13 @@ class Settings {
                     modifier = Modifier.fillMaxWidth().padding(vertical = 20.dp)
                 )
                 val showDialog = remember { mutableStateOf(false) }
-                UiUtils.ShowAlertDialogToLogout(onClickConfirm = {
+                UiUtils.ShowAlertDialogToLogout(
+                    onClickConfirm = {
                     homeViewModel.clearAccountInStorage()
                     homeViewModel.clearLocalData()
-                }, onNavigateToSignIn, showDialog)
+                },
+                    onNavigateToSignIn,
+                    showDialog)
                 //Group button
                 Button(
                     onClick = {

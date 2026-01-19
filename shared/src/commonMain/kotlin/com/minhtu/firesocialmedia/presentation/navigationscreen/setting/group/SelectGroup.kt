@@ -114,17 +114,17 @@ class SelectGroup {
                         }
                 )
 
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(20.dp)
-                ) {
-                    Icon(Icons.Default.PushPin, contentDescription = "Pin", tint = Color.Red)
-                    Spacer(Modifier.width(10.dp))
-                    Text(
-                        text = "PINNED",
-                        fontWeight = FontWeight.Bold,
-                        color = Color.Gray
-                    )
-                }
+//                Row(
+//                    modifier = Modifier.fillMaxWidth().padding(20.dp)
+//                ) {
+//                    Icon(Icons.Default.PushPin, contentDescription = "Pin", tint = Color.Red)
+//                    Spacer(Modifier.width(10.dp))
+//                    Text(
+//                        text = "PINNED",
+//                        fontWeight = FontWeight.Bold,
+//                        color = Color.Gray
+//                    )
+//                }
                 //Pinned groups
 //                LazyColumn(
 //                    modifier = Modifier
@@ -193,7 +193,7 @@ class SelectGroup {
                     AutoSizeImage(
                         group.avatar,
                         contentDescription = "Group Avatar",
-                        contentScale = ContentScale.Fit,
+                        contentScale = ContentScale.Crop,
                         modifier = Modifier
                             .size(50.dp)
                             .clip(CircleShape)

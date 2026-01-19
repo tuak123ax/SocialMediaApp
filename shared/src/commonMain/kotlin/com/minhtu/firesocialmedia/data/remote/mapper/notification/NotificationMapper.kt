@@ -34,6 +34,10 @@ fun convertTypeStringToEnum(type : String) : NotificationType {
             NotificationType.SHARE_NEW
         }
 
+        "INVITE_TO_GROUP" -> {
+            NotificationType.INVITE_TO_GROUP
+        }
+
         else -> {
             NotificationType.NONE
         }

@@ -123,6 +123,7 @@ import com.minhtu.firesocialmedia.presentation.navigationscreen.friend.Friend
 import com.minhtu.firesocialmedia.presentation.navigationscreen.friend.FriendViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.notification.Notification
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.Settings
+import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.GroupDetails.Companion.DropdownMenuForMoreOptionsInGroup
 import com.minhtu.firesocialmedia.presentation.search.SearchViewModel
 import com.seiko.imageloader.asImageBitmap
 import com.seiko.imageloader.ui.AutoSizeImage
@@ -634,10 +635,6 @@ class UiUtils {
             onClickReject: () -> Unit,
             showDialog: MutableState<Boolean>
         ) {
-            CommonBackHandler {
-                showDialog.value = true
-            }
-
             if (showDialog.value) {
                 AlertDialog(
                     onDismissRequest = { showDialog.value = false },
@@ -798,13 +795,18 @@ class UiUtils {
         @Composable
         fun BackAndTitleAndMoreOptionsRow(
             title : String,
-            navigateBack : () -> Unit) {
-            Row(horizontalArrangement = Arrangement.SpaceBetween,
+            showMoreOptionsMenu : Boolean = false,
+            navigateBack : () -> Unit,
+            onClickMoreOptions : () -> Unit = {},
+            onDismissRequest : () -> Unit = {},
+            onLeaveGroup : () -> Unit = {}) {
+            Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(Color.White)
-                    .padding(10.dp)){
+                    .padding(10.dp)
+            ) {
                 CrossPlatformIcon(
                     icon = "arrow_back",
                     backgroundColor = "#FFFFFFFF",
@@ -814,39 +816,50 @@ class UiUtils {
                         .size(30.dp)
                         .clip(CircleShape)
                         .testTag(TestTag.TAG_BUTTON_BACK)
-                        .semantics{
-                            contentDescription = TestTag.TAG_BUTTON_BACK
-                        }
-                        .clickable {
-                            // Handle back button click
-                            navigateBack()
-                        }
+                        .semantics { contentDescription = TestTag.TAG_BUTTON_BACK }
+                        .clickable { navigateBack() }
                 )
+
                 Text(
                     text = title,
                     color = Color.Black,
                     fontWeight = FontWeight.Bold,
                     style = MaterialTheme.typography.titleMedium,
                     textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth().padding(top = 10.dp)
-                )
-                CrossPlatformIcon(
-                    icon = "more_horiz",
-                    backgroundColor = "#FFFFFFFF",
-                    contentDescription = "More Options",
-                    tint = Color.Black,
                     modifier = Modifier
-                        .size(30.dp)
-                        .clip(CircleShape)
-                        .testTag(TestTag.TAG_BUTTON_MOREOPTIONS)
-                        .semantics{
-                            contentDescription = TestTag.TAG_BUTTON_MOREOPTIONS
-                        }
-                        .clickable {
-
-                        }
+                        .weight(1f)
+                        .padding(horizontal = 8.dp)
                 )
+
+                Box{
+                    CrossPlatformIcon(
+                        icon = "more_horiz",
+                        backgroundColor = "#FFFFFFFF",
+                        contentDescription = "More Options",
+                        tint = Color.Black,
+                        modifier = Modifier
+                            .size(30.dp)
+                            .clip(CircleShape)
+                            .testTag(TestTag.TAG_BUTTON_MOREOPTIONS)
+                            .semantics { contentDescription = TestTag.TAG_BUTTON_MOREOPTIONS }
+                            .clickable {
+                                onClickMoreOptions()
+                            }
+                    )
+                    if(showMoreOptionsMenu) {
+                        DropdownMenuForMoreOptionsInGroup(
+                            showMoreOptionsMenu,
+                            onLeaveGroup = {
+                                onLeaveGroup()
+                            },
+                            onDismissRequest = {
+                                onDismissRequest()
+                            }
+                        )
+                    }
+                }
             }
+
         }
 
         @Composable

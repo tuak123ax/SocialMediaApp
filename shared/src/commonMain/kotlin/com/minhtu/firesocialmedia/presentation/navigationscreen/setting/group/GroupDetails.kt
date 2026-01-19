@@ -30,6 +30,8 @@ import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.NotificationsOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -72,6 +74,7 @@ import com.minhtu.firesocialmedia.data.remote.service.imagepicker.ImagePicker
 import com.minhtu.firesocialmedia.domain.entity.group.GroupInstance
 import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
+import com.minhtu.firesocialmedia.platform.CommonBackHandler
 import com.minhtu.firesocialmedia.platform.CrossPlatformIcon
 import com.minhtu.firesocialmedia.platform.getImageBytesFromDrawable
 import com.minhtu.firesocialmedia.platform.showToast
@@ -109,6 +112,9 @@ class GroupDetails {
             onNavigateToCommentScreen: (selectedNew : NewsInstance) -> Unit,
             onClickInviteButton : () -> Unit
         ){
+            CommonBackHandler{
+                onNavigateBack()
+            }
             // Preserve scroll position across navigation/back stack using rememberSaveable
             val listState = rememberSaveable(saver = LazyListState.Saver) { LazyListState(0, 0) }
             var isGroupInfoVisible by remember { mutableStateOf(true) }
@@ -170,6 +176,52 @@ class GroupDetails {
                 }
             }
 
+            val isMember = if(fetchGroupInfoState == null) false else fetchGroupInfoState!!.members.containsKey(currentUser.uid)
+
+            val joinGroupState by groupDetailsViewModel.joinGroupStatus.collectAsState()
+            LaunchedEffect(joinGroupState) {
+                if(joinGroupState != null) {
+                    if(joinGroupState!!) {
+                        showToast("Join group successfully!!!")
+                        //Fetch group info again to get new data
+                        groupDetailsViewModel.fetchGroupInfo(groupId)
+                    } else {
+                        showToast("Cannot join this group now. Please retry!")
+                    }
+                    groupDetailsViewModel.resetJoinGroupState()
+                }
+            }
+
+            val showAlertDialog = remember { mutableStateOf(false) }
+            UiUtils.ShowBasicAlertDialog(
+                "Leave Group",
+                "Are you sure you want to leave this group?",
+                onClickConfirm = {
+                    groupDetailsViewModel.leaveGroup(
+                        currentUser,
+                        fetchGroupInfoState!!
+                    )
+                },
+                onClickReject = {
+                    showAlertDialog.value = false
+                },
+                showAlertDialog
+            )
+            val leaveGroupStatus by groupDetailsViewModel.leaveGroupStatus.collectAsState()
+            LaunchedEffect(leaveGroupStatus) {
+                if(leaveGroupStatus != null) {
+                    if(leaveGroupStatus!!) {
+                        showToast("Leave group successfully!!!")
+                    } else {
+                        showToast("Cannot leave this group now. Please retry!")
+                    }
+                    groupDetailsViewModel.resetLeaveGroupStatus()
+                    onNavigateBack()
+                }
+            }
+
+            //Show more options menu
+            var showMoreOptionsMenu by remember { mutableStateOf(false) }
             Box(modifier = modifier.padding(paddingValues)) {
                 Column(
                     verticalArrangement = Arrangement.Center,
@@ -341,51 +393,54 @@ class GroupDetails {
                                     }
                                 }
 
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    OutlinedButton(
-                                        onClick = {
-                                            //Click invite button
-                                            onClickInviteButton()
-                                        },
-                                        shape = CircleShape,
-                                        colors = ButtonDefaults.outlinedButtonColors(
-                                            containerColor = Color.Red
-                                        )
-                                    ){
-                                        Text(
-                                            text = "Invite",
-                                            color = Color.White
-                                        )
-                                    }
-                                    Spacer(Modifier.width(8.dp))
-                                    if(notificationStatus != null) {
-                                        Button(
+                                //Only show invite button and notification setting for members
+                                if(isMember) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        OutlinedButton(
                                             onClick = {
-                                                groupDetailsViewModel.updateNotificationStatus(
-                                                    groupId,
-                                                    currentUser.uid)
+                                                //Click invite button
+                                                onClickInviteButton()
                                             },
                                             shape = CircleShape,
-                                            border = BorderStroke(1.dp, Color.LightGray),
-                                            colors = ButtonDefaults.buttonColors(
-                                                containerColor = Color.White,
-                                                contentColor = Color.Black
-                                            ),
-                                            modifier = Modifier.size(35.dp),
-                                            contentPadding = PaddingValues(0.dp)
-                                        ) {
-                                            if(notificationStatus!!) {
-                                                Icon(
-                                                    Icons.Default.Notifications,
-                                                    contentDescription = "Notification"
-                                                )
-                                            } else {
-                                                Icon(
-                                                    Icons.Default.NotificationsOff,
-                                                    contentDescription = "Notification"
-                                                )
+                                            colors = ButtonDefaults.outlinedButtonColors(
+                                                containerColor = Color.Red
+                                            )
+                                        ){
+                                            Text(
+                                                text = "Invite",
+                                                color = Color.White
+                                            )
+                                        }
+                                        Spacer(Modifier.width(8.dp))
+                                        if(notificationStatus != null) {
+                                            Button(
+                                                onClick = {
+                                                    groupDetailsViewModel.updateNotificationStatus(
+                                                        groupId,
+                                                        currentUser.uid)
+                                                },
+                                                shape = CircleShape,
+                                                border = BorderStroke(1.dp, Color.LightGray),
+                                                colors = ButtonDefaults.buttonColors(
+                                                    containerColor = Color.White,
+                                                    contentColor = Color.Black
+                                                ),
+                                                modifier = Modifier.size(35.dp),
+                                                contentPadding = PaddingValues(0.dp)
+                                            ) {
+                                                if(notificationStatus!!) {
+                                                    Icon(
+                                                        Icons.Default.Notifications,
+                                                        contentDescription = "Notification"
+                                                    )
+                                                } else {
+                                                    Icon(
+                                                        Icons.Default.NotificationsOff,
+                                                        contentDescription = "Notification"
+                                                    )
+                                                }
                                             }
                                         }
                                     }
@@ -422,7 +477,7 @@ class GroupDetails {
                     }
 
                     if(fetchGroupInfoState != null) {
-                        if(fetchGroupInfoState!!.members.containsKey(currentUser.uid)) {
+                        if(isMember) {
                             //Column to show posts in group
                             Column(
                                 verticalArrangement = Arrangement.Center,
@@ -444,7 +499,9 @@ class GroupDetails {
                             Spacer(Modifier.weight(1f))
                             OutlinedButton(
                                 onClick = {
-
+                                    if(fetchGroupInfoState != null) {
+                                        groupDetailsViewModel.joinGroup(currentUser, fetchGroupInfoState!!)
+                                    }
                                 },
                                 shape = RoundedCornerShape(10.dp),
                                 border = BorderStroke(1.dp, Color.LightGray),
@@ -469,14 +526,21 @@ class GroupDetails {
                         }
                     }
                 }
-                UiUtils.BackAndMoreOptionsRow(onNavigateBack)
-                Text(
-                    text = "GroupDetails",
-                    color = Color.Black,
-                    fontWeight = FontWeight.Bold,
-                    style = MaterialTheme.typography.titleMedium,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth().padding(top = 10.dp)
+                UiUtils.BackAndTitleAndMoreOptionsRow(
+                    "GroupDetails",
+                    showMoreOptionsMenu,
+                    onNavigateBack,
+                    onClickMoreOptions = {
+                        showMoreOptionsMenu = true
+                    },
+                    onDismissRequest = {
+                        showMoreOptionsMenu = false
+                    },
+                    onLeaveGroup = {
+                        if(fetchGroupInfoState != null) {
+                            showAlertDialog.value = true
+                        }
+                    }
                 )
                 if(showBottomSheet) {
                     ShareBottomSheet(
@@ -687,6 +751,24 @@ class GroupDetails {
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
+            }
+        }
+
+        @Composable
+        fun DropdownMenuForMoreOptionsInGroup(expanded : Boolean,
+                                              onLeaveGroup : () -> Unit,
+                                              onDismissRequest: () -> Unit) {
+            DropdownMenu(
+                expanded = expanded,
+                onDismissRequest = onDismissRequest
+            ) {
+                DropdownMenuItem(
+                    text = { Text("Leave group") },
+                    onClick = {
+                        onLeaveGroup()
+                        onDismissRequest()
+                    }
+                )
             }
         }
     }

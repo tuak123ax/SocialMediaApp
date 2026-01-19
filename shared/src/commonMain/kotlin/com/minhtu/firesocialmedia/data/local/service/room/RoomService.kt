@@ -28,4 +28,5 @@ interface RoomService {
     suspend fun loadNewsPostedWhenOffline() : List<NewsEntity>
     suspend fun deleteDraftPost(id : String)
     suspend fun deleteAllDraftPosts()
+    suspend fun clearLocalFriends()
 }

@@ -12,6 +12,7 @@ import com.minhtu.firesocialmedia.data.remote.service.database.DatabaseService
 import com.minhtu.firesocialmedia.domain.core.NetworkMonitor
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.domain.repository.UserRepository
+import com.minhtu.firesocialmedia.platform.logMessage
 import kotlinx.coroutines.flow.first
 
 class UserRepositoryImpl(
@@ -25,12 +26,15 @@ class UserRepositoryImpl(
                                  isCurrentUser: Boolean): UserInstance? {
         val isOnline = networkMonitor.isOnline.first()
         if(isOnline) {
+            logMessage("getUser", { "invoked isOnline" })
             val user = databaseService.getUser(userId)?.toDomain()
             if(user != null && !isCurrentUser) {
+                logMessage("getUser", { user.name + " " +user.notifications.size.toString() })
                 localDatabaseService.storeUserFriendToRoom(user.toRoomEntity())
             }
             return user
         } else {
+            logMessage("getUser", { "invoked isOffline" })
             return if(isCurrentUser) {
                 cryptoService.getCurrentUserInfo()?.toDomain()
             } else {

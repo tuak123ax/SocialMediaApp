@@ -318,4 +318,8 @@ class CommonDbRepositoryImpl(
              false
          }
     }
+
+    override suspend fun clearLocalFriends() {
+        localDatabaseService.clearLocalFriends()
+    }
 }

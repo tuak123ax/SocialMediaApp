@@ -90,7 +90,10 @@ class HomeViewModel(
         }
     }
 
-    fun getAllUserFriends(user: UserInstance) {
+    suspend fun getAllUserFriends(user: UserInstance) {
+        //Clear old User's friends in local database
+        userInteractor.clearLocalFriends()
+        //Fetch new User's friends and save into local database
         viewModelScope.launch(ioDispatcher) {
             val friendIds = user.friends
             // Thresholds

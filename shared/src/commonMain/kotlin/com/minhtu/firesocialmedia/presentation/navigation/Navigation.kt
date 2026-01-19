@@ -399,7 +399,9 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                         modifier = Modifier
                             .fillMaxSize()
                             .background(color = Color.Black),
-                        onNavigateToHomeScreen = { navController.navigate(route = Home.getScreenName()) }
+                        onNavigateBack = {
+                            navController.popBackStack()
+                        }
                     )
                 }
                 composable(
@@ -586,6 +588,10 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                         onNavigateToUserInformation = { user ->
                             selectedUser = user
                             navController.navigate(route = UserInformation.getScreenName())
+                        },
+                        onNavigateToGroupDetails = { groupId ->
+                            selectedGroup = GroupInstance(id = groupId)
+                            navController.navigate(route = GroupDetails.getScreenName())
                         }
                     )
                 }
@@ -779,6 +785,7 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                         )
                     } else {
                         showToast("Cannot open group screen. Retry later!!!")
+                        navController.popBackStack()
                     }
                 }
                 composable(
@@ -852,6 +859,16 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                             },
                             onNavigateBack = {
                                 navController.popBackStack()
+                                if(homeViewModel.currentUser != null && selectedGroup != null) {
+                                    //Remove group in current user group list
+                                    homeViewModel.currentUser!!.groups.remove(selectedGroup!!.id)
+                                }
+                                coroutineScope.launch {
+                                    //Delay a little bit to wait for animation
+                                    delay(200)
+                                    //Reset old group info
+                                    groupDetailsViewModel.resetFetchGroupInfoState()
+                                }
                             },
                             onNavigateToUploadNewsfeed = { new ->
                                 updateNew = new
@@ -904,7 +921,9 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                     if(selectedGroup != null) {
                         InviteMember.InviteMemberScreen(
                             selectedGroup,
+                            homeViewModel.currentUser!!,
                             paddingValues,
+                            localImageLoaderValue,
                             inviteMemberViewModel,
                             searchViewModel,
                             onNavigateBack = {
@@ -945,6 +964,12 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                         },
                         onNavigateBack = {
                             navController.popBackStack()
+                            coroutineScope.launch {
+                                //Delay a little bit to wait for animation
+                                delay(200)
+                                //Reset old group info
+                                groupDetailsViewModel.resetFetchGroupInfoState()
+                            }
                         },
                         onNavigateToUploadNewsfeed = { new ->
                             updateNew = new

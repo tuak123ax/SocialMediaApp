@@ -3,6 +3,7 @@ package com.minhtu.firesocialmedia.domain.repository
 import com.minhtu.firesocialmedia.domain.entity.group.GroupConfigs
 import com.minhtu.firesocialmedia.domain.entity.group.GroupInstance
 import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
+import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 
 interface GroupRepository {
     suspend fun saveGroupAndUserGroups(
@@ -23,4 +24,12 @@ interface GroupRepository {
 
     suspend fun fetchNotificationState(userId: String, groupId: String): Boolean
     suspend fun copyLink(copyData: String)
+    suspend fun inviteFriendToGroup(
+        friend: UserInstance)
+
+    suspend fun joinGroup(user: UserInstance,
+                          group : GroupInstance): Boolean
+
+    suspend fun leaveGroup(user: UserInstance, group: GroupInstance): Boolean
+    suspend fun leaveAndDeleteGroup(user: UserInstance, group: GroupInstance) : Boolean
 }

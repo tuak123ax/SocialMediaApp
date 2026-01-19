@@ -14,6 +14,7 @@ import com.minhtu.firesocialmedia.data.remote.dto.signin.SignInDTO
 import com.minhtu.firesocialmedia.data.remote.dto.user.UserDTO
 import com.minhtu.firesocialmedia.domain.entity.base.BaseNewsInstance
 import com.minhtu.firesocialmedia.domain.entity.call.CallStatus
+import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.utils.Utils
 import io.mockative.Mockable
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -228,5 +229,32 @@ interface DatabaseService {
         userPath: String,
         groupPath: String,
         notificationStatusPath : String
+    ): Boolean
+
+    suspend fun inviteFriendToGroup(
+        friendDto: UserDTO,
+        userPath : String,
+        notificationPath : String)
+
+    suspend fun addUserToGroup(
+        user: UserDTO,
+        group : GroupDTO,
+        userPath: String,
+        groupPath: String,
+        memberPath : String): Boolean
+
+    suspend fun removeUserFromGroup(
+        user: UserDTO,
+        group: GroupDTO,
+        userPath: String,
+        groupPath: String,
+        memberPath: String
+    ): Boolean
+
+    suspend fun deleteGroup(
+        user: UserDTO,
+        group: GroupDTO,
+        userPath: String,
+        groupPath: String
     ): Boolean
 }

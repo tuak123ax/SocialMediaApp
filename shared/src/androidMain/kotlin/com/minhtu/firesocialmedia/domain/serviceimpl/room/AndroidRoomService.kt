@@ -141,6 +141,10 @@ class AndroidRoomService(
         return newsDao.deleteAllDraftPosts()
     }
 
+    override suspend fun clearLocalFriends() {
+        userDao.clearUserFriends()
+    }
+
     suspend fun copyPickedFileToAppStorage(
         imageUri: Uri,
         directory: File = context.filesDir): File = withContext(Dispatchers.IO) {

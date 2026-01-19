@@ -66,10 +66,15 @@ import com.minhtu.firesocialmedia.domain.usecases.group.FindGroupByIdUseCase
 import com.minhtu.firesocialmedia.domain.usecases.group.GetAllGroupsUseCase
 import com.minhtu.firesocialmedia.domain.usecases.group.GetAllMembersInGroupUseCase
 import com.minhtu.firesocialmedia.domain.usecases.group.GetGroupConfigsUseCase
+import com.minhtu.firesocialmedia.domain.usecases.group.InviteFriendToGroupUseCase
+import com.minhtu.firesocialmedia.domain.usecases.group.JoinGroupUseCase
+import com.minhtu.firesocialmedia.domain.usecases.group.LeaveAndDeleteGroupUseCase
+import com.minhtu.firesocialmedia.domain.usecases.group.LeaveGroupUseCase
 import com.minhtu.firesocialmedia.domain.usecases.group.SaveNewToGroupUseCase
 import com.minhtu.firesocialmedia.domain.usecases.group.UpdateNotificationStatusUseCase
 import com.minhtu.firesocialmedia.domain.usecases.home.ClearAccountUseCase
 import com.minhtu.firesocialmedia.domain.usecases.home.ClearLocalDataUseCase
+import com.minhtu.firesocialmedia.domain.usecases.home.ClearLocalFriendsUseCase
 import com.minhtu.firesocialmedia.domain.usecases.home.DeleteNewsFromDatabaseUseCase
 import com.minhtu.firesocialmedia.domain.usecases.home.GetLatestNewsUseCase
 import com.minhtu.firesocialmedia.domain.usecases.home.SaveCurrentUserInfoUseCase
@@ -270,7 +275,8 @@ object AppModule {
         searchUserByNameUseCase: SearchUserByNameUseCase,
         storeUserFriendsToRoomUseCase: StoreUserFriendsToRoomUseCase,
         saveCurrentUserInfoUseCase: SaveCurrentUserInfoUseCase,
-        clearLocalDataUseCase: ClearLocalDataUseCase
+        clearLocalDataUseCase: ClearLocalDataUseCase,
+        clearLocalFriendsUseCase: ClearLocalFriendsUseCase
     ) : UserInteractor {
         return UserInteractorImpl(
             getCurrentUserUidUseCase,
@@ -281,7 +287,8 @@ object AppModule {
             searchUserByNameUseCase,
             storeUserFriendsToRoomUseCase,
             saveCurrentUserInfoUseCase,
-            clearLocalDataUseCase
+            clearLocalDataUseCase,
+            clearLocalFriendsUseCase
         )
     }
     fun provideNewsInteractor(
@@ -630,5 +637,25 @@ object AppModule {
 
     fun provideFindGroupByIdUseCase(groupRepository: GroupRepository) : FindGroupByIdUseCase {
         return FindGroupByIdUseCase(groupRepository)
+    }
+
+    fun provideInviteFriendToGroupUseCase(groupRepository: GroupRepository) : InviteFriendToGroupUseCase {
+        return InviteFriendToGroupUseCase(groupRepository)
+    }
+
+    fun provideClearLocalFriendsUseCase(commonDbRepository: CommonDbRepository) : ClearLocalFriendsUseCase{
+        return ClearLocalFriendsUseCase(commonDbRepository)
+    }
+
+    fun provideJoinGroupUseCase(groupRepository: GroupRepository) : JoinGroupUseCase {
+        return JoinGroupUseCase(groupRepository)
+    }
+
+    fun provideLeaveGroupUseCase(groupRepository: GroupRepository) : LeaveGroupUseCase {
+        return LeaveGroupUseCase(groupRepository)
+    }
+
+    fun provideLeaveAndDeleteGroupUseCase(groupRepository: GroupRepository) : LeaveAndDeleteGroupUseCase {
+        return LeaveAndDeleteGroupUseCase(groupRepository)
     }
 }

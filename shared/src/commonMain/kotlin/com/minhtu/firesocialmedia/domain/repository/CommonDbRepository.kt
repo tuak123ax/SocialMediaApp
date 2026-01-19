@@ -69,4 +69,5 @@ interface CommonDbRepository {
     suspend fun loadNewsPostedWhenOffline(): List<NewsInstance>
     suspend fun deleteAllDraftPosts() : Boolean
     suspend fun deleteDraftPost(newId : String) : Boolean
+    suspend fun clearLocalFriends()
 }

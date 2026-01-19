@@ -106,6 +106,7 @@ object ViewModelProvider {
         val clearLocalDataUseCase = AppModule.provideClearLocalDataUseCase(commonDbRepository)
         val saveNewToDatabaseUseCase = AppModule.provideSaveNewToDatabaseUseCase(commonDbRepository)
         val findNewByIdInDbUseCase = AppModule.provideFindNewByIdInDbUseCase(newsRepository)
+        val clearLocalFriendsUseCase = AppModule.provideClearLocalFriendsUseCase(commonDbRepository)
         val userInteractor = AppModule.provideUserInteractor(
             getCurrentUserUidUseCase,
             getUserUseCase,
@@ -115,7 +116,8 @@ object ViewModelProvider {
             searchUserByNameUseCase,
             storeUserFriendsToRoomUseCase,
             saveCurrentUserInfoUseCase,
-            clearLocalDataUseCase
+            clearLocalDataUseCase,
+            clearLocalFriendsUseCase
         )
         val newsInteractor = AppModule.provideNewsInteractor(
             getLatestNewsUseCase,
@@ -296,11 +298,17 @@ object ViewModelProvider {
         val updateNotificationStatusUseCase = AppModule.provideUpdateNotificationStatusUseCase(groupRepository)
         val fetchNotificationStateUseCase = AppModule.provideFetchNotificationStateUseCase(groupRepository)
         val findGroupByIdUseCase = AppModule.provideFindGroupByIdUseCase(groupRepository)
+        val joinGroupUseCase = AppModule.provideJoinGroupUseCase(groupRepository)
+        val leaveGroupUseCase = AppModule.provideLeaveGroupUseCase(groupRepository)
+        val leaveAndDeleteGroupUseCase = AppModule.provideLeaveAndDeleteGroupUseCase(groupRepository)
         return GroupDetailsViewModel(
             fetchGroupInfoUseCase,
             updateNotificationStatusUseCase,
             fetchNotificationStateUseCase,
-            findGroupByIdUseCase)
+            findGroupByIdUseCase,
+            joinGroupUseCase,
+            leaveGroupUseCase,
+            leaveAndDeleteGroupUseCase)
     }
 
     fun createSelectGroupViewModel(platformContext: PlatformContext): SelectGroupViewModel {
@@ -313,7 +321,14 @@ object ViewModelProvider {
 
     fun createInviteMemberViewModel(platformContext: PlatformContext): InviteMemberViewModel {
         val groupRepository = AppModule.provideGroupRepository(platformContext)
+        val userRepository = AppModule.provideUserRepository(platformContext)
         val copyLinkUseCase = AppModule.provideCopyLinkUseCase(groupRepository)
-        return InviteMemberViewModel(copyLinkUseCase)
+        val getUserUseCase = AppModule.provideGetUserUseCase(userRepository)
+        val inviteFriendToGroupUseCase = AppModule.provideInviteFriendToGroupUseCase(groupRepository)
+        return InviteMemberViewModel(
+            copyLinkUseCase,
+            getUserUseCase,
+            inviteFriendToGroupUseCase
+            )
     }
 }

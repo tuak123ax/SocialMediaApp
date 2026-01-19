@@ -165,12 +165,14 @@ class AndroidDatabaseService(private val context: Context) : DatabaseService {
 
                 databaseReference.addListenerForSingleValueEvent(object : ValueEventListener {
                     override fun onDataChange(snapshot: DataSnapshot) {
+                        val notiSnap = snapshot.child("notifications")
+                        val keys = notiSnap.children.mapNotNull { it.key }
+                        logMessage("onDataChange",
+                            { "userId=$userId notiCount=${notiSnap.childrenCount} keys=$keys" })
+
                         val user = snapshot.getValue(UserDTO::class.java)
-                        if (user != null) {
-                            continuation.resume(user)
-                        } else {
-                            continuation.resume(null)
-                        }
+                        logMessage("onDataChange", { "mappedNotiSize=${user?.notifications?.size}" })
+                        continuation.resume(user)
                     }
 
                     override fun onCancelled(error: DatabaseError) {
@@ -573,6 +575,63 @@ class AndroidDatabaseService(private val context: Context) : DatabaseService {
             userPath,
             groupPath,
             notificationStatusPath
+        )
+    }
+
+    override suspend fun inviteFriendToGroup(
+        friendDto: UserDTO,
+        userPath : String,
+        notificationPath : String) {
+        return AndroidDatabaseHelper.inviteFriendToGroup(
+            friendDto,
+            userPath,
+            notificationPath
+        )
+    }
+
+    override suspend fun addUserToGroup(
+        user: UserDTO,
+        group : GroupDTO,
+        userPath: String,
+        groupPath: String,
+        memberPath : String
+    ): Boolean {
+        return AndroidDatabaseHelper.addUserToGroup(
+            user,
+            group,
+            userPath,
+            groupPath,
+            memberPath
+        )
+    }
+
+    override suspend fun removeUserFromGroup(
+        user: UserDTO,
+        group: GroupDTO,
+        userPath: String,
+        groupPath: String,
+        memberPath: String
+    ): Boolean {
+        return AndroidDatabaseHelper.removeUserFromGroup(
+            user,
+            group,
+            userPath,
+            groupPath,
+            memberPath
+        )
+    }
+
+    override suspend fun deleteGroup(
+        user: UserDTO,
+        group: GroupDTO,
+        userPath: String,
+        groupPath: String
+    ): Boolean {
+        return AndroidDatabaseHelper.deleteGroup(
+            user,
+            group,
+            userPath,
+            groupPath
         )
     }
 

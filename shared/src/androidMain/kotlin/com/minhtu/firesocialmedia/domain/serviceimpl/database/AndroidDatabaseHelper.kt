@@ -25,6 +25,7 @@ import com.minhtu.firesocialmedia.data.remote.dto.group.GroupDTO
 import com.minhtu.firesocialmedia.data.remote.dto.group.GroupSummaryDTO
 import com.minhtu.firesocialmedia.data.remote.dto.news.NewsDTO
 import com.minhtu.firesocialmedia.data.remote.dto.notification.NotificationDTO
+import com.minhtu.firesocialmedia.data.remote.dto.user.UserDTO
 import com.minhtu.firesocialmedia.domain.entity.base.BaseNewsInstance
 import com.minhtu.firesocialmedia.domain.entity.call.CallStatus
 import com.minhtu.firesocialmedia.platform.logMessage
@@ -1191,6 +1192,116 @@ class AndroidDatabaseHelper {
             }.getOrElse {
                 false
             }
+        }
+
+        fun inviteFriendToGroup(
+            friendDto: UserDTO,
+            userPath : String,
+            notificationPath : String) {
+            val databaseRef = FirebaseDatabase
+                .getInstance()
+                .reference
+                .child(userPath)
+                .child(friendDto.uid)
+                .child(notificationPath)
+            databaseRef.setValue(friendDto.notifications)
+        }
+
+        suspend fun addUserToGroup(
+            user: UserDTO,
+            group : GroupDTO,
+            userPath: String,
+            groupPath: String,
+            memberPath : String): Boolean = suspendCancellableCoroutine { continuation ->
+            val databaseRef = FirebaseDatabase.getInstance().reference
+
+            // Store only necessary fields under user
+            val groupSummary = GroupSummaryDTO(
+                id = group.id,
+                name = group.name,
+                avatar = group.avatar
+            )
+
+            val updates = hashMapOf<String, Any?>(
+                "$groupPath/${group.id}/$memberPath/${user.uid}" to "member",
+
+                "$userPath/${user.uid}/$groupPath/${group.id}" to groupSummary
+            )
+
+            databaseRef.updateChildren(updates)
+                .addOnCompleteListener { task ->
+                    if (!continuation.isActive) return@addOnCompleteListener
+
+                    if (!task.isSuccessful) {
+                        Log.e("Task", "updateChildren FAILED", task.exception)
+                        Log.e("Task", "updates=$updates")
+                    } else {
+                        Log.d("Task", "updateChildren SUCCESS")
+                    }
+
+                    continuation.resume(task.isSuccessful, onCancellation = {})
+                }
+        }
+
+        suspend fun removeUserFromGroup(
+            user: UserDTO,
+            group: GroupDTO,
+            userPath: String,
+            groupPath: String,
+            memberPath: String
+        ): Boolean = suspendCancellableCoroutine { continuation ->
+            val databaseRef = FirebaseDatabase.getInstance().reference
+
+
+            val updates = hashMapOf<String, Any?>(
+                "$groupPath/${group.id}/$memberPath/${user.uid}" to null,
+
+                "$userPath/${user.uid}/$groupPath/${group.id}" to null
+            )
+
+            databaseRef.updateChildren(updates)
+                .addOnCompleteListener { task ->
+                    if (!continuation.isActive) return@addOnCompleteListener
+
+                    if (!task.isSuccessful) {
+                        Log.e("Task", "updateChildren FAILED", task.exception)
+                        Log.e("Task", "updates=$updates")
+                    } else {
+                        Log.d("Task", "updateChildren SUCCESS")
+                    }
+
+                    continuation.resume(task.isSuccessful, onCancellation = {})
+                }
+        }
+
+        suspend fun deleteGroup(
+            user: UserDTO,
+            group: GroupDTO,
+            userPath: String,
+            groupPath: String
+        ): Boolean = suspendCancellableCoroutine { continuation ->
+            val databaseRef = FirebaseDatabase.getInstance().reference
+
+
+            val updates = hashMapOf<String, Any?>(
+                "$groupPath/${group.id}" to null,
+
+                "$userPath/${user.uid}/$groupPath/${group.id}" to null
+            )
+
+            databaseRef.updateChildren(updates)
+                .addOnCompleteListener { task ->
+                    if (!continuation.isActive) return@addOnCompleteListener
+
+                    if (!task.isSuccessful) {
+                        Log.e("Task", "updateChildren FAILED", task.exception)
+                        Log.e("Task", "updates=$updates")
+                    } else {
+                        Log.d("Task", "updateChildren SUCCESS")
+                    }
+
+                    continuation.resume(task.isSuccessful, onCancellation = {})
+                }
         }
     }
 }

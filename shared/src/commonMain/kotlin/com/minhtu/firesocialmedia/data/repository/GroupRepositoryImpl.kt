@@ -6,12 +6,14 @@ import com.minhtu.firesocialmedia.data.remote.mapper.group.toDto
 import com.minhtu.firesocialmedia.data.remote.mapper.group.toGroupConfigs
 import com.minhtu.firesocialmedia.data.remote.mapper.group.toGroupDTO
 import com.minhtu.firesocialmedia.data.remote.mapper.news.toDto
+import com.minhtu.firesocialmedia.data.remote.mapper.user.toDto
 import com.minhtu.firesocialmedia.data.remote.service.clipboard.ClipboardService
 import com.minhtu.firesocialmedia.data.remote.service.database.DatabaseService
 import com.minhtu.firesocialmedia.domain.core.NetworkMonitor
 import com.minhtu.firesocialmedia.domain.entity.group.GroupConfigs
 import com.minhtu.firesocialmedia.domain.entity.group.GroupInstance
 import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
+import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.domain.repository.GroupRepository
 import kotlinx.coroutines.flow.first
 
@@ -145,5 +147,68 @@ class GroupRepositoryImpl(
 
     override suspend fun copyLink(copyData: String) {
         clipboardService.copy(copyData)
+    }
+
+    override suspend fun inviteFriendToGroup(
+        friend: UserInstance) {
+        val isOnline = networkMonitor.isOnline.first()
+        if(isOnline) {
+            databaseService.inviteFriendToGroup(
+                friend.toDto(),
+                DataConstant.USER_PATH,
+                DataConstant.NOTIFICATION_PATH
+            )
+        }
+    }
+
+    override suspend fun joinGroup(user: UserInstance,
+                                   group : GroupInstance): Boolean {
+        val isOnline = networkMonitor.isOnline.first()
+        return if(isOnline) {
+            databaseService.addUserToGroup(
+                user.toDto(),
+                group.toDto(),
+                DataConstant.USER_PATH,
+                DataConstant.GROUP_PATH,
+                DataConstant.MEMBERS_PATH
+            )
+        } else {
+            false
+        }
+    }
+
+    override suspend fun leaveGroup(
+        user: UserInstance,
+        group: GroupInstance
+    ): Boolean {
+        val isOnline = networkMonitor.isOnline.first()
+        return if(isOnline) {
+            databaseService.removeUserFromGroup(
+                user.toDto(),
+                group.toDto(),
+                DataConstant.USER_PATH,
+                DataConstant.GROUP_PATH,
+                DataConstant.MEMBERS_PATH
+            )
+        } else {
+            false
+        }
+    }
+
+    override suspend fun leaveAndDeleteGroup(
+        user: UserInstance,
+        group: GroupInstance
+    ) : Boolean {
+        val isOnline = networkMonitor.isOnline.first()
+        return if(isOnline) {
+            databaseService.deleteGroup(
+                user.toDto(),
+                group.toDto(),
+                DataConstant.USER_PATH,
+                DataConstant.GROUP_PATH
+            )
+        } else {
+            false
+        }
     }
 }

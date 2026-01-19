@@ -36,7 +36,7 @@ class ShowImage {
                             localImageLoaderValue : ProvidedValue<*>,
                             showImageViewModel: ShowImageViewModel,
                             modifier: Modifier,
-                            onNavigateToHomeScreen: () -> Unit) {
+                            onNavigateBack: () -> Unit) {
             Box(
                 modifier = modifier
             ) {
@@ -80,7 +80,7 @@ class ShowImage {
                             modifier = Modifier
                                 .size(30.dp)
                                 .clickable {
-                                    onNavigateToHomeScreen()
+                                    onNavigateBack()
                                 }
                                 .testTag(TestTag.TAG_BUTTON_CLOSE)
                                 .semantics {

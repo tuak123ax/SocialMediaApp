@@ -11,10 +11,6 @@ import com.minhtu.firesocialmedia.platform.initPlatformContext
 class AppApplication : Application() {
     override fun onCreate() {
         super.onCreate()
-        // Enable disk persistence for Firebase Realtime Database before any reference is created
-        runCatching {
-            FirebaseDatabase.getInstance().setPersistenceEnabled(true)
-        }
         initPlatformContext(this)
         createChannelNotification()
     }
