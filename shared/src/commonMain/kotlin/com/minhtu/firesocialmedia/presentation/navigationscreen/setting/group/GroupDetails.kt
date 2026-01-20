@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -21,6 +22,10 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -79,6 +84,8 @@ import com.minhtu.firesocialmedia.platform.CrossPlatformIcon
 import com.minhtu.firesocialmedia.platform.getImageBytesFromDrawable
 import com.minhtu.firesocialmedia.platform.showToast
 import com.minhtu.firesocialmedia.presentation.home.HomeViewModel
+import com.minhtu.firesocialmedia.presentation.loading.Loading
+import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
 import com.minhtu.firesocialmedia.presentation.search.SearchViewModel
 import com.minhtu.firesocialmedia.presentation.userinformation.UserInformation.Companion.DropdownMenuForCoverPhoto
 import com.minhtu.firesocialmedia.utils.UiUtils
@@ -104,13 +111,15 @@ class GroupDetails {
             modifier: Modifier = Modifier,
             homeViewModel : HomeViewModel,
             searchViewModel : SearchViewModel,
+            loadingViewModel : LoadingViewModel,
             groupDetailsViewModel: GroupDetailsViewModel,
             onNavigateToShowImageScreen : (image : String) -> Unit,
             onNavigateToUserInformation : (user : UserInstance?) -> Unit,
             onNavigateBack : () -> Unit,
             onNavigateToUploadNewsfeed: (updateNew : NewsInstance?) -> Unit,
             onNavigateToCommentScreen: (selectedNew : NewsInstance) -> Unit,
-            onClickInviteButton : () -> Unit
+            onClickInviteButton : () -> Unit,
+            onLeaveGroup : () -> Unit
         ){
             CommonBackHandler{
                 onNavigateBack()
@@ -212,11 +221,11 @@ class GroupDetails {
                 if(leaveGroupStatus != null) {
                     if(leaveGroupStatus!!) {
                         showToast("Leave group successfully!!!")
+                        onLeaveGroup()
                     } else {
                         showToast("Cannot leave this group now. Please retry!")
                     }
                     groupDetailsViewModel.resetLeaveGroupStatus()
-                    onNavigateBack()
                 }
             }
 
@@ -490,6 +499,8 @@ class GroupDetails {
                                     listOf("Feed", "Members", "Photos"),
                                     localImageLoaderValue,
                                     homeViewModel,
+                                    groupDetailsViewModel,
+                                    loadingViewModel,
                                     onNavigateToShowImageScreen,
                                     onNavigateToUserInformation,
                                     onNavigateToUploadNewsfeed
@@ -604,6 +615,8 @@ class GroupDetails {
             tabTitles : List<String>,
             localImageLoaderValue : ProvidedValue<*>,
             homeViewModel: HomeViewModel,
+            groupDetailsViewModel : GroupDetailsViewModel,
+            loadingViewModel: LoadingViewModel,
             onNavigateToShowImageScreen: (image: String) -> Unit,
             onNavigateToUserInformation: (user: UserInstance?) -> Unit,
             onNavigateToUploadNewsfeed : (updateNew : NewsInstance?) -> Unit){
@@ -653,7 +666,7 @@ class GroupDetails {
                                 localImageLoaderValue,
                                 listState,
                                 homeViewModel,
-                                group.posts.values.toList(),
+                                group.posts.values.toList().sortedByDescending { it.timePosted },
                                 onNavigateToUploadNewsfeed,
                                 onNavigateToShowImageScreen,
                                 onNavigateToUserInformation,
@@ -664,9 +677,11 @@ class GroupDetails {
                             )
                         }
                         1 -> {
+                            val isLoading by loadingViewModel.isLoading.collectAsState()
                             var memberList by remember { mutableStateOf<List<UserInstance>>(emptyList()) }
                             // Run filtering when friend list or search query changes
                             LaunchedEffect(Unit) {
+                                loadingViewModel.showLoading()
                                 memberList = coroutineScope {
                                     group.members.keys.map { userId ->
                                         async {
@@ -674,20 +689,51 @@ class GroupDetails {
                                         }
                                     }.awaitAll().filterNotNull()
                                 }
+                                loadingViewModel.hideLoading()
                             }
 
-                            LazyColumn(
-                                modifier = Modifier
-                                    .testTag(TestTag.TAG_MEMBERS_TAB)
-                                    .semantics { contentDescription = TestTag.TAG_MEMBERS_TAB }
-                            ) {
-                                items(memberList) { user ->
-                                    UserRow(user, localImageLoaderValue, onNavigateToUserInformation)
+                            Box {
+                                LazyColumn(
+                                    modifier = Modifier
+                                        .testTag(TestTag.TAG_MEMBERS_TAB)
+                                        .semantics { contentDescription = TestTag.TAG_MEMBERS_TAB }
+                                ) {
+                                    items(memberList) { user ->
+                                        UserRow(user, localImageLoaderValue, onNavigateToUserInformation)
+                                    }
+                                }
+                                if(isLoading) {
+                                    Loading.LoadingScreen()
                                 }
                             }
                         }
                         2 -> {
-
+                            val gridState = rememberLazyGridState()
+                            val listImages = groupDetailsViewModel.visibleImages
+                            // Init once per group
+                            LaunchedEffect(group.id) {
+                                groupDetailsViewModel.init(group.posts.values.toList())
+                            }
+                            // React only to new posts
+                            LaunchedEffect(group.posts.size) {
+                                groupDetailsViewModel.onPostsUpdated(group.posts.values.toList())
+                            }
+                            LaunchedEffect(gridState) {
+                                snapshotFlow {
+                                    gridState.layoutInfo.visibleItemsInfo.lastOrNull()?.index
+                                }.collect { index ->
+                                    if (index != null && index >= listImages.size - 6) {
+                                        groupDetailsViewModel.loadMore()
+                                    }
+                                }
+                            }
+                            GroupImageGalleryScreen(
+                                images = listImages,
+                                localImageLoaderValue = localImageLoaderValue,
+                                onImageClick = { image ->
+                                    onNavigateToShowImageScreen(image)
+                                }
+                            )
                         }
                     }
                 }
@@ -769,6 +815,54 @@ class GroupDetails {
                         onDismissRequest()
                     }
                 )
+            }
+        }
+
+        @Composable
+        fun GroupImageGalleryScreen(
+            images: List<String>,
+            localImageLoaderValue : ProvidedValue<*>,
+            onImageClick: (String) -> Unit
+        ) {
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(3),
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(4.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                items(images) { image ->
+                    GalleryImageItem(
+                        imageUrl = image,
+                        localImageLoaderValue,
+                        onClick = { onImageClick(image) }
+                    )
+                }
+            }
+        }
+
+        @Composable
+        fun GalleryImageItem(
+            imageUrl: String,
+            localImageLoaderValue : ProvidedValue<*>,
+            onClick: () -> Unit
+        ) {
+            Box(
+                modifier = Modifier
+                    .aspectRatio(1f) // square image
+                    .clip(RoundedCornerShape(8.dp))
+                    .clickable { onClick() }
+            ) {
+                CompositionLocalProvider(
+                    localImageLoaderValue
+                ) {
+                    AutoSizeImage(
+                        imageUrl,
+                        contentDescription = "Image",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
             }
         }
     }

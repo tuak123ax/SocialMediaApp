@@ -1,12 +1,14 @@
 package com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group
 
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.minhtu.firesocialmedia.constants.Constants
 import com.minhtu.firesocialmedia.domain.entity.group.GroupInstance
+import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.domain.usecases.group.FetchGroupInfoUseCase
 import com.minhtu.firesocialmedia.domain.usecases.group.FetchNotificationStateUseCase
@@ -127,5 +129,53 @@ class GroupDetailsViewModel(
     }
     fun resetLeaveGroupStatus() {
         _leaveGroupStatus.value = null
+    }
+
+    //--------------Limit photos before pass to Compose----------------//
+    private val pageSize = 30
+    private var currentPage = 0
+    private var allPosts: List<NewsInstance> = emptyList()
+    private var loading = false
+
+    private val _visibleImages = mutableStateListOf<String>()
+    val visibleImages: List<String> = _visibleImages
+
+    /** Initial load OR hard refresh */
+    fun init(posts: List<NewsInstance>) {
+        allPosts = posts.sortedByDescending { it.timePosted }
+        _visibleImages.clear()
+        currentPage = 0
+        loadMore()
+    }
+
+    /** Called when new posts arrive */
+    fun onPostsUpdated(posts: List<NewsInstance>) {
+        if (posts.size <= allPosts.size) {
+            return
+        }
+
+        val sorted = posts.sortedByDescending { it.timePosted }
+        val newPosts = sorted.take(posts.size - allPosts.size)
+
+        val newImages = newPosts.map { it.image }
+
+        // Insert new images at top (newest first)
+        _visibleImages.addAll(0, newImages)
+
+        allPosts = sorted
+    }
+
+    fun loadMore() {
+        if (loading) return
+        loading = true
+
+        val nextImages = allPosts
+            .drop(currentPage * pageSize)
+            .take(pageSize)
+            .map { it.image }
+
+        _visibleImages.addAll(nextImages)
+        currentPage++
+        loading = false
     }
 }

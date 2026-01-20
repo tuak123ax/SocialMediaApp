@@ -848,6 +848,7 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                                 .background(color = Color.White),
                             homeViewModel,
                             searchViewModel,
+                            loadingViewModel,
                             groupDetailsViewModel,
                             onNavigateToShowImageScreen = { image ->
                                 selectedImage = image
@@ -859,10 +860,6 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                             },
                             onNavigateBack = {
                                 navController.popBackStack()
-                                if(homeViewModel.currentUser != null && selectedGroup != null) {
-                                    //Remove group in current user group list
-                                    homeViewModel.currentUser!!.groups.remove(selectedGroup!!.id)
-                                }
                                 coroutineScope.launch {
                                     //Delay a little bit to wait for animation
                                     delay(200)
@@ -884,6 +881,19 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                             },
                             onClickInviteButton = {
                                 navController.navigate(route = InviteMember.getScreenName())
+                            },
+                            onLeaveGroup = {
+                                navController.popBackStack()
+                                if(homeViewModel.currentUser != null && selectedGroup != null) {
+                                    //Remove group in current user group list
+                                    homeViewModel.currentUser!!.groups.remove(selectedGroup!!.id)
+                                }
+                                coroutineScope.launch {
+                                    //Delay a little bit to wait for animation
+                                    delay(200)
+                                    //Reset old group info
+                                    groupDetailsViewModel.resetFetchGroupInfoState()
+                                }
                             }
                         )
                     } else {
@@ -953,6 +963,7 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                         localImageLoaderValue = localImageLoaderValue,
                         homeViewModel = homeViewModel,
                         searchViewModel = searchViewModel,
+                        loadingViewModel = loadingViewModel,
                         groupDetailsViewModel = groupDetailsViewModel,
                         onNavigateToShowImageScreen = { image ->
                             selectedImage = image
@@ -985,6 +996,19 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                         },
                         onClickInviteButton = {
                             navController.navigate(route = InviteMember.getScreenName())
+                        },
+                        onLeaveGroup = {
+                            navController.popBackStack()
+                            if(homeViewModel.currentUser != null && selectedGroup != null) {
+                                //Remove group in current user group list
+                                homeViewModel.currentUser!!.groups.remove(selectedGroup.id)
+                            }
+                            coroutineScope.launch {
+                                //Delay a little bit to wait for animation
+                                delay(200)
+                                //Reset old group info
+                                groupDetailsViewModel.resetFetchGroupInfoState()
+                            }
                         }
                     )
                 }
