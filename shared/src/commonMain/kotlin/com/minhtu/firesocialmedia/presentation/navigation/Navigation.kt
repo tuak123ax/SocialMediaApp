@@ -69,6 +69,8 @@ import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.Gr
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.GroupDetailsViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.InviteMember
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.InviteMemberViewModel
+import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.ManageMembers
+import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.ManageMembersViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.SelectGroup
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.SelectGroupViewModel
 import com.minhtu.firesocialmedia.presentation.postinformation.PostInformation
@@ -123,6 +125,7 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
     val syncDataUseCase = AppModule.provideSyncDataUseCase(AppModule.provideCommonDbRepository(platformContext))
     val selectGroupViewModel : SelectGroupViewModel = platformViewModel { ViewModelProvider.createSelectGroupViewModel(platformContext) }
     val inviteMemberViewModel : InviteMemberViewModel = platformViewModel { ViewModelProvider.createInviteMemberViewModel(platformContext) }
+    val manageMembersViewModel : ManageMembersViewModel = platformViewModel { ViewModelProvider.createManageMembersViewModel(platformContext) }
 
     var updateNew : NewsInstance? = null
     lateinit var relatedNew : NewsInstance
@@ -859,7 +862,10 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                                 navController.navigate(route = UserInformation.getScreenName())
                             },
                             onNavigateBack = {
-                                navController.popBackStack()
+                                navController.popBackStack(
+                                    route = SelectGroup.getScreenName(),
+                                    inclusive = false
+                                )
                                 coroutineScope.launch {
                                     //Delay a little bit to wait for animation
                                     delay(200)
@@ -894,6 +900,10 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                                     //Reset old group info
                                     groupDetailsViewModel.resetFetchGroupInfoState()
                                 }
+                            },
+                            onManageMembers = { group ->
+                                selectedGroup = group
+                                navController.navigate(route = ManageMembers.getScreenName())
                             }
                         )
                     } else {
@@ -930,7 +940,7 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                 ) {
                     if(selectedGroup != null) {
                         InviteMember.InviteMemberScreen(
-                            selectedGroup,
+                            selectedGroup!!,
                             homeViewModel.currentUser!!,
                             paddingValues,
                             localImageLoaderValue,
@@ -974,7 +984,10 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                             navController.navigate(route = UserInformation.getScreenName())
                         },
                         onNavigateBack = {
-                            navController.popBackStack()
+                            navController.popBackStack(
+                                route = SelectGroup.getScreenName(),
+                                inclusive = false
+                            )
                             coroutineScope.launch {
                                 //Delay a little bit to wait for animation
                                 delay(200)
@@ -1001,7 +1014,7 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                             navController.popBackStack()
                             if(homeViewModel.currentUser != null && selectedGroup != null) {
                                 //Remove group in current user group list
-                                homeViewModel.currentUser!!.groups.remove(selectedGroup.id)
+                                homeViewModel.currentUser!!.groups.remove(selectedGroup!!.id)
                             }
                             coroutineScope.launch {
                                 //Delay a little bit to wait for animation
@@ -1009,8 +1022,54 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                                 //Reset old group info
                                 groupDetailsViewModel.resetFetchGroupInfoState()
                             }
+                        },
+                        onManageMembers = { group ->
+                            selectedGroup = group
+                            navController.navigate(route = ManageMembers.getScreenName())
                         }
                     )
+                }
+                composable(
+                    route = ManageMembers.getScreenName(),
+                    enterTransition = DefaultNavAnimations.enter,
+                    popEnterTransition = DefaultNavAnimations.popEnter,
+                    exitTransition = DefaultNavAnimations.exit,
+                    popExitTransition = DefaultNavAnimations.popExit
+                ) {
+                    if(selectedGroup != null && homeViewModel.currentUser != null) {
+                        ManageMembers.ManageMembersScreen(
+                            homeViewModel.currentUser!!,
+                            selectedGroup,
+                            manageMembersViewModel,
+                            searchViewModel,
+                            loadingViewModel,
+                            paddingValues,
+                            localImageLoaderValue,
+                            onNavigateBack = {
+                                navController.popBackStack()
+                            },
+                            onInviteMembers = {
+                                navController.navigate(route = InviteMember.getScreenName())
+                            },
+                            onNavigateToUserInformationScreen = { user ->
+                                selectedUser = user
+                                navController.navigate(route = UserInformation.getScreenName())
+                            },
+                            onNavigateToSelectGroupScreen = {
+                                //Remove group from current user group list
+                                homeViewModel.currentUser!!.groups.remove(selectedGroup.id)
+                                navController.navigate(route = SelectGroup.getScreenName()) {
+                                    popUpTo(SelectGroup.getScreenName()) {
+                                        inclusive = false
+                                    }
+                                    launchSingleTop = true
+                                }
+                            }
+                        )
+                    } else {
+                        showToast("Cannot open manage members screen now. Please try again!!!")
+                        navController.popBackStack()
+                    }
                 }
             }
         }

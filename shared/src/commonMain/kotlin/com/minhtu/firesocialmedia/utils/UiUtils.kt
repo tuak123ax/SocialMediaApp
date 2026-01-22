@@ -795,11 +795,18 @@ class UiUtils {
         @Composable
         fun BackAndTitleAndMoreOptionsRow(
             title : String,
+            subTitle : String = "",
+            trailingIcon : String = "",
+            trailingIconTint : Color = Color.Black,
             showMoreOptionsMenu : Boolean = false,
+            isMember : Boolean = true,
+            isAdmin : Boolean = false,
+            iconSize : Dp = 30.dp,
             navigateBack : () -> Unit,
             onClickMoreOptions : () -> Unit = {},
             onDismissRequest : () -> Unit = {},
-            onLeaveGroup : () -> Unit = {}) {
+            onLeaveGroup : () -> Unit = {},
+            onManageMembers : () -> Unit = {}) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
@@ -813,49 +820,68 @@ class UiUtils {
                     contentDescription = "Back",
                     tint = Color.Black,
                     modifier = Modifier
-                        .size(30.dp)
+                        .size(iconSize)
                         .clip(CircleShape)
                         .testTag(TestTag.TAG_BUTTON_BACK)
                         .semantics { contentDescription = TestTag.TAG_BUTTON_BACK }
                         .clickable { navigateBack() }
                 )
 
-                Text(
-                    text = title,
-                    color = Color.Black,
-                    fontWeight = FontWeight.Bold,
-                    style = MaterialTheme.typography.titleMedium,
-                    textAlign = TextAlign.Center,
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier
+                        .fillMaxWidth()
                         .weight(1f)
                         .padding(horizontal = 8.dp)
-                )
-
-                Box{
-                    CrossPlatformIcon(
-                        icon = "more_horiz",
-                        backgroundColor = "#FFFFFFFF",
-                        contentDescription = "More Options",
-                        tint = Color.Black,
-                        modifier = Modifier
-                            .size(30.dp)
-                            .clip(CircleShape)
-                            .testTag(TestTag.TAG_BUTTON_MOREOPTIONS)
-                            .semantics { contentDescription = TestTag.TAG_BUTTON_MOREOPTIONS }
-                            .clickable {
-                                onClickMoreOptions()
-                            }
+                ) {
+                    Text(
+                        text = title,
+                        color = Color.Black,
+                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.titleMedium,
+                        textAlign = TextAlign.Center
                     )
-                    if(showMoreOptionsMenu) {
-                        DropdownMenuForMoreOptionsInGroup(
-                            showMoreOptionsMenu,
-                            onLeaveGroup = {
-                                onLeaveGroup()
-                            },
-                            onDismissRequest = {
-                                onDismissRequest()
-                            }
+                    if(subTitle.isNotEmpty()) {
+                        Text(
+                            text = subTitle,
+                            color = Color.LightGray,
+                            style = MaterialTheme.typography.bodyMedium,
+                            textAlign = TextAlign.Center
                         )
+                    }
+                }
+
+                if(isMember) {
+                    Box{
+                        CrossPlatformIcon(
+                            icon = trailingIcon,
+                            backgroundColor = "#FFFFFFFF",
+                            contentDescription = "More Options",
+                            tint = trailingIconTint,
+                            modifier = Modifier
+                                .size(iconSize)
+                                .clip(CircleShape)
+                                .testTag(TestTag.TAG_BUTTON_MOREOPTIONS)
+                                .semantics { contentDescription = TestTag.TAG_BUTTON_MOREOPTIONS }
+                                .clickable {
+                                    onClickMoreOptions()
+                                }
+                        )
+                        if(showMoreOptionsMenu) {
+                            DropdownMenuForMoreOptionsInGroup(
+                                showMoreOptionsMenu,
+                                isAdmin = isAdmin,
+                                onLeaveGroup = {
+                                    onLeaveGroup()
+                                },
+                                onDismissRequest = {
+                                    onDismissRequest()
+                                },
+                                onManageMembers = {
+                                    onManageMembers()
+                                }
+                            )
+                        }
                     }
                 }
             }

@@ -85,5 +85,7 @@ class TestTag {
         const val TAG_FEED_TAB : String = "TAG_FEED_TAB"
         const val TAG_MEMBERS_TAB : String = "TAG_MEMBERS_TAB"
         const val TAG_PHOTOS_TAB : String = "TAG_PHOTOS_TAB"
+        const val TAG_ACTION_BUTTON_OF_USER_IN_GROUP_ROW : String = "TAG_ACTION_BUTTON_OF_USER_IN_GROUP_ROW"
+        const val TAG_ACTION_BUTTON_OF_USER_IN_GROUP : String = "TAG_ACTION_BUTTON_OF_USER_IN_GROUP"
     }
 }

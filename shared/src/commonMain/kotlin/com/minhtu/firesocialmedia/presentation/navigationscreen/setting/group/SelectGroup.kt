@@ -212,7 +212,7 @@ class SelectGroup {
                     contentDescription = "right_arrow",
                     tint = Color.LightGray,
                     modifier = Modifier
-                        .size(10.dp)
+                        .size(20.dp)
                 )
                 Spacer(Modifier.width(20.dp))
             }

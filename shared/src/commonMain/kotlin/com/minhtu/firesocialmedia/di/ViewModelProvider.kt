@@ -1,5 +1,6 @@
 package com.minhtu.firesocialmedia.di
 
+import com.minhtu.firesocialmedia.di.AppModule
 import com.minhtu.firesocialmedia.domain.repository.GroupRepository
 import com.minhtu.firesocialmedia.domain.usecases.group.FetchGroupInfoUseCase
 import com.minhtu.firesocialmedia.presentation.calling.audiocall.CallingViewModel
@@ -14,6 +15,7 @@ import com.minhtu.firesocialmedia.presentation.navigationscreen.notification.Not
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.CreateGroupViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.GroupDetailsViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.InviteMemberViewModel
+import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.ManageMembersViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.SelectGroupViewModel
 import com.minhtu.firesocialmedia.presentation.postinformation.PostInformationViewModel
 import com.minhtu.firesocialmedia.presentation.search.SearchViewModel
@@ -330,5 +332,19 @@ object ViewModelProvider {
             getUserUseCase,
             inviteFriendToGroupUseCase
             )
+    }
+
+    fun createManageMembersViewModel(platformContext: PlatformContext): ManageMembersViewModel {
+        val userRepository = AppModule.provideUserRepository(platformContext)
+        val groupRepository = AppModule.provideGroupRepository(platformContext)
+        val getUserUseCase = AppModule.provideGetUserUseCase(userRepository)
+        val removeMemberUseCase = AppModule.provideRemoveMemberUseCase(groupRepository)
+        val promoteMemberUseCase = AppModule.providePromoteMemberUseCase(groupRepository)
+        val demoteMemberUseCase = AppModule.provideDemoteMemberUseCase(groupRepository)
+        return ManageMembersViewModel(
+            getUserUseCase,
+            removeMemberUseCase,
+            promoteMemberUseCase,
+            demoteMemberUseCase)
     }
 }

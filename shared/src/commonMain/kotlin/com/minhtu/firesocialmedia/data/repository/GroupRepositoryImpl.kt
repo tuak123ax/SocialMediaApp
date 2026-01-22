@@ -211,4 +211,56 @@ class GroupRepositoryImpl(
             false
         }
     }
+
+    override suspend fun removeMember(member: UserInstance,
+                                      group : GroupInstance): Boolean {
+        val isOnline = networkMonitor.isOnline.first()
+        return if(isOnline) {
+            databaseService.removeUserFromGroup(
+                member.toDto(),
+                group.toDto(),
+                DataConstant.USER_PATH,
+                DataConstant.GROUP_PATH,
+                DataConstant.MEMBERS_PATH
+            )
+        } else {
+            false
+        }
+    }
+
+    override suspend fun promoteMember(
+        member: UserInstance,
+        group: GroupInstance
+    ): Boolean {
+        val isOnline = networkMonitor.isOnline.first()
+        return if(isOnline) {
+            databaseService.updateMemberRole(
+                "admin",
+                member.toDto(),
+                group.toDto(),
+                DataConstant.GROUP_PATH,
+                DataConstant.MEMBERS_PATH
+            )
+        } else {
+            false
+        }
+    }
+
+    override suspend fun demoteMember(
+        member: UserInstance,
+        group: GroupInstance
+    ): Boolean {
+        val isOnline = networkMonitor.isOnline.first()
+        return if(isOnline) {
+            databaseService.updateMemberRole(
+                "member",
+                member.toDto(),
+                group.toDto(),
+                DataConstant.GROUP_PATH,
+                DataConstant.MEMBERS_PATH
+            )
+        } else {
+            false
+        }
+    }
 }

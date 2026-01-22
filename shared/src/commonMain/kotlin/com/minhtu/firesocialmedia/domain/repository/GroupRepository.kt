@@ -32,4 +32,9 @@ interface GroupRepository {
 
     suspend fun leaveGroup(user: UserInstance, group: GroupInstance): Boolean
     suspend fun leaveAndDeleteGroup(user: UserInstance, group: GroupInstance) : Boolean
+    suspend fun removeMember(member: UserInstance,
+                             group : GroupInstance): Boolean
+
+    suspend fun promoteMember(member: UserInstance, group: GroupInstance): Boolean
+    suspend fun demoteMember(member: UserInstance, group: GroupInstance): Boolean
 }

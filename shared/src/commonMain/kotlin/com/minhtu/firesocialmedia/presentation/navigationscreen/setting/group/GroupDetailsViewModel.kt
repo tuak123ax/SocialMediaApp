@@ -104,7 +104,7 @@ class GroupDetailsViewModel(
     }
 
     fun resetJoinGroupState() {
-        _groupDetailsFromDeepLink.value = null
+        _joinGroupStatus.value = null
     }
 
     private val _leaveGroupStatus = MutableStateFlow<Boolean?>(null)
@@ -113,7 +113,7 @@ class GroupDetailsViewModel(
                    fetchGroupInfoState: GroupInstance) {
         viewModelScope.launch(ioDispatcher) {
             if(fetchGroupInfoState.members.size > 1) {
-                //If the group has other members, you can leave.
+                //If the group has other members, only leave.
                 _leaveGroupStatus.value = leaveGroupUseCase.invoke(
                     currentUser,
                     fetchGroupInfoState
@@ -125,6 +125,8 @@ class GroupDetailsViewModel(
                     fetchGroupInfoState
                 )
             }
+            fetchGroupInfoState.members.remove(currentUser.uid)
+            currentUser.groups.remove(fetchGroupInfoState.id)
         }
     }
     fun resetLeaveGroupStatus() {

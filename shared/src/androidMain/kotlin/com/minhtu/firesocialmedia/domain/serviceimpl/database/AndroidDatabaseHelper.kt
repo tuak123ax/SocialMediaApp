@@ -1303,5 +1303,24 @@ class AndroidDatabaseHelper {
                     continuation.resume(task.isSuccessful, onCancellation = {})
                 }
         }
+
+        suspend fun updateMemberRole(
+            role : String,
+            user: UserDTO,
+            group: GroupDTO,
+            groupPath: String,
+            memberPath: String
+        ): Boolean = suspendCancellableCoroutine{ continuation ->
+            val databaseRef = FirebaseDatabase
+                .getInstance()
+                .reference
+                .child(groupPath)
+                .child(group.id)
+                .child(memberPath)
+                .child(user.uid)
+            databaseRef.setValue(role).addOnCompleteListener { task ->
+                continuation.resume(task.isSuccessful, onCancellation = {})
+            }
+        }
     }
 }

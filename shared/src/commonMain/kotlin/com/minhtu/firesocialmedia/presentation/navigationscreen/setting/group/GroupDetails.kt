@@ -119,7 +119,8 @@ class GroupDetails {
             onNavigateToUploadNewsfeed: (updateNew : NewsInstance?) -> Unit,
             onNavigateToCommentScreen: (selectedNew : NewsInstance) -> Unit,
             onClickInviteButton : () -> Unit,
-            onLeaveGroup : () -> Unit
+            onLeaveGroup : () -> Unit,
+            onManageMembers : (GroupInstance) -> Unit
         ){
             CommonBackHandler{
                 onNavigateBack()
@@ -203,18 +204,27 @@ class GroupDetails {
 
             val showAlertDialog = remember { mutableStateOf(false) }
             UiUtils.ShowBasicAlertDialog(
-                "Leave Group",
-                "Are you sure you want to leave this group?",
-                onClickConfirm = {
-                    groupDetailsViewModel.leaveGroup(
-                        currentUser,
-                        fetchGroupInfoState!!
-                    )
-                },
-                onClickReject = {
-                    showAlertDialog.value = false
-                },
-                showAlertDialog
+                    "Leave Group",
+            "Are you sure you want to leave this group?",
+            onClickConfirm = {
+                if(fetchGroupInfoState != null) {
+                    val adminSet = fetchGroupInfoState!!.members.filterValues {it == "admin"}.keys
+                    val memberSet = fetchGroupInfoState!!.members.filterValues {it == "member"}.keys
+                    val isAdmin = adminSet.contains(currentUser.uid)
+                    if(isAdmin && adminSet.size <= 1 && memberSet.isNotEmpty()) {
+                        showToast("You are the last admin in the group. Cannot leave!")
+                    } else {
+                        groupDetailsViewModel.leaveGroup(
+                            currentUser,
+                            fetchGroupInfoState!!
+                        )
+                    }
+                }
+            },
+            onClickReject = {
+                showAlertDialog.value = false
+            },
+            showAlertDialog
             )
             val leaveGroupStatus by groupDetailsViewModel.leaveGroupStatus.collectAsState()
             LaunchedEffect(leaveGroupStatus) {
@@ -539,8 +549,11 @@ class GroupDetails {
                 }
                 UiUtils.BackAndTitleAndMoreOptionsRow(
                     "GroupDetails",
-                    showMoreOptionsMenu,
-                    onNavigateBack,
+                    trailingIcon = "more_horiz",
+                    showMoreOptionsMenu = showMoreOptionsMenu,
+                    isMember = isMember,
+                    isAdmin = if(fetchGroupInfoState != null) fetchGroupInfoState!!.members[currentUser.uid] == "admin" else false,
+                    navigateBack = onNavigateBack,
                     onClickMoreOptions = {
                         showMoreOptionsMenu = true
                     },
@@ -550,6 +563,11 @@ class GroupDetails {
                     onLeaveGroup = {
                         if(fetchGroupInfoState != null) {
                             showAlertDialog.value = true
+                        }
+                    },
+                    onManageMembers = {
+                        if(fetchGroupInfoState != null) {
+                            onManageMembers(fetchGroupInfoState!!)
                         }
                     }
                 )
@@ -802,8 +820,10 @@ class GroupDetails {
 
         @Composable
         fun DropdownMenuForMoreOptionsInGroup(expanded : Boolean,
+                                              isAdmin : Boolean = false,
                                               onLeaveGroup : () -> Unit,
-                                              onDismissRequest: () -> Unit) {
+                                              onDismissRequest: () -> Unit,
+                                              onManageMembers : () -> Unit) {
             DropdownMenu(
                 expanded = expanded,
                 onDismissRequest = onDismissRequest
@@ -815,6 +835,15 @@ class GroupDetails {
                         onDismissRequest()
                     }
                 )
+                if(isAdmin) {
+                    DropdownMenuItem(
+                        text = { Text("Manage members") },
+                        onClick = {
+                            onManageMembers()
+                            onDismissRequest()
+                        }
+                    )
+                }
             }
         }
 

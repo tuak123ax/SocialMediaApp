@@ -153,6 +153,7 @@ actual fun getIconPainter(icon : String): Painter? {
         "select_group" -> painterResource(id = R.drawable.select_group)
         "right_arrow" -> painterResource(id = R.drawable.right_arrow)
         "global" -> painterResource(id = R.drawable.global)
+        "add_member" -> painterResource(id = R.drawable.add_member)
         else -> null
     }
 }
@@ -180,7 +181,7 @@ actual fun PasswordVisibilityIcon(passwordVisibility : Boolean) {
         icon = icon,
         backgroundColor = "#00FFFFFF",
         contentDescription = descriptionOfIcon,
-        modifier = Modifier.size(20.dp)
+        modifier = Modifier.size(30.dp)
     )
 }
 

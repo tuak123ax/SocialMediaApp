@@ -94,7 +94,7 @@ class Settings {
                             backgroundColor = "#00FFFFFF",
                             contentDescription = "group",
                             modifier = Modifier
-                                .size(30.dp)
+                                .size(40.dp)
                                 .padding(end = 5.dp)
                         )
                         Text(text = "Group", color = Color.Black)
@@ -104,7 +104,7 @@ class Settings {
                             backgroundColor = "#00FFFFFF",
                             contentDescription = "right",
                             modifier = Modifier
-                                .size(35.dp)
+                                .size(40.dp)
                         )
                     }
                 }

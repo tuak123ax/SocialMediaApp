@@ -257,4 +257,12 @@ interface DatabaseService {
         userPath: String,
         groupPath: String
     ): Boolean
+
+    suspend fun updateMemberRole(
+        role : String,
+        user: UserDTO,
+        group: GroupDTO,
+        groupPath: String,
+        memberPath: String
+    ): Boolean
 }

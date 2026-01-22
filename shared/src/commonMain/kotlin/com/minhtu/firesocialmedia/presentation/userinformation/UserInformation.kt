@@ -322,6 +322,7 @@ class UserInformation {
                                                 Relationship.WAITING_RESPONSE -> "Response"
                                                 else -> "Unknown"
                                             },
+                                            textAlign = TextAlign.Center,
                                             color = Color.Black,
                                             maxLines = 1
                                         )

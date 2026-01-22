@@ -113,7 +113,7 @@ class Group {
                                     backgroundColor = "#00FFFFFF",
                                     contentDescription = "select_group",
                                     modifier = Modifier
-                                        .size(30.dp)
+                                        .size(40.dp)
                                         .padding(end = 5.dp)
                                 )
                                 Text(text = "Select Your Group", color = Color.Black)
@@ -123,7 +123,7 @@ class Group {
                                     backgroundColor = "#00FFFFFF",
                                     contentDescription = "right",
                                     modifier = Modifier
-                                        .size(35.dp)
+                                        .size(40.dp)
                                 )
                             }
                         }
@@ -177,7 +177,7 @@ class Group {
                                 backgroundColor = "#00FFFFFF",
                                 contentDescription = "create_group",
                                 modifier = Modifier
-                                    .size(30.dp)
+                                    .size(40.dp)
                                     .padding(end = 5.dp)
                             )
                             Text(text = "Create Group", color = Color.Black)
@@ -187,7 +187,7 @@ class Group {
                                 backgroundColor = "#00FFFFFF",
                                 contentDescription = "right",
                                 modifier = Modifier
-                                    .size(35.dp)
+                                    .size(40.dp)
                             )
                         }
                     }
@@ -230,7 +230,7 @@ class Group {
                                 backgroundColor = "#00FFFFFF",
                                 contentDescription = "explore_group",
                                 modifier = Modifier
-                                    .size(30.dp)
+                                    .size(40.dp)
                                     .padding(end = 5.dp)
                             )
                             Text(text = "Explore Group", color = Color.Black)
@@ -240,7 +240,7 @@ class Group {
                                 backgroundColor = "#00FFFFFF",
                                 contentDescription = "right",
                                 modifier = Modifier
-                                    .size(35.dp)
+                                    .size(40.dp)
                             )
                         }
                     }

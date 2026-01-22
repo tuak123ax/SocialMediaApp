@@ -635,6 +635,22 @@ class AndroidDatabaseService(private val context: Context) : DatabaseService {
         )
     }
 
+    override suspend fun updateMemberRole(
+        role : String,
+        user: UserDTO,
+        group: GroupDTO,
+        groupPath: String,
+        memberPath: String
+    ): Boolean {
+        return AndroidDatabaseHelper.updateMemberRole(
+            role,
+            user,
+            group,
+            groupPath,
+            memberPath
+        )
+    }
+
     override suspend fun observePhoneCallWithoutCheckingInCall(
         currentUserId: String,
         phoneCallCallBack : (CallingRequestDTO) -> Unit,

@@ -60,6 +60,7 @@ import com.minhtu.firesocialmedia.domain.usecases.friend.SaveFriendRequestUseCas
 import com.minhtu.firesocialmedia.domain.usecases.friend.SaveFriendUseCase
 import com.minhtu.firesocialmedia.domain.usecases.group.CopyLinkUseCase
 import com.minhtu.firesocialmedia.domain.usecases.group.CreateGroupUseCase
+import com.minhtu.firesocialmedia.domain.usecases.group.DemoteMemberUseCase
 import com.minhtu.firesocialmedia.domain.usecases.group.FetchGroupInfoUseCase
 import com.minhtu.firesocialmedia.domain.usecases.group.FetchNotificationStateUseCase
 import com.minhtu.firesocialmedia.domain.usecases.group.FindGroupByIdUseCase
@@ -70,6 +71,8 @@ import com.minhtu.firesocialmedia.domain.usecases.group.InviteFriendToGroupUseCa
 import com.minhtu.firesocialmedia.domain.usecases.group.JoinGroupUseCase
 import com.minhtu.firesocialmedia.domain.usecases.group.LeaveAndDeleteGroupUseCase
 import com.minhtu.firesocialmedia.domain.usecases.group.LeaveGroupUseCase
+import com.minhtu.firesocialmedia.domain.usecases.group.PromoteMemberUseCase
+import com.minhtu.firesocialmedia.domain.usecases.group.RemoveMemberUseCase
 import com.minhtu.firesocialmedia.domain.usecases.group.SaveNewToGroupUseCase
 import com.minhtu.firesocialmedia.domain.usecases.group.UpdateNotificationStatusUseCase
 import com.minhtu.firesocialmedia.domain.usecases.home.ClearAccountUseCase
@@ -657,5 +660,16 @@ object AppModule {
 
     fun provideLeaveAndDeleteGroupUseCase(groupRepository: GroupRepository) : LeaveAndDeleteGroupUseCase {
         return LeaveAndDeleteGroupUseCase(groupRepository)
+    }
+
+    fun provideRemoveMemberUseCase(groupRepository: GroupRepository) : RemoveMemberUseCase {
+        return RemoveMemberUseCase(groupRepository)
+    }
+
+    fun providePromoteMemberUseCase(groupRepository: GroupRepository) : PromoteMemberUseCase {
+        return PromoteMemberUseCase(groupRepository)
+    }
+    fun provideDemoteMemberUseCase(groupRepository: GroupRepository) : DemoteMemberUseCase {
+        return DemoteMemberUseCase(groupRepository)
     }
 }

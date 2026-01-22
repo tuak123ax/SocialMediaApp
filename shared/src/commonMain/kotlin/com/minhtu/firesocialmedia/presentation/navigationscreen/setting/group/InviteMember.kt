@@ -99,6 +99,7 @@ class InviteMember {
                 ) {
                     UiUtils.BackAndTitleAndMoreOptionsRow(
                         title = "Invite Members",
+                        trailingIcon = "more_horiz",
                         navigateBack = onNavigateBack
                     )
                     HorizontalDivider(
