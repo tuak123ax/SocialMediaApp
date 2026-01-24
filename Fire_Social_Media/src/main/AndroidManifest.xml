@@ -42,11 +42,19 @@
             <!-- Deep links for HTTPS -->
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW"/>
-                <category android:name="android.intent.category.BROWSABLE"/>
+
                 <category android:name="android.intent.category.DEFAULT"/>
-                <data android:scheme="https"
+                <category android:name="android.intent.category.BROWSABLE"/>
+
+                <data
+                    android:scheme="https"
                     android:host="firechat-aa433.web.app"
-                    android:pathPrefix="/news"/>
+                    android:pathPrefix="/news" />
+
+                <data
+                    android:scheme="https"
+                    android:host="firechat-aa433.web.app"
+                    android:pathPrefix="/groups" />
             </intent-filter>
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

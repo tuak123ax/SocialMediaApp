@@ -96,7 +96,7 @@ class VideoCall {
                     modifier = Modifier.fillMaxSize()
                 )
                 if (isLoading) {
-                    Loading.Companion.LoadingScreen()
+                    Loading.LoadingScreen()
                 }
 
                 //Button stop video call

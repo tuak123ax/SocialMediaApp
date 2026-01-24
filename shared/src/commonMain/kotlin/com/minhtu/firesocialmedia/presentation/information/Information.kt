@@ -75,36 +75,36 @@ class Information {
                     }
                 }
             }
-            Box(modifier = Modifier.Companion.fillMaxSize()) {
-                val avatarModifier = Modifier.Companion
+            Box(modifier = Modifier.fillMaxSize()) {
+                val avatarModifier = Modifier
                     .size(160.dp)
                     .clip(CircleShape)
-                    .border(1.dp, Color.Companion.Gray, CircleShape)
+                    .border(1.dp, Color.Gray, CircleShape)
                     .clickable {
                         imagePicker.pickImage()
                     }
-                    .testTag(TestTag.Companion.TAG_SELECT_AVATAR)
+                    .testTag(TestTag.TAG_SELECT_AVATAR)
                     .semantics {
-                        contentDescription = TestTag.Companion.TAG_SELECT_AVATAR
+                        contentDescription = TestTag.TAG_SELECT_AVATAR
                     }
                 Column(
                     modifier = modifier,
                     verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.Companion.CenterHorizontally
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
                         text = "Please select your avatar",
-                        color = Color.Companion.White,
+                        color = Color.White,
                         fontSize = 25.sp,
-                        textAlign = TextAlign.Companion.Center,
-                        modifier = Modifier.Companion
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
                             .fillMaxWidth()
                             .padding(20.dp)
                     )
-                    Spacer(modifier = Modifier.Companion.padding(20.dp))
-                    var imageBytes =
+                    Spacer(modifier = Modifier.padding(20.dp))
+                    val imageBytes =
                         produceState<ByteArray?>(initialValue = null, informationViewModel.avatar) {
-                            if (informationViewModel.avatar == Constants.Companion.DEFAULT_AVATAR_URL) {
+                            if (informationViewModel.avatar == Constants.DEFAULT_AVATAR_URL) {
                                 value = getImageBytesFromDrawable("unknownavatar")
                             } else {
                                 value = imagePicker.loadImageBytes(informationViewModel.avatar)
@@ -116,34 +116,34 @@ class Information {
                             modifier = avatarModifier
                         )
                     }
-                    Spacer(modifier = Modifier.Companion.padding(20.dp))
+                    Spacer(modifier = Modifier.padding(20.dp))
                     Text(
                         text = "And input your name below",
-                        color = Color.Companion.White,
+                        color = Color.White,
                         fontSize = 30.sp,
-                        textAlign = TextAlign.Companion.Center,
-                        modifier = Modifier.Companion.fillMaxWidth()
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
                     )
-                    Spacer(modifier = Modifier.Companion.padding(20.dp))
+                    Spacer(modifier = Modifier.padding(20.dp))
                     OutlinedTextField(
                         value = informationViewModel.username,
                         shape = RoundedCornerShape(30.dp),
-                        textStyle = TextStyle(color = Color.Companion.White),
+                        textStyle = TextStyle(color = Color.White),
                         onValueChange = {
                             informationViewModel.updateUsername(it)
-                        }, modifier = Modifier.Companion
+                        }, modifier = Modifier
                             .fillMaxWidth()
                             .padding(20.dp)
-                            .testTag(TestTag.Companion.TAG_SELECT_NAME)
+                            .testTag(TestTag.TAG_SELECT_NAME)
                             .semantics {
-                                contentDescription = TestTag.Companion.TAG_SELECT_NAME
+                                contentDescription = TestTag.TAG_SELECT_NAME
                             },
                         label = { Text(text = "Name") },
                         singleLine = true
                     )
-                    Spacer(modifier = Modifier.Companion.padding(20.dp))
+                    Spacer(modifier = Modifier.padding(20.dp))
                     Row(
-                        modifier = Modifier.Companion.fillMaxWidth(),
+                        modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.Center
                     ) {
                         Button(
@@ -151,16 +151,16 @@ class Information {
                                 loadingViewModel.showLoading()
                                 informationViewModel.finishSignUpStage()
                             },
-                            modifier = Modifier.Companion.testTag(TestTag.Companion.TAG_BUTTON_NEXT)
+                            modifier = Modifier.testTag(TestTag.TAG_BUTTON_NEXT)
                                 .semantics {
-                                    contentDescription = TestTag.Companion.TAG_BUTTON_NEXT
+                                    contentDescription = TestTag.TAG_BUTTON_NEXT
                                 }) {
                             Text(text = "Next")
                         }
                     }
                 }
                 if (isLoading) {
-                    Loading.Companion.LoadingScreen()
+                    Loading.LoadingScreen()
                 }
             }
         }

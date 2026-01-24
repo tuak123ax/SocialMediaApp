@@ -90,7 +90,10 @@ class HomeViewModel(
         }
     }
 
-    fun getAllUserFriends(user: UserInstance) {
+    suspend fun getAllUserFriends(user: UserInstance) {
+        //Clear old User's friends in local database
+        userInteractor.clearLocalFriends()
+        //Fetch new User's friends and save into local database
         viewModelScope.launch(ioDispatcher) {
             val friendIds = user.friends
             // Thresholds
@@ -673,5 +676,9 @@ class HomeViewModel(
         val local = listNews.firstOrNull { it.id == sharedNewId }
         val value = local ?: runCatching { newsInteractor.findNewById(sharedNewId) }.getOrNull()
         _sharedNewsById.update { old -> old + (sharedNewId to value) }
+    }
+
+    fun isFriendOf(posterId: String): Boolean {
+        return _allUserFriends.value.any { it?.uid == posterId}
     }
 }

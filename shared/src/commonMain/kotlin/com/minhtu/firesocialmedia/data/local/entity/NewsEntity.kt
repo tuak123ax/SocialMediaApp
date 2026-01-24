@@ -3,6 +3,7 @@ package com.minhtu.firesocialmedia.data.local.entity
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import com.minhtu.firesocialmedia.domain.core.DecentralizationType
 
 @Entity(
     tableName = "News",
@@ -22,5 +23,6 @@ data class NewsEntity(
     var timePosted: Long = 0,
     var isNewPost : Boolean = false,
     var localPath : String = "",
-    var shareContentId : String = ""
+    var shareContentId : String = "",
+    var decentralizationType : DecentralizationType? = null
 )

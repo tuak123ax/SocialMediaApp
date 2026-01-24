@@ -28,13 +28,13 @@ class GifLoading {
         fun GifLoadingScreen(localImageLoaderValue : ProvidedValue<*>,
                              message : String) {
             Box(
-                contentAlignment = Alignment.Companion.Center,
-                modifier = Modifier.Companion
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
                     .fillMaxSize()
-                    .background(Color.Companion.White.copy(alpha = 0.8f))
+                    .background(Color.White.copy(alpha = 0.8f))
             ) {
                 Column(
-                    horizontalAlignment = Alignment.Companion.CenterHorizontally,
+                    horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     CompositionLocalProvider(
                         localImageLoaderValue
@@ -42,16 +42,16 @@ class GifLoading {
                         AutoSizeImage(
                             getResId("loading_gif"),
                             contentDescription = "Poster Avatar",
-                            contentScale = ContentScale.Companion.Fit,
-                            modifier = Modifier.Companion
+                            contentScale = ContentScale.Fit,
+                            modifier = Modifier
                                 .size(100.dp)
                         )
                     }
-                    Spacer(modifier = Modifier.Companion.height(16.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
                     Text(
                         text = message,
                         style = MaterialTheme.typography.bodyMedium,
-                        color = Color.Companion.Gray
+                        color = Color.Gray
                     )
                 }
             }

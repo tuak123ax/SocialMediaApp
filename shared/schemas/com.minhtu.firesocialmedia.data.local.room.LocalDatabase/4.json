@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 4,
-    "identityHash": "739ccddf1191450aeac92e4c3bf7dff3",
+    "identityHash": "1246250b2b84dfcfd2593466f35c8d1e",
     "entities": [
       {
         "tableName": "UserFriends",
@@ -65,7 +65,7 @@
       },
       {
         "tableName": "News",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `posterId` TEXT NOT NULL, `posterName` TEXT NOT NULL, `avatar` TEXT NOT NULL, `message` TEXT NOT NULL, `image` TEXT NOT NULL, `video` TEXT NOT NULL, `isVisible` INTEGER NOT NULL, `likeCount` INTEGER NOT NULL, `commentCount` INTEGER NOT NULL, `timePosted` INTEGER NOT NULL, `isNewPost` INTEGER NOT NULL, `localPath` TEXT NOT NULL, `shareContentId` TEXT NOT NULL, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `posterId` TEXT NOT NULL, `posterName` TEXT NOT NULL, `avatar` TEXT NOT NULL, `message` TEXT NOT NULL, `image` TEXT NOT NULL, `video` TEXT NOT NULL, `isVisible` INTEGER NOT NULL, `likeCount` INTEGER NOT NULL, `commentCount` INTEGER NOT NULL, `timePosted` INTEGER NOT NULL, `isNewPost` INTEGER NOT NULL, `localPath` TEXT NOT NULL, `shareContentId` TEXT NOT NULL, `decentralizationType` TEXT, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
@@ -150,6 +150,11 @@
             "columnName": "shareContentId",
             "affinity": "TEXT",
             "notNull": true
+          },
+          {
+            "fieldPath": "decentralizationType",
+            "columnName": "decentralizationType",
+            "affinity": "TEXT"
           }
         ],
         "primaryKey": {
@@ -364,7 +369,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '739ccddf1191450aeac92e4c3bf7dff3')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '1246250b2b84dfcfd2593466f35c8d1e')"
     ]
   }
 }

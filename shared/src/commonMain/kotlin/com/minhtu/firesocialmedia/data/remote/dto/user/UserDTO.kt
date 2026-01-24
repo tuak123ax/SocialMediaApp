@@ -1,5 +1,6 @@
 package com.minhtu.firesocialmedia.data.remote.dto.user
 
+import com.minhtu.firesocialmedia.data.remote.dto.group.GroupSummaryDTO
 import com.minhtu.firesocialmedia.data.remote.dto.notification.NotificationDTO
 import com.minhtu.firesocialmedia.data.remote.dto.notification.toMap
 import kotlinx.serialization.Serializable
@@ -11,7 +12,8 @@ data class UserDTO(var email: String = "", var image: String = "", var name: Str
                    var friendRequests : ArrayList<String> = ArrayList(),
                    var notifications : ArrayList<NotificationDTO> = ArrayList(),
                    var friends : ArrayList<String> = ArrayList(),
-                   var likedComments : HashMap<String,Int> = HashMap()
+                   var likedComments : HashMap<String,Int> = HashMap(),
+                   var groups: HashMap<String, GroupSummaryDTO> = HashMap()
 )
 {
     fun addFriend(friend: String){
@@ -48,6 +50,7 @@ fun UserDTO.toMap(): Map<String, Any?> = mapOf(
     "likedComments" to likedComments,
     "friendRequests" to friendRequests,
     "friends" to friends,
-    "notifications" to notifications.map { it.toMap() }
+    "notifications" to notifications.map { it.toMap() },
+    "groups" to groups
 )
 

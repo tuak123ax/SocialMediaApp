@@ -1,12 +1,14 @@
 package com.minhtu.firesocialmedia.platform
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.unit.dp
 import com.minhtu.firesocialmedia.data.remote.service.imagepicker.ImagePicker
 import com.minhtu.firesocialmedia.di.PlatformContext
 import com.minhtu.firesocialmedia.domain.entity.home.deeplinks.ShareApp
@@ -43,7 +45,8 @@ fun CrossPlatformIcon(
             Image(
                 painter = iconPainter,
                 contentDescription = contentDescription,
-                modifier = modifier,
+                modifier = modifier
+                    .padding(4.dp),
                 contentScale = contentScale,
                 colorFilter = if (tint != Color.Unspecified) ColorFilter.tint(tint) else null
             )

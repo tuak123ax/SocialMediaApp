@@ -91,5 +91,9 @@ class IosRoomService : RoomService {
     override suspend fun deleteAllDraftPosts() {
         // no-op on iOS for now
     }
+
+    override suspend fun clearLocalFriends() {
+        // no-op on iOS for now
+    }
 }
 

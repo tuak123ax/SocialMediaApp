@@ -226,46 +226,46 @@ class Calling {
                     AutoSizeImage(
                         if(isCalling) callee!!.image else caller!!.image,
                         contentDescription = "image",
-                        contentScale = ContentScale.Companion.Crop,
-                        modifier = Modifier.Companion
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
                             .size(120.dp)
                             .clip(CircleShape) // Ensures circular shape
                             .border(
                                 2.dp,
-                                Color.Companion.White,
+                                Color.White,
                                 CircleShape
                             ) // Optional border for better appearance
-                            .testTag(TestTag.Companion.TAG_USER_AVATAR)
+                            .testTag(TestTag.TAG_USER_AVATAR)
                             .semantics {
-                                contentDescription = TestTag.Companion.TAG_USER_AVATAR
+                                contentDescription = TestTag.TAG_USER_AVATAR
                             }
                     )
                 }
-                Spacer(modifier = Modifier.Companion.height(10.dp)) // Space between avatar and name
+                Spacer(modifier = Modifier.height(10.dp)) // Space between avatar and name
                 // User name with max width & ellipsis
                 Text(
                     text = if(isCalling) callee!!.name else caller!!.name,
-                    color = Color.Companion.Black,
+                    color = Color.Black,
                     fontSize = 20.sp,
-                    fontWeight = FontWeight.Companion.Bold,
-                    textAlign = TextAlign.Companion.Center,
-                    modifier = Modifier.Companion.fillMaxWidth(), // Restrict width to avoid touching buttons
-                    overflow = TextOverflow.Companion.Ellipsis, // Add "..." if too long
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth(), // Restrict width to avoid touching buttons
+                    overflow = TextOverflow.Ellipsis, // Add "..." if too long
                     maxLines = 1
                 )
 
-                Spacer(modifier = Modifier.Companion.height(20.dp))
+                Spacer(modifier = Modifier.height(20.dp))
                 Text(
                     text = if(isCalling) "You are calling..." else "is calling you",
-                    color = Color.Companion.Black,
+                    color = Color.Black,
                     fontSize = 30.sp,
-                    fontWeight = FontWeight.Companion.Bold,
-                    textAlign = TextAlign.Companion.Center,
-                    modifier = Modifier.Companion.fillMaxWidth() // Restrict width to avoid touching buttons
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth() // Restrict width to avoid touching buttons
                 )
                 //Audio call is happening, start count-up timer
                 if(startCount) {
-                    Spacer(modifier = Modifier.Companion.height(20.dp))
+                    Spacer(modifier = Modifier.height(20.dp))
                     //Count-up timer
                     CountUpTimer(
                         callingViewModel.secondsForCountUpTimer.value,

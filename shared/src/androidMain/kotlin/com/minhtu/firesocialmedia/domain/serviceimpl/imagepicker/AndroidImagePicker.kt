@@ -20,6 +20,8 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.core.net.toUri
 import com.minhtu.firesocialmedia.data.remote.service.imagepicker.ImagePicker
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
 
 class AndroidImagePicker(
@@ -73,24 +75,30 @@ class AndroidImagePicker(
         launcher.launch(intent)
     }
 
-    override suspend fun loadImageBytes(uri: String): ByteArray? {
-        return try {
-            val parsedUri = uri.toUri()
-            val bitmap = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                val source = ImageDecoder.createSource(context.contentResolver, parsedUri)
-                ImageDecoder.decodeBitmap(source)
-            } else {
-                MediaStore.Images.Media.getBitmap(context.contentResolver, parsedUri)
-            }
+    override suspend fun loadImageBytes(uri: String): ByteArray? =
+        withContext(Dispatchers.IO) {
+            try {
+                val parsedUri = uri.toUri()
 
-            val stream = ByteArrayOutputStream()
-            bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)
-            stream.toByteArray()
-        } catch (e: Exception) {
-            e.printStackTrace()
-            null
+                val bitmap = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                    val source = ImageDecoder.createSource(context.contentResolver, parsedUri)
+                    ImageDecoder.decodeBitmap(source)
+                } else {
+                    @Suppress("DEPRECATION")
+                    MediaStore.Images.Media.getBitmap(context.contentResolver, parsedUri)
+                }
+
+                ByteArrayOutputStream().use { stream ->
+                    // JPEG is much faster/smaller than PNG for photos
+                    bitmap.compress(Bitmap.CompressFormat.JPEG, 85, stream)
+                    stream.toByteArray()
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                null
+            }
         }
-    }
+
 
     @Composable
     override fun ByteArrayImage(byteArray: ByteArray?, modifier: Modifier) {

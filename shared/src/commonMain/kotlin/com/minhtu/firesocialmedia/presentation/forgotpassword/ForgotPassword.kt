@@ -46,15 +46,15 @@ class ForgotPassword{
                         forgotPasswordViewModel.sendEmailResetPassword()
                     } else {
                         when (emailExisted.value!!.message) {
-                            Constants.Companion.EMAIL_EMPTY -> {
+                            Constants.EMAIL_EMPTY -> {
                                 showToast("Please input your email!")
                             }
 
-                            Constants.Companion.EMAIL_SERVER_ERROR -> {
+                            Constants.EMAIL_SERVER_ERROR -> {
                                 showToast("Server error happened! Please try again.")
                             }
 
-                            Constants.Companion.EMAIL_NOT_EXISTED -> {
+                            Constants.EMAIL_NOT_EXISTED -> {
                                 showToast("This email doesn't exist!")
                             }
                         }
@@ -72,27 +72,27 @@ class ForgotPassword{
                 }
             }
 
-            Box(modifier = Modifier.Companion.fillMaxSize()) {
+            Box(modifier = Modifier.fillMaxSize()) {
                 Column(modifier = modifier, verticalArrangement = Arrangement.Center) {
                     //Title
                     Text(
                         text = "Forgot Password",
-                        color = Color.Companion.Blue,
+                        color = Color.Blue,
                         fontSize = 30.sp,
-                        textAlign = TextAlign.Companion.Center,
-                        modifier = Modifier.Companion.fillMaxWidth()
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
                     )
-                    Spacer(modifier = Modifier.Companion.padding(bottom = 50.dp))
+                    Spacer(modifier = Modifier.padding(bottom = 50.dp))
                     //Username textfield
                     OutlinedTextField(
                         value = forgotPasswordViewModel.email, onValueChange = {
                             forgotPasswordViewModel.updateEmail(it)
-                        }, modifier = Modifier.Companion
+                        }, modifier = Modifier
                             .fillMaxWidth()
                             .padding(20.dp)
-                            .testTag(TestTag.Companion.TAG_USERNAME)
+                            .testTag(TestTag.TAG_USERNAME)
                             .semantics {
-                                contentDescription = TestTag.Companion.TAG_USERNAME
+                                contentDescription = TestTag.TAG_USERNAME
                             },
                         label = { Text(text = "Username") },
                         singleLine = true
@@ -100,7 +100,7 @@ class ForgotPassword{
 
                     //Row contains buttons
                     Row(
-                        modifier = Modifier.Companion
+                        modifier = Modifier
                             .fillMaxWidth()
                             .padding(20.dp), horizontalArrangement = Arrangement.Center
                     ) {
@@ -111,7 +111,7 @@ class ForgotPassword{
                         }) {
                             Text(text = "Back")
                         }
-                        Spacer(modifier = Modifier.Companion.padding(horizontal = 20.dp))
+                        Spacer(modifier = Modifier.padding(horizontal = 20.dp))
                         //Reset button
                         Button(onClick = { forgotPasswordViewModel.checkIfEmailExists() }) {
                             Text(text = "Reset Password")
@@ -119,7 +119,7 @@ class ForgotPassword{
                     }
                 }
                 if (isLoading) {
-                    Loading.Companion.LoadingScreen()
+                    Loading.LoadingScreen()
                 }
             }
         }

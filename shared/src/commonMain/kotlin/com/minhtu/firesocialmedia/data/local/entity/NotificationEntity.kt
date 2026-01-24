@@ -4,6 +4,7 @@ import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
 import com.minhtu.firesocialmedia.domain.entity.notification.NotificationType
+import com.minhtu.firesocialmedia.domain.core.DecentralizationType
 
 @Entity(
     tableName = "Notifications",
@@ -26,4 +27,20 @@ class EnumConverters {
     @androidx.room.TypeConverter
     fun toNotificationType(value: String): NotificationType =
         runCatching { NotificationType.valueOf(value) }.getOrElse { NotificationType.NONE }
+
+    @androidx.room.TypeConverter
+    fun fromDecentralizationType(type: DecentralizationType?): String? = when (type) {
+        is DecentralizationType.Public -> "PUBLIC"
+        is DecentralizationType.Private -> "PRIVATE"
+        is DecentralizationType.OnlyFriends -> "ONLY_FRIENDS"
+        null -> null
+    }
+
+    @androidx.room.TypeConverter
+    fun toDecentralizationType(value: String?): DecentralizationType? = when (value) {
+        "PUBLIC" -> DecentralizationType.Public
+        "PRIVATE" -> DecentralizationType.Private
+        "ONLY_FRIENDS" -> DecentralizationType.OnlyFriends
+        else -> null
+    }
 }

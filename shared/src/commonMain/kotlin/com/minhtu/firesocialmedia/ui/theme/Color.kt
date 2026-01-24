@@ -10,6 +10,11 @@ val RedAccent80 = Color(0xFFFFEBEE)  // Red 50
 val Red40 = Color(0xFFD32F2F)  // Red 700 (primary)
 val RedGrey40 = Color(0xFFC62828)  // Red 800 (secondary)
 val RedAccent40 = Color(0xFFB71C1C)  // Red 900 (tertiary)
+val adminCardColor = Color(0xFFFDF2F1)
+val adminBorderColor = Color(0xFFF3CFCB)
+val memberCardColor = Color(0xFFF5F7F9)
+val positiveBackgroundButtonColor = Color(0xFFFFE6E6)
+val positiveTintColor = Color(0xFFE53935)
 
 // Container and text colors
 val OnPrimary = Color(0xFFFFFFFF)

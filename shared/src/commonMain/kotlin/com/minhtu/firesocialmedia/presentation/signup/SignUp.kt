@@ -59,37 +59,37 @@ class SignUp {
                     onNavigateToInformationScreen()
                 } else {
                     when (signUpStatus.value.message) {
-                        Constants.Companion.DATA_EMPTY -> showToast("Please fill all information!")
-                        Constants.Companion.PASSWORD_MISMATCH -> showToast("Passwords are different!")
-                        Constants.Companion.PASSWORD_SHORT -> showToast("Password is too short!")
-                        Constants.Companion.SIGNUP_FAIL -> showToast("Sign up failed. Something went wrong!")
+                        Constants.DATA_EMPTY -> showToast("Please fill all information!")
+                        Constants.PASSWORD_MISMATCH -> showToast("Passwords are different!")
+                        Constants.PASSWORD_SHORT -> showToast("Password is too short!")
+                        Constants.SIGNUP_FAIL -> showToast("Sign up failed. Something went wrong!")
                     }
                 }
                 signUpViewModel.resetSignUpStatus()
             }
-            Box(modifier = Modifier.Companion.fillMaxSize()) {
+            Box(modifier = Modifier.fillMaxSize()) {
                 Column(modifier = modifier, verticalArrangement = Arrangement.Center) {
                     //Title
                     Text(
                         text = "Sign Up",
-                        color = Color.Companion.Red,
+                        color = Color.Red,
                         fontSize = 30.sp,
-                        textAlign = TextAlign.Companion.Center,
-                        modifier = Modifier.Companion.fillMaxWidth()
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
                     )
-                    Spacer(modifier = Modifier.Companion.padding(bottom = 30.dp))
+                    Spacer(modifier = Modifier.padding(bottom = 30.dp))
                     //Username textfield
                     OutlinedTextField(
                         value = signUpViewModel.email,
-                        textStyle = TextStyle(Color.Companion.White),
+                        textStyle = TextStyle(Color.White),
                         onValueChange = { email ->
                             signUpViewModel.updateEmail(email)
-                        }, modifier = Modifier.Companion
+                        }, modifier = Modifier
                             .fillMaxWidth()
                             .padding(20.dp)
-                            .testTag(TestTag.Companion.TAG_USERNAME)
+                            .testTag(TestTag.TAG_USERNAME)
                             .semantics {
-                                contentDescription = TestTag.Companion.TAG_USERNAME
+                                contentDescription = TestTag.TAG_USERNAME
                             },
                         label = { Text(text = "Username") },
                         shape = RoundedCornerShape(30.dp),
@@ -97,49 +97,49 @@ class SignUp {
                     )
                     //Password textfield
                     PasswordTextField(
-                        Constants.Companion.PASSWORD,
+                        Constants.PASSWORD,
                         signUpViewModel,
-                        TestTag.Companion.TAG_PASSWORD
+                        TestTag.TAG_PASSWORD
                     )
                     //Confirm password textfield
                     PasswordTextField(
-                        Constants.Companion.CONFIRM_PASSWORD,
+                        Constants.CONFIRM_PASSWORD,
                         signUpViewModel,
-                        TestTag.Companion.TAG_CONFIRMPASSWORD
+                        TestTag.TAG_CONFIRMPASSWORD
                     )
 
                     Row(
-                        modifier = Modifier.Companion
+                        modifier = Modifier
                             .fillMaxWidth()
                             .padding(20.dp), horizontalArrangement = Arrangement.Center
                     ) {
                         //Back button
                         Button(
                             onClick = { onNavigateToSignInScreen() },
-                            modifier = Modifier.Companion.testTag(TestTag.Companion.TAG_BUTTON_BACK)
+                            modifier = Modifier.testTag(TestTag.TAG_BUTTON_BACK)
                                 .semantics {
-                                    contentDescription = TestTag.Companion.TAG_BUTTON_BACK
+                                    contentDescription = TestTag.TAG_BUTTON_BACK
                                 }) {
                             Text(text = "Back")
                         }
-                        Spacer(modifier = Modifier.Companion.padding(horizontal = 20.dp))
+                        Spacer(modifier = Modifier.padding(horizontal = 20.dp))
                         //SignUp button
                         Button(
                             onClick = {
                                 loadingViewModel.showLoading()
                                 signUpViewModel.signUp()
                             },
-                            modifier = Modifier.Companion
-                                .testTag(TestTag.Companion.TAG_BUTTON_SIGNUP)
+                            modifier = Modifier
+                                .testTag(TestTag.TAG_BUTTON_SIGNUP)
                                 .semantics {
-                                    contentDescription = TestTag.Companion.TAG_BUTTON_SIGNUP
+                                    contentDescription = TestTag.TAG_BUTTON_SIGNUP
                                 }) {
                             Text(text = "Sign Up")
                         }
                     }
                 }
                 if (isLoading) {
-                    Loading.Companion.LoadingScreen()
+                    Loading.LoadingScreen()
                 }
             }
         }
@@ -150,15 +150,15 @@ class SignUp {
                 mutableStateOf(false)
             }
             OutlinedTextField(
-                value = if (label == Constants.Companion.PASSWORD) signUpViewModel.password else signUpViewModel.confirmPassword,
+                value = if (label == Constants.PASSWORD) signUpViewModel.password else signUpViewModel.confirmPassword,
                 onValueChange = { password ->
-                    if (label == Constants.Companion.PASSWORD) signUpViewModel.updatePassword(
+                    if (label == Constants.PASSWORD) signUpViewModel.updatePassword(
                         password
                     )
                     else signUpViewModel.updateConfirmPassword(password)
                 },
-                textStyle = TextStyle(Color.Companion.White),
-                modifier = Modifier.Companion
+                textStyle = TextStyle(Color.White),
+                modifier = Modifier
                     .fillMaxWidth()
                     .padding(20.dp)
                     .testTag(testTag)
@@ -168,8 +168,8 @@ class SignUp {
                 label = { Text(text = label) },
                 singleLine = true,
                 shape = androidx.compose.foundation.shape.RoundedCornerShape(30.dp),
-                visualTransformation = if (passwordVisibility) VisualTransformation.Companion.None else PasswordVisualTransformation(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Companion.Password),
+                visualTransformation = if (passwordVisibility) VisualTransformation.None else PasswordVisualTransformation(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                 trailingIcon = {
                     IconButton(onClick = { passwordVisibility = !passwordVisibility }) {
                         PasswordVisibilityIcon(passwordVisibility)

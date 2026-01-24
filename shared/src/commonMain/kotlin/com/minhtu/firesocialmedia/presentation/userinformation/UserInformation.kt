@@ -58,6 +58,7 @@ import androidx.compose.ui.unit.sp
 import com.minhtu.firesocialmedia.constants.Constants
 import com.minhtu.firesocialmedia.constants.TestTag
 import com.minhtu.firesocialmedia.data.remote.service.imagepicker.ImagePicker
+import com.minhtu.firesocialmedia.domain.core.DecentralizationType
 import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.platform.getImageBytesFromDrawable
@@ -130,27 +131,27 @@ class UserInformation {
             Box(modifier = modifier.padding(paddingValues)) {
                 Column(
                     verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.Companion.Start
+                    horizontalAlignment = Alignment.Start
                 ) {
                     //Cover photo box
-                    Box(contentAlignment = Alignment.Companion.Center) {
+                    Box(contentAlignment = Alignment.Center) {
                         var showMenu by remember { mutableStateOf(false) }
-                        val coverPhotoModifier = Modifier.Companion
+                        val coverPhotoModifier = Modifier
                             .height(200.dp)
                             .fillMaxWidth()
                             .clickable {
                                 showMenu = true
                             }
-                            .testTag(TestTag.Companion.TAG_COVER_PHOTO)
+                            .testTag(TestTag.TAG_COVER_PHOTO)
                             .semantics {
-                                contentDescription = TestTag.Companion.TAG_COVER_PHOTO
+                                contentDescription = TestTag.TAG_COVER_PHOTO
                             }
-                        var imageBytes = produceState<ByteArray?>(
+                        val imageBytes = produceState<ByteArray?>(
                             initialValue = null,
                             userInformationViewModel.coverPhoto
                         ) {
                             value =
-                                if (userInformationViewModel.coverPhoto == Constants.Companion.DEFAULT_AVATAR_URL) {
+                                if (userInformationViewModel.coverPhoto == Constants.DEFAULT_AVATAR_URL) {
                                     getImageBytesFromDrawable("unknownavatar")
                                 } else {
                                     imagePicker.loadImageBytes(userInformationViewModel.coverPhoto)
@@ -171,15 +172,15 @@ class UserInformation {
                     }
                     //User avatar, name and button
                     Row(
-                        modifier = Modifier.Companion
+                        modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 10.dp),
-                        verticalAlignment = Alignment.Companion.CenterVertically,
+                        verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween // Ensures spacing between name and buttons
                     ) {
                         Column(
-                            horizontalAlignment = Alignment.Companion.CenterHorizontally,
-                            modifier = Modifier.Companion
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier
                                 .weight(1f)
                                 .offset(y = (-50).dp) // Moves avatar & name up
                         ) {
@@ -190,39 +191,39 @@ class UserInformation {
                                 AutoSizeImage(
                                     user!!.image,
                                     contentDescription = "image",
-                                    contentScale = ContentScale.Companion.Crop,
-                                    modifier = Modifier.Companion
+                                    contentScale = ContentScale.Crop,
+                                    modifier = Modifier
                                         .size(120.dp)
                                         .clip(CircleShape) // Ensures circular shape
                                         .border(
                                             2.dp,
-                                            Color.Companion.White,
+                                            Color.White,
                                             CircleShape
                                         ) // Optional border for better appearance
-                                        .testTag(TestTag.Companion.TAG_USER_AVATAR)
+                                        .testTag(TestTag.TAG_USER_AVATAR)
                                         .semantics {
-                                            contentDescription = TestTag.Companion.TAG_USER_AVATAR
+                                            contentDescription = TestTag.TAG_USER_AVATAR
                                         }
                                 )
                             }
-                            Spacer(modifier = Modifier.Companion.height(10.dp)) // Space between avatar and name
+                            Spacer(modifier = Modifier.height(10.dp)) // Space between avatar and name
                             // User name with max width & ellipsis
                             Text(
                                 text = user!!.name,
-                                color = Color.Companion.Black,
+                                color = Color.Black,
                                 fontSize = 20.sp,
-                                fontWeight = FontWeight.Companion.Bold,
-                                textAlign = TextAlign.Companion.Center,
-                                modifier = Modifier.Companion.widthIn(max = 150.dp), // Restrict width to avoid touching buttons
-                                overflow = TextOverflow.Companion.Ellipsis, // Add "..." if too long
+                                fontWeight = FontWeight.Bold,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.widthIn(max = 150.dp), // Restrict width to avoid touching buttons
+                                overflow = TextOverflow.Ellipsis, // Add "..." if too long
                                 maxLines = 1
                             )
                         }
 
                         // Move buttons up by adjusting offset(y = -20.dp)
                         Row(
-                            verticalAlignment = Alignment.Companion.CenterVertically,
-                            modifier = Modifier.Companion.offset(y = (-20).dp) // Moves buttons up
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.offset(y = (-20).dp) // Moves buttons up
                         ) {
                             // Chat button
 //                            IconButton(
@@ -241,85 +242,91 @@ class UserInformation {
 //                            }
 
                             //Call button
-                            IconButton(
-                                onClick = {
-                                    if(user != null) {
-                                        userInformationViewModel.checkCalleeAvailable(user)
-                                    }
-                                },
-                                modifier = Modifier.Companion.border(
-                                    1.dp,
-                                    Color.Companion.Black,
-                                    CircleShape
-                                )
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Call,
-                                    contentDescription = "Call",
-                                    tint = Color.Companion.Gray
-                                )
+                            if(!isCurrentUser) {
+                                IconButton(
+                                    onClick = {
+                                        if(user != null) {
+                                            userInformationViewModel.checkCalleeAvailable(user)
+                                        }
+                                    },
+                                    modifier = Modifier.border(
+                                        1.dp,
+                                        Color.Black,
+                                        CircleShape
+                                    )
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Call,
+                                        contentDescription = "Call",
+                                        tint = Color.Gray
+                                    )
+                                }
                             }
 
-                            Spacer(modifier = Modifier.Companion.width(8.dp)) // Space between buttons
+                            Spacer(modifier = Modifier.width(8.dp)) // Space between buttons
 
                             // Add friend button
                             Box(
-                                contentAlignment = Alignment.Companion.Center,
-                                modifier = Modifier.Companion
+                                contentAlignment = Alignment.Center,
+                                modifier = Modifier
                                     .clip(RoundedCornerShape(20.dp)) // Clip first before applying shadow
                                     .shadow(4.dp) // Apply shadow after clipping
+                                    .width(140.dp) // Reserve space to keep avatar/name centered
                                     .background(
-                                        Brush.Companion.linearGradient(
+                                        Brush.linearGradient(
                                             colors = listOf(
-                                                Color.Companion.Red,
-                                                Color.Companion.White
+                                                Color.Red,
+                                                Color.White
                                             )
                                         )
                                     )
                             ) {
                                 var showMenu by remember { mutableStateOf(false) }
-                                Button(
-                                    onClick = {
-                                        if (addFriendStatus != Relationship.WAITING_RESPONSE) {
-                                            val relationship =
-                                                userInformationViewModel.checkRelationship(
-                                                    user!!,
-                                                    homeViewModel.currentUser!!
+                                if(!isCurrentUser) {
+                                    Button(
+                                        onClick = {
+                                            if (addFriendStatus != Relationship.WAITING_RESPONSE) {
+                                                val relationship =
+                                                    userInformationViewModel.checkRelationship(
+                                                        user!!,
+                                                        homeViewModel.currentUser!!
+                                                    )
+                                                userInformationViewModel.updateRelationship(relationship)
+                                                userInformationViewModel.clickAddFriendButton(
+                                                    friend = user,
+                                                    currentUser = homeViewModel.currentUser
                                                 )
-                                            userInformationViewModel.updateRelationship(relationship)
-                                            userInformationViewModel.clickAddFriendButton(
-                                                friend = user,
-                                                currentUser = homeViewModel.currentUser
-                                            )
-                                        } else {
-                                            showMenu = true
-                                        }
-                                    },
-                                    modifier = Modifier.Companion
-                                        .clip(
-                                            androidx.compose.foundation.shape.RoundedCornerShape(
-                                                20.dp
-                                            )
-                                        ) // Ensures button shape
-                                        .background(Color.Companion.Transparent) // Prevents default button background
-                                        .testTag(TestTag.Companion.TAG_BUTTON_ADDFRIEND)
-                                        .semantics {
-                                            contentDescription =
-                                                TestTag.Companion.TAG_BUTTON_ADDFRIEND
+                                            } else {
+                                                showMenu = true
+                                            }
                                         },
-                                    colors = ButtonDefaults.buttonColors(containerColor = Color.Companion.Transparent) // Makes background follow Box
-                                ) {
-                                    Text(
-                                        text = when (addFriendStatus) {
-                                            Relationship.FRIEND -> "Unfriend"
-                                            Relationship.FRIEND_REQUEST -> "Cancel Request"
-                                            Relationship.NONE -> "Add Friend"
-                                            Relationship.WAITING_RESPONSE -> "Response"
-                                            else -> "Unknown"
-                                        },
-                                        color = Color.Companion.Black,
-                                        maxLines = 1
-                                    )
+                                        modifier = Modifier
+                                            .clip(
+                                                androidx.compose.foundation.shape.RoundedCornerShape(
+                                                    20.dp
+                                                )
+                                            ) // Ensures button shape
+                                            .background(Color.Transparent) // Prevents default button background
+                                            .testTag(TestTag.TAG_BUTTON_ADDFRIEND)
+                                            .semantics {
+                                                contentDescription =
+                                                    TestTag.TAG_BUTTON_ADDFRIEND
+                                            },
+                                        colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent) // Makes background follow Box
+                                    ) {
+                                        Text(
+                                            text = when (addFriendStatus) {
+                                                Relationship.FRIEND -> "Unfriend"
+                                                Relationship.FRIEND_REQUEST -> "Cancel Request"
+                                                Relationship.NONE -> "Add Friend"
+                                                Relationship.WAITING_RESPONSE -> "Response"
+                                                else -> "Unknown"
+                                            },
+                                            textAlign = TextAlign.Center,
+                                            color = Color.Black,
+                                            maxLines = 1
+                                        )
+                                    }
                                 }
                                 DropdownMenuForResponse(
                                     showMenu,
@@ -334,12 +341,19 @@ class UserInformation {
 
                     val filterList by remember {
                         derivedStateOf {
-                            newsList.value.filter { news ->
+                            newsList.value
+                                .filter { news ->
                                 (news.posterId == user!!.uid)
                             }
+                                .filter { news ->
+                                    when(news.decentralizationType) {
+                                        DecentralizationType.Private -> news.posterId == homeViewModel.currentUser?.uid
+                                        else -> true
+                                    }
+                                }
                         }
                     }
-                    UiUtils.Companion.LazyColumnOfNewsWithSlideOutAnimationAndLoadMore(
+                    UiUtils.LazyColumnOfNewsWithSlideOutAnimationAndLoadMore(
                         localImageLoaderValue,
                         listState,
                         homeViewModel,
@@ -353,7 +367,7 @@ class UserInformation {
                         }
                     )
                 }
-                UiUtils.Companion.BackAndMoreOptionsRow(onNavigateBack)
+                UiUtils.BackAndMoreOptionsRow(onNavigateBack)
                 if(showBottomSheet) {
                     UiUtils.ShareBottomSheet(
                         deepLink = "https://firechat-aa433.web.app/news/${newToBeShared?.id}",

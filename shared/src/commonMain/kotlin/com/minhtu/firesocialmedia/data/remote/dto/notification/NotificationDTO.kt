@@ -1,6 +1,5 @@
 package com.minhtu.firesocialmedia.data.remote.dto.notification
 
-import com.minhtu.firesocialmedia.domain.entity.notification.NotificationType
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -10,7 +9,7 @@ data class NotificationDTO(
     val avatar : String ="",
     val sender : String = "",
     val timeSend : Long = 0,
-    val type : NotificationType = NotificationType.NONE,
+    val type : String = "NONE",
     var relatedInfo : String = ""
 ){
     companion object{
@@ -30,7 +29,7 @@ fun NotificationDTO.toMap(): Map<String, Any> = mapOf(
     "avatar" to avatar,
     "sender" to sender,
     "timeSend" to timeSend,
-    "type" to type.name, // store enum as string
+    "type" to type,
     "relatedInfo" to relatedInfo
 )
 
@@ -41,7 +40,7 @@ fun NotificationDTO.Companion.fromMap(map: Map<String, Any?>): NotificationDTO {
         avatar = map["avatar"] as? String ?: "",
         sender = map["sender"] as? String ?: "",
         timeSend = (map["timeSend"] as? Number)?.toLong() ?: 0L,
-        type = (map["type"] as? String)?.let { NotificationType.valueOf(it) } ?: NotificationType.NONE,
+        type = (map["type"] as? String) ?: "NONE",
         relatedInfo = map["relatedInfo"] as? String ?: ""
     )
 }

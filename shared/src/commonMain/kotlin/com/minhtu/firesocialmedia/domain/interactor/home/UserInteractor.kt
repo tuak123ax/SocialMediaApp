@@ -13,4 +13,5 @@ interface UserInteractor {
     suspend fun searchUserByName(name: String): List<UserInstance>?
     suspend fun storeUserFriendsToRoom(friends : List<UserInstance?>)
     suspend fun clearLocalData()
+    suspend fun clearLocalFriends()
 }

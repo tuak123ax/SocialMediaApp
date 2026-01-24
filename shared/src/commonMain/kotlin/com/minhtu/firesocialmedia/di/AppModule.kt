@@ -9,6 +9,7 @@ import com.minhtu.firesocialmedia.data.repository.AuthenticationRepositoryImpl
 import com.minhtu.firesocialmedia.data.repository.CallRepositoryImpl
 import com.minhtu.firesocialmedia.data.repository.CommentRepositoryImpl
 import com.minhtu.firesocialmedia.data.repository.CommonDbRepositoryImpl
+import com.minhtu.firesocialmedia.data.repository.GroupRepositoryImpl
 import com.minhtu.firesocialmedia.data.repository.LocalRepositoryImpl
 import com.minhtu.firesocialmedia.data.repository.NewsRepositoryImpl
 import com.minhtu.firesocialmedia.data.repository.NotificationRepositoryImpl
@@ -23,6 +24,7 @@ import com.minhtu.firesocialmedia.domain.repository.AuthenticationRepository
 import com.minhtu.firesocialmedia.domain.repository.CallRepository
 import com.minhtu.firesocialmedia.domain.repository.CommentRepository
 import com.minhtu.firesocialmedia.domain.repository.CommonDbRepository
+import com.minhtu.firesocialmedia.domain.repository.GroupRepository
 import com.minhtu.firesocialmedia.domain.repository.LocalRepository
 import com.minhtu.firesocialmedia.domain.repository.NewsRepository
 import com.minhtu.firesocialmedia.domain.repository.NotificationRepository
@@ -56,8 +58,28 @@ import com.minhtu.firesocialmedia.domain.usecases.forgotpassword.CheckIfEmailExi
 import com.minhtu.firesocialmedia.domain.usecases.forgotpassword.SendEmailResetPasswordUseCase
 import com.minhtu.firesocialmedia.domain.usecases.friend.SaveFriendRequestUseCase
 import com.minhtu.firesocialmedia.domain.usecases.friend.SaveFriendUseCase
+import com.minhtu.firesocialmedia.domain.usecases.group.CopyLinkUseCase
+import com.minhtu.firesocialmedia.domain.usecases.group.CreateGroupUseCase
+import com.minhtu.firesocialmedia.domain.usecases.group.DemoteMemberUseCase
+import com.minhtu.firesocialmedia.domain.usecases.group.FetchFeatureGroupsUseCase
+import com.minhtu.firesocialmedia.domain.usecases.group.FetchGroupInfoUseCase
+import com.minhtu.firesocialmedia.domain.usecases.group.FetchNotificationStateUseCase
+import com.minhtu.firesocialmedia.domain.usecases.group.FetchRecommendGroupsUseCase
+import com.minhtu.firesocialmedia.domain.usecases.group.FindGroupByIdUseCase
+import com.minhtu.firesocialmedia.domain.usecases.group.GetAllGroupsUseCase
+import com.minhtu.firesocialmedia.domain.usecases.group.GetAllMembersInGroupUseCase
+import com.minhtu.firesocialmedia.domain.usecases.group.GetGroupConfigsUseCase
+import com.minhtu.firesocialmedia.domain.usecases.group.InviteFriendToGroupUseCase
+import com.minhtu.firesocialmedia.domain.usecases.group.JoinGroupUseCase
+import com.minhtu.firesocialmedia.domain.usecases.group.LeaveAndDeleteGroupUseCase
+import com.minhtu.firesocialmedia.domain.usecases.group.LeaveGroupUseCase
+import com.minhtu.firesocialmedia.domain.usecases.group.PromoteMemberUseCase
+import com.minhtu.firesocialmedia.domain.usecases.group.RemoveMemberUseCase
+import com.minhtu.firesocialmedia.domain.usecases.group.SaveNewToGroupUseCase
+import com.minhtu.firesocialmedia.domain.usecases.group.UpdateNotificationStatusUseCase
 import com.minhtu.firesocialmedia.domain.usecases.home.ClearAccountUseCase
 import com.minhtu.firesocialmedia.domain.usecases.home.ClearLocalDataUseCase
+import com.minhtu.firesocialmedia.domain.usecases.home.ClearLocalFriendsUseCase
 import com.minhtu.firesocialmedia.domain.usecases.home.DeleteNewsFromDatabaseUseCase
 import com.minhtu.firesocialmedia.domain.usecases.home.GetLatestNewsUseCase
 import com.minhtu.firesocialmedia.domain.usecases.home.SaveCurrentUserInfoUseCase
@@ -258,7 +280,8 @@ object AppModule {
         searchUserByNameUseCase: SearchUserByNameUseCase,
         storeUserFriendsToRoomUseCase: StoreUserFriendsToRoomUseCase,
         saveCurrentUserInfoUseCase: SaveCurrentUserInfoUseCase,
-        clearLocalDataUseCase: ClearLocalDataUseCase
+        clearLocalDataUseCase: ClearLocalDataUseCase,
+        clearLocalFriendsUseCase: ClearLocalFriendsUseCase
     ) : UserInteractor {
         return UserInteractorImpl(
             getCurrentUserUidUseCase,
@@ -269,7 +292,8 @@ object AppModule {
             searchUserByNameUseCase,
             storeUserFriendsToRoomUseCase,
             saveCurrentUserInfoUseCase,
-            clearLocalDataUseCase
+            clearLocalDataUseCase,
+            clearLocalFriendsUseCase
         )
     }
     fun provideNewsInteractor(
@@ -409,7 +433,10 @@ object AppModule {
         updateNewsFromDatabaseUseCase: UpdateNewsFromDatabaseUseCase,
         loadNewsPostedWhenOfflineUseCase: LoadNewsPostedWhenOfflineUseCase,
         deleteAllDraftPostsUseCase: DeleteAllDraftPostsUseCase,
-        deleteDraftPostUseCase: DeleteDraftPostUseCase): UploadNewfeedViewModel {
+        deleteDraftPostUseCase: DeleteDraftPostUseCase,
+        saveNewToGroupUseCase: SaveNewToGroupUseCase,
+        getAllMembersInGroupUseCase : GetAllMembersInGroupUseCase,
+        getGroupConfigsUseCase: GetGroupConfigsUseCase): UploadNewfeedViewModel {
         return UploadNewfeedViewModel(
             getUserUseCase,
             saveNotificationToDatabaseUseCase,
@@ -417,7 +444,10 @@ object AppModule {
             updateNewsFromDatabaseUseCase,
             loadNewsPostedWhenOfflineUseCase,
             deleteAllDraftPostsUseCase,
-            deleteDraftPostUseCase
+            deleteDraftPostUseCase,
+            saveNewToGroupUseCase,
+            getAllMembersInGroupUseCase,
+            getGroupConfigsUseCase
         )
     }
 
@@ -567,5 +597,88 @@ object AppModule {
 
     fun provideDeleteDraftPostUseCase(commonDbRepository: CommonDbRepository) : DeleteDraftPostUseCase {
         return DeleteDraftPostUseCase(commonDbRepository)
+    }
+
+    //---------------------------Group----------------------------------------//
+    fun provideCreateGroupUseCase(groupRepository: GroupRepository) : CreateGroupUseCase{
+        return CreateGroupUseCase(groupRepository)
+    }
+    fun provideGroupRepository(platformContext: PlatformContext) : GroupRepository {
+        return GroupRepositoryImpl(
+            platformContext.database,
+            platformContext.networkMonitor,
+            platformContext.clipboard)
+    }
+    fun provideGetAllGroupsUseCase(groupRepository: GroupRepository) : GetAllGroupsUseCase {
+        return GetAllGroupsUseCase(groupRepository)
+    }
+    fun provideFetchGroupInfoUseCase(groupRepository: GroupRepository) : FetchGroupInfoUseCase {
+        return FetchGroupInfoUseCase(groupRepository)
+    }
+
+    fun provideSaveNewToGroupUseCase(groupRepository: GroupRepository) : SaveNewToGroupUseCase {
+        return SaveNewToGroupUseCase(groupRepository)
+    }
+
+    fun provideUpdateNotificationStatusUseCase(groupRepository: GroupRepository) : UpdateNotificationStatusUseCase {
+        return UpdateNotificationStatusUseCase(groupRepository)
+    }
+
+    fun provideGetAllMembersInGroupUseCase(groupRepository: GroupRepository) : GetAllMembersInGroupUseCase{
+        return GetAllMembersInGroupUseCase(groupRepository)
+    }
+
+    fun provideGetGroupConfigsUseCase(groupRepository: GroupRepository) : GetGroupConfigsUseCase{
+        return GetGroupConfigsUseCase(groupRepository)
+    }
+
+    fun provideFetchNotificationStateUseCase(groupRepository: GroupRepository) : FetchNotificationStateUseCase {
+        return FetchNotificationStateUseCase(groupRepository)
+    }
+
+    fun provideCopyLinkUseCase(groupRepository: GroupRepository) : CopyLinkUseCase{
+        return CopyLinkUseCase(groupRepository)
+    }
+
+    fun provideFindGroupByIdUseCase(groupRepository: GroupRepository) : FindGroupByIdUseCase {
+        return FindGroupByIdUseCase(groupRepository)
+    }
+
+    fun provideInviteFriendToGroupUseCase(groupRepository: GroupRepository) : InviteFriendToGroupUseCase {
+        return InviteFriendToGroupUseCase(groupRepository)
+    }
+
+    fun provideClearLocalFriendsUseCase(commonDbRepository: CommonDbRepository) : ClearLocalFriendsUseCase{
+        return ClearLocalFriendsUseCase(commonDbRepository)
+    }
+
+    fun provideJoinGroupUseCase(groupRepository: GroupRepository) : JoinGroupUseCase {
+        return JoinGroupUseCase(groupRepository)
+    }
+
+    fun provideLeaveGroupUseCase(groupRepository: GroupRepository) : LeaveGroupUseCase {
+        return LeaveGroupUseCase(groupRepository)
+    }
+
+    fun provideLeaveAndDeleteGroupUseCase(groupRepository: GroupRepository) : LeaveAndDeleteGroupUseCase {
+        return LeaveAndDeleteGroupUseCase(groupRepository)
+    }
+
+    fun provideRemoveMemberUseCase(groupRepository: GroupRepository) : RemoveMemberUseCase {
+        return RemoveMemberUseCase(groupRepository)
+    }
+
+    fun providePromoteMemberUseCase(groupRepository: GroupRepository) : PromoteMemberUseCase {
+        return PromoteMemberUseCase(groupRepository)
+    }
+    fun provideDemoteMemberUseCase(groupRepository: GroupRepository) : DemoteMemberUseCase {
+        return DemoteMemberUseCase(groupRepository)
+    }
+
+    fun provideFetchRecommendGroupsUseCase(groupRepository: GroupRepository) : FetchRecommendGroupsUseCase{
+        return FetchRecommendGroupsUseCase(groupRepository)
+    }
+    fun provideFetchFeatureGroupsUseCase(groupRepository: GroupRepository) : FetchFeatureGroupsUseCase {
+        return FetchFeatureGroupsUseCase(groupRepository)
     }
 }

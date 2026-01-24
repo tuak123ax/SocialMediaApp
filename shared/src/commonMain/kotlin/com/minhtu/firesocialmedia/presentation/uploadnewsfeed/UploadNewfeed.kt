@@ -26,13 +26,17 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -57,6 +61,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.minhtu.firesocialmedia.constants.TestTag
 import com.minhtu.firesocialmedia.data.remote.service.imagepicker.ImagePicker
+import com.minhtu.firesocialmedia.domain.core.DecentralizationType
 import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
 import com.minhtu.firesocialmedia.platform.CommonBackHandler
 import com.minhtu.firesocialmedia.platform.CrossPlatformIcon
@@ -80,7 +85,7 @@ class UploadNewsfeed {
                                  uploadNewsfeedViewModel: UploadNewfeedViewModel,
                                  loadingViewModel: LoadingViewModel,
                                  updateNew : NewsInstance?,
-                                 onNavigateToHomeScreen: () -> Unit){
+                                 onNavigateBack: () -> Unit){
             val isLoading by loadingViewModel.isLoading.collectAsState()
             uploadNewsfeedViewModel.updateCurrentUser(homeViewModel.currentUser!!)
 
@@ -89,6 +94,8 @@ class UploadNewsfeed {
             val updateStatus = uploadNewsfeedViewModel.updatePostStatus.collectAsState()
             val postError = uploadNewsfeedViewModel.postError.collectAsState()
             var isUpdated by remember { mutableStateOf(false) }
+            var showAccessPermissionSheet by remember { mutableStateOf(false) }
+            val currentAccessPermission = uploadNewsfeedViewModel.accessPermission.collectAsState()
             LaunchedEffect(Unit) {
                 if(updateNew != null) {
                     isUpdated = true
@@ -110,7 +117,7 @@ class UploadNewsfeed {
                     }
                     loadingViewModel.hideLoading()
                     uploadNewsfeedViewModel.resetPostStatus()
-                    onNavigateToHomeScreen()
+                    onNavigateBack()
                 }
             }
             LaunchedEffect(updateStatus.value) {
@@ -122,7 +129,7 @@ class UploadNewsfeed {
                     }
                     loadingViewModel.hideLoading()
                     uploadNewsfeedViewModel.resetPostStatus()
-                    onNavigateToHomeScreen()
+                    onNavigateBack()
                 }
             }
             LaunchedEffect(postError.value) {
@@ -163,7 +170,8 @@ class UploadNewsfeed {
                         uploadNewsfeedViewModel.resetPostError()
                         uploadNewsfeedViewModel.resetBackValue()
                         uploadNewsfeedViewModel.resetPostStatus()
-                        onNavigateToHomeScreen()
+                        uploadNewsfeedViewModel.resetGroupId()
+                        onNavigateBack()
                         showDialog.value = false // Close the dialog
                     },
                     showDialog = showDialog
@@ -180,7 +188,45 @@ class UploadNewsfeed {
                         textAlign = TextAlign.Center,
                         modifier = Modifier.fillMaxWidth()
                     )
-                    Spacer(modifier = Modifier.padding(bottom = 20.dp))
+                    Spacer(modifier = Modifier.padding(bottom = 10.dp))
+                    Row(horizontalArrangement = Arrangement.Center,
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            OutlinedButton(
+                                onClick = {
+                                    //Show bottom sheet to choose access permission
+                                    showAccessPermissionSheet = true
+                                },
+                                colors = ButtonDefaults.outlinedButtonColors(
+                                    containerColor = Color.White,
+                                    contentColor = Color.Black
+                                ),
+                                modifier = Modifier
+                                    .testTag(TestTag.TAG_BUTTON_ACCESS_MODIFIER)
+                                    .semantics {
+                                        contentDescription = TestTag.TAG_BUTTON_ACCESS_MODIFIER
+                                    }
+                            ) {
+                                AccessPermissionButtonContent(currentAccessPermission.value)
+                            }
+                            if(showAccessPermissionSheet) {
+                                //Access permission sheet
+                                AccessPermissionBottomSheet(
+                                    title = "Who can see your post?",
+                                    currentAccessPermission.value,
+                                    onDismiss = {
+                                        showAccessPermissionSheet = false
+                                    },
+                                    onSelected = { selectedAccess ->
+                                        showAccessPermissionSheet = false
+                                        uploadNewsfeedViewModel.updateAccessPermission(selectedAccess)
+                                    }
+                                )
+                            }
+                        }
+                    }
+                    Spacer(modifier = Modifier.padding(bottom = 10.dp))
                     OutlinedTextField(
                         value = uploadNewsfeedViewModel.message,
                         onValueChange = {
@@ -346,13 +392,13 @@ class UploadNewsfeed {
                             showDraftPickerDialog = true
                         },
                         colors = ButtonDefaults.outlinedButtonColors(
-                            containerColor = Color.Companion.White,
-                            contentColor = Color.Companion.Black
+                            containerColor = Color.White,
+                            contentColor = Color.Black
                         ),
-                        modifier = Modifier.Companion
-                            .testTag(TestTag.Companion.TAG_BUTTON_DRAFTPOST)
+                        modifier = Modifier
+                            .testTag(TestTag.TAG_BUTTON_DRAFTPOST)
                             .semantics {
-                                contentDescription = TestTag.Companion.TAG_BUTTON_DRAFTPOST
+                                contentDescription = TestTag.TAG_BUTTON_DRAFTPOST
                             }
                     ) {
                         BadgedBox(
@@ -364,13 +410,13 @@ class UploadNewsfeed {
                                 "draft",
                                 backgroundColor = "#FFFFFFFF",
                                 "Draft",
-                                Modifier.Companion
+                                Modifier
                                     .size(25.dp)
                                     .padding(end = 5.dp)
                             )
                         }
                         Spacer(Modifier.padding(horizontal = 5.dp))
-                        Text(text = "Your draft posts", color = Color.Companion.Black)
+                        Text(text = "Your draft posts", color = Color.Black)
                     }
                 }
                 DraftPostPickerDialog(
@@ -400,6 +446,35 @@ class UploadNewsfeed {
                     Loading.LoadingScreen()
                 }
             }
+        }
+
+        @Composable
+        fun AccessPermissionButtonContent(currentAccessPermission: DecentralizationType) {
+            CrossPlatformIcon(
+                when(currentAccessPermission) {
+                    DecentralizationType.Public -> {"public"}
+                    DecentralizationType.Private -> {"private"}
+                    DecentralizationType.OnlyFriends -> {"onlyFriends"}
+                    },
+                    backgroundColor = "#FFFFFFFF",
+                    "accessPermission",
+                    Modifier
+                        .size(25.dp)
+                        .padding(end = 5.dp)
+            )
+            Text(text = when(currentAccessPermission) {
+                DecentralizationType.Public -> {"Public"}
+                DecentralizationType.Private -> {"Private"}
+                DecentralizationType.OnlyFriends -> {"Only Friends"}
+            }, color = Color.Black)
+            CrossPlatformIcon(
+                "down_arrow",
+                backgroundColor = "#FFFFFFFF",
+                "down_arrow",
+                Modifier
+                    .size(25.dp)
+                    .padding(end = 5.dp)
+            )
         }
 
         fun getScreenName() : String{
@@ -538,7 +613,7 @@ class UploadNewsfeed {
                                     "nothing_here",
                                     backgroundColor = "#FFFFFFFF",
                                     "nothing",
-                                    Modifier.Companion
+                                    Modifier
                                         .fillMaxSize()
                                         .padding(vertical = 20.dp)
                                 )
@@ -553,5 +628,102 @@ class UploadNewsfeed {
             }
         }
 
+        @OptIn(ExperimentalMaterial3Api::class)
+        @Composable
+        fun AccessPermissionBottomSheet(
+            title : String,
+            currentAccess : DecentralizationType,
+            onDismiss: () -> Unit,
+            onSelected: (selectedAccess : DecentralizationType) -> Unit
+        ) {
+            var selectedAccess by remember { mutableStateOf(currentAccess) }
+            ModalBottomSheet(
+                onDismissRequest = { onDismiss() },
+                sheetState = rememberModalBottomSheetState(),
+            ) {
+                // Sheet Content
+                Column(Modifier.padding(16.dp)) {
+                    Text(title)
+                    Spacer(Modifier.height(10.dp))
+                    AccessPermissionRow(currentAccess) { access ->
+                        selectedAccess = access
+                    }
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
+                        Button(onClick = {
+                            onSelected(selectedAccess)
+                            }) {
+                            Text("Select")
+                        }
+                    }
+                }
+            }
+        }
+
+        @Composable
+        fun AccessPermissionRow(
+            currentAccess: DecentralizationType,
+            onSelect: (DecentralizationType) -> Unit) {
+            var localAccessState by remember { mutableStateOf(currentAccess) }
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 10.dp)
+            ) {
+                CrossPlatformIcon(
+                    icon = "public",
+                    backgroundColor = "#FFFFFFFF",
+                    contentDescription = "public",
+                    tint = if(localAccessState == DecentralizationType.Public) Color.Red else Color.Gray,
+                    modifier = Modifier
+                        .size(25.dp)
+                        .testTag(TestTag.TAG_SELECT_PUBLIC)
+                        .semantics {
+                            contentDescription = TestTag.TAG_SELECT_PUBLIC
+                        }
+                )
+                Text(
+                    text = "Public"
+                )
+                RadioButton(
+                    selected = localAccessState == DecentralizationType.Public,
+                    onClick = {
+                        localAccessState = DecentralizationType.Public
+                        onSelect(localAccessState)
+                    }
+                )
+            }
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 10.dp)
+            ) {
+                CrossPlatformIcon(
+                    icon = "private",
+                    backgroundColor = "#FFFFFFFF",
+                    contentDescription = "private",
+                    tint = if(localAccessState == DecentralizationType.Private) Color.Red else Color.Gray,
+                    modifier = Modifier
+                        .size(25.dp)
+                        .testTag(TestTag.TAG_SELECT_PRIVATE)
+                        .semantics {
+                            contentDescription = TestTag.TAG_SELECT_PRIVATE
+                        }
+                )
+                Text(
+                    text = "Private"
+                )
+                RadioButton(
+                    selected = localAccessState == DecentralizationType.Private,
+                    onClick = {
+                        localAccessState = DecentralizationType.Private
+                        onSelect(localAccessState)
+                    }
+                )
+            }
+        }
     }
 }

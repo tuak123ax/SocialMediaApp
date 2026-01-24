@@ -39,6 +39,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.outlined.Block
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
@@ -114,7 +115,6 @@ import com.minhtu.firesocialmedia.platform.VideoPlayer
 import com.minhtu.firesocialmedia.platform.convertTimeToDateString
 import com.minhtu.firesocialmedia.platform.getUriStringFromLocalPath
 import com.minhtu.firesocialmedia.platform.launchShareAppWithDeepLink
-import com.minhtu.firesocialmedia.platform.logMessage
 import com.minhtu.firesocialmedia.platform.queryShareApps
 import com.minhtu.firesocialmedia.presentation.home.Home
 import com.minhtu.firesocialmedia.presentation.home.HomeViewModel
@@ -123,6 +123,7 @@ import com.minhtu.firesocialmedia.presentation.navigationscreen.friend.Friend
 import com.minhtu.firesocialmedia.presentation.navigationscreen.friend.FriendViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.notification.Notification
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.Settings
+import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.GroupDetails.Companion.DropdownMenuForMoreOptionsInGroup
 import com.minhtu.firesocialmedia.presentation.search.SearchViewModel
 import com.seiko.imageloader.asImageBitmap
 import com.seiko.imageloader.ui.AutoSizeImage
@@ -448,7 +449,7 @@ class UiUtils {
                     //Shared content
                     Column(
                         modifier = Modifier
-                            .fillMaxSize()
+                            .fillMaxWidth()
                             .padding(10.dp)
                             .border(1.dp, Color.Black)
                     ) {
@@ -600,10 +601,6 @@ class UiUtils {
         ) {
             val coroutineScope = rememberCoroutineScope()
 
-            CommonBackHandler {
-                showDialog.value = true
-            }
-
             if (showDialog.value) {
                 AlertDialog(
                     onDismissRequest = { showDialog.value = false },
@@ -638,10 +635,6 @@ class UiUtils {
             onClickReject: () -> Unit,
             showDialog: MutableState<Boolean>
         ) {
-            CommonBackHandler {
-                showDialog.value = true
-            }
-
             if (showDialog.value) {
                 AlertDialog(
                     onDismissRequest = { showDialog.value = false },
@@ -675,8 +668,7 @@ class UiUtils {
             homeViewModel: HomeViewModel,
             onNavigateToUploadNews: () -> Unit,
             modifier: Modifier,
-            useDefaultInsets: Boolean = true,
-            useCustomBar: Boolean = false
+            useDefaultInsets: Boolean = true
         ) {
             val items = listOf(
                 Screen.Home,
@@ -684,86 +676,6 @@ class UiUtils {
                 Screen.Notification,
                 Screen.Settings
             )
-            if (useCustomBar) {
-                // Lightweight custom bar (fixed height) to match Android visual size
-                Box(modifier = modifier) {
-                    val currentRoute = currentRoute
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(56.dp)
-                            .background(Color.White)
-                            .align(Alignment.BottomCenter),
-                        horizontalArrangement = Arrangement.SpaceAround,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        items.forEach { screen ->
-                            val notificationCount = homeViewModel.listNotificationOfCurrentUser.size
-                            val showBadge = screen.route == Notification.getScreenName() && notificationCount > 0
-                            val selected = currentRoute == screen.route
-                            val tint = if (selected) Color.Red else Color(0xFF666666)
-                            val testTag = when(screen.route) {
-                                Notification.getScreenName() -> TestTag.TAG_NOTIFICATION_BOTTOM
-                                Home.getScreenName() -> TestTag.TAG_HOME_BOTTOM
-                                Friend.getScreenName() -> TestTag.TAG_FRIEND_BOTTOM
-                                Settings.getScreenName() -> TestTag.TAG_SETTING_BOTTOM
-                                else -> ""
-                            }
-                            Box(
-                                modifier = Modifier
-                                    .size(56.dp)
-                                    .clip(CircleShape)
-                                    .testTag(testTag)
-                                    .semantics { contentDescription = testTag }
-                                    .clickable { onNavigate(screen.route) },
-                                contentAlignment = Alignment.Center
-                            ) {
-                                if (showBadge) {
-                                    BadgedBox(badge = { Badge { Text(notificationCount.toString()) } }) {
-                                        Icon(
-                                            screen.icon,
-                                            contentDescription = screen.title,
-                                            tint = tint,
-                                            modifier = Modifier.size(28.dp)
-                                        )
-                                    }
-                                } else {
-                                    Icon(
-                                        screen.icon,
-                                        contentDescription = screen.title,
-                                        tint = tint,
-                                        modifier = Modifier.size(28.dp)
-                                    )
-                                }
-                            }
-                        }
-                    }
-
-                    // Floating action button centered above the bar
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier
-                            .size(56.dp)
-                            .offset(y = (-30).dp)
-                            .shadow(8.dp, CircleShape)
-                            .clip(CircleShape)
-                            .background(
-                                Brush.linearGradient(colors = listOf(Color.Red, Color.White))
-                            )
-                            .align(Alignment.BottomCenter)
-                    ) {
-                        FloatingActionButton(
-                            onClick = { onNavigateToUploadNews() },
-                            shape = CircleShape,
-                            containerColor = Color.Transparent,
-                            elevation = FloatingActionButtonDefaults.elevation(0.dp)
-                        ) {
-                            Icon(Icons.Default.Add, contentDescription = "Add", tint = Color.Black)
-                        }
-                    }
-                }
-                return
-            }
             Box(modifier = modifier){
                 val barInsets = if (useDefaultInsets) NavigationBarDefaults.windowInsets else WindowInsets(0)
                 NavigationBar(
@@ -850,6 +762,7 @@ class UiUtils {
                     tint = Color.Black,
                     modifier = Modifier
                         .size(30.dp)
+                        .clip(CircleShape)
                         .testTag(TestTag.TAG_BUTTON_BACK)
                         .semantics{
                             contentDescription = TestTag.TAG_BUTTON_BACK
@@ -867,6 +780,7 @@ class UiUtils {
                     tint = Color.Black,
                     modifier = Modifier
                         .size(30.dp)
+                        .clip(CircleShape)
                         .testTag(TestTag.TAG_BUTTON_MOREOPTIONS)
                         .semantics{
                             contentDescription = TestTag.TAG_BUTTON_MOREOPTIONS
@@ -876,6 +790,102 @@ class UiUtils {
                         }
                 )
             }
+        }
+
+        @Composable
+        fun BackAndTitleAndMoreOptionsRow(
+            title : String,
+            subTitle : String = "",
+            trailingIcon : String = "",
+            trailingIconTint : Color = Color.Black,
+            showMoreOptionsMenu : Boolean = false,
+            isMember : Boolean = true,
+            isAdmin : Boolean = false,
+            iconSize : Dp = 30.dp,
+            navigateBack : () -> Unit,
+            onClickMoreOptions : () -> Unit = {},
+            onDismissRequest : () -> Unit = {},
+            onLeaveGroup : () -> Unit = {},
+            onManageMembers : () -> Unit = {}) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color.White)
+                    .padding(10.dp)
+            ) {
+                CrossPlatformIcon(
+                    icon = "arrow_back",
+                    backgroundColor = "#FFFFFFFF",
+                    contentDescription = "Back",
+                    tint = Color.Black,
+                    modifier = Modifier
+                        .size(iconSize)
+                        .clip(CircleShape)
+                        .testTag(TestTag.TAG_BUTTON_BACK)
+                        .semantics { contentDescription = TestTag.TAG_BUTTON_BACK }
+                        .clickable { navigateBack() }
+                )
+
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
+                        .padding(horizontal = 8.dp)
+                ) {
+                    Text(
+                        text = title,
+                        color = Color.Black,
+                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.titleMedium,
+                        textAlign = TextAlign.Center
+                    )
+                    if(subTitle.isNotEmpty()) {
+                        Text(
+                            text = subTitle,
+                            color = Color.LightGray,
+                            style = MaterialTheme.typography.bodyMedium,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                }
+
+                if(isMember) {
+                    Box{
+                        CrossPlatformIcon(
+                            icon = trailingIcon,
+                            backgroundColor = "#FFFFFFFF",
+                            contentDescription = "More Options",
+                            tint = trailingIconTint,
+                            modifier = Modifier
+                                .size(iconSize)
+                                .clip(CircleShape)
+                                .testTag(TestTag.TAG_BUTTON_MOREOPTIONS)
+                                .semantics { contentDescription = TestTag.TAG_BUTTON_MOREOPTIONS }
+                                .clickable {
+                                    onClickMoreOptions()
+                                }
+                        )
+                        if(showMoreOptionsMenu) {
+                            DropdownMenuForMoreOptionsInGroup(
+                                showMoreOptionsMenu,
+                                isAdmin = isAdmin,
+                                onLeaveGroup = {
+                                    onLeaveGroup()
+                                },
+                                onDismissRequest = {
+                                    onDismissRequest()
+                                },
+                                onManageMembers = {
+                                    onManageMembers()
+                                }
+                            )
+                        }
+                    }
+                }
+            }
+
         }
 
         @Composable
@@ -1279,7 +1289,7 @@ class UiUtils {
         }
 
         @Composable
-        private fun NewsCardPlaceholder() {
+        fun NewsCardPlaceholder() {
             Card(
                 modifier = Modifier
                     .padding(start = 10.dp, end = 10.dp, top = 5.dp)
@@ -1361,6 +1371,47 @@ class UiUtils {
                 }
             }
         }
+
+        @Composable
+        fun NewsCardUnavailable(
+            message: String = "This content is not available"
+        ) {
+            Card(
+                modifier = Modifier
+                    .padding(start = 10.dp, end = 10.dp, top = 5.dp)
+                    .fillMaxWidth(),
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 30.dp, horizontal = 20.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+
+                    // Icon
+                    Icon(
+                        imageVector = Icons.Outlined.Block,
+                        contentDescription = null,
+                        tint = Color(0xFFBDBDBD),
+                        modifier = Modifier.size(48.dp)
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // Title
+                    Text(
+                        text = message,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color(0xFF9E9E9E),
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
+        }
+
 
         @Composable
         fun ThreeDotsLoading(
@@ -1701,6 +1752,41 @@ class UiUtils {
                             )
                         }
                     }
+                }
+            }
+        }
+
+        @Composable
+        fun TitleAndSubTitleBelow(
+            title : String,
+            subTitle : String = "",
+            modifier: Modifier = Modifier,
+            textAlign: TextAlign = TextAlign.Center
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 8.dp)
+            ) {
+                Text(
+                    text = title,
+                    color = Color.Black,
+                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.titleMedium,
+                    textAlign = textAlign,
+                    overflow = TextOverflow.Ellipsis,
+                    maxLines = 1,
+
+                )
+                if(subTitle.isNotEmpty()) {
+                    Text(
+                        text = subTitle,
+                        color = Color.LightGray,
+                        style = MaterialTheme.typography.bodyMedium,
+                        textAlign = textAlign,
+                        overflow = TextOverflow.Ellipsis,
+                        maxLines = 1,
+                    )
                 }
             }
         }

@@ -122,7 +122,7 @@ class AndroidAuthService(var context: Context) : AuthService{
                     // with Firebase.
                     val firebaseCredential = GoogleAuthProvider.getCredential(idToken, null)
                     Firebase.auth.signInWithCredential(firebaseCredential)
-                        .addOnCompleteListener(context as Activity) { task ->
+                        .addOnCompleteListener { task ->
                             if (task.isSuccessful) {
                                 val user = Firebase.auth.currentUser
                                 if(user != null && continuation.isActive) {

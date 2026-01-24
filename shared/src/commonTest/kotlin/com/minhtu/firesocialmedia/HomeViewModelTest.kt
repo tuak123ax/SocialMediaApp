@@ -44,6 +44,7 @@ class HomeViewModelTest {
             override suspend fun searchUserByName(name: String) = emptyList<UserInstance>()
             override suspend fun storeUserFriendsToRoom(friends: List<UserInstance?>) {}
             override suspend fun clearLocalData() {}
+            override suspend fun clearLocalFriends() {}
         }
         val fakeNewsInteractor = object : NewsInteractor {
             override suspend fun pageLatest(number: Int, lastTimePosted: Double?, lastKey: String?) = null
@@ -85,6 +86,7 @@ class HomeViewModelTest {
             override suspend fun searchUserByName(name: String) = emptyList<UserInstance>()
             override suspend fun storeUserFriendsToRoom(friends: List<UserInstance?>) {}
             override suspend fun clearLocalData() {}
+            override suspend fun clearLocalFriends() {}
         }
         val homeViewModel = HomeViewModel(
             fakeUserInteractor,
@@ -131,6 +133,7 @@ class HomeViewModelTest {
                 override suspend fun searchUserByName(name: String) = emptyList<UserInstance>()
                 override suspend fun storeUserFriendsToRoom(friends: List<UserInstance?>) {}
                 override suspend fun clearLocalData() {}
+                override suspend fun clearLocalFriends() {}
             },
             object : NewsInteractor {
                 override suspend fun pageLatest(number: Int, lastTimePosted: Double?, lastKey: String?) = LatestNewsResult(news, null, null)
@@ -174,6 +177,7 @@ class HomeViewModelTest {
                 override suspend fun searchUserByName(name: String) = emptyList<UserInstance>()
                 override suspend fun storeUserFriendsToRoom(friends: List<UserInstance?>) {}
                 override suspend fun clearLocalData() {}
+                override suspend fun clearLocalFriends() {}
             },
             object : NewsInteractor {
                 override suspend fun pageLatest(number: Int, lastTimePosted: Double?, lastKey: String?) = null
@@ -220,6 +224,7 @@ class HomeViewModelTest {
             override suspend fun searchUserByName(name: String) = emptyList<UserInstance>()
             override suspend fun storeUserFriendsToRoom(friends: List<UserInstance?>) {}
             override suspend fun clearLocalData() {}
+            override suspend fun clearLocalFriends() {}
         }
         val homeViewModel = HomeViewModel(
             fakeUserInteractor,
@@ -264,6 +269,7 @@ class HomeViewModelTest {
             override suspend fun searchUserByName(name: String) = emptyList<UserInstance>()
             override suspend fun storeUserFriendsToRoom(friends: List<UserInstance?>) {}
             override suspend fun clearLocalData() {}
+            override suspend fun clearLocalFriends() {}
         }
         val homeViewModel = HomeViewModel(
             fakeUserInteractor,

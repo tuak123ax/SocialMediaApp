@@ -16,6 +16,8 @@ import com.minhtu.firesocialmedia.data.remote.dto.call.CallingRequestDTO
 import com.minhtu.firesocialmedia.data.remote.dto.call.IceCandidateDTO
 import com.minhtu.firesocialmedia.data.remote.dto.call.OfferAnswerDTO
 import com.minhtu.firesocialmedia.data.remote.dto.comment.CommentDTO
+import com.minhtu.firesocialmedia.data.remote.dto.group.GroupDTO
+import com.minhtu.firesocialmedia.data.remote.dto.group.GroupSummaryDTO
 import com.minhtu.firesocialmedia.data.remote.dto.home.LatestNewsDTO
 import com.minhtu.firesocialmedia.data.remote.dto.news.NewsDTO
 import com.minhtu.firesocialmedia.data.remote.dto.notification.NotificationDTO
@@ -163,12 +165,14 @@ class AndroidDatabaseService(private val context: Context) : DatabaseService {
 
                 databaseReference.addListenerForSingleValueEvent(object : ValueEventListener {
                     override fun onDataChange(snapshot: DataSnapshot) {
+                        val notiSnap = snapshot.child("notifications")
+                        val keys = notiSnap.children.mapNotNull { it.key }
+                        logMessage("onDataChange",
+                            { "userId=$userId notiCount=${notiSnap.childrenCount} keys=$keys" })
+
                         val user = snapshot.getValue(UserDTO::class.java)
-                        if (user != null) {
-                            continuation.resume(user)
-                        } else {
-                            continuation.resume(null)
-                        }
+                        logMessage("onDataChange", { "mappedNotiSize=${user?.notifications?.size}" })
+                        continuation.resume(user)
                     }
 
                     override fun onCancelled(error: DatabaseError) {
@@ -465,6 +469,202 @@ class AndroidDatabaseService(private val context: Context) : DatabaseService {
 
     override fun stopObservePhoneCall() {
         AndroidDatabaseHelper.stopObservePhoneCall()
+    }
+
+    override suspend fun saveGroupAndUserGroups(
+        groupRootPath: String,
+        userRootPath: String,
+        userGroupsField: String,
+        groupAvatarsStoragePath : String,
+        group: GroupDTO,
+        userId: String): Boolean {
+        return AndroidDatabaseHelper.saveGroupAndUserGroups(
+            groupRootPath,
+            userRootPath,
+            userGroupsField,
+            groupAvatarsStoragePath,
+            group,
+            userId
+        )
+    }
+
+    override suspend fun getAllGroups(
+        userPath : String,
+        groupPath : String,
+        userId: String): Set<GroupSummaryDTO> {
+        return AndroidDatabaseHelper.getAllGroups(userPath, groupPath,userId)
+    }
+
+    override suspend fun fetchGroupInfo(
+        groupId: String,
+        groupPath: String
+    ): GroupDTO? {
+        return AndroidDatabaseHelper.fetchGroupInfo(groupId, groupPath)
+    }
+
+    override suspend fun saveNewToGroup(
+        newsDTO: NewsDTO,
+        groupId: String,
+        groupPath: String,
+        postsPath: String,
+        imagePath : String
+    ): Boolean {
+        return AndroidDatabaseHelper.saveNewToGroup(
+            newsDTO,
+            groupId,
+            groupPath,
+            postsPath,
+            imagePath
+        )
+    }
+
+    override suspend fun updateNotificationStatus(
+        newStatus: Boolean,
+        groupId: String,
+        userId : String,
+        userPath : String,
+        groupPath: String,
+        notificationStatusPath: String
+    ): Boolean {
+        return AndroidDatabaseHelper.updateNotificationStatus(
+            newStatus,
+            groupId,
+            userId,
+            userPath,
+            groupPath,
+            notificationStatusPath
+        )
+    }
+
+    override suspend fun getAllMembersInGroup(
+        groupId: String,
+        groupPath: String,
+        membersPath: String
+    ): HashMap<String, String> {
+        return AndroidDatabaseHelper.getAllMembersInGroup(
+            groupId,
+            groupPath,
+            membersPath
+        )
+    }
+
+    override suspend fun getGroupConfigs(
+        userId: String,
+        groupId: String,
+        userPath: String,
+        groupPath: String
+    ): GroupSummaryDTO {
+        return AndroidDatabaseHelper.getGroupConfigs(
+            userId,
+            groupId,
+            userPath,
+            groupPath
+        )
+    }
+
+    override suspend fun fetchNotificationState(
+        userId: String,
+        groupId: String,
+        userPath: String,
+        groupPath: String,
+        notificationStatusPath : String
+    ): Boolean {
+        return AndroidDatabaseHelper.fetchNotificationState(
+            userId,
+            groupId,
+            userPath,
+            groupPath,
+            notificationStatusPath
+        )
+    }
+
+    override suspend fun inviteFriendToGroup(
+        friendDto: UserDTO,
+        userPath : String,
+        notificationPath : String) {
+        return AndroidDatabaseHelper.inviteFriendToGroup(
+            friendDto,
+            userPath,
+            notificationPath
+        )
+    }
+
+    override suspend fun addUserToGroup(
+        user: UserDTO,
+        group : GroupDTO,
+        userPath: String,
+        groupPath: String,
+        memberPath : String,
+        memberCountPath : String
+    ): Boolean {
+        return AndroidDatabaseHelper.addUserToGroup(
+            user,
+            group,
+            userPath,
+            groupPath,
+            memberPath,
+            memberCountPath
+        )
+    }
+
+    override suspend fun removeUserFromGroup(
+        user: UserDTO,
+        group: GroupDTO,
+        userPath: String,
+        groupPath: String,
+        memberPath: String,
+        memberCountPath : String
+    ): Boolean {
+        return AndroidDatabaseHelper.removeUserFromGroup(
+            user,
+            group,
+            userPath,
+            groupPath,
+            memberPath,
+            memberCountPath
+        )
+    }
+
+    override suspend fun deleteGroup(
+        user: UserDTO,
+        group: GroupDTO,
+        userPath: String,
+        groupPath: String
+    ): Boolean {
+        return AndroidDatabaseHelper.deleteGroup(
+            user,
+            group,
+            userPath,
+            groupPath
+        )
+    }
+
+    override suspend fun updateMemberRole(
+        role : String,
+        user: UserDTO,
+        group: GroupDTO,
+        groupPath: String,
+        memberPath: String
+    ): Boolean {
+        return AndroidDatabaseHelper.updateMemberRole(
+            role,
+            user,
+            group,
+            groupPath,
+            memberPath
+        )
+    }
+
+    override suspend fun fetchRecommendGroups(
+        limit : Int,
+        groupPath: String,
+        memberCountPath: String
+    ): List<GroupDTO> {
+        return AndroidDatabaseHelper.fetchGroupsByMemberCount(
+            limit,
+            groupPath,
+            memberCountPath
+        )
     }
 
     override suspend fun observePhoneCallWithoutCheckingInCall(

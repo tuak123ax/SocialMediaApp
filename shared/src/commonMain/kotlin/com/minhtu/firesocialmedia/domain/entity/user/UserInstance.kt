@@ -1,5 +1,6 @@
 package com.minhtu.firesocialmedia.domain.entity.user
 
+import com.minhtu.firesocialmedia.domain.entity.group.GroupInstance
 import com.minhtu.firesocialmedia.domain.entity.notification.NotificationInstance
 import com.minhtu.firesocialmedia.domain.entity.notification.toMap
 
@@ -9,7 +10,8 @@ data class UserInstance(var email: String = "", var image: String = "", var name
                         var friendRequests : ArrayList<String> = ArrayList(),
                         var notifications : ArrayList<NotificationInstance> = ArrayList(),
                         var friends : ArrayList<String> = ArrayList(),
-                        var likedComments : HashMap<String,Int> = HashMap()
+                        var likedComments : HashMap<String,Int> = HashMap(),
+                        var groups: HashMap<String, GroupInstance> = HashMap()
 )
 {
     fun addFriend(friend: String){
@@ -46,6 +48,7 @@ fun UserInstance.toMap(): Map<String, Any?> = mapOf(
     "likedComments" to likedComments,
     "friendRequests" to friendRequests,
     "friends" to friends,
-    "notifications" to notifications.map { it.toMap() }
+    "notifications" to notifications.map { it.toMap() },
+    "groups" to groups
 )
 

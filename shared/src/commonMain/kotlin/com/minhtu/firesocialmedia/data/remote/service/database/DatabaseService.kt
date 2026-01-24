@@ -5,6 +5,8 @@ import com.minhtu.firesocialmedia.data.remote.dto.call.CallingRequestDTO
 import com.minhtu.firesocialmedia.data.remote.dto.call.IceCandidateDTO
 import com.minhtu.firesocialmedia.data.remote.dto.call.OfferAnswerDTO
 import com.minhtu.firesocialmedia.data.remote.dto.comment.CommentDTO
+import com.minhtu.firesocialmedia.data.remote.dto.group.GroupDTO
+import com.minhtu.firesocialmedia.data.remote.dto.group.GroupSummaryDTO
 import com.minhtu.firesocialmedia.data.remote.dto.home.LatestNewsDTO
 import com.minhtu.firesocialmedia.data.remote.dto.news.NewsDTO
 import com.minhtu.firesocialmedia.data.remote.dto.notification.NotificationDTO
@@ -177,4 +179,95 @@ interface DatabaseService {
     suspend fun searchUserByName(name: String, path: String) : List<UserDTO>?
     suspend fun sendWhoEndCall(sessionId: String, whoEndCall: String): Boolean
     fun stopObservePhoneCall()
+    suspend fun saveGroupAndUserGroups(
+        groupRootPath: String,
+        userRootPath: String,
+        userGroupsField: String,
+        groupAvatarsStoragePath : String,
+        group: GroupDTO,
+        userId: String): Boolean
+    suspend fun getAllGroups(
+        userPath : String,
+        groupPath : String,
+        userId : String) : Set<GroupSummaryDTO>
+
+    suspend fun fetchGroupInfo(groupId: String, groupPath: String): GroupDTO?
+    suspend fun saveNewToGroup(
+        newsDTO: NewsDTO,
+        groupId: String,
+        groupPath: String,
+        postsPath: String,
+        imagePath : String
+    ): Boolean
+
+    suspend fun updateNotificationStatus(
+        newStatus: Boolean,
+        groupId: String,
+        userId : String,
+        userPath: String,
+        groupPath: String,
+        notificationStatusPath: String
+    ): Boolean
+
+    suspend fun getAllMembersInGroup(
+        groupId: String,
+        groupPath: String,
+        membersPath: String
+    ): HashMap<String, String>
+
+    suspend fun getGroupConfigs(
+        userId: String,
+        groupId: String,
+        userPath: String,
+        groupPath: String
+    ): GroupSummaryDTO
+
+    suspend fun fetchNotificationState(
+        userId: String,
+        groupId: String,
+        userPath: String,
+        groupPath: String,
+        notificationStatusPath : String
+    ): Boolean
+
+    suspend fun inviteFriendToGroup(
+        friendDto: UserDTO,
+        userPath : String,
+        notificationPath : String)
+
+    suspend fun addUserToGroup(
+        user: UserDTO,
+        group : GroupDTO,
+        userPath: String,
+        groupPath: String,
+        memberPath : String,
+        memberCountPath : String): Boolean
+
+    suspend fun removeUserFromGroup(
+        user: UserDTO,
+        group: GroupDTO,
+        userPath: String,
+        groupPath: String,
+        memberPath: String,
+        memberCountPath : String
+    ): Boolean
+
+    suspend fun deleteGroup(
+        user: UserDTO,
+        group: GroupDTO,
+        userPath: String,
+        groupPath: String
+    ): Boolean
+
+    suspend fun updateMemberRole(
+        role : String,
+        user: UserDTO,
+        group: GroupDTO,
+        groupPath: String,
+        memberPath: String
+    ): Boolean
+
+    suspend fun fetchRecommendGroups(limit : Int,
+                                     groupPath: String,
+                                     memberCountPath: String): List<GroupDTO>
 }

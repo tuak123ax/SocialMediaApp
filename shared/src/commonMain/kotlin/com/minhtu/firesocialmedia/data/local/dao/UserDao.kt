@@ -42,5 +42,5 @@ interface UserDao {
     suspend fun deleteByIds(ids: List<String>)
 
     @Query("DELETE FROM UserFriends")
-    suspend fun clear()
+    suspend fun clearUserFriends()
 }

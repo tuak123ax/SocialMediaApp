@@ -38,92 +38,99 @@ class Settings {
         fun SettingsScreen(modifier: Modifier,
                            paddingValues: PaddingValues,
                            homeViewModel: HomeViewModel,
-                           onNavigateToSignIn: () -> Unit){
+                           onNavigateToSignIn: () -> Unit,
+                           onNavigateToGroupScreen: () -> Unit){
             Column(
                 verticalArrangement = Arrangement.Top,
-                horizontalAlignment = Alignment.Companion.CenterHorizontally,
+                horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = modifier.padding(paddingValues)
             ) {
                 Text(
                     text = "Settings",
                     fontSize = 20.sp,
-                    fontWeight = FontWeight.Companion.Bold,
-                    textAlign = TextAlign.Companion.Center,
-                    modifier = Modifier.Companion.fillMaxWidth().padding(vertical = 20.dp)
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 20.dp)
                 )
-//                val openChatAppIntent = getChatAppIntent(context)
-//                val openChatAppLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()){}
                 val showDialog = remember { mutableStateOf(false) }
-                UiUtils.Companion.ShowAlertDialogToLogout(onClickConfirm = {
+                UiUtils.ShowAlertDialogToLogout(
+                    onClickConfirm = {
                     homeViewModel.clearAccountInStorage()
                     homeViewModel.clearLocalData()
-                }, onNavigateToSignIn, showDialog)
-                //Fire chat button
+                },
+                    onNavigateToSignIn,
+                    showDialog)
+                //Group button
                 Button(
                     onClick = {
-//                    if (openChatAppIntent != null) {
-//                        openChatAppLauncher.launch(openChatAppIntent)
-//                    } else {
-//                        showToast("Can't find this app on your device!")
-//                    }
+                        onNavigateToGroupScreen()
                     },
                     shape = RoundedCornerShape(10.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.Companion.White.copy(alpha = 0.95f),
-                        contentColor = Color.Companion.Black
+                        containerColor = Color.White.copy(alpha = 0.95f),
+                        contentColor = Color.Black
                     ),
-                    modifier = Modifier.Companion
+                    modifier = Modifier
                         .padding(horizontal = 10.dp)
                         .border(
                             1.dp,
-                            Color.Companion.Black,
+                            Color.Black,
                             androidx.compose.foundation.shape.RoundedCornerShape(10.dp)
                         )
                         .fillMaxWidth()
-                        .testTag(TestTag.Companion.TAG_FIRECHAT_BUTTON)
+                        .testTag(TestTag.TAG_GROUP_BUTTON)
                         .semantics {
-                            contentDescription = TestTag.Companion.TAG_FIRECHAT_BUTTON
+                            contentDescription = TestTag.TAG_GROUP_BUTTON
                         }
                 ) {
                     Row(
                         horizontalArrangement = Arrangement.Start,
-                        verticalAlignment = Alignment.Companion.CenterVertically,
-                        modifier = Modifier.Companion
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
                             .fillMaxWidth()
                     ) {
                         CrossPlatformIcon(
-                            icon = "fire_chat_icon",
+                            icon = "group",
                             backgroundColor = "#00FFFFFF",
-                            contentDescription = "FireChat",
-                            modifier = Modifier.Companion
-                                .size(30.dp)
+                            contentDescription = "group",
+                            modifier = Modifier
+                                .size(40.dp)
                                 .padding(end = 5.dp)
                         )
-                        Text(text = "FireChat", color = Color.Companion.Black)
+                        Text(text = "Group", color = Color.Black)
+                        Spacer(Modifier.weight(1f))
+                        CrossPlatformIcon(
+                            icon = "right",
+                            backgroundColor = "#00FFFFFF",
+                            contentDescription = "right",
+                            modifier = Modifier
+                                .size(40.dp)
+                        )
                     }
                 }
 
-                Spacer(modifier = Modifier.Companion.weight(1f))
+                Spacer(modifier = Modifier.weight(1f))
                 Button(
                     onClick = {
                         showDialog.value = true
                     },
                     shape = androidx.compose.foundation.shape.RoundedCornerShape(10.dp),
-                    modifier = Modifier.Companion
+                    modifier = Modifier
                         .height(60.dp)
                         .fillMaxWidth()
                         .padding(10.dp)
-                        .testTag(TestTag.Companion.TAG_BUTTON_LOGOUT)
+                        .testTag(TestTag.TAG_BUTTON_LOGOUT)
                         .semantics {
-                            contentDescription = TestTag.Companion.TAG_BUTTON_LOGOUT
+                            contentDescription = TestTag.TAG_BUTTON_LOGOUT
                         },
                     elevation = ButtonDefaults.buttonElevation(
                         defaultElevation = 4.dp
                     ),
-                    colors = ButtonDefaults.buttonColors(Color.Companion.Gray)
+                    colors = ButtonDefaults.buttonColors(Color.Gray)
                 ) {
                     Text(text = "Logout")
                 }
+                Spacer(Modifier.height(20.dp))
             }
         }
 

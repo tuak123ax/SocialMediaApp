@@ -87,43 +87,6 @@ class Utils {
                 action))
         }
 
-        interface GetUserCallback{
-            fun onSuccess(users : List<UserInstance>)
-            fun onFailure()
-        }
-
-        interface GetNewCallback{
-            fun onSuccess(news : List<NewsInstance>,
-                          lastTimePosted : Double?,
-                          lastKey : String)
-            fun onFailure()
-        }
-
-        interface GetNotificationCallback{
-            fun onSuccess(notifications : List<NotificationInstance>)
-            fun onFailure()
-        }
-
-        interface SignInGoogleCallback{
-            fun onSuccess(email : String)
-            fun onFailure()
-        }
-
-        interface FetchSignInMethodCallback{
-            fun onSuccess(result : Pair<Boolean, String>)
-            fun onFailure(result : Pair<Boolean, String>)
-        }
-
-        interface SendPasswordResetEmailCallback{
-            fun onSuccess()
-            fun onFailure()
-        }
-
-        interface SaveSignUpInformationCallBack{
-            fun onSuccess()
-            fun onFailure()
-        }
-
         interface BasicCallBack{
             fun onSuccess()
             fun onFailure()
@@ -152,6 +115,18 @@ class Utils {
             } catch (ex : Exception) {
                 logMessage("decodeBase64ToBytes", { ex.message.toString() })
                 return null
+            }
+        }
+
+        fun convertToNumberString(number : Int) : String{
+            return if(number < 1000) {
+                number.toString()
+            } else if(number < 1000000) {
+                (number/1000).toString() + "K"
+            } else if(number < 1000000000) {
+                (number/1000000).toString() + "M"
+            } else {
+                (number/1000000000).toString() + "M"
             }
         }
     }

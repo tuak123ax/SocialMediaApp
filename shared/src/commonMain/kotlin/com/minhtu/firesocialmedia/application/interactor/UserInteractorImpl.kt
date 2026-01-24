@@ -6,6 +6,7 @@ import com.minhtu.firesocialmedia.domain.usecases.common.GetCurrentUserUidUseCas
 import com.minhtu.firesocialmedia.domain.usecases.common.GetUserUseCase
 import com.minhtu.firesocialmedia.domain.usecases.home.ClearAccountUseCase
 import com.minhtu.firesocialmedia.domain.usecases.home.ClearLocalDataUseCase
+import com.minhtu.firesocialmedia.domain.usecases.home.ClearLocalFriendsUseCase
 import com.minhtu.firesocialmedia.domain.usecases.home.SaveCurrentUserInfoUseCase
 import com.minhtu.firesocialmedia.domain.usecases.home.SaveLikedPostUseCase
 import com.minhtu.firesocialmedia.domain.usecases.home.SearchUserByNameUseCase
@@ -21,7 +22,8 @@ class UserInteractorImpl(
     private val searchUserByNameUseCase: SearchUserByNameUseCase,
     private val storeUserFriendsToRoomUseCase : StoreUserFriendsToRoomUseCase,
     private val saveCurrentUserInfoUseCase : SaveCurrentUserInfoUseCase,
-    private val clearLocalDataUseCase: ClearLocalDataUseCase
+    private val clearLocalDataUseCase: ClearLocalDataUseCase,
+    private val clearLocalFriendsUseCase : ClearLocalFriendsUseCase
 ) : UserInteractor {
     override suspend fun getCurrentUserId(): String? {
         return getCurrentUserUidUseCase.invoke()
@@ -64,5 +66,9 @@ class UserInteractorImpl(
 
     override suspend fun clearLocalData() {
         clearLocalDataUseCase.invoke()
+    }
+
+    override suspend fun clearLocalFriends() {
+        clearLocalFriendsUseCase.invoke()
     }
 }

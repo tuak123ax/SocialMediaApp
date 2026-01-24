@@ -26,7 +26,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.IosShare
 import androidx.compose.material.icons.filled.ModeComment
 import androidx.compose.material.icons.filled.PersonAddAlt1
@@ -66,7 +68,6 @@ import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
 import com.minhtu.firesocialmedia.domain.entity.notification.NotificationInstance
 import com.minhtu.firesocialmedia.domain.entity.notification.NotificationType
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
-import com.minhtu.firesocialmedia.platform.logMessage
 import com.minhtu.firesocialmedia.platform.showToast
 import com.minhtu.firesocialmedia.presentation.home.HomeViewModel
 import com.minhtu.firesocialmedia.presentation.loading.Loading
@@ -87,7 +88,8 @@ class Notification {
                                notificationViewModel : NotificationViewModel,
                                loadingViewModel: LoadingViewModel,
                                onNavigateToPostInformation: (new : NewsInstance) -> Unit,
-                               onNavigateToUserInformation: (user : UserInstance?) -> Unit){
+                               onNavigateToUserInformation: (user : UserInstance?) -> Unit,
+                               onNavigateToGroupDetails : (groupId : String) -> Unit){
             val isLoading by loadingViewModel.isLoading.collectAsState()
             val getNeededUsersStatus by notificationViewModel.getNeededUsersStatus.collectAsState()
             val getAllNotificationsStatus = homeViewModel.getAllNotificationsOfCurrentUser.value
@@ -168,7 +170,8 @@ class Notification {
                                             pendingDelete = true
                                         },
                                         onNavigateToPostInformation,
-                                        onNavigateToUserInformation
+                                        onNavigateToUserInformation,
+                                        onNavigateToGroupDetails
                                     )
                                 }
                             }
@@ -204,7 +207,8 @@ class Notification {
                                          notificationViewModel: NotificationViewModel,
                                          onDelete: () -> Unit,
                                          onNavigateToPostInformation: (new : NewsInstance) -> Unit,
-                                         onNavigateToUserInformation: (user : UserInstance?) -> Unit) {
+                                         onNavigateToUserInformation: (user : UserInstance?) -> Unit,
+                                         onNavigateToGroupDetails : (groupId : String) -> Unit) {
             val swipeDistancePx = with(LocalDensity.current) { 70.dp.toPx() }
             var offsetX by remember { mutableFloatStateOf(0f) }
             val animatedOffsetX by animateFloatAsState(targetValue = offsetX)
@@ -249,7 +253,7 @@ class Notification {
                     }
                 }
 
-                // Foreground content (slidable)
+                // Foreground content (slideable)
                 Box(
                     modifier = Modifier
                         .offset { IntOffset(animatedOffsetX.roundToInt(), 0) }
@@ -271,12 +275,9 @@ class Notification {
                             if (notification.relatedInfo.isNotEmpty()) {
                                 if (notification.type == NotificationType.LIKE ||
                                     notification.type == NotificationType.COMMENT ||
-                                    notification.type == NotificationType.UPLOAD_NEW
+                                    notification.type == NotificationType.UPLOAD_NEW||
+                                    notification.type == NotificationType.SHARE_NEW
                                 ) {
-                                    logMessage(
-                                        "onNavigateToPostInformation",
-                                        { notification.relatedInfo }
-                                    )
                                     notificationViewModel.onNotificationClick(
                                         notification,
                                         homeViewModel.listNews,
@@ -291,6 +292,12 @@ class Notification {
                                         onNavigateToUserInformation(
                                             user
                                         )
+                                    } else {
+                                        if(notification.type == NotificationType.INVITE_TO_GROUP) {
+                                            onNavigateToGroupDetails(
+                                                notification.relatedInfo
+                                            )
+                                        }
                                     }
                                 }
                             } else {
@@ -343,12 +350,15 @@ class Notification {
                     )
                     Text(
                         text = when (notification.type) {
-                            NotificationType.NONE -> ""
                             NotificationType.LIKE -> "liked your post!"
                             NotificationType.COMMENT -> "commented in your post!"
                             NotificationType.ADD_FRIEND -> "sent you a friend request!"
                             NotificationType.UPLOAD_NEW -> "uploaded a new post!"
                             NotificationType.SHARE_NEW -> "shared a post!"
+                            NotificationType.INVITE_TO_GROUP -> "invited you to a group!"
+                            else -> {
+                                "Unknown notification type!"
+                            }
                         },
                         color = Color.Gray,
                         maxLines = 1,
@@ -365,9 +375,6 @@ class Notification {
         @Composable
         private fun ShowBasedOnNotificationType(type: NotificationType) {
             when(type) {
-                NotificationType.NONE -> {
-
-                }
                 NotificationType.LIKE -> {
                     IconButton(onClick = { /* Handle click */ }) {
                         Icon(
@@ -412,6 +419,24 @@ class Notification {
                             imageVector = Icons.Filled.IosShare,
                             contentDescription = "Shared Post",
                             tint = Color.Green
+                        )
+                    }
+                }
+                NotificationType.INVITE_TO_GROUP -> {
+                    IconButton(onClick = { /* Handle click */ }) {
+                        Icon(
+                            imageVector = Icons.Default.Group,
+                            contentDescription = "Invite to group",
+                            tint = Color.Cyan
+                        )
+                    }
+                }
+                else -> {
+                    IconButton(onClick = { /* Handle click */ }) {
+                        Icon(
+                            imageVector = Icons.Default.Error,
+                            contentDescription = "Error",
+                            tint = Color.Red
                         )
                     }
                 }

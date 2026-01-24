@@ -12,6 +12,7 @@ import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.GenericTypeIndicator
+import com.google.firebase.database.ServerValue
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.StorageMetadata
@@ -21,8 +22,11 @@ import com.minhtu.firesocialmedia.data.remote.dto.call.AudioCallSessionDTO
 import com.minhtu.firesocialmedia.data.remote.dto.call.CallingRequestDTO
 import com.minhtu.firesocialmedia.data.remote.dto.call.IceCandidateDTO
 import com.minhtu.firesocialmedia.data.remote.dto.call.OfferAnswerDTO
+import com.minhtu.firesocialmedia.data.remote.dto.group.GroupDTO
+import com.minhtu.firesocialmedia.data.remote.dto.group.GroupSummaryDTO
 import com.minhtu.firesocialmedia.data.remote.dto.news.NewsDTO
 import com.minhtu.firesocialmedia.data.remote.dto.notification.NotificationDTO
+import com.minhtu.firesocialmedia.data.remote.dto.user.UserDTO
 import com.minhtu.firesocialmedia.domain.entity.base.BaseNewsInstance
 import com.minhtu.firesocialmedia.domain.entity.call.CallStatus
 import com.minhtu.firesocialmedia.platform.logMessage
@@ -901,7 +905,7 @@ class AndroidDatabaseHelper {
 
             // Attempt 1: original URI string (if parseable)
             val firstUri = originalUriStr?.let {
-                runCatching { Uri.parse(it) }.getOrNull()
+                runCatching { it.toUri() }.getOrNull()
             }
 
             if (firstUri != null) {
@@ -961,6 +965,398 @@ class AndroidDatabaseHelper {
                 // optional: log e
                 false
             }
+        }
+
+        suspend fun saveGroupAndUserGroups(
+            groupRootPath: String,
+            userRootPath: String,
+            userGroupsField: String,
+            groupAvatarsStoragePath : String,
+            group: GroupDTO,
+            userId: String
+        ): Boolean = suspendCancellableCoroutine { continuation ->
+
+            val databaseRef = FirebaseDatabase.getInstance().reference
+            val storageRef = FirebaseStorage.getInstance().reference.child(groupRootPath).child(groupAvatarsStoragePath).child(group.id)
+
+            //Store the avatar to the firebase storage first
+            try{
+                val metadata = StorageMetadata.Builder()
+                    .setCacheControl("public,max-age=604800,immutable")
+                    .build()
+                storageRef.putFile(group.avatar.toUri(), metadata).addOnCompleteListener{ putFileTask ->
+                    if(putFileTask.isSuccessful){
+                        storageRef.downloadUrl.addOnSuccessListener { dataUrl ->
+                            //Get the new url of avatar on remote
+                            group.avatar = dataUrl.toString()
+                            // Store only necessary fields under user
+                            val groupSummary = GroupSummaryDTO(
+                                id = group.id,
+                                name = group.name,
+                                avatar = group.avatar
+                            )
+
+                            val updates = hashMapOf<String, Any?>(
+                                "$groupRootPath/${group.id}" to group,
+
+                                "$userRootPath/$userId/$userGroupsField/${group.id}" to groupSummary
+                            )
+
+                            databaseRef.updateChildren(updates)
+                                .addOnCompleteListener { task ->
+                                    if (!continuation.isActive) return@addOnCompleteListener
+
+                                    if (!task.isSuccessful) {
+                                        Log.e("Task", "updateChildren FAILED", task.exception)
+                                        Log.e("Task", "updates=$updates")
+                                    } else {
+                                        Log.d("Task", "updateChildren SUCCESS")
+                                    }
+
+                                    continuation.resume(task.isSuccessful, onCancellation = {})
+                                }
+                        }
+                    }
+                }
+            } catch(ex : Exception) {
+                logMessage("saveGroupAndUserGroups", { "Exception when save Group And User Groups: " + ex.message.toString() })
+            }
+        }
+
+        suspend fun getAllGroups(
+            userPath: String,
+            groupPath: String,
+            userId: String
+        ): Set<GroupSummaryDTO> {
+            val snapshot = FirebaseDatabase
+                .getInstance()
+                .reference
+                .child(userPath)
+                .child(userId)
+                .child(groupPath)
+                .get()
+                .await()
+
+            return snapshot.children
+                .mapNotNull { it.getValue(GroupSummaryDTO::class.java) }
+                .toSet()
+        }
+
+        suspend fun fetchGroupInfo(groupId: String,
+                                   groupPath: String): GroupDTO? {
+            val snapshot = FirebaseDatabase
+                .getInstance()
+                .reference
+                .child(groupPath)
+                .child(groupId)
+                .get()
+                .await()
+
+            return snapshot.getValue(GroupDTO::class.java)
+        }
+
+        suspend fun saveNewToGroup(
+            newsDTO: NewsDTO,
+            groupId: String,
+            groupPath: String,
+            postsPath: String,
+            imagePath : String
+        ): Boolean {
+            return runCatching {
+                val storageRef = FirebaseStorage.getInstance().getReference().child(groupPath).child(groupId).child(imagePath).child(newsDTO.id)
+                val dbRef = FirebaseDatabase.getInstance().getReference().child(groupPath).child(groupId).child(postsPath).child(newsDTO.id)
+
+                when {
+                    newsDTO.image.isNotEmpty() -> {
+                        val url = uploadMediaAndGetUrl(
+                            storageRef = storageRef,
+                            originalUriStr = newsDTO.image,
+                            localPath = newsDTO.localPath
+                        )
+                        newsDTO.updateImage(url)
+                    }
+                    newsDTO.video.isNotEmpty() -> {
+                        val url = uploadMediaAndGetUrl(
+                            storageRef = storageRef,
+                            originalUriStr = newsDTO.video,
+                            localPath = newsDTO.localPath
+                        )
+                        newsDTO.updateVideo(url)
+                    }
+                    else -> {
+                        // No media, just write the post
+                    }
+                }
+
+                dbRef.setValue(newsDTO).await()
+                true
+            }.getOrElse { e ->
+                // optional: log e
+                false
+            }
+        }
+
+        suspend fun updateNotificationStatus(
+            newStatus: Boolean,
+            groupId: String,
+            userId : String,
+            userPath : String,
+            groupPath: String,
+            notificationStatusPath: String
+        ): Boolean  {
+            return runCatching {
+                val databaseRef = FirebaseDatabase
+                    .getInstance()
+                    .getReference()
+                    .child(userPath)
+                    .child(userId)
+                    .child(groupPath)
+                    .child(groupId)
+                    .child(notificationStatusPath)
+                databaseRef.setValue(newStatus).await()
+                true
+            }.getOrElse {
+                false
+            }
+        }
+
+        suspend fun getAllMembersInGroup(
+            groupId: String,
+            groupPath: String,
+            membersPath: String
+        ): HashMap<String, String> {
+            return runCatching {
+                val snapshot = FirebaseDatabase
+                    .getInstance()
+                    .getReference()
+                    .child(groupPath)
+                    .child(groupId)
+                    .child(membersPath)
+                    .get()
+                    .await()
+
+                val result = HashMap<String, String>()
+
+                for (child in snapshot.children) {
+                    val key = child.key ?: continue
+                    val value = child.getValue(String::class.java) ?: continue
+                    result[key] = value
+                }
+
+                result
+            }.getOrElse {
+                HashMap()
+            }
+        }
+
+        suspend fun getGroupConfigs(
+            userId: String,
+            groupId: String,
+            userPath: String,
+            groupPath: String
+        ): GroupSummaryDTO {
+            return runCatching {
+                val snapshot = FirebaseDatabase
+                    .getInstance()
+                    .getReference()
+                    .child(userPath)
+                    .child(userId)
+                    .child(groupPath)
+                    .child(groupId)
+                    .get()
+                    .await()
+                snapshot.getValue(GroupSummaryDTO::class.java) ?: GroupSummaryDTO()
+            }.getOrElse {
+                GroupSummaryDTO()
+            }
+        }
+
+        suspend fun fetchNotificationState(
+            userId: String,
+            groupId: String,
+            userPath: String,
+            groupPath: String,
+            notificationStatusPath : String
+        ): Boolean {
+            return runCatching {
+                val snapshot = FirebaseDatabase
+                    .getInstance()
+                    .getReference()
+                    .child(userPath)
+                    .child(userId)
+                    .child(groupPath)
+                    .child(groupId)
+                    .child(notificationStatusPath)
+                    .get()
+                    .await()
+                snapshot.getValue(Boolean::class.java) ?: false
+            }.getOrElse {
+                false
+            }
+        }
+
+        fun inviteFriendToGroup(
+            friendDto: UserDTO,
+            userPath : String,
+            notificationPath : String) {
+            val databaseRef = FirebaseDatabase
+                .getInstance()
+                .reference
+                .child(userPath)
+                .child(friendDto.uid)
+                .child(notificationPath)
+            databaseRef.setValue(friendDto.notifications)
+        }
+
+        suspend fun addUserToGroup(
+            user: UserDTO,
+            group : GroupDTO,
+            userPath: String,
+            groupPath: String,
+            memberPath : String,
+            memberCountPath : String): Boolean = suspendCancellableCoroutine { continuation ->
+            val databaseRef = FirebaseDatabase.getInstance().reference
+
+            // Store only necessary fields under user
+            val groupSummary = GroupSummaryDTO(
+                id = group.id,
+                name = group.name,
+                avatar = group.avatar
+            )
+
+            val updates = hashMapOf<String, Any?>(
+                "$groupPath/${group.id}/$memberPath/${user.uid}" to "member",
+
+                "$userPath/${user.uid}/$groupPath/${group.id}" to groupSummary,
+                "$groupPath/${group.id}/$memberCountPath" to ServerValue.increment(+1)
+            )
+
+            databaseRef.updateChildren(updates)
+                .addOnCompleteListener { task ->
+                    if (!continuation.isActive) return@addOnCompleteListener
+
+                    if (!task.isSuccessful) {
+                        Log.e("Task", "updateChildren FAILED", task.exception)
+                        Log.e("Task", "updates=$updates")
+                    } else {
+                        Log.d("Task", "updateChildren SUCCESS")
+                    }
+
+                    continuation.resume(task.isSuccessful, onCancellation = {})
+                }
+        }
+
+        suspend fun removeUserFromGroup(
+            user: UserDTO,
+            group: GroupDTO,
+            userPath: String,
+            groupPath: String,
+            memberPath: String,
+            memberCountPath : String
+        ): Boolean = suspendCancellableCoroutine { continuation ->
+            val databaseRef = FirebaseDatabase.getInstance().reference
+
+
+            val updates = hashMapOf(
+                "$groupPath/${group.id}/$memberPath/${user.uid}" to null,
+
+                "$userPath/${user.uid}/$groupPath/${group.id}" to null,
+                "$groupPath/${group.id}/$memberCountPath" to ServerValue.increment(-1)
+            )
+
+            databaseRef.updateChildren(updates)
+                .addOnCompleteListener { task ->
+                    if (!continuation.isActive) return@addOnCompleteListener
+
+                    if (!task.isSuccessful) {
+                        Log.e("Task", "updateChildren FAILED", task.exception)
+                        Log.e("Task", "updates=$updates")
+                    } else {
+                        Log.d("Task", "updateChildren SUCCESS")
+                    }
+
+                    continuation.resume(task.isSuccessful, onCancellation = {})
+                }
+        }
+
+        suspend fun deleteGroup(
+            user: UserDTO,
+            group: GroupDTO,
+            userPath: String,
+            groupPath: String
+        ): Boolean = suspendCancellableCoroutine { continuation ->
+            val databaseRef = FirebaseDatabase.getInstance().reference
+
+
+            val updates = hashMapOf<String, Any?>(
+                "$groupPath/${group.id}" to null,
+
+                "$userPath/${user.uid}/$groupPath/${group.id}" to null
+            )
+
+            databaseRef.updateChildren(updates)
+                .addOnCompleteListener { task ->
+                    if (!continuation.isActive) return@addOnCompleteListener
+
+                    if (!task.isSuccessful) {
+                        Log.e("Task", "updateChildren FAILED", task.exception)
+                        Log.e("Task", "updates=$updates")
+                    } else {
+                        Log.d("Task", "updateChildren SUCCESS")
+                    }
+
+                    continuation.resume(task.isSuccessful, onCancellation = {})
+                }
+        }
+
+        suspend fun updateMemberRole(
+            role : String,
+            user: UserDTO,
+            group: GroupDTO,
+            groupPath: String,
+            memberPath: String
+        ): Boolean = suspendCancellableCoroutine{ continuation ->
+            val databaseRef = FirebaseDatabase
+                .getInstance()
+                .reference
+                .child(groupPath)
+                .child(group.id)
+                .child(memberPath)
+                .child(user.uid)
+            databaseRef.setValue(role).addOnCompleteListener { task ->
+                continuation.resume(task.isSuccessful, onCancellation = {})
+            }
+        }
+
+        suspend fun fetchGroupsByMemberCount(
+            limit: Int,
+            groupPath : String,
+            memberCountPath : String
+        ) : List<GroupDTO> = suspendCancellableCoroutine{ continuation ->
+            val databaseRef = FirebaseDatabase
+                .getInstance()
+                .reference
+                .child(groupPath)
+
+            databaseRef
+                .orderByChild(memberCountPath)
+                .limitToLast(limit)
+                .addListenerForSingleValueEvent(object : ValueEventListener {
+                    override fun onDataChange(snapshot: DataSnapshot) {
+                        val list = snapshot.children
+                            .mapNotNull { it.getValue(GroupDTO::class.java) }
+                            .sortedByDescending { it.memberCount }
+                        if(continuation.isActive) continuation.resume(
+                            list,
+                            onCancellation = {})
+                    }
+
+                    override fun onCancelled(error: DatabaseError) {
+                        if(continuation.isActive) continuation.resume(
+                            emptyList(),
+                            onCancellation = {})
+                    }
+                })
         }
     }
 }
