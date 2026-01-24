@@ -73,6 +73,7 @@ import androidx.compose.ui.unit.sp
 import com.minhtu.firesocialmedia.constants.TestTag
 import com.minhtu.firesocialmedia.domain.entity.group.GroupInstance
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
+import com.minhtu.firesocialmedia.platform.CommonBackHandler
 import com.minhtu.firesocialmedia.platform.showToast
 import com.minhtu.firesocialmedia.presentation.loading.Loading
 import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
@@ -104,6 +105,9 @@ class ManageMembers {
             onNavigateToUserInformationScreen : (UserInstance) -> Unit,
             onNavigateToSelectGroupScreen : () -> Unit
         ) {
+            CommonBackHandler {
+                onNavigateBack()
+            }
             val isLoading by loadingViewModel.isLoading.collectAsState()
             val removeMemberStatus by manageMembersViewModel.removeMemberStatus.collectAsState()
             var adminToDelete by remember { mutableStateOf<UserInstance?>(null) }
@@ -220,7 +224,10 @@ class ManageMembers {
                                 subHeader = if(adminList.size > 1) "${adminList.size} Admins" else "${adminList.size} Admin",
                                 headerTextColor = Color.Red
                             )}
-                            items(adminList, key = {it.uid}) { admin ->
+                            val filterAdminList = adminList.filter {
+                                it.name.contains(searchViewModel.query, ignoreCase = true)
+                            }
+                            items(filterAdminList, key = {it.uid}) { admin ->
                                 val visible = adminPendingDeleteId != admin.uid
                                 Box(
                                     modifier = Modifier
@@ -280,7 +287,10 @@ class ManageMembers {
                                 subHeader = if(memberList.size > 1) "${memberList.size} Members" else "${memberList.size} Member",
                                 headerTextColor = Color.Gray
                             )}
-                            items(memberList, key = {it.uid}) { member ->
+                            val filterMemberList = memberList.filter {
+                                it.name.contains(searchViewModel.query, ignoreCase = true)
+                            }
+                            items(filterMemberList, key = {it.uid}) { member ->
                                 //State to track visibility of a member
                                 var visible by remember { mutableStateOf(true) }
                                 //State to track to delay before delete data from db

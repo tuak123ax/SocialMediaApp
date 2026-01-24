@@ -215,8 +215,17 @@ class CreateGroup {
                     ) {
                         Button(
                             onClick = {
-                                loadingViewModel.showLoading()
-                                createGroupViewModel.createGroup(currentUser)
+                                if(createGroupViewModel.groupName.value.isEmpty()) {
+                                    showToast("Please input group name!")
+                                } else {
+                                    if(createGroupViewModel.accessPermission.value == DecentralizationType.Private &&
+                                        createGroupViewModel.password.value.isEmpty()) {
+                                        showToast("Please input group password!")
+                                    } else {
+                                        loadingViewModel.showLoading()
+                                        createGroupViewModel.createGroup(currentUser)
+                                    }
+                                }
                             },
                             modifier = Modifier
                                 .fillMaxWidth()

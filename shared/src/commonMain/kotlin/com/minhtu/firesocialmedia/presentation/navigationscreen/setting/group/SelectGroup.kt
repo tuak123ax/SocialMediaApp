@@ -46,6 +46,7 @@ import androidx.compose.ui.unit.dp
 import com.minhtu.firesocialmedia.constants.TestTag
 import com.minhtu.firesocialmedia.domain.entity.group.GroupInstance
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
+import com.minhtu.firesocialmedia.platform.CommonBackHandler
 import com.minhtu.firesocialmedia.platform.CrossPlatformIcon
 import com.minhtu.firesocialmedia.platform.showToast
 import com.minhtu.firesocialmedia.presentation.search.Search
@@ -63,9 +64,13 @@ class SelectGroup {
             selectGroupViewModel: SelectGroupViewModel,
             searchViewModel : SearchViewModel,
             localImageLoaderValue : ProvidedValue<*>,
+            onNavigateBack : () -> Unit,
             onNavigateToCreateGroup : () -> Unit,
             onNavigateToSelectedGroup : (GroupInstance) -> Unit
         ) {
+            CommonBackHandler {
+                onNavigateBack()
+            }
             val groupList = currentUser.groups.values
             Column(
                 modifier = Modifier

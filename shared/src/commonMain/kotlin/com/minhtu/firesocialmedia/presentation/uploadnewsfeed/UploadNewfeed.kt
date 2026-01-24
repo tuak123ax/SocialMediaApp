@@ -702,36 +702,6 @@ class UploadNewsfeed {
                     .padding(horizontal = 10.dp)
             ) {
                 CrossPlatformIcon(
-                    icon = "onlyFriends",
-                    backgroundColor = "#FFFFFFFF",
-                    contentDescription = "onlyFriends",
-                    tint = if(localAccessState == DecentralizationType.OnlyFriends) Color.Red else Color.Gray,
-                    modifier = Modifier
-                        .size(25.dp)
-                        .testTag(TestTag.TAG_SELECT_ONLYFRIENDS)
-                        .semantics {
-                            contentDescription = TestTag.TAG_SELECT_ONLYFRIENDS
-                        }
-                )
-                Text(
-                    text = "Only Friends"
-                )
-                RadioButton(
-                    selected = localAccessState == DecentralizationType.OnlyFriends,
-                    onClick = {
-                        localAccessState = DecentralizationType.OnlyFriends
-                        onSelect(DecentralizationType.OnlyFriends)
-                    }
-                )
-            }
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 10.dp)
-            ) {
-                CrossPlatformIcon(
                     icon = "private",
                     backgroundColor = "#FFFFFFFF",
                     contentDescription = "private",

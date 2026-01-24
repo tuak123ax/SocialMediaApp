@@ -73,6 +73,7 @@ class ExploreGroupViewModel(
             val filtered = result
                 .filter { currentUser.uid !in it.members }
                 .filter { query.isBlank() || it.name.contains(query, true) }
+                .shuffled()
             _fetchFeatureGroups.value = filtered
             endReachedFeature = result.size < currentFeatureLimit
             if (!endReachedFeature) currentFeatureLimit += featurePageSize

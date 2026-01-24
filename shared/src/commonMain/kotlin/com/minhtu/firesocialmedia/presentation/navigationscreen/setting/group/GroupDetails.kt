@@ -29,10 +29,12 @@ import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.NotificationsOff
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenu
@@ -41,11 +43,13 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.TabRowDefaults
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -68,6 +72,8 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -239,6 +245,9 @@ class GroupDetails {
                     groupDetailsViewModel.resetLeaveGroupStatus()
                 }
             }
+
+            var showPasswordDialog by remember { mutableStateOf(false) }
+
 
             //Show more options menu
             var showMoreOptionsMenu by remember { mutableStateOf(false) }
@@ -522,7 +531,11 @@ class GroupDetails {
                             OutlinedButton(
                                 onClick = {
                                     if(fetchGroupInfoState != null) {
-                                        groupDetailsViewModel.joinGroup(currentUser, fetchGroupInfoState!!)
+                                        if(fetchGroupInfoState!!.password.isNotEmpty()) {
+                                            showPasswordDialog = true
+                                        } else {
+                                            groupDetailsViewModel.joinGroup(currentUser, fetchGroupInfoState!!)
+                                        }
                                     }
                                 },
                                 shape = RoundedCornerShape(10.dp),
@@ -580,6 +593,20 @@ class GroupDetails {
                         },
                         onClick = {
                             showBottomSheet = false
+                        }
+                    )
+                }
+                if(showPasswordDialog) {
+                    PasswordDialog(
+                        show = showPasswordDialog,
+                        onDismiss = { showPasswordDialog = false },
+                        onConfirm = { password ->
+                            if(fetchGroupInfoState!= null && fetchGroupInfoState!!.password == password) {
+                                groupDetailsViewModel.joinGroup(currentUser, fetchGroupInfoState!!)
+                                showPasswordDialog = false
+                            } else {
+                                showToast("Password is wrong. Please try again!!!")
+                            }
                         }
                     )
                 }
@@ -884,5 +911,50 @@ class GroupDetails {
                 }
             }
         }
+
+        @Composable
+        fun PasswordDialog(
+            show: Boolean,
+            onDismiss: () -> Unit,
+            onConfirm: (String) -> Unit
+        ) {
+            if (!show) return
+
+            var password by remember { mutableStateOf("") }
+
+            AlertDialog(
+                onDismissRequest = onDismiss,
+                title = { Text("Enter password") },
+                text = {
+                    OutlinedTextField(
+                        value = password,
+                        onValueChange = { password = it },
+                        singleLine = true,
+                        label = { Text("Password") },
+                        visualTransformation = PasswordVisualTransformation(),
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Password
+                        )
+                    )
+                },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            onConfirm(password)
+                            password = ""
+                        },
+                        enabled = password.isNotBlank()
+                    ) {
+                        Text("Confirm")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = onDismiss) {
+                        Text("Cancel")
+                    }
+                }
+            )
+        }
+
     }
 }

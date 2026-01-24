@@ -94,6 +94,107 @@ class SignInViewModelTest {
         override suspend fun searchUserByName(name: String, path: String) = null
         override suspend fun sendWhoEndCall(sessionId: String, whoEndCall: String) = true
         override fun stopObservePhoneCall() {}
+
+        // -------- Group APIs (stubs) ----------
+        override suspend fun saveGroupAndUserGroups(
+            groupRootPath: String,
+            userRootPath: String,
+            userGroupsField: String,
+            groupAvatarsStoragePath: String,
+            group: com.minhtu.firesocialmedia.data.remote.dto.group.GroupDTO,
+            userId: String
+        ): Boolean = true
+
+        override suspend fun getAllGroups(
+            userPath: String,
+            groupPath: String,
+            userId: String
+        ): Set<com.minhtu.firesocialmedia.data.remote.dto.group.GroupSummaryDTO> = emptySet()
+
+        override suspend fun fetchGroupInfo(groupId: String, groupPath: String): com.minhtu.firesocialmedia.data.remote.dto.group.GroupDTO? = null
+
+        override suspend fun saveNewToGroup(
+            newsDTO: com.minhtu.firesocialmedia.data.remote.dto.news.NewsDTO,
+            groupId: String,
+            groupPath: String,
+            postsPath: String,
+            imagePath: String
+        ): Boolean = true
+
+        override suspend fun updateNotificationStatus(
+            newStatus: Boolean,
+            groupId: String,
+            userId: String,
+            userPath: String,
+            groupPath: String,
+            notificationStatusPath: String
+        ): Boolean = true
+
+        override suspend fun getAllMembersInGroup(
+            groupId: String,
+            groupPath: String,
+            membersPath: String
+        ): HashMap<String, String> = hashMapOf()
+
+        override suspend fun getGroupConfigs(
+            userId: String,
+            groupId: String,
+            userPath: String,
+            groupPath: String
+        ): com.minhtu.firesocialmedia.data.remote.dto.group.GroupSummaryDTO = com.minhtu.firesocialmedia.data.remote.dto.group.GroupSummaryDTO()
+
+        override suspend fun fetchNotificationState(
+            userId: String,
+            groupId: String,
+            userPath: String,
+            groupPath: String,
+            notificationStatusPath: String
+        ): Boolean = false
+
+        override suspend fun inviteFriendToGroup(
+            friendDto: com.minhtu.firesocialmedia.data.remote.dto.user.UserDTO,
+            userPath: String,
+            notificationPath: String
+        ) {}
+
+        override suspend fun addUserToGroup(
+            user: com.minhtu.firesocialmedia.data.remote.dto.user.UserDTO,
+            group: com.minhtu.firesocialmedia.data.remote.dto.group.GroupDTO,
+            userPath: String,
+            groupPath: String,
+            memberPath: String,
+            memberCountPath: String
+        ): Boolean = true
+
+        override suspend fun removeUserFromGroup(
+            user: com.minhtu.firesocialmedia.data.remote.dto.user.UserDTO,
+            group: com.minhtu.firesocialmedia.data.remote.dto.group.GroupDTO,
+            userPath: String,
+            groupPath: String,
+            memberPath: String,
+            memberCountPath: String
+        ): Boolean = true
+
+        override suspend fun deleteGroup(
+            user: com.minhtu.firesocialmedia.data.remote.dto.user.UserDTO,
+            group: com.minhtu.firesocialmedia.data.remote.dto.group.GroupDTO,
+            userPath: String,
+            groupPath: String
+        ): Boolean = true
+
+        override suspend fun updateMemberRole(
+            role: String,
+            user: com.minhtu.firesocialmedia.data.remote.dto.user.UserDTO,
+            group: com.minhtu.firesocialmedia.data.remote.dto.group.GroupDTO,
+            groupPath: String,
+            memberPath: String
+        ): Boolean = true
+
+        override suspend fun fetchRecommendGroups(
+            limit: Int,
+            groupPath: String,
+            memberCountPath: String
+        ): List<com.minhtu.firesocialmedia.data.remote.dto.group.GroupDTO> = emptyList()
     }
 
     private class FakePlatformContext(
@@ -142,6 +243,7 @@ class SignInViewModelTest {
             override suspend fun loadNewsPostedWhenOffline() = emptyList<com.minhtu.firesocialmedia.data.local.entity.NewsEntity>()
             override suspend fun deleteDraftPost(id: String) {}
             override suspend fun deleteAllDraftPosts() {}
+            override suspend fun clearLocalFriends() {}
         }
         override val permissionManager: PermissionManager = object : PermissionManager {
             override suspend fun requestCameraAndAudioPermissions() = true

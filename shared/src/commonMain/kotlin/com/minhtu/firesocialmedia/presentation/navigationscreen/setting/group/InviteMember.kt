@@ -68,6 +68,7 @@ import com.minhtu.firesocialmedia.constants.TestTag
 import com.minhtu.firesocialmedia.data.remote.constant.DataConstant
 import com.minhtu.firesocialmedia.domain.entity.group.GroupInstance
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
+import com.minhtu.firesocialmedia.platform.CommonBackHandler
 import com.minhtu.firesocialmedia.platform.CrossPlatformIcon
 import com.minhtu.firesocialmedia.presentation.search.Search
 import com.minhtu.firesocialmedia.presentation.search.SearchViewModel
@@ -90,6 +91,9 @@ class InviteMember {
             searchViewModel: SearchViewModel,
             onNavigateBack : () -> Unit
         ) {
+            CommonBackHandler {
+                onNavigateBack()
+            }
             var showBottomSheet by rememberSaveable { mutableStateOf(false) }
             Box(modifier = Modifier.padding(paddingValues)) {
                 Column(
@@ -137,11 +141,12 @@ class InviteMember {
                     if(currentUser.friends.isNotEmpty()) {
                         var memberList by remember { mutableStateOf<List<UserInstance>>(emptyList()) }
                         // Run filtering when friend list or search query changes
-                        LaunchedEffect(Unit) {
+                        LaunchedEffect(searchViewModel.query) {
                             memberList = coroutineScope {
                                 currentUser.friends.map { userId ->
                                     async {
                                         inviteMemberViewModel.findUserById(userId)
+                                            ?.takeIf { it.name.contains(searchViewModel.query, ignoreCase = true) }
                                     }
                                 }.awaitAll().filterNotNull()
                             }

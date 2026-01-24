@@ -18,6 +18,8 @@ import com.minhtu.firesocialmedia.data.remote.dto.home.LatestNewsDTO
 import com.minhtu.firesocialmedia.data.remote.dto.news.NewsDTO
 import com.minhtu.firesocialmedia.data.remote.dto.notification.NotificationDTO
 import com.minhtu.firesocialmedia.data.remote.dto.notification.fromMap
+import com.minhtu.firesocialmedia.data.remote.dto.group.GroupDTO
+import com.minhtu.firesocialmedia.data.remote.dto.group.GroupSummaryDTO
 import com.minhtu.firesocialmedia.data.remote.dto.signin.SignInDTO
 import com.minhtu.firesocialmedia.data.remote.dto.user.UserDTO
 import com.minhtu.firesocialmedia.data.remote.dto.user.toMap
@@ -630,5 +632,147 @@ class IosDatabaseService() : DatabaseService {
                 continuation.resume(null) {}
             }
         }
+    }
+
+    // -------------------- Group placeholder implementations (iOS) -------------------- //
+    override suspend fun saveGroupAndUserGroups(
+        groupRootPath: String,
+        userRootPath: String,
+        userGroupsField: String,
+        groupAvatarsStoragePath: String,
+        group: GroupDTO,
+        userId: String
+    ): Boolean {
+        // TODO: Implement iOS group creation flow
+        return false
+    }
+
+    override suspend fun getAllGroups(
+        userPath: String,
+        groupPath: String,
+        userId: String
+    ): Set<GroupSummaryDTO> {
+        // TODO: Implement iOS get all groups
+        return emptySet()
+    }
+
+    override suspend fun fetchGroupInfo(groupId: String, groupPath: String): GroupDTO? {
+        // TODO: Implement iOS fetch group info
+        return null
+    }
+
+    override suspend fun saveNewToGroup(
+        newsDTO: NewsDTO,
+        groupId: String,
+        groupPath: String,
+        postsPath: String,
+        imagePath: String
+    ): Boolean {
+        // TODO: Implement iOS save new to group
+        return false
+    }
+
+    override suspend fun updateNotificationStatus(
+        newStatus: Boolean,
+        groupId: String,
+        userId: String,
+        userPath: String,
+        groupPath: String,
+        notificationStatusPath: String
+    ): Boolean {
+        // TODO: Implement iOS notification status update
+        return false
+    }
+
+    override suspend fun getAllMembersInGroup(
+        groupId: String,
+        groupPath: String,
+        membersPath: String
+    ): HashMap<String, String> {
+        // TODO: Implement iOS fetch members
+        return HashMap()
+    }
+
+    override suspend fun getGroupConfigs(
+        userId: String,
+        groupId: String,
+        userPath: String,
+        groupPath: String
+    ): GroupSummaryDTO {
+        // TODO: Implement iOS group configs
+        return GroupSummaryDTO()
+    }
+
+    override suspend fun fetchNotificationState(
+        userId: String,
+        groupId: String,
+        userPath: String,
+        groupPath: String,
+        notificationStatusPath: String
+    ): Boolean {
+        // TODO: Implement iOS fetch notification state
+        return false
+    }
+
+    override suspend fun inviteFriendToGroup(
+        friendDto: UserDTO,
+        userPath: String,
+        notificationPath: String
+    ) {
+        // TODO: Implement iOS invite friend to group
+    }
+
+    override suspend fun addUserToGroup(
+        user: UserDTO,
+        group: GroupDTO,
+        userPath: String,
+        groupPath: String,
+        memberPath: String,
+        memberCountPath: String
+    ): Boolean {
+        // TODO: Implement iOS add user to group
+        return false
+    }
+
+    override suspend fun removeUserFromGroup(
+        user: UserDTO,
+        group: GroupDTO,
+        userPath: String,
+        groupPath: String,
+        memberPath: String,
+        memberCountPath: String
+    ): Boolean {
+        // TODO: Implement iOS remove user from group
+        return false
+    }
+
+    override suspend fun deleteGroup(
+        user: UserDTO,
+        group: GroupDTO,
+        userPath: String,
+        groupPath: String
+    ): Boolean {
+        // TODO: Implement iOS delete group
+        return false
+    }
+
+    override suspend fun updateMemberRole(
+        role: String,
+        user: UserDTO,
+        group: GroupDTO,
+        groupPath: String,
+        memberPath: String
+    ): Boolean {
+        // TODO: Implement iOS update member role
+        return false
+    }
+
+    override suspend fun fetchRecommendGroups(
+        limit: Int,
+        groupPath: String,
+        memberCountPath: String
+    ): List<GroupDTO> {
+        // TODO: Implement iOS fetch recommend/feature groups
+        return emptyList()
     }
 }

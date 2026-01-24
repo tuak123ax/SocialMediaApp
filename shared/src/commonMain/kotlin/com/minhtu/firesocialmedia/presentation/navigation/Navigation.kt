@@ -36,7 +36,6 @@ import com.minhtu.firesocialmedia.domain.entity.home.deeplinks.DeepLinksData
 import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.platform.generateImageLoader
-import com.minhtu.firesocialmedia.platform.logMessage
 import com.minhtu.firesocialmedia.platform.platformViewModel
 import com.minhtu.firesocialmedia.platform.rememberPlatformImagePicker
 import com.minhtu.firesocialmedia.platform.setupSignInLauncher
@@ -169,7 +168,6 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
             } else {
                 // Now online → only show if we were actually offline before
                 if (prev == true) {
-                    logMessage("networkStatus", { "online" })
                     snackBarHostState.currentSnackbarData?.dismiss()
                     snackBarHostState.showSnackbar(
                         message = "You are back online",
@@ -942,6 +940,10 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                         selectGroupViewModel,
                         searchViewModel,
                         localImageLoaderValue,
+                        onNavigateBack = {
+                            searchViewModel.updateQuery("")
+                            navController.popBackStack()
+                        },
                         onNavigateToCreateGroup = {
                             navController.navigate(CreateGroup.getScreenName())
                         },
@@ -967,6 +969,7 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                             inviteMemberViewModel,
                             searchViewModel,
                             onNavigateBack = {
+                                searchViewModel.updateQuery("")
                                 navController.popBackStack()
                             }
                         )
@@ -1070,6 +1073,7 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                             paddingValues,
                             localImageLoaderValue,
                             onNavigateBack = {
+                                searchViewModel.updateQuery("")
                                 navController.popBackStack()
                             },
                             onInviteMembers = {

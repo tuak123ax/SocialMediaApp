@@ -185,6 +185,13 @@ kotlin {
             implementation("junit:junit:4.13.2")
         }
 
+        androidInstrumentedTest.dependencies {
+            implementation("androidx.test:core-ktx:1.6.1")
+            implementation("androidx.test.ext:junit:1.2.1")
+            implementation("androidx.test.espresso:espresso-core:3.6.1")
+            implementation("androidx.compose.ui:ui-test-junit4")
+        }
+
         iosMain.dependencies {
             api(compose.runtime)
             implementation(compose.foundation)
@@ -237,6 +244,7 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
 dependencies {
     add("kspAndroid", libs.androidx.room.compiler)
     add("kspCommonMainMetadata", libs.androidx.room.compiler)
+    add("debugImplementation", "androidx.compose.ui:ui-test-manifest")
 }
 
 room {
