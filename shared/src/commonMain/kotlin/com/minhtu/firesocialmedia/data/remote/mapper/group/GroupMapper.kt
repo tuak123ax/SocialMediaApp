@@ -15,6 +15,7 @@ fun GroupInstance.toDto() : GroupDTO {
         password,
         description,
         createdDate,
+        memberCount,
         members,
         HashMap(posts.mapValues { (_,v) -> v.toDto() })
     )
@@ -28,6 +29,7 @@ fun GroupDTO.toDomain() : GroupInstance {
         password,
         description,
         createdDate,
+        memberCount,
         members,
         HashMap(posts.mapValues { (_,v) -> v.toDomain() })
     )

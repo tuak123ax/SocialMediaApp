@@ -37,4 +37,6 @@ interface GroupRepository {
 
     suspend fun promoteMember(member: UserInstance, group: GroupInstance): Boolean
     suspend fun demoteMember(member: UserInstance, group: GroupInstance): Boolean
+    suspend fun fetchRecommendGroups(limit: Int): List<GroupInstance>
+    suspend fun fetchFeatureGroups(limit: Int): List<GroupInstance>
 }

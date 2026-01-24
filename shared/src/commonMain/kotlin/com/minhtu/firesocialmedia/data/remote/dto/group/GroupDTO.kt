@@ -11,6 +11,7 @@ data class GroupDTO(
     var password : String = "",
     var description : String = "",
     var createdDate : Long = 0,
+    var memberCount : Long = 0,
     var members : HashMap<String, String> = HashMap(),
     var posts: HashMap<String, NewsDTO> = HashMap()
 )

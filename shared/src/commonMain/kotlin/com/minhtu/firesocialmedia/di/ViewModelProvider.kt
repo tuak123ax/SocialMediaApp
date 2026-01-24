@@ -13,6 +13,7 @@ import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.friend.FriendViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.notification.NotificationViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.CreateGroupViewModel
+import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.ExploreGroupViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.GroupDetailsViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.InviteMemberViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.ManageMembersViewModel
@@ -346,5 +347,15 @@ object ViewModelProvider {
             removeMemberUseCase,
             promoteMemberUseCase,
             demoteMemberUseCase)
+    }
+
+    fun createExploreGroupViewModel(platformContext: PlatformContext): ExploreGroupViewModel {
+        val groupRepository = AppModule.provideGroupRepository(platformContext)
+        val fetchRecommendGroupsUseCase = AppModule.provideFetchRecommendGroupsUseCase(groupRepository)
+        val fetchFeatureGroupsUseCase = AppModule.provideFetchFeatureGroupsUseCase((groupRepository))
+        return ExploreGroupViewModel(
+            fetchRecommendGroupsUseCase,
+            fetchFeatureGroupsUseCase
+        )
     }
 }

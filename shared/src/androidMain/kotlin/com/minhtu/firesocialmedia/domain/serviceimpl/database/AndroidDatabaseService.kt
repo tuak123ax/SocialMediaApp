@@ -594,14 +594,16 @@ class AndroidDatabaseService(private val context: Context) : DatabaseService {
         group : GroupDTO,
         userPath: String,
         groupPath: String,
-        memberPath : String
+        memberPath : String,
+        memberCountPath : String
     ): Boolean {
         return AndroidDatabaseHelper.addUserToGroup(
             user,
             group,
             userPath,
             groupPath,
-            memberPath
+            memberPath,
+            memberCountPath
         )
     }
 
@@ -610,14 +612,16 @@ class AndroidDatabaseService(private val context: Context) : DatabaseService {
         group: GroupDTO,
         userPath: String,
         groupPath: String,
-        memberPath: String
+        memberPath: String,
+        memberCountPath : String
     ): Boolean {
         return AndroidDatabaseHelper.removeUserFromGroup(
             user,
             group,
             userPath,
             groupPath,
-            memberPath
+            memberPath,
+            memberCountPath
         )
     }
 
@@ -648,6 +652,18 @@ class AndroidDatabaseService(private val context: Context) : DatabaseService {
             group,
             groupPath,
             memberPath
+        )
+    }
+
+    override suspend fun fetchRecommendGroups(
+        limit : Int,
+        groupPath: String,
+        memberCountPath: String
+    ): List<GroupDTO> {
+        return AndroidDatabaseHelper.fetchGroupsByMemberCount(
+            limit,
+            groupPath,
+            memberCountPath
         )
     }
 

@@ -14,7 +14,6 @@ import com.minhtu.firesocialmedia.data.remote.dto.signin.SignInDTO
 import com.minhtu.firesocialmedia.data.remote.dto.user.UserDTO
 import com.minhtu.firesocialmedia.domain.entity.base.BaseNewsInstance
 import com.minhtu.firesocialmedia.domain.entity.call.CallStatus
-import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.utils.Utils
 import io.mockative.Mockable
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -241,14 +240,16 @@ interface DatabaseService {
         group : GroupDTO,
         userPath: String,
         groupPath: String,
-        memberPath : String): Boolean
+        memberPath : String,
+        memberCountPath : String): Boolean
 
     suspend fun removeUserFromGroup(
         user: UserDTO,
         group: GroupDTO,
         userPath: String,
         groupPath: String,
-        memberPath: String
+        memberPath: String,
+        memberCountPath : String
     ): Boolean
 
     suspend fun deleteGroup(
@@ -265,4 +266,8 @@ interface DatabaseService {
         groupPath: String,
         memberPath: String
     ): Boolean
+
+    suspend fun fetchRecommendGroups(limit : Int,
+                                     groupPath: String,
+                                     memberCountPath: String): List<GroupDTO>
 }

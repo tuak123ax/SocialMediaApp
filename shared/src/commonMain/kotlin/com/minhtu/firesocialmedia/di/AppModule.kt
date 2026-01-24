@@ -61,8 +61,10 @@ import com.minhtu.firesocialmedia.domain.usecases.friend.SaveFriendUseCase
 import com.minhtu.firesocialmedia.domain.usecases.group.CopyLinkUseCase
 import com.minhtu.firesocialmedia.domain.usecases.group.CreateGroupUseCase
 import com.minhtu.firesocialmedia.domain.usecases.group.DemoteMemberUseCase
+import com.minhtu.firesocialmedia.domain.usecases.group.FetchFeatureGroupsUseCase
 import com.minhtu.firesocialmedia.domain.usecases.group.FetchGroupInfoUseCase
 import com.minhtu.firesocialmedia.domain.usecases.group.FetchNotificationStateUseCase
+import com.minhtu.firesocialmedia.domain.usecases.group.FetchRecommendGroupsUseCase
 import com.minhtu.firesocialmedia.domain.usecases.group.FindGroupByIdUseCase
 import com.minhtu.firesocialmedia.domain.usecases.group.GetAllGroupsUseCase
 import com.minhtu.firesocialmedia.domain.usecases.group.GetAllMembersInGroupUseCase
@@ -671,5 +673,12 @@ object AppModule {
     }
     fun provideDemoteMemberUseCase(groupRepository: GroupRepository) : DemoteMemberUseCase {
         return DemoteMemberUseCase(groupRepository)
+    }
+
+    fun provideFetchRecommendGroupsUseCase(groupRepository: GroupRepository) : FetchRecommendGroupsUseCase{
+        return FetchRecommendGroupsUseCase(groupRepository)
+    }
+    fun provideFetchFeatureGroupsUseCase(groupRepository: GroupRepository) : FetchFeatureGroupsUseCase {
+        return FetchFeatureGroupsUseCase(groupRepository)
     }
 }

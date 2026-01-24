@@ -90,6 +90,9 @@ class CreateGroup {
                 if(createGroupState != null) {
                     if(createGroupState!!.id.isNotEmpty()) {
                         showToast("Create group successfully!!!")
+                        currentUser.groups[createGroupState!!.id] = createGroupState!!
+                        createGroupViewModel.resetAccessPermission()
+                        createGroupViewModel.resetCreateGroupUiState()
                         onCreateGroupSuccess(createGroupState!!)
                     } else {
                         showToast("Create group failed. Please retry!!!")

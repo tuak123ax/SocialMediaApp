@@ -64,6 +64,7 @@ import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.Settings
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.CreateGroup
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.CreateGroupViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.ExploreGroup
+import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.ExploreGroupViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.Group
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.GroupDetails
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.GroupDetailsViewModel
@@ -126,6 +127,7 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
     val selectGroupViewModel : SelectGroupViewModel = platformViewModel { ViewModelProvider.createSelectGroupViewModel(platformContext) }
     val inviteMemberViewModel : InviteMemberViewModel = platformViewModel { ViewModelProvider.createInviteMemberViewModel(platformContext) }
     val manageMembersViewModel : ManageMembersViewModel = platformViewModel { ViewModelProvider.createManageMembersViewModel(platformContext) }
+    val exploreGroupViewModel : ExploreGroupViewModel = platformViewModel { ViewModelProvider.createExploreGroupViewModel(platformContext) }
 
     var updateNew : NewsInstance? = null
     lateinit var relatedNew : NewsInstance
@@ -825,7 +827,21 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                     exitTransition = DefaultNavAnimations.exit,
                     popExitTransition = DefaultNavAnimations.popExit
                 ) {
-                    ExploreGroup.ExploreGroupScreen()
+                    if(homeViewModel.currentUser != null) {
+                        ExploreGroup.ExploreGroupScreen(
+                            homeViewModel.currentUser!!,
+                            localImageLoaderValue,
+                            exploreGroupViewModel,
+                            searchViewModel,
+                            onNavigateBack = {
+                                navController.popBackStack()
+                            },
+                            onNavigateToGroupDetails = { group ->
+                                selectedGroup = group
+                                navController.navigate(route = GroupDetails.getScreenName())
+                            }
+                        )
+                    }
                 }
                 composable(
                     route = GroupDetails.getScreenName(),
@@ -862,10 +878,14 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                                 navController.navigate(route = UserInformation.getScreenName())
                             },
                             onNavigateBack = {
-                                navController.popBackStack(
-                                    route = SelectGroup.getScreenName(),
-                                    inclusive = false
-                                )
+                                if(homeViewModel.currentUser != null && homeViewModel.currentUser!!.groups.isNotEmpty()) {
+                                    navController.popBackStack(
+                                        route = SelectGroup.getScreenName(),
+                                        inclusive = false
+                                    )
+                                } else {
+                                    navController.popBackStack()
+                                }
                                 coroutineScope.launch {
                                     //Delay a little bit to wait for animation
                                     delay(200)
@@ -984,10 +1004,14 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                             navController.navigate(route = UserInformation.getScreenName())
                         },
                         onNavigateBack = {
-                            navController.popBackStack(
-                                route = SelectGroup.getScreenName(),
-                                inclusive = false
-                            )
+                            if(homeViewModel.currentUser != null && homeViewModel.currentUser!!.groups.isNotEmpty()) {
+                                navController.popBackStack(
+                                    route = SelectGroup.getScreenName(),
+                                    inclusive = false
+                                )
+                            } else {
+                                navController.popBackStack()
+                            }
                             coroutineScope.launch {
                                 //Delay a little bit to wait for animation
                                 delay(200)

@@ -92,6 +92,7 @@ import com.minhtu.firesocialmedia.utils.UiUtils
 import com.minhtu.firesocialmedia.utils.UiUtils.Companion.LazyColumnOfNewsWithSlideOutAnimationAndLoadMore
 import com.minhtu.firesocialmedia.utils.UiUtils.Companion.ShareBottomSheet
 import com.minhtu.firesocialmedia.utils.UiUtils.Companion.UserRow
+import com.minhtu.firesocialmedia.utils.Utils.Companion.convertToNumberString
 import com.seiko.imageloader.ui.AutoSizeImage
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -611,17 +612,6 @@ class GroupDetails {
                     textAlign = TextAlign.Center,
                     fontWeight = FontWeight.Bold
                 )
-            }
-        }
-        fun convertToNumberString(number : Int) : String{
-            return if(number < 1000) {
-                number.toString()
-            } else if(number < 1000000) {
-                (number/1000).toString() + "K"
-            } else if(number < 1000000000) {
-                (number/1000000).toString() + "M"
-            } else {
-                (number/1000000000).toString() + "M"
             }
         }
 

@@ -1755,5 +1755,40 @@ class UiUtils {
                 }
             }
         }
+
+        @Composable
+        fun TitleAndSubTitleBelow(
+            title : String,
+            subTitle : String = "",
+            modifier: Modifier = Modifier,
+            textAlign: TextAlign = TextAlign.Center
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 8.dp)
+            ) {
+                Text(
+                    text = title,
+                    color = Color.Black,
+                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.titleMedium,
+                    textAlign = textAlign,
+                    overflow = TextOverflow.Ellipsis,
+                    maxLines = 1,
+
+                )
+                if(subTitle.isNotEmpty()) {
+                    Text(
+                        text = subTitle,
+                        color = Color.LightGray,
+                        style = MaterialTheme.typography.bodyMedium,
+                        textAlign = textAlign,
+                        overflow = TextOverflow.Ellipsis,
+                        maxLines = 1,
+                    )
+                }
+            }
+        }
     }
 }

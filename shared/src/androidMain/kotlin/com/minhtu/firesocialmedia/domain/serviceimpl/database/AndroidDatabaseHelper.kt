@@ -12,6 +12,7 @@ import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.GenericTypeIndicator
+import com.google.firebase.database.ServerValue
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.StorageMetadata
@@ -1212,7 +1213,8 @@ class AndroidDatabaseHelper {
             group : GroupDTO,
             userPath: String,
             groupPath: String,
-            memberPath : String): Boolean = suspendCancellableCoroutine { continuation ->
+            memberPath : String,
+            memberCountPath : String): Boolean = suspendCancellableCoroutine { continuation ->
             val databaseRef = FirebaseDatabase.getInstance().reference
 
             // Store only necessary fields under user
@@ -1225,7 +1227,8 @@ class AndroidDatabaseHelper {
             val updates = hashMapOf<String, Any?>(
                 "$groupPath/${group.id}/$memberPath/${user.uid}" to "member",
 
-                "$userPath/${user.uid}/$groupPath/${group.id}" to groupSummary
+                "$userPath/${user.uid}/$groupPath/${group.id}" to groupSummary,
+                "$groupPath/${group.id}/$memberCountPath" to ServerValue.increment(+1)
             )
 
             databaseRef.updateChildren(updates)
@@ -1248,15 +1251,17 @@ class AndroidDatabaseHelper {
             group: GroupDTO,
             userPath: String,
             groupPath: String,
-            memberPath: String
+            memberPath: String,
+            memberCountPath : String
         ): Boolean = suspendCancellableCoroutine { continuation ->
             val databaseRef = FirebaseDatabase.getInstance().reference
 
 
-            val updates = hashMapOf<String, Any?>(
+            val updates = hashMapOf(
                 "$groupPath/${group.id}/$memberPath/${user.uid}" to null,
 
-                "$userPath/${user.uid}/$groupPath/${group.id}" to null
+                "$userPath/${user.uid}/$groupPath/${group.id}" to null,
+                "$groupPath/${group.id}/$memberCountPath" to ServerValue.increment(-1)
             )
 
             databaseRef.updateChildren(updates)
@@ -1321,6 +1326,37 @@ class AndroidDatabaseHelper {
             databaseRef.setValue(role).addOnCompleteListener { task ->
                 continuation.resume(task.isSuccessful, onCancellation = {})
             }
+        }
+
+        suspend fun fetchGroupsByMemberCount(
+            limit: Int,
+            groupPath : String,
+            memberCountPath : String
+        ) : List<GroupDTO> = suspendCancellableCoroutine{ continuation ->
+            val databaseRef = FirebaseDatabase
+                .getInstance()
+                .reference
+                .child(groupPath)
+
+            databaseRef
+                .orderByChild(memberCountPath)
+                .limitToLast(limit)
+                .addListenerForSingleValueEvent(object : ValueEventListener {
+                    override fun onDataChange(snapshot: DataSnapshot) {
+                        val list = snapshot.children
+                            .mapNotNull { it.getValue(GroupDTO::class.java) }
+                            .sortedByDescending { it.memberCount }
+                        if(continuation.isActive) continuation.resume(
+                            list,
+                            onCancellation = {})
+                    }
+
+                    override fun onCancelled(error: DatabaseError) {
+                        if(continuation.isActive) continuation.resume(
+                            emptyList(),
+                            onCancellation = {})
+                    }
+                })
         }
     }
 }

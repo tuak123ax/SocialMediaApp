@@ -182,7 +182,6 @@ class SelectGroup {
                     .fillMaxWidth()
                     .padding(5.dp)
                     .clickable {
-                        // Handle image click
                         onNavigateToSelectedGroup(group)
                     }
             ) {

@@ -53,6 +53,11 @@ class CreateGroupViewModel(
     fun resetCreateGroupState() {
         _createGroupState.value = null
     }
+    fun resetCreateGroupUiState() {
+        avatar = Constants.DEFAULT_AVATAR_URL
+        _groupName.value = ""
+        password.value = ""
+    }
     fun createGroup(currentUser : UserInstance) {
         viewModelScope.launch(ioDispatcher) {
             val memberMap = HashMap<String, String>()
@@ -64,6 +69,7 @@ class CreateGroupViewModel(
                 avatar = avatar,
                 password = if(_accessPermission.value == DecentralizationType.Private) password.value else "",
                 createdDate = getCurrentTime(),
+                memberCount = 1,
                 members = memberMap,
                 posts = HashMap()
             )

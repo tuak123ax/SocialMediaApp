@@ -170,7 +170,8 @@ class GroupRepositoryImpl(
                 group.toDto(),
                 DataConstant.USER_PATH,
                 DataConstant.GROUP_PATH,
-                DataConstant.MEMBERS_PATH
+                DataConstant.MEMBERS_PATH,
+                DataConstant.MEMBER_COUNT_PATH
             )
         } else {
             false
@@ -188,7 +189,8 @@ class GroupRepositoryImpl(
                 group.toDto(),
                 DataConstant.USER_PATH,
                 DataConstant.GROUP_PATH,
-                DataConstant.MEMBERS_PATH
+                DataConstant.MEMBERS_PATH,
+                DataConstant.MEMBER_COUNT_PATH
             )
         } else {
             false
@@ -216,13 +218,23 @@ class GroupRepositoryImpl(
                                       group : GroupInstance): Boolean {
         val isOnline = networkMonitor.isOnline.first()
         return if(isOnline) {
-            databaseService.removeUserFromGroup(
-                member.toDto(),
-                group.toDto(),
-                DataConstant.USER_PATH,
-                DataConstant.GROUP_PATH,
-                DataConstant.MEMBERS_PATH
-            )
+            if(group.members.size > 1) {
+                databaseService.removeUserFromGroup(
+                    member.toDto(),
+                    group.toDto(),
+                    DataConstant.USER_PATH,
+                    DataConstant.GROUP_PATH,
+                    DataConstant.MEMBERS_PATH,
+                    DataConstant.MEMBER_COUNT_PATH
+                )
+            } else {
+                databaseService.deleteGroup(
+                    member.toDto(),
+                    group.toDto(),
+                    DataConstant.USER_PATH,
+                    DataConstant.GROUP_PATH
+                )
+            }
         } else {
             false
         }
@@ -261,6 +273,32 @@ class GroupRepositoryImpl(
             )
         } else {
             false
+        }
+    }
+
+    override suspend fun fetchRecommendGroups(limit: Int): List<GroupInstance> {
+        val isOnline = networkMonitor.isOnline.first()
+        return if(isOnline) {
+            databaseService.fetchRecommendGroups(
+                limit,
+                DataConstant.GROUP_PATH,
+                DataConstant.MEMBER_COUNT_PATH
+            ).map { it.toDomain() }
+        } else {
+            emptyList()
+        }
+    }
+
+    override suspend fun fetchFeatureGroups(limit: Int): List<GroupInstance> {
+        val isOnline = networkMonitor.isOnline.first()
+        return if(isOnline) {
+            databaseService.fetchRecommendGroups(
+                limit,
+                DataConstant.GROUP_PATH,
+                DataConstant.MEMBER_COUNT_PATH
+            ).map { it.toDomain() }
+        } else {
+            emptyList()
         }
     }
 }
