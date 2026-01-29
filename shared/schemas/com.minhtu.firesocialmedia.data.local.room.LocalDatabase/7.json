@@ -1,8 +1,8 @@
 {
   "formatVersion": 1,
   "database": {
-    "version": 5,
-    "identityHash": "8cfc1d560e69edf43f61c2585b52fdaf",
+    "version": 7,
+    "identityHash": "fe92195d5ec9235eec308c33d77a8727",
     "entities": [
       {
         "tableName": "UserFriends",
@@ -178,7 +178,7 @@
       },
       {
         "tableName": "Notifications",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `content` TEXT NOT NULL, `avatar` TEXT NOT NULL, `sender` TEXT NOT NULL, `timeSend` INTEGER NOT NULL, `type` TEXT NOT NULL, `relatedInfo` TEXT NOT NULL, `isRead` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `content` TEXT NOT NULL, `avatar` TEXT NOT NULL, `sender` TEXT NOT NULL, `timeSend` INTEGER NOT NULL, `type` TEXT NOT NULL, `relatedInfo` TEXT NOT NULL, `beRead` INTEGER NOT NULL, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
@@ -223,8 +223,8 @@
             "notNull": true
           },
           {
-            "fieldPath": "isRead",
-            "columnName": "isRead",
+            "fieldPath": "beRead",
+            "columnName": "beRead",
             "affinity": "INTEGER",
             "notNull": true
           }
@@ -375,7 +375,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '8cfc1d560e69edf43f61c2585b52fdaf')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'fe92195d5ec9235eec308c33d77a8727')"
     ]
   }
 }

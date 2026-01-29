@@ -54,6 +54,7 @@ import com.minhtu.firesocialmedia.utils.UiUtils
 import com.minhtu.firesocialmedia.utils.UiUtils.Companion.NewsCardPlaceholder
 import com.minhtu.firesocialmedia.utils.UiUtils.Companion.NewsCardUnavailable
 import com.minhtu.firesocialmedia.utils.UiUtils.Companion.NewsCardWithSharedContent
+import com.minhtu.firesocialmedia.utils.Utils.Companion.hexToColor
 import com.seiko.imageloader.ui.AutoSizeImage
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -221,6 +222,7 @@ class PostInformation {
                                         icon = "like",
                                         backgroundColor = if (isLiked) "#00FFFF" else "#FFFFFFFF",
                                         contentDescription = "Like",
+                                        tint = if(isLiked) hexToColor("FF1565C0") else Color.Black,
                                         modifier = Modifier
                                             .size(25.dp)
                                             .padding(end = 5.dp)

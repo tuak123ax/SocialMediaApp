@@ -239,6 +239,11 @@ class Home {
                                 .background(MaterialTheme.colorScheme.primaryContainer)
                                 .clickable {
                                     onNavigateToSearch()
+                                }
+                                .testTag(TestTag.TAG_ICON_BUTTON_SEARCH)
+                                .semantics {
+                                    contentDescription =
+                                        TestTag.TAG_ICON_BUTTON_SEARCH
                                 },
                             contentAlignment = Alignment.Center
                         ) {
@@ -249,11 +254,7 @@ class Home {
                                 contentScale = ContentScale.Fit,
                                 modifier = Modifier
                                     .size(22.dp)
-                                    .testTag(TestTag.TAG_ICON_BUTTON_SEARCH)
-                                    .semantics {
-                                        contentDescription =
-                                            TestTag.TAG_ICON_BUTTON_SEARCH
-                                    }
+                                    .padding(4.dp)
                             )
                         }
 
@@ -268,6 +269,11 @@ class Home {
                                 .clickable {
                                     showDialog.value = true
                                 }
+                                .testTag(TestTag.TAG_ICON_BUTTON_LOGOUT)
+                                .semantics {
+                                    contentDescription =
+                                        TestTag.TAG_ICON_BUTTON_LOGOUT
+                                }
                         ) {
                             CrossPlatformIcon(
                                 icon = "logout",
@@ -276,11 +282,7 @@ class Home {
                                 contentScale = ContentScale.Fit,
                                 modifier = Modifier
                                     .size(22.dp)
-                                    .testTag(TestTag.TAG_ICON_BUTTON_LOGOUT)
-                                    .semantics {
-                                        contentDescription =
-                                            TestTag.TAG_ICON_BUTTON_LOGOUT
-                                    }
+                                    .padding(4.dp)
                             )
                         }
                     }

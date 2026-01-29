@@ -64,6 +64,7 @@ import com.minhtu.firesocialmedia.platform.logMessage
 import com.minhtu.firesocialmedia.platform.showToast
 import com.minhtu.firesocialmedia.utils.UiUtils
 import com.minhtu.firesocialmedia.utils.Utils
+import com.minhtu.firesocialmedia.utils.Utils.Companion.hexToColor
 import com.rickclephas.kmp.observableviewmodel.launch
 import com.seiko.imageloader.ui.AutoSizeImage
 import kotlinx.coroutines.Dispatchers
@@ -386,6 +387,7 @@ class Comment {
                                 icon = "like",
                                 backgroundColor = if (isLiked) "#00FFFF" else "#FFFFFF",
                                 contentDescription = TestTag.TAG_BUTTON_LIKE,
+                                tint = if(isLiked) hexToColor("FF1565C0") else Color.Black,
                                 modifier = Modifier
                                     .size(20.dp)
                                     .testTag(TestTag.TAG_BUTTON_LIKE)
@@ -394,8 +396,7 @@ class Comment {
                                     }
                                     .clickable {
                                         onLikeComment()
-                                    },
-                                tint = if (isLiked) Utils.hexToColor("#00FFFF") else Color.Unspecified
+                                    }
                             )
                             Text(
                                 text = "${likeCountList.value[comment.id] ?: 0}",

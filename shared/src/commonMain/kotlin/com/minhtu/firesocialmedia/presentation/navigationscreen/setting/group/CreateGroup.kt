@@ -271,7 +271,13 @@ class CreateGroup {
                 visualTransformation = if (passwordVisibility) VisualTransformation.None else PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                 trailingIcon = {
-                    IconButton(onClick = { passwordVisibility = !passwordVisibility }) {
+                    IconButton(
+                        onClick = { passwordVisibility = !passwordVisibility },
+                        modifier = Modifier
+                            .testTag(TestTag.TAG_SHOW_PASSWORD)
+                            .semantics{
+                                contentDescription = TestTag.TAG_SHOW_PASSWORD
+                            }) {
                         PasswordVisibilityIcon(passwordVisibility)
                     }
                 }

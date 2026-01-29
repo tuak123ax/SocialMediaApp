@@ -11,6 +11,7 @@ import com.minhtu.firesocialmedia.data.repository.CommentRepositoryImpl
 import com.minhtu.firesocialmedia.data.repository.CommonDbRepositoryImpl
 import com.minhtu.firesocialmedia.data.repository.GroupRepositoryImpl
 import com.minhtu.firesocialmedia.data.repository.LocalRepositoryImpl
+import com.minhtu.firesocialmedia.data.repository.NetworkRepositoryImpl
 import com.minhtu.firesocialmedia.data.repository.NewsRepositoryImpl
 import com.minhtu.firesocialmedia.data.repository.NotificationRepositoryImpl
 import com.minhtu.firesocialmedia.data.repository.ShowImageRepositoryImpl
@@ -26,6 +27,7 @@ import com.minhtu.firesocialmedia.domain.repository.CommentRepository
 import com.minhtu.firesocialmedia.domain.repository.CommonDbRepository
 import com.minhtu.firesocialmedia.domain.repository.GroupRepository
 import com.minhtu.firesocialmedia.domain.repository.LocalRepository
+import com.minhtu.firesocialmedia.domain.repository.NetworkRepository
 import com.minhtu.firesocialmedia.domain.repository.NewsRepository
 import com.minhtu.firesocialmedia.domain.repository.NotificationRepository
 import com.minhtu.firesocialmedia.domain.repository.ShowImageRepository
@@ -92,6 +94,7 @@ import com.minhtu.firesocialmedia.domain.usecases.home.UpdateFCMTokenUseCase
 import com.minhtu.firesocialmedia.domain.usecases.home.UpdateLikeCountForNewUseCase
 import com.minhtu.firesocialmedia.domain.usecases.information.CheckCalleeAvailableUseCase
 import com.minhtu.firesocialmedia.domain.usecases.information.SaveSignUpInformationUseCase
+import com.minhtu.firesocialmedia.domain.usecases.network.CheckInternetConnectionUseCase
 import com.minhtu.firesocialmedia.domain.usecases.newsfeed.DeleteAllDraftPostsUseCase
 import com.minhtu.firesocialmedia.domain.usecases.newsfeed.DeleteDraftPostUseCase
 import com.minhtu.firesocialmedia.domain.usecases.newsfeed.SaveNewToDatabaseUseCase
@@ -100,6 +103,7 @@ import com.minhtu.firesocialmedia.domain.usecases.notification.DeleteNotificatio
 import com.minhtu.firesocialmedia.domain.usecases.notification.FindNewByIdInDbUseCase
 import com.minhtu.firesocialmedia.domain.usecases.notification.GetAllNotificationOfUserUseCase
 import com.minhtu.firesocialmedia.domain.usecases.notification.SaveNotificationToDatabaseUseCase
+import com.minhtu.firesocialmedia.domain.usecases.notification.UpdateIsReadStatusOfNotificationUseCase
 import com.minhtu.firesocialmedia.domain.usecases.showimage.DownloadImageUseCase
 import com.minhtu.firesocialmedia.domain.usecases.signin.CheckLocalAccountUseCase
 import com.minhtu.firesocialmedia.domain.usecases.signin.CheckUserExistsUseCase
@@ -466,12 +470,16 @@ object AppModule {
         saveFriendUseCase: SaveFriendUseCase,
         saveFriendRequestUseCase: SaveFriendRequestUseCase,
         saveNotificationToDatabaseUseCase: SaveNotificationToDatabaseUseCase,
-        checkCalleeAvailableUseCase: CheckCalleeAvailableUseCase): UserInformationViewModel {
+        checkCalleeAvailableUseCase: CheckCalleeAvailableUseCase,
+        getUserUseCase: GetUserUseCase,
+        checkInternetConnectionUseCase: CheckInternetConnectionUseCase): UserInformationViewModel {
         return UserInformationViewModel(
             saveFriendUseCase,
             saveFriendRequestUseCase,
             saveNotificationToDatabaseUseCase,
-            checkCalleeAvailableUseCase
+            checkCalleeAvailableUseCase,
+            getUserUseCase,
+            checkInternetConnectionUseCase
         )
     }
 
@@ -529,10 +537,13 @@ object AppModule {
     }
     fun provideNotificationViewModel(
         getUserUseCase: GetUserUseCase,
-        findNewByIdInDbUseCase: FindNewByIdInDbUseCase) : NotificationViewModel {
+        findNewByIdInDbUseCase: FindNewByIdInDbUseCase,
+        updateIsReadStatusOfNotificationUseCase : UpdateIsReadStatusOfNotificationUseCase
+    ) : NotificationViewModel {
         return NotificationViewModel(
             getUserUseCase,
-            findNewByIdInDbUseCase
+            findNewByIdInDbUseCase,
+            updateIsReadStatusOfNotificationUseCase
         )
     }
     //---------------------------Call----------------------------------------//
@@ -680,5 +691,17 @@ object AppModule {
     }
     fun provideFetchFeatureGroupsUseCase(groupRepository: GroupRepository) : FetchFeatureGroupsUseCase {
         return FetchFeatureGroupsUseCase(groupRepository)
+    }
+
+    fun provideCheckInternetConnectionUseCase(networkRepository: NetworkRepository) : CheckInternetConnectionUseCase{
+        return CheckInternetConnectionUseCase(networkRepository)
+    }
+
+    fun provideNetworkRepository(platformContext: PlatformContext) : NetworkRepository {
+        return NetworkRepositoryImpl(platformContext.networkMonitor)
+    }
+
+    fun provideUpdateIsReadStatusOfNotificationUseCase(notificationRepository: NotificationRepository) : UpdateIsReadStatusOfNotificationUseCase {
+        return UpdateIsReadStatusOfNotificationUseCase(notificationRepository)
     }
 }

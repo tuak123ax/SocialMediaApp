@@ -7,9 +7,11 @@ import com.minhtu.firesocialmedia.data.remote.constant.DataConstant
 import com.minhtu.firesocialmedia.data.remote.mapper.notification.toDomain
 import com.minhtu.firesocialmedia.data.remote.mapper.notification.toDto
 import com.minhtu.firesocialmedia.data.remote.mapper.user.toDTONotifications
+import com.minhtu.firesocialmedia.data.remote.mapper.user.toDto
 import com.minhtu.firesocialmedia.data.remote.service.database.DatabaseService
 import com.minhtu.firesocialmedia.domain.core.NetworkMonitor
 import com.minhtu.firesocialmedia.domain.entity.notification.NotificationInstance
+import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.domain.repository.NotificationRepository
 import kotlinx.coroutines.flow.first
 
@@ -51,5 +53,15 @@ class NotificationRepositoryImpl(
             id,
             DataConstant.USER_PATH,
             notification.toDto())
+    }
+
+    override suspend fun updateIsReadStatusOfNotification(user : UserInstance,
+                                                          notification: NotificationInstance) {
+        databaseService.updateIsReadStatusOfNotification(
+            user.uid,
+            notification.id,
+            DataConstant.USER_PATH,
+            DataConstant.NOTIFICATION_PATH
+        )
     }
 }

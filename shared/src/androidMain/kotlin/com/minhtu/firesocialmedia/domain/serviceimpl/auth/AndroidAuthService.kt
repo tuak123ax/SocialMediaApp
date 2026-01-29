@@ -8,15 +8,19 @@ import com.google.firebase.FirebaseException
 import com.google.firebase.FirebaseNetworkException
 import com.google.firebase.FirebaseTooManyRequestsException
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseAuthException
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.auth.FirebaseAuthInvalidUserException
 import com.google.firebase.auth.FirebaseAuthMultiFactorException
+import com.google.firebase.auth.FirebaseAuthUserCollisionException
+import com.google.firebase.auth.FirebaseAuthWeakPasswordException
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.auth
 import com.minhtu.firesocialmedia.constants.Constants
 import com.minhtu.firesocialmedia.data.remote.service.auth.AuthService
 import com.minhtu.firesocialmedia.domain.entity.forgotpassword.EmailExistResult
 import com.minhtu.firesocialmedia.domain.error.signin.SignInError
+import com.minhtu.firesocialmedia.domain.error.signup.SignUpError
 import com.minhtu.firesocialmedia.platform.logMessage
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.tasks.await
@@ -67,12 +71,36 @@ class AndroidAuthService(var context: Context) : AuthService{
         return try {
             FirebaseAuth.getInstance()
                 .createUserWithEmailAndPassword(email, password)
-                .await() // suspend until complete
+                .await()
+
             Result.success(Unit)
-        } catch (ex: Exception) {
-            Result.failure(SignInError.Unknown(ex.message ?: "Unknown error"))
+
+        } catch (e: FirebaseAuthWeakPasswordException) {
+            //Password too weak
+            Result.failure(SignUpError.WeakPassword)
+
+        } catch (e: FirebaseAuthInvalidCredentialsException) {
+            //Invalid email format
+            Result.failure(SignUpError.InvalidEmail)
+
+        } catch (e: FirebaseAuthUserCollisionException) {
+            //Email already exists
+            Result.failure(SignUpError.EmailAlreadyInUse)
+
+        } catch (e: FirebaseNetworkException) {
+            //No internet
+            Result.failure(SignUpError.NetworkError)
+
+        } catch (e: FirebaseAuthException) {
+            // any other Firebase auth error
+            Result.failure(SignUpError.Unknown(e.message ?: "Authentication error"))
+
+        } catch (e: Exception) {
+            // truly unexpected
+            Result.failure(SignUpError.Unknown(e.message ?: "Unknown error"))
         }
     }
+
 
     override suspend fun getCurrentUserUid(): String? = suspendCancellableCoroutine{ continuation ->
         if(continuation.isActive) continuation.resume(FirebaseAuth.getInstance().uid, onCancellation = {})

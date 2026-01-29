@@ -45,8 +45,7 @@ fun CrossPlatformIcon(
             Image(
                 painter = iconPainter,
                 contentDescription = contentDescription,
-                modifier = modifier
-                    .padding(4.dp),
+                modifier = modifier,
                 contentScale = contentScale,
                 colorFilter = if (tint != Color.Unspecified) ColorFilter.tint(tint) else null
             )

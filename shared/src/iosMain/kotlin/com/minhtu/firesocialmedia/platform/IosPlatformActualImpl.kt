@@ -818,4 +818,3 @@ actual fun launchShareAppWithDeepLink(app: ShareApp, deepLink: String) {
         UIApplication.sharedApplication.openURL(url)
     }
 }
-

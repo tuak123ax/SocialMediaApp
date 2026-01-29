@@ -26,6 +26,7 @@ import com.minhtu.firesocialmedia.data.remote.dto.user.UserDTO
 import com.minhtu.firesocialmedia.data.remote.service.database.DatabaseService
 import com.minhtu.firesocialmedia.domain.entity.base.BaseNewsInstance
 import com.minhtu.firesocialmedia.domain.entity.call.CallStatus
+import com.minhtu.firesocialmedia.domain.error.signin.SignInError
 import com.minhtu.firesocialmedia.domain.serviceimpl.crypto.AndroidCryptoHelper
 import com.minhtu.firesocialmedia.platform.logMessage
 import com.minhtu.firesocialmedia.utils.Utils
@@ -35,9 +36,11 @@ import kotlinx.coroutines.withTimeout
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
-class AndroidDatabaseService(private val context: Context) : DatabaseService {
+class AndroidDatabaseService(context: Context) : DatabaseService {
+    // Never hold a Service context to avoid leaks; keep only applicationContext
+    private val appContext: Context = context.applicationContext
     override suspend fun updateFCMTokenForCurrentUser(currentUser: UserDTO) {
-        val secureSharedPreferences = AndroidCryptoHelper.getEncryptedSharedPreferences(context)
+        val secureSharedPreferences = AndroidCryptoHelper.getEncryptedSharedPreferences(appContext)
         val currentFCMToken = secureSharedPreferences.getString(Constants.KEY_FCM_TOKEN, "")
         if(!currentFCMToken.isNullOrEmpty()) {
             if(currentUser.token != currentFCMToken) {
@@ -57,16 +60,15 @@ class AndroidDatabaseService(private val context: Context) : DatabaseService {
                     it.getValue(UserDTO::class.java)?.email == email
                 }
                 val result = if (exists) {
-                    SignInDTO(true, Constants.ACCOUNT_EXISTED)
+                    SignInDTO(true, SignInError.AccountExist.message!!)
                 } else {
-                    SignInDTO(true, Constants.ACCOUNT_NOT_EXISTED)
+                    SignInDTO(true, SignInError.AccountNotExist.message!!)
                 }
                 continuation.resume(result)
             }
 
             override fun onCancelled(error: DatabaseError) {
                 if (!continuation.isActive) return
-                logMessage("checkUserExists", { "Error when checkUserExists" })
                 continuation.resume(SignInDTO(false, Constants.LOGIN_ERROR))
             }
         }
@@ -165,13 +167,7 @@ class AndroidDatabaseService(private val context: Context) : DatabaseService {
 
                 databaseReference.addListenerForSingleValueEvent(object : ValueEventListener {
                     override fun onDataChange(snapshot: DataSnapshot) {
-                        val notiSnap = snapshot.child("notifications")
-                        val keys = notiSnap.children.mapNotNull { it.key }
-                        logMessage("onDataChange",
-                            { "userId=$userId notiCount=${notiSnap.childrenCount} keys=$keys" })
-
                         val user = snapshot.getValue(UserDTO::class.java)
-                        logMessage("onDataChange", { "mappedNotiSize=${user?.notifications?.size}" })
                         continuation.resume(user)
                     }
 
@@ -317,6 +313,8 @@ class AndroidDatabaseService(private val context: Context) : DatabaseService {
                 for (dataSnapshot in snapshot.getChildren()) {
                     val notification = dataSnapshot.getValue(NotificationDTO::class.java)
                     if (notification != null) {
+                        logMessage("getAllNotificationsOfUser",
+                            { notification.id + "isRead: "+ notification.beRead })
                         result.add(notification)
                     }
                 }
@@ -339,7 +337,7 @@ class AndroidDatabaseService(private val context: Context) : DatabaseService {
     }
 
     override suspend fun downloadImage(image: String, fileName: String) : Boolean {
-        return AndroidDatabaseHelper.downloadImage(context, image, fileName)
+        return AndroidDatabaseHelper.downloadImage(appContext, image, fileName)
     }
 
     override suspend fun updateNewsFromDatabase(
@@ -664,6 +662,20 @@ class AndroidDatabaseService(private val context: Context) : DatabaseService {
             limit,
             groupPath,
             memberCountPath
+        )
+    }
+
+    override suspend fun updateIsReadStatusOfNotification(
+        userId: String,
+        notificationId: String,
+        userPath: String,
+        notificationPath: String
+    ) {
+        AndroidDatabaseHelper.updateIsReadStatusOfNotification(
+            userId,
+            notificationId,
+            userPath,
+            notificationPath
         )
     }
 

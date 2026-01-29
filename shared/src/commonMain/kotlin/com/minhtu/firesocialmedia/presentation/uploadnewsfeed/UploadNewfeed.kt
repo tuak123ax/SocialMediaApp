@@ -92,7 +92,7 @@ class UploadNewsfeed {
             imagePicker.RegisterLauncher({loadingViewModel.hideLoading()})
             val postStatus = uploadNewsfeedViewModel.createPostStatus.collectAsState()
             val updateStatus = uploadNewsfeedViewModel.updatePostStatus.collectAsState()
-            val postError = uploadNewsfeedViewModel.postError.collectAsState()
+            val postError by uploadNewsfeedViewModel.postError.collectAsState()
             var isUpdated by remember { mutableStateOf(false) }
             var showAccessPermissionSheet by remember { mutableStateOf(false) }
             val currentAccessPermission = uploadNewsfeedViewModel.accessPermission.collectAsState()
@@ -132,9 +132,11 @@ class UploadNewsfeed {
                     onNavigateBack()
                 }
             }
-            LaunchedEffect(postError.value) {
-                if(postError.value != null) {
+            LaunchedEffect(postError) {
+                if(postError != null) {
                     showToast("Please input message or image!")
+                    loadingViewModel.hideLoading()
+                    uploadNewsfeedViewModel.resetPostError()
                 }
             }
 

@@ -58,11 +58,8 @@ class SignUp {
                 if (signUpStatus.value.signUpStatus) {
                     onNavigateToInformationScreen()
                 } else {
-                    when (signUpStatus.value.message) {
-                        Constants.DATA_EMPTY -> showToast("Please fill all information!")
-                        Constants.PASSWORD_MISMATCH -> showToast("Passwords are different!")
-                        Constants.PASSWORD_SHORT -> showToast("Password is too short!")
-                        Constants.SIGNUP_FAIL -> showToast("Sign up failed. Something went wrong!")
+                    if(signUpStatus.value.message.isNotEmpty()) {
+                        showToast(signUpStatus.value.message)
                     }
                 }
                 signUpViewModel.resetSignUpStatus()
@@ -171,7 +168,13 @@ class SignUp {
                 visualTransformation = if (passwordVisibility) VisualTransformation.None else PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                 trailingIcon = {
-                    IconButton(onClick = { passwordVisibility = !passwordVisibility }) {
+                    IconButton(
+                        onClick = { passwordVisibility = !passwordVisibility },
+                        modifier = Modifier
+                            .testTag(TestTag.TAG_SHOW_PASSWORD)
+                            .semantics{
+                                contentDescription = TestTag.TAG_SHOW_PASSWORD
+                            }) {
                         PasswordVisibilityIcon(passwordVisibility)
                     }
                 }

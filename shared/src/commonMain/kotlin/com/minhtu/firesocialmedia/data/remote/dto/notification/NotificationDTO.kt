@@ -10,7 +10,8 @@ data class NotificationDTO(
     val sender : String = "",
     val timeSend : Long = 0,
     val type : String = "NONE",
-    var relatedInfo : String = ""
+    var relatedInfo : String = "",
+    var beRead : Boolean = false
 ){
     companion object{
 
@@ -30,7 +31,8 @@ fun NotificationDTO.toMap(): Map<String, Any> = mapOf(
     "sender" to sender,
     "timeSend" to timeSend,
     "type" to type,
-    "relatedInfo" to relatedInfo
+    "relatedInfo" to relatedInfo,
+    "beRead" to beRead
 )
 
 fun NotificationDTO.Companion.fromMap(map: Map<String, Any?>): NotificationDTO {
@@ -41,6 +43,7 @@ fun NotificationDTO.Companion.fromMap(map: Map<String, Any?>): NotificationDTO {
         sender = map["sender"] as? String ?: "",
         timeSend = (map["timeSend"] as? Number)?.toLong() ?: 0L,
         type = (map["type"] as? String) ?: "NONE",
-        relatedInfo = map["relatedInfo"] as? String ?: ""
+        relatedInfo = map["relatedInfo"] as? String ?: "",
+        beRead = map["beRead"] as? Boolean ?: false
     )
 }
