@@ -95,7 +95,13 @@ class MainActivity : ComponentActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-        unregisterReceiver(downloadReceiver)
+        try {
+            downloadReceiver?.let { unregisterReceiver(it) }
+        } catch (_: Exception) {
+        } finally {
+            downloadReceiver = null
+        }
+        runCatching { permissionManager.clear() }
     }
 
     @SuppressLint("UnspecifiedRegisterReceiverFlag")
@@ -183,10 +189,5 @@ class MainActivity : ComponentActivity() {
 
         // Forward to your permission manager
         permissionManager.onRequestPermissionsResult(requestCode, grantResults)
-    }
-
-    @Preview(showBackground = true, showSystemUi = true)
-    @Composable
-    fun GreetingPreview() {
     }
 }

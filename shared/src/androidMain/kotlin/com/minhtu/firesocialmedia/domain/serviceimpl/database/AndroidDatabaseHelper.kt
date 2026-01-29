@@ -17,6 +17,7 @@ import com.google.firebase.database.ValueEventListener
 import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.StorageMetadata
 import com.google.firebase.storage.StorageReference
+import com.minhtu.firesocialmedia.constants.Constants
 import com.minhtu.firesocialmedia.data.remote.constant.DataConstant
 import com.minhtu.firesocialmedia.data.remote.dto.call.AudioCallSessionDTO
 import com.minhtu.firesocialmedia.data.remote.dto.call.CallingRequestDTO
@@ -31,6 +32,7 @@ import com.minhtu.firesocialmedia.domain.entity.base.BaseNewsInstance
 import com.minhtu.firesocialmedia.domain.entity.call.CallStatus
 import com.minhtu.firesocialmedia.platform.logMessage
 import com.minhtu.firesocialmedia.utils.Utils
+import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -763,15 +765,26 @@ class AndroidDatabaseHelper {
              }
         }
 
-        private var valueEventListener : ValueEventListener? = null
+        // Distinct listener refs to avoid cross-removals and leaks
+        private var answerValueEventListener: ValueEventListener? = null
+        private var callStatusValueEventListener: ValueEventListener? = null
+        private var answerDatabaseRef: DatabaseReference? = null
+        private var callStatusDatabaseRef: DatabaseReference? = null
         fun observeAnswerFromCallee(
             sessionId : String,
             callPath: String,
             answerCallBack : (answer : OfferAnswerDTO) -> Unit,
             rejectCallBack : () -> Unit
         ) {
-            val firebaseDatabase = FirebaseDatabase.getInstance().getReference(callPath).child(sessionId).child("answer")
-            valueEventListener = object : ValueEventListener {
+            // Clean up any previous answer listener before attaching a new one
+            answerDatabaseRef?.let { ref ->
+                answerValueEventListener?.let { ref.removeEventListener(it) }
+            }
+            answerDatabaseRef = FirebaseDatabase.getInstance()
+                .getReference(callPath)
+                .child(sessionId)
+                .child("answer")
+            answerValueEventListener = object : ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
                     val answer = snapshot.getValue(OfferAnswerDTO::class.java) ?: return
                     val sdp = answer.sdp
@@ -790,7 +803,7 @@ class AndroidDatabaseHelper {
                     Log.e("CallObserver", "Failed to observe answer", error.toException())
                 }
             }
-            firebaseDatabase.addValueEventListener(valueEventListener!!)
+            answerDatabaseRef!!.addValueEventListener(answerValueEventListener!!)
         }
 
         //Use this variable to track the call status, prevent invoking function many times.
@@ -800,8 +813,15 @@ class AndroidDatabaseHelper {
             callPath: String,
             callStatusCallBack: Utils.Companion.CallStatusCallBack
         ) {
-            val firebaseDatabase = FirebaseDatabase.getInstance().getReference(callPath).child(sessionId).child("status")
-            valueEventListener = object : ValueEventListener {
+            // Clean up any previous status listener before attaching a new one
+            callStatusDatabaseRef?.let { ref ->
+                callStatusValueEventListener?.let { ref.removeEventListener(it) }
+            }
+            callStatusDatabaseRef = FirebaseDatabase.getInstance()
+                .getReference(callPath)
+                .child(sessionId)
+                .child("status")
+            callStatusValueEventListener = object : ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
                     val callStatus = snapshot.getValue(CallStatus::class.java) ?: return
                     if(lastCallStatus != callStatus) {
@@ -809,9 +829,20 @@ class AndroidDatabaseHelper {
                         lastCallStatus = callStatus
                         if(callStatus == CallStatus.ACCEPTED || callStatus == CallStatus.VIDEO) {
                             callStatusCallBack.onSuccess(callStatus)
+                            // Once accepted or switched to video, we no longer need to observe status here
+                            callStatusDatabaseRef?.let { ref ->
+                                callStatusValueEventListener?.let { ref.removeEventListener(it) }
+                            }
+                            callStatusValueEventListener = null
+                            callStatusDatabaseRef = null
                         } else {
                             if(callStatus == CallStatus.ENDED) {
                                 callStatusCallBack.onFailure()
+                                callStatusDatabaseRef?.let { ref ->
+                                    callStatusValueEventListener?.let { ref.removeEventListener(it) }
+                                }
+                                callStatusValueEventListener = null
+                                callStatusDatabaseRef = null
                             }
                         }
                     }
@@ -820,19 +851,26 @@ class AndroidDatabaseHelper {
                 override fun onCancelled(error: DatabaseError) {
                     Log.e("CallObserver", "Failed to observe answer", error.toException())
                     callStatusCallBack.onFailure()
+                    callStatusDatabaseRef?.let { ref ->
+                        callStatusValueEventListener?.let { ref.removeEventListener(it) }
+                    }
+                    callStatusValueEventListener = null
+                    callStatusDatabaseRef = null
                 }
             }
-            firebaseDatabase.addValueEventListener(valueEventListener!!)
+            callStatusDatabaseRef!!.addValueEventListener(callStatusValueEventListener!!)
         }
 
         fun cancelObserveAnswerFromCallee(
             sessionId : String,
             callPath: String
         ) {
-            val firebaseDatabase = FirebaseDatabase.getInstance().getReference(callPath).child(sessionId).child("answer")
-            if(valueEventListener != null) {
-                firebaseDatabase.removeEventListener(valueEventListener!!)
+            // Remove current answer listener if present
+            answerDatabaseRef?.let { ref ->
+                answerValueEventListener?.let { ref.removeEventListener(it) }
             }
+            answerValueEventListener = null
+            answerDatabaseRef = null
         }
 
         fun observeIceCandidatesFromCallee(
@@ -888,6 +926,17 @@ class AndroidDatabaseHelper {
             callListener?.let { l -> firebaseDatabase?.removeEventListener(l) }
             callListener = null
             firebaseDatabase = null
+            // Also stop answer and call status listeners to avoid leaks
+            answerDatabaseRef?.let { ref ->
+                answerValueEventListener?.let { ref.removeEventListener(it) }
+            }
+            callStatusDatabaseRef?.let { ref ->
+                callStatusValueEventListener?.let { ref.removeEventListener(it) }
+            }
+            answerValueEventListener = null
+            callStatusValueEventListener = null
+            answerDatabaseRef = null
+            callStatusDatabaseRef = null
         }
 
         suspend fun uploadMediaAndGetUrl(
@@ -984,43 +1033,76 @@ class AndroidDatabaseHelper {
                 val metadata = StorageMetadata.Builder()
                     .setCacheControl("public,max-age=604800,immutable")
                     .build()
-                storageRef.putFile(group.avatar.toUri(), metadata).addOnCompleteListener{ putFileTask ->
-                    if(putFileTask.isSuccessful){
-                        storageRef.downloadUrl.addOnSuccessListener { dataUrl ->
-                            //Get the new url of avatar on remote
-                            group.avatar = dataUrl.toString()
-                            // Store only necessary fields under user
-                            val groupSummary = GroupSummaryDTO(
-                                id = group.id,
-                                name = group.name,
-                                avatar = group.avatar
-                            )
+                if(group.avatar != Constants.DEFAULT_AVATAR_URL) {
+                    storageRef.putFile(group.avatar.toUri(), metadata).addOnCompleteListener{ putFileTask ->
+                        if(putFileTask.isSuccessful){
+                            storageRef.downloadUrl.addOnSuccessListener { dataUrl ->
+                                //Get the new url of avatar on remote
+                                group.avatar = dataUrl.toString()
 
-                            val updates = hashMapOf<String, Any?>(
-                                "$groupRootPath/${group.id}" to group,
-
-                                "$userRootPath/$userId/$userGroupsField/${group.id}" to groupSummary
-                            )
-
-                            databaseRef.updateChildren(updates)
-                                .addOnCompleteListener { task ->
-                                    if (!continuation.isActive) return@addOnCompleteListener
-
-                                    if (!task.isSuccessful) {
-                                        Log.e("Task", "updateChildren FAILED", task.exception)
-                                        Log.e("Task", "updates=$updates")
-                                    } else {
-                                        Log.d("Task", "updateChildren SUCCESS")
-                                    }
-
-                                    continuation.resume(task.isSuccessful, onCancellation = {})
-                                }
+                                updateGroupDataOnServer(
+                                    databaseRef,
+                                    groupRootPath,
+                                    userRootPath,
+                                    userGroupsField,
+                                    group,
+                                    userId,
+                                    continuation
+                                )
+                            }
                         }
                     }
+                } else {
+                    updateGroupDataOnServer(
+                        databaseRef,
+                        groupRootPath,
+                        userRootPath,
+                        userGroupsField,
+                        group,
+                        userId,
+                        continuation
+                    )
                 }
             } catch(ex : Exception) {
                 logMessage("saveGroupAndUserGroups", { "Exception when save Group And User Groups: " + ex.message.toString() })
             }
+        }
+
+        fun updateGroupDataOnServer(
+            databaseRef : DatabaseReference,
+            groupRootPath: String,
+            userRootPath: String,
+            userGroupsField: String,
+            group: GroupDTO,
+            userId: String,
+            continuation : CancellableContinuation<Boolean>
+        ) {
+            // Store only necessary fields under user
+            val groupSummary = GroupSummaryDTO(
+                id = group.id,
+                name = group.name,
+                avatar = group.avatar
+            )
+
+            val updates = hashMapOf<String, Any?>(
+                "$groupRootPath/${group.id}" to group,
+
+                "$userRootPath/$userId/$userGroupsField/${group.id}" to groupSummary
+            )
+
+            databaseRef.updateChildren(updates)
+                .addOnCompleteListener { task ->
+                    if (!continuation.isActive) return@addOnCompleteListener
+
+                    if (!task.isSuccessful) {
+                        Log.e("Task", "updateChildren FAILED", task.exception)
+                        Log.e("Task", "updates=$updates")
+                    } else {
+                        Log.d("Task", "updateChildren SUCCESS")
+                    }
+
+                    continuation.resume(task.isSuccessful, onCancellation = {})
+                }
         }
 
         suspend fun getAllGroups(
@@ -1358,5 +1440,30 @@ class AndroidDatabaseHelper {
                     }
                 })
         }
+
+        fun updateIsReadStatusOfNotification(
+            userId: String,
+            notificationId: String,
+            userPath: String,
+            notificationPath: String
+        ) {
+            val notificationsRef = FirebaseDatabase
+                .getInstance()
+                .reference
+                .child(userPath)
+                .child(userId)
+                .child(notificationPath)
+
+            notificationsRef.get().addOnSuccessListener { snapshot ->
+                snapshot.children.forEach { child ->
+                    val id = child.child("id").getValue(String::class.java)
+                    if (id == notificationId) {
+                        child.ref.child("beRead").setValue(true)
+                        return@addOnSuccessListener
+                    }
+                }
+            }
+        }
+
     }
 }

@@ -38,6 +38,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -61,19 +62,23 @@ import com.minhtu.firesocialmedia.data.remote.service.imagepicker.ImagePicker
 import com.minhtu.firesocialmedia.domain.core.DecentralizationType
 import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
+import com.minhtu.firesocialmedia.platform.CommonBackHandler
 import com.minhtu.firesocialmedia.platform.getImageBytesFromDrawable
 import com.minhtu.firesocialmedia.platform.showToast
 import com.minhtu.firesocialmedia.presentation.home.HomeViewModel
+import com.minhtu.firesocialmedia.presentation.loading.Loading
+import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.friend.FriendViewModel
 import com.minhtu.firesocialmedia.utils.UiUtils
 import com.seiko.imageloader.ui.AutoSizeImage
+import kotlinx.coroutines.launch
 
 class UserInformation {
     companion object{
         @Composable
         fun UserInformationScreen(
             imagePicker: ImagePicker,
-            user: UserInstance?,
+            user : UserInstance?,
             isCurrentUser : Boolean,
             paddingValues: PaddingValues,
             localImageLoaderValue : ProvidedValue<*>,
@@ -81,22 +86,39 @@ class UserInformation {
             homeViewModel : HomeViewModel,
             friendViewModel: FriendViewModel,
             userInformationViewModel: UserInformationViewModel,
+            loadingViewModel: LoadingViewModel,
             onNavigateToShowImageScreen : (image : String) -> Unit,
-            onNavigateToUserInformation : (user : UserInstance?) -> Unit,
             onNavigateBack : () -> Unit,
             onNavigateToUploadNewsfeed: (updateNew : NewsInstance?) -> Unit,
             onNavigateToCallingScreen : (user : UserInstance?) -> Unit,
             onNavigateToCommentScreen: (selectedNew : NewsInstance) -> Unit,
         ){
+            CommonBackHandler {
+                onNavigateBack()
+            }
+            val isLoading by loadingViewModel.isLoading.collectAsState()
+            val coroutineScope = rememberCoroutineScope()
             val listState = rememberLazyListState()
             val newsList = homeViewModel.allNews.collectAsState()
             val addFriendStatus by userInformationViewModel.addFriendStatus.collectAsState()
             var showBottomSheet by rememberSaveable { mutableStateOf(false) }
             var newToBeShared by remember { mutableStateOf<NewsInstance?>(null) }
+            val fetchedUser by userInformationViewModel.fetchedUser.collectAsState()
+            var addFriendTimes by rememberSaveable { mutableStateOf(1) }
+            var callButtonEnabled by remember { mutableStateOf(true) }
             LaunchedEffect(Unit) {
-                val relationship =
-                    userInformationViewModel.checkRelationship(user!!, homeViewModel.currentUser!!)
-                userInformationViewModel.updateRelationship(relationship)
+                if(user != null) {
+                    loadingViewModel.showLoading()
+                    userInformationViewModel.fetchUserInformation(user.uid, isCurrentUser)
+                }
+            }
+            LaunchedEffect(fetchedUser) {
+                if(fetchedUser != null) {
+                    loadingViewModel.hideLoading()
+                    val relationship =
+                        userInformationViewModel.checkRelationship(fetchedUser!!, homeViewModel.currentUser!!)
+                    userInformationViewModel.updateRelationship(relationship)
+                }
             }
 
             LaunchedEffect(Unit) {
@@ -110,11 +132,15 @@ class UserInformation {
                     if(calleeCurrentState!!) {
                         if(isCurrentUser) {
                             showToast("Cannot call for yourself")
+                            // Only re-enable the button when we aren't navigating away
+                            callButtonEnabled = true
                         } else {
-                            onNavigateToCallingScreen(user)
+                            onNavigateToCallingScreen(fetchedUser)
                         }
                     } else {
                         showToast("This user is having another call! Please recall after a few minutes.")
+                        // Re-enable when the callee is busy and we stay on this screen
+                        callButtonEnabled = true
                     }
                     userInformationViewModel.resetCalleeState()
                 }
@@ -171,61 +197,62 @@ class UserInformation {
                             { showMenu = false })
                     }
                     //User avatar, name and button
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 10.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween // Ensures spacing between name and buttons
-                    ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
+                    if(fetchedUser != null) {
+                        Row(
                             modifier = Modifier
-                                .weight(1f)
-                                .offset(y = (-50).dp) // Moves avatar & name up
+                                .fillMaxWidth()
+                                .padding(horizontal = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween // Ensures spacing between name and buttons
                         ) {
-                            // User avatar
-                            CompositionLocalProvider(
-                                localImageLoaderValue
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .offset(y = (-50).dp) // Moves avatar & name up
                             ) {
-                                AutoSizeImage(
-                                    user!!.image,
-                                    contentDescription = "image",
-                                    contentScale = ContentScale.Crop,
-                                    modifier = Modifier
-                                        .size(120.dp)
-                                        .clip(CircleShape) // Ensures circular shape
-                                        .border(
-                                            2.dp,
-                                            Color.White,
-                                            CircleShape
-                                        ) // Optional border for better appearance
-                                        .testTag(TestTag.TAG_USER_AVATAR)
-                                        .semantics {
-                                            contentDescription = TestTag.TAG_USER_AVATAR
-                                        }
+                                // User avatar
+                                CompositionLocalProvider(
+                                    localImageLoaderValue
+                                ) {
+                                    AutoSizeImage(
+                                        fetchedUser!!.image,
+                                        contentDescription = "image",
+                                        contentScale = ContentScale.Crop,
+                                        modifier = Modifier
+                                            .size(120.dp)
+                                            .clip(CircleShape) // Ensures circular shape
+                                            .border(
+                                                2.dp,
+                                                Color.White,
+                                                CircleShape
+                                            ) // Optional border for better appearance
+                                            .testTag(TestTag.TAG_USER_AVATAR)
+                                            .semantics {
+                                                contentDescription = TestTag.TAG_USER_AVATAR
+                                            }
+                                    )
+                                }
+                                Spacer(modifier = Modifier.height(10.dp)) // Space between avatar and name
+                                // User name with max width & ellipsis
+                                Text(
+                                    text = fetchedUser!!.name,
+                                    color = Color.Black,
+                                    fontSize = 20.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    textAlign = TextAlign.Center,
+                                    modifier = Modifier.widthIn(max = 150.dp), // Restrict width to avoid touching buttons
+                                    overflow = TextOverflow.Ellipsis, // Add "..." if too long
+                                    maxLines = 1
                                 )
                             }
-                            Spacer(modifier = Modifier.height(10.dp)) // Space between avatar and name
-                            // User name with max width & ellipsis
-                            Text(
-                                text = user!!.name,
-                                color = Color.Black,
-                                fontSize = 20.sp,
-                                fontWeight = FontWeight.Bold,
-                                textAlign = TextAlign.Center,
-                                modifier = Modifier.widthIn(max = 150.dp), // Restrict width to avoid touching buttons
-                                overflow = TextOverflow.Ellipsis, // Add "..." if too long
-                                maxLines = 1
-                            )
-                        }
 
-                        // Move buttons up by adjusting offset(y = -20.dp)
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.offset(y = (-20).dp) // Moves buttons up
-                        ) {
-                            // Chat button
+                            // Move buttons up by adjusting offset(y = -20.dp)
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.offset(y = (-20).dp) // Moves buttons up
+                            ) {
+                                // Chat button
 //                            IconButton(
 //                                onClick = { /* Handle click */ },
 //                                modifier = Modifier.Companion.border(
@@ -241,118 +268,146 @@ class UserInformation {
 //                                )
 //                            }
 
-                            //Call button
-                            if(!isCurrentUser) {
-                                IconButton(
-                                    onClick = {
-                                        if(user != null) {
-                                            userInformationViewModel.checkCalleeAvailable(user)
-                                        }
-                                    },
-                                    modifier = Modifier.border(
-                                        1.dp,
-                                        Color.Black,
-                                        CircleShape
-                                    )
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Call,
-                                        contentDescription = "Call",
-                                        tint = Color.Gray
-                                    )
-                                }
-                            }
-
-                            Spacer(modifier = Modifier.width(8.dp)) // Space between buttons
-
-                            // Add friend button
-                            Box(
-                                contentAlignment = Alignment.Center,
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(20.dp)) // Clip first before applying shadow
-                                    .shadow(4.dp) // Apply shadow after clipping
-                                    .width(140.dp) // Reserve space to keep avatar/name centered
-                                    .background(
-                                        Brush.linearGradient(
-                                            colors = listOf(
-                                                Color.Red,
-                                                Color.White
-                                            )
-                                        )
-                                    )
-                            ) {
-                                var showMenu by remember { mutableStateOf(false) }
+                                //Call button
                                 if(!isCurrentUser) {
-                                    Button(
+                                    IconButton(
+                                        enabled = callButtonEnabled,
                                         onClick = {
-                                            if (addFriendStatus != Relationship.WAITING_RESPONSE) {
-                                                val relationship =
-                                                    userInformationViewModel.checkRelationship(
-                                                        user!!,
-                                                        homeViewModel.currentUser!!
-                                                    )
-                                                userInformationViewModel.updateRelationship(relationship)
-                                                userInformationViewModel.clickAddFriendButton(
-                                                    friend = user,
-                                                    currentUser = homeViewModel.currentUser
-                                                )
-                                            } else {
-                                                showMenu = true
+                                            if(callButtonEnabled) {
+                                                callButtonEnabled = false
+                                                coroutineScope.launch {
+                                                    val networkStatus = userInformationViewModel.checkInternetConnection()
+                                                    if(networkStatus) {
+                                                        userInformationViewModel.checkCalleeAvailable(fetchedUser!!)
+                                                    } else {
+                                                        showToast("No internet, please recheck your network!")
+                                                        callButtonEnabled = true
+                                                    }
+                                                }
                                             }
                                         },
-                                        modifier = Modifier
-                                            .clip(
-                                                androidx.compose.foundation.shape.RoundedCornerShape(
-                                                    20.dp
-                                                )
-                                            ) // Ensures button shape
-                                            .background(Color.Transparent) // Prevents default button background
-                                            .testTag(TestTag.TAG_BUTTON_ADDFRIEND)
-                                            .semantics {
-                                                contentDescription =
-                                                    TestTag.TAG_BUTTON_ADDFRIEND
-                                            },
-                                        colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent) // Makes background follow Box
+                                        modifier = Modifier.border(
+                                            1.dp,
+                                            Color.Black,
+                                            CircleShape
+                                        )
                                     ) {
-                                        Text(
-                                            text = when (addFriendStatus) {
-                                                Relationship.FRIEND -> "Unfriend"
-                                                Relationship.FRIEND_REQUEST -> "Cancel Request"
-                                                Relationship.NONE -> "Add Friend"
-                                                Relationship.WAITING_RESPONSE -> "Response"
-                                                else -> "Unknown"
-                                            },
-                                            textAlign = TextAlign.Center,
-                                            color = Color.Black,
-                                            maxLines = 1
+                                        Icon(
+                                            imageVector = Icons.Default.Call,
+                                            contentDescription = "Call",
+                                            tint = Color.Gray
                                         )
                                     }
                                 }
-                                DropdownMenuForResponse(
-                                    showMenu,
-                                    friendViewModel,
-                                    userInformationViewModel,
-                                    user!!,
-                                    homeViewModel.currentUser!!,
-                                    { showMenu = false })
+
+                                Spacer(modifier = Modifier.width(8.dp)) // Space between buttons
+
+                                // Add friend button
+                                Box(
+                                    contentAlignment = Alignment.Center,
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(20.dp)) // Clip first before applying shadow
+                                        .shadow(4.dp) // Apply shadow after clipping
+                                        .width(140.dp) // Reserve space to keep avatar/name centered
+                                        .background(
+                                            Brush.linearGradient(
+                                                colors = listOf(
+                                                    Color.Red,
+                                                    Color.White
+                                                )
+                                            )
+                                        )
+                                ) {
+                                    var showMenu by remember { mutableStateOf(false) }
+                                    if(!isCurrentUser) {
+                                        Button(
+                                            onClick = {
+                                                coroutineScope.launch {
+                                                    val networkStatus = userInformationViewModel.checkInternetConnection()
+                                                    //Only perform add friend feature when have internet connection
+                                                    if(networkStatus) {
+                                                        if (addFriendStatus != Relationship.WAITING_RESPONSE) {
+                                                            val relationship =
+                                                                userInformationViewModel.checkRelationship(
+                                                                    fetchedUser!!,
+                                                                    homeViewModel.currentUser!!
+                                                                )
+                                                            userInformationViewModel.updateRelationship(relationship)
+                                                            if(relationship == Relationship.NONE && addFriendTimes <= 0) {
+                                                                showToast("You only can add friend once when you go to this page!!!")
+                                                            } else {
+                                                                addFriendTimes -= 1
+                                                                userInformationViewModel. clickAddFriendButton(
+                                                                    friend = fetchedUser,
+                                                                    currentUser = homeViewModel.currentUser
+                                                                )
+                                                            }
+                                                        } else {
+                                                            showMenu = true
+                                                        }
+                                                    } else {
+                                                        showToast("No internet, please recheck your network!")
+                                                    }
+                                                }
+                                            },
+                                            modifier = Modifier
+                                                .clip(
+                                                    androidx.compose.foundation.shape.RoundedCornerShape(
+                                                        20.dp
+                                                    )
+                                                ) // Ensures button shape
+                                                .background(Color.Transparent) // Prevents default button background
+                                                .testTag(TestTag.TAG_BUTTON_ADDFRIEND)
+                                                .semantics {
+                                                    contentDescription =
+                                                        TestTag.TAG_BUTTON_ADDFRIEND
+                                                },
+                                            colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent) // Makes background follow Box
+                                        ) {
+                                            Text(
+                                                text = when (addFriendStatus) {
+                                                    Relationship.FRIEND -> "Unfriend"
+                                                    Relationship.FRIEND_REQUEST -> "Cancel Request"
+                                                    Relationship.NONE -> "Add Friend"
+                                                    Relationship.WAITING_RESPONSE -> "Response"
+                                                    else -> "Unknown"
+                                                },
+                                                textAlign = TextAlign.Center,
+                                                color = Color.Black,
+                                                maxLines = 1
+                                            )
+                                        }
+                                    }
+                                    DropdownMenuForResponse(
+                                        showMenu,
+                                        friendViewModel,
+                                        userInformationViewModel,
+                                        fetchedUser!!,
+                                        homeViewModel.currentUser!!,
+                                        { showMenu = false })
+                                }
                             }
                         }
                     }
 
                     val filterList by remember {
                         derivedStateOf {
+                            val user = fetchedUser ?: return@derivedStateOf emptyList()
+
                             newsList.value
                                 .filter { news ->
-                                (news.posterId == user!!.uid)
-                            }
+                                    news.posterId == user.uid
+                                }
                                 .filter { news ->
-                                    when(news.decentralizationType) {
-                                        DecentralizationType.Private -> news.posterId == homeViewModel.currentUser?.uid
+                                    when (news.decentralizationType) {
+                                        DecentralizationType.Private ->
+                                            news.posterId == homeViewModel.currentUser?.uid
                                         else -> true
                                     }
                                 }
                         }
                     }
+
                     UiUtils.LazyColumnOfNewsWithSlideOutAnimationAndLoadMore(
                         localImageLoaderValue,
                         listState,
@@ -360,7 +415,9 @@ class UserInformation {
                         filterList,
                         onNavigateToUploadNewsfeed,
                         onNavigateToShowImageScreen,
-                        onNavigateToUserInformation,
+                        onNavigateToUserInformation = {
+                            //Don't allow navigate to this screen again
+                        },
                         showBottomSheet = { news ->
                             newToBeShared = news
                             showBottomSheet = true
@@ -378,6 +435,9 @@ class UserInformation {
                             showBottomSheet = false
                         }
                     )
+                }
+                if(isLoading) {
+                    Loading.LoadingScreen()
                 }
             }
         }

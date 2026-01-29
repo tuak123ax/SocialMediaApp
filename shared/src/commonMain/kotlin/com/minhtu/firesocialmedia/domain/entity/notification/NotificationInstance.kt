@@ -16,7 +16,8 @@ data class NotificationInstance(
     val sender : String = "",
     val timeSend : Long = 0,
     val type : NotificationType = NotificationType.NONE,
-    var relatedInfo : String = ""
+    var relatedInfo : String = "",
+    var beRead : Boolean = false
 ){
     companion object{
 
@@ -36,7 +37,8 @@ fun NotificationInstance.toMap(): Map<String, Any> = mapOf(
     "sender" to sender,
     "timeSend" to timeSend,
     "type" to type.name, // store enum as string
-    "relatedInfo" to relatedInfo
+    "relatedInfo" to relatedInfo,
+    "beRead" to beRead
 )
 
 fun NotificationInstance.Companion.fromMap(map: Map<String, Any?>): NotificationInstance {
@@ -47,6 +49,7 @@ fun NotificationInstance.Companion.fromMap(map: Map<String, Any?>): Notification
         sender = map["sender"] as? String ?: "",
         timeSend = (map["timeSend"] as? Number)?.toLong() ?: 0L,
         type = (map["type"] as? String)?.let { NotificationType.valueOf(it) } ?: NotificationType.NONE,
-        relatedInfo = map["relatedInfo"] as? String ?: ""
+        relatedInfo = map["relatedInfo"] as? String ?: "",
+        beRead = map["beRead"] as? Boolean ?: false
     )
 }

@@ -10,7 +10,6 @@ import com.minhtu.firesocialmedia.domain.usecases.signin.CheckUserExistsUseCase
 import com.minhtu.firesocialmedia.domain.usecases.signin.HandleSignInGoogleResultUseCase
 import com.minhtu.firesocialmedia.domain.usecases.signin.RememberPasswordUseCase
 import com.minhtu.firesocialmedia.domain.usecases.signin.SignInUseCase
-import com.minhtu.firesocialmedia.platform.logMessage
 import com.rickclephas.kmp.observableviewmodel.ViewModel
 import com.rickclephas.kmp.observableviewmodel.launch
 import kotlinx.coroutines.CoroutineDispatcher
@@ -18,7 +17,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.withContext
 
 class SignInViewModel(
     private val signInUseCase : SignInUseCase,
@@ -73,7 +71,6 @@ class SignInViewModel(
                 }
                 checkEmailInDatabase(email.value)
             } else {
-                logMessage("signIn", { "Error when sign in" })
                 _signInStatus.value = SignInState(false, signInError)
             }
         }

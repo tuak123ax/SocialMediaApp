@@ -178,7 +178,7 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                         //Show loading while sync data
                         loadingViewModel.showSyncLoading()
                         //Sync data
-                        val syncDataResult = syncDataUseCase.invoke(homeViewModel.currentUser!!.uid)
+                        syncDataUseCase.invoke(homeViewModel.currentUser!!.uid)
                         //Dismiss loading
                         loadingViewModel.hideSyncLoading()
                     }
@@ -468,15 +468,13 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                         homeViewModel = homeViewModel,
                         friendViewModel = friendViewModel,
                         userInformationViewModel = userInformationViewModel,
+                        loadingViewModel = loadingViewModel,
                         onNavigateToShowImageScreen = { image ->
                             selectedImage = image
                             navController.navigate(route = ShowImage.getScreenName())
                         },
-                        onNavigateToUserInformation = { user ->
-                            selectedUser = user
-                            navController.navigate(route = UserInformation.getScreenName())
-                        },
                         onNavigateBack = {
+                            userInformationViewModel.resetOldData()
                             navController.popBackStack()
                         },
                         onNavigateToUploadNewsfeed = { new ->

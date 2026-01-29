@@ -7,13 +7,16 @@ import com.minhtu.firesocialmedia.constants.Constants
 import com.minhtu.firesocialmedia.domain.entity.notification.NotificationInstance
 import com.minhtu.firesocialmedia.domain.entity.notification.NotificationType
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
+import com.minhtu.firesocialmedia.domain.usecases.common.GetUserUseCase
 import com.minhtu.firesocialmedia.domain.usecases.friend.SaveFriendRequestUseCase
 import com.minhtu.firesocialmedia.domain.usecases.friend.SaveFriendUseCase
 import com.minhtu.firesocialmedia.domain.usecases.information.CheckCalleeAvailableUseCase
+import com.minhtu.firesocialmedia.domain.usecases.network.CheckInternetConnectionUseCase
 import com.minhtu.firesocialmedia.domain.usecases.notification.SaveNotificationToDatabaseUseCase
 import com.minhtu.firesocialmedia.platform.createMessageForServer
 import com.minhtu.firesocialmedia.platform.getCurrentTime
 import com.minhtu.firesocialmedia.platform.getRandomIdForNotification
+import com.minhtu.firesocialmedia.platform.logMessage
 import com.minhtu.firesocialmedia.platform.sendMessageToServer
 import com.minhtu.firesocialmedia.utils.Utils
 import com.rickclephas.kmp.observableviewmodel.ViewModel
@@ -26,6 +29,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -40,6 +44,8 @@ class UserInformationViewModel(
     private val saveFriendRequestUseCase: SaveFriendRequestUseCase,
     private val saveNotificationToDatabaseUseCase : SaveNotificationToDatabaseUseCase,
     private val checkCalleeAvailableUseCase: CheckCalleeAvailableUseCase,
+    private val getUserUseCase: GetUserUseCase,
+    private val checkInternetConnectionUseCase : CheckInternetConnectionUseCase,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : ViewModel() {
     // StateFlow to update UI in Compose
@@ -53,6 +59,9 @@ class UserInformationViewModel(
     private var friendRequestList : ArrayList<String> = ArrayList()
     var currentRelationship : Relationship = Relationship.NONE
     private var updateFriendRequestJob : Job? = null
+    suspend fun checkInternetConnection() : Boolean {
+        return checkInternetConnectionUseCase.invoke().first()
+    }
     fun clickAddFriendButton(friend : UserInstance?, currentUser : UserInstance?) {
         viewModelScope.launch {
             withContext(ioDispatcher) {
@@ -99,7 +108,8 @@ class UserInformationViewModel(
 
                                 }
                             }
-                        } catch(_: Exception) {
+                        } catch(e: Exception) {
+                            logMessage("updateFriendRequestJob", { "Exception: ${e.message}" })
                         }
                     }
                 }
@@ -182,5 +192,19 @@ class UserInformationViewModel(
 
     fun resetCalleeState() {
         _calleeCurrentState.value = null
+    }
+
+    private val _fetchedUser = MutableStateFlow<UserInstance?>(null)
+    var fetchedUser = _fetchedUser.asStateFlow()
+    fun fetchUserInformation(userId: String, isCurrentUser : Boolean) {
+        viewModelScope.launch(ioDispatcher) {
+            _fetchedUser.value = getUserUseCase.invoke(userId, isCurrentUser)
+        }
+    }
+
+    fun resetOldData() {
+        _fetchedUser.value = null
+        coverPhoto = Constants.DEFAULT_AVATAR_URL
+        _addFriendStatus.value = null
     }
 }

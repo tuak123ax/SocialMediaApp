@@ -88,5 +88,7 @@ class TestTag {
         const val TAG_ACTION_BUTTON_OF_USER_IN_GROUP_ROW : String = "TAG_ACTION_BUTTON_OF_USER_IN_GROUP_ROW"
         const val TAG_ACTION_BUTTON_OF_USER_IN_GROUP : String = "TAG_ACTION_BUTTON_OF_USER_IN_GROUP"
         const val TAG_RECOMMEND_GROUP : String = "TAG_RECOMMEND_GROUP"
+        const val TAG_SHARE_APPS_ROW : String = "TAG_SHARE_APPS_ROW"
+        const val TAG_SHOW_PASSWORD : String = "TAG_SHOW_PASSWORD"
     }
 }

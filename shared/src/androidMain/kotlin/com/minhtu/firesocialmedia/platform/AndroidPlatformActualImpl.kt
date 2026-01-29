@@ -181,7 +181,9 @@ actual fun PasswordVisibilityIcon(passwordVisibility : Boolean) {
         icon = icon,
         backgroundColor = "#00FFFFFF",
         contentDescription = descriptionOfIcon,
-        modifier = Modifier.size(30.dp)
+        modifier = Modifier
+            .size(30.dp)
+            .padding(4.dp)
     )
 }
 
@@ -263,12 +265,14 @@ actual fun sendMessageToServer(request: String) {
             val response = Client.getClient(Constants.APP_SCRIPT_URL)?.create(NotificationApiService::class.java)!!
                 .sendToAppScript(request).execute()
             if (response.isSuccessful) {
-//                Log.d("FCM", "Notification Sent Successfully: ${response.body()}")
+                logMessage("sendMessageToFCM",
+                    { "Notification Sent Successfully: ${response.body()}" })
             } else {
-//                Log.e("FCM", "Error: ${response.errorBody()?.string()}")
+                logMessage("sendMessageToFCM",
+                    { "Error: \${response.errorBody()?.string()}" })
             }
         } catch (e: Exception) {
-//            Log.e("FCM", "Exception: ${e.message}")
+            logMessage("sendMessageToFCM", { "Error: ${e.message}" })
         }
     }
 }

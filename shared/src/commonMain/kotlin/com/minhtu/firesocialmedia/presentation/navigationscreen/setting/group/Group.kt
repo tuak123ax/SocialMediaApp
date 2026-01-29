@@ -59,7 +59,7 @@ class Group {
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(500.dp)
-                            .padding(end = 5.dp)
+                            .padding(5.dp)
                     )
                 } else {
                     Text(
@@ -114,7 +114,7 @@ class Group {
                                     contentDescription = "select_group",
                                     modifier = Modifier
                                         .size(40.dp)
-                                        .padding(end = 5.dp)
+                                        .padding(5.dp)
                                 )
                                 Text(text = "Select Your Group", color = Color.Black)
                                 Spacer(Modifier.weight(1f))
@@ -124,6 +124,7 @@ class Group {
                                     contentDescription = "right",
                                     modifier = Modifier
                                         .size(40.dp)
+                                        .padding(5.dp)
                                 )
                             }
                         }
@@ -178,7 +179,7 @@ class Group {
                                 contentDescription = "create_group",
                                 modifier = Modifier
                                     .size(40.dp)
-                                    .padding(end = 5.dp)
+                                    .padding(5.dp)
                             )
                             Text(text = "Create Group", color = Color.Black)
                             Spacer(Modifier.weight(1f))
@@ -188,6 +189,7 @@ class Group {
                                 contentDescription = "right",
                                 modifier = Modifier
                                     .size(40.dp)
+                                    .padding(5.dp)
                             )
                         }
                     }
@@ -231,7 +233,7 @@ class Group {
                                 contentDescription = "explore_group",
                                 modifier = Modifier
                                     .size(40.dp)
-                                    .padding(end = 5.dp)
+                                    .padding(5.dp)
                             )
                             Text(text = "Explore Group", color = Color.Black)
                             Spacer(Modifier.weight(1f))
@@ -241,6 +243,7 @@ class Group {
                                 contentDescription = "right",
                                 modifier = Modifier
                                     .size(40.dp)
+                                    .padding(5.dp)
                             )
                         }
                     }

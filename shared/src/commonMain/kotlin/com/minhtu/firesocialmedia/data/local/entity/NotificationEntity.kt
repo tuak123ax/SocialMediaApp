@@ -17,7 +17,8 @@ data class NotificationEntity(
     val sender: String = "",
     val timeSend: Long = 0L,
     val type: NotificationType = NotificationType.NONE,
-    val relatedInfo: String = ""
+    val relatedInfo: String = "",
+    var beRead : Boolean = false
 )
 
 class EnumConverters {

@@ -46,6 +46,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -75,6 +76,7 @@ import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
 import com.minhtu.firesocialmedia.presentation.search.SearchViewModel
 import com.seiko.imageloader.ui.AutoSizeImage
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
 class Notification {
@@ -213,7 +215,8 @@ class Notification {
             var offsetX by remember { mutableFloatStateOf(0f) }
             val animatedOffsetX by animateFloatAsState(targetValue = offsetX)
             val swipeThreshold = -swipeDistancePx / 2
-
+            val currentUser = homeViewModel.currentUser
+            val coroutineScope = rememberCoroutineScope()
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -227,7 +230,7 @@ class Notification {
                 Row(
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(Color.White)
+                        .background(if(notification.beRead) Color.LightGray else Color.White)
                         .testTag(TestTag.TAG_BUTTON_DELETE)
                         .semantics {
                             contentDescription = TestTag.TAG_BUTTON_DELETE
@@ -258,7 +261,7 @@ class Notification {
                     modifier = Modifier
                         .offset { IntOffset(animatedOffsetX.roundToInt(), 0) }
                         .fillMaxWidth()
-                        .background(Color.White)
+                        .background(if(notification.beRead) Color.LightGray else Color.White)
                         .pointerInput(notification.id) {
                             detectHorizontalDragGestures(
                                 onHorizontalDrag = { _, dragAmount ->
@@ -302,6 +305,22 @@ class Notification {
                                 }
                             } else {
                                 showToast("This notification is from old version, cannot navigate to other screen!")
+                            }
+                            //Mark as read
+                            if(currentUser != null) {
+                                coroutineScope.launch {
+                                    val updatedNotification = notification.copy(beRead = true)
+                                    notificationViewModel.updateIsReadStatusOfNotification(
+                                        updatedNotification,
+                                        currentUser
+                                    )
+                                    val updatedNotifications = homeViewModel.listNotificationOfCurrentUser.map {
+                                        if (it.id == updatedNotification.id) updatedNotification else it
+                                    }
+
+                                    homeViewModel.listNotificationOfCurrentUser.clear()
+                                    homeViewModel.listNotificationOfCurrentUser.addAll(updatedNotifications)
+                                }
                             }
                         }
                 ) {

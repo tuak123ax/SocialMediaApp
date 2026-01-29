@@ -96,7 +96,8 @@ fun NotificationInstance.toRoomEntity() : NotificationEntity {
         sender,
         timeSend,
         type,
-        relatedInfo
+        relatedInfo,
+        beRead
     )
 }
 
@@ -114,7 +115,8 @@ fun NotificationEntity.toDomain() : NotificationInstance {
         sender,
         timeSend,
         type,
-        relatedInfo
+        relatedInfo,
+        beRead
     )
 }
 

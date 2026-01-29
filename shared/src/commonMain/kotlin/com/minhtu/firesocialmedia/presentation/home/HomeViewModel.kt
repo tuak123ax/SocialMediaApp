@@ -210,6 +210,22 @@ class HomeViewModel(
         }
     }
 
+    // Ensure a single user is present in cache; fetch and cache if missing
+    fun ensureUserLoaded(userId: String) {
+        if (userId.isBlank()) return
+        viewModelScope.launch(ioDispatcher) {
+            val alreadyCached = cacheMutex.withLock { loadedUsersCache.containsKey(userId) }
+            if (alreadyCached) return@launch
+            val user = runCatching { userInteractor.getUser(userId, false) }.getOrNull()
+            cacheMutex.withLock {
+                if (!loadedUsersCache.containsKey(userId)) {
+                    loadedUsersCache[userId] = user
+                    _loadedUserState.value = loadedUsersCache.toMap()
+                }
+            }
+        }
+    }
+
     val _getAllNotificationsOfCurrentUser = mutableStateOf(false)
     val getAllNotificationsOfCurrentUser = _getAllNotificationsOfCurrentUser
     suspend fun getAllNotificationsOfUser() {
@@ -217,6 +233,10 @@ class HomeViewModel(
         if(currentUserId != null) {
             val notifications = notificationInteractor.allNotificationsOf(
                 currentUserId)
+            for(notification in notifications!!) {
+                logMessage("getAllNotifications",
+                    { notification.id + "isRead: "+ notification.beRead })
+            }
             if(notifications != null) {
                 listNotificationOfCurrentUser.clear()
                 listNotificationOfCurrentUser.addAll(notifications)

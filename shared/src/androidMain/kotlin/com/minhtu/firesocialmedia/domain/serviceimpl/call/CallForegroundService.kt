@@ -94,13 +94,13 @@ class CallForegroundService : Service() {
         super.onCreate()
 
         //Initialize services
-        callManager = AndroidAudioCallService(this)
-        databaseService = AndroidDatabaseService(this)
         backgroundScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
         callNotificationManager = CallNotificationManager(this)
-
         val platformContext = AndroidPlatformContext(this, AndroidPermissionManager(null))
         val callRepository = AppModule.provideCallRepository(platformContext)
+        // Use the same AudioCallService instance across repository and service to avoid leaks
+        callManager = platformContext.audioCall
+        databaseService = AndroidDatabaseService(applicationContext)
         //Initialize use cases
         initializeCallUseCase = AppModule.provideInitializeCallUseCase(callRepository)
         sendSignalingDataUseCase = AppModule.provideSendSignalingDataUseCase(callRepository)

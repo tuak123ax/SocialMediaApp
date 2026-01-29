@@ -87,6 +87,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.composed
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
@@ -109,7 +110,6 @@ import com.minhtu.firesocialmedia.constants.TestTag
 import com.minhtu.firesocialmedia.domain.entity.home.deeplinks.ShareApp
 import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
-import com.minhtu.firesocialmedia.platform.CommonBackHandler
 import com.minhtu.firesocialmedia.platform.CrossPlatformIcon
 import com.minhtu.firesocialmedia.platform.VideoPlayer
 import com.minhtu.firesocialmedia.platform.convertTimeToDateString
@@ -125,6 +125,7 @@ import com.minhtu.firesocialmedia.presentation.navigationscreen.notification.Not
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.Settings
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.GroupDetails.Companion.DropdownMenuForMoreOptionsInGroup
 import com.minhtu.firesocialmedia.presentation.search.SearchViewModel
+import com.minhtu.firesocialmedia.utils.Utils.Companion.hexToColor
 import com.seiko.imageloader.asImageBitmap
 import com.seiko.imageloader.ui.AutoSizeImage
 import kotlinx.coroutines.delay
@@ -300,9 +301,9 @@ class UiUtils {
                                     icon = "like",
                                     backgroundColor = if(isLiked) "#00FFFF" else "#FFFFFFFF",
                                     contentDescription = "Like",
+                                    tint = if(isLiked) hexToColor("FF1565C0") else Color.Black,
                                     modifier = Modifier
                                         .size(25.dp)
-                                        .padding(end = 5.dp)
                                 )
                                 Text(text = if(isLiked) "Liked" else "Like", color = Color.Black)
                             }
@@ -323,7 +324,6 @@ class UiUtils {
                                     contentDescription = "Comment",
                                     modifier = Modifier
                                         .size(25.dp)
-                                        .padding(end = 5.dp)
                                 )
                                 Text(text = "Comment", color = Color.Black)
                             }
@@ -346,7 +346,6 @@ class UiUtils {
                                     contentDescription = "Share",
                                     modifier = Modifier
                                         .size(25.dp)
-                                        .padding(end = 5.dp)
                                 )
                                 Text(text = "Share", color = Color.Black)
                             }
@@ -375,6 +374,11 @@ class UiUtils {
             LaunchedEffect(Unit) {
                 homeViewModel.updateLikeStatus()
             }
+            val loadedUsers by homeViewModel.loadedUserState.collectAsState()
+            LaunchedEffect(sharedNew.posterId) {
+                homeViewModel.ensureUserLoaded(sharedNew.posterId)
+            }
+            val ownerUser = loadedUsers[sharedNew.posterId]
             Card(
                 modifier = Modifier
                     .padding(start = 10.dp, end = 10.dp, top = 5.dp)
@@ -446,30 +450,34 @@ class UiUtils {
                     }
                     //Message
                     ExpandableText(news.message)
-                    //Shared content
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(10.dp)
-                            .border(1.dp, Color.Black)
-                    ) {
-                        NewsCard(
-                            sharedNew,
-                            user,
-                            isLiked,
-                            likeCountList,
-                            commentCountList,
-                            localImageLoaderValue,
-                            likeCommentAndShareButtonEnable = false,
-                            hasDropdownMenu = false,
-                            onNavigateToShowImageScreen,
-                            onNavigateToUserInformation,
-                            homeViewModel,
-                            listState,
-                            onDelete,
-                            onNavigateToCreatePost,
-                            showBottomSheet
-                        )
+                    if(ownerUser != null) {
+                        //Shared content
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(10.dp)
+                                .border(1.dp, Color.Black)
+                        ) {
+                            NewsCard(
+                                sharedNew,
+                                ownerUser!!,
+                                isLiked,
+                                likeCountList,
+                                commentCountList,
+                                localImageLoaderValue,
+                                likeCommentAndShareButtonEnable = false,
+                                hasDropdownMenu = false,
+                                onNavigateToShowImageScreen,
+                                onNavigateToUserInformation,
+                                homeViewModel,
+                                listState,
+                                onDelete,
+                                onNavigateToCreatePost,
+                                showBottomSheet
+                            )
+                        }
+                    } else {
+                        ShareContentPlaceholder()
                     }
                     //Like and comment part
                     Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp),
@@ -504,6 +512,7 @@ class UiUtils {
                                 icon = "like",
                                 backgroundColor = if(isLiked) "#00FFFF" else "#FFFFFFFF",
                                 contentDescription = "Like",
+                                tint = if(isLiked) hexToColor("FF1565C0") else Color.Black,
                                 modifier = Modifier
                                     .size(25.dp)
                                     .padding(end = 5.dp)
@@ -684,7 +693,9 @@ class UiUtils {
                 ) {
                     val currentRoute = currentRoute
                     items.forEach { screen ->
-                        val notificationCount = homeViewModel.listNotificationOfCurrentUser.size
+                        val notificationCount = homeViewModel.listNotificationOfCurrentUser.filter {
+                            !it.beRead
+                        }.size
 
                         val showBadge = screen.route == Notification.getScreenName() && notificationCount > 0
                         val testTag = when(screen.route) {
@@ -801,7 +812,7 @@ class UiUtils {
             showMoreOptionsMenu : Boolean = false,
             isMember : Boolean = true,
             isAdmin : Boolean = false,
-            iconSize : Dp = 30.dp,
+            iconSize : Dp = 35.dp,
             navigateBack : () -> Unit,
             onClickMoreOptions : () -> Unit = {},
             onDismissRequest : () -> Unit = {},
@@ -821,6 +832,7 @@ class UiUtils {
                     tint = Color.Black,
                     modifier = Modifier
                         .size(iconSize)
+                        .padding(4.dp)
                         .clip(CircleShape)
                         .testTag(TestTag.TAG_BUTTON_BACK)
                         .semantics { contentDescription = TestTag.TAG_BUTTON_BACK }
@@ -866,6 +878,7 @@ class UiUtils {
                                 .clickable {
                                     onClickMoreOptions()
                                 }
+                                .padding(4.dp)
                         )
                         if(showMoreOptionsMenu) {
                             DropdownMenuForMoreOptionsInGroup(
@@ -1721,7 +1734,12 @@ class UiUtils {
                 Text("No compatible apps found")
             } else {
                 LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    modifier = Modifier
+                        .testTag(TestTag.TAG_SHARE_APPS_ROW)
+                        .semantics{
+                            contentDescription = TestTag.TAG_SHARE_APPS_ROW
+                        }
                 ) {
                     items(shareAppsList) { app ->
                         Column(
@@ -1789,6 +1807,107 @@ class UiUtils {
                     )
                 }
             }
+        }
+
+        @Composable
+        fun ShareContentPlaceholder() {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(10.dp),
+                shape = RoundedCornerShape(12.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White)
+            ) {
+                Column(modifier = Modifier.padding(12.dp)) {
+
+                    // Header: avatar + name
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clip(CircleShape)
+                                .shimmerPlaceholder()
+                        )
+
+                        Spacer(modifier = Modifier.width(8.dp))
+
+                        Column {
+                            Box(
+                                modifier = Modifier
+                                    .height(14.dp)
+                                    .width(120.dp)
+                                    .shimmerPlaceholder()
+                            )
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Box(
+                                modifier = Modifier
+                                    .height(12.dp)
+                                    .width(80.dp)
+                                    .shimmerPlaceholder()
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // Content text
+                    Box(
+                        modifier = Modifier
+                            .height(16.dp)
+                            .fillMaxWidth(0.7f)
+                            .shimmerPlaceholder()
+                    )
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    // Image placeholder
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(180.dp)
+                            .clip(RoundedCornerShape(10.dp))
+                            .shimmerPlaceholder()
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // Actions row
+                    Row(
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .height(24.dp)
+                                .width(60.dp)
+                                .shimmerPlaceholder()
+                        )
+                        Box(
+                            modifier = Modifier
+                                .height(24.dp)
+                                .width(80.dp)
+                                .shimmerPlaceholder()
+                        )
+                    }
+                }
+            }
+        }
+
+        fun Modifier.shimmerPlaceholder(): Modifier = composed {
+            val shimmer = rememberInfiniteTransition()
+            val alpha by shimmer.animateFloat(
+                initialValue = 0.3f,
+                targetValue = 0.7f,
+                animationSpec = infiniteRepeatable(
+                    animation = tween(800),
+                    repeatMode = RepeatMode.Reverse
+                )
+            )
+
+            background(
+                color = Color.LightGray.copy(alpha = alpha),
+                shape = RoundedCornerShape(6.dp)
+            )
         }
     }
 }

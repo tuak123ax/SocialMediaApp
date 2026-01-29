@@ -59,7 +59,8 @@ class AndroidAudioCallService(
     private var surfaceTextureHelper : SurfaceTextureHelper? = null
     private var hasStarted = false
     private var localVideoSender: RtpSender? = null
-    private lateinit var audioDeviceModule: AudioDeviceModule
+    private var audioDeviceModule: AudioDeviceModule
+    private var peerConnectionObserver : PeerConnection.Observer? = null
 
     init {
         // 1. Initialize WebRTC global settings
@@ -372,7 +373,7 @@ class AndroidAudioCallService(
                 .createIceServer()
         )
         val rtcConfig = PeerConnection.RTCConfiguration(iceServers)
-        val observer = object : PeerConnection.Observer{
+        peerConnectionObserver = object : PeerConnection.Observer{
             override fun onSignalingChange(p0: PeerConnection.SignalingState?) {
                 logMessage("initialize", { "onSignalingChange" })
             }
@@ -435,7 +436,7 @@ class AndroidAudioCallService(
             }
         }
         //Setup peer connection.
-        peerConnection = peerConnectionFactory.createPeerConnection(rtcConfig,observer)
+        peerConnection = peerConnectionFactory.createPeerConnection(rtcConfig,peerConnectionObserver)
         //Setup audio track.
         setupAudioTrack()
         onInitializeFinished()
@@ -662,6 +663,7 @@ class AndroidAudioCallService(
             hasStarted = false
 
             // PeerConnection
+            peerConnectionObserver = null
             peerConnection?.close()
             peerConnection?.dispose()
             peerConnection = null

@@ -3,13 +3,16 @@ package com.minhtu.firesocialmedia.domain.serviceimpl.permission
 import android.Manifest
 import android.app.Activity
 import android.content.pm.PackageManager
+import java.lang.ref.WeakReference
 import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import com.minhtu.firesocialmedia.data.remote.service.permission.PermissionManager
 import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.suspendCancellableCoroutine
 
-class AndroidPermissionManager(private val activity: Activity?) : PermissionManager {
+class AndroidPermissionManager(activity: Activity?) : PermissionManager {
     private var continuation: CancellableContinuation<Boolean>? = null
+    private var activityRef: WeakReference<Activity>? = activity?.let { WeakReference(it) }
 
     override suspend fun requestCameraAndAudioPermissions(): Boolean {
         return requestPermissions(
@@ -28,9 +31,21 @@ class AndroidPermissionManager(private val activity: Activity?) : PermissionMana
     private suspend fun requestPermissions(permissions: Array<String>): Boolean {
         return suspendCancellableCoroutine { cont ->
             continuation = cont
-            if(activity!= null) {
-                ActivityCompat.requestPermissions(activity, permissions, REQUEST_CODE)
+            val currentActivity = activityRef?.get()
+            if (currentActivity == null) {
+                cont.resume(false, onCancellation = {})
+                return@suspendCancellableCoroutine
             }
+            // If already granted, return immediately
+            val allGranted = permissions.all {
+                ContextCompat.checkSelfPermission(currentActivity, it) == PackageManager.PERMISSION_GRANTED
+            }
+            if (allGranted) {
+                cont.resume(true, onCancellation = {})
+                continuation = null
+                return@suspendCancellableCoroutine
+            }
+            ActivityCompat.requestPermissions(currentActivity, permissions, REQUEST_CODE)
         }
     }
 
@@ -39,6 +54,12 @@ class AndroidPermissionManager(private val activity: Activity?) : PermissionMana
         val granted = grantResults.all { it == PackageManager.PERMISSION_GRANTED }
         continuation?.resume(granted, onCancellation = {})
         continuation = null
+    }
+
+    fun clear() {
+        continuation = null
+        activityRef?.clear()
+        activityRef = null
     }
 
     companion object {

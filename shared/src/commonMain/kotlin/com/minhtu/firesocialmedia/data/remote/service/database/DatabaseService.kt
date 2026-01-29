@@ -270,4 +270,11 @@ interface DatabaseService {
     suspend fun fetchRecommendGroups(limit : Int,
                                      groupPath: String,
                                      memberCountPath: String): List<GroupDTO>
+
+    suspend fun updateIsReadStatusOfNotification(
+        userId: String,
+        notificationId: String,
+        userPath: String,
+        notificationPath: String
+    )
 }

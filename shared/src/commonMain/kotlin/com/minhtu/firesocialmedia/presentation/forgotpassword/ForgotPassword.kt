@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -25,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.minhtu.firesocialmedia.constants.Constants
 import com.minhtu.firesocialmedia.constants.TestTag
+import com.minhtu.firesocialmedia.platform.logMessage
 import com.minhtu.firesocialmedia.platform.showToast
 import com.minhtu.firesocialmedia.presentation.loading.Loading
 import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
@@ -38,14 +40,15 @@ class ForgotPassword{
             modifier: Modifier,
             onNavigateToSignInScreen:() -> Unit) {
             val isLoading by loadingViewModel.isLoading.collectAsState()
-            val emailExisted = forgotPasswordViewModel.emailExisted.collectAsState()
-            val emailSent = forgotPasswordViewModel.emailSent.collectAsState()
-            LaunchedEffect(emailExisted.value) {
-                if (emailExisted.value != null) {
-                    if (emailExisted.value!!.exist) {
+            val emailExisted by forgotPasswordViewModel.emailExisted.collectAsState()
+            val emailSent by forgotPasswordViewModel.emailSent.collectAsState()
+            LaunchedEffect(emailExisted) {
+                if (emailExisted != null) {
+                    if (emailExisted!!.exist) {
                         forgotPasswordViewModel.sendEmailResetPassword()
                     } else {
-                        when (emailExisted.value!!.message) {
+                        loadingViewModel.hideLoading()
+                        when (emailExisted!!.message) {
                             Constants.EMAIL_EMPTY -> {
                                 showToast("Please input your email!")
                             }
@@ -59,16 +62,20 @@ class ForgotPassword{
                             }
                         }
                     }
+                    forgotPasswordViewModel.resetEmailExistStatus()
                 }
             }
-            LaunchedEffect(emailSent.value) {
-                if (emailSent.value != null) {
-                    if (emailSent.value!!) {
+            LaunchedEffect(emailSent) {
+                if (emailSent != null) {
+                    loadingViewModel.hideLoading()
+                    if (emailSent!!) {
                         showToast("Please check your email to reset password!")
                         onNavigateToSignInScreen()
                     } else {
                         showToast("Server error happened! Please try again.")
                     }
+                    forgotPasswordViewModel.updateEmail("")
+                    forgotPasswordViewModel.resetEmailResetPassword()
                 }
             }
 
@@ -95,7 +102,11 @@ class ForgotPassword{
                                 contentDescription = TestTag.TAG_USERNAME
                             },
                         label = { Text(text = "Username") },
-                        singleLine = true
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = Color.White,
+                            unfocusedTextColor = Color.White
+                        )
                     )
 
                     //Row contains buttons
@@ -106,14 +117,19 @@ class ForgotPassword{
                     ) {
                         //Back button
                         Button(onClick = {
+                            forgotPasswordViewModel.resetEmailExistStatus()
                             forgotPasswordViewModel.resetEmailResetPassword()
+                            forgotPasswordViewModel.updateEmail("")
                             onNavigateToSignInScreen()
                         }) {
                             Text(text = "Back")
                         }
                         Spacer(modifier = Modifier.padding(horizontal = 20.dp))
                         //Reset button
-                        Button(onClick = { forgotPasswordViewModel.checkIfEmailExists() }) {
+                        Button(onClick = {
+                            loadingViewModel.showLoading()
+                            forgotPasswordViewModel.checkIfEmailExists()
+                        }) {
                             Text(text = "Reset Password")
                         }
                     }

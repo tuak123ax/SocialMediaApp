@@ -95,7 +95,7 @@ class Settings {
                             contentDescription = "group",
                             modifier = Modifier
                                 .size(40.dp)
-                                .padding(end = 5.dp)
+                                .padding(5.dp)
                         )
                         Text(text = "Group", color = Color.Black)
                         Spacer(Modifier.weight(1f))
@@ -105,6 +105,7 @@ class Settings {
                             contentDescription = "right",
                             modifier = Modifier
                                 .size(40.dp)
+                                .padding(5.dp)
                         )
                     }
                 }

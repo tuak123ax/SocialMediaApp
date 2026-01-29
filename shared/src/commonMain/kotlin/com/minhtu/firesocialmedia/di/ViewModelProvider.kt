@@ -216,18 +216,24 @@ object ViewModelProvider {
     }
 
     fun createUserInformationViewModel(platformContext : PlatformContext): UserInformationViewModel {
+        val userRepository = AppModule.provideUserRepository(platformContext)
         val notificationRepository = AppModule.provideNotificationRepository(platformContext)
         val commonDbRepository = AppModule.provideCommonDbRepository(platformContext)
         val callRepository = AppModule.provideCallRepository(platformContext)
+        val networkRepository = AppModule.provideNetworkRepository(platformContext)
         val saveFriendUseCase = AppModule.provideSaveFriendUseCase(commonDbRepository)
         val saveFriendRequestUseCase = AppModule.provideSaveFriendRequestUseCase(commonDbRepository)
         val saveNotificationToDatabaseUseCase = AppModule.provideSaveNotificationToDatabaseUseCase(notificationRepository)
         val checkCalleeAvailableUseCase = AppModule.provideCheckCalleeAvailableUseCase(callRepository)
+        val getUserUseCase = AppModule.provideGetUserUseCase(userRepository)
+        val checkInternetConnectionUseCase = AppModule.provideCheckInternetConnectionUseCase(networkRepository)
         return AppModule.provideUserInformationViewModel(
             saveFriendUseCase,
             saveFriendRequestUseCase,
             saveNotificationToDatabaseUseCase,
-            checkCalleeAvailableUseCase)
+            checkCalleeAvailableUseCase,
+            getUserUseCase,
+            checkInternetConnectionUseCase)
     }
 
     fun createSearchViewModel() : SearchViewModel{
@@ -253,11 +259,14 @@ object ViewModelProvider {
     fun createNotificationViewModel(platformContext: PlatformContext) : NotificationViewModel {
         val userRepository = AppModule.provideUserRepository(platformContext)
         val newsRepository = AppModule.provideNewsRepository(platformContext)
+        val notificationRepository = AppModule.provideNotificationRepository(platformContext)
         val getUserUseCase = AppModule.provideGetUserUseCase(userRepository)
         val findNewByIdInDbUseCase = AppModule.provideFindNewByIdInDbUseCase(newsRepository)
+        val updateIsReadStatusOfNotificationUseCase = AppModule.provideUpdateIsReadStatusOfNotificationUseCase(notificationRepository)
         return AppModule.provideNotificationViewModel(
             getUserUseCase,
-            findNewByIdInDbUseCase
+            findNewByIdInDbUseCase,
+            updateIsReadStatusOfNotificationUseCase
         )
     }
 

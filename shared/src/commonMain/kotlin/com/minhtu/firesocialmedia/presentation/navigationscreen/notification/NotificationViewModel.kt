@@ -7,6 +7,7 @@ import com.minhtu.firesocialmedia.domain.entity.notification.NotificationInstanc
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.domain.usecases.common.GetUserUseCase
 import com.minhtu.firesocialmedia.domain.usecases.notification.FindNewByIdInDbUseCase
+import com.minhtu.firesocialmedia.domain.usecases.notification.UpdateIsReadStatusOfNotificationUseCase
 import com.minhtu.firesocialmedia.platform.logMessage
 import com.minhtu.firesocialmedia.utils.Utils
 import com.rickclephas.kmp.observableviewmodel.ViewModel
@@ -25,6 +26,7 @@ import kotlinx.coroutines.withContext
 class NotificationViewModel (
     private val getUserUseCase: GetUserUseCase,
     private val findNewByIdInDbUseCase : FindNewByIdInDbUseCase,
+    private val updateIsReadStatusOfNotificationUseCase : UpdateIsReadStatusOfNotificationUseCase,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : ViewModel(){
     var allNeededUsers : HashMap<String,UserInstance?> = HashMap()
@@ -98,5 +100,21 @@ class NotificationViewModel (
                 }
             }
         }
+    }
+
+    suspend fun updateIsReadStatusOfNotification(
+        updatedNotification: NotificationInstance,
+        user: UserInstance
+    ) {
+        val updatedNotifications = user.notifications.map {
+            if (it.id == updatedNotification.id) updatedNotification else it
+        }
+
+        user.notifications = ArrayList(updatedNotifications)
+
+        updateIsReadStatusOfNotificationUseCase.invoke(
+            user,
+            updatedNotification
+        )
     }
 }
