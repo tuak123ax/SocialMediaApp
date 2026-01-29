@@ -3,8 +3,6 @@ package com.minhtu.firesocialmedia.constants
 class Constants {
     companion object{
         const val CHANNEL_ID = "NotificationID"
-        const val PASSWORD = "Password"
-        const val CONFIRM_PASSWORD = "Confirm Password"
         const val POST_NEWS_SERVER_ERROR = "POST_AVATAR_SERVER_ERROR"
         const val POST_NEWS_EMPTY_ERROR = "POST_NEWS_EMPTY_ERROR"
         const val UPDATE_NEWS_EMPTY_ERROR = "UPDATE_NEWS_EMPTY_ERROR"

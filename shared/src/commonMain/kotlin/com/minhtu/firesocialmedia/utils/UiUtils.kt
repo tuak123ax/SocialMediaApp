@@ -39,6 +39,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.outlined.Block
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Badge
@@ -99,6 +100,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -116,6 +118,7 @@ import com.minhtu.firesocialmedia.platform.convertTimeToDateString
 import com.minhtu.firesocialmedia.platform.getUriStringFromLocalPath
 import com.minhtu.firesocialmedia.platform.launchShareAppWithDeepLink
 import com.minhtu.firesocialmedia.platform.queryShareApps
+import com.minhtu.firesocialmedia.platform.toHex
 import com.minhtu.firesocialmedia.presentation.home.Home
 import com.minhtu.firesocialmedia.presentation.home.HomeViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.Screen
@@ -126,6 +129,7 @@ import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.Settings
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.GroupDetails.Companion.DropdownMenuForMoreOptionsInGroup
 import com.minhtu.firesocialmedia.presentation.search.SearchViewModel
 import com.minhtu.firesocialmedia.utils.Utils.Companion.hexToColor
+import com.minhtu.sharedmodule.ui.theme.loginBackgroundColor
 import com.seiko.imageloader.asImageBitmap
 import com.seiko.imageloader.ui.AutoSizeImage
 import kotlinx.coroutines.delay
@@ -1907,6 +1911,110 @@ class UiUtils {
             background(
                 color = Color.LightGray.copy(alpha = alpha),
                 shape = RoundedCornerShape(6.dp)
+            )
+        }
+
+        @Composable
+        fun PasswordVisibilityIcon(passwordVisibility : Boolean,
+                                   tint : Color,
+                                   backgroundColor : String) {
+            val icon = if(passwordVisibility) "visibility" else "visibility_off"
+            val descriptionOfIcon = if(passwordVisibility) "Hide password" else "Show password"
+            CrossPlatformIcon(
+                icon = icon,
+                backgroundColor = backgroundColor,
+                tint = tint,
+                contentDescription = descriptionOfIcon,
+                modifier = Modifier
+                    .size(30.dp)
+                    .padding(4.dp)
+            )
+        }
+
+        @Composable
+        fun IconAndTitle(hasIcon : Boolean = true,
+                         hasTitle : Boolean = true,
+                         icon : String = "",
+                         title : String = "",
+                         titleColor : Color = Color.Red,
+                         modifier: Modifier = Modifier
+        ) {
+            Row(
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = modifier
+            ) {
+                if(hasIcon) {
+                    CrossPlatformIcon(
+                        icon = "fire_chat_icon",
+                        backgroundColor = loginBackgroundColor.toHex(),
+                        modifier = Modifier
+                            .size(30.dp)
+                    )
+                }
+                if(hasTitle) {
+                    Text(
+                        text = title,
+                        color = titleColor,
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+        }
+
+        @Composable
+        fun SubTitle(
+            subTitle : String,
+            modifier: Modifier = Modifier) {
+            Row(
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = modifier
+            ) {
+                Text(
+                    text = subTitle,
+                    color = Color.LightGray,
+                    style = MaterialTheme.typography.titleSmall,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        }
+
+        @Composable
+        fun TextFieldWithLeadingIcon(
+            value : String,
+            onValueChange : (String) -> Unit,
+            label : String,
+            testTag : String
+        ) {
+            OutlinedTextField(
+                value = value,
+                onValueChange = {
+                    onValueChange(it)
+                },
+                shape = RoundedCornerShape(10.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(20.dp)
+                    .testTag(testTag)
+                    .semantics {
+                        contentDescription = testTag
+                    },
+                leadingIcon = {
+                    Icon(
+                        Icons.Default.Person,
+                        label
+                    )
+                },
+                label = { Text(text = label) },
+                singleLine = true,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = Color.White,
+                    unfocusedTextColor = Color.White
+                ),
+                textStyle = TextStyle(Color.White)
             )
         }
     }

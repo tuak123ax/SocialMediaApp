@@ -82,9 +82,6 @@ fun Color.toHex(): String {
 @Composable
 expect fun CommonBackHandler(enabled: Boolean = true, onBack: () -> Unit)
 
-@Composable
-expect fun PasswordVisibilityIcon(passwordVisibility : Boolean)
-
 expect fun exitApp()
 
 expect fun createMessageForServer(message: String, tokenList : ArrayList<String>, sender : UserInstance, type : String): String

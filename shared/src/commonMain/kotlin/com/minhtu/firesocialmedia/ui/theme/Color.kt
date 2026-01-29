@@ -15,6 +15,7 @@ val adminBorderColor = Color(0xFFF3CFCB)
 val memberCardColor = Color(0xFFF5F7F9)
 val positiveBackgroundButtonColor = Color(0xFFFFE6E6)
 val positiveTintColor = Color(0xFFE53935)
+val loginBackgroundColor = Color(0xFF132026)
 
 // Container and text colors
 val OnPrimary = Color(0xFFFFFFFF)

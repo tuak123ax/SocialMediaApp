@@ -264,18 +264,6 @@ actual fun CommonBackHandler(enabled: Boolean, onBack: () -> Unit) {
 
 }
 
-@Composable
-actual fun PasswordVisibilityIcon(passwordVisibility: Boolean) {
-    val iconName = if (passwordVisibility) "visibility" else "visibility_off"
-    val descriptionOfIcon = if(passwordVisibility) "Hide password" else "Show password"
-    CrossPlatformIcon(
-        icon = iconName,
-        backgroundColor = "#FF132026",
-        contentDescription = descriptionOfIcon,
-        Modifier.size(24.dp)
-    )
-}
-
 actual fun exitApp() {
 
 }

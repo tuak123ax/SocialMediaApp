@@ -173,20 +173,6 @@ actual fun CommonBackHandler(enabled: Boolean, onBack: () -> Unit) {
     AndroidBackHandler(enabled, onBack)
 }
 
-@Composable
-actual fun PasswordVisibilityIcon(passwordVisibility : Boolean) {
-    val icon = if(passwordVisibility) "visibility" else "visibility_off"
-    val descriptionOfIcon = if(passwordVisibility) "Hide password" else "Show password"
-    CrossPlatformIcon(
-        icon = icon,
-        backgroundColor = "#00FFFFFF",
-        contentDescription = descriptionOfIcon,
-        modifier = Modifier
-            .size(30.dp)
-            .padding(4.dp)
-    )
-}
-
 actual fun exitApp() {
     // Finish and remove app task
     val am = appContext.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager

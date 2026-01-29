@@ -51,13 +51,14 @@ import com.minhtu.firesocialmedia.data.remote.service.imagepicker.ImagePicker
 import com.minhtu.firesocialmedia.domain.core.DecentralizationType
 import com.minhtu.firesocialmedia.domain.entity.group.GroupInstance
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
-import com.minhtu.firesocialmedia.platform.PasswordVisibilityIcon
 import com.minhtu.firesocialmedia.platform.getImageBytesFromDrawable
 import com.minhtu.firesocialmedia.platform.showToast
+import com.minhtu.firesocialmedia.platform.toHex
 import com.minhtu.firesocialmedia.presentation.loading.Loading
 import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
 import com.minhtu.firesocialmedia.presentation.uploadnewsfeed.UploadNewsfeed.Companion.AccessPermissionBottomSheet
 import com.minhtu.firesocialmedia.presentation.uploadnewsfeed.UploadNewsfeed.Companion.AccessPermissionButtonContent
+import com.minhtu.firesocialmedia.utils.UiUtils.Companion.PasswordVisibilityIcon
 
 class CreateGroup {
     companion object {
@@ -278,7 +279,10 @@ class CreateGroup {
                             .semantics{
                                 contentDescription = TestTag.TAG_SHOW_PASSWORD
                             }) {
-                        PasswordVisibilityIcon(passwordVisibility)
+                        PasswordVisibilityIcon(
+                            passwordVisibility,
+                            tint = Color.Black,
+                            Color.Black.toHex())
                     }
                 }
             )

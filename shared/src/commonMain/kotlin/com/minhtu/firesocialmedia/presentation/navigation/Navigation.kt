@@ -236,8 +236,7 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                         signInViewModel,
                         loadingViewModel,
                         modifier = Modifier
-                            .fillMaxSize()
-                            .background(Color(0xFF132026)),
+                            .fillMaxSize(),
                         onNavigateToSignUpScreen = { navController.navigate(route = SignUp.getScreenName()) },
                         onNavigateToHomeScreen = { navController.navigate(route = Home.getScreenName()) },
                         onNavigateToInformationScreen = { navController.navigate(route = Information.getScreenName()) },
@@ -528,9 +527,6 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                     ForgotPassword.ForgotPasswordScreen(
                         forgotPasswordViewModel,
                         loadingViewModel,
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(Color(0xFF132026)),
                         onNavigateToSignInScreen = {
                             navController.popBackStack()
                         }
