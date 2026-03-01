@@ -4,6 +4,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.minhtu.firesocialmedia.domain.entity.call.CallEventFlow
+import com.minhtu.firesocialmedia.domain.entity.call.SpeakerType
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.domain.usecases.call.ManageCallStateUseCase
 import com.minhtu.firesocialmedia.domain.usecases.call.RequestPermissionUseCase
@@ -42,7 +43,9 @@ class CallingViewModel(
                     sessionId = generateSessionId(caller.uid, callee.uid)
                     //Start call service
                     startCallServiceUseCase.invoke(
-                        sessionId, caller, callee
+                        sessionId,
+                        caller,
+                        callee
                     )
                 } catch (e : Exception) {
                     logMessage("startCall Exception", { e.message.toString() })
@@ -64,7 +67,20 @@ class CallingViewModel(
             logMessage("stopCall Exception", { e.message.toString() })
         } finally {
             sessionId = ""
+            resetMuteAndSpeakerState()
         }
+    }
+
+    /** Single source of truth for mute state (survives recomposition, can be synced later). */
+    val isMuted = mutableStateOf(false)
+
+    /** Single source of truth for speaker mode (survives recomposition, can be synced later). */
+    val currentSpeakerType = mutableStateOf<SpeakerType>(SpeakerType.Audio)
+
+    /** Resets mute and speaker to defaults (e.g. when call ends). */
+    fun resetMuteAndSpeakerState() {
+        isMuted.value = false
+        currentSpeakerType.value = SpeakerType.Audio
     }
 
     fun generateSessionId(callerId: String, calleeId: String): String {
@@ -112,13 +128,37 @@ class CallingViewModel(
     }
     fun stopCallAction(
         currentUser : String,
-        isCaller : Boolean,
-        callingViewModel: CallingViewModel
+        isCaller : Boolean
     ) {
         viewModelScope.launch(ioDispatcher) {
             delay(2000L)
-            callingViewModel.stopCall(isCaller, currentUser)
-            callingViewModel.resetCounter()
+            stopCall(isCaller, currentUser)
+            resetCounter()
+        }
+    }
+
+    fun updateMuteStatus(muted: Boolean) {
+        isMuted.value = muted
+        viewModelScope.launch(ioDispatcher) {
+            manageCallStateUseCase.updateMuteStatus(muted)
+        }
+    }
+
+    fun updateSpeakerStatus(speakerType: SpeakerType) {
+        currentSpeakerType.value = speakerType
+        viewModelScope.launch(ioDispatcher) {
+            manageCallStateUseCase.updateSpeakerStatus(speakerType)
+        }
+    }
+
+    /**
+     * Pushes current mute and speaker state to the call service.
+     * Call when the call becomes active so the device audio matches the UI (fixes no sound until user taps a button).
+     */
+    fun syncAudioStateToService() {
+        viewModelScope.launch(ioDispatcher) {
+            manageCallStateUseCase.updateMuteStatus(isMuted.value)
+            manageCallStateUseCase.updateSpeakerStatus(currentSpeakerType.value)
         }
     }
 }

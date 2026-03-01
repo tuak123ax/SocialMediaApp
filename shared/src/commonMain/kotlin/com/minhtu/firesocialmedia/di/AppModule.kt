@@ -42,6 +42,9 @@ import com.minhtu.firesocialmedia.domain.usecases.call.StartCallServiceUseCase
 import com.minhtu.firesocialmedia.domain.usecases.call.StartVideoCallServiceUseCase
 import com.minhtu.firesocialmedia.domain.usecases.call.StopCallServiceUseCase
 import com.minhtu.firesocialmedia.domain.usecases.call.StopObservePhoneCallUseCase
+import com.minhtu.firesocialmedia.domain.usecases.call.UpdateCameraStatusUseCase
+import com.minhtu.firesocialmedia.domain.usecases.call.UpdateMicStatusUseCase
+import com.minhtu.firesocialmedia.domain.usecases.call.UpdateSpeakerStatusUseCase
 import com.minhtu.firesocialmedia.domain.usecases.call.VideoCallUseCase
 import com.minhtu.firesocialmedia.domain.usecases.comment.DeleteCommentFromDatabaseUseCase
 import com.minhtu.firesocialmedia.domain.usecases.comment.DeleteSubCommentFromDatabaseUseCase
@@ -99,6 +102,7 @@ import com.minhtu.firesocialmedia.domain.usecases.newsfeed.DeleteAllDraftPostsUs
 import com.minhtu.firesocialmedia.domain.usecases.newsfeed.DeleteDraftPostUseCase
 import com.minhtu.firesocialmedia.domain.usecases.newsfeed.SaveNewToDatabaseUseCase
 import com.minhtu.firesocialmedia.domain.usecases.newsfeed.UpdateNewsFromDatabaseUseCase
+import com.minhtu.firesocialmedia.domain.usecases.notification.DeleteAllNotificationsUseCase
 import com.minhtu.firesocialmedia.domain.usecases.notification.DeleteNotificationFromDatabaseUseCase
 import com.minhtu.firesocialmedia.domain.usecases.notification.FindNewByIdInDbUseCase
 import com.minhtu.firesocialmedia.domain.usecases.notification.GetAllNotificationOfUserUseCase
@@ -538,12 +542,14 @@ object AppModule {
     fun provideNotificationViewModel(
         getUserUseCase: GetUserUseCase,
         findNewByIdInDbUseCase: FindNewByIdInDbUseCase,
-        updateIsReadStatusOfNotificationUseCase : UpdateIsReadStatusOfNotificationUseCase
+        updateIsReadStatusOfNotificationUseCase : UpdateIsReadStatusOfNotificationUseCase,
+        deleteAllNotificationsUseCase: DeleteAllNotificationsUseCase
     ) : NotificationViewModel {
         return NotificationViewModel(
             getUserUseCase,
             findNewByIdInDbUseCase,
-            updateIsReadStatusOfNotificationUseCase
+            updateIsReadStatusOfNotificationUseCase,
+            deleteAllNotificationsUseCase
         )
     }
     //---------------------------Call----------------------------------------//
@@ -703,5 +709,21 @@ object AppModule {
 
     fun provideUpdateIsReadStatusOfNotificationUseCase(notificationRepository: NotificationRepository) : UpdateIsReadStatusOfNotificationUseCase {
         return UpdateIsReadStatusOfNotificationUseCase(notificationRepository)
+    }
+
+    fun provideDeleteAllNotificationsUseCase(notificationRepository: NotificationRepository) : DeleteAllNotificationsUseCase{
+        return DeleteAllNotificationsUseCase(notificationRepository)
+    }
+
+    fun provideUpdateMicStatusUseCase(callRepository: CallRepository) : UpdateMicStatusUseCase{
+        return UpdateMicStatusUseCase(callRepository)
+    }
+
+    fun provideUpdateCameraStatusUseCase(callRepository: CallRepository) : UpdateCameraStatusUseCase{
+        return UpdateCameraStatusUseCase(callRepository)
+    }
+
+    fun provideUpdateSpeakerStatusUseCase(callRepository: CallRepository) : UpdateSpeakerStatusUseCase{
+        return UpdateSpeakerStatusUseCase(callRepository)
     }
 }

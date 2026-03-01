@@ -64,4 +64,17 @@ class NotificationRepositoryImpl(
             DataConstant.NOTIFICATION_PATH
         )
     }
+
+    override suspend fun deleteAllNotifications(user: UserInstance): Result<Unit> {
+        val isOnline = networkMonitor.isOnline.first()
+        return if(isOnline) {
+            databaseService.deleteAllNotifications(
+                user.uid,
+                DataConstant.USER_PATH,
+                DataConstant.NOTIFICATION_PATH
+            )
+        } else {
+            Result.failure(Throwable("No network!"))
+        }
+    }
 }

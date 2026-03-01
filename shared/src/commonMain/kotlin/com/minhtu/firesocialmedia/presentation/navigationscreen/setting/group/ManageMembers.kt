@@ -27,6 +27,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -449,6 +450,7 @@ class ManageMembers {
                                     .clip(CircleShape)
                             )
                         }
+                        Spacer(Modifier.width(10.dp))
                         Text(
                             text = user.name,
                             color = Color.Black,
@@ -456,8 +458,9 @@ class ManageMembers {
                             overflow = TextOverflow.Ellipsis,
                             maxLines = 2,
                             modifier = Modifier
+                                .weight(1f)
                                 .padding(horizontal = 5.dp))
-                        Spacer(Modifier.weight(1f))
+                        Spacer(Modifier.width(8.dp))
                         OutlinedButton(
                             onClick = {
                                 expanded = !expanded

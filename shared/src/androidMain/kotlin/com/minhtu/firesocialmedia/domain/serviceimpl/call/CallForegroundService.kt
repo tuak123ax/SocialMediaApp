@@ -392,6 +392,8 @@ class CallForegroundService : Service() {
             if(calleeIdFromFCM != null) {
                 logMessage("onStartCommand", { "callee side" })
                 logMessage("onStartCommand", { "sessionId: $sessionId" })
+                // Session we are accepting (from Accept button / notification). Only handle this session.
+                val acceptedSessionId = sessionId
                 //Start service from callee side
                 backgroundScope.launch {
                     try{
@@ -399,12 +401,17 @@ class CallForegroundService : Service() {
                             sessionId,
                             calleeIdFromFCM,
                             onReceivePhoneCallRequest = { callingRequestData ->
-                                sessionId = callingRequestData.sessionId
-                                offer = callingRequestData.offer
-                                callerIdForCallee = callingRequestData.callerId
-                                calleeIdForCallee = callingRequestData.calleeId
-                                //Handle accept call.
-                                handleAcceptCall(callingRequestData)
+                                // Ignore if this is a different call (e.g. stale observer from previous call firing for new session).
+                                if (callingRequestData.sessionId != acceptedSessionId) {
+                                    logMessage("onReceivePhoneCallRequest", { "ignore session ${callingRequestData.sessionId}, accepted $acceptedSessionId" })
+                                } else {
+                                    sessionId = callingRequestData.sessionId
+                                    offer = callingRequestData.offer
+                                    callerIdForCallee = callingRequestData.callerId
+                                    calleeIdForCallee = callingRequestData.calleeId
+                                    //Handle accept call.
+                                    handleAcceptCall(callingRequestData)
+                                }
                             },
                             onEndCall = {
                                 handleEndCall(CallEvent.CallEnded)
@@ -424,12 +431,16 @@ class CallForegroundService : Service() {
     }
 
     private suspend fun handleRejectCall(emitEvent: CallEvent?) {
-        val rejectCallResult = manageCallStateUseCase.rejectCall(sessionId)
-        //Stop call flow.
+        // Stop flow first (remove Firebase listener, stop call, cancel notification) so the service is not held by the listener.
+        // Then write to Firebase so the other side is notified.
         stopCallFlow(emitEvent)
+        manageCallStateUseCase.rejectCall(sessionId)
     }
 
     private suspend fun stopCallFlow(emitEvent : CallEvent?) {
+        // Remove only the callee-accept observer (observePhoneCallWithoutCheckingInCall) so it doesn't fire for the next call.
+        // Do not call stopObservePhoneCall() here — that would also remove the app's incoming-call listener.
+        databaseService.stopObservePhoneCallWithoutCheckingInCall()
         //Stop call in call manager
         callManager.stopCall()
         //Emit event to UI
@@ -437,6 +448,11 @@ class CallForegroundService : Service() {
             CallEventFlow.events.value != CallEvent.CallEnded) {
             CallEventFlow.events.value = emitEvent
         }
+        // Clear video/track state so next call starts clean (keep events so UI can show toast)
+        CallEventFlow.localVideoTrack.value = null
+        CallEventFlow.remoteVideoTrack.value = null
+        CallEventFlow.videoCallState.value = null
+        CallEventFlow.answerVideoCallState.value = true
         //Dismiss notification
         val notificationManager = applicationContext.getSystemService(NOTIFICATION_SERVICE) as NotificationManager
         notificationManager.cancel(NOTIF_ID)
@@ -474,6 +490,9 @@ class CallForegroundService : Service() {
     }
 
     override fun onDestroy() {
+        // Remove Firebase listener and cancel timer so CallForegroundService is not retained (fixes LeakCanary leak).
+        callNotificationManager.stopTimerNotificationUpdates()
+        databaseService.stopObservePhoneCallWithoutCheckingInCall()
         // Create a temporary scope just for cleanup
         runBlocking {
             withContext(Dispatchers.IO) {

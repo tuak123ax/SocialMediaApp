@@ -4,6 +4,7 @@ import com.minhtu.firesocialmedia.data.remote.dto.call.IceCandidateDTO
 import com.minhtu.firesocialmedia.data.remote.dto.call.OfferAnswerDTO
 import com.minhtu.firesocialmedia.data.remote.dto.user.UserDTO
 import com.minhtu.firesocialmedia.platform.WebRTCVideoTrack
+import com.minhtu.firesocialmedia.domain.entity.call.SpeakerType
 
 interface AudioCallService{
     /**
@@ -118,4 +119,19 @@ interface AudioCallService{
      * This function is used to release all resources of foreground service.
      * */
     suspend fun releaseResources()
+
+    /**
+     * This function is used to mute/unmute mic.
+     * */
+    suspend fun updateMuteStatus(muted: Boolean)
+
+    /**
+     * This function is used to turn video track on/off (when user turns camera off, remote stops receiving video).
+     * */
+    suspend fun updateCameraStatus(cameraOff: Boolean)
+
+    /**
+     * This function is used to change speaker type.
+     * */
+    suspend fun updateSpeakerStatus(speakerType: SpeakerType)
 }

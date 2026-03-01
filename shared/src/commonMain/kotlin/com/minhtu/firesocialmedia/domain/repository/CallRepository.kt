@@ -7,6 +7,7 @@ import com.minhtu.firesocialmedia.domain.entity.call.IceCandidateData
 import com.minhtu.firesocialmedia.domain.entity.call.OfferAnswer
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.platform.WebRTCVideoTrack
+import com.minhtu.firesocialmedia.domain.entity.call.SpeakerType
 import com.minhtu.firesocialmedia.utils.Utils
 import kotlinx.coroutines.flow.MutableStateFlow
 
@@ -136,4 +137,10 @@ interface CallRepository {
     suspend fun sendWhoEndCall(sessionId: String, whoEndCall: String): Boolean
     suspend fun stopCallService()
     fun stopObservePhoneCall()
+    suspend fun updateMuteStatus(muted: Boolean)
+
+    /** Turn local video track on/off; when off, remote peer stops receiving our video. */
+    suspend fun updateCameraStatus(cameraOff: Boolean)
+
+    suspend fun updateSpeakerStatus(speakerType: SpeakerType)
 }

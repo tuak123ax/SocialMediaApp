@@ -36,6 +36,7 @@ import com.minhtu.firesocialmedia.domain.entity.home.deeplinks.DeepLinksData
 import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.platform.generateImageLoader
+import com.minhtu.firesocialmedia.platform.logMessage
 import com.minhtu.firesocialmedia.platform.platformViewModel
 import com.minhtu.firesocialmedia.platform.rememberPlatformImagePicker
 import com.minhtu.firesocialmedia.platform.setupSignInLauncher
@@ -73,6 +74,10 @@ import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.Ma
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.ManageMembersViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.SelectGroup
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.SelectGroupViewModel
+import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.notificationconfigs.NotificationConfigs
+import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.notificationconfigs.NotificationConfigsViewModel
+import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.privacy.Privacy
+import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security.SecuritySettings
 import com.minhtu.firesocialmedia.presentation.postinformation.PostInformation
 import com.minhtu.firesocialmedia.presentation.postinformation.PostInformationViewModel
 import com.minhtu.firesocialmedia.presentation.search.Search
@@ -127,14 +132,15 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
     val inviteMemberViewModel : InviteMemberViewModel = platformViewModel { ViewModelProvider.createInviteMemberViewModel(platformContext) }
     val manageMembersViewModel : ManageMembersViewModel = platformViewModel { ViewModelProvider.createManageMembersViewModel(platformContext) }
     val exploreGroupViewModel : ExploreGroupViewModel = platformViewModel { ViewModelProvider.createExploreGroupViewModel(platformContext) }
+    val notificationConfigsViewModel : NotificationConfigsViewModel = platformViewModel { ViewModelProvider.createNotificationConfigsViewModel(platformContext) }
 
     var updateNew : NewsInstance? = null
     lateinit var relatedNew : NewsInstance
-    var callee : UserInstance? = null
-    var caller : UserInstance? = null
-    var sessionId = ""
-    var remoteOffer : OfferAnswer? = null
-    var remoteVideoOffer : OfferAnswer? = null
+    var callee by remember { mutableStateOf<UserInstance?>(null) }
+    var caller by remember { mutableStateOf<UserInstance?>(null) }
+    var sessionId by remember { mutableStateOf("") }
+    var remoteOffer by remember { mutableStateOf<OfferAnswer?>(null) }
+    var remoteVideoOffer by remember { mutableStateOf<OfferAnswer?>(null) }
     val callingViewModel : CallingViewModel = platformViewModel { ViewModelProvider.createCallingViewModel(platformContext) }
     val videoCallViewModel : VideoCallViewModel = platformViewModel { ViewModelProvider.createVideoCallViewModel(platformContext) }
 
@@ -264,9 +270,6 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                         onVideoPicked = {}
                     )
                     Information.InformationScreen(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(Color(0xFF132026)),
                         platform = platformContext,
                         imagePicker = picker,
                         signUpViewModel = signUpViewModel,
@@ -374,9 +377,7 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                         onVideoPicked = { uri -> uploadNewsfeedViewModel.updateVideo(uri) }
                     )
                     UploadNewsfeed.UploadNewsfeedScreen(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(Color.White),
+                        paddingValues,
                         imagePicker = picker,
                         localImageLoaderValue,
                         homeViewModel = homeViewModel,
@@ -421,6 +422,7 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                         modifier = Modifier
                             .fillMaxSize()
                             .background(color = Color.White),
+                        paddingValues,
                         searchViewModel,
                         homeViewModel,
                         localImageLoaderValue = localImageLoaderValue,
@@ -461,9 +463,6 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                         isCurrentUser = selectedUser == homeViewModel.currentUser,
                         paddingValues = paddingValues,
                         localImageLoaderValue = localImageLoaderValue,
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(color = Color.White),
                         homeViewModel = homeViewModel,
                         friendViewModel = friendViewModel,
                         userInformationViewModel = userInformationViewModel,
@@ -609,8 +608,21 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                             signInViewModel.reset()
                             navController.navigate(route = SignIn.getScreenName())
                         },
+                        onNavigateToProfileInformation = {
+                            selectedUser = homeViewModel.currentUser
+                            navController.navigate(route = UserInformation.getScreenName())
+                        },
                         onNavigateToGroupScreen = {
                             navController.navigate(route = Group.getScreenName())
+                        },
+                        onNavigateToPrivacyScreen = {
+                            navController.navigate(route = Privacy.getScreenName())
+                        },
+                        onNavigateToSecuritySettingsScreen = {
+                            navController.navigate(route = SecuritySettings.getScreenName())
+                        },
+                        onNavigateToNotificationConfigsScreen = {
+                            navController.navigate(route = NotificationConfigs.getScreenName())
                         }
                     )
                 }
@@ -704,10 +716,7 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                         remoteVideoOffer,
                         videoCallViewModel,
                         loadingViewModel,
-                        navigationHandler,
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(Color.White)
+                        navigationHandler
                     )
                 }
                 composable(
@@ -799,13 +808,20 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                     )
                     if(homeViewModel.currentUser != null) {
                         CreateGroup.CreateGroupScreen(
+                            paddingValues,
                             createGroupViewModel,
                             loadingViewModel,
                             picker,
                             homeViewModel.currentUser!!,
                             onCreateGroupSuccess = { createdGroup ->
                                 selectedGroup = createdGroup
-                                navController.navigate(route = GroupDetails.getScreenName())
+                                navController.navigate(route = GroupDetails.getScreenName()) {
+                                    popUpTo(CreateGroup.getScreenName()) { inclusive = true }
+                                    launchSingleTop = true
+                                }
+                            },
+                            onNavigateBack = {
+                                navController.popBackStack()
                             }
                         )
                     } else {
@@ -822,6 +838,7 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                     if(homeViewModel.currentUser != null) {
                         ExploreGroup.ExploreGroupScreen(
                             homeViewModel.currentUser!!,
+                            paddingValues,
                             localImageLoaderValue,
                             exploreGroupViewModel,
                             searchViewModel,
@@ -871,10 +888,18 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                             },
                             onNavigateBack = {
                                 if(homeViewModel.currentUser != null && homeViewModel.currentUser!!.groups.isNotEmpty()) {
-                                    navController.popBackStack(
-                                        route = SelectGroup.getScreenName(),
-                                        inclusive = false
-                                    )
+                                    val selectGroupRoute = SelectGroup.getScreenName()
+                                    val canPopToSelectGroup = try {
+                                        navController.getBackStackEntry(selectGroupRoute)
+                                        true
+                                    } catch (e: IllegalArgumentException) {
+                                        false
+                                    }
+                                    if (canPopToSelectGroup) {
+                                        navController.popBackStack(route = selectGroupRoute, inclusive = false)
+                                    } else {
+                                        navController.popBackStack()
+                                    }
                                 } else {
                                     navController.popBackStack()
                                 }
@@ -933,6 +958,7 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                         homeViewModel.currentUser!!,
                         selectGroupViewModel,
                         searchViewModel,
+                        paddingValues,
                         localImageLoaderValue,
                         onNavigateBack = {
                             searchViewModel.updateQuery("")
@@ -1002,10 +1028,18 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                         },
                         onNavigateBack = {
                             if(homeViewModel.currentUser != null && homeViewModel.currentUser!!.groups.isNotEmpty()) {
-                                navController.popBackStack(
-                                    route = SelectGroup.getScreenName(),
-                                    inclusive = false
-                                )
+                                val selectGroupRoute = SelectGroup.getScreenName()
+                                val canPopToSelectGroup = try {
+                                    navController.getBackStackEntry(selectGroupRoute)
+                                    true
+                                } catch (e: IllegalArgumentException) {
+                                    false
+                                }
+                                if (canPopToSelectGroup) {
+                                    navController.popBackStack(route = selectGroupRoute, inclusive = false)
+                                } else {
+                                    navController.popBackStack()
+                                }
                             } else {
                                 navController.popBackStack()
                             }
@@ -1092,6 +1126,50 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                         showToast("Cannot open manage members screen now. Please try again!!!")
                         navController.popBackStack()
                     }
+                }
+
+                composable(
+                    route = Privacy.getScreenName(),
+                    enterTransition = DefaultNavAnimations.enter,
+                    popEnterTransition = DefaultNavAnimations.popEnter,
+                    exitTransition = DefaultNavAnimations.exit,
+                    popExitTransition = DefaultNavAnimations.popExit
+                ) {
+                    Privacy.PrivacyScreen(
+                        onClickBack = {
+                            navController.popBackStack()
+                        }
+                    )
+                }
+
+                composable(
+                    route = SecuritySettings.getScreenName(),
+                    enterTransition = DefaultNavAnimations.enter,
+                    popEnterTransition = DefaultNavAnimations.popEnter,
+                    exitTransition = DefaultNavAnimations.exit,
+                    popExitTransition = DefaultNavAnimations.popExit
+                ) {
+                    SecuritySettings.SecuritySettingsScreen(
+                        onNavigateBack = {
+                            navController.popBackStack()
+                        }
+                    )
+                }
+
+                composable(
+                    route = NotificationConfigs.getScreenName(),
+                    enterTransition = DefaultNavAnimations.enter,
+                    popEnterTransition = DefaultNavAnimations.popEnter,
+                    exitTransition = DefaultNavAnimations.exit,
+                    popExitTransition = DefaultNavAnimations.popExit
+                ) {
+                    NotificationConfigs.NotificationConfigsScreen(
+                        paddingValues,
+                        notificationConfigsViewModel,
+                        onNavigateBack = {
+                            navController.popBackStack()
+                        }
+                    )
                 }
             }
         }

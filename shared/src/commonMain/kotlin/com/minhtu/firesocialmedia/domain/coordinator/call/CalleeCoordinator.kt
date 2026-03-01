@@ -31,7 +31,6 @@ class CalleeCoordinator(
                 calleeUseCases.observePhoneCall.invoke(
                     calleeId,
                     onReceivePhoneCallRequest = { callingRequestData->
-                        tempCallingRequestData = callingRequestData
                         onReceivePhoneCallRequest(callingRequestData)
                     },
                     iceCandidateCallBack = { iceCandidates ->

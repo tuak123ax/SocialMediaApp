@@ -128,7 +128,7 @@ interface DatabaseService {
     suspend fun sendAnswerToFirebase(
         sessionId : String,
         answer: OfferAnswerDTO,
-        sendIceCandidateCallBack : Utils.Companion.BasicCallBack
+        sendAnswerCallBack : Utils.Companion.BasicCallBack
     )
 
     suspend fun updateAnswerInFirebase(
@@ -179,6 +179,9 @@ interface DatabaseService {
     suspend fun searchUserByName(name: String, path: String) : List<UserDTO>?
     suspend fun sendWhoEndCall(sessionId: String, whoEndCall: String): Boolean
     fun stopObservePhoneCall()
+
+    /** Removes only the observer from [observePhoneCallWithoutCheckingInCall]. Use when call ends in service so the app's incoming-call observer is not removed. */
+    fun stopObservePhoneCallWithoutCheckingInCall()
     suspend fun saveGroupAndUserGroups(
         groupRootPath: String,
         userRootPath: String,
@@ -277,4 +280,9 @@ interface DatabaseService {
         userPath: String,
         notificationPath: String
     )
+
+    suspend fun deleteAllNotifications(
+        uid: String,
+        userPath: String,
+        notificationPath: String): Result<Unit>
 }

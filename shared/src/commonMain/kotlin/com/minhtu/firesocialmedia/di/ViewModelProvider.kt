@@ -18,6 +18,7 @@ import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.Gr
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.InviteMemberViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.ManageMembersViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.SelectGroupViewModel
+import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.notificationconfigs.NotificationConfigsViewModel
 import com.minhtu.firesocialmedia.presentation.postinformation.PostInformationViewModel
 import com.minhtu.firesocialmedia.presentation.search.SearchViewModel
 import com.minhtu.firesocialmedia.presentation.showimage.ShowImageViewModel
@@ -263,10 +264,12 @@ object ViewModelProvider {
         val getUserUseCase = AppModule.provideGetUserUseCase(userRepository)
         val findNewByIdInDbUseCase = AppModule.provideFindNewByIdInDbUseCase(newsRepository)
         val updateIsReadStatusOfNotificationUseCase = AppModule.provideUpdateIsReadStatusOfNotificationUseCase(notificationRepository)
+        val deleteAllNotificationsUseCase = AppModule.provideDeleteAllNotificationsUseCase(notificationRepository)
         return AppModule.provideNotificationViewModel(
             getUserUseCase,
             findNewByIdInDbUseCase,
-            updateIsReadStatusOfNotificationUseCase
+            updateIsReadStatusOfNotificationUseCase,
+            deleteAllNotificationsUseCase
         )
     }
 
@@ -286,9 +289,15 @@ object ViewModelProvider {
         val callRepository = AppModule.provideCallRepository(platformContext)
         val startVideoCallServiceUseCase = AppModule.provideStartVideoCallServiceUseCase(callRepository)
         val requestCameraAndAudioPermissionsUseCase = AppModule.provideRequestCameraAndAudioPermissionsUseCase(callRepository)
+        val updateMicStatusUseCase = AppModule.provideUpdateMicStatusUseCase(callRepository)
+        val updateCameraStatusUseCase = AppModule.provideUpdateCameraStatusUseCase(callRepository)
+        val updateSpeakerStatusUseCase = AppModule.provideUpdateSpeakerStatusUseCase(callRepository)
         return VideoCallViewModel(
             startVideoCallServiceUseCase,
-            requestCameraAndAudioPermissionsUseCase
+            requestCameraAndAudioPermissionsUseCase,
+            updateMicStatusUseCase,
+            updateCameraStatusUseCase,
+            updateSpeakerStatusUseCase
         )
     }
 
@@ -366,5 +375,9 @@ object ViewModelProvider {
             fetchRecommendGroupsUseCase,
             fetchFeatureGroupsUseCase
         )
+    }
+
+    fun createNotificationConfigsViewModel(platformContext: PlatformContext): NotificationConfigsViewModel {
+        return NotificationConfigsViewModel()
     }
 }

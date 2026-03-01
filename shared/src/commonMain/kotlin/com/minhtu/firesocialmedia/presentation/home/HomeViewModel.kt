@@ -237,14 +237,10 @@ class HomeViewModel(
                 logMessage("getAllNotifications",
                     { notification.id + "isRead: "+ notification.beRead })
             }
-            if(notifications != null) {
-                listNotificationOfCurrentUser.clear()
-                listNotificationOfCurrentUser.addAll(notifications)
-                updateNotifications(ArrayList(listNotificationOfCurrentUser.toList()))
-                _getAllNotificationsOfCurrentUser.value = true
-            } else {
-                _getAllNotificationsOfCurrentUser.value = false
-            }
+            listNotificationOfCurrentUser.clear()
+            listNotificationOfCurrentUser.addAll(notifications)
+            updateNotifications(ArrayList(listNotificationOfCurrentUser.toList()))
+            _getAllNotificationsOfCurrentUser.value = true
         }
     }
 
@@ -532,9 +528,16 @@ class HomeViewModel(
                                 }
                                 resetPhoneCallRequestStatus()
                                 isInCall.value = false
+                                // Clear video/track state so next call is clean (don't clear events yet - Calling screen may need it to show toast)
                                 CallEventFlow.localVideoTrack.value = null
                                 CallEventFlow.remoteVideoTrack.value = null
                                 CallEventFlow.videoCallState.value = null
+                                CallEventFlow.answerVideoCallState.value = true
+                                // Reset all call state after a delay so next call starts clean (if user wasn't on Calling screen to trigger reset there)
+                                viewModelScope.launch {
+                                    kotlinx.coroutines.delay(2000L)
+                                    CallEventFlow.reset()
+                                }
                             }
                         }
                     )

@@ -1,14 +1,17 @@
 package com.minhtu.firesocialmedia.presentation.navigationscreen.notification
 
 import androidx.compose.runtime.snapshots.SnapshotStateList
+import androidx.compose.ui.graphics.Path
 import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
 import com.minhtu.firesocialmedia.domain.entity.news.isDefaultNewsInstance
 import com.minhtu.firesocialmedia.domain.entity.notification.NotificationInstance
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.domain.usecases.common.GetUserUseCase
+import com.minhtu.firesocialmedia.domain.usecases.notification.DeleteAllNotificationsUseCase
 import com.minhtu.firesocialmedia.domain.usecases.notification.FindNewByIdInDbUseCase
 import com.minhtu.firesocialmedia.domain.usecases.notification.UpdateIsReadStatusOfNotificationUseCase
 import com.minhtu.firesocialmedia.platform.logMessage
+import com.minhtu.firesocialmedia.presentation.navigationscreen.notification.instance.BasicResult
 import com.minhtu.firesocialmedia.utils.Utils
 import com.rickclephas.kmp.observableviewmodel.ViewModel
 import com.rickclephas.kmp.observableviewmodel.launch
@@ -18,6 +21,7 @@ import kotlinx.coroutines.IO
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -27,6 +31,7 @@ class NotificationViewModel (
     private val getUserUseCase: GetUserUseCase,
     private val findNewByIdInDbUseCase : FindNewByIdInDbUseCase,
     private val updateIsReadStatusOfNotificationUseCase : UpdateIsReadStatusOfNotificationUseCase,
+    private val deleteAllNotificationsUseCase : DeleteAllNotificationsUseCase,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : ViewModel(){
     var allNeededUsers : HashMap<String,UserInstance?> = HashMap()
@@ -116,5 +121,27 @@ class NotificationViewModel (
             user,
             updatedNotification
         )
+    }
+
+    private val _deleteAllNotificationsStatus = MutableStateFlow<BasicResult?>(null)
+    var deleteAllNotificationsStatus = _deleteAllNotificationsStatus.asStateFlow()
+    fun deleteAllNotifications(currentUser : UserInstance) {
+        viewModelScope.launch(ioDispatcher) {
+            val result = deleteAllNotificationsUseCase.invoke(currentUser)
+            if(result.isSuccess) {
+                _deleteAllNotificationsStatus.value = BasicResult(true)
+            } else {
+                val error = result.exceptionOrNull()
+                if(error != null && error.message != null && error.message!!.contains("network", ignoreCase = true)) {
+                    _deleteAllNotificationsStatus.value = BasicResult(false, "Please recheck your network!")
+                } else {
+                    _deleteAllNotificationsStatus.value = BasicResult(false, "Cannot delete notifications. Please try again!")
+                }
+            }
+        }
+    }
+
+    fun resetDeleteAllNotificationsStatus() {
+        _deleteAllNotificationsStatus.value = null
     }
 }

@@ -3,6 +3,7 @@ package com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -63,6 +64,7 @@ class SelectGroup {
             currentUser : UserInstance,
             selectGroupViewModel: SelectGroupViewModel,
             searchViewModel : SearchViewModel,
+            paddingValues : PaddingValues,
             localImageLoaderValue : ProvidedValue<*>,
             onNavigateBack : () -> Unit,
             onNavigateToCreateGroup : () -> Unit,
@@ -75,10 +77,14 @@ class SelectGroup {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
+                    .padding(paddingValues)
             ) {
                 Row(
                     horizontalArrangement = Arrangement.SpaceBetween,
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp).padding(top = 20.dp)
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp)
+                        .padding(top = 20.dp)
                 ) {
                     Text(
                         text = "My Groups",
@@ -112,7 +118,8 @@ class SelectGroup {
                 Search.SearchBar(
                     query = searchViewModel.query,
                     onQueryChange = { query -> searchViewModel.updateQuery(query) },
-                    modifier = Modifier.height(80.dp).padding(vertical = 10.dp)
+                    modifier = Modifier
+                        .padding(horizontal = 10.dp)
                         .testTag(TestTag.TAG_SEARCH_BAR)
                         .semantics {
                             contentDescription = TestTag.TAG_SEARCH_BAR
@@ -148,7 +155,9 @@ class SelectGroup {
                     text = "ALL GROUPS",
                     color = Color.Gray,
                     fontWeight = FontWeight.Bold,
-                    modifier = Modifier.fillMaxWidth().padding(20.dp)
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 20.dp, start = 20.dp)
                 )
                 //All groups
                 var filterList by remember { mutableStateOf<List<GroupInstance>>(emptyList()) }
@@ -185,7 +194,7 @@ class SelectGroup {
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(5.dp)
+                    .padding(top = 10.dp)
                     .clickable {
                         onNavigateToSelectedGroup(group)
                     }
@@ -199,7 +208,7 @@ class SelectGroup {
                         contentDescription = "Group Avatar",
                         contentScale = ContentScale.Crop,
                         modifier = Modifier
-                            .size(50.dp)
+                            .size(60.dp)
                             .clip(CircleShape)
                     )
                 }

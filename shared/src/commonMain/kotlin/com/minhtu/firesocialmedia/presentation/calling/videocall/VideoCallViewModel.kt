@@ -1,11 +1,16 @@
 package com.minhtu.firesocialmedia.presentation.calling.videocall
 
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.minhtu.firesocialmedia.domain.entity.call.OfferAnswer
+import com.minhtu.firesocialmedia.domain.entity.call.SpeakerType
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.domain.usecases.call.RequestCameraAndAudioPermissionsUseCase
 import com.minhtu.firesocialmedia.domain.usecases.call.StartVideoCallServiceUseCase
+import com.minhtu.firesocialmedia.domain.usecases.call.UpdateCameraStatusUseCase
+import com.minhtu.firesocialmedia.domain.usecases.call.UpdateMicStatusUseCase
+import com.minhtu.firesocialmedia.domain.usecases.call.UpdateSpeakerStatusUseCase
 import com.minhtu.firesocialmedia.platform.logMessage
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -16,6 +21,9 @@ import kotlinx.coroutines.withContext
 class VideoCallViewModel(
     val startVideoCallServiceUseCase: StartVideoCallServiceUseCase,
     val requestCameraAndAudioPermissionsUseCase : RequestCameraAndAudioPermissionsUseCase,
+    val updateMicStatusUseCase : UpdateMicStatusUseCase,
+    val updateCameraStatusUseCase : UpdateCameraStatusUseCase,
+    val updateSpeakerStatusUseCase : UpdateSpeakerStatusUseCase,
     val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : ViewModel() {
     fun startVideoCall(
@@ -49,6 +57,26 @@ class VideoCallViewModel(
             } else {
                 onDenied()
             }
+        }
+    }
+
+    fun updateMicStatus(micMuted: Boolean) {
+        viewModelScope.launch {
+            updateMicStatusUseCase.invoke(micMuted)
+        }
+    }
+
+    fun updateCameraStatus(cameraOff: Boolean) {
+        viewModelScope.launch(ioDispatcher) {
+            updateCameraStatusUseCase.invoke(cameraOff)
+        }
+    }
+
+    val currentSpeakerType = mutableStateOf<SpeakerType>(SpeakerType.Audio)
+    fun updateSpeakerStatus(speakerType: SpeakerType) {
+        currentSpeakerType.value = speakerType
+        viewModelScope.launch(ioDispatcher) {
+            updateSpeakerStatusUseCase.invoke(speakerType)
         }
     }
 }

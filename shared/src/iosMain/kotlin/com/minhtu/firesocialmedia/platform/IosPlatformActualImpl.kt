@@ -123,6 +123,7 @@ import platform.UserNotifications.UNUserNotificationCenter
 import platform.darwin.NSObject
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
+import platform.Foundation.NSBundle
 
 object ToastController {
     val toastMessage = mutableStateOf<String?>(null)
@@ -746,6 +747,7 @@ actual class WebRTCVideoTrack
 actual fun WebRTCVideoView(
     localTrack: WebRTCVideoTrack?,
     remoteTrack: WebRTCVideoTrack?,
+    isLocalVideoOff : Boolean,
     modifier: Modifier
 ) {
     // iOS implementation will be added later
@@ -797,12 +799,14 @@ actual fun getUriStringFromLocalPath(localPath: String): String {
 actual suspend fun queryShareApps(text: String): MutableList<ShareApp> {
     // iOS doesn't expose a direct list of share targets; return empty placeholder
     return mutableListOf()
-}
-
-actual fun launchShareAppWithDeepLink(app: ShareApp, deepLink: String) {
+}actual fun launchShareAppWithDeepLink(app: ShareApp, deepLink: String) {
     // Minimal attempt to open the deep link; fallback is no-op
     val url = NSURL.URLWithString(deepLink)
     if (url != null) {
         UIApplication.sharedApplication.openURL(url)
     }
+}actual fun getAppVersion(): String {
+    return NSBundle.mainBundle
+        .objectForInfoDictionaryKey("CFBundleShortVersionString")
+        ?.toString() ?: ""
 }

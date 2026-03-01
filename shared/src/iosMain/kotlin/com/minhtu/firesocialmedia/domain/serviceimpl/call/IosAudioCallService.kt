@@ -4,6 +4,7 @@ import com.minhtu.firesocialmedia.data.remote.dto.call.IceCandidateDTO
 import com.minhtu.firesocialmedia.data.remote.dto.call.OfferAnswerDTO
 import com.minhtu.firesocialmedia.data.remote.dto.user.UserDTO
 import com.minhtu.firesocialmedia.data.remote.service.call.AudioCallService
+import com.minhtu.firesocialmedia.domain.entity.call.SpeakerType
 import com.minhtu.firesocialmedia.platform.WebRTCVideoTrack
 
 class IosAudioCallService : AudioCallService {
@@ -88,6 +89,18 @@ class IosAudioCallService : AudioCallService {
     }
 
     override suspend fun releaseResources() {
+        // iOS implementation will be added later
+    }
+
+    override suspend fun updateMuteStatus(muted: Boolean) {
+        // iOS implementation will be added later
+    }
+
+    override suspend fun updateCameraStatus(cameraOff: Boolean) {
+        // iOS implementation will be added later
+    }
+
+    override suspend fun updateSpeakerStatus(speakerType: SpeakerType) {
         // iOS implementation will be added later
     }
 }

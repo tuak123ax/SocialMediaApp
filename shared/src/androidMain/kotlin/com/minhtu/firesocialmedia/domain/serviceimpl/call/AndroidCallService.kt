@@ -12,6 +12,7 @@ import com.minhtu.firesocialmedia.data.remote.service.call.AudioCallService
 import com.minhtu.firesocialmedia.domain.entity.call.CallAction
 import com.minhtu.firesocialmedia.platform.WebRTCVideoTrack
 import com.minhtu.firesocialmedia.platform.logMessage
+import com.minhtu.firesocialmedia.domain.entity.call.SpeakerType
 import com.minhtu.firesocialmedia.utils.AndroidUtils
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.encodeToString
@@ -42,10 +43,34 @@ import org.webrtc.audio.JavaAudioDeviceModule
 object WebRTCManager {
     var eglBase: EglBase = EglBase.create()
 }
-class AndroidAudioCallService(
+
+/**
+ * Singleton so that both CallForegroundService (which runs the call and holds localVideoTrack)
+ * and the VideoCall UI (which calls updateCameraStatus) use the same instance. Otherwise
+ * updateCameraStatus would run on an instance with null localVideoTrack and have no effect.
+ */
+class AndroidAudioCallService private constructor(
     context : Context
-    ) : AudioCallService {
+) : AudioCallService {
     private val appContext: Context = context.applicationContext
+
+    companion object {
+        @Volatile
+        private var instance: AndroidAudioCallService? = null
+
+        fun get(context: Context): AndroidAudioCallService {
+            return instance ?: synchronized(this) {
+                instance ?: AndroidAudioCallService(context.applicationContext).also { instance = it }
+            }
+        }
+
+        /** Clear singleton after releasing resources so the next call gets a fresh instance. */
+        fun clearInstance() {
+            synchronized(this) {
+                instance = null
+            }
+        }
+    }
     private var peerConnectionFactory: PeerConnectionFactory
     private var peerConnection : PeerConnection? = null
     private var isRemoteDescriptionSet: Boolean = false
@@ -54,6 +79,7 @@ class AndroidAudioCallService(
     private var localAudioTrack : AudioTrack? = null
     private var localVideoSource : VideoSource? = null
     private var localVideoTrack : VideoTrack? = null
+    private var remoteAudioTrack: AudioTrack? = null
     private var remoteVideoTrack: VideoTrack? = null
     private var videoCapturer: CameraVideoCapturer? = null
     private var surfaceTextureHelper : SurfaceTextureHelper? = null
@@ -61,8 +87,12 @@ class AndroidAudioCallService(
     private var localVideoSender: RtpSender? = null
     private var audioDeviceModule: AudioDeviceModule
     private var peerConnectionObserver : PeerConnection.Observer? = null
+    private var lastSpeakerType: SpeakerType = SpeakerType.Audio
 
     init {
+        // 0. Fresh EglBase for this instance (previous one was released in releaseResources())
+        WebRTCManager.eglBase = EglBase.create()
+
         // 1. Initialize WebRTC global settings
         val options = PeerConnectionFactory.InitializationOptions.builder(appContext)
             .setEnableInternalTracer(true)
@@ -429,8 +459,9 @@ class AndroidAudioCallService(
                         onRemoteVideoTrackReceived(WebRTCVideoTrack(remoteVideoTrack))
                     }
                     is AudioTrack -> {
-                        mediaStreamTrack.setEnabled(true) // Ensure audio plays
-                        Log.d("WebRTC", "Remote audio track enabled: ${mediaStreamTrack.enabled()}")
+                        remoteAudioTrack = mediaStreamTrack
+                        applySpeakerType(lastSpeakerType)
+                        Log.d("WebRTC", "Remote audio track enabled: ${remoteAudioTrack?.enabled()}")
                     }
                 }
             }
@@ -449,7 +480,7 @@ class AndroidAudioCallService(
     private fun setupAudioManager() {
         val audioManager = appContext.getSystemService(Context.AUDIO_SERVICE) as AudioManager
         audioManager.mode = AudioManager.MODE_IN_COMMUNICATION
-        audioManager.isSpeakerphoneOn = true
+        audioManager.isSpeakerphoneOn = false
     }
 
     /**
@@ -659,6 +690,7 @@ class AndroidAudioCallService(
             localVideoTrack = null
             remoteVideoTrack = null
             localAudioTrack = null
+            remoteAudioTrack = null
             localVideoSender = null
             hasStarted = false
 
@@ -686,13 +718,63 @@ class AndroidAudioCallService(
                 val am = appContext.getSystemService(Context.AUDIO_SERVICE) as AudioManager
                 am.mode = AudioManager.MODE_NORMAL
                 am.isSpeakerphoneOn = false
+                audioDeviceModule.setSpeakerMute(false)
             }
             runCatching { audioDeviceModule.release() }
 
             logMessage("CallForegroundService") { "WebRTC resources released successfully" }
 
+            // Clear singleton so the next call gets a fresh instance (new PeerConnectionFactory, EglBase, etc.)
+            clearInstance()
         } catch (e: Exception) {
             logMessage("CallForegroundService") { "Failed to stop WebRTC cleanly: ${e.message}" }
+            clearInstance()
+        }
+    }
+
+    override suspend fun updateMuteStatus(muted: Boolean) {
+        val audioManager =
+            appContext.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+
+        audioManager.isMicrophoneMute = muted
+        localAudioTrack?.setEnabled(!muted)
+    }
+
+    override suspend fun updateCameraStatus(cameraOff: Boolean) {
+        localVideoTrack?.setEnabled(!cameraOff)
+    }
+
+    override suspend fun updateSpeakerStatus(speakerType: SpeakerType) {
+        lastSpeakerType = speakerType
+        applySpeakerType(speakerType)
+    }
+
+    private fun getRemoteAudioTrack(): AudioTrack? {
+        peerConnection?.transceivers?.forEach { transceiver ->
+            val track = transceiver.receiver.track()
+            if (track is AudioTrack) return track
+        }
+        return remoteAudioTrack
+    }
+
+    private fun applySpeakerType(speakerType: SpeakerType) {
+        val audioManager =
+            appContext.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+        audioManager.mode = AudioManager.MODE_IN_COMMUNICATION
+
+        when (speakerType) {
+            SpeakerType.Audio -> {
+                audioDeviceModule.setSpeakerMute(false)
+                getRemoteAudioTrack()?.setEnabled(true)
+                remoteAudioTrack?.setEnabled(true)
+                audioManager.isSpeakerphoneOn = false
+            }
+            SpeakerType.Speaker -> {
+                audioDeviceModule.setSpeakerMute(false)
+                getRemoteAudioTrack()?.setEnabled(true)
+                remoteAudioTrack?.setEnabled(true)
+                audioManager.isSpeakerphoneOn = true
+            }
         }
     }
 }

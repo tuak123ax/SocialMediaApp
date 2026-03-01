@@ -158,6 +158,7 @@ expect class WebRTCVideoTrack
 expect fun WebRTCVideoView(
     localTrack: WebRTCVideoTrack?,
     remoteTrack: WebRTCVideoTrack?,
+    isLocalVideoOff : Boolean,
     modifier: Modifier
 )
 
@@ -187,3 +188,5 @@ expect fun getUriStringFromLocalPath(localPath : String) : String
 expect suspend fun queryShareApps(text: String): MutableList<ShareApp>
 
 expect fun launchShareAppWithDeepLink(app : ShareApp, deepLink : String)
+
+expect fun getAppVersion(): String

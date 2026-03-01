@@ -12,12 +12,14 @@ class TestTag {
         const val TAG_BUTTON_ACCESS_MODIFIER: String = "TAG_BUTTON_ACCESS_MODIFIER"
         const val TAG_BUTTON_SIGNINGOOGLE : String = "TAG_BUTTON_SIGNINGOOGLE"
         const val TAG_BUTTON_BACK: String = "TAG_BUTTON_BACK"
+        const val TAG_BUTTON_BACK_TOP_BAR: String = "TAG_BUTTON_BACK_TOP_BAR"
         const val TAG_SELECT_AVATAR: String = "TAG_SELECT_AVATAR"
         const val TAG_SELECT_NAME: String = "TAG_SELECT_NAME"
         const val TAG_BUTTON_NEXT: String = "TAG_BUTTON_NEXT"
         const val TAG_ICON_BUTTON_SEARCH: String = "TAG_ICON_BUTTON_SEARCH"
         const val TAG_ICON_BUTTON_LOGOUT: String = "TAG_ICON_BUTTON_LOGOUT"
         const val TAG_BUTTON_LOGOUT: String = "TAG_BUTTON_LOGOUT"
+        const val TAG_BOTTOM_ACTION_BUTTON : String = "TAG_BOTTOM_ACTION_BUTTON"
         const val TAG_CURRENT_USER: String = "TAG_CURRENT_USER"
         const val TAG_CREATE_POST: String = "TAG_CREATE_POST"
         const val TAG_USERS_ROW: String = "TAG_USERS_ROW"
@@ -90,5 +92,8 @@ class TestTag {
         const val TAG_RECOMMEND_GROUP : String = "TAG_RECOMMEND_GROUP"
         const val TAG_SHARE_APPS_ROW : String = "TAG_SHARE_APPS_ROW"
         const val TAG_SHOW_PASSWORD : String = "TAG_SHOW_PASSWORD"
+        const val TAG_BUTTON_MUTE : String = "TAG_BUTTON_MUTE"
+        const val TAG_BUTTON_SPEAKER : String = "TAG_BUTTON_SPEAKER"
+        const val TAG_BUTTON_EXIT_VIDEO_CALL : String = "TAG_BUTTON_EXIT_VIDEO_CALL"
     }
 }

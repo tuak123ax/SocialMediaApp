@@ -13,6 +13,7 @@ import com.minhtu.firesocialmedia.domain.entity.call.CallStatus
 import com.minhtu.firesocialmedia.domain.entity.call.CallingRequestData
 import com.minhtu.firesocialmedia.domain.entity.call.IceCandidateData
 import com.minhtu.firesocialmedia.domain.entity.call.OfferAnswer
+import com.minhtu.firesocialmedia.domain.entity.call.SpeakerType
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.domain.repository.CallRepository
 import com.minhtu.firesocialmedia.platform.WebRTCVideoTrack
@@ -381,6 +382,18 @@ class CallRepositoryImpl(
 
     override fun stopObservePhoneCall() {
         databaseService.stopObservePhoneCall()
+    }
+
+    override suspend fun updateMuteStatus(muted: Boolean) {
+        audioCallService.updateMuteStatus(muted)
+    }
+
+    override suspend fun updateCameraStatus(cameraOff: Boolean) {
+        audioCallService.updateCameraStatus(cameraOff)
+    }
+
+    override suspend fun updateSpeakerStatus(speakerType: SpeakerType) {
+        audioCallService.updateSpeakerStatus(speakerType)
     }
 
     override suspend fun sendIceCandidateToFireBase(

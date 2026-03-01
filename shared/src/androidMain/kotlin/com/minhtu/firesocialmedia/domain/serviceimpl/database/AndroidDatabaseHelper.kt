@@ -508,6 +508,8 @@ class AndroidDatabaseHelper {
 
         private var callListener: ChildEventListener? = null
         private var firebaseDatabase : DatabaseReference? = null
+        private var callListenerWithoutInCallCheck: ChildEventListener? = null
+        private var firebaseDatabaseWithoutInCallCheck: DatabaseReference? = null
         fun observePhoneCall(
             isInCall : MutableStateFlow<Boolean>,
             currentUserId: String,
@@ -625,8 +627,11 @@ class AndroidDatabaseHelper {
             endCallSession: (Boolean) -> Unit,
             whoEndCallCallBack : (String) -> Unit,
             iceCandidateCallBack : (iceCandidates : Map<String, IceCandidateDTO>?) -> Unit) {
-            val firebaseDatabase = FirebaseDatabase.getInstance().getReference(callPath)
-            firebaseDatabase.addChildEventListener(object : ChildEventListener {
+            // Remove any previous listener so we don't have multiple active observers (e.g. from a prior call).
+            callListenerWithoutInCallCheck?.let { firebaseDatabaseWithoutInCallCheck?.removeEventListener(it) }
+            callListenerWithoutInCallCheck = null
+            firebaseDatabaseWithoutInCallCheck = FirebaseDatabase.getInstance().getReference(callPath)
+            callListenerWithoutInCallCheck = object : ChildEventListener {
                 override fun onChildAdded(snapshot: DataSnapshot, previousChildName: String?) {
                     Log.e("observePhoneCallWithoutCheckingInCall", "onChildAdded")
 
@@ -682,7 +687,8 @@ class AndroidDatabaseHelper {
                 override fun onCancelled(error: DatabaseError) {
                     Log.e("observePhoneCallWithoutCheckingInCall", "Failed to observe call", error.toException())
                 }
-            })
+            }
+            firebaseDatabaseWithoutInCallCheck!!.addChildEventListener(callListenerWithoutInCallCheck!!)
         }
 
         fun handleOffer(session : AudioCallSessionDTO?,
@@ -813,6 +819,8 @@ class AndroidDatabaseHelper {
             callPath: String,
             callStatusCallBack: Utils.Companion.CallStatusCallBack
         ) {
+            // Reset so the next call does not see stale status from the previous call (e.g. ACCEPTED/ENDED)
+            lastCallStatus = null
             // Clean up any previous status listener before attaching a new one
             callStatusDatabaseRef?.let { ref ->
                 callStatusValueEventListener?.let { ref.removeEventListener(it) }
@@ -823,11 +831,24 @@ class AndroidDatabaseHelper {
                 .child("status")
             callStatusValueEventListener = object : ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
+                    // Session deleted (callee ended without writing ENDED) → treat as call ended so caller dismisses notification
+                    if (!snapshot.exists()) {
+                        if (lastCallStatus != null) {
+                            Log.e("observeCallStatus", "session removed (call ended)")
+                            callStatusCallBack.onFailure()
+                            callStatusDatabaseRef?.let { ref ->
+                                callStatusValueEventListener?.let { ref.removeEventListener(it) }
+                            }
+                            callStatusValueEventListener = null
+                            callStatusDatabaseRef = null
+                        }
+                        return
+                    }
                     val callStatus = snapshot.getValue(CallStatus::class.java) ?: return
                     if(lastCallStatus != callStatus) {
                         Log.e("observeCallStatus", callStatus.name)
-                        lastCallStatus = callStatus
                         if(callStatus == CallStatus.ACCEPTED || callStatus == CallStatus.VIDEO) {
+                            lastCallStatus = callStatus
                             callStatusCallBack.onSuccess(callStatus)
                             // Once accepted or switched to video, we no longer need to observe status here
                             callStatusDatabaseRef?.let { ref ->
@@ -835,8 +856,12 @@ class AndroidDatabaseHelper {
                             }
                             callStatusValueEventListener = null
                             callStatusDatabaseRef = null
-                        } else {
-                            if(callStatus == CallStatus.ENDED) {
+                        } else if(callStatus == CallStatus.ENDED) {
+                            // Only treat ENDED as "call ended" if we had seen this call start (RINGING/ACCEPTED).
+                            // Otherwise it's stale from the previous call — ignore so next call gets RINGING first.
+                            val hadCallStarted = lastCallStatus != null
+                            lastCallStatus = callStatus
+                            if (hadCallStarted) {
                                 callStatusCallBack.onFailure()
                                 callStatusDatabaseRef?.let { ref ->
                                     callStatusValueEventListener?.let { ref.removeEventListener(it) }
@@ -844,6 +869,8 @@ class AndroidDatabaseHelper {
                                 callStatusValueEventListener = null
                                 callStatusDatabaseRef = null
                             }
+                        } else {
+                            lastCallStatus = callStatus
                         }
                     }
                 }
@@ -926,6 +953,9 @@ class AndroidDatabaseHelper {
             callListener?.let { l -> firebaseDatabase?.removeEventListener(l) }
             callListener = null
             firebaseDatabase = null
+            callListenerWithoutInCallCheck?.let { l -> firebaseDatabaseWithoutInCallCheck?.removeEventListener(l) }
+            callListenerWithoutInCallCheck = null
+            firebaseDatabaseWithoutInCallCheck = null
             // Also stop answer and call status listeners to avoid leaks
             answerDatabaseRef?.let { ref ->
                 answerValueEventListener?.let { ref.removeEventListener(it) }
@@ -937,6 +967,12 @@ class AndroidDatabaseHelper {
             callStatusValueEventListener = null
             answerDatabaseRef = null
             callStatusDatabaseRef = null
+        }
+
+        fun stopObservePhoneCallWithoutCheckingInCall() {
+            callListenerWithoutInCallCheck?.let { l -> firebaseDatabaseWithoutInCallCheck?.removeEventListener(l) }
+            callListenerWithoutInCallCheck = null
+            firebaseDatabaseWithoutInCallCheck = null
         }
 
         suspend fun uploadMediaAndGetUrl(
@@ -1033,7 +1069,7 @@ class AndroidDatabaseHelper {
                 val metadata = StorageMetadata.Builder()
                     .setCacheControl("public,max-age=604800,immutable")
                     .build()
-                if(group.avatar != Constants.DEFAULT_AVATAR_URL) {
+                if(group.avatar != Constants.DEFAULT_AVATAR_URL && group.avatar != Constants.DEFAULT_DECADE_AVATAR_URL && group.avatar != Constants.DEFAULT_ARK_AVATAR_URL_FOR_GROUP) {
                     storageRef.putFile(group.avatar.toUri(), metadata).addOnCompleteListener{ putFileTask ->
                         if(putFileTask.isSuccessful){
                             storageRef.downloadUrl.addOnSuccessListener { dataUrl ->
@@ -1465,5 +1501,24 @@ class AndroidDatabaseHelper {
             }
         }
 
+        suspend fun deleteAllNotifications(
+            uid: String,
+            userPath: String,
+            notificationPath: String
+        ): Result<Unit> {
+            return try {
+                FirebaseDatabase.getInstance()
+                    .reference
+                    .child(userPath)
+                    .child(uid)
+                    .child(notificationPath)
+                    .removeValue()
+                    .await()
+
+                Result.success(Unit)
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
     }
 }

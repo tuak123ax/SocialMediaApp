@@ -6,6 +6,8 @@ class Constants {
         const val POST_NEWS_SERVER_ERROR = "POST_AVATAR_SERVER_ERROR"
         const val POST_NEWS_EMPTY_ERROR = "POST_NEWS_EMPTY_ERROR"
         const val UPDATE_NEWS_EMPTY_ERROR = "UPDATE_NEWS_EMPTY_ERROR"
+        const val ACCOUNT_EXISTED = "ACCOUNT_EXISTED"
+        const val ACCOUNT_NOT_EXISTED = "ACCOUNT_NOT_EXISTED"
         const val LOGIN_ERROR = "LOGIN_ERROR"
         const val SIGNUP_FAIL = "SIGNUP_FAIL"
         const val EMAIL_EMPTY = "EMAIL_EMPTY"
@@ -14,6 +16,8 @@ class Constants {
         const val EMAIL_EXISTED = "EMAIL_EXISTED"
 
         const val DEFAULT_AVATAR_URL = "https://firebasestorage.googleapis.com/v0/b/firechat-aa433.appspot.com/o/unknownavatar.png?alt=media&token=9a49ff27-e5fa-4813-97d4-47bd15281550"
+        const val DEFAULT_DECADE_AVATAR_URL = "https://firebasestorage.googleapis.com/v0/b/firechat-aa433.appspot.com/o/decadeAvatar.png?alt=media&token=062af105-6d07-4cc0-8784-d0af3cfecbb9"
+        const val DEFAULT_ARK_AVATAR_URL_FOR_GROUP = "https://firebasestorage.googleapis.com/v0/b/firechat-aa433.appspot.com/o/arkavatar.png?alt=media&token=2d95a489-c480-402b-bb3f-cb32542bac75"
         const val REMOTE_MSG_AUTHORIZATION = "Authorization"
         const val REMOTE_MSG_CONTENT_TYPE = "Content-Type"
 
@@ -32,9 +36,6 @@ class Constants {
         const val APP_SCRIPT_ENDPOINT = "AKfycbw4JXnBNCl-hoHi2l0_l-Ugp-9icTBWPJVR5PyKqe5o7-JJ-p26yFVpBO8kUZhxtUSzWA/exec"
 
         const val KEY_FCM_TOKEN = "fcm_token"
-        const val PRIVATE_KEY = "PRIVATE_KEY"
-        const val IV = "IV"
-        const val KEY_MESSAGE = "message"
 
         const val KEY_USER_ID = "user_id"
         const val KEY_NAME = "name"
@@ -44,13 +45,6 @@ class Constants {
         const val KEY_FRIEND_REQUEST = "friend_request"
         const val KEY_EMAIL = "email"
         const val KEY_PASSWORD = "password"
-        fun getRemoteMsgHeaders(): HashMap<String, String> {
-            val remoteMsgHeaders: HashMap<String, String> = HashMap()
-            remoteMsgHeaders[REMOTE_MSG_AUTHORIZATION] =
-                "key=AAAArVU2EM0:APA91bFO912dkn-eLz9VVMkhh3_a3KDV4-cIKssP-uwXlzNhKhU35XyLj83BgLr_Y9v0ysjgd5OjP0dFpT-0TXuBnJHTQics2rCNrab7bZjCpdZsqNlB4ldER11tgJuyAHKpdBZs3QPG"
-            remoteMsgHeaders[REMOTE_MSG_CONTENT_TYPE] = "application/json"
-            return remoteMsgHeaders
-        }
 
         const val KEY_SESSION_ID = "session_id"
         const val KEY_CALLER_NAME = "caller_name"

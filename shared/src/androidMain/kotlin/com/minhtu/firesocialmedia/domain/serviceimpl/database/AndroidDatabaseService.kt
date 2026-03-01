@@ -356,7 +356,7 @@ class AndroidDatabaseService(context: Context) : DatabaseService {
         val databaseReference = FirebaseDatabase.getInstance().getReference()
             .child("users").child(user.uid)
 
-        if(user.image != Constants.DEFAULT_AVATAR_URL){
+        if(user.image != Constants.DEFAULT_AVATAR_URL && user.image != Constants.DEFAULT_DECADE_AVATAR_URL && user.image != Constants.DEFAULT_ARK_AVATAR_URL_FOR_GROUP){
             val metadata = StorageMetadata.Builder()
                 .setCacheControl("public,max-age=604800,immutable")
                 .build()
@@ -467,6 +467,10 @@ class AndroidDatabaseService(context: Context) : DatabaseService {
 
     override fun stopObservePhoneCall() {
         AndroidDatabaseHelper.stopObservePhoneCall()
+    }
+
+    override fun stopObservePhoneCallWithoutCheckingInCall() {
+        AndroidDatabaseHelper.stopObservePhoneCallWithoutCheckingInCall()
     }
 
     override suspend fun saveGroupAndUserGroups(
@@ -674,6 +678,18 @@ class AndroidDatabaseService(context: Context) : DatabaseService {
         AndroidDatabaseHelper.updateIsReadStatusOfNotification(
             userId,
             notificationId,
+            userPath,
+            notificationPath
+        )
+    }
+
+    override suspend fun deleteAllNotifications(
+        uid: String,
+        userPath: String,
+        notificationPath: String
+    ): Result<Unit> {
+        return AndroidDatabaseHelper.deleteAllNotifications(
+            uid,
             userPath,
             notificationPath
         )

@@ -411,7 +411,9 @@ class IosDatabaseService() : DatabaseService {
         val storageReference: FIRStorageReference = FIRStorage.storage().reference().child("avatar").child(user.uid)
         val databaseReference: FIRDatabaseReference = FIRDatabase.database().reference().child("users").child(user.uid)
         try {
-            if (user.image != Constants.DEFAULT_AVATAR_URL) {
+            if (user.image != Constants.DEFAULT_AVATAR_URL &&
+                user.image != Constants.DEFAULT_DECADE_AVATAR_URL &&
+                user.image != Constants.DEFAULT_ARK_AVATAR_URL_FOR_GROUP) {
                 val nsDataAvatar = Base64.decode(user.image).toNSData()
                 val metadata = FIRStorageMetadata().apply {
                     setContentType("image/jpeg")
@@ -590,6 +592,10 @@ class IosDatabaseService() : DatabaseService {
     }
 
     override fun stopObservePhoneCall() {
+        // iOS implementation will be added later
+    }
+
+    override fun stopObservePhoneCallWithoutCheckingInCall() {
         // iOS implementation will be added later
     }
 
@@ -774,5 +780,22 @@ class IosDatabaseService() : DatabaseService {
     ): List<GroupDTO> {
         // TODO: Implement iOS fetch recommend/feature groups
         return emptyList()
+    }
+
+    override suspend fun updateIsReadStatusOfNotification(
+        userId: String,
+        notificationId: String,
+        userPath: String,
+        notificationPath: String
+    ) {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun deleteAllNotifications(
+        uid: String,
+        userPath: String,
+        notificationPath: String
+    ): Result<Unit> {
+        TODO("Not yet implemented")
     }
 }

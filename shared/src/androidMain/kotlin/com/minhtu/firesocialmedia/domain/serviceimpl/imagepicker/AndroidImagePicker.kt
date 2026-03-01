@@ -109,7 +109,7 @@ class AndroidImagePicker(
                 Image(
                     bitmap = it.asImageBitmap(),
                     contentDescription = "Image",
-                    contentScale = ContentScale.Crop,
+                    contentScale = ContentScale.FillBounds,
                     modifier = modifier
                 )
             }

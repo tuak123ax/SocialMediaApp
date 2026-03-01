@@ -94,6 +94,7 @@ class SignInViewModelTest {
         override suspend fun searchUserByName(name: String, path: String) = null
         override suspend fun sendWhoEndCall(sessionId: String, whoEndCall: String) = true
         override fun stopObservePhoneCall() {}
+        override fun stopObservePhoneCallWithoutCheckingInCall() {}
 
         // -------- Group APIs (stubs) ----------
         override suspend fun saveGroupAndUserGroups(
@@ -220,6 +221,9 @@ class SignInViewModelTest {
             override suspend fun addIceCandidate(sdp: String, sdpMid: String, sdpMLineIndex: Int) {}
             override suspend fun setupAudioTrack() {}
             override suspend fun releaseResources() {}
+            override suspend fun updateMuteStatus(muted: Boolean) {}
+            override suspend fun updateCameraStatus(cameraOff: Boolean) {}
+            override suspend fun updateSpeakerStatus(speakerType: com.minhtu.firesocialmedia.domain.entity.call.SpeakerType) {}
         }
         override val room: RoomService = object : RoomService {
             override suspend fun storeUserFriendsToRoom(friends: List<com.minhtu.firesocialmedia.data.local.entity.UserEntity?>) {}

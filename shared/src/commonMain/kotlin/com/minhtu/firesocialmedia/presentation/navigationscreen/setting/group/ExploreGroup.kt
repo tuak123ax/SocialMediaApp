@@ -4,6 +4,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -66,6 +67,7 @@ class ExploreGroup {
         @Composable
         fun ExploreGroupScreen(
             currentUser : UserInstance,
+            paddingValues: PaddingValues,
             localImageLoaderValue : ProvidedValue<*>,
             exploreGroupViewModel: ExploreGroupViewModel,
             searchViewModel : SearchViewModel,
@@ -85,6 +87,7 @@ class ExploreGroup {
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier
                     .fillMaxSize()
+                    .padding(paddingValues)
             ){
                 UiUtils.BackAndTitleAndMoreOptionsRow(
                     title = "Explore All Groups",
@@ -93,7 +96,8 @@ class ExploreGroup {
                 Search.SearchBar(
                     query = searchViewModel.query,
                     onQueryChange = { query -> searchViewModel.updateQuery(query) },
-                    modifier = Modifier.height(80.dp).padding(vertical = 10.dp)
+                    modifier = Modifier
+                        .padding(horizontal = 10.dp)
                         .testTag(TestTag.TAG_SEARCH_BAR)
                         .semantics {
                             contentDescription = TestTag.TAG_SEARCH_BAR

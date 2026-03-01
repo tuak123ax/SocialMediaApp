@@ -16,6 +16,19 @@ val memberCardColor = Color(0xFFF5F7F9)
 val positiveBackgroundButtonColor = Color(0xFFFFE6E6)
 val positiveTintColor = Color(0xFFE53935)
 val loginBackgroundColor = Color(0xFF132026)
+val iconButtonBackgroundColor = Color(0xFFEEF2F7)
+val homeEditTextBackgroundColor = Color(0xFFF0F2F5)
+val blurLikeColor = Color(0xFF8E8E93)
+val avatarGrayBackground = Color(0xFFE6E9ED)
+val activeColor = Color(0xFFE53935)
+val inactiveColor = Color(0xFF2C2C2E)    // Dark surface (iOS-style)
+val iconActive = Color.White
+val iconInactive = Color.White
+
+val PolicyRed = Color(0xFFE53935)
+val PolicyGrayTitle = Color(0xFF9E9E9E)
+val PolicyBody = Color(0xFF424242)
+val PolicySubText = Color(0xFF757575)
 
 // Container and text colors
 val OnPrimary = Color(0xFFFFFFFF)

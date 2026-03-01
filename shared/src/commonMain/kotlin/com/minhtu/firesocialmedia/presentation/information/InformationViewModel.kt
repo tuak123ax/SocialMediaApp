@@ -36,7 +36,7 @@ class InformationViewModel(
         password =  input
     }
 
-    var avatar by mutableStateOf(Constants.DEFAULT_AVATAR_URL)
+    var avatar by mutableStateOf(Constants.DEFAULT_DECADE_AVATAR_URL)
     fun updateAvatar(input:String){
         avatar = input
     }

@@ -8,6 +8,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.drawable.BitmapDrawable
+import android.os.Build
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -74,6 +75,7 @@ import com.seiko.imageloader.option.androidContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import okio.Path.Companion.toOkioPath
 import org.json.JSONArray
 import org.json.JSONObject
@@ -154,6 +156,13 @@ actual fun getIconPainter(icon : String): Painter? {
         "right_arrow" -> painterResource(id = R.drawable.right_arrow)
         "global" -> painterResource(id = R.drawable.global)
         "add_member" -> painterResource(id = R.drawable.add_member)
+        "image" -> painterResource(id = R.drawable.image)
+        "mute" -> painterResource(id = R.drawable.mute)
+        "unmute" -> painterResource(id = R.drawable.unmute)
+        "speaker" -> painterResource(id = R.drawable.speaker)
+        "no_sound" -> painterResource(id = R.drawable.no_sound)
+        "audio" -> painterResource(id = R.drawable.audio)
+        "video_call" -> painterResource(id = R.drawable.video_call)
         else -> null
     }
 }
@@ -297,14 +306,14 @@ actual fun getRandomIdForNotification() : String {
     return "Noti-" + UUID.randomUUID().toString()
 }
 
-actual suspend fun getImageBytesFromDrawable(name: String): ByteArray?{
+actual suspend fun getImageBytesFromDrawable(name: String): ByteArray? = withContext(Dispatchers.IO) {
     val resId = appContext.resources.getIdentifier(name, "drawable", appContext.packageName)
-    val drawable = appContext.getDrawable(resId) ?: return null
+    val drawable = appContext.getDrawable(resId) ?: return@withContext null
 
     val bitmap = (drawable as BitmapDrawable).bitmap
     val stream = ByteArrayOutputStream()
     bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)
-    return stream.toByteArray()
+    stream.toByteArray()
 }
 
 actual fun generateImageLoader(): ImageLoader {
@@ -413,6 +422,7 @@ actual class WebRTCVideoTrack(val track: VideoTrack?)
 actual fun WebRTCVideoView(
     localTrack: WebRTCVideoTrack?,
     remoteTrack: WebRTCVideoTrack?,
+    isLocalVideoOff : Boolean,
     modifier: Modifier
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
@@ -424,15 +434,17 @@ actual fun WebRTCVideoView(
             )
         }
 
-        localTrack?.track?.let {
-            LocalVideoView(
-                eglBaseContext = WebRTCManager.eglBase.eglBaseContext,
-                videoTrack = it,
-                modifier = Modifier
-                    .size(150.dp)
-                    .align(Alignment.BottomEnd)
-                    .padding(16.dp)
-            )
+        if(!isLocalVideoOff) {
+            localTrack?.track?.let {
+                LocalVideoView(
+                    eglBaseContext = WebRTCManager.eglBase.eglBaseContext,
+                    videoTrack = it,
+                    modifier = Modifier
+                        .size(150.dp)
+                        .align(Alignment.BottomEnd)
+                        .padding(16.dp)
+                )
+            }
         }
     }
 }
@@ -627,4 +639,19 @@ actual fun launchShareAppWithDeepLink(app : ShareApp, deepLink : String) {
         flags = Intent.FLAG_ACTIVITY_NEW_TASK
     }
     appContext.startActivity(intent)
+}
+
+actual fun getAppVersion(): String {
+    val pm = appContext.packageManager
+    val pkg = appContext.packageName
+
+    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        pm.getPackageInfo(
+            pkg,
+            PackageManager.PackageInfoFlags.of(0)
+        ).versionName
+    } else {
+        @Suppress("DEPRECATION")
+        pm.getPackageInfo(pkg, 0).versionName
+    } ?: ""
 }
