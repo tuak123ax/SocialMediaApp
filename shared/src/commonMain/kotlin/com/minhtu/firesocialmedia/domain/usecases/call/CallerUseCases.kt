@@ -125,9 +125,11 @@ class ObserveIceCandidateUseCase(private val signalingUseCase: SendSignalingData
 }
 
 class ObserveAnswer(private val signalingUseCase: SendSignalingDataUseCase) {
-    suspend operator fun invoke(sessionId: String,
-                                callerId : String,
-                                onRejectVideoCall : suspend () -> Unit) {
+    suspend operator fun invoke(
+        sessionId: String,
+        callerId : String?,
+        onRejectVideoCall : suspend () -> Unit
+    ) {
         signalingUseCase.observeAnswerFromCallee(
             sessionId,
             callerId,

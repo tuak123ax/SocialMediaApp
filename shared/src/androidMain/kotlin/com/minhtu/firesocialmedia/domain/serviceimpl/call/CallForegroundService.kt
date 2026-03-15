@@ -77,6 +77,12 @@ class CallForegroundService : Service() {
     private var calleeIdForCallee : String = ""
     private var callerFromApp : UserInstance? = null
     private var calleeFromApp : UserInstance? = null
+    private var inFlightStartVideoCallSignature: String? = null
+    /**
+     * SDP hash of the last video offer we processed as callee, used to ignore stale Firebase offers
+     * that fire again due to re-subscription (e.g. after Video→Audio navigation).
+     */
+    private var lastProcessedVideoOfferSdpHash: Int? = null
 
     private lateinit var initializeCallUseCase: InitializeCallUseCase
     private lateinit var sendSignalingDataUseCase : SendSignalingDataUseCase
@@ -236,7 +242,7 @@ class CallForegroundService : Service() {
                                         true))
                             },
                             onReceiveVideoCall = { videoOffer ->
-                                CallEventFlow.videoCallState.emit(videoOffer)
+                                handleIncomingVideoOffer(videoOffer)
                             },
                             onEndCall = {
                                 logMessage("onEndCallCaller", { "caller" })
@@ -264,28 +270,55 @@ class CallForegroundService : Service() {
     private fun startVideoCallAction(intent: Intent) {
         logMessage("START_VIDEO_CALL", { "START_VIDEO_CALL" })
         backgroundScope.launch {
+            val intentSessionId = intent.getStringExtra("sessionId").orEmpty()
             val remoteVideoOfferJsonString = intent.getStringExtra("remoteVideoOffer")
+            val currentUserId = intent.getStringExtra("currentUserId").orEmpty()
+            val offerHash = remoteVideoOfferJsonString?.hashCode() ?: 0
+            val startSignature = "$intentSessionId|$currentUserId|$offerHash"
+            if (inFlightStartVideoCallSignature == startSignature) {
+                logMessage("START_VIDEO_CALL", { "skip duplicate START_VIDEO_CALL signature=$startSignature" })
+                return@launch
+            }
+            inFlightStartVideoCallSignature = startSignature
+
+            // Keep existing tracks during video rejoin to avoid renderer/sender race conditions.
+            // Remote black-screen behavior should come from muted sender frames, not track disposal.
+            // Use sessionId from intent when present so we're in sync with the app (avoids stale member after multiple decline/accept)
+            intentSessionId.takeIf { it.isNotEmpty() }?.let { sessionIdFromIntent ->
+                sessionId = sessionIdFromIntent
+            }
             val remoteVideoOffer = remoteVideoOfferJsonString?.let { Json.decodeFromString<OfferAnswerDTO>(it).toDomain() }
-            val currentUserId = intent.getStringExtra("currentUserId")
-            //Remote video offer is null means this is caller side.
-            if(remoteVideoOffer == null) {
-                try{
+            val currentUserIdOrNull = currentUserId.ifEmpty { null }
+            try {
+                // Remote video offer is null means this is caller side.
+                if(remoteVideoOffer == null) {
+                    // We're initiating a new video offer: reset the stale-offer guard so that the
+                    // other user's fresh video offer (if they also click video call) is not blocked.
+                    lastProcessedVideoOfferSdpHash = null
+                    // Caller is initiating a fresh video upgrade, so don't apply incoming-offer prep.
                     callerCoordinator.startVideoCall(
-                        currentUserId,
+                        currentUserIdOrNull,
                         sessionId,
                         onLocalVideoTrackCreated = { localVideoTrack ->
                             //Received local video track
                             //Emit event to update UI
                             CallEventFlow.localVideoTrack.emit(localVideoTrack)
+                        },
+                        onRejectVideoCall = {
+                            // Clean up all video resources so the next attempt starts completely fresh
+                            backgroundScope.launch { callManager.stopVideoCallResources() }
+                            // Clear video track state for UI
+                            CallEventFlow.localVideoTrack.value = null
+                            CallEventFlow.remoteVideoTrack.value = null
+                            // Callee declined video call — set message for toast and notify UI to navigate back
+                            CallEventFlow.videoCallDeclinedMessage.value = calleeFromApp?.name?.let { "$it declined the video call" }
+                                ?: "The other person declined the video call"
+                            CallEventFlow.answerVideoCallState.value = false
                         })
-                } catch (ex : Exception) {
-                    logMessage("callerCoordinator start video call exception",
-                        { ex.message.toString() })
-                }
-            } else {
-                try {
+                } else {
+                    callManager.prepareForIncomingVideoNegotiation()
                     calleeCoordinator.startVideoCall(
-                        currentUserId,
+                        currentUserIdOrNull,
                         sessionId,
                         remoteVideoOffer,
                         onLocalVideoTrackCreated = { localVideoTrack ->
@@ -294,9 +327,13 @@ class CallForegroundService : Service() {
                             CallEventFlow.localVideoTrack.emit(localVideoTrack)
                         }
                     )
-                } catch (ex : Exception) {
-                    logMessage("calleeCoordinator start video call exception",
-                        { ex.message.toString() })
+                }
+            } catch (ex : Exception) {
+                val role = if (remoteVideoOffer == null) "caller" else "callee"
+                logMessage("${role}Coordinator start video call exception", { ex.message.toString() })
+            } finally {
+                if (inFlightStartVideoCallSignature == startSignature) {
+                    inFlightStartVideoCallSignature = null
                 }
             }
         }
@@ -453,6 +490,8 @@ class CallForegroundService : Service() {
         CallEventFlow.remoteVideoTrack.value = null
         CallEventFlow.videoCallState.value = null
         CallEventFlow.answerVideoCallState.value = true
+        CallEventFlow.videoCallDeclinedMessage.value = null
+        lastProcessedVideoOfferSdpHash = null
         //Dismiss notification
         val notificationManager = applicationContext.getSystemService(NOTIFICATION_SERVICE) as NotificationManager
         notificationManager.cancel(NOTIF_ID)
@@ -481,12 +520,67 @@ class CallForegroundService : Service() {
                     }
                 },
                 onReceiveVideoCallRequest = { videoOffer ->
-                    CallEventFlow.videoCallState.emit(videoOffer)
+                    handleIncomingVideoOffer(videoOffer)
                 }
             )
         } catch (ex : Exception) {
             logMessage("calleeCoordinator accept call exception", { ex.message.toString() })
         }
+    }
+
+    private suspend fun handleIncomingVideoOffer(videoOffer: OfferAnswer) {
+        val localUserId = when (videoOffer.initiator) {
+            callerFromApp?.uid -> calleeFromApp?.uid
+            calleeFromApp?.uid -> callerFromApp?.uid
+            callerIdForCallee -> calleeIdForCallee
+            calleeIdForCallee -> callerIdForCallee
+            else -> null
+        }
+        logMessage(
+            "handleIncomingVideoOffer",
+            { "initiator=${videoOffer.initiator}, localUserId=$localUserId, auto=${CallEventFlow.hasAcceptedVideoInCurrentCall.value}" }
+        )
+
+        // Ignore self-authored offers; they can still be observed via Firebase updates.
+        if (!localUserId.isNullOrEmpty() && localUserId == videoOffer.initiator) {
+            logMessage("handleIncomingVideoOffer", { "ignore self-authored offer" })
+            return
+        }
+
+        // After the first successful video join in this call, subsequent upgrades skip the
+        // accept/decline dialog and auto-navigate the UI directly to the VideoCall screen.
+        if (CallEventFlow.hasAcceptedVideoInCurrentCall.value &&
+            !localUserId.isNullOrEmpty() &&
+            sessionId.isNotEmpty()
+        ) {
+            // Glare guard: if we're currently acting as the video initiator (caller) ourselves,
+            // ignore the incoming cross-offer. Processing both simultaneously corrupts PeerConnection state.
+            if (inFlightStartVideoCallSignature != null) {
+                logMessage("handleIncomingVideoOffer", { "ignore: glare detected — we're currently initiating a video call" })
+                return
+            }
+
+            val incomingOfferHash = videoOffer.sdp.hashCode()
+            // Stale-offer guard: ignore offers we've already processed (Firebase re-fires the current
+            // value when the listener re-subscribes, e.g. after Video→Audio navigation).
+            if (incomingOfferHash == lastProcessedVideoOfferSdpHash) {
+                logMessage("handleIncomingVideoOffer", { "ignore: duplicate stale offer (already processed sdpHash=$incomingOfferHash)" })
+                return
+            }
+
+            // Emit to videoCallState — the audio screen's LaunchedEffect auto-navigates to VideoCall
+            // (because hasAcceptedVideoInCurrentCall=true), and VideoCall's own LaunchedEffect processes
+            // the offer as callee. This avoids dual renegotiation (once here, once in the UI).
+            logMessage("handleIncomingVideoOffer", { "auto-navigate to video: emit offer to videoCallState" })
+            lastProcessedVideoOfferSdpHash = incomingOfferHash
+            CallEventFlow.videoCallState.emit(videoOffer)
+            return
+        }
+
+        // First-time video request still requires UI accept/decline.
+        logMessage("handleIncomingVideoOffer", { "emit video offer to UI for accept/decline" })
+        callManager.prepareForIncomingVideoNegotiation()
+        CallEventFlow.videoCallState.emit(videoOffer)
     }
 
     override fun onDestroy() {

@@ -387,6 +387,22 @@ class AndroidDatabaseHelper {
             }
         }
 
+        fun clearAnswerInFirebase(
+            sessionId: String,
+            callPath: String,
+            clearAnswerCallBack: Utils.Companion.BasicCallBack
+        ) {
+            Log.d("Task", "clearAnswerInFirebase")
+            val database = FirebaseDatabase.getInstance().getReference(callPath).child(sessionId).child("answer")
+            database.setValue(null).addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    clearAnswerCallBack.onSuccess()
+                } else {
+                    clearAnswerCallBack.onFailure()
+                }
+            }
+        }
+
         fun updateOfferInFirebase(
             sessionId: String,
             updateContent: String,
@@ -510,6 +526,15 @@ class AndroidDatabaseHelper {
         private var firebaseDatabase : DatabaseReference? = null
         private var callListenerWithoutInCallCheck: ChildEventListener? = null
         private var firebaseDatabaseWithoutInCallCheck: DatabaseReference? = null
+        // Track listeners that must be removed in stopObserve* to prevent leaks
+        private val pendingOfferListeners = mutableListOf<Pair<DatabaseReference, ValueEventListener>>()
+        private val pendingOfferListenersWithoutInCall = mutableListOf<Pair<DatabaseReference, ValueEventListener>>()
+        private val callerCandidatesListeners = mutableListOf<Pair<DatabaseReference, ChildEventListener>>()
+        private val callerCandidatesListenersWithoutInCall = mutableListOf<Pair<DatabaseReference, ChildEventListener>>()
+        private var calleeCandidatesRef: DatabaseReference? = null
+        private var calleeCandidatesListener: ChildEventListener? = null
+        private var videoOfferRef: DatabaseReference? = null
+        private var videoOfferListener: ValueEventListener? = null
         fun observePhoneCall(
             isInCall : MutableStateFlow<Boolean>,
             currentUserId: String,
@@ -599,10 +624,15 @@ class AndroidDatabaseHelper {
                     phoneCallCallBack,
                     iceCandidateCallBack)
             } else {
-                snapshot.ref.addValueEventListener(object : ValueEventListener {
+                val ref = snapshot.ref
+                val listener = object : ValueEventListener {
                     override fun onDataChange(updatedSnapshot: DataSnapshot) {
                         val updatedSession = updatedSnapshot.getValue(AudioCallSessionDTO::class.java)
                         if (updatedSession?.offer != null) {
+                            synchronized(pendingOfferListeners) {
+                                pendingOfferListeners.removeAll { it.first == ref }
+                            }
+                            ref.removeEventListener(this)
                             handleOffer(
                                 updatedSession,
                                 updatedSession.offer!!,
@@ -611,12 +641,20 @@ class AndroidDatabaseHelper {
                                 currentUserId,
                                 phoneCallCallBack,
                                 iceCandidateCallBack)
-                            snapshot.ref.removeEventListener(this) // Detach after use
                         }
                     }
 
-                    override fun onCancelled(error: DatabaseError) {}
-                })
+                    override fun onCancelled(error: DatabaseError) {
+                        synchronized(pendingOfferListeners) {
+                            pendingOfferListeners.removeAll { it.first == ref }
+                        }
+                        ref.removeEventListener(this)
+                    }
+                }
+                synchronized(pendingOfferListeners) {
+                    pendingOfferListeners.add(ref to listener)
+                }
+                ref.addValueEventListener(listener)
             }
         }
 
@@ -653,10 +691,15 @@ class AndroidDatabaseHelper {
                             phoneCallCallBack,
                             iceCandidateCallBack)
                     } else {
-                        snapshot.ref.addValueEventListener(object : ValueEventListener {
+                        val ref = snapshot.ref
+                        val listener = object : ValueEventListener {
                             override fun onDataChange(updatedSnapshot: DataSnapshot) {
                                 val updatedSession = updatedSnapshot.getValue(AudioCallSessionDTO::class.java)
                                 if (updatedSession?.offer != null) {
+                                    synchronized(pendingOfferListenersWithoutInCall) {
+                                        pendingOfferListenersWithoutInCall.removeAll { it.first == ref }
+                                    }
+                                    ref.removeEventListener(this)
                                     handleOfferWithoutInCall(
                                         updatedSession,
                                         updatedSession.offer!!,
@@ -664,12 +707,20 @@ class AndroidDatabaseHelper {
                                         currentUserId,
                                         phoneCallCallBack,
                                         iceCandidateCallBack)
-                                    snapshot.ref.removeEventListener(this) // Detach after use
                                 }
                             }
 
-                            override fun onCancelled(error: DatabaseError) {}
-                        })
+                            override fun onCancelled(error: DatabaseError) {
+                                synchronized(pendingOfferListenersWithoutInCall) {
+                                    pendingOfferListenersWithoutInCall.removeAll { it.first == ref }
+                                }
+                                ref.removeEventListener(this)
+                            }
+                        }
+                        synchronized(pendingOfferListenersWithoutInCall) {
+                            pendingOfferListenersWithoutInCall.add(ref to listener)
+                        }
+                        ref.addValueEventListener(listener)
                     }
                 }
 
@@ -716,7 +767,7 @@ class AndroidDatabaseHelper {
                         .child(sessionId)
                         .child("callerCandidates")
 
-                    candidatesRef.addChildEventListener(object : ChildEventListener {
+                    val listener = object : ChildEventListener {
                         override fun onChildAdded(snapshot: DataSnapshot, previousChildName: String?) {
                             val ice = snapshot.getValue(IceCandidateDTO::class.java) ?: return
                             val single = HashMap<String, IceCandidateDTO>()
@@ -727,7 +778,11 @@ class AndroidDatabaseHelper {
                         override fun onChildRemoved(snapshot: DataSnapshot) {}
                         override fun onChildMoved(snapshot: DataSnapshot, previousChildName: String?) {}
                         override fun onCancelled(error: DatabaseError) {}
-                    })
+                    }
+                    synchronized(callerCandidatesListeners) {
+                        callerCandidatesListeners.add(candidatesRef to listener)
+                    }
+                    candidatesRef.addChildEventListener(listener)
                 }
             }
         }
@@ -755,7 +810,7 @@ class AndroidDatabaseHelper {
                          .child(sessionId)
                          .child("callerCandidates")
 
-                     candidatesRef.addChildEventListener(object : ChildEventListener {
+                     val listener = object : ChildEventListener {
                          override fun onChildAdded(snapshot: DataSnapshot, previousChildName: String?) {
                              val ice = snapshot.getValue(IceCandidateDTO::class.java) ?: return
                              val single = HashMap<String, IceCandidateDTO>()
@@ -766,7 +821,11 @@ class AndroidDatabaseHelper {
                          override fun onChildRemoved(snapshot: DataSnapshot) {}
                          override fun onChildMoved(snapshot: DataSnapshot, previousChildName: String?) {}
                          override fun onCancelled(error: DatabaseError) {}
-                     })
+                     }
+                     synchronized(callerCandidatesListenersWithoutInCall) {
+                         callerCandidatesListenersWithoutInCall.add(candidatesRef to listener)
+                     }
+                     candidatesRef.addChildEventListener(listener)
                  }
              }
         }
@@ -796,12 +855,14 @@ class AndroidDatabaseHelper {
                     val sdp = answer.sdp
                     val type = answer.type
                     val initiator = answer.initiator
+                    // When callee declines video call, only initiator is set to "Reject" (sdp may still be present from a previous write). Treat reject first so we never show "accepted" toast.
+                    if (initiator == "Reject") {
+                        rejectCallBack()
+                        return
+                    }
                     if (!sdp.isNullOrEmpty()) {
                         Log.e("CallObserver", "Answer received: sdp=$sdp, type=$type")
                         answerCallBack(answer)
-                    }
-                    if(initiator == "Reject") {
-                        rejectCallBack()
                     }
                 }
 
@@ -905,12 +966,18 @@ class AndroidDatabaseHelper {
             callPath: String,
             iceCandidateCallBack: (iceCandidate: IceCandidateDTO) -> Unit
         ) {
+            calleeCandidatesRef?.let { ref ->
+                calleeCandidatesListener?.let { ref.removeEventListener(it) }
+            }
+            calleeCandidatesRef = null
+            calleeCandidatesListener = null
+
             val firebaseDatabase = FirebaseDatabase.getInstance()
                 .getReference(callPath)
                 .child(sessionId)
                 .child("calleeCandidates")
-
-            firebaseDatabase.addChildEventListener(object : ChildEventListener {
+            calleeCandidatesRef = firebaseDatabase
+            calleeCandidatesListener = object : ChildEventListener {
                 override fun onChildAdded(snapshot: DataSnapshot, previousChildName: String?) {
                     Log.e("observeIceCandidatesFromCallee", "Got ice candidate from callee")
                     val iceCandidate = snapshot.getValue(IceCandidateDTO::class.java) ?: return
@@ -924,14 +991,22 @@ class AndroidDatabaseHelper {
                 override fun onChildChanged(snapshot: DataSnapshot, previousChildName: String?) {}
                 override fun onChildRemoved(snapshot: DataSnapshot) {}
                 override fun onChildMoved(snapshot: DataSnapshot, previousChildName: String?) {}
-            })
+            }
+            firebaseDatabase.addChildEventListener(calleeCandidatesListener!!)
         }
 
         fun observeVideoCall(sessionId: String,
                              callPath: String,
                              videoCallCallBack: (offer : OfferAnswerDTO) -> Unit) {
+            videoOfferRef?.let { ref ->
+                videoOfferListener?.let { ref.removeEventListener(it) }
+            }
+            videoOfferRef = null
+            videoOfferListener = null
+
             val firebaseDatabase = FirebaseDatabase.getInstance().getReference(callPath).child(sessionId).child("offer")
-            firebaseDatabase.addValueEventListener(object : ValueEventListener {
+            videoOfferRef = firebaseDatabase
+            videoOfferListener = object : ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
                     val offer = snapshot.getValue(OfferAnswerDTO::class.java) ?: return
                     val sdp = offer.sdp
@@ -946,7 +1021,8 @@ class AndroidDatabaseHelper {
                 override fun onCancelled(error: DatabaseError) {
                     Log.e("CallObserver", "Failed to observe offer", error.toException())
                 }
-            })
+            }
+            firebaseDatabase.addValueEventListener(videoOfferListener!!)
         }
 
         fun stopObservePhoneCall() {
@@ -956,6 +1032,34 @@ class AndroidDatabaseHelper {
             callListenerWithoutInCallCheck?.let { l -> firebaseDatabaseWithoutInCallCheck?.removeEventListener(l) }
             callListenerWithoutInCallCheck = null
             firebaseDatabaseWithoutInCallCheck = null
+            // Remove pending offer listeners (waiting for offer on session refs)
+            synchronized(pendingOfferListeners) {
+                pendingOfferListeners.forEach { (ref, listener) -> ref.removeEventListener(listener) }
+                pendingOfferListeners.clear()
+            }
+            synchronized(pendingOfferListenersWithoutInCall) {
+                pendingOfferListenersWithoutInCall.forEach { (ref, listener) -> ref.removeEventListener(listener) }
+                pendingOfferListenersWithoutInCall.clear()
+            }
+            // Remove callerCandidates listeners
+            synchronized(callerCandidatesListeners) {
+                callerCandidatesListeners.forEach { (ref, listener) -> ref.removeEventListener(listener) }
+                callerCandidatesListeners.clear()
+            }
+            synchronized(callerCandidatesListenersWithoutInCall) {
+                callerCandidatesListenersWithoutInCall.forEach { (ref, listener) -> ref.removeEventListener(listener) }
+                callerCandidatesListenersWithoutInCall.clear()
+            }
+            calleeCandidatesRef?.let { ref ->
+                calleeCandidatesListener?.let { ref.removeEventListener(it) }
+            }
+            calleeCandidatesRef = null
+            calleeCandidatesListener = null
+            videoOfferRef?.let { ref ->
+                videoOfferListener?.let { ref.removeEventListener(it) }
+            }
+            videoOfferRef = null
+            videoOfferListener = null
             // Also stop answer and call status listeners to avoid leaks
             answerDatabaseRef?.let { ref ->
                 answerValueEventListener?.let { ref.removeEventListener(it) }
@@ -973,6 +1077,36 @@ class AndroidDatabaseHelper {
             callListenerWithoutInCallCheck?.let { l -> firebaseDatabaseWithoutInCallCheck?.removeEventListener(l) }
             callListenerWithoutInCallCheck = null
             firebaseDatabaseWithoutInCallCheck = null
+            synchronized(pendingOfferListenersWithoutInCall) {
+                pendingOfferListenersWithoutInCall.forEach { (ref, listener) -> ref.removeEventListener(listener) }
+                pendingOfferListenersWithoutInCall.clear()
+            }
+            synchronized(callerCandidatesListenersWithoutInCall) {
+                callerCandidatesListenersWithoutInCall.forEach { (ref, listener) -> ref.removeEventListener(listener) }
+                callerCandidatesListenersWithoutInCall.clear()
+            }
+            // Also clear per-call signaling listeners so a completed/aborted call does not
+            // leak answer/video/status updates into the next negotiation.
+            calleeCandidatesRef?.let { ref ->
+                calleeCandidatesListener?.let { ref.removeEventListener(it) }
+            }
+            calleeCandidatesRef = null
+            calleeCandidatesListener = null
+            videoOfferRef?.let { ref ->
+                videoOfferListener?.let { ref.removeEventListener(it) }
+            }
+            videoOfferRef = null
+            videoOfferListener = null
+            answerDatabaseRef?.let { ref ->
+                answerValueEventListener?.let { ref.removeEventListener(it) }
+            }
+            answerDatabaseRef = null
+            answerValueEventListener = null
+            callStatusDatabaseRef?.let { ref ->
+                callStatusValueEventListener?.let { ref.removeEventListener(it) }
+            }
+            callStatusDatabaseRef = null
+            callStatusValueEventListener = null
         }
 
         suspend fun uploadMediaAndGetUrl(

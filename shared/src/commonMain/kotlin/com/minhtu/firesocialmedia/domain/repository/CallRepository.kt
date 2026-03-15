@@ -67,6 +67,10 @@ interface CallRepository {
 
     suspend fun rejectVideoCall()
 
+    suspend fun resetVideoCallStartedState()
+
+    suspend fun stopVideoCallResources()
+
     suspend fun requestCameraAndAudioPermissions(): Boolean
 
     suspend fun requestAudioPermission(): Boolean
@@ -113,6 +117,8 @@ interface CallRepository {
         updateField : String,
         updateAnswerCallBack : Utils.Companion.BasicCallBack
     )
+
+    suspend fun clearAnswerInFirebase(sessionId : String)
 
     suspend fun observePhoneCallWithoutCheckingInCall(
         currentUserId : String,

@@ -533,6 +533,7 @@ class HomeViewModel(
                                 CallEventFlow.remoteVideoTrack.value = null
                                 CallEventFlow.videoCallState.value = null
                                 CallEventFlow.answerVideoCallState.value = true
+                                CallEventFlow.videoCallDeclinedMessage.value = null
                                 // Reset all call state after a delay so next call starts clean (if user wasn't on Calling screen to trigger reset there)
                                 viewModelScope.launch {
                                     kotlinx.coroutines.delay(2000L)

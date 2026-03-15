@@ -41,6 +41,7 @@ import com.minhtu.firesocialmedia.domain.entity.call.OfferAnswer
 import com.minhtu.firesocialmedia.domain.entity.call.SpeakerType
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.platform.WebRTCVideoView
+import com.minhtu.firesocialmedia.platform.logMessage
 import com.minhtu.firesocialmedia.platform.showToast
 import com.minhtu.firesocialmedia.presentation.loading.Loading
 import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
@@ -61,23 +62,41 @@ class VideoCall {
             loadingViewModel: LoadingViewModel,
             navHandler: NavigationHandler
         ) {
+            // Use ViewModel-stored params when composable params are stale (e.g. after multiple decline/accept)
+            val pendingSessionId by videoCallViewModel.pendingVideoCallSessionId
+            val pendingOffer by videoCallViewModel.pendingRemoteVideoOffer
+            val effectiveSessionId = if (sessionId.isNotEmpty()) sessionId else pendingSessionId
+            val effectiveOffer = remoteVideoOffer ?: pendingOffer
+            fun offerKey(offer: OfferAnswer?): String? {
+                if (offer == null) return null
+                return "${offer.initiator}|${offer.type}|${offer.sdp.hashCode()}"
+            }
+
             // Control button states
             var isMicMuted by remember { mutableStateOf(false) }
             var isCameraOff by remember { mutableStateOf(false) }
             val isLoading by loadingViewModel.isLoading.collectAsState()
+            var lastHandledOfferKey by remember { mutableStateOf(offerKey(effectiveOffer)) }
 
             LaunchedEffect(Unit) {
+                // Callee path: ensure we don't navigate back due to stale answerVideoCallState from any other flow
+                if (effectiveOffer != null) {
+                    CallEventFlow.answerVideoCallState.value = true
+                }
                 videoCallViewModel.requestPermissionsAndStartVideoCall(
                     onGranted = {
                         if (caller != null && callee != null) {
                             loadingViewModel.showLoading()
                             videoCallViewModel.startVideoCall(
-                                remoteVideoOffer,
+                                effectiveOffer,
                                 caller,
                                 callee,
                                 currentUserId,
-                                sessionId
+                                effectiveSessionId
                             )
+                            // Persist "video already accepted in this call" so next upgrades auto-join.
+                            CallEventFlow.hasAcceptedVideoInCurrentCall.value = true
+                            videoCallViewModel.clearPendingVideoCallParams()
                         } else {
                             showToast("Don't have information of caller and callee!")
                             navHandler.navigateBack()
@@ -91,12 +110,57 @@ class VideoCall {
             }
 
             val videoCallState by CallEventFlow.answerVideoCallState.collectAsState()
+            val videoCallDeclinedMessage by CallEventFlow.videoCallDeclinedMessage.collectAsState()
+            val incomingVideoOfferState by CallEventFlow.videoCallState.collectAsState()
             LaunchedEffect(videoCallState) {
                 if (!videoCallState) {
+                    videoCallDeclinedMessage?.let { message ->
+                        showToast(message)
+                        CallEventFlow.videoCallDeclinedMessage.value = null
+                    }
+                    // Leave video screen without tearing down WebRTC video resources.
+                    // Keep resources alive for quick rejoin, but stop sending local frames.
+                    isCameraOff = true
+                    videoCallViewModel.updateCameraStatus(true)
+                    // Clear only UI-bound local track wrapper before leaving this screen.
+                    // WebRTC sender/track resources are still preserved in service for quick rejoin.
+                    CallEventFlow.localVideoTrack.value = null
+                    videoCallViewModel.clearPendingVideoCallParams()
                     CallEventFlow.answerVideoCallState.value = true
                     navHandler.navigateBack()
                 } else {
                     videoCallViewModel.updateCameraStatus(isCameraOff)
+                }
+            }
+
+            // If this screen is still visible (e.g. showing black remote view after peer returned to audio),
+            // auto-handle the next incoming video offer so renegotiation resumes without requiring a new popup.
+            LaunchedEffect(incomingVideoOfferState?.sdp, incomingVideoOfferState?.initiator) {
+                val incomingOffer = incomingVideoOfferState
+                val incomingKey = offerKey(incomingOffer)
+                if (incomingOffer != null &&
+                    incomingOffer.initiator != currentUserId &&
+                    incomingKey != null
+                ) {
+                    // Always consume the videoCallState immediately so the audio screen
+                    // (still in the back stack) doesn't re-navigate during the
+                    // clearVideoStateAfterNavigate 200ms delay window.
+                    CallEventFlow.videoCallState.value = null
+
+                    if (incomingKey != lastHandledOfferKey) {
+                        if (caller != null && callee != null && effectiveSessionId.isNotEmpty()) {
+                            loadingViewModel.showLoading()
+                            lastHandledOfferKey = incomingKey
+                            videoCallViewModel.startVideoCall(
+                                incomingOffer,
+                                caller,
+                                callee,
+                                currentUserId,
+                                effectiveSessionId
+                            )
+                            CallEventFlow.hasAcceptedVideoInCurrentCall.value = true
+                        }
+                    }
                 }
             }
 
@@ -215,8 +279,14 @@ class VideoCall {
                     ) {
                         FloatingActionButton(
                             onClick = {
+                                logMessage("ClickBack", { "Back to audio screen" })
                                 videoCallViewModel.updateCameraStatus(true)
-                                navHandler.navigateBack() },
+                                // Drop stale local preview wrapper when exiting video UI.
+                                // Rejoin will re-emit a fresh, live local track from service.
+                                CallEventFlow.localVideoTrack.value = null
+                                videoCallViewModel.clearPendingVideoCallParams()
+                                navHandler.navigateBack()
+                            },
                             containerColor = Color.Transparent,
                             elevation = FloatingActionButtonDefaults.elevation(0.dp)
                         ) {

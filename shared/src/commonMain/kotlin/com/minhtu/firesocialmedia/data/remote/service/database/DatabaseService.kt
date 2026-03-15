@@ -138,6 +138,10 @@ interface DatabaseService {
         updateAnswerCallBack : Utils.Companion.BasicCallBack
     )
 
+    suspend fun clearAnswerInFirebase(
+        sessionId : String
+    )
+
     suspend fun updateOfferInFirebase(
         sessionId : String,
         updateContent: String,

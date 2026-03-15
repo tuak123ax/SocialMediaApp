@@ -292,12 +292,14 @@ object ViewModelProvider {
         val updateMicStatusUseCase = AppModule.provideUpdateMicStatusUseCase(callRepository)
         val updateCameraStatusUseCase = AppModule.provideUpdateCameraStatusUseCase(callRepository)
         val updateSpeakerStatusUseCase = AppModule.provideUpdateSpeakerStatusUseCase(callRepository)
+        val manageCallStateUseCase = AppModule.provideManageCallStateUseCase(callRepository)
         return VideoCallViewModel(
             startVideoCallServiceUseCase,
             requestCameraAndAudioPermissionsUseCase,
             updateMicStatusUseCase,
             updateCameraStatusUseCase,
-            updateSpeakerStatusUseCase
+            updateSpeakerStatusUseCase,
+            manageCallStateUseCase
         )
     }
 

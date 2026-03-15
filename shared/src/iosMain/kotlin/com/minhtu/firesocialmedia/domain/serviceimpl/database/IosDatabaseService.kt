@@ -533,6 +533,12 @@ class IosDatabaseService() : DatabaseService {
         // iOS implementation will be added later
     }
 
+    override suspend fun clearAnswerInFirebase(
+        sessionId: String
+    ) {
+        // iOS implementation will be added later
+    }
+
     override suspend fun updateOfferInFirebase(
         sessionId: String,
         updateContent: String,

@@ -181,6 +181,14 @@ class CallRepositoryImpl(
         audioCallService.rejectVideoCall()
     }
 
+    override suspend fun resetVideoCallStartedState() {
+        audioCallService.resetVideoCallStartedState()
+    }
+
+    override suspend fun stopVideoCallResources() {
+        audioCallService.stopVideoCallResources()
+    }
+
     override suspend fun requestCameraAndAudioPermissions(): Boolean {
         return permissionManager.requestCameraAndAudioPermissions()
     }
@@ -329,6 +337,11 @@ class CallRepositoryImpl(
 
             }
         )
+    }
+
+    override suspend fun clearAnswerInFirebase(sessionId: String) {
+        databaseService.clearAnswerInFirebase(sessionId)
+        logMessage("clearAnswerInFirebase", { "clear Answer completed" })
     }
 
     override suspend fun observePhoneCallWithoutCheckingInCall(

@@ -30,6 +30,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Button
@@ -180,10 +182,12 @@ class UploadNewsfeed {
                 showDialog.value = true
             }
             if (showDialog.value) {
-                UiUtils.ShowAlertDialog(
+                UiUtils.ShowDiscardDialog(
                     title = "Warning",
                     message = "Are you sure you want to exit? All data will be lost!",
-                    resetAndBack = {
+                    icon = Icons.Default.Warning,
+                    iconBackground = Color(0xFFFFF3E0),
+                    onDiscard = {
                         uploadNewsfeedViewModel.resetPostError()
                         uploadNewsfeedViewModel.resetBackValue()
                         uploadNewsfeedViewModel.resetPostStatus()

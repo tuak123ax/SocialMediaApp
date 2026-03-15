@@ -53,6 +53,14 @@ class IosAudioCallService : AudioCallService {
         // iOS implementation will be added later
     }
 
+    override suspend fun resetVideoCallStartedState() {
+        // iOS implementation will be added later
+    }
+
+    override suspend fun stopVideoCallResources() {
+        // iOS implementation will be added later
+    }
+
     override suspend fun callerEndCallFromApp(currentUser: String) {
         // iOS implementation will be added later
     }

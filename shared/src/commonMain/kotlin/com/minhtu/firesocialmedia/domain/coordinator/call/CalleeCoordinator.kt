@@ -22,7 +22,6 @@ class CalleeCoordinator(
         onEndCall : suspend () -> Unit,
         whoEndCallCallBack : suspend (String) -> Unit
     ) {
-        var tempCallingRequestData : CallingRequestData? = null
         //Callee starts call
         calleeUseCases.listenForIncomingCalls.invoke(
             onInitializeFinished = {
@@ -34,12 +33,8 @@ class CalleeCoordinator(
                         onReceivePhoneCallRequest(callingRequestData)
                     },
                     iceCandidateCallBack = { iceCandidates ->
-                        //Callee set remote description of caller
-                        if(tempCallingRequestData?.offer != null) {
-                            logMessage("startCall" , { "setRemoteDescription" })
-                            calleeUseCases.setRemoteDescription.invoke(tempCallingRequestData.offer!!)
-                        }
-                        //Callee set remote ice candidates of caller
+                        // Keep this callback limited to ICE delivery. Reapplying the original
+                        // audio offer here during video upgrade can overwrite the fresh video offer.
                         if(iceCandidates != null) {
                             logMessage("startCall" , { "addIceCandidates" })
                             calleeUseCases.addIceCandidates.invoke(iceCandidates)
@@ -108,12 +103,13 @@ class CalleeCoordinator(
                                sessionId : String,
                                remoteVideoOffer : OfferAnswer,
                                onLocalVideoTrackCreated : suspend (localVideoTrack : WebRTCVideoTrack) -> Unit) {
+        // Apply the caller's video offer before adding our own local video track.
+        // Doing addTrack first on the answerer can create a separate local transceiver
+        // that does not bind to the offered video m-line during renegotiation.
+        initializeCallUseCase.setRemoteDescription(remoteVideoOffer)
         videoCallUseCase.startVideoCall(
             onLocalVideoTrackCreated = { localVideoTrack ->
                 onLocalVideoTrackCreated(localVideoTrack)
-                //This is callee side
-                //Set remote description.
-                initializeCallUseCase.setRemoteDescription(remoteVideoOffer)
                 val callType = getCallTypeFromSdp(remoteVideoOffer.sdp)
                 //Create answer
                 initializeCallUseCase.createAndSendAnswer(

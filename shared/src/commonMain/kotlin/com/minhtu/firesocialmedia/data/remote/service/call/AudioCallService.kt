@@ -77,6 +77,24 @@ interface AudioCallService{
     suspend fun rejectVideoCall()
 
     /**
+     * Prepare for an incoming video renegotiation on an existing audio call by queuing any
+     * remote ICE until the new remote video offer/answer is applied.
+     */
+    suspend fun prepareForIncomingVideoNegotiation()
+
+    /**
+     * Reset video-call-started state so the next startVideoCall can create and send a new offer (e.g. after leaving VideoCall screen or after callee declined).
+     */
+    suspend fun resetVideoCallStartedState()
+
+    /**
+     * Stop video-specific resources (capturer, video source/track, video sender) after a
+     * video call decline or exit, without tearing down the underlying audio peer connection.
+     * Also resets hasStarted so the next attempt can create fresh resources.
+     */
+    suspend fun stopVideoCallResources()
+
+    /**
      * This function is used to create audio offer for caller.
      * @Param:
      * onOfferCreated: return created audio offer to process next step.

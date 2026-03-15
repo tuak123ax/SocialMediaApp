@@ -84,6 +84,7 @@ class SignInViewModelTest {
         override suspend fun observePhoneCallWithoutCheckingInCall(currentUserId: String, phoneCallCallBack: (com.minhtu.firesocialmedia.data.remote.dto.call.CallingRequestDTO) -> Unit, endCallSession: (Boolean) -> Unit, whoEndCallCallBack: (String) -> Unit, iceCandidateCallBack: (iceCandidates: Map<String, com.minhtu.firesocialmedia.data.remote.dto.call.IceCandidateDTO>?) -> Unit) {}
         override suspend fun sendAnswerToFirebase(sessionId: String, answer: com.minhtu.firesocialmedia.data.remote.dto.call.OfferAnswerDTO, sendIceCandidateCallBack: com.minhtu.firesocialmedia.utils.Utils.Companion.BasicCallBack) {}
         override suspend fun updateAnswerInFirebase(sessionId: String, updateContent: String, updateField: String, updateAnswerCallBack: com.minhtu.firesocialmedia.utils.Utils.Companion.BasicCallBack) {}
+        override suspend fun clearAnswerInFirebase(sessionId: String) {}
         override suspend fun updateOfferInFirebase(sessionId: String, updateContent: String, updateField: String, updateOfferCallBack: com.minhtu.firesocialmedia.utils.Utils.Companion.BasicCallBack) {}
         override suspend fun isCalleeInActiveCall(calleeId: String, callPath: String): Boolean? = null
         override suspend fun observeAnswerFromCallee(sessionId: String, answerCallBack: (com.minhtu.firesocialmedia.data.remote.dto.call.OfferAnswerDTO) -> Unit, rejectCallBack: () -> Unit) {}
@@ -214,6 +215,7 @@ class SignInViewModelTest {
             override suspend fun callerEndCallFromApp(currentUser: String) {}
             override suspend fun calleeEndCallFromApp(sessionId: String, currentUser: String) {}
             override suspend fun rejectVideoCall() {}
+            override suspend fun resetVideoCallStartedState() {}
             override suspend fun createOffer(onOfferCreated: (offer: com.minhtu.firesocialmedia.data.remote.dto.call.OfferAnswerDTO) -> Unit) {}
             override suspend fun createVideoOffer(onOfferCreated: (offer: com.minhtu.firesocialmedia.data.remote.dto.call.OfferAnswerDTO) -> Unit) {}
             override suspend fun createAnswer(videoSupport: Boolean, onAnswerCreated: (answer: com.minhtu.firesocialmedia.data.remote.dto.call.OfferAnswerDTO) -> Unit) {}

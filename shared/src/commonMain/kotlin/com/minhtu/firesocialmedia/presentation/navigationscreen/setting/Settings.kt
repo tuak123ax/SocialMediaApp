@@ -87,14 +87,14 @@ class Settings {
                         .padding(vertical = 20.dp)
                 )
                 val showDialog = remember { mutableStateOf(false) }
-                UiUtils.ShowAlertDialogToLogout(
+                UiUtils.LogoutBottomSheet(
                     onClickConfirm = {
-                    homeViewModel.clearAccountInStorage()
-                    homeViewModel.clearLocalData()
-                },
+                        homeViewModel.clearAccountInStorage()
+                        homeViewModel.clearLocalData()
+                    },
                     onNavigateToSignIn,
-                    showDialog)
-
+                    showDialog
+                )
                 val settingsList = prepareSettingsData()
                 LazyColumn(
                     modifier = Modifier

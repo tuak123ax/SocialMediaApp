@@ -10,10 +10,12 @@ import com.minhtu.firesocialmedia.data.remote.dto.call.OfferAnswerDTO
 import com.minhtu.firesocialmedia.data.remote.dto.user.UserDTO
 import com.minhtu.firesocialmedia.data.remote.service.call.AudioCallService
 import com.minhtu.firesocialmedia.domain.entity.call.CallAction
+import com.minhtu.firesocialmedia.domain.entity.call.CallEventFlow
 import com.minhtu.firesocialmedia.platform.WebRTCVideoTrack
 import com.minhtu.firesocialmedia.platform.logMessage
 import com.minhtu.firesocialmedia.domain.entity.call.SpeakerType
 import com.minhtu.firesocialmedia.utils.AndroidUtils
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -39,6 +41,8 @@ import org.webrtc.VideoSource
 import org.webrtc.VideoTrack
 import org.webrtc.audio.AudioDeviceModule
 import org.webrtc.audio.JavaAudioDeviceModule
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 
 object WebRTCManager {
     var eglBase: EglBase = EglBase.create()
@@ -88,6 +92,7 @@ class AndroidAudioCallService private constructor(
     private var audioDeviceModule: AudioDeviceModule
     private var peerConnectionObserver : PeerConnection.Observer? = null
     private var lastSpeakerType: SpeakerType = SpeakerType.Audio
+    private var onRemoteVideoTrackReceivedCallback: ((WebRTCVideoTrack) -> Unit)? = null
 
     init {
         // 0. Fresh EglBase for this instance (previous one was released in releaseResources())
@@ -126,9 +131,7 @@ class AndroidAudioCallService private constructor(
     override suspend fun createOffer(onOfferCreated : (offer : OfferAnswerDTO) -> Unit) {
         logMessage("createOffer", { "start createOffer" })
         //Create constraints for audio call.
-        val constraints = MediaConstraints().apply {
-            mandatory.add(MediaConstraints.KeyValuePair("OfferToReceiveAudio", "true"))
-        }
+        val constraints = MediaConstraints()
 
         peerConnection?.createOffer(object : SdpObserver{
             override fun onCreateSuccess(description: SessionDescription) {
@@ -149,7 +152,7 @@ class AndroidAudioCallService private constructor(
                     }
 
                     override fun onSetFailure(p0: String?) {
-                        logMessage("setLocalDescription", { "onSetFailure" })
+                        logMessage("setLocalDescription", { "onSetFailure: ${p0 ?: "unknown"}" })
                     }
 
                 }, description)
@@ -177,6 +180,10 @@ class AndroidAudioCallService private constructor(
      * */
     override suspend fun createVideoOffer(
         onOfferCreated: (OfferAnswerDTO) -> Unit) {
+        // A video upgrade starts a new negotiation. Queue any remote ICE that arrives
+        // until the upgraded remote answer is applied.
+        isRemoteDescriptionSet = false
+        pendingRemoteIceCandidates.clear()
         //Create constraints for video call.
         val constraints = MediaConstraints().apply {
             mandatory.add(MediaConstraints.KeyValuePair("OfferToReceiveAudio", "true"))
@@ -185,6 +192,7 @@ class AndroidAudioCallService private constructor(
 
         peerConnection?.createOffer(object : SdpObserver{
             override fun onCreateSuccess(description: SessionDescription) {
+                val normalizedDescription = normalizeVideoSdp(description)
                 //Set local description when create offer success
                 peerConnection?.setLocalDescription(object : SdpObserver{
                     override fun onCreateSuccess(p0: SessionDescription?) {
@@ -194,7 +202,12 @@ class AndroidAudioCallService private constructor(
                     override fun onSetSuccess() {
                         logMessage("setLocalDescription", { "onSetSuccess" })
                         //Return offer after set to local description.
-                        onOfferCreated(OfferAnswerDTO(description.description, description.type.canonicalForm()))
+                        onOfferCreated(
+                            OfferAnswerDTO(
+                                normalizedDescription.description,
+                                normalizedDescription.type.canonicalForm()
+                            )
+                        )
                     }
 
                     override fun onCreateFailure(p0: String?) {
@@ -202,10 +215,10 @@ class AndroidAudioCallService private constructor(
                     }
 
                     override fun onSetFailure(p0: String?) {
-                        logMessage("setLocalDescription", { "onSetFailure" })
+                        logMessage("setLocalDescription", { "onSetFailure: ${p0 ?: "unknown"}" })
                     }
 
-                }, description)
+                }, normalizedDescription)
             }
 
             override fun onSetSuccess() {
@@ -233,19 +246,13 @@ class AndroidAudioCallService private constructor(
                               onAnswerCreated : (answer : OfferAnswerDTO) -> Unit) {
         logMessage("createAnswer", { "start createAnswer" })
         //Create constraints for audio or video call.
-        var constraints = MediaConstraints()
-        constraints = if(videoSupport) {
-            MediaConstraints().apply {
-                mandatory.add(MediaConstraints.KeyValuePair("OfferToReceiveAudio", "true"))
-                mandatory.add(MediaConstraints.KeyValuePair("OfferToReceiveVideo", "true"))
-            }
-        } else {
-            MediaConstraints().apply {
-                mandatory.add(MediaConstraints.KeyValuePair("OfferToReceiveAudio", "true"))
-            }
+        val constraints = MediaConstraints().apply {
+            mandatory.add(MediaConstraints.KeyValuePair("OfferToReceiveAudio", "true"))
+            mandatory.add(MediaConstraints.KeyValuePair("OfferToReceiveVideo", "true"))
         }
         peerConnection?.createAnswer(object : SdpObserver {
             override fun onCreateSuccess(sdp: SessionDescription) {
+                val normalizedDescription = if (videoSupport) normalizeVideoSdp(sdp) else sdp
                 //Set local description when create answer success
                 logMessage("createAnswer", { "onCreateSuccess" })
                 peerConnection?.setLocalDescription(object : SdpObserver{
@@ -257,7 +264,12 @@ class AndroidAudioCallService private constructor(
                         logMessage("setLocalDescription", { "onSetSuccess" })
                         //Return answer after set to local description.
                         //Send this answer back to the caller
-                        onAnswerCreated(OfferAnswerDTO(sdp.description, sdp.type.canonicalForm()))
+                        onAnswerCreated(
+                            OfferAnswerDTO(
+                                normalizedDescription.description,
+                                normalizedDescription.type.canonicalForm()
+                            )
+                        )
                     }
 
                     override fun onCreateFailure(p0: String?) {
@@ -265,10 +277,10 @@ class AndroidAudioCallService private constructor(
                     }
 
                     override fun onSetFailure(p0: String?) {
-                        logMessage("setLocalDescription", { "onCreateFailure" })
+                        logMessage("setLocalDescription", { "onSetFailure: ${p0 ?: "unknown"}" })
                     }
 
-                },sdp)
+                }, normalizedDescription)
             }
 
             override fun onSetSuccess() {
@@ -289,35 +301,214 @@ class AndroidAudioCallService private constructor(
      * remoteOffer: remote offer/answer to set in remote description of peer connection.
      * */
     override suspend fun setRemoteDescription(remoteOfferAnswer : OfferAnswerDTO) {
-        val sessionDescription = SessionDescription(SessionDescription.Type.fromCanonicalForm(remoteOfferAnswer.type), remoteOfferAnswer.sdp)
-        peerConnection?.setRemoteDescription(object : SdpObserver{
-            override fun onCreateSuccess(p0: SessionDescription?) {
-                logMessage("setRemoteDescription", { "onCreateSuccess" })
-            }
+        Log.d(
+            "WebRTC",
+            "setRemoteDescription called: type=${remoteOfferAnswer.type}, sdpLength=${remoteOfferAnswer.sdp?.length}, signalingState=${peerConnection?.signalingState()}"
+        )
+        val peerConnection = peerConnection
+            ?: throw IllegalStateException("PeerConnection is null when setting remote description")
+        val type = remoteOfferAnswer.type
+            ?: throw IllegalArgumentException("Remote description type is null")
+        val sdp = remoteOfferAnswer.sdp
+            ?: throw IllegalArgumentException("Remote description SDP is null")
+        val sessionDescription = SessionDescription(
+            SessionDescription.Type.fromCanonicalForm(type),
+            sdp
+        )
+        // During renegotiation, queue any incoming ICE until this SDP is fully applied.
+        isRemoteDescriptionSet = false
 
-            override fun onSetSuccess() {
-                logMessage("setRemoteDescription", { "onSetSuccess" })
-                isRemoteDescriptionSet = true
-                val pendingCount = pendingRemoteIceCandidates.size
-                if (pendingCount > 0) {
-                    Log.d("WebRTC", "Flushing $pendingCount pending remote ICE candidates")
-                    pendingRemoteIceCandidates.forEach { candidate ->
-                        val added = peerConnection?.addIceCandidate(candidate) ?: false
-                        Log.d("WebRTC", "Flushed ICE candidate added=$added: ${candidate.sdpMid}:${candidate.sdpMLineIndex}")
+        suspendCancellableCoroutine<Unit> { continuation ->
+            peerConnection.setRemoteDescription(object : SdpObserver{
+                override fun onCreateSuccess(p0: SessionDescription?) {
+                    logMessage("setRemoteDescription", { "onCreateSuccess" })
+                }
+
+                override fun onSetSuccess() {
+                    Log.d("WebRTC", "setRemoteDescription onSetSuccess: signalingState=${this@AndroidAudioCallService.peerConnection?.signalingState()}")
+                    isRemoteDescriptionSet = true
+                    val pendingCount = pendingRemoteIceCandidates.size
+                    if (pendingCount > 0) {
+                        Log.d("WebRTC", "Flushing $pendingCount pending remote ICE candidates")
+                        pendingRemoteIceCandidates.forEach { candidate ->
+                            val added = this@AndroidAudioCallService.peerConnection?.addIceCandidate(candidate) ?: false
+                            Log.d("WebRTC", "Flushed ICE candidate added=$added: ${candidate.sdpMid}:${candidate.sdpMLineIndex}")
+                        }
+                        pendingRemoteIceCandidates.clear()
                     }
-                    pendingRemoteIceCandidates.clear()
+                    checkForRemoteVideoTrack("remote-description-set")
+                    if (continuation.isActive) continuation.resume(Unit)
+                }
+
+                override fun onCreateFailure(p0: String?) {
+                    val message = "setRemoteDescription onCreateFailure: $p0"
+                    Log.e("WebRTC", message)
+                    logMessage("setRemoteDescription", { message })
+                    if (continuation.isActive) {
+                        continuation.resumeWithException(IllegalStateException(message))
+                    }
+                }
+
+                override fun onSetFailure(p0: String?) {
+                    val message = "setRemoteDescription onSetFailure: $p0"
+                    if (
+                        sessionDescription.type == SessionDescription.Type.ANSWER &&
+                        p0?.contains("Called in wrong state: stable") == true
+                    ) {
+                        Log.w("WebRTC", "Ignoring duplicate remote answer after negotiation completed")
+                        if (continuation.isActive) continuation.resume(Unit)
+                        return
+                    }
+                    Log.e("WebRTC", message)
+                    logMessage("setRemoteDescription", { message })
+                    if (continuation.isActive) {
+                        continuation.resumeWithException(IllegalStateException(message))
+                    }
+                }
+
+            }, sessionDescription)
+        }
+    }
+
+    /**
+     * Explicitly check for remote video tracks after setRemoteDescription succeeds.
+     * onTrack may not fire during renegotiation when the transceiver was already created
+     * locally via addTrack, so we scan transceivers as a fallback.
+     */
+    private fun isVideoTrackUsable(track: VideoTrack?): Boolean {
+        if (track == null) return false
+        return runCatching {
+            track.enabled()
+            true
+        }.getOrElse { false }
+    }
+
+    private fun isVideoSenderUsable(sender: RtpSender?): Boolean {
+        if (sender == null) return false
+        return runCatching {
+            val senderTrack = sender.track() as? VideoTrack ?: return false
+            isVideoTrackUsable(senderTrack)
+        }.getOrElse { false }
+    }
+
+    private fun findReusableLocalVideoSendPath(): Pair<RtpSender, VideoTrack>? {
+        val preferredSender = localVideoSender
+        val preferredTrack = runCatching { preferredSender?.track() as? VideoTrack }.getOrNull()
+        if (preferredSender != null && isVideoTrackUsable(preferredTrack)) {
+            return preferredSender to preferredTrack!!
+        }
+
+        val transceiverSender = runCatching {
+            peerConnection?.transceivers
+                ?.mapNotNull { transceiver ->
+                    val sender = runCatching { transceiver.sender }.getOrNull() ?: return@mapNotNull null
+                    val senderTrack = runCatching { sender.track() as? VideoTrack }.getOrNull() ?: return@mapNotNull null
+                    if (isVideoTrackUsable(senderTrack)) sender to senderTrack else null
+                }
+                ?.firstOrNull()
+        }.getOrNull()
+
+        if (transceiverSender != null) {
+            localVideoSender = transceiverSender.first
+        }
+        return transceiverSender
+    }
+
+    private suspend fun emitLocalVideoTrack(
+        track: VideoTrack,
+        onStartVideoCall: suspend (videoTrack: WebRTCVideoTrack) -> Unit
+    ) {
+        val wrapped = WebRTCVideoTrack(track)
+        onStartVideoCall(wrapped)
+        // Safety net: keep local track flow in sync even if upper callback scope is cancelled.
+        CallEventFlow.localVideoTrack.value = wrapped
+    }
+
+    private fun checkForRemoteVideoTrack(reason: String = "unspecified") {
+        val transceivers = try {
+            peerConnection?.transceivers
+        } catch (e: Exception) {
+            Log.e("WebRTC", "checkForRemoteVideoTrack: failed to get transceivers", e)
+            null
+        }
+        val currentTrack = remoteVideoTrack
+        val hasUsableCurrentTrack = isVideoTrackUsable(currentTrack)
+        Log.d(
+            "WebRTC",
+            "checkForRemoteVideoTrack[$reason]: transceiverCount=${transceivers?.size}, currentRemoteVideoTrack=$currentTrack, currentTrackUsable=$hasUsableCurrentTrack, callbackSet=${onRemoteVideoTrackReceivedCallback != null}"
+        )
+        var candidateTrack: VideoTrack? = null
+        transceivers?.forEach { transceiver ->
+            val track = runCatching { transceiver.receiver?.track() }.getOrNull()
+            val trackUsable = (track as? VideoTrack)?.let { isVideoTrackUsable(it) } ?: false
+            Log.d("WebRTC", "  transceiver mid=${transceiver.mid}, direction=${transceiver.direction}, receiverTrack kind=${track?.kind()}, type=${track?.javaClass?.simpleName}, sameAsCurrent=${track === remoteVideoTrack}, usable=$trackUsable")
+            if (track is VideoTrack && trackUsable) {
+                candidateTrack = track
+                return@forEach
+            }
+        }
+        when {
+            candidateTrack == null -> {
+                if (currentTrack != null) {
+                    Log.d(
+                        "WebRTC",
+                        "checkForRemoteVideoTrack[$reason]: no remote video track found, clearing stale remote track"
+                    )
+                    remoteVideoTrack = null
+                    CallEventFlow.remoteVideoTrack.value = null
+                } else {
+                    Log.d("WebRTC", "checkForRemoteVideoTrack[$reason]: no usable remote video track found yet")
                 }
             }
-
-            override fun onCreateFailure(p0: String?) {
-                logMessage("setRemoteDescription", { "onCreateFailure" })
+            candidateTrack !== currentTrack -> {
+                if (hasUsableCurrentTrack) {
+                    // During renegotiation, WebRTC may hand us a different VideoTrack wrapper
+                    // for the same transceiver momentarily. Replacing a working track with
+                    // that wrapper can race with disposal and cause addSink failures.
+                    Log.d(
+                        "WebRTC",
+                        "checkForRemoteVideoTrack[$reason]: keeping existing usable remote track; skip wrapper swap"
+                    )
+                } else {
+                    Log.d("WebRTC", "checkForRemoteVideoTrack[$reason]: emitting refreshed remote video track")
+                    emitRemoteVideoTrack(candidateTrack!!)
+                }
             }
-
-            override fun onSetFailure(p0: String?) {
-                logMessage("setRemoteDescription", { "onSetFailure" })
+            !hasUsableCurrentTrack -> {
+                Log.d("WebRTC", "checkForRemoteVideoTrack[$reason]: re-emitting current remote video track")
+                emitRemoteVideoTrack(candidateTrack!!)
             }
+            else -> {
+                if (CallEventFlow.remoteVideoTrack.value == null) {
+                    Log.d(
+                        "WebRTC",
+                        "checkForRemoteVideoTrack[$reason]: current remote track exists but flow is null, re-emitting"
+                    )
+                    emitRemoteVideoTrack(currentTrack!!)
+                } else {
+                    Log.d("WebRTC", "checkForRemoteVideoTrack[$reason]: keeping existing remote video track")
+                }
+            }
+        }
+    }
 
-        }, sessionDescription)
+    /**
+     * Central helper to emit a newly detected remote video track.
+     * Uses both the callback chain AND directly sets CallEventFlow as a safety net
+     * (in case the callback's coroutine scope is cancelled).
+     */
+    private fun emitRemoteVideoTrack(track: VideoTrack) {
+        if (!isVideoTrackUsable(track)) {
+            Log.w("WebRTC", "emitRemoteVideoTrack: skip disposed/invalid remote track wrapper=${System.identityHashCode(track)}")
+            return
+        }
+        // Ensure rendering is not blocked by a disabled remote track state.
+        runCatching { track.setEnabled(true) }
+        remoteVideoTrack = track
+        val wrapped = WebRTCVideoTrack(track)
+        Log.d("WebRTC", "emitRemoteVideoTrack: wrapper=${System.identityHashCode(track)}, id=${runCatching { track.id() }.getOrNull()}")
+        onRemoteVideoTrackReceivedCallback?.invoke(wrapped)
+        CallEventFlow.remoteVideoTrack.value = wrapped
     }
 
     /**
@@ -368,10 +559,19 @@ class AndroidAudioCallService private constructor(
     ) {
         logMessage("addIceCandidate", { "addIceCandidate" })
         val candidate = IceCandidate(sdpMid, sdpMLineIndex, sdp)
-        Log.d("WebRTC", "addIceCandidate called. isRemoteDescriptionSet=$isRemoteDescriptionSet")
-        if (isRemoteDescriptionSet) {
+        Log.d("WebRTC", "addIceCandidate called. isRemoteDescriptionSet=$isRemoteDescriptionSet, mLineIndex=$sdpMLineIndex")
+        
+        // If the remote description is set BUT the candidate is for an m-line we don't have yet 
+        // (e.g., video candidate arriving before video offer is applied), we must queue it.
+        // Assuming audio is mLineIndex 0 and video is mLineIndex 1.
+        val isVideoCandidateArrivingEarly = isRemoteDescriptionSet && sdpMLineIndex > 0 && (peerConnection?.remoteDescription?.description?.contains("m=video") != true)
+
+        if (isRemoteDescriptionSet && !isVideoCandidateArrivingEarly) {
             val added = peerConnection?.addIceCandidate(candidate) ?: false
             Log.d("WebRTC", "Applied ICE candidate added=$added: ${candidate.sdpMid}:${candidate.sdpMLineIndex}")
+            if (added) {
+                checkForRemoteVideoTrack("ice-candidate-added")
+            }
         } else {
             pendingRemoteIceCandidates.add(candidate)
             Log.d("WebRTC", "Queued ICE candidate. Pending size=${pendingRemoteIceCandidates.size}")
@@ -391,26 +591,45 @@ class AndroidAudioCallService private constructor(
         logMessage("initialize", { "start initialize" })
         isRemoteDescriptionSet = false
         pendingRemoteIceCandidates.clear()
+        onRemoteVideoTrackReceivedCallback = onRemoteVideoTrackReceived
         //Setup audio manager
         setupAudioManager()
         //Setup ice servers.
         val iceServers = listOf(
             PeerConnection.IceServer.builder("stun:stun1.l.google.com:19302").createIceServer(),
             PeerConnection.IceServer.builder("stun:stun2.l.google.com:19302").createIceServer(),
-            PeerConnection.IceServer.builder("turn:openrelay.metered.ca:80")
+            // Provide multiple TURN transports so mobile networks can still obtain relay
+            // candidates during renegotiation instead of relying only on host/srflx.
+            PeerConnection.IceServer.builder(
+                listOf(
+                    "turn:openrelay.metered.ca:80",
+                    "turn:openrelay.metered.ca:80?transport=tcp",
+                    "turn:openrelay.metered.ca:443",
+                    "turn:openrelay.metered.ca:443?transport=tcp",
+                    "turns:openrelay.metered.ca:443?transport=tcp"
+                )
+            )
                 .setUsername("openrelayproject")
                 .setPassword("openrelayproject")
                 .createIceServer()
         )
-        val rtcConfig = PeerConnection.RTCConfiguration(iceServers)
+        val rtcConfig = PeerConnection.RTCConfiguration(iceServers).apply {
+            sdpSemantics = PeerConnection.SdpSemantics.UNIFIED_PLAN
+            continualGatheringPolicy = PeerConnection.ContinualGatheringPolicy.GATHER_CONTINUALLY
+        }
         peerConnectionObserver = object : PeerConnection.Observer{
             override fun onSignalingChange(p0: PeerConnection.SignalingState?) {
-                logMessage("initialize", { "onSignalingChange" })
+                Log.d("WebRTC", "onSignalingChange: $p0")
             }
 
             override fun onIceConnectionChange(p0: PeerConnection.IceConnectionState?) {
-                logMessage("initialize", { "onIceConnectionChange" })
                 Log.d("WebRTC", "ICE connection state changed: $p0")
+                if (
+                    p0 == PeerConnection.IceConnectionState.CONNECTED ||
+                    p0 == PeerConnection.IceConnectionState.COMPLETED
+                ) {
+                    checkForRemoteVideoTrack("ice-$p0")
+                }
             }
 
             override fun onIceConnectionReceivingChange(p0: Boolean) {
@@ -423,6 +642,10 @@ class AndroidAudioCallService private constructor(
 
             override fun onIceCandidate(candidate: IceCandidate) {
                 logMessage("initialize", { "onIceCandidate" })
+                Log.d(
+                    "WebRTC",
+                    "onIceCandidate: mid=${candidate.sdpMid}, mLine=${candidate.sdpMLineIndex}, sdp=${candidate.sdp}"
+                )
                 val iceCandidateData = IceCandidateDTO(candidate.sdp, candidate.sdpMid, candidate.sdpMLineIndex)
                 onIceCandidateCreated(iceCandidateData)
             }
@@ -431,8 +654,14 @@ class AndroidAudioCallService private constructor(
                 logMessage("initialize", { "onIceCandidatesRemoved" })
             }
 
-            override fun onAddStream(p0: MediaStream?) {
-                logMessage("initialize", { "onAddStream" })
+            override fun onAddStream(stream: MediaStream?) {
+                Log.d("WebRTC", "onAddStream: videoTracks=${stream?.videoTracks?.size}, audioTracks=${stream?.audioTracks?.size}")
+                stream?.videoTracks?.firstOrNull()?.let { track ->
+                    if (track !== remoteVideoTrack) {
+                        Log.d("WebRTC", "Remote video track obtained via onAddStream fallback")
+                        emitRemoteVideoTrack(track)
+                    }
+                }
             }
 
             override fun onRemoveStream(p0: MediaStream?) {
@@ -448,15 +677,14 @@ class AndroidAudioCallService private constructor(
             }
 
             override fun onTrack(transceiver: RtpTransceiver?) {
-                logMessage("initialize", { "onTrack" })
                 val receiver = transceiver?.receiver
-                val mediaStreamTrack = receiver?.track()
-                Log.d("WebRTC", "Track received: ${mediaStreamTrack?.kind()}")
-                //Check if the track is audio or video
+                val mediaStreamTrack = runCatching { receiver?.track() }.getOrNull()
+                Log.d("WebRTC", "onTrack: kind=${mediaStreamTrack?.kind()}, id=${runCatching { mediaStreamTrack?.id() }.getOrNull()}, enabled=${runCatching { mediaStreamTrack?.enabled() }.getOrNull()}")
                 when (mediaStreamTrack) {
                     is VideoTrack -> {
-                        remoteVideoTrack = mediaStreamTrack
-                        onRemoteVideoTrackReceived(WebRTCVideoTrack(remoteVideoTrack))
+                        Log.d("WebRTC", "onTrack: remote VIDEO track received")
+                        val stableVideoTrack = runCatching { receiver?.track() as? VideoTrack }.getOrNull()
+                        emitRemoteVideoTrack(stableVideoTrack ?: mediaStreamTrack)
                     }
                     is AudioTrack -> {
                         remoteAudioTrack = mediaStreamTrack
@@ -493,13 +721,55 @@ class AndroidAudioCallService private constructor(
     ) {
         if (hasStarted) {
             Log.w("WebRTC", "startVideoCall already called.")
-            return
+            val reusableSendPath = findReusableLocalVideoSendPath()
+            if (reusableSendPath != null) {
+                val reusableSender = reusableSendPath.first
+                val reusableTrack = reusableSendPath.second
+                Log.d("WebRTC", "startVideoCall duplicate: reusing sender-owned local video track")
+                // Re-entering video screen: re-enable track and restore SEND_RECV on transceiver so
+                // frames are actually transmitted again (transceiver may have been set RECV_ONLY).
+                runCatching { reusableTrack.setEnabled(true) }
+                val senderOwnedTrack = runCatching { localVideoSender?.track() as? VideoTrack }.getOrNull()
+                val trackToEmit = if (isVideoTrackUsable(senderOwnedTrack)) senderOwnedTrack!! else reusableTrack
+                localVideoTrack = trackToEmit
+                runCatching { trackToEmit.setEnabled(true) }
+                // Restore transceiver to SEND_RECV so the re-enabled track is actually transmitted.
+                runCatching {
+                    peerConnection?.transceivers
+                        ?.firstOrNull { it.sender == reusableSender }
+                        ?.also { transceiver ->
+                            if (transceiver.direction != RtpTransceiver.RtpTransceiverDirection.SEND_RECV) {
+                                transceiver.direction = RtpTransceiver.RtpTransceiverDirection.SEND_RECV
+                                Log.d("WebRTC", "startVideoCall duplicate: restored transceiver direction to SEND_RECV")
+                            }
+                        }
+                }
+                emitLocalVideoTrack(trackToEmit, onStartVideoCall)
+                return
+            }
+            val existingTrack = localVideoTrack
+            Log.w(
+                "WebRTC",
+                "startVideoCall duplicate: stale started state (trackUsable=${isVideoTrackUsable(existingTrack)}, senderUsable=${isVideoSenderUsable(localVideoSender)}), forcing restart"
+            )
+            hasStarted = false
         }
 
         hasStarted = true
 
-        if (videoCapturer == null) {
-            videoCapturer = createCameraCapturer()
+        // Stop any existing capturer from a previous attempt before re-creating
+        videoCapturer?.let { capturer ->
+            try { capturer.stopCapture() } catch (_: Exception) {}
+            try { capturer.dispose() } catch (_: Exception) {}
+        }
+        videoCapturer = null
+
+        videoCapturer = createCameraCapturer()
+        val capturer = videoCapturer
+        if (capturer == null) {
+            Log.e("WebRTC", "No camera capturer available on this device.")
+            hasStarted = false
+            return
         }
 
         // Ensure EGL context exists
@@ -529,14 +799,17 @@ class AndroidAudioCallService private constructor(
             return
         }
 
-        localVideoSource = peerConnectionFactory.createVideoSource(videoCapturer!!.isScreencast)
+        // Dispose previous video source to avoid leaks from prior attempts
+        localVideoSource?.dispose()
+        localVideoSource = peerConnectionFactory.createVideoSource(capturer.isScreencast)
 
         try {
-            videoCapturer?.initialize(surfaceTextureHelper, appContext, localVideoSource?.capturerObserver)
-            videoCapturer?.startCapture(720, 1280, 30)
+            capturer.initialize(surfaceTextureHelper, appContext, localVideoSource?.capturerObserver)
+            startCaptureWithFallbacks(capturer)
         } catch (e: Exception) {
             Log.e("WebRTC", "Capturer start failed: ${e.message}")
             surfaceTextureHelper?.dispose()
+            surfaceTextureHelper = null
             hasStarted = false
             return
         }
@@ -544,15 +817,57 @@ class AndroidAudioCallService private constructor(
         localVideoTrack = peerConnectionFactory.createVideoTrack("video", localVideoSource)
         localVideoTrack?.setEnabled(true)
 
-        // Remove previous video sender if exists
-        localVideoSender?.let { sender ->
-            peerConnection?.removeTrack(sender)
+        val connection = peerConnection
+        val localTrack = localVideoTrack
+
+        // Bind local video to the intended video m-line when possible.
+        // Prefer the transceiver that owns our previously used local video sender.
+        val preferredSender = localVideoSender
+        val existingVideoTransceiver = connection?.transceivers?.firstOrNull { transceiver ->
+            preferredSender != null && runCatching { transceiver.sender == preferredSender }.getOrDefault(false)
+        } ?: connection?.transceivers?.firstOrNull { transceiver ->
+            val senderTrack = runCatching { transceiver.sender.track() }.getOrNull()
+            val receiverTrack = runCatching { transceiver.receiver.track() }.getOrNull()
+            senderTrack?.kind() == "video" || receiverTrack?.kind() == "video"
         }
 
-        // Add the video track and keep reference to sender
-        localVideoSender = peerConnection?.addTrack(localVideoTrack)
+        localVideoSender = if (existingVideoTransceiver != null && localTrack != null) {
+            runCatching {
+                val attached = existingVideoTransceiver.sender.setTrack(localTrack, true)
+                if (!attached) {
+                    throw IllegalStateException("setTrack returned false")
+                }
+                existingVideoTransceiver.direction = RtpTransceiver.RtpTransceiverDirection.SEND_RECV
+                existingVideoTransceiver.sender
+            }.getOrElse { error ->
+                Log.w("WebRTC", "startVideoCall: failed to reuse video transceiver, fallback to addTrack: ${error.message}")
+                connection?.addTrack(localTrack)
+            }
+        } else if (localTrack != null) {
+            runCatching {
+                val init = RtpTransceiver.RtpTransceiverInit(
+                    RtpTransceiver.RtpTransceiverDirection.SEND_RECV
+                )
+                connection?.addTransceiver(localTrack, init)?.sender
+            }.getOrElse { error ->
+                Log.w("WebRTC", "startVideoCall: addTransceiver failed, fallback to addTrack: ${error.message}")
+                connection?.addTrack(localTrack)
+            }
+        } else {
+            null
+        }
 
-        onStartVideoCall(WebRTCVideoTrack(localVideoTrack))
+        Log.d(
+            "WebRTC",
+            "startVideoCall: attached local video sender=$localVideoSender, reusedTransceiver=${existingVideoTransceiver != null}"
+        )
+        if (!isVideoSenderUsable(localVideoSender)) {
+            Log.e("WebRTC", "startVideoCall: local video sender is unusable after attach")
+        }
+
+        localVideoTrack?.let { track ->
+            emitLocalVideoTrack(track, onStartVideoCall)
+        }
     }
 
     /**
@@ -577,6 +892,41 @@ class AndroidAudioCallService private constructor(
             }
         }
         return null
+    }
+
+    private fun startCaptureWithFallbacks(capturer: CameraVideoCapturer) {
+        val capturePresets = listOf(
+            Triple(1280, 720, 30),
+            Triple(960, 540, 24),
+            Triple(640, 480, 24),
+            Triple(320, 240, 15)
+        )
+        var lastError: Exception? = null
+        for ((width, height, fps) in capturePresets) {
+            try {
+                capturer.startCapture(width, height, fps)
+                Log.d("WebRTC", "Camera capture started at ${width}x${height}@${fps}")
+                return
+            } catch (e: Exception) {
+                lastError = e
+                Log.w("WebRTC", "Capture preset ${width}x${height}@${fps} failed: ${e.message}")
+            }
+        }
+        throw IllegalStateException("Failed to start camera capture with all presets", lastError)
+    }
+
+    private fun normalizeVideoSdp(description: SessionDescription): SessionDescription {
+        var sdp = description.description ?: return description
+        // Keep SDP normalization intentionally conservative.
+        // Aggressive codec/direction rewrites can make setLocalDescription fail on some devices.
+        // We only normalize line endings for signaling transport/storage stability.
+        sdp = sdp.replace("\r\n", "\n").replace("\n", "\r\n")
+
+        if (!sdp.endsWith("\r\n")) {
+            sdp += "\r\n"
+        }
+
+        return SessionDescription(description.type, sdp)
     }
 
     private var callForegroundServiceIntent : Intent? = null
@@ -639,6 +989,108 @@ class AndroidAudioCallService private constructor(
         }
     }
 
+    override suspend fun prepareForIncomingVideoNegotiation() {
+        val senderTrack = runCatching { localVideoSender?.track() as? VideoTrack }.getOrNull()
+        if (hasStarted && isVideoTrackUsable(senderTrack)) {
+            // Sync service's local track ref with the sender's live track.
+            // Do NOT emit to CallEventFlow here — startVideoCall duplicate path handles emission
+            // after the track is enabled and ready. Premature emission can cause DisposableEffect
+            // to bind to a track that's still disabled or not yet fully attached.
+            localVideoTrack = senderTrack
+            Log.d(
+                "WebRTC",
+                "prepareForIncomingVideoNegotiation: active sender track exists, keep existing video resources"
+            )
+            return
+        }
+        val reusableSendPath = findReusableLocalVideoSendPath()
+        if (hasStarted && (isVideoSenderUsable(localVideoSender) || reusableSendPath != null)) {
+            if (reusableSendPath != null) {
+                localVideoSender = reusableSendPath.first
+                localVideoTrack = reusableSendPath.second
+            }
+            Log.d(
+                "WebRTC",
+                "prepareForIncomingVideoNegotiation: active video sender exists, skip resetting tracks/ICE gate"
+            )
+            return
+        }
+        Log.d(
+            "WebRTC",
+            "prepareForIncomingVideoNegotiation: queue remote ICE until new video SDP is applied"
+        )
+        // Clear potentially disposed/stale remote track while waiting for renegotiated video.
+        remoteVideoTrack = null
+        CallEventFlow.remoteVideoTrack.value = null
+        isRemoteDescriptionSet = false
+        // Do not clear pendingRemoteIceCandidates here. 
+        // Video ICE candidates might have already arrived and been queued.
+    }
+
+    override suspend fun resetVideoCallStartedState() {
+        // Keep video session state alive across Video -> Audio screen navigation.
+        // Full reset must happen only in stopVideoCallResources()/releaseResources().
+        Log.d("WebRTC", "resetVideoCallStartedState: ignore to preserve active video resources")
+    }
+
+    override suspend fun stopVideoCallResources() {
+        Log.d("WebRTC", "stopVideoCallResources: cleaning up video-only resources")
+        // Stop and dispose capturer
+        videoCapturer?.let { capturer ->
+            try { capturer.stopCapture() } catch (_: Exception) {}
+            try { capturer.dispose() } catch (_: Exception) {}
+        }
+        videoCapturer = null
+
+        // Detach video from sender while keeping transceiver reusable for next upgrade.
+        localVideoSender?.let { sender ->
+            val detached = runCatching { sender.setTrack(null, false) }
+                .onFailure { e ->
+                    Log.w("WebRTC", "stopVideoCallResources: setTrack(null) failed: ${e.message}")
+                }
+                .getOrDefault(false)
+            val transceiverUpdated = runCatching {
+                peerConnection?.transceivers
+                    ?.firstOrNull { it.sender == sender }
+                    ?.also { it.direction = RtpTransceiver.RtpTransceiverDirection.RECV_ONLY } != null
+            }
+                .onFailure { e ->
+                    Log.w("WebRTC", "stopVideoCallResources: failed to mark video transceiver RECV_ONLY: ${e.message}")
+                }
+                .getOrDefault(false)
+            Log.d(
+                "WebRTC",
+                "stopVideoCallResources: detached=$detached, transceiverUpdated=$transceiverUpdated"
+            )
+        }
+        // Keep localVideoSender reference for reuse on next startVideoCall.
+
+        // Dispose video source and track
+        runCatching { localVideoSource?.dispose() }
+        localVideoSource = null
+        localVideoTrack = null
+        remoteVideoTrack = null
+        CallEventFlow.localVideoTrack.value = null
+        CallEventFlow.remoteVideoTrack.value = null
+
+        // Dispose surface texture helper
+        runCatching { surfaceTextureHelper?.stopListening() }
+        runCatching { surfaceTextureHelper?.dispose() }
+        surfaceTextureHelper = null
+
+        isRemoteDescriptionSet = true
+        val pendingCount = pendingRemoteIceCandidates.size
+        if (pendingCount > 0) {
+            Log.d("WebRTC", "Flushing $pendingCount pending remote ICE candidates after video reject")
+            pendingRemoteIceCandidates.forEach { candidate ->
+                peerConnection?.addIceCandidate(candidate)
+            }
+            pendingRemoteIceCandidates.clear()
+        }
+
+        hasStarted = false
+    }
+
     /**
      * This function is used to setup audio track.
      * */
@@ -692,7 +1144,10 @@ class AndroidAudioCallService private constructor(
             localAudioTrack = null
             remoteAudioTrack = null
             localVideoSender = null
+            CallEventFlow.localVideoTrack.value = null
+            CallEventFlow.remoteVideoTrack.value = null
             hasStarted = false
+            onRemoteVideoTrackReceivedCallback = null
 
             // PeerConnection
             peerConnectionObserver = null
@@ -741,7 +1196,9 @@ class AndroidAudioCallService private constructor(
     }
 
     override suspend fun updateCameraStatus(cameraOff: Boolean) {
-        localVideoTrack?.setEnabled(!cameraOff)
+        val shouldEnable = !cameraOff
+        runCatching { localVideoTrack?.setEnabled(shouldEnable) }
+        runCatching { (localVideoSender?.track() as? VideoTrack)?.setEnabled(shouldEnable) }
     }
 
     override suspend fun updateSpeakerStatus(speakerType: SpeakerType) {

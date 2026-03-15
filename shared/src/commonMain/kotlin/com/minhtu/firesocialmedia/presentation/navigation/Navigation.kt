@@ -141,6 +141,7 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
     var sessionId by remember { mutableStateOf("") }
     var remoteOffer by remember { mutableStateOf<OfferAnswer?>(null) }
     var remoteVideoOffer by remember { mutableStateOf<OfferAnswer?>(null) }
+    var navigateToVideoCallTrigger by remember { mutableStateOf(0) }
     val callingViewModel : CallingViewModel = platformViewModel { ViewModelProvider.createCallingViewModel(platformContext) }
     val videoCallViewModel : VideoCallViewModel = platformViewModel { ViewModelProvider.createVideoCallViewModel(platformContext) }
 
@@ -193,6 +194,12 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                     snackBarHostState.currentSnackbarData?.dismiss()
                 }
             }
+        }
+    }
+
+    LaunchedEffect(navigateToVideoCallTrigger) {
+        if (navigateToVideoCallTrigger > 0) {
+            navController.navigate(route = VideoCall.getScreenName())
         }
     }
 
@@ -675,32 +682,37 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                     popEnterTransition = DefaultNavAnimations.popEnter,
                     exitTransition = DefaultNavAnimations.exit,
                     popExitTransition = DefaultNavAnimations.popExit) {
-                    Calling.CallingScreen(
-                        localImageLoaderValue = localImageLoaderValue,
-                        sessionId,
-                        callee,
-                        caller,
-                        homeViewModel.currentUser,
-                        remoteOffer,
-                        SharedCallData.navigateToCallingScreenFromNotification,
-                        callingViewModel,
-                        homeViewModel,
-                        navigationHandler,
-                        onStopCallAndNavigateBack = {
-                            if(navigationHandler.getCurrentRoute() != Home.getScreenName()) {
-                                navigationHandler.navigateBack()
-                            }
-                            homeViewModel.resetCallEvent() },
-                        onNavigateToVideoCall = { sessionID, videoOffer ->
-                            sessionId = sessionID
-                            remoteVideoOffer = videoOffer
-                            remoteVideoOffer = videoOffer
-                            navController.navigate(route = VideoCall.getScreenName())
-                        },
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(Color.White)
-                    )
+                    if(caller != null && callee != null) {
+                        Calling.CallingScreen(
+                            localImageLoaderValue = localImageLoaderValue,
+                            sessionId,
+                            callee!!,
+                            caller!!,
+                            homeViewModel.currentUser,
+                            remoteOffer,
+                            SharedCallData.navigateToCallingScreenFromNotification,
+                            callingViewModel,
+                            homeViewModel,
+                            navigationHandler,
+                            onStopCallAndNavigateBack = {
+                                if(navigationHandler.getCurrentRoute() != Home.getScreenName()) {
+                                    navigationHandler.navigateBack()
+                                }
+                                homeViewModel.resetCallEvent() },
+                            onNavigateToVideoCall = { sessionID, videoOffer ->
+                                videoCallViewModel.setPendingVideoCallParams(sessionID, videoOffer)
+                                sessionId = sessionID
+                                remoteVideoOffer = videoOffer
+                                navigateToVideoCallTrigger++
+                            },
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(Color.White)
+                        )
+                    } else {
+                        showToast("Cannot get caller and callee information. Cannot show calling screen!")
+                        navController.popBackStack()
+                    }
                 }
                 composable(
                     route = VideoCall.getScreenName(),

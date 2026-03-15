@@ -31,6 +31,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.NotificationsOff
@@ -211,10 +212,12 @@ class GroupDetails {
             }
 
             val showAlertDialog = remember { mutableStateOf(false) }
-            UiUtils.ShowBasicAlertDialog(
+            UiUtils.ShowDiscardDialog(
                     "Leave Group",
             "Are you sure you want to leave this group?",
-            onClickConfirm = {
+                icon = Icons.AutoMirrored.Filled.Logout,
+                iconBackground = Color(0xFFFDEAEA),
+                onDiscard = {
                 if(fetchGroupInfoState != null) {
                     val adminSet = fetchGroupInfoState!!.members.filterValues {it == "admin"}.keys
                     val memberSet = fetchGroupInfoState!!.members.filterValues {it == "member"}.keys
@@ -229,10 +232,7 @@ class GroupDetails {
                     }
                 }
             },
-            onClickReject = {
-                showAlertDialog.value = false
-            },
-            showAlertDialog
+                showDialog = showAlertDialog
             )
             val leaveGroupStatus by groupDetailsViewModel.leaveGroupStatus.collectAsState()
             LaunchedEffect(leaveGroupStatus) {

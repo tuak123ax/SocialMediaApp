@@ -36,6 +36,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.PersonRemove
 import androidx.compose.material.icons.filled.VerifiedUser
 import androidx.compose.material.icons.outlined.ArrowDownward
 import androidx.compose.material3.ButtonDefaults
@@ -372,10 +373,12 @@ class ManageMembers {
                     }
 
                     adminToDelete?.let { admin ->
-                        UiUtils.ShowBasicAlertDialog(
-                            "Remove Admin",
-                            "Are you sure you want to remove this admin from this group?",
-                            onClickConfirm = {
+                        UiUtils.ShowDiscardDialog(
+                            "Remove Admin?",
+                            "Are you sure you want to remove this admin from the group? This action cannot be undone.",
+                            icon = Icons.Default.PersonRemove,
+                            iconBackground = Color(0xFFD32F2F),
+                            onDiscard = {
                                 //If you are the last admin and there are members in group. Cannot remove you
                                 if (adminList.size <= 1 && memberSet.isNotEmpty()) {
                                     //Cannot remove the last admin
@@ -385,8 +388,7 @@ class ManageMembers {
                                     showAlertDialog.value = false
                                 }
                             },
-                            onClickReject = {
-                                showAlertDialog.value = false
+                            onCancel = {
                                 adminToDelete = null
                             },
                             showAlertDialog

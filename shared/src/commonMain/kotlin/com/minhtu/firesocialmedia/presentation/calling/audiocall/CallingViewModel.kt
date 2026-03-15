@@ -4,6 +4,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.minhtu.firesocialmedia.domain.entity.call.CallEventFlow
+import com.minhtu.firesocialmedia.domain.entity.call.OfferAnswer
 import com.minhtu.firesocialmedia.domain.entity.call.SpeakerType
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.domain.usecases.call.ManageCallStateUseCase
@@ -125,6 +126,28 @@ class CallingViewModel(
 
     fun updateVideoState() {
         CallEventFlow.videoCallState.value = null
+    }
+
+    /** Clear video call state after a short delay so navigation and VideoCall screen composition complete first (avoids timing/reset issues). */
+    fun clearVideoStateAfterNavigate() {
+        viewModelScope.launch {
+            delay(200)
+            CallEventFlow.videoCallState.value = null
+        }
+    }
+
+    /** Pending video offer and session for Accept — set when dialog is shown, used when user taps Accept so navigation always has valid data. */
+    var pendingVideoOfferForAccept = mutableStateOf<OfferAnswer?>(null)
+    var pendingSessionIdForVideoCall = mutableStateOf("")
+
+    fun setPendingVideoOfferForAccept(offer: OfferAnswer?, sessionIdForCall: String) {
+        pendingVideoOfferForAccept.value = offer
+        pendingSessionIdForVideoCall.value = sessionIdForCall
+    }
+
+    fun clearPendingVideoOfferForAccept() {
+        pendingVideoOfferForAccept.value = null
+        pendingSessionIdForVideoCall.value = ""
     }
     fun stopCallAction(
         currentUser : String,

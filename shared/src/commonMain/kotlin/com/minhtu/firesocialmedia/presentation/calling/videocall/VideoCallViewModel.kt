@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.minhtu.firesocialmedia.domain.entity.call.OfferAnswer
 import com.minhtu.firesocialmedia.domain.entity.call.SpeakerType
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
+import com.minhtu.firesocialmedia.domain.usecases.call.ManageCallStateUseCase
 import com.minhtu.firesocialmedia.domain.usecases.call.RequestCameraAndAudioPermissionsUseCase
 import com.minhtu.firesocialmedia.domain.usecases.call.StartVideoCallServiceUseCase
 import com.minhtu.firesocialmedia.domain.usecases.call.UpdateCameraStatusUseCase
@@ -24,14 +25,25 @@ class VideoCallViewModel(
     val updateMicStatusUseCase : UpdateMicStatusUseCase,
     val updateCameraStatusUseCase : UpdateCameraStatusUseCase,
     val updateSpeakerStatusUseCase : UpdateSpeakerStatusUseCase,
+    val manageCallStateUseCase: ManageCallStateUseCase,
     val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : ViewModel() {
+    private var lastStartVideoCallSignature: String? = null
+    private var isStartingVideoCall: Boolean = false
+
     fun startVideoCall(
         remoteVideoOffer : OfferAnswer?,
         caller : UserInstance,
         callee : UserInstance,
         currentUserId : String?,
         sessionId : String) {
+        val startSignature = "$sessionId|${currentUserId.orEmpty()}|${remoteVideoOffer?.sdp?.hashCode() ?: 0}"
+        if (isStartingVideoCall && lastStartVideoCallSignature == startSignature) {
+            logMessage("startVideoCall", { "Skip duplicate startVideoCall signature=$startSignature" })
+            return
+        }
+        lastStartVideoCallSignature = startSignature
+        isStartingVideoCall = true
         logMessage("startVideoCall", { sessionId })
         logMessage("startVideoCall", { "currentUserId: $currentUserId" })
         viewModelScope.launch {
@@ -40,6 +52,8 @@ class VideoCallViewModel(
                     startVideoCallServiceUseCase.invoke(sessionId, caller, callee, currentUserId, remoteVideoOffer)
                 } catch (e : Exception) {
                     logMessage("startVideoCall Exception", { e.message.toString() })
+                } finally {
+                    isStartingVideoCall = false
                 }
             }
         }
@@ -78,5 +92,27 @@ class VideoCallViewModel(
         viewModelScope.launch(ioDispatcher) {
             updateSpeakerStatusUseCase.invoke(speakerType)
         }
+    }
+
+    /**
+     * Deprecated behavior: keep video resources alive across Video->Audio navigation.
+     * Full release happens only when the call ends at service level.
+     */
+    fun resetVideoCallStartedState() {
+        logMessage("resetVideoCallStartedState", { "skip stopVideoCallResources to preserve video resources" })
+    }
+
+    /** Params for the current video call navigation — set by Navigation before navigating so VideoCall screen has them even if composable state is stale. */
+    var pendingVideoCallSessionId = mutableStateOf("")
+    var pendingRemoteVideoOffer = mutableStateOf<OfferAnswer?>(null)
+
+    fun setPendingVideoCallParams(sessionId: String, offer: OfferAnswer?) {
+        pendingVideoCallSessionId.value = sessionId
+        pendingRemoteVideoOffer.value = offer
+    }
+
+    fun clearPendingVideoCallParams() {
+        pendingVideoCallSessionId.value = ""
+        pendingRemoteVideoOffer.value = null
     }
 }

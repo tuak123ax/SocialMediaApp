@@ -75,6 +75,7 @@ import com.minhtu.firesocialmedia.domain.entity.call.CallingRequestData
 import com.minhtu.firesocialmedia.domain.entity.home.deeplinks.DeepLinksData
 import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
+import com.minhtu.firesocialmedia.platform.CommonBackHandler
 import com.minhtu.firesocialmedia.platform.CrossPlatformIcon
 import com.minhtu.firesocialmedia.platform.logMessage
 import com.minhtu.firesocialmedia.platform.showToast
@@ -114,7 +115,11 @@ class Home {
             var showBottomSheet by rememberSaveable { mutableStateOf(false) }
             var newToBeShared by remember { mutableStateOf<NewsInstance?>(null) }
             val showDialog = remember { mutableStateOf(false) }
-            UiUtils.ShowAlertDialogToLogout(
+
+            CommonBackHandler {
+                showDialog.value = true
+            }
+            UiUtils.LogoutBottomSheet(
                 onClickConfirm = {
                     homeViewModel.clearAccountInStorage()
                     homeViewModel.clearLocalData()

@@ -68,6 +68,14 @@ class ManageCallStateUseCase(
         callRepository.rejectVideoCall()
     }
 
+    suspend fun resetVideoCallStartedState() {
+        callRepository.resetVideoCallStartedState()
+    }
+
+    suspend fun stopVideoCallResources() {
+        callRepository.stopVideoCallResources()
+    }
+
     suspend fun updateMuteStatus(muted: Boolean) {
         callRepository.updateMuteStatus(muted)
     }

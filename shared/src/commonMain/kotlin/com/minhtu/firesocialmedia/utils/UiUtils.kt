@@ -9,11 +9,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -43,8 +39,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.outlined.Block
@@ -55,7 +51,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Divider
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -79,6 +74,7 @@ import androidx.compose.material3.TabRow
 import androidx.compose.material3.TabRowDefaults
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -99,11 +95,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
@@ -118,6 +113,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import com.minhtu.firesocialmedia.constants.TestTag
 import com.minhtu.firesocialmedia.domain.entity.home.deeplinks.ShareApp
 import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
@@ -137,10 +133,7 @@ import com.minhtu.firesocialmedia.presentation.navigationscreen.friend.FriendVie
 import com.minhtu.firesocialmedia.presentation.navigationscreen.notification.Notification
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.Settings
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.GroupDetails.Companion.DropdownMenuForMoreOptionsInGroup
-import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.ManageMembers.Companion.ActionRow
 import com.minhtu.firesocialmedia.presentation.search.SearchViewModel
-import com.minhtu.sharedmodule.ui.theme.adminBorderColor
-import com.minhtu.sharedmodule.ui.theme.adminCardColor
 import com.minhtu.sharedmodule.ui.theme.loginBackgroundColor
 import com.minhtu.sharedmodule.ui.theme.memberCardColor
 import com.seiko.imageloader.asImageBitmap
@@ -491,70 +484,226 @@ class UiUtils {
         }
 
         @Composable
-        fun ShowAlertDialog(title : String, message : String, resetAndBack:() -> Unit, showDialog : MutableState<Boolean>) {
-            if (showDialog.value) {
-                AlertDialog(
-                    onDismissRequest = { showDialog.value = false },
-                    title = { Text(title) },
-                    text = { Text(message) },
-                    confirmButton = {
+        fun ShowDiscardDialog(
+            title: String,
+            message: String,
+            icon : ImageVector,
+            iconBackground : Color,
+            onDiscard: () -> Unit,
+            onCancel: () -> Unit = {},
+            showDialog: MutableState<Boolean>
+        ) {
+            if (!showDialog.value) return
+
+            Dialog(
+                onDismissRequest = { showDialog.value = false }
+            ) {
+                Card(
+                    shape = RoundedCornerShape(28.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color.White
+                    )
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .padding(horizontal = 24.dp, vertical = 32.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+
+                        // Icon Circle
+                        Box(
+                            modifier = Modifier
+                                .size(72.dp)
+                                .clip(CircleShape)
+                                .background(iconBackground),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = icon,
+                                contentDescription = null,
+                                tint = Color(0xFFFF9800),
+                                modifier = Modifier.size(36.dp)
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(24.dp))
+
+                        // Title
+                        Text(
+                            text = title,
+                            style = MaterialTheme.typography.titleLarge.copy(
+                                fontWeight = FontWeight.Bold
+                            ),
+                            textAlign = TextAlign.Center
+                        )
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        // Message
+                        Text(
+                            text = message,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color.Gray,
+                            textAlign = TextAlign.Center
+                        )
+
+                        Spacer(modifier = Modifier.height(28.dp))
+
+                        // Discard Button
                         Button(
                             onClick = {
-                            resetAndBack()
-                        },
+                                showDialog.value = false
+                                onDiscard()
+                            },
                             modifier = Modifier
-                                .testTag(TestTag.TAG_BUTTON_YES)
-                                .semantics{
-                                    contentDescription = TestTag.TAG_BUTTON_YES
-                                }
-                            ) {
-                            Text("Yes")
+                                .fillMaxWidth()
+                                .height(56.dp)
+                                .shadow(8.dp, RoundedCornerShape(16.dp)),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFFE53935) // Modern red
+                            )
+                        ) {
+                            Text(
+                                "Discard",
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold
+                            )
                         }
-                    },
-                    dismissButton = {
-                        Button(onClick = { showDialog.value = false },
-                            modifier = Modifier.testTag(TestTag.TAG_BUTTON_NO)
-                                .semantics{
-                                    contentDescription = TestTag.TAG_BUTTON_NO
-                                }) {
-                            Text("No")
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        // Cancel Button
+                        TextButton(
+                            onClick = {
+                                showDialog.value = false
+                                onCancel() },
+                            modifier = Modifier
+                                .testTag(TestTag.TAG_BUTTON_NO)
+                        ) {
+                            Text(
+                                "Cancel",
+                                color = Color.Gray,
+                                fontWeight = FontWeight.Medium
+                            )
                         }
                     }
-                )
+                }
             }
         }
 
+        @OptIn(ExperimentalMaterial3Api::class)
         @Composable
-        fun ShowAlertDialogToLogout(
+        fun LogoutBottomSheet(
             onClickConfirm: () -> Unit,
             onNavigateToSignIn: () -> Unit,
-            showDialog: MutableState<Boolean>
+            showSheet: MutableState<Boolean>
         ) {
             val coroutineScope = rememberCoroutineScope()
+            val sheetState = rememberModalBottomSheetState(
+                skipPartiallyExpanded = true
+            )
 
-            if (showDialog.value) {
-                AlertDialog(
-                    onDismissRequest = { showDialog.value = false },
-                    title = { Text("Logout") },
-                    text = { Text("Are you sure you want to logout?") },
-                    confirmButton = {
-                        Button(onClick = {
-                            onClickConfirm()
-                            showDialog.value = false
-                            coroutineScope.launch {
-                                delay(100) // let the dialog close properly
-                                onNavigateToSignIn()
-                            }
-                        }) {
-                            Text("Yes")
+            if (showSheet.value) {
+
+                ModalBottomSheet(
+                    onDismissRequest = { showSheet.value = false },
+                    sheetState = sheetState,
+                    shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+                    containerColor = Color.White
+                ) {
+
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 24.dp, vertical = 16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        // Icon Circle
+                        Box(
+                            modifier = Modifier
+                                .size(80.dp)
+                                .clip(CircleShape)
+                                .background(Color(0xFFFFEBEE)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ExitToApp,
+                                contentDescription = "Logout Icon",
+                                tint = Color(0xFFFF3B30),
+                                modifier = Modifier.size(36.dp)
+                            )
                         }
-                    },
-                    dismissButton = {
-                        Button(onClick = { showDialog.value = false }) {
-                            Text("No")
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        Text(
+                            text = "Logout",
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Bold
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Text(
+                            text = "Are you sure you want to log out? You can always log back in later.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color.Gray,
+                            textAlign = TextAlign.Center
+                        )
+
+                        Spacer(modifier = Modifier.height(24.dp))
+
+                        // Log Out Button
+                        Button(
+                            onClick = {
+                                onClickConfirm()
+                                showSheet.value = false
+                                coroutineScope.launch {
+                                    delay(200)
+                                    onNavigateToSignIn()
+                                }
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(56.dp),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFFFF3B30)
+                            )
+                        ) {
+                            Text(
+                                text = "Log Out",
+                                color = Color.White,
+                                style = MaterialTheme.typography.titleMedium
+                            )
                         }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        // Cancel Button
+                        OutlinedButton(
+                            onClick = { showSheet.value = false },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(56.dp),
+                            shape = RoundedCornerShape(16.dp)
+                        ) {
+                            Text(
+                                text = "Cancel",
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
                     }
-                )
+                }
             }
         }
 

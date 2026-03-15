@@ -10,11 +10,12 @@ import com.minhtu.firesocialmedia.utils.Utils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 
 class InitializeCallUseCase(
     val callRepository: CallRepository,
-    val coroutineScope: CoroutineScope = CoroutineScope(Dispatchers.IO)
+    val coroutineScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 ) {
     suspend fun initializeCall(
         onInitializeFinished : suspend () -> Unit,
@@ -100,9 +101,6 @@ class InitializeCallUseCase(
                     answer.initiator = currentUserId
                 }
                 coroutineScope.launch {
-                    // Slight delay to ensure remote SDP and candidates are applied on caller
-                    // before we send our answer, avoiding race in signaling/storage
-                    kotlinx.coroutines.delay(50)
                     //Send offer to DB after created
                     callRepository.sendAnswerToFirebase(
                         sessionId,

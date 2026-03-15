@@ -139,7 +139,7 @@ class AndroidDatabaseService(context: Context) : DatabaseService {
         val result = ArrayList<UserDTO>()
         val database = FirebaseDatabase.getInstance()
         val databaseReference: DatabaseReference = database.getReference().child(DataConstant.USER_PATH)
-        databaseReference.addValueEventListener(object : ValueEventListener {
+        val listener = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 result.clear()
                 for (dataSnapshot in snapshot.getChildren()) {
@@ -148,13 +148,21 @@ class AndroidDatabaseService(context: Context) : DatabaseService {
                         result.add(user)
                     }
                 }
-                if(continuation.isActive) continuation.resume(result)
+                if (continuation.isActive) {
+                    databaseReference.removeEventListener(this)
+                    continuation.resume(result)
+                }
             }
 
             override fun onCancelled(error: DatabaseError) {
-                if(continuation.isActive) continuation.resume(null)
+                if (continuation.isActive) {
+                    databaseReference.removeEventListener(this)
+                    continuation.resume(null)
+                }
             }
-        })
+        }
+        databaseReference.addValueEventListener(listener)
+        continuation.invokeOnCancellation { databaseReference.removeEventListener(listener) }
     }
 
     override suspend fun getUser(userId: String): UserDTO? =
@@ -249,7 +257,7 @@ class AndroidDatabaseService(context: Context) : DatabaseService {
             }
             .limitToLast(number)
 
-        dbRef.addValueEventListener(object : ValueEventListener {
+        val listener = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 val newsList = snapshot.children.mapNotNull { it.getValue(NewsDTO::class.java) }
 
@@ -257,18 +265,26 @@ class AndroidDatabaseService(context: Context) : DatabaseService {
                     // Sort newest → oldest
                     val sorted = newsList.sortedByDescending { it.timePosted }.map { it }
                     val oldest = sorted.last()
-                    if(continuation.isActive) continuation.resume(LatestNewsDTO(
-                        sorted,
-                        if(newsList.size < number) null else oldest.timePosted.toDouble(),
-                        oldest.id // Return both for next pagination
-                    ))
+                    if (continuation.isActive) {
+                        dbRef.removeEventListener(this)
+                        continuation.resume(LatestNewsDTO(
+                            sorted,
+                            if (newsList.size < number) null else oldest.timePosted.toDouble(),
+                            oldest.id // Return both for next pagination
+                        ))
+                    }
                 }
             }
 
             override fun onCancelled(error: DatabaseError) {
-                if(continuation.isActive) continuation.resume(LatestNewsDTO())
+                if (continuation.isActive) {
+                    dbRef.removeEventListener(this)
+                    continuation.resume(LatestNewsDTO())
+                }
             }
-        })
+        }
+        dbRef.addValueEventListener(listener)
+        continuation.invokeOnCancellation { dbRef.removeEventListener(listener) }
     }
 
 
@@ -281,7 +297,7 @@ class AndroidDatabaseService(context: Context) : DatabaseService {
             .child(DataConstant.NEWS_PATH)
             .child(newsId)
             .child(path)
-        databaseReference.addValueEventListener(object : ValueEventListener {
+        val listener = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 result.clear()
                 for (dataSnapshot in snapshot.getChildren()) {
@@ -290,13 +306,21 @@ class AndroidDatabaseService(context: Context) : DatabaseService {
                         result.add(comments)
                     }
                 }
-                if(continuation.isActive) continuation.resume(result)
+                if (continuation.isActive) {
+                    databaseReference.removeEventListener(this)
+                    continuation.resume(result)
+                }
             }
 
             override fun onCancelled(error: DatabaseError) {
-                if(continuation.isActive) continuation.resume(null)
+                if (continuation.isActive) {
+                    databaseReference.removeEventListener(this)
+                    continuation.resume(null)
+                }
             }
-        })
+        }
+        databaseReference.addValueEventListener(listener)
+        continuation.invokeOnCancellation { databaseReference.removeEventListener(listener) }
     }
 
     override suspend fun getAllNotificationsOfUser(
@@ -307,7 +331,7 @@ class AndroidDatabaseService(context: Context) : DatabaseService {
         val database = FirebaseDatabase.getInstance()
         val databaseReference: DatabaseReference = database.getReference().child(DataConstant.USER_PATH)
             .child(currentUserUid).child(path)
-        databaseReference.addValueEventListener(object : ValueEventListener {
+        val listener = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 result.clear()
                 for (dataSnapshot in snapshot.getChildren()) {
@@ -318,13 +342,21 @@ class AndroidDatabaseService(context: Context) : DatabaseService {
                         result.add(notification)
                     }
                 }
-                if(continuation.isActive) continuation.resume(result)
+                if (continuation.isActive) {
+                    databaseReference.removeEventListener(this)
+                    continuation.resume(result)
+                }
             }
 
             override fun onCancelled(error: DatabaseError) {
-                if(continuation.isActive) continuation.resume(null)
+                if (continuation.isActive) {
+                    databaseReference.removeEventListener(this)
+                    continuation.resume(null)
+                }
             }
-        })
+        }
+        databaseReference.addValueEventListener(listener)
+        continuation.invokeOnCancellation { databaseReference.removeEventListener(listener) }
     }
 
     override suspend fun saveListToDatabase(
@@ -735,6 +767,24 @@ class AndroidDatabaseService(context: Context) : DatabaseService {
             updateField,
             DataConstant.CALL_PATH,
             updateAnswerCallBack
+        )
+    }
+
+    override suspend fun clearAnswerInFirebase(
+        sessionId: String
+    ) = suspendCancellableCoroutine { continuation ->
+        AndroidDatabaseHelper.clearAnswerInFirebase(
+            sessionId,
+            DataConstant.CALL_PATH,
+            object : Utils.Companion.BasicCallBack {
+                override fun onSuccess() {
+                    if (continuation.isActive) continuation.resume(Unit)
+                }
+
+                override fun onFailure() {
+                    if (continuation.isActive) continuation.resume(Unit)
+                }
+            }
         )
     }
 
