@@ -16,7 +16,7 @@ class IosAudioCallService : AudioCallService {
         // iOS implementation will be added later
     }
 
-    override suspend fun startVideoCall(onStartVideoCall: suspend (videoTrack: WebRTCVideoTrack) -> Unit) {
+    override suspend fun startVideoCall(isVideoInitiator: Boolean, onStartVideoCall: suspend (videoTrack: WebRTCVideoTrack) -> Unit) {
         // iOS implementation will be added later
     }
 

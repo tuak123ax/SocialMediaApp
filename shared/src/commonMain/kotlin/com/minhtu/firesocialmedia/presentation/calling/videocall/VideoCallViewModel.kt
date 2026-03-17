@@ -95,11 +95,14 @@ class VideoCallViewModel(
     }
 
     /**
-     * Deprecated behavior: keep video resources alive across Video->Audio navigation.
-     * Full release happens only when the call ends at service level.
+     * Properly release video-specific resources (capturer, source, track, sender) so
+     * the next startVideoCall creates everything fresh.  This avoids the stale-track
+     * issue where a reused VideoTrack no longer delivers frames to a new renderer.
      */
-    fun resetVideoCallStartedState() {
-        logMessage("resetVideoCallStartedState", { "skip stopVideoCallResources to preserve video resources" })
+    fun stopVideoCallResources() {
+        viewModelScope.launch(ioDispatcher) {
+            manageCallStateUseCase.stopVideoCallResources()
+        }
     }
 
     /** Params for the current video call navigation — set by Navigation before navigating so VideoCall screen has them even if composable state is stale. */

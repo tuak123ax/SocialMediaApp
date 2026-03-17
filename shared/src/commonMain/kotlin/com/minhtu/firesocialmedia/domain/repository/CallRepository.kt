@@ -84,6 +84,7 @@ interface CallRepository {
     )
 
     suspend fun startVideoCall(
+        isVideoInitiator: Boolean,
         onStartVideoCall : suspend (videoTrack : WebRTCVideoTrack) -> Unit)
 
     suspend fun observeVideoCall(

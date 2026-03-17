@@ -717,42 +717,16 @@ class AndroidAudioCallService private constructor(
      * onStartVideoCall: return local video track when it is available.
      * */
     override suspend fun startVideoCall(
+        isVideoInitiator: Boolean,
         onStartVideoCall: suspend (videoTrack: WebRTCVideoTrack) -> Unit
     ) {
-        if (hasStarted) {
-            Log.w("WebRTC", "startVideoCall already called.")
-            val reusableSendPath = findReusableLocalVideoSendPath()
-            if (reusableSendPath != null) {
-                val reusableSender = reusableSendPath.first
-                val reusableTrack = reusableSendPath.second
-                Log.d("WebRTC", "startVideoCall duplicate: reusing sender-owned local video track")
-                // Re-entering video screen: re-enable track and restore SEND_RECV on transceiver so
-                // frames are actually transmitted again (transceiver may have been set RECV_ONLY).
-                runCatching { reusableTrack.setEnabled(true) }
-                val senderOwnedTrack = runCatching { localVideoSender?.track() as? VideoTrack }.getOrNull()
-                val trackToEmit = if (isVideoTrackUsable(senderOwnedTrack)) senderOwnedTrack!! else reusableTrack
-                localVideoTrack = trackToEmit
-                runCatching { trackToEmit.setEnabled(true) }
-                // Restore transceiver to SEND_RECV so the re-enabled track is actually transmitted.
-                runCatching {
-                    peerConnection?.transceivers
-                        ?.firstOrNull { it.sender == reusableSender }
-                        ?.also { transceiver ->
-                            if (transceiver.direction != RtpTransceiver.RtpTransceiverDirection.SEND_RECV) {
-                                transceiver.direction = RtpTransceiver.RtpTransceiverDirection.SEND_RECV
-                                Log.d("WebRTC", "startVideoCall duplicate: restored transceiver direction to SEND_RECV")
-                            }
-                        }
-                }
-                emitLocalVideoTrack(trackToEmit, onStartVideoCall)
-                return
-            }
-            val existingTrack = localVideoTrack
-            Log.w(
-                "WebRTC",
-                "startVideoCall duplicate: stale started state (trackUsable=${isVideoTrackUsable(existingTrack)}, senderUsable=${isVideoSenderUsable(localVideoSender)}), forcing restart"
-            )
-            hasStarted = false
+        // Only tear down and recreate when we're the video initiator (caller). The callee has
+        // just set the remote description; calling stopVideoCallResources() here would set our
+        // video transceiver to RECV_ONLY and break the answer path, so the other user would
+        // see a black remote (callee's local track would not be sent).
+        if (isVideoInitiator && hasStarted) {
+            Log.d("WebRTC", "startVideoCall: initiator re-entry, cleaning up before full creation")
+            stopVideoCallResources()
         }
 
         hasStarted = true

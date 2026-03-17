@@ -18,10 +18,10 @@ interface AudioCallService{
 
     /**
      * This function is used to start video call.
-     * @Param:
-     * onStartVideoCall: return local video track when it is available.
-     * */
-    suspend fun startVideoCall(onStartVideoCall : suspend (videoTrack : WebRTCVideoTrack) -> Unit)
+     * @param isVideoInitiator true when this device is creating the video offer (caller); false when answering (callee). When true, re-entry does a full teardown before creating track; when false, we must not tear down after setRemoteDescription.
+     * @param onStartVideoCall return local video track when it is available.
+     */
+    suspend fun startVideoCall(isVideoInitiator: Boolean, onStartVideoCall : suspend (videoTrack : WebRTCVideoTrack) -> Unit)
 
     /**
      * This function is used to start video call foreground service.

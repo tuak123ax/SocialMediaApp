@@ -84,6 +84,7 @@ class CallerCoordinator(
                                onLocalVideoTrackCreated : suspend (localVideoTrack : WebRTCVideoTrack) -> Unit,
                                onRejectVideoCall : suspend () -> Unit = {}) {
         videoCallUseCase.startVideoCall(
+            isVideoInitiator = true,
             onLocalVideoTrackCreated = { localVideoTrack ->
                 onLocalVideoTrackCreated(localVideoTrack)
                 //Create video offer

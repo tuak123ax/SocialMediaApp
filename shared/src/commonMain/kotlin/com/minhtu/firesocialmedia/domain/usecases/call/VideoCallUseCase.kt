@@ -15,9 +15,10 @@ class VideoCallUseCase(
     val coroutineScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 ) {
     suspend fun startVideoCall(
+        isVideoInitiator: Boolean,
         onLocalVideoTrackCreated : suspend (localVideoTrack : WebRTCVideoTrack) -> Unit) {
-        //Start video call
         callRepository.startVideoCall(
+            isVideoInitiator = isVideoInitiator,
             onStartVideoCall = { localVideoTrack ->
                 onLocalVideoTrackCreated(localVideoTrack)
             }

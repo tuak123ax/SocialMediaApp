@@ -229,8 +229,12 @@ class CallRepositoryImpl(
             })
     }
 
-    override suspend fun startVideoCall(onStartVideoCall: suspend (WebRTCVideoTrack) -> Unit) {
+    override suspend fun startVideoCall(
+        isVideoInitiator: Boolean,
+        onStartVideoCall: suspend (WebRTCVideoTrack) -> Unit
+    ) {
         audioCallService.startVideoCall(
+            isVideoInitiator = isVideoInitiator,
             onStartVideoCall = { localVideoTrack ->
                 onStartVideoCall(localVideoTrack)
             }

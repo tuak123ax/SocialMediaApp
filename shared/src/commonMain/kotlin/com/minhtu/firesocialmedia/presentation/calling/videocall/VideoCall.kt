@@ -118,13 +118,8 @@ class VideoCall {
                         showToast(message)
                         CallEventFlow.videoCallDeclinedMessage.value = null
                     }
-                    // Leave video screen without tearing down WebRTC video resources.
-                    // Keep resources alive for quick rejoin, but stop sending local frames.
-                    isCameraOff = true
-                    videoCallViewModel.updateCameraStatus(true)
-                    // Clear only UI-bound local track wrapper before leaving this screen.
-                    // WebRTC sender/track resources are still preserved in service for quick rejoin.
                     CallEventFlow.localVideoTrack.value = null
+                    videoCallViewModel.stopVideoCallResources()
                     videoCallViewModel.clearPendingVideoCallParams()
                     CallEventFlow.answerVideoCallState.value = true
                     navHandler.navigateBack()
@@ -280,10 +275,8 @@ class VideoCall {
                         FloatingActionButton(
                             onClick = {
                                 logMessage("ClickBack", { "Back to audio screen" })
-                                videoCallViewModel.updateCameraStatus(true)
-                                // Drop stale local preview wrapper when exiting video UI.
-                                // Rejoin will re-emit a fresh, live local track from service.
                                 CallEventFlow.localVideoTrack.value = null
+                                videoCallViewModel.stopVideoCallResources()
                                 videoCallViewModel.clearPendingVideoCallParams()
                                 navHandler.navigateBack()
                             },

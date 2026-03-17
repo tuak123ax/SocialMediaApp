@@ -108,6 +108,7 @@ class CalleeCoordinator(
         // that does not bind to the offered video m-line during renegotiation.
         initializeCallUseCase.setRemoteDescription(remoteVideoOffer)
         videoCallUseCase.startVideoCall(
+            isVideoInitiator = false,
             onLocalVideoTrackCreated = { localVideoTrack ->
                 onLocalVideoTrackCreated(localVideoTrack)
                 val callType = getCallTypeFromSdp(remoteVideoOffer.sdp)

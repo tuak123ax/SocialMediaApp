@@ -207,7 +207,7 @@ class SignInViewModelTest {
         override val clipboard: ClipboardService = object : ClipboardService { override fun copy(text: String) {} }
         override val audioCall: AudioCallService = object : AudioCallService {
             override suspend fun startCallService(sessionId: String, caller: com.minhtu.firesocialmedia.data.remote.dto.user.UserDTO, callee: com.minhtu.firesocialmedia.data.remote.dto.user.UserDTO) {}
-            override suspend fun startVideoCall(onStartVideoCall: suspend (videoTrack: com.minhtu.firesocialmedia.platform.WebRTCVideoTrack) -> Unit) {}
+            override suspend fun startVideoCall(isVideoInitiator: Boolean, onStartVideoCall: suspend (videoTrack: com.minhtu.firesocialmedia.platform.WebRTCVideoTrack) -> Unit) {}
             override suspend fun startVideoCallService(sessionId: String, caller: com.minhtu.firesocialmedia.data.remote.dto.user.UserDTO, callee: com.minhtu.firesocialmedia.data.remote.dto.user.UserDTO, currentUserId: String?, remoteVideoOffer: com.minhtu.firesocialmedia.data.remote.dto.call.OfferAnswerDTO?) {}
             override suspend fun initialize(onInitializeFinished: () -> Unit, onIceCandidateCreated: (iceCandidateData: com.minhtu.firesocialmedia.data.remote.dto.call.IceCandidateDTO) -> Unit, onRemoteVideoTrackReceived: (remoteVideoTrack: com.minhtu.firesocialmedia.platform.WebRTCVideoTrack) -> Unit) {}
             override suspend fun stopCall() {}
