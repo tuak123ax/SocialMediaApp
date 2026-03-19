@@ -791,50 +791,22 @@ class AndroidAudioCallService private constructor(
         localVideoTrack = peerConnectionFactory.createVideoTrack("video", localVideoSource)
         localVideoTrack?.setEnabled(true)
 
-        val connection = peerConnection
-        val localTrack = localVideoTrack
-
-        // Bind local video to the intended video m-line when possible.
-        // Prefer the transceiver that owns our previously used local video sender.
-        val preferredSender = localVideoSender
-        val existingVideoTransceiver = connection?.transceivers?.firstOrNull { transceiver ->
-            preferredSender != null && runCatching { transceiver.sender == preferredSender }.getOrDefault(false)
-        } ?: connection?.transceivers?.firstOrNull { transceiver ->
-            val senderTrack = runCatching { transceiver.sender.track() }.getOrNull()
-            val receiverTrack = runCatching { transceiver.receiver.track() }.getOrNull()
-            senderTrack?.kind() == "video" || receiverTrack?.kind() == "video"
+        val localTrack = localVideoTrack ?: run {
+            Log.e("WebRTC", "startVideoCall: localVideoTrack is null")
+            hasStarted = false
+            return
         }
 
-        localVideoSender = if (existingVideoTransceiver != null && localTrack != null) {
-            runCatching {
-                val attached = existingVideoTransceiver.sender.setTrack(localTrack, true)
-                if (!attached) {
-                    throw IllegalStateException("setTrack returned false")
-                }
-                existingVideoTransceiver.direction = RtpTransceiver.RtpTransceiverDirection.SEND_RECV
-                existingVideoTransceiver.sender
-            }.getOrElse { error ->
-                Log.w("WebRTC", "startVideoCall: failed to reuse video transceiver, fallback to addTrack: ${error.message}")
-                connection?.addTrack(localTrack)
+        peerConnection?.senders
+            ?.filter { it.track() is VideoTrack }
+            ?.forEach { sender ->
+                try {
+                    peerConnection?.removeTrack(sender)
+                } catch (_: Exception) {}
             }
-        } else if (localTrack != null) {
-            runCatching {
-                val init = RtpTransceiver.RtpTransceiverInit(
-                    RtpTransceiver.RtpTransceiverDirection.SEND_RECV
-                )
-                connection?.addTransceiver(localTrack, init)?.sender
-            }.getOrElse { error ->
-                Log.w("WebRTC", "startVideoCall: addTransceiver failed, fallback to addTrack: ${error.message}")
-                connection?.addTrack(localTrack)
-            }
-        } else {
-            null
-        }
+        localVideoSender = null // reset
+        localVideoSender = peerConnection?.addTrack(localTrack)
 
-        Log.d(
-            "WebRTC",
-            "startVideoCall: attached local video sender=$localVideoSender, reusedTransceiver=${existingVideoTransceiver != null}"
-        )
         if (!isVideoSenderUsable(localVideoSender)) {
             Log.e("WebRTC", "startVideoCall: local video sender is unusable after attach")
         }
