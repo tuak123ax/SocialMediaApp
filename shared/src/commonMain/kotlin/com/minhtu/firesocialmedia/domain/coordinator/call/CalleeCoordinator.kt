@@ -41,10 +41,7 @@ class CalleeCoordinator(
                         }
                     },
                     onEndCall = {
-                        val deleteCallSessionResult = calleeUseCases.endCallUseCase.invoke(sessionId)
-                        if(deleteCallSessionResult) {
-                            onEndCall()
-                        }
+                        onEndCall()
                     },
                     whoEndCallCallBack = { whoEndCall ->
                         whoEndCallCallBack(whoEndCall)

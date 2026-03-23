@@ -271,6 +271,7 @@ class Calling {
             Column(modifier = modifier.padding(vertical = 40.dp),
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally) {
+                logMessage("CallingScreen", { "Calling Screen is shown" })
                 //Avatar
                 CompositionLocalProvider(
                     localImageLoaderValue

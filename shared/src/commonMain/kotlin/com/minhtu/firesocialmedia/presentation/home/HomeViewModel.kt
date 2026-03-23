@@ -34,6 +34,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -502,6 +503,11 @@ class HomeViewModel(
                         onEndCall = {
                             logMessage("observePhoneCall", { "onEndCall" })
                             _endCallStatus.value = true
+                            resetPhoneCallRequestStatus()
+                            //Send StopVideoCall first for user who is in video call screen.
+                            CallEventFlow.events.value = CallEvent.StopVideoCall
+                            //Delay to wait to back to audio call screen.
+                            delay(2000)
                             viewModelScope.launch(ioDispatcher) {
                                 if(CallEventFlow.events.value != CallEvent.StopCalling &&
                                     CallEventFlow.events.value != CallEvent.CallEnded) {
@@ -526,17 +532,10 @@ class HomeViewModel(
                                         }
                                     }
                                 }
-                                resetPhoneCallRequestStatus()
                                 isInCall.value = false
-                                // Clear video/track state so next call is clean (don't clear events yet - Calling screen may need it to show toast)
-                                CallEventFlow.localVideoTrack.value = null
-                                CallEventFlow.remoteVideoTrack.value = null
-                                CallEventFlow.videoCallState.value = null
-                                CallEventFlow.answerVideoCallState.value = true
-                                CallEventFlow.videoCallDeclinedMessage.value = null
                                 // Reset all call state after a delay so next call starts clean (if user wasn't on Calling screen to trigger reset there)
                                 viewModelScope.launch {
-                                    kotlinx.coroutines.delay(2000L)
+                                    delay(2000L);
                                     CallEventFlow.reset()
                                 }
                             }

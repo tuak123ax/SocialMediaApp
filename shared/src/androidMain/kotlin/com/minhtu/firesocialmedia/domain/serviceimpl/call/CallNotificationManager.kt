@@ -6,6 +6,7 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.ComponentName
 import android.content.Context
+import android.content.Context.NOTIFICATION_SERVICE
 import android.content.Intent
 import android.os.Build
 import androidx.core.app.NotificationCompat
@@ -93,7 +94,7 @@ class CallNotificationManager(private val context: Context) {
             }
         }
 
-        // ⏱️ Build and return the **initial** notification immediately
+        // Build and return the **initial** notification immediately
         val initialText = String.format("Call in progress: %02d:%02d", seconds / 60, seconds % 60)
         return buildTimerNotification(initialText, stopPendingIntent, callPendingIntent)
     }
@@ -126,6 +127,11 @@ class CallNotificationManager(private val context: Context) {
 
     fun stopTimerNotificationUpdates() {
         cancelTimerJob()
+    }
+    fun stopIncomingCallNotification() {
+        CallSoundManager.stopRingtone()
+        val notificationManager = context.getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.cancel(NOTIF_ID)
     }
 
     fun showPermissionNotification() {

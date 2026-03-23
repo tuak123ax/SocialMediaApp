@@ -437,12 +437,14 @@ actual fun VideoPlayer(uri: String, modifier: Modifier) {
 
 actual class WebRTCVideoTrack(val track: VideoTrack?)
 
-private fun isUsableVideoTrack(track: VideoTrack?): Boolean {
+fun isUsableVideoTrack(track: VideoTrack?): Boolean {
     if (track == null) return false
-    return runCatching {
+
+    return try {
         track.enabled()
-        true
-    }.getOrDefault(false)
+    } catch (e: Exception) {
+        false
+    }
 }
 
 @Composable
@@ -523,7 +525,11 @@ fun LocalVideoView(
         onRelease = { renderer ->
             currentRenderer = null
             if (isUsableVideoTrack(videoTrack)) {
-                runCatching { videoTrack.removeSink(renderer) }
+                runCatching {
+                    try {
+                        videoTrack.removeSink(renderer)
+                    } catch (_: Exception) {}
+                }
             }
             renderer.clearImage()
             renderer.release()
@@ -572,7 +578,11 @@ fun RemoteVideoView(
         },
         onRelease = { renderer ->
             currentRenderer = null
-            runCatching { videoTrack.removeSink(renderer) }
+            runCatching {
+                try {
+                    videoTrack.removeSink(renderer)
+                } catch (_: Exception) {}
+            }
             renderer.clearImage()
             renderer.release()
         },

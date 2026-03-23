@@ -178,10 +178,6 @@ class Home {
                 if(getCurrentUserStatus) {
                     logMessage("observePhoneCall", { "start observe phone call" })
                     homeViewModel.observePhoneCall()
-                    if(navigateToCallingScreen) {
-                        logMessage("navigateToCallingScreen", { "onNavigateToCallingScreenWithUI" })
-                        onNavigateToCallingScreenWithUI()
-                    }
                 }
             }
             LaunchedEffect(Unit) {

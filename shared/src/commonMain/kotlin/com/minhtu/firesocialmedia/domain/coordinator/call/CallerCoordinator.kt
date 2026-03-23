@@ -73,6 +73,7 @@ class CallerCoordinator(
             onEndCall = {
                 val deleteCallSessionResult = callerUseCases.endCall.invoke(audioCallSession.sessionId)
                 if(deleteCallSessionResult) {
+                    logMessage("DeleteCallSession", { "DeleteCallSession success by caller" })
                     onEndCall()
                 }
             }

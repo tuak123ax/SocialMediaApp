@@ -61,7 +61,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 
@@ -73,8 +72,8 @@ class CallForegroundService : Service() {
 
     private var sessionId = ""
     private var offer : OfferAnswer? = null
-    private var callerIdForCallee : String = ""
-    private var calleeIdForCallee : String = ""
+    private var callerIdForCalleeFlow : String = ""
+    private var calleeIdForCalleeFlow : String = ""
     private var callerFromApp : UserInstance? = null
     private var calleeFromApp : UserInstance? = null
     private var inFlightStartVideoCallSignature: String? = null
@@ -92,6 +91,7 @@ class CallForegroundService : Service() {
     private lateinit var calleeUseCases : CalleeUseCases
     private lateinit var callerCoordinator: CallerCoordinator
     private lateinit var calleeCoordinator : CalleeCoordinator
+    private var isStopped : Boolean = false
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -245,8 +245,15 @@ class CallForegroundService : Service() {
                                 handleIncomingVideoOffer(videoOffer)
                             },
                             onEndCall = {
-                                logMessage("onEndCallCaller", { "caller" })
-                                handleEndCall(CallEvent.CallEnded)
+                                if(!isStopped) {
+                                    logMessage("onEndCallCaller", { "caller" })
+                                    handleEndCall()
+                                    val deleteCallSessionResult = callerUseCases.endCall.invoke(sessionId)
+                                    if(deleteCallSessionResult) {
+                                        sendEventToUIAfterStopCall(CallEvent.CallEnded)
+                                    }
+                                    stopService()
+                                }
                             }
                         )
                     } catch (ex : Exception) {
@@ -341,6 +348,7 @@ class CallForegroundService : Service() {
 
     private fun stopCallActionFromCaller(intent: Intent) {
         backgroundScope.launch {
+            isStopped = true
             var callerId = ""
             logMessage("STOP_CALL_ACTION_FROM_CALLER", { "STOP_CALL_ACTION_FROM_CALLER" })
             if(callerFromApp != null && calleeFromApp != null) {
@@ -349,12 +357,20 @@ class CallForegroundService : Service() {
                 logMessage("STOP_CALL_ACTION_FROM_CALLER", { "calleeId:$calleeFromApp" })
                 sendNotification("", sessionId, callerFromApp!!, calleeFromApp!!, "STOP_CALL")
             }
-            if(intent.hasExtra(Constants.KEY_CALLER_ID)) {
-                callerId = intent.getStringExtra(Constants.KEY_CALLER_ID).toString()
+            if(callerFromApp != null) {
+                callerId = callerFromApp!!.uid
+            } else {
+                if(intent.hasExtra(Constants.KEY_CALLER_ID)) {
+                    callerId = intent.getStringExtra(Constants.KEY_CALLER_ID).toString()
+                }
             }
-            val sendWhoEndCall = calleeUseCases.sendWhoEndCallUseCase.invoke(sessionId, callerId)
-            val deleteCallSessionResult = calleeUseCases.endCallUseCase.invoke(sessionId)
-            handleEndCall(null)
+            val sendWhoEndCall = callerUseCases.sendWhoEndCallUseCase.invoke(sessionId, callerId)
+            handleEndCall()
+            val deleteCallSessionResult = callerUseCases.endCall.invoke(sessionId)
+            if(deleteCallSessionResult) {
+                sendEventToUIAfterStopCall(CallEvent.StopCalling)
+            }
+            stopService()
         }
     }
 
@@ -369,41 +385,46 @@ class CallForegroundService : Service() {
                 calleeId = intent.getStringExtra(Constants.KEY_CALLEE_ID).toString()
             }
             val sendWhoEndCall = calleeUseCases.sendWhoEndCallUseCase.invoke(sessionId, calleeId)
+            handleEndCall()
             val deleteCallSessionResult = calleeUseCases.endCallUseCase.invoke(sessionId)
-            handleEndCall(CallEvent.StopCalling)
+            if(deleteCallSessionResult) {
+                sendEventToUIAfterStopCall(CallEvent.StopCalling)
+            }
+            stopService()
         }
     }
 
     private fun rejectCallAction(intent: Intent){
         backgroundScope.launch {
-            var calleeId = ""
             logMessage("REJECT_CALL_ACTION", { "REJECT_CALL_ACTION" })
-            if(intent.hasExtra(Constants.KEY_SESSION_ID)) {
+            if(sessionId.isEmpty() && intent.hasExtra(Constants.KEY_SESSION_ID)) {
                 sessionId = intent.getStringExtra(Constants.KEY_SESSION_ID).toString()
             }
-            if(intent.hasExtra(Constants.KEY_CALLEE_ID)) {
-                calleeId = intent.getStringExtra(Constants.KEY_CALLEE_ID).toString()
+            if(calleeIdForCalleeFlow.isEmpty() && intent.hasExtra(Constants.KEY_CALLEE_ID)) {
+                calleeIdForCalleeFlow = intent.getStringExtra(Constants.KEY_CALLEE_ID).toString()
             }
-            //Emit stop calling event before end call, so that when homeViewModel observed
-            //end call action, it won't emit event again
-            CallEventFlow.events.value = CallEvent.StopCalling
-            val sendWhoEndCall = calleeUseCases.sendWhoEndCallUseCase.invoke(sessionId, calleeId)
+            val sendWhoEndCall = calleeUseCases.sendWhoEndCallUseCase.invoke(sessionId, calleeIdForCalleeFlow)
+            handleEndCall()
             val deleteCallSessionResult = calleeUseCases.endCallUseCase.invoke(sessionId)
-            handleEndCall(null)
+            stopService()
         }
     }
 
-    private suspend fun handleEndCall(callEvent : CallEvent?) {
+    private suspend fun handleEndCall() {
         //Stop count-up timer.
-        logMessage("handleEndCall", { "stopTimerNotificationUpdates" })
+        logMessage("handleEndCall", { "stopIncomingCallNotification and stopTimerNotificationUpdates" })
+        callNotificationManager.stopIncomingCallNotification()
         callNotificationManager.stopTimerNotificationUpdates()
         //Emit event to update UI.
         logMessage("handleEndCall", { "stopCallFlow" })
-        releaseCallAndStopService(callEvent)
+        releaseCall()
     }
 
-    private suspend fun releaseCallAndStopService(callEvent : CallEvent?) {
-        handleRejectCall(callEvent)
+    private suspend fun releaseCall() {
+        handleRejectCall()
+    }
+
+    private suspend fun stopService() {
         logMessage("handleEndCall", { "Calling stopForeground + stopSelf" })
         withContext(Dispatchers.Main) {
             //Stop foreground service.
@@ -444,14 +465,20 @@ class CallForegroundService : Service() {
                                 } else {
                                     sessionId = callingRequestData.sessionId
                                     offer = callingRequestData.offer
-                                    callerIdForCallee = callingRequestData.callerId
-                                    calleeIdForCallee = callingRequestData.calleeId
+                                    callerIdForCalleeFlow = callingRequestData.callerId
+                                    calleeIdForCalleeFlow = callingRequestData.calleeId
                                     //Handle accept call.
                                     handleAcceptCall(callingRequestData)
                                 }
                             },
                             onEndCall = {
-                                handleEndCall(CallEvent.CallEnded)
+                                handleEndCall()
+                                val deleteCallSessionResult = calleeUseCases.endCallUseCase.invoke(sessionId)
+                                if(deleteCallSessionResult) {
+                                    logMessage("DeleteCallSession", { "DeleteCallSession success by callee" })
+                                    sendEventToUIAfterStopCall(CallEvent.CallEnded)
+                                }
+                                stopService()
                             },
                             whoEndCallCallBack = {
                             }
@@ -467,24 +494,20 @@ class CallForegroundService : Service() {
         }
     }
 
-    private suspend fun handleRejectCall(emitEvent: CallEvent?) {
-        // Stop flow first (remove Firebase listener, stop call, cancel notification) so the service is not held by the listener.
-        // Then write to Firebase so the other side is notified.
-        stopCallFlow(emitEvent)
-        manageCallStateUseCase.rejectCall(sessionId)
+    private suspend fun handleRejectCall() {
+        // Write to Firebase so the other side is notified.
+        val sendCallStatusResult = manageCallStateUseCase.rejectCall(sessionId)
+        logMessage("handleRejectCall", { "sendCallStatusResult : $sendCallStatusResult" })
+        // Stop flow (remove Firebase listener, stop call, cancel notification) so the service is not held by the listener.
+        stopCallFlow()
     }
 
-    private suspend fun stopCallFlow(emitEvent : CallEvent?) {
+    private suspend fun stopCallFlow() {
         // Remove only the callee-accept observer (observePhoneCallWithoutCheckingInCall) so it doesn't fire for the next call.
         // Do not call stopObservePhoneCall() here — that would also remove the app's incoming-call listener.
         databaseService.stopObservePhoneCallWithoutCheckingInCall()
         //Stop call in call manager
         callManager.stopCall()
-        //Emit event to UI
-        if(emitEvent != null && CallEventFlow.events.value != CallEvent.StopCalling &&
-            CallEventFlow.events.value != CallEvent.CallEnded) {
-            CallEventFlow.events.value = emitEvent
-        }
         // Clear video/track state so next call starts clean (keep events so UI can show toast)
         CallEventFlow.localVideoTrack.value = null
         CallEventFlow.remoteVideoTrack.value = null
@@ -495,6 +518,17 @@ class CallForegroundService : Service() {
         //Dismiss notification
         val notificationManager = applicationContext.getSystemService(NOTIFICATION_SERVICE) as NotificationManager
         notificationManager.cancel(NOTIF_ID)
+    }
+
+    private fun sendEventToUIAfterStopCall(emitEvent: CallEvent?) {
+        //Emit event to UI
+        //Emit StopVideoCall event first for user who currently is in video call
+        CallEventFlow.events.value = CallEvent.StopVideoCall
+        if(emitEvent != null && CallEventFlow.events.value != CallEvent.StopCalling &&
+            CallEventFlow.events.value != CallEvent.CallEnded) {
+            logMessage("handleEndCall", { "send call event to update UI : $emitEvent" })
+            CallEventFlow.events.value = emitEvent
+        }
     }
 
     private suspend fun handleAcceptCall(callingRequestData : CallingRequestData) {
@@ -532,8 +566,8 @@ class CallForegroundService : Service() {
         val localUserId = when (videoOffer.initiator) {
             callerFromApp?.uid -> calleeFromApp?.uid
             calleeFromApp?.uid -> callerFromApp?.uid
-            callerIdForCallee -> calleeIdForCallee
-            calleeIdForCallee -> callerIdForCallee
+            callerIdForCalleeFlow -> calleeIdForCalleeFlow
+            calleeIdForCalleeFlow -> callerIdForCalleeFlow
             else -> null
         }
         logMessage(
@@ -584,19 +618,17 @@ class CallForegroundService : Service() {
     }
 
     override fun onDestroy() {
-        // Remove Firebase listener and cancel timer so CallForegroundService is not retained (fixes LeakCanary leak).
+        callNotificationManager.stopIncomingCallNotification()
         callNotificationManager.stopTimerNotificationUpdates()
         databaseService.stopObservePhoneCallWithoutCheckingInCall()
-        // Create a temporary scope just for cleanup
-        runBlocking {
-            withContext(Dispatchers.IO) {
-                try { releaseServiceResource() }
-                catch (e: Exception) { logMessage("ReleaseServiceResource") { e.message.toString() } }
-                try { callManager.releaseResources() }
-                catch (e: Exception) { logMessage("ReleaseCallManager") { e.message.toString() } }
-            }
+
+        backgroundScope.launch(Dispatchers.IO) {
+            try { releaseServiceResource() } catch (_: Exception) {}
+            try { callManager.releaseResources() } catch (_: Exception) {}
+
+            backgroundScope.cancel() // cancel AFTER cleanup
         }
-        backgroundScope.cancel()
+
         super.onDestroy()
     }
 

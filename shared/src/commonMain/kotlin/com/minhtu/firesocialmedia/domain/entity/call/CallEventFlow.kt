@@ -35,4 +35,5 @@ sealed class CallEvent {
     object AnswerReceived : CallEvent()
     object CallEnded : CallEvent()
     object StopCalling : CallEvent()
+    object StopVideoCall : CallEvent()
 }

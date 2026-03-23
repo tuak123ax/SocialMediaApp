@@ -36,6 +36,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.minhtu.firesocialmedia.constants.TestTag
+import com.minhtu.firesocialmedia.domain.entity.call.CallEvent
 import com.minhtu.firesocialmedia.domain.entity.call.CallEventFlow
 import com.minhtu.firesocialmedia.domain.entity.call.OfferAnswer
 import com.minhtu.firesocialmedia.domain.entity.call.SpeakerType
@@ -60,12 +61,12 @@ class VideoCall {
             remoteVideoOffer: OfferAnswer?,
             videoCallViewModel: VideoCallViewModel,
             loadingViewModel: LoadingViewModel,
-            navHandler: NavigationHandler
+            onNavigateBack: () -> Unit
         ) {
             // Use ViewModel-stored params when composable params are stale (e.g. after multiple decline/accept)
             val pendingSessionId by videoCallViewModel.pendingVideoCallSessionId
             val pendingOffer by videoCallViewModel.pendingRemoteVideoOffer
-            val effectiveSessionId = if (sessionId.isNotEmpty()) sessionId else pendingSessionId
+            val effectiveSessionId = sessionId.ifEmpty { pendingSessionId }
             val effectiveOffer = remoteVideoOffer ?: pendingOffer
             fun offerKey(offer: OfferAnswer?): String? {
                 if (offer == null) return null
@@ -99,12 +100,12 @@ class VideoCall {
                             videoCallViewModel.clearPendingVideoCallParams()
                         } else {
                             showToast("Don't have information of caller and callee!")
-                            navHandler.navigateBack()
+                            onNavigateBack()
                         }
                     },
                     onDenied = {
                         showToast("Permissions are denied! Return to audio call screen.")
-                        navHandler.navigateBack()
+                        onNavigateBack()
                     }
                 )
             }
@@ -122,7 +123,7 @@ class VideoCall {
                     videoCallViewModel.stopVideoCallResources()
                     videoCallViewModel.clearPendingVideoCallParams()
                     CallEventFlow.answerVideoCallState.value = true
-                    navHandler.navigateBack()
+                    onNavigateBack()
                 } else {
                     videoCallViewModel.updateCameraStatus(isCameraOff)
                 }
@@ -155,6 +156,21 @@ class VideoCall {
                             )
                             CallEventFlow.hasAcceptedVideoInCurrentCall.value = true
                         }
+                    }
+                }
+            }
+
+            val callEventState by CallEventFlow.events.collectAsState()
+            LaunchedEffect(callEventState) {
+                if(callEventState != null) {
+                    logMessage("VideoCallScreen", { callEventState.toString() })
+                    when(callEventState) {
+                        CallEvent.StopVideoCall -> {
+                            logMessage("VideoCallScreen", { "StopVideoCall" })
+                            onNavigateBack()
+                        }
+
+                        else -> {}
                     }
                 }
             }
@@ -278,7 +294,7 @@ class VideoCall {
                                 CallEventFlow.localVideoTrack.value = null
                                 videoCallViewModel.stopVideoCallResources()
                                 videoCallViewModel.clearPendingVideoCallParams()
-                                navHandler.navigateBack()
+                                onNavigateBack()
                             },
                             containerColor = Color.Transparent,
                             elevation = FloatingActionButtonDefaults.elevation(0.dp)

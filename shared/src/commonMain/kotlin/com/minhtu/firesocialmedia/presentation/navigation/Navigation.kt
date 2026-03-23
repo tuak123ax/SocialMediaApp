@@ -728,7 +728,9 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                         remoteVideoOffer,
                         videoCallViewModel,
                         loadingViewModel,
-                        navigationHandler
+                        onNavigateBack = {
+                            navigationHandler.navigateBack()
+                        }
                     )
                 }
                 composable(
