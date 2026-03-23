@@ -8,6 +8,8 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Context.NOTIFICATION_SERVICE
 import android.content.Intent
+import android.media.AudioAttributes
+import android.media.RingtoneManager
 import android.os.Build
 import androidx.core.app.NotificationCompat
 import com.minhtu.firesocialmedia.R
@@ -156,12 +158,28 @@ class CallNotificationManager(private val context: Context) {
         context.getSystemService(NotificationManager::class.java).notify(PERMISSION_ID, notification)
     }
 
-    fun buildCallNotification(calleeName : String, callerId : String) : Notification {
+    fun buildCallNotification(calleeName: String, callerId: String): Notification {
+        val channelId = "call_channel_v2"
         val channelName = "Call Service"
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(channelId, channelName, NotificationManager.IMPORTANCE_HIGH)
-            context.getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
+            val channel = NotificationChannel(
+                channelId,
+                channelName,
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                // without this → no sound
+                setSound(
+                    RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE),
+                    AudioAttributes.Builder()
+                        .setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
+                        .build()
+                )
+                enableVibration(true)
+            }
+
+            context.getSystemService(NotificationManager::class.java)
+                .createNotificationChannel(channel)
         }
 
         val rejectIntent = Intent(context, CallActionBroadcastReceiver::class.java).apply {
@@ -176,14 +194,14 @@ class CallNotificationManager(private val context: Context) {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        val notification = NotificationCompat.Builder(context, channelId)
-            .setContentTitle("Incoming Call")
+        return NotificationCompat.Builder(context, channelId)
             .setContentTitle("Calling")
             .setContentText("You are calling $calleeName")
-            .addAction(R.drawable.ic_reject_call, "Stop", rejectPendingIntent)
             .setSmallIcon(R.drawable.notification)
             .setOngoing(true)
-
-        return notification.build()
+            .setCategory(NotificationCompat.CATEGORY_CALL)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .addAction(R.drawable.ic_reject_call, "Stop", rejectPendingIntent)
+            .build()
     }
 }

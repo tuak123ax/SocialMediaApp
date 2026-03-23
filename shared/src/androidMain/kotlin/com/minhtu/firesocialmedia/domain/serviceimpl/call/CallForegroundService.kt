@@ -221,6 +221,8 @@ class CallForegroundService : Service() {
                             onSendCallSessionResult = { result ->
                                 if(result) {
                                     showCallNotification(callNotificationManager.buildCallNotification(callee.name, caller.uid))
+                                    //Play ringtone
+                                    CallSoundManager.playRingtoneForCaller(applicationContext)
                                     sendNotification("Is calling you", sessionId, caller, callee, "CALL")
                                 } else {
                                     logMessage("onSendCallSessionResult", { "send call session fail" })
@@ -231,6 +233,8 @@ class CallForegroundService : Service() {
                                 CallEventFlow.answerVideoCallState.emit(false)
                             },
                             onAcceptCall = {
+                                //Stop ringtone
+                                CallSoundManager.stopRingtoneForCaller()
                                 //Emit event for UI
                                 CallEventFlow.events.value = CallEvent.AnswerReceived
                                 //Show timer notification
@@ -245,6 +249,8 @@ class CallForegroundService : Service() {
                                 handleIncomingVideoOffer(videoOffer)
                             },
                             onEndCall = {
+                                //Stop ringtone
+                                CallSoundManager.stopRingtoneForCaller()
                                 if(!isStopped) {
                                     logMessage("onEndCallCaller", { "caller" })
                                     handleEndCall()
