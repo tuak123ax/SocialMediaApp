@@ -123,7 +123,6 @@ class Search {
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-
                     BasicTextField(
                         value = query,
                         onValueChange = onQueryChange,
