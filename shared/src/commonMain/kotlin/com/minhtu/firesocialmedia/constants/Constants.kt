@@ -54,5 +54,6 @@ class Constants {
         const val KEY_CALLEE_ID = "callee_id"
         const val KEY_CALLEE_AVATAR = "callee_avatar"
         const val FROM_NOTIFICATION = "FROM_NOTIFICATION"
+        const val SUPPORT_FACEBOOK_LINK = "https://www.facebook.com/nguyen.minh.tu.311112"
     }
 }

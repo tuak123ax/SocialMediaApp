@@ -13,7 +13,8 @@ data class UserDTO(var email: String = "", var image: String = "", var name: Str
                    var notifications : ArrayList<NotificationDTO> = ArrayList(),
                    var friends : ArrayList<String> = ArrayList(),
                    var likedComments : HashMap<String,Int> = HashMap(),
-                   var groups: HashMap<String, GroupSummaryDTO> = HashMap()
+                   var groups: HashMap<String, GroupSummaryDTO> = HashMap(),
+                   var lastTimeChangePassword : Long = 0
 )
 {
     fun addFriend(friend: String){
@@ -51,6 +52,7 @@ fun UserDTO.toMap(): Map<String, Any?> = mapOf(
     "friendRequests" to friendRequests,
     "friends" to friends,
     "notifications" to notifications.map { it.toMap() },
-    "groups" to groups
+    "groups" to groups,
+    "lastTimeChangePassword" to lastTimeChangePassword
 )
 

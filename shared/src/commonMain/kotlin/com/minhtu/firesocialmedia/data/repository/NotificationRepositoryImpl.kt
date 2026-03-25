@@ -7,7 +7,6 @@ import com.minhtu.firesocialmedia.data.remote.constant.DataConstant
 import com.minhtu.firesocialmedia.data.remote.mapper.notification.toDomain
 import com.minhtu.firesocialmedia.data.remote.mapper.notification.toDto
 import com.minhtu.firesocialmedia.data.remote.mapper.user.toDTONotifications
-import com.minhtu.firesocialmedia.data.remote.mapper.user.toDto
 import com.minhtu.firesocialmedia.data.remote.service.database.DatabaseService
 import com.minhtu.firesocialmedia.domain.core.NetworkMonitor
 import com.minhtu.firesocialmedia.domain.entity.notification.NotificationInstance

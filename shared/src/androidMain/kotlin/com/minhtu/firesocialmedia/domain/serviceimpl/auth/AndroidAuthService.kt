@@ -1,27 +1,33 @@
 package com.minhtu.firesocialmedia.domain.serviceimpl.auth
 
-import android.app.Activity
 import android.content.Context
 import com.google.android.gms.auth.api.identity.SignInCredential
 import com.google.firebase.Firebase
 import com.google.firebase.FirebaseException
 import com.google.firebase.FirebaseNetworkException
 import com.google.firebase.FirebaseTooManyRequestsException
+import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthException
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.auth.FirebaseAuthInvalidUserException
 import com.google.firebase.auth.FirebaseAuthMultiFactorException
+import com.google.firebase.auth.FirebaseAuthRecentLoginRequiredException
 import com.google.firebase.auth.FirebaseAuthUserCollisionException
 import com.google.firebase.auth.FirebaseAuthWeakPasswordException
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.auth
+import com.google.firebase.database.FirebaseDatabase
 import com.minhtu.firesocialmedia.constants.Constants
+import com.minhtu.firesocialmedia.data.remote.dto.user.UserDTO
 import com.minhtu.firesocialmedia.data.remote.service.auth.AuthService
 import com.minhtu.firesocialmedia.domain.entity.forgotpassword.EmailExistResult
+import com.minhtu.firesocialmedia.domain.entity.settings.ChangePasswordState
+import com.minhtu.firesocialmedia.domain.error.changepassword.ChangePasswordError
 import com.minhtu.firesocialmedia.domain.error.signin.SignInError
 import com.minhtu.firesocialmedia.domain.error.signup.SignUpError
 import com.minhtu.firesocialmedia.platform.logMessage
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.tasks.await
 import kotlin.coroutines.cancellation.CancellationException
@@ -177,4 +183,73 @@ class AndroidAuthService(var context: Context) : AuthService{
                 }
             }
         }
+
+    override suspend fun reAuthenticate(
+        currentUserEmail: String,
+        currentPassword: String
+    ): Boolean {
+        val user = FirebaseAuth.getInstance().currentUser ?: return false
+
+        val credential = EmailAuthProvider.getCredential(currentUserEmail, currentPassword)
+
+        return try {
+            user.reauthenticate(credential).await()
+            true
+        } catch (_: Exception) {
+            false
+        }
+    }
+
+    override suspend fun changePassword(
+        userDTO: UserDTO,
+        newPassword: String,
+        userPath: String,
+        lastTimeChangePasswordPath: String): ChangePasswordState {
+        val user = FirebaseAuth.getInstance().currentUser
+            ?: return ChangePasswordState(false, ChangePasswordError.UserNotLoginError)
+
+        val databaseRef = FirebaseDatabase
+            .getInstance()
+            .reference
+            .child(userPath)
+            .child(userDTO.uid)
+            .child(lastTimeChangePasswordPath)
+
+        return try {
+            // STEP 1: Update Auth FIRST
+            user.updatePassword(newPassword).await()
+
+            // STEP 2: Update DB with retry (max 3 times)
+            var attempt = 0
+            var delayTime = 200L
+            var dbSuccess = false
+
+            while (attempt < 3 && !dbSuccess) {
+                try {
+                    databaseRef.setValue(System.currentTimeMillis()).await()
+                    dbSuccess = true
+                } catch (_: Exception) {
+                    attempt++
+                    if (attempt < 3) {
+                        delay(delayTime)
+                        delayTime = (delayTime * 2).coerceAtMost(1000L)
+                    }
+                }
+            }
+
+            // Accept inconsistency if still fails
+            if (!dbSuccess) {
+                 logMessage("changePassword",
+                     { "Failed to update DB after retries for user: ${userDTO.uid}" })
+            }
+
+            ChangePasswordState(true)
+
+        } catch (_: FirebaseAuthRecentLoginRequiredException) {
+            ChangePasswordState(false, ChangePasswordError.ReauthenticateRequiredError)
+
+        } catch (e: Exception) {
+            ChangePasswordState(false, ChangePasswordError.Unknown(e.message ?: ""))
+        }
+    }
 }

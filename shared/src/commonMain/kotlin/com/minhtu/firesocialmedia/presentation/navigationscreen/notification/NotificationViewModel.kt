@@ -1,7 +1,6 @@
 package com.minhtu.firesocialmedia.presentation.navigationscreen.notification
 
 import androidx.compose.runtime.snapshots.SnapshotStateList
-import androidx.compose.ui.graphics.Path
 import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
 import com.minhtu.firesocialmedia.domain.entity.news.isDefaultNewsInstance
 import com.minhtu.firesocialmedia.domain.entity.notification.NotificationInstance

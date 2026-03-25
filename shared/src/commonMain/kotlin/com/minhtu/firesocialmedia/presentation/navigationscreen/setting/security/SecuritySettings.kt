@@ -21,7 +21,6 @@ import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Devices
 import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.Security
-import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.ShieldMoon
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -45,12 +44,16 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.utils.UiUtils
+import com.minhtu.firesocialmedia.utils.Utils.Companion.toTimeAgo
 
 class SecuritySettings {
     companion object {
         @Composable
         fun SecuritySettingsScreen(
+            currentUser : UserInstance?,
+            paddingValues: PaddingValues,
             onNavigateBack: () -> Unit,
             onChangePassword: () -> Unit = {},
             onLoginActivity: () -> Unit = {},
@@ -62,6 +65,7 @@ class SecuritySettings {
                 modifier = Modifier
                     .fillMaxSize()
                     .background(Color.White)
+                    .padding(paddingValues)
             ) {
 
                 // Top bar
@@ -90,7 +94,7 @@ class SecuritySettings {
                         SecurityItem(
                             icon = Icons.Default.Key,
                             title = "Change Password",
-                            subtitle = "Last changed 3 months ago",
+                            subtitle = if(currentUser != null && currentUser.lastTimeChangePassword > 0) "Last changed ${currentUser.lastTimeChangePassword.toTimeAgo()}" else "Haven't changed password before",
                             onClick = onChangePassword
                         )
                     }

@@ -3,12 +3,12 @@ package com.minhtu.firesocialmedia.domain.serviceimpl.permission
 import android.Manifest
 import android.app.Activity
 import android.content.pm.PackageManager
-import java.lang.ref.WeakReference
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.minhtu.firesocialmedia.data.remote.service.permission.PermissionManager
 import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.suspendCancellableCoroutine
+import java.lang.ref.WeakReference
 
 class AndroidPermissionManager(activity: Activity?) : PermissionManager {
     private var continuation: CancellableContinuation<Boolean>? = null

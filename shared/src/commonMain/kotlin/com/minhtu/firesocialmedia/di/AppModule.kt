@@ -14,6 +14,7 @@ import com.minhtu.firesocialmedia.data.repository.LocalRepositoryImpl
 import com.minhtu.firesocialmedia.data.repository.NetworkRepositoryImpl
 import com.minhtu.firesocialmedia.data.repository.NewsRepositoryImpl
 import com.minhtu.firesocialmedia.data.repository.NotificationRepositoryImpl
+import com.minhtu.firesocialmedia.data.repository.SettingsRepositoryImpl
 import com.minhtu.firesocialmedia.data.repository.ShowImageRepositoryImpl
 import com.minhtu.firesocialmedia.data.repository.UserRepositoryImpl
 import com.minhtu.firesocialmedia.domain.interactor.comment.CommentInteractor
@@ -30,6 +31,7 @@ import com.minhtu.firesocialmedia.domain.repository.LocalRepository
 import com.minhtu.firesocialmedia.domain.repository.NetworkRepository
 import com.minhtu.firesocialmedia.domain.repository.NewsRepository
 import com.minhtu.firesocialmedia.domain.repository.NotificationRepository
+import com.minhtu.firesocialmedia.domain.repository.SettingsRepository
 import com.minhtu.firesocialmedia.domain.repository.ShowImageRepository
 import com.minhtu.firesocialmedia.domain.repository.UserRepository
 import com.minhtu.firesocialmedia.domain.usecases.call.InitializeCallUseCase
@@ -108,6 +110,9 @@ import com.minhtu.firesocialmedia.domain.usecases.notification.FindNewByIdInDbUs
 import com.minhtu.firesocialmedia.domain.usecases.notification.GetAllNotificationOfUserUseCase
 import com.minhtu.firesocialmedia.domain.usecases.notification.SaveNotificationToDatabaseUseCase
 import com.minhtu.firesocialmedia.domain.usecases.notification.UpdateIsReadStatusOfNotificationUseCase
+import com.minhtu.firesocialmedia.domain.usecases.settings.ChangePasswordUseCase
+import com.minhtu.firesocialmedia.domain.usecases.settings.ValidateNewPasswordUseCase
+import com.minhtu.firesocialmedia.domain.usecases.settings.VerifyCurrentPasswordUseCase
 import com.minhtu.firesocialmedia.domain.usecases.showimage.DownloadImageUseCase
 import com.minhtu.firesocialmedia.domain.usecases.signin.CheckLocalAccountUseCase
 import com.minhtu.firesocialmedia.domain.usecases.signin.CheckUserExistsUseCase
@@ -725,5 +730,21 @@ object AppModule {
 
     fun provideUpdateSpeakerStatusUseCase(callRepository: CallRepository) : UpdateSpeakerStatusUseCase{
         return UpdateSpeakerStatusUseCase(callRepository)
+    }
+
+    fun provideSettingsRepository(platformContext: PlatformContext) : SettingsRepository {
+        return SettingsRepositoryImpl(platformContext.auth)
+    }
+
+    fun provideVerifyCurrentPasswordUseCase(settingsRepository: SettingsRepository) : VerifyCurrentPasswordUseCase {
+        return VerifyCurrentPasswordUseCase(settingsRepository)
+    }
+
+    fun provideValidateNewPasswordUseCase() : ValidateNewPasswordUseCase {
+        return ValidateNewPasswordUseCase()
+    }
+
+    fun provideChangePasswordUseCase(settingsRepository: SettingsRepository) : ChangePasswordUseCase {
+        return ChangePasswordUseCase(settingsRepository)
     }
 }

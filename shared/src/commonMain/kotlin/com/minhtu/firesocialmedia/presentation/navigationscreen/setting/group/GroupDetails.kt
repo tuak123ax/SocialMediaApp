@@ -87,7 +87,6 @@ import com.minhtu.firesocialmedia.domain.entity.group.GroupInstance
 import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.platform.CommonBackHandler
-import com.minhtu.firesocialmedia.platform.CrossPlatformIcon
 import com.minhtu.firesocialmedia.platform.getImageBytesFromDrawable
 import com.minhtu.firesocialmedia.platform.showToast
 import com.minhtu.firesocialmedia.presentation.home.HomeViewModel
@@ -99,7 +98,6 @@ import com.minhtu.firesocialmedia.utils.UiUtils
 import com.minhtu.firesocialmedia.utils.UiUtils.Companion.LazyColumnOfNewsWithSlideOutAnimationAndLoadMore
 import com.minhtu.firesocialmedia.utils.UiUtils.Companion.SearchUserCard
 import com.minhtu.firesocialmedia.utils.UiUtils.Companion.ShareBottomSheet
-import com.minhtu.firesocialmedia.utils.UiUtils.Companion.UserRow
 import com.minhtu.firesocialmedia.utils.Utils.Companion.convertToNumberString
 import com.seiko.imageloader.ui.AutoSizeImage
 import kotlinx.coroutines.async

@@ -46,7 +46,8 @@ import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.outlined.Block
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Badge
@@ -113,6 +114,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -2367,6 +2370,80 @@ class UiUtils {
                         }
                     )
                 }
+            }
+        }
+
+        @Composable
+        fun PasswordField(
+            label: String,
+            value: String,
+            onValueChange: (String) -> Unit,
+            isVisible: Boolean,
+            onToggleVisibility: () -> Unit
+        ) {
+            Column {
+                Text(
+                    text = label,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                OutlinedTextField(
+                    value = value,
+                    onValueChange = onValueChange,
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    visualTransformation = if (isVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                    trailingIcon = {
+                        IconButton(onClick = onToggleVisibility) {
+                            Icon(
+                                imageVector = if (isVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                                contentDescription = null
+                            )
+                        }
+                    },
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                        focusedLabelColor = MaterialTheme.colorScheme.primary
+                    )
+                )
+            }
+        }
+
+        @Composable
+        fun QuestionTextAndClickableText(
+            questionText : String,
+            questionTextColor : Color = Color.Black,
+            clickableText : String,
+            clickableTextColor : Color = Color.Black,
+            onClick: () -> Unit,
+            modifier: Modifier = Modifier
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = questionText,
+                    color = questionTextColor,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+
+                Spacer(Modifier.width(5.dp))
+
+                Text(
+                    text = clickableText,
+                    color = clickableTextColor,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold,
+                    modifier = modifier
+                        .clickable {
+                            onClick()
+                        }
+                )
             }
         }
     }

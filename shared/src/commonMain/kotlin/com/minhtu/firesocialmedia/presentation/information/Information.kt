@@ -52,7 +52,6 @@ import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
 import com.minhtu.firesocialmedia.presentation.signup.SignUpViewModel
 import com.minhtu.firesocialmedia.utils.UiUtils
 import com.minhtu.sharedmodule.ui.theme.avatarGrayBackground
-import com.minhtu.sharedmodule.ui.theme.memberCardColor
 
 class Information {
     companion object{

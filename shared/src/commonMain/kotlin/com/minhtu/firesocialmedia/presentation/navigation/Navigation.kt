@@ -36,7 +36,6 @@ import com.minhtu.firesocialmedia.domain.entity.home.deeplinks.DeepLinksData
 import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.platform.generateImageLoader
-import com.minhtu.firesocialmedia.platform.logMessage
 import com.minhtu.firesocialmedia.platform.platformViewModel
 import com.minhtu.firesocialmedia.platform.rememberPlatformImagePicker
 import com.minhtu.firesocialmedia.platform.setupSignInLauncher
@@ -77,6 +76,8 @@ import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.Se
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.notificationconfigs.NotificationConfigs
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.notificationconfigs.NotificationConfigsViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.privacy.Privacy
+import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security.ChangePassword
+import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security.ChangePasswordViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security.SecuritySettings
 import com.minhtu.firesocialmedia.presentation.postinformation.PostInformation
 import com.minhtu.firesocialmedia.presentation.postinformation.PostInformationViewModel
@@ -133,6 +134,7 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
     val manageMembersViewModel : ManageMembersViewModel = platformViewModel { ViewModelProvider.createManageMembersViewModel(platformContext) }
     val exploreGroupViewModel : ExploreGroupViewModel = platformViewModel { ViewModelProvider.createExploreGroupViewModel(platformContext) }
     val notificationConfigsViewModel : NotificationConfigsViewModel = platformViewModel { ViewModelProvider.createNotificationConfigsViewModel(platformContext) }
+    val changePasswordViewModel : ChangePasswordViewModel =platformViewModel { ViewModelProvider.createChangePasswordViewModel(platformContext) }
 
     var updateNew : NewsInstance? = null
     lateinit var relatedNew : NewsInstance
@@ -265,7 +267,13 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                             .fillMaxSize()
                             .background(Color(0xFF132026)),
                         onNavigateToSignInScreen = {
-                            navController.popBackStack() },
+                            navController.navigate(SignIn.getScreenName()) {
+                                popUpTo(0) {
+                                    inclusive = true
+                                }
+                                launchSingleTop = true
+                            }
+                        },
                         onNavigateToInformationScreen = { navController.navigate(route = Information.getScreenName()) }
                     )
                 }
@@ -534,7 +542,12 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                         forgotPasswordViewModel,
                         loadingViewModel,
                         onNavigateToSignInScreen = {
-                            navController.popBackStack()
+                            navController.navigate(SignIn.getScreenName()) {
+                                popUpTo(0) {
+                                    inclusive = true
+                                }
+                                launchSingleTop = true
+                            }
                         }
                     )
                 }
@@ -1164,8 +1177,13 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                     popExitTransition = DefaultNavAnimations.popExit
                 ) {
                     SecuritySettings.SecuritySettingsScreen(
+                        homeViewModel.currentUser,
+                        paddingValues,
                         onNavigateBack = {
                             navController.popBackStack()
+                        },
+                        onChangePassword = {
+                            navController.navigate(ChangePassword.getScreenName())
                         }
                     )
                 }
@@ -1180,6 +1198,35 @@ fun SetUpNavigation(context: Any, platformContext : PlatformContext) {
                     NotificationConfigs.NotificationConfigsScreen(
                         paddingValues,
                         notificationConfigsViewModel,
+                        onNavigateBack = {
+                            navController.popBackStack()
+                        }
+                    )
+                }
+
+                composable(
+                    route = ChangePassword.getScreenName(),
+                    enterTransition = DefaultNavAnimations.enter,
+                    popEnterTransition = DefaultNavAnimations.popEnter,
+                    exitTransition = DefaultNavAnimations.exit,
+                    popExitTransition = DefaultNavAnimations.popExit
+                ) {
+                    ChangePassword.ChangePasswordScreen(
+                        paddingValues,
+                        currentUser = if(homeViewModel.currentUser != null) homeViewModel.currentUser!! else UserInstance(),
+                        changePasswordViewModel = changePasswordViewModel,
+                        loadingViewModel = loadingViewModel,
+                        onNavigateToForgotPasswordScreen = {
+                            navController.navigate(ForgotPassword.getScreenName())
+                        },
+                        onNavigateToSignInScreen = {
+                            navController.navigate(SignIn.getScreenName()) {
+                                popUpTo(0) {
+                                    inclusive = true
+                                }
+                                launchSingleTop = true
+                            }
+                        },
                         onNavigateBack = {
                             navController.popBackStack()
                         }

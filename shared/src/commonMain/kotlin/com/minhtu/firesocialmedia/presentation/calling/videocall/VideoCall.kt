@@ -46,7 +46,6 @@ import com.minhtu.firesocialmedia.platform.logMessage
 import com.minhtu.firesocialmedia.platform.showToast
 import com.minhtu.firesocialmedia.presentation.loading.Loading
 import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
-import com.minhtu.firesocialmedia.utils.NavigationHandler
 import com.minhtu.sharedmodule.ui.theme.activeColor
 import com.minhtu.sharedmodule.ui.theme.inactiveColor
 

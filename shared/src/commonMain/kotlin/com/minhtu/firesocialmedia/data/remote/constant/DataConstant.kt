@@ -23,5 +23,6 @@ class DataConstant {
         const val MEMBERS_PATH = "members"
         const val DEEP_LINK = "https://firechat-aa433.web.app"
         const val MEMBER_COUNT_PATH = "memberCount"
+        const val LAST_TIME_CHANGE_PASSWORD_PATH = "lastTimeChangePassword"
     }
 }

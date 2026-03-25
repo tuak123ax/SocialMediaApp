@@ -1,6 +1,5 @@
 package com.minhtu.firesocialmedia.data.remote.dto.news
 
-import com.minhtu.firesocialmedia.domain.core.DecentralizationType
 import com.minhtu.firesocialmedia.domain.entity.base.BaseNewsInstance
 import com.minhtu.firesocialmedia.domain.entity.base.CountInterface
 import kotlinx.serialization.Serializable

@@ -1,8 +1,5 @@
 package com.minhtu.firesocialmedia.di
 
-import com.minhtu.firesocialmedia.di.AppModule
-import com.minhtu.firesocialmedia.domain.repository.GroupRepository
-import com.minhtu.firesocialmedia.domain.usecases.group.FetchGroupInfoUseCase
 import com.minhtu.firesocialmedia.presentation.calling.audiocall.CallingViewModel
 import com.minhtu.firesocialmedia.presentation.calling.videocall.VideoCallViewModel
 import com.minhtu.firesocialmedia.presentation.comment.CommentViewModel
@@ -19,6 +16,7 @@ import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.In
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.ManageMembersViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.SelectGroupViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.notificationconfigs.NotificationConfigsViewModel
+import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security.ChangePasswordViewModel
 import com.minhtu.firesocialmedia.presentation.postinformation.PostInformationViewModel
 import com.minhtu.firesocialmedia.presentation.search.SearchViewModel
 import com.minhtu.firesocialmedia.presentation.showimage.ShowImageViewModel
@@ -381,5 +379,17 @@ object ViewModelProvider {
 
     fun createNotificationConfigsViewModel(platformContext: PlatformContext): NotificationConfigsViewModel {
         return NotificationConfigsViewModel()
+    }
+
+    fun createChangePasswordViewModel(platformContext: PlatformContext): ChangePasswordViewModel {
+        val settingsRepository = AppModule.provideSettingsRepository(platformContext)
+        val verifyCurrentPasswordUseCase = AppModule.provideVerifyCurrentPasswordUseCase(settingsRepository)
+        val validateNewPasswordUseCase = AppModule.provideValidateNewPasswordUseCase()
+        val changePasswordUseCase = AppModule.provideChangePasswordUseCase(settingsRepository)
+        return ChangePasswordViewModel(
+            verifyCurrentPasswordUseCase,
+            validateNewPasswordUseCase,
+            changePasswordUseCase
+        )
     }
 }

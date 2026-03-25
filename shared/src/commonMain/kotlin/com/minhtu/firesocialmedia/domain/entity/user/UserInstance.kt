@@ -11,7 +11,8 @@ data class UserInstance(var email: String = "", var image: String = "", var name
                         var notifications : ArrayList<NotificationInstance> = ArrayList(),
                         var friends : ArrayList<String> = ArrayList(),
                         var likedComments : HashMap<String,Int> = HashMap(),
-                        var groups: HashMap<String, GroupInstance> = HashMap()
+                        var groups: HashMap<String, GroupInstance> = HashMap(),
+                        var lastTimeChangePassword: Long = 0
 )
 {
     fun addFriend(friend: String){
@@ -49,6 +50,7 @@ fun UserInstance.toMap(): Map<String, Any?> = mapOf(
     "friendRequests" to friendRequests,
     "friends" to friends,
     "notifications" to notifications.map { it.toMap() },
-    "groups" to groups
+    "groups" to groups,
+    "lastTimeChangePassword" to lastTimeChangePassword
 )
 
