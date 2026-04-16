@@ -34,10 +34,13 @@ import com.minhtu.firesocialmedia.platform.logMessage
 import com.minhtu.firesocialmedia.utils.Utils
 import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
+import kotlinx.io.IOException
 import java.io.File
 
 class AndroidDatabaseHelper {
@@ -1653,6 +1656,42 @@ class AndroidDatabaseHelper {
             } catch (e: Exception) {
                 Result.failure(e)
             }
+        }
+
+        suspend fun updateTwoFAEnabledFlagForUser(
+            userId: String,
+            twoFAEnabled: Boolean,
+            userPath: String,
+            twoFaEnabledPath: String
+        ): Boolean {
+            val ref = FirebaseDatabase.getInstance()
+                .reference
+                .child(userPath)
+                .child(userId)
+                .child(twoFaEnabledPath)
+
+            var delayTime = 200L
+
+            repeat(3) { attempt ->
+                try {
+                    withTimeout(3000) {
+                        ref.setValue(twoFAEnabled).await()
+                    }
+                    return true
+                } catch (e: Exception) {
+                    val shouldRetry = e is IOException
+
+                    if (attempt < 2 && shouldRetry) {
+                        delay(delayTime)
+                        delayTime *= 2
+                    } else {
+                        Log.e("Firebase", "Failed to update 2FA flag", e)
+                        return false
+                    }
+                }
+            }
+
+            return false
         }
     }
 }

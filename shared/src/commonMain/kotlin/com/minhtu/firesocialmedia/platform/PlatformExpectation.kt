@@ -5,8 +5,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
+import com.minhtu.firesocialmedia.domain.entity.authentication.TwoFARequest
+import com.minhtu.firesocialmedia.domain.entity.authentication.TwoFAResponse
 import com.minhtu.firesocialmedia.data.remote.service.imagepicker.ImagePicker
 import com.minhtu.firesocialmedia.di.PlatformContext
 import com.minhtu.firesocialmedia.domain.entity.home.deeplinks.ShareApp
@@ -87,6 +90,7 @@ expect fun createMessageForServer(message: String, tokenList : ArrayList<String>
 expect fun createCallMessage(message: String, tokenList : ArrayList<String>, sessionId : String, sender : UserInstance, receiver : UserInstance, type : String) : String
 
 expect fun sendMessageToServer(request: String)
+expect suspend fun send2FARequest(request: TwoFARequest) : TwoFAResponse
 
 expect object TokenStorage {
     fun updateTokenInStorage(token: String?)
@@ -188,3 +192,8 @@ expect suspend fun queryShareApps(text: String): MutableList<ShareApp>
 expect fun launchShareAppWithDeepLink(app : ShareApp, deepLink : String)
 
 expect fun getAppVersion(): String
+
+expect fun generateQrImage(content: String): ImageBitmap
+expect object AppConfig {
+    val twoFAApiKey: String
+}

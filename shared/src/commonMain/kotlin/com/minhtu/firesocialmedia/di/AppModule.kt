@@ -110,8 +110,17 @@ import com.minhtu.firesocialmedia.domain.usecases.notification.FindNewByIdInDbUs
 import com.minhtu.firesocialmedia.domain.usecases.notification.GetAllNotificationOfUserUseCase
 import com.minhtu.firesocialmedia.domain.usecases.notification.SaveNotificationToDatabaseUseCase
 import com.minhtu.firesocialmedia.domain.usecases.notification.UpdateIsReadStatusOfNotificationUseCase
+import com.minhtu.firesocialmedia.domain.usecases.settings.BuildOtpAuthUrlUseCase
 import com.minhtu.firesocialmedia.domain.usecases.settings.ChangePasswordUseCase
+import com.minhtu.firesocialmedia.domain.usecases.settings.CopyUseCase
+import com.minhtu.firesocialmedia.domain.usecases.settings.Disable2FAUseCase
+import com.minhtu.firesocialmedia.domain.usecases.settings.Enable2FAUseCase
+import com.minhtu.firesocialmedia.domain.usecases.settings.GenerateSecretFor2FAUseCase
+import com.minhtu.firesocialmedia.domain.usecases.settings.Get2FAVerifiedStatusUseCase
+import com.minhtu.firesocialmedia.domain.usecases.settings.UpdateVerify2FASuccessUseCase
 import com.minhtu.firesocialmedia.domain.usecases.settings.ValidateNewPasswordUseCase
+import com.minhtu.firesocialmedia.domain.usecases.settings.Verify2FAUseCase
+import com.minhtu.firesocialmedia.domain.usecases.settings.VerifyBackupCodeUseCase
 import com.minhtu.firesocialmedia.domain.usecases.settings.VerifyCurrentPasswordUseCase
 import com.minhtu.firesocialmedia.domain.usecases.showimage.DownloadImageUseCase
 import com.minhtu.firesocialmedia.domain.usecases.signin.CheckLocalAccountUseCase
@@ -175,13 +184,17 @@ object AppModule {
                                rememberPasswordUseCase: RememberPasswordUseCase,
                                checkUserExistsUseCase: CheckUserExistsUseCase,
                                checkLocalAccountUseCase : CheckLocalAccountUseCase,
-                               handleSignInGoogleResult: HandleSignInGoogleResultUseCase) : SignInViewModel{
+                               handleSignInGoogleResult: HandleSignInGoogleResultUseCase,
+                               getCurrentUserUidUseCase: GetCurrentUserUidUseCase,
+                               getUserUseCase: GetUserUseCase) : SignInViewModel{
         return SignInViewModel(
             signInUseCase,
             rememberPasswordUseCase,
             checkUserExistsUseCase,
             checkLocalAccountUseCase,
-            handleSignInGoogleResult
+            handleSignInGoogleResult,
+            getCurrentUserUidUseCase,
+            getUserUseCase
         )
     }
 
@@ -260,8 +273,8 @@ object AppModule {
     fun provideUpdateFCMTokenUseCase(userRepository: UserRepository) : UpdateFCMTokenUseCase {
         return UpdateFCMTokenUseCase(userRepository)
     }
-    fun provideClearAccountUseCase(homeRepository: AuthenticationRepository) : ClearAccountUseCase {
-        return ClearAccountUseCase(homeRepository)
+    fun provideClearAccountUseCase(authenticationRepository: AuthenticationRepository) : ClearAccountUseCase {
+        return ClearAccountUseCase(authenticationRepository)
     }
     fun provideUpdateCountValueInDatabase(commonDbRepository: CommonDbRepository) : UpdateLikeCountForNewUseCase {
         return UpdateLikeCountForNewUseCase(commonDbRepository)
@@ -733,7 +746,11 @@ object AppModule {
     }
 
     fun provideSettingsRepository(platformContext: PlatformContext) : SettingsRepository {
-        return SettingsRepositoryImpl(platformContext.auth)
+        return SettingsRepositoryImpl(
+            platformContext.auth,
+            platformContext.database,
+            platformContext.clipboard,
+            platformContext.crypto)
     }
 
     fun provideVerifyCurrentPasswordUseCase(settingsRepository: SettingsRepository) : VerifyCurrentPasswordUseCase {
@@ -746,5 +763,42 @@ object AppModule {
 
     fun provideChangePasswordUseCase(settingsRepository: SettingsRepository) : ChangePasswordUseCase {
         return ChangePasswordUseCase(settingsRepository)
+    }
+
+    fun provideGenerateSecretFor2FAUseCase(settingsRepository: SettingsRepository) : GenerateSecretFor2FAUseCase {
+        return GenerateSecretFor2FAUseCase(settingsRepository)
+    }
+
+    fun provideBuildOtpAuthUrlUseCase() : BuildOtpAuthUrlUseCase {
+        return BuildOtpAuthUrlUseCase()
+    }
+
+    fun provideCopyUseCase(settingsRepository: SettingsRepository) : CopyUseCase {
+        return CopyUseCase(settingsRepository)
+    }
+
+    fun provideEnable2FAUseCase(settingsRepository: SettingsRepository) : Enable2FAUseCase {
+        return Enable2FAUseCase(settingsRepository)
+    }
+
+    fun provideDisable2FAUseCase(settingsRepository: SettingsRepository) : Disable2FAUseCase {
+        return Disable2FAUseCase(settingsRepository)
+
+    }
+
+    fun provideVerify2FAUseCase(settingsRepository: SettingsRepository) : Verify2FAUseCase {
+        return Verify2FAUseCase(settingsRepository)
+    }
+
+    fun provideVerifyBackupCodeUseCase(settingsRepository: SettingsRepository) : VerifyBackupCodeUseCase {
+        return VerifyBackupCodeUseCase(settingsRepository)
+    }
+
+    fun provideUpdateVerify2FASuccessUseCase(settingsRepository: SettingsRepository) : UpdateVerify2FASuccessUseCase {
+        return UpdateVerify2FASuccessUseCase(settingsRepository)
+    }
+
+    fun provideGet2FAVerifiedStatusUseCase(settingsRepository: SettingsRepository) : Get2FAVerifiedStatusUseCase {
+        return Get2FAVerifiedStatusUseCase(settingsRepository)
     }
 }

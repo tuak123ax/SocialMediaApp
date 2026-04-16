@@ -289,4 +289,11 @@ interface DatabaseService {
         uid: String,
         userPath: String,
         notificationPath: String): Result<Unit>
+
+    suspend fun updateTwoFAEnabledFlagForUser(
+        userId: String,
+        twoFAEnabled: Boolean,
+        userPath: String,
+        twoFaEnabledPath: String
+    ) : Boolean
 }

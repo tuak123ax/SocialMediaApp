@@ -7,6 +7,7 @@ import com.minhtu.firesocialmedia.presentation.forgotpassword.ForgotPasswordView
 import com.minhtu.firesocialmedia.presentation.home.HomeViewModel
 import com.minhtu.firesocialmedia.presentation.information.InformationViewModel
 import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
+import com.minhtu.firesocialmedia.presentation.navigation.RouterViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.friend.FriendViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.notification.NotificationViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.CreateGroupViewModel
@@ -16,7 +17,12 @@ import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.In
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.ManageMembersViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.SelectGroupViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.notificationconfigs.NotificationConfigsViewModel
-import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security.ChangePasswordViewModel
+import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security.SecuritySettingsViewModel
+import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security.changepassword.ChangePasswordViewModel
+import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security.twoFA.BackUpCodeViewModel
+import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security.twoFA.TwoFAViewModel
+import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security.twoFA.TwoFactorEnabledViewModel
+import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security.twoFA.VerifyOTPViewModel
 import com.minhtu.firesocialmedia.presentation.postinformation.PostInformationViewModel
 import com.minhtu.firesocialmedia.presentation.search.SearchViewModel
 import com.minhtu.firesocialmedia.presentation.showimage.ShowImageViewModel
@@ -26,19 +32,28 @@ import com.minhtu.firesocialmedia.presentation.uploadnewsfeed.UploadNewfeedViewM
 import com.minhtu.firesocialmedia.presentation.userinformation.UserInformationViewModel
 
 object ViewModelProvider {
-    fun createSignInViewModel(platformContext: PlatformContext) : SignInViewModel {
+    fun createSignInViewModel(platformContext: PlatformContext): SignInViewModel {
         val authenticationRepository = AppModule.provideAuthenticationRepository(platformContext)
+        val userRepository = AppModule.provideUserRepository(platformContext)
         val signInUseCase = AppModule.provideSignInUseCase(authenticationRepository)
-        val rememberPasswordUseCase = AppModule.provideRememberPasswordUseCase(authenticationRepository)
-        val checkUserExistsUseCase = AppModule.provideCheckUserExistsUseCase(authenticationRepository)
-        val checkLocalAccountUseCase = AppModule.provideCheckLocalAccountUseCase(authenticationRepository)
-        val handleSignInGoogleResult = AppModule.provideHandleSignInGoogleResultUseCase(authenticationRepository)
+        val rememberPasswordUseCase =
+            AppModule.provideRememberPasswordUseCase(authenticationRepository)
+        val checkUserExistsUseCase =
+            AppModule.provideCheckUserExistsUseCase(authenticationRepository)
+        val checkLocalAccountUseCase =
+            AppModule.provideCheckLocalAccountUseCase(authenticationRepository)
+        val handleSignInGoogleResult =
+            AppModule.provideHandleSignInGoogleResultUseCase(authenticationRepository)
+        val getCurrentUserUidUseCase = AppModule.provideGetCurrentUserUidUseCase(userRepository)
+        val getUserUseCase = AppModule.provideGetUserUseCase(userRepository)
         return AppModule.provideSignInViewModel(
             signInUseCase,
             rememberPasswordUseCase,
             checkUserExistsUseCase,
             checkLocalAccountUseCase,
-            handleSignInGoogleResult
+            handleSignInGoogleResult,
+            getCurrentUserUidUseCase,
+            getUserUseCase
         )
     }
 
@@ -48,36 +63,39 @@ object ViewModelProvider {
         return AppModule.provideSignUpViewModel(signUpUseCase)
     }
 
-    fun createForgotPasswordViewModel(platformContext: PlatformContext) : ForgotPasswordViewModel {
+    fun createForgotPasswordViewModel(platformContext: PlatformContext): ForgotPasswordViewModel {
         val forgotPasswordRepository = AppModule.provideForgotPasswordRepository(platformContext)
-        val checkIfEmailExistsUseCase = AppModule.provideCheckIfEmailExistsUseCase(forgotPasswordRepository)
-        val sendEmailResetPasswordUseCase = AppModule.provideSendEmailResetPasswordUseCase(forgotPasswordRepository)
+        val checkIfEmailExistsUseCase =
+            AppModule.provideCheckIfEmailExistsUseCase(forgotPasswordRepository)
+        val sendEmailResetPasswordUseCase =
+            AppModule.provideSendEmailResetPasswordUseCase(forgotPasswordRepository)
         return AppModule.provideForgotPasswordViewModel(
             checkIfEmailExistsUseCase,
             sendEmailResetPasswordUseCase
         )
     }
 
-    fun createInformationViewModel(platformContext: PlatformContext) : InformationViewModel {
+    fun createInformationViewModel(platformContext: PlatformContext): InformationViewModel {
         val informationRepository = AppModule.provideInformationRepository(platformContext)
         val userRepository = AppModule.provideUserRepository(platformContext)
         val localRepository = AppModule.provideLocalRepository(platformContext)
 
-        val saveSignUpInformationUseCase = AppModule.provideSaveSignUpInformationUseCase(informationRepository)
+        val saveSignUpInformationUseCase =
+            AppModule.provideSaveSignUpInformationUseCase(informationRepository)
         val getCurrentUserUidUseCase = AppModule.provideGetCurrentUserUidUseCase(userRepository)
         val getFCMTokenUseCase = AppModule.provideGetFCMTokenUseCase(localRepository)
         return AppModule.provideInformationViewModel(
             saveSignUpInformationUseCase,
             getCurrentUserUidUseCase,
             getFCMTokenUseCase
-            )
+        )
     }
 
-    fun createLoadingViewModel() : LoadingViewModel {
+    fun createLoadingViewModel(): LoadingViewModel {
         return AppModule.provideLoadingViewModel()
     }
 
-    fun createHomeViewModel(platformContext: PlatformContext) : HomeViewModel {
+    fun createHomeViewModel(platformContext: PlatformContext): HomeViewModel {
         val authenticationRepository = AppModule.provideAuthenticationRepository(platformContext)
         val notificationRepository = AppModule.provideNotificationRepository(platformContext)
         val commonDbRepository = AppModule.provideCommonDbRepository(platformContext)
@@ -88,23 +106,34 @@ object ViewModelProvider {
         val getCurrentUserUidUseCase = AppModule.provideGetCurrentUserUidUseCase(userRepository)
         val getUserUseCase = AppModule.provideGetUserUseCase(userRepository)
         val getLatestNewsUseCase = AppModule.provideGetLatestNewsUseCase(newsRepository)
-        val getAllNotificationOfUserUseCase = AppModule.provideGetAllNotificationOfUserUseCase(notificationRepository)
+        val getAllNotificationOfUserUseCase =
+            AppModule.provideGetAllNotificationOfUserUseCase(notificationRepository)
         val updateFCMTokenUseCase = AppModule.provideUpdateFCMTokenUseCase(userRepository)
         val clearAccountUseCase = AppModule.provideClearAccountUseCase(authenticationRepository)
-        val saveValueToDatabaseUseCase = AppModule.provideSaveValueToDatabaseUseCase(commonDbRepository)
-        val updateCountValueInDatabase = AppModule.provideUpdateCountValueInDatabase(commonDbRepository)
-        val deleteNewsFromDatabaseUseCase = AppModule.provideDeleteNewsFromDatabaseUseCase(newsRepository)
+        val saveValueToDatabaseUseCase =
+            AppModule.provideSaveValueToDatabaseUseCase(commonDbRepository)
+        val updateCountValueInDatabase =
+            AppModule.provideUpdateCountValueInDatabase(commonDbRepository)
+        val deleteNewsFromDatabaseUseCase =
+            AppModule.provideDeleteNewsFromDatabaseUseCase(newsRepository)
         val sendSignalingDataUseCase = AppModule.provideSendSignalingDataUseCase(callRepository)
-        val observePhoneCallWithInCallUseCase = AppModule.provideObservePhoneCallWithInCallUseCase(sendSignalingDataUseCase)
-        val stopObservePhoneCallUseCase = AppModule.provideStopObservePhoneCallUseCase(sendSignalingDataUseCase)
-        val saveNotificationToDatabaseUseCase = AppModule.provideSaveNotificationToDatabaseUseCase(notificationRepository)
-        val deleteNotificationFromDatabaseUseCase = AppModule.provideDeleteNotificationFromDatabaseUseCase(notificationRepository)
+        val observePhoneCallWithInCallUseCase =
+            AppModule.provideObservePhoneCallWithInCallUseCase(sendSignalingDataUseCase)
+        val stopObservePhoneCallUseCase =
+            AppModule.provideStopObservePhoneCallUseCase(sendSignalingDataUseCase)
+        val saveNotificationToDatabaseUseCase =
+            AppModule.provideSaveNotificationToDatabaseUseCase(notificationRepository)
+        val deleteNotificationFromDatabaseUseCase =
+            AppModule.provideDeleteNotificationFromDatabaseUseCase(notificationRepository)
         val searchUserByNameUseCase = AppModule.provideSearchUserByNameUseCase(userRepository)
         val stopCallServiceUseCase = AppModule.provideStopCallServiceUseCase(callRepository)
-        val storeUserFriendsToRoomUseCase = AppModule.provideStoreUserFriendsToRoomUseCase(localRepository)
+        val storeUserFriendsToRoomUseCase =
+            AppModule.provideStoreUserFriendsToRoomUseCase(localRepository)
         val storeNewsToRoomUseCase = AppModule.provideStoreNewsToRoomUseCase(localRepository)
-        val storeNotificationsToRoomUseCase = AppModule.provideStoreNotificationsToRoomUseCase(localRepository)
-        val saveCurrentUserInfoUseCase = AppModule.provideSaveCurrentUserInfoUseCase(localRepository)
+        val storeNotificationsToRoomUseCase =
+            AppModule.provideStoreNotificationsToRoomUseCase(localRepository)
+        val saveCurrentUserInfoUseCase =
+            AppModule.provideSaveCurrentUserInfoUseCase(localRepository)
         val clearLocalDataUseCase = AppModule.provideClearLocalDataUseCase(commonDbRepository)
         val saveNewToDatabaseUseCase = AppModule.provideSaveNewToDatabaseUseCase(commonDbRepository)
         val findNewByIdInDbUseCase = AppModule.provideFindNewByIdInDbUseCase(newsRepository)
@@ -148,16 +177,20 @@ object ViewModelProvider {
         )
     }
 
-    fun createCommentViewModel(platformContext: PlatformContext) : CommentViewModel{
+    fun createCommentViewModel(platformContext: PlatformContext): CommentViewModel {
         val userRepository = AppModule.provideUserRepository(platformContext)
         val notificationRepository = AppModule.provideNotificationRepository(platformContext)
         val commonDbRepository = AppModule.provideCommonDbRepository(platformContext)
         val commentRepository = AppModule.provideCommentRepository(platformContext)
         val getUserUseCase = AppModule.provideGetUserUseCase(userRepository)
-        val saveCommentToDatabaseUseCase = AppModule.provideSaveCommentToDatabaseUseCase(commonDbRepository)
-        val saveSubCommentToDatabaseUseCase = AppModule.provideSaveSubCommentToDatabaseUseCase(commonDbRepository)
-        val deleteCommentFromDatabaseUseCase = AppModule.provideDeleteCommentFromDatabaseUseCase(commonDbRepository)
-        val deleteSubCommentFromDatabaseUseCase = AppModule.provideDeleteSubCommentFromDatabaseUseCase(commonDbRepository)
+        val saveCommentToDatabaseUseCase =
+            AppModule.provideSaveCommentToDatabaseUseCase(commonDbRepository)
+        val saveSubCommentToDatabaseUseCase =
+            AppModule.provideSaveSubCommentToDatabaseUseCase(commonDbRepository)
+        val deleteCommentFromDatabaseUseCase =
+            AppModule.provideDeleteCommentFromDatabaseUseCase(commonDbRepository)
+        val deleteSubCommentFromDatabaseUseCase =
+            AppModule.provideDeleteSubCommentFromDatabaseUseCase(commonDbRepository)
         val getAllCommentsUseCase = AppModule.provideGetAllCommentsUseCase(commentRepository)
         val commentInteractor = AppModule.provideCommentInteractor(
             saveCommentToDatabaseUseCase,
@@ -167,11 +200,16 @@ object ViewModelProvider {
             getAllCommentsUseCase
         )
         val saveLikedCommentsUseCase = AppModule.provideSaveLikedCommentsUseCase(commonDbRepository)
-        val saveNotificationToDatabaseUseCase = AppModule.provideSaveNotificationToDatabaseUseCase(notificationRepository)
-        val updateCommentCountForNewUseCase = AppModule.provideUpdateCommentCountForNewUseCase(commonDbRepository)
-        val updateReplyCountForCommentUseCase = AppModule.provideUpdateReplyCountForCommentUseCase(commonDbRepository)
-        val updateLikeCountForCommentUseCase = AppModule.provideUpdateLikeCountForCommentUseCase(commonDbRepository)
-        val updateLikeCountForSubCommentUseCase = AppModule.provideUpdateLikeCountForSubCommentUseCase(commonDbRepository)
+        val saveNotificationToDatabaseUseCase =
+            AppModule.provideSaveNotificationToDatabaseUseCase(notificationRepository)
+        val updateCommentCountForNewUseCase =
+            AppModule.provideUpdateCommentCountForNewUseCase(commonDbRepository)
+        val updateReplyCountForCommentUseCase =
+            AppModule.provideUpdateReplyCountForCommentUseCase(commonDbRepository)
+        val updateLikeCountForCommentUseCase =
+            AppModule.provideUpdateLikeCountForCommentUseCase(commonDbRepository)
+        val updateLikeCountForSubCommentUseCase =
+            AppModule.provideUpdateLikeCountForSubCommentUseCase(commonDbRepository)
         return AppModule.provideCommentViewModel(
             commentInteractor,
             getUserUseCase,
@@ -184,22 +222,27 @@ object ViewModelProvider {
         )
     }
 
-    fun createUploadNewfeedViewModel(platformContext: PlatformContext) : UploadNewfeedViewModel {
+    fun createUploadNewfeedViewModel(platformContext: PlatformContext): UploadNewfeedViewModel {
         val notificationRepository = AppModule.provideNotificationRepository(platformContext)
         val userRepository = AppModule.provideUserRepository(platformContext)
         val commonDbRepository = AppModule.provideCommonDbRepository(platformContext)
         val newsRepository = AppModule.provideNewsRepository(platformContext)
         val groupRepository = AppModule.provideGroupRepository(platformContext)
 
-        val saveNotificationToDatabaseUseCase = AppModule.provideSaveNotificationToDatabaseUseCase(notificationRepository)
+        val saveNotificationToDatabaseUseCase =
+            AppModule.provideSaveNotificationToDatabaseUseCase(notificationRepository)
         val getUserUseCase = AppModule.provideGetUserUseCase(userRepository)
         val saveNewToDatabaseUseCase = AppModule.provideSaveNewToDatabaseUseCase(commonDbRepository)
-        val updateNewsFromDatabaseUseCase = AppModule.provideUpdateNewsFromDatabaseUseCase(newsRepository)
-        val loadNewsPostedWhenOfflineUseCase = AppModule.provideLoadNewsPostedWhenOfflineUseCase(commonDbRepository)
-        val deleteAllDraftPostsUseCase = AppModule.provideDeleteAllDraftPostsUseCase(commonDbRepository)
+        val updateNewsFromDatabaseUseCase =
+            AppModule.provideUpdateNewsFromDatabaseUseCase(newsRepository)
+        val loadNewsPostedWhenOfflineUseCase =
+            AppModule.provideLoadNewsPostedWhenOfflineUseCase(commonDbRepository)
+        val deleteAllDraftPostsUseCase =
+            AppModule.provideDeleteAllDraftPostsUseCase(commonDbRepository)
         val deleteDraftPostUseCase = AppModule.provideDeleteDraftPostUseCase(commonDbRepository)
         val saveNewToGroupUseCase = AppModule.provideSaveNewToGroupUseCase(groupRepository)
-        val getAllMembersInGroupUseCase = AppModule.provideGetAllMembersInGroupUseCase(groupRepository)
+        val getAllMembersInGroupUseCase =
+            AppModule.provideGetAllMembersInGroupUseCase(groupRepository)
         val getGroupConfigsUseCase = AppModule.provideGetGroupConfigsUseCase(groupRepository)
         return AppModule.provideUploadNewfeedViewModel(
             getUserUseCase,
@@ -211,10 +254,11 @@ object ViewModelProvider {
             deleteDraftPostUseCase,
             saveNewToGroupUseCase,
             getAllMembersInGroupUseCase,
-            getGroupConfigsUseCase)
+            getGroupConfigsUseCase
+        )
     }
 
-    fun createUserInformationViewModel(platformContext : PlatformContext): UserInformationViewModel {
+    fun createUserInformationViewModel(platformContext: PlatformContext): UserInformationViewModel {
         val userRepository = AppModule.provideUserRepository(platformContext)
         val notificationRepository = AppModule.provideNotificationRepository(platformContext)
         val commonDbRepository = AppModule.provideCommonDbRepository(platformContext)
@@ -222,24 +266,28 @@ object ViewModelProvider {
         val networkRepository = AppModule.provideNetworkRepository(platformContext)
         val saveFriendUseCase = AppModule.provideSaveFriendUseCase(commonDbRepository)
         val saveFriendRequestUseCase = AppModule.provideSaveFriendRequestUseCase(commonDbRepository)
-        val saveNotificationToDatabaseUseCase = AppModule.provideSaveNotificationToDatabaseUseCase(notificationRepository)
-        val checkCalleeAvailableUseCase = AppModule.provideCheckCalleeAvailableUseCase(callRepository)
+        val saveNotificationToDatabaseUseCase =
+            AppModule.provideSaveNotificationToDatabaseUseCase(notificationRepository)
+        val checkCalleeAvailableUseCase =
+            AppModule.provideCheckCalleeAvailableUseCase(callRepository)
         val getUserUseCase = AppModule.provideGetUserUseCase(userRepository)
-        val checkInternetConnectionUseCase = AppModule.provideCheckInternetConnectionUseCase(networkRepository)
+        val checkInternetConnectionUseCase =
+            AppModule.provideCheckInternetConnectionUseCase(networkRepository)
         return AppModule.provideUserInformationViewModel(
             saveFriendUseCase,
             saveFriendRequestUseCase,
             saveNotificationToDatabaseUseCase,
             checkCalleeAvailableUseCase,
             getUserUseCase,
-            checkInternetConnectionUseCase)
+            checkInternetConnectionUseCase
+        )
     }
 
-    fun createSearchViewModel() : SearchViewModel{
+    fun createSearchViewModel(): SearchViewModel {
         return AppModule.provideSeachViewModel()
     }
 
-    fun createFriendViewModel(platformContext : PlatformContext) : FriendViewModel {
+    fun createFriendViewModel(platformContext: PlatformContext): FriendViewModel {
         val commonDbRepository = AppModule.provideCommonDbRepository(platformContext)
         val saveFriendUseCase = AppModule.provideSaveFriendUseCase(commonDbRepository)
         val saveFriendRequestUseCase = AppModule.provideSaveFriendRequestUseCase(commonDbRepository)
@@ -249,20 +297,22 @@ object ViewModelProvider {
         )
     }
 
-    fun createShowImageViewModel(platformContext: PlatformContext) : ShowImageViewModel{
+    fun createShowImageViewModel(platformContext: PlatformContext): ShowImageViewModel {
         val showImageRepository = AppModule.provideShowImageRepository(platformContext)
         val downloadImageUseCase = AppModule.provideDownloadImageUseCase(showImageRepository)
         return AppModule.provideShowImageViewModel(downloadImageUseCase)
     }
 
-    fun createNotificationViewModel(platformContext: PlatformContext) : NotificationViewModel {
+    fun createNotificationViewModel(platformContext: PlatformContext): NotificationViewModel {
         val userRepository = AppModule.provideUserRepository(platformContext)
         val newsRepository = AppModule.provideNewsRepository(platformContext)
         val notificationRepository = AppModule.provideNotificationRepository(platformContext)
         val getUserUseCase = AppModule.provideGetUserUseCase(userRepository)
         val findNewByIdInDbUseCase = AppModule.provideFindNewByIdInDbUseCase(newsRepository)
-        val updateIsReadStatusOfNotificationUseCase = AppModule.provideUpdateIsReadStatusOfNotificationUseCase(notificationRepository)
-        val deleteAllNotificationsUseCase = AppModule.provideDeleteAllNotificationsUseCase(notificationRepository)
+        val updateIsReadStatusOfNotificationUseCase =
+            AppModule.provideUpdateIsReadStatusOfNotificationUseCase(notificationRepository)
+        val deleteAllNotificationsUseCase =
+            AppModule.provideDeleteAllNotificationsUseCase(notificationRepository)
         return AppModule.provideNotificationViewModel(
             getUserUseCase,
             findNewByIdInDbUseCase,
@@ -271,7 +321,7 @@ object ViewModelProvider {
         )
     }
 
-    fun createCallingViewModel(platformContext: PlatformContext) : CallingViewModel {
+    fun createCallingViewModel(platformContext: PlatformContext): CallingViewModel {
         val callRepository = AppModule.provideCallRepository(platformContext)
         val startCallServiceUseCase = AppModule.provideStartCallServiceUseCase(callRepository)
         val manageCallStateUseCase = AppModule.provideManageCallStateUseCase(callRepository)
@@ -283,10 +333,12 @@ object ViewModelProvider {
         )
     }
 
-    fun createVideoCallViewModel(platformContext: PlatformContext) : VideoCallViewModel {
+    fun createVideoCallViewModel(platformContext: PlatformContext): VideoCallViewModel {
         val callRepository = AppModule.provideCallRepository(platformContext)
-        val startVideoCallServiceUseCase = AppModule.provideStartVideoCallServiceUseCase(callRepository)
-        val requestCameraAndAudioPermissionsUseCase = AppModule.provideRequestCameraAndAudioPermissionsUseCase(callRepository)
+        val startVideoCallServiceUseCase =
+            AppModule.provideStartVideoCallServiceUseCase(callRepository)
+        val requestCameraAndAudioPermissionsUseCase =
+            AppModule.provideRequestCameraAndAudioPermissionsUseCase(callRepository)
         val updateMicStatusUseCase = AppModule.provideUpdateMicStatusUseCase(callRepository)
         val updateCameraStatusUseCase = AppModule.provideUpdateCameraStatusUseCase(callRepository)
         val updateSpeakerStatusUseCase = AppModule.provideUpdateSpeakerStatusUseCase(callRepository)
@@ -316,12 +368,15 @@ object ViewModelProvider {
     fun createGroupDetailsViewModel(platformContext: PlatformContext): GroupDetailsViewModel {
         val groupRepository = AppModule.provideGroupRepository(platformContext)
         val fetchGroupInfoUseCase = AppModule.provideFetchGroupInfoUseCase(groupRepository)
-        val updateNotificationStatusUseCase = AppModule.provideUpdateNotificationStatusUseCase(groupRepository)
-        val fetchNotificationStateUseCase = AppModule.provideFetchNotificationStateUseCase(groupRepository)
+        val updateNotificationStatusUseCase =
+            AppModule.provideUpdateNotificationStatusUseCase(groupRepository)
+        val fetchNotificationStateUseCase =
+            AppModule.provideFetchNotificationStateUseCase(groupRepository)
         val findGroupByIdUseCase = AppModule.provideFindGroupByIdUseCase(groupRepository)
         val joinGroupUseCase = AppModule.provideJoinGroupUseCase(groupRepository)
         val leaveGroupUseCase = AppModule.provideLeaveGroupUseCase(groupRepository)
-        val leaveAndDeleteGroupUseCase = AppModule.provideLeaveAndDeleteGroupUseCase(groupRepository)
+        val leaveAndDeleteGroupUseCase =
+            AppModule.provideLeaveAndDeleteGroupUseCase(groupRepository)
         return GroupDetailsViewModel(
             fetchGroupInfoUseCase,
             updateNotificationStatusUseCase,
@@ -329,7 +384,8 @@ object ViewModelProvider {
             findGroupByIdUseCase,
             joinGroupUseCase,
             leaveGroupUseCase,
-            leaveAndDeleteGroupUseCase)
+            leaveAndDeleteGroupUseCase
+        )
     }
 
     fun createSelectGroupViewModel(platformContext: PlatformContext): SelectGroupViewModel {
@@ -345,12 +401,13 @@ object ViewModelProvider {
         val userRepository = AppModule.provideUserRepository(platformContext)
         val copyLinkUseCase = AppModule.provideCopyLinkUseCase(groupRepository)
         val getUserUseCase = AppModule.provideGetUserUseCase(userRepository)
-        val inviteFriendToGroupUseCase = AppModule.provideInviteFriendToGroupUseCase(groupRepository)
+        val inviteFriendToGroupUseCase =
+            AppModule.provideInviteFriendToGroupUseCase(groupRepository)
         return InviteMemberViewModel(
             copyLinkUseCase,
             getUserUseCase,
             inviteFriendToGroupUseCase
-            )
+        )
     }
 
     fun createManageMembersViewModel(platformContext: PlatformContext): ManageMembersViewModel {
@@ -364,13 +421,16 @@ object ViewModelProvider {
             getUserUseCase,
             removeMemberUseCase,
             promoteMemberUseCase,
-            demoteMemberUseCase)
+            demoteMemberUseCase
+        )
     }
 
     fun createExploreGroupViewModel(platformContext: PlatformContext): ExploreGroupViewModel {
         val groupRepository = AppModule.provideGroupRepository(platformContext)
-        val fetchRecommendGroupsUseCase = AppModule.provideFetchRecommendGroupsUseCase(groupRepository)
-        val fetchFeatureGroupsUseCase = AppModule.provideFetchFeatureGroupsUseCase((groupRepository))
+        val fetchRecommendGroupsUseCase =
+            AppModule.provideFetchRecommendGroupsUseCase(groupRepository)
+        val fetchFeatureGroupsUseCase =
+            AppModule.provideFetchFeatureGroupsUseCase((groupRepository))
         return ExploreGroupViewModel(
             fetchRecommendGroupsUseCase,
             fetchFeatureGroupsUseCase
@@ -383,13 +443,86 @@ object ViewModelProvider {
 
     fun createChangePasswordViewModel(platformContext: PlatformContext): ChangePasswordViewModel {
         val settingsRepository = AppModule.provideSettingsRepository(platformContext)
-        val verifyCurrentPasswordUseCase = AppModule.provideVerifyCurrentPasswordUseCase(settingsRepository)
+        val verifyCurrentPasswordUseCase =
+            AppModule.provideVerifyCurrentPasswordUseCase(settingsRepository)
         val validateNewPasswordUseCase = AppModule.provideValidateNewPasswordUseCase()
         val changePasswordUseCase = AppModule.provideChangePasswordUseCase(settingsRepository)
         return ChangePasswordViewModel(
             verifyCurrentPasswordUseCase,
             validateNewPasswordUseCase,
             changePasswordUseCase
+        )
+    }
+
+    fun create2FAViewModel(platformContext: PlatformContext): TwoFAViewModel {
+        val settingsRepository = AppModule.provideSettingsRepository(platformContext)
+        val generateSecretFor2FAUseCase =
+            AppModule.provideGenerateSecretFor2FAUseCase(settingsRepository)
+        val buildOtpAuthUrlUseCase = AppModule.provideBuildOtpAuthUrlUseCase()
+        val copyUseCase = AppModule.provideCopyUseCase(settingsRepository)
+        return TwoFAViewModel(
+            generateSecretFor2FAUseCase,
+            buildOtpAuthUrlUseCase,
+            copyUseCase
+        )
+    }
+
+    fun createVerifyOTPViewModel(platformContext: PlatformContext): VerifyOTPViewModel {
+        val settingsRepository = AppModule.provideSettingsRepository(platformContext)
+        val authenticationRepository = AppModule.provideAuthenticationRepository(platformContext)
+        val enable2FAUseCase = AppModule.provideEnable2FAUseCase(settingsRepository)
+        val verify2FAUseCase = AppModule.provideVerify2FAUseCase(settingsRepository)
+        val clearAccountUseCase = AppModule.provideClearAccountUseCase(authenticationRepository)
+        return VerifyOTPViewModel(
+            enable2FAUseCase,
+            verify2FAUseCase,
+            clearAccountUseCase
+        )
+    }
+
+    fun createSecuritySettingsViewModel(platformContext: PlatformContext): SecuritySettingsViewModel {
+        val settingsRepository = AppModule.provideSettingsRepository(platformContext)
+        val disable2FAUseCase = AppModule.provideDisable2FAUseCase(settingsRepository)
+        return SecuritySettingsViewModel(disable2FAUseCase)
+    }
+
+    fun createTwoFactorEnabledViewModel(platformContext: PlatformContext): TwoFactorEnabledViewModel {
+        val settingsRepository = AppModule.provideSettingsRepository(platformContext)
+        val copyUseCase = AppModule.provideCopyUseCase(settingsRepository)
+        val updateVerify2FASuccessUseCase =
+            AppModule.provideUpdateVerify2FASuccessUseCase(settingsRepository)
+        return TwoFactorEnabledViewModel(
+            copyUseCase,
+            updateVerify2FASuccessUseCase
+        )
+    }
+
+    fun createBackUpCodeViewModel(platformContext: PlatformContext): BackUpCodeViewModel {
+        val userRepository = AppModule.provideUserRepository(platformContext)
+        val settingsRepository = AppModule.provideSettingsRepository(platformContext)
+        val getCurrentUserUidUseCase = AppModule.provideGetCurrentUserUidUseCase(userRepository)
+        val verifyBackupCodeUseCase = AppModule.provideVerifyBackupCodeUseCase(settingsRepository)
+        return BackUpCodeViewModel(
+            getCurrentUserUidUseCase,
+            verifyBackupCodeUseCase
+        )
+    }
+
+    fun createRouterViewModel(platformContext: PlatformContext): RouterViewModel {
+        val authenticationRepository = AppModule.provideAuthenticationRepository(platformContext)
+        val userRepository = AppModule.provideUserRepository(platformContext)
+        val settingsRepository = AppModule.provideSettingsRepository(platformContext)
+        val checkLocalAccountUseCase =
+            AppModule.provideCheckLocalAccountUseCase(authenticationRepository)
+        val getCurrentUserUidUseCase = AppModule.provideGetCurrentUserUidUseCase(userRepository)
+        val getUserUseCase = AppModule.provideGetUserUseCase(userRepository)
+        val get2FAVerifiedStatusUseCase =
+            AppModule.provideGet2FAVerifiedStatusUseCase(settingsRepository)
+        return RouterViewModel(
+            checkLocalAccountUseCase,
+            getCurrentUserUidUseCase,
+            getUserUseCase,
+            get2FAVerifiedStatusUseCase
         )
     }
 }

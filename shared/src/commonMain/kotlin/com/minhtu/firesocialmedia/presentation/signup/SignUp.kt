@@ -30,6 +30,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -60,6 +61,7 @@ class SignUp {
             onNavigateToSignInScreen : () -> Unit,
             onNavigateToInformationScreen: ()-> Unit
         ){
+            val focusManager = LocalFocusManager.current
             val isLoading by loadingViewModel.isLoading.collectAsState()
             //Use launched effect to observe state one time although recomposition happened
             val signUpStatus = signUpViewModel.signUpStatus.collectAsState()
@@ -113,6 +115,7 @@ class SignUp {
                     //SignUp button
                     Button(
                         onClick = {
+                            focusManager.clearFocus(force = true)
                             loadingViewModel.showLoading()
                             signUpViewModel.signUp()
                         },

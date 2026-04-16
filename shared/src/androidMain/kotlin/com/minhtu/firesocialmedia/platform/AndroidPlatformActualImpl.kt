@@ -7,6 +7,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.drawable.BitmapDrawable
 import android.os.Build
 import android.util.Log
@@ -29,6 +30,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -53,12 +56,15 @@ import com.google.android.gms.auth.api.identity.BeginSignInRequest
 import com.google.android.gms.auth.api.identity.Identity
 import com.minhtu.firesocialmedia.R
 import com.minhtu.firesocialmedia.constants.Constants
+import com.minhtu.firesocialmedia.domain.entity.authentication.TwoFARequest
+import com.minhtu.firesocialmedia.domain.entity.authentication.TwoFAResponse
 import com.minhtu.firesocialmedia.data.remote.service.imagepicker.ImagePicker
 import com.minhtu.firesocialmedia.data.remote.service.signinlauncher.SignInLauncher
 import com.minhtu.firesocialmedia.di.PlatformContext
 import com.minhtu.firesocialmedia.domain.entity.home.deeplinks.ShareApp
 import com.minhtu.firesocialmedia.domain.entity.signin.SignInState
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
+import com.minhtu.firesocialmedia.domain.serviceimpl.auth.AuthenticationApiService
 import com.minhtu.firesocialmedia.domain.serviceimpl.call.WebRTCManager
 import com.minhtu.firesocialmedia.domain.serviceimpl.crypto.AndroidCryptoHelper
 import com.minhtu.firesocialmedia.domain.serviceimpl.imagepicker.AndroidImagePicker
@@ -67,7 +73,7 @@ import com.minhtu.firesocialmedia.domain.serviceimpl.notification.NotificationAp
 import com.minhtu.firesocialmedia.presentation.signin.SignInViewModel
 import com.minhtu.firesocialmedia.presentation.toast.ToastController
 import com.minhtu.firesocialmedia.utils.NavigationHandler
-import com.russhwolf.settings.BuildConfig
+import com.minhtu.firesocialmedia.BuildConfig
 import com.russhwolf.settings.Settings
 import com.seiko.imageloader.ImageLoader
 import com.seiko.imageloader.cache.memory.maxSizePercent
@@ -87,6 +93,7 @@ import org.webrtc.EglBase
 import org.webrtc.RendererCommon
 import org.webrtc.SurfaceViewRenderer
 import org.webrtc.VideoTrack
+import qrcode.QRCode
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.text.SimpleDateFormat
@@ -178,6 +185,7 @@ actual fun getIconPainter(icon : String): Painter? {
 actual fun getResId(icon : String): Int {
     return when(icon) {
         "loading_gif" -> R.raw.loading_gif
+        "dialga" -> R.raw.dialga
         else -> {0}
     }
 }
@@ -277,6 +285,34 @@ actual fun sendMessageToServer(request: String) {
         } catch (e: Exception) {
             logMessage("sendMessageToFCM", { "Error: ${e.message}" })
         }
+    }
+}
+actual suspend fun send2FARequest(request: TwoFARequest): TwoFAResponse {
+    logMessage("sendVerifyOTPRequest") {
+        "UserId : " + request.userId + "\n" + "secret: " + request.secret + "\n" + "apiKey: " + request.apiKey+ "\n" + "otp: " + request.otp + "\n" + "action: " + request.action
+    }
+    val response = Client.getClient(Constants.APP_SCRIPT_URL)
+        ?.create(AuthenticationApiService::class.java)!!
+        .sendVerifyRequestToAppScript(request)
+        .execute()
+
+    return if (response.isSuccessful) {
+        val twoFAResponse = response.body()
+        logMessage("sendVerifyOTPRequest") {
+            "Success: ${response.code()} | success=${twoFAResponse?.success} | message=${twoFAResponse?.message}"
+        }
+        twoFAResponse ?: TwoFAResponse(false, "Error happened. Please try again!")
+    } else {
+        val errorBody = response.errorBody()?.string()
+        logMessage("sendVerifyOTPRequest") {
+            """
+            Request failed:
+            - Code: ${response.code()}
+            - Message: ${response.message()}
+            - Error Body: $errorBody
+            """.trimIndent()
+        }
+        TwoFAResponse(false, response.code().toString())
     }
 }
 
@@ -708,4 +744,14 @@ actual fun getAppVersion(): String {
         @Suppress("DEPRECATION")
         pm.getPackageInfo(pkg, 0).versionName
     } ?: ""
+}
+
+actual fun generateQrImage(content: String): ImageBitmap {
+    val bytes = QRCode.ofSquares().build(content).renderToBytes()
+    val bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+    return bitmap.asImageBitmap()
+}
+
+actual object AppConfig {
+    actual val twoFAApiKey: String = BuildConfig.APP_SCRIPT_FOR_2FA_AUTHENTICATION_API_KEY
 }

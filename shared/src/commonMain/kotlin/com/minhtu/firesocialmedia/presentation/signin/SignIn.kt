@@ -38,6 +38,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -57,6 +58,7 @@ import com.minhtu.firesocialmedia.platform.showToast
 import com.minhtu.firesocialmedia.platform.toHex
 import com.minhtu.firesocialmedia.presentation.loading.Loading
 import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
+import com.minhtu.firesocialmedia.presentation.navigation.RouterViewModel
 import com.minhtu.firesocialmedia.utils.UiUtils.Companion.IconAndTitle
 import com.minhtu.firesocialmedia.utils.UiUtils.Companion.PasswordVisibilityIcon
 import com.minhtu.firesocialmedia.utils.UiUtils.Companion.SubTitle
@@ -69,11 +71,14 @@ class SignIn{
         fun SignInScreen(
             signInViewModel: SignInViewModel,
             loadingViewModel: LoadingViewModel,
+            routerViewModel: RouterViewModel,
             modifier: Modifier,
             onNavigateToSignUpScreen:() -> Unit,
             onNavigateToHomeScreen:()-> Unit,
             onNavigateToInformationScreen:() -> Unit,
-            onNavigateToForgotPasswordScreen:() -> Unit) {
+            onNavigateToForgotPasswordScreen:() -> Unit,
+            onNavigateToVerifyOTP : () -> Unit) {
+            val focusManager = LocalFocusManager.current
             val isLoading = loadingViewModel.isLoading.collectAsState()
 
             val localCredentials = signInViewModel.localCredentials
@@ -97,7 +102,8 @@ class SignIn{
                     if (signInStatus.value.error == SignInError.AccountNotExist) {
                         onNavigateToInformationScreen()
                     } else {
-                        onNavigateToHomeScreen()
+                        //Fetch user info to check 2FA
+                        signInViewModel.check2FAStatus()
                     }
                 } else {
                     when (signInStatus.value.error) {
@@ -118,6 +124,21 @@ class SignIn{
                     }
                 }
                 signInViewModel.resetSignInStatus()
+            }
+
+            val check2FAStatus by signInViewModel.check2FAStatus.collectAsState()
+            LaunchedEffect(check2FAStatus) {
+                if(check2FAStatus != null) {
+                    signInViewModel.currentUser.value?.let { routerViewModel.currentUser.value = it }
+                    if(check2FAStatus!!) {
+                        //2FA enabled
+                        onNavigateToVerifyOTP()
+                    } else {
+                        //2FA disabled
+                        onNavigateToHomeScreen()
+                    }
+                    signInViewModel.resetCheck2FAStatus()
+                }
             }
 
             //Back button
@@ -186,6 +207,7 @@ class SignIn{
                     //SignIn button
                     Button(
                         onClick = {
+                            focusManager.clearFocus(force = true)
                             signInViewModel.signIn(
                                 showLoading = { loadingViewModel.showLoading() }
                             )

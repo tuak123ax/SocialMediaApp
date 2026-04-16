@@ -35,6 +35,7 @@ class Constants {
         const val APP_SCRIPT_URL = "https://script.google.com/macros/s/"
         const val APP_SCRIPT_ENDPOINT = "AKfycbw4JXnBNCl-hoHi2l0_l-Ugp-9icTBWPJVR5PyKqe5o7-JJ-p26yFVpBO8kUZhxtUSzWA/exec"
 
+        const val APP_SCRIPT_2FA_ENDPOINT = "AKfycbwv3Jg31yCw4SiOsUwm8JA0BOZHvmk6xOqTBeOHM4_Vt0O6vQpFhwFgkofxavSDr1NJ0g/exec"
         const val KEY_FCM_TOKEN = "fcm_token"
 
         const val KEY_USER_ID = "user_id"
@@ -55,5 +56,6 @@ class Constants {
         const val KEY_CALLEE_AVATAR = "callee_avatar"
         const val FROM_NOTIFICATION = "FROM_NOTIFICATION"
         const val SUPPORT_FACEBOOK_LINK = "https://www.facebook.com/nguyen.minh.tu.311112"
+        const val KEY_2FA_VERIFIED = "2fa_verified"
     }
 }

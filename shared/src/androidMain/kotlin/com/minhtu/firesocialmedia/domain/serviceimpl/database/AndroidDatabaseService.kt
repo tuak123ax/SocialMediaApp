@@ -873,4 +873,17 @@ class AndroidDatabaseService(context: Context) : DatabaseService {
             videoCallCallBack)
     }
 
+    override suspend fun updateTwoFAEnabledFlagForUser(
+        userId: String,
+        twoFAEnabled: Boolean,
+        userPath: String,
+        twoFaEnabledPath: String
+    ) : Boolean {
+        return AndroidDatabaseHelper.updateTwoFAEnabledFlagForUser(
+            userId,
+            twoFAEnabled,
+            userPath,
+            twoFaEnabledPath
+        )
+    }
 }

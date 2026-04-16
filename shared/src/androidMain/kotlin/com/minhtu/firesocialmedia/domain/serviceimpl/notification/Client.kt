@@ -7,15 +7,14 @@ import retrofit2.converter.scalars.ScalarsConverterFactory
 class Client {
 
     companion object{
-        private var retrofit: Retrofit? = null
+        private val retrofitCache = mutableMapOf<String, Retrofit>()
         fun getClient(url: String): Retrofit? {
-            if (retrofit == null) {
-                retrofit = Retrofit.Builder().baseUrl(url)
+            return retrofitCache.getOrPut(url) {
+                Retrofit.Builder().baseUrl(url)
                     .addConverterFactory(ScalarsConverterFactory.create())
                     .addConverterFactory(GsonConverterFactory.create())
                     .build()
             }
-            return retrofit
         }
     }
 }

@@ -1,4 +1,4 @@
-package com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security
+package com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security.changepassword
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement

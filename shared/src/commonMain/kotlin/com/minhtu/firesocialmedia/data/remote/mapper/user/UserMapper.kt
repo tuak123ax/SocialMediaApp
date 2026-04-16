@@ -25,7 +25,8 @@ fun UserDTO.toDomain() : UserInstance {
         friends,
         likedComments,
         HashMap(groups.mapValues { (_,v) -> v.toGroupDTO().toDomain() }),
-        lastTimeChangePassword
+        lastTimeChangePassword,
+        twoFAEnabled
     )
 }
 
@@ -43,7 +44,8 @@ fun UserInstance.toDto() : UserDTO {
         friends,
         likedComments,
         HashMap(groups.mapValues { (_,v) -> v.toDto().GroupSummaryDTO() }),
-        lastTimeChangePassword
+        lastTimeChangePassword,
+        twoFAEnabled
     )
 }
 

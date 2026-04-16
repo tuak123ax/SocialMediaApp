@@ -38,4 +38,15 @@ class AndroidCryptoService(private val context: Context) : CryptoService {
     override suspend fun getCurrentUserInfo(): UserDTO? {
         return AndroidCryptoHelper.getCurrentUserInfo(context)
     }
+
+    override suspend fun save2FAStatus(status: Boolean) {
+        AndroidCryptoHelper.save2FAStatus(context, status)
+    }
+    override suspend fun get2FAStatus() : Boolean {
+        return AndroidCryptoHelper.get2FAStatus(context)
+    }
+
+    override suspend fun delete2FAStatus() {
+        AndroidCryptoHelper.delete2FAStatus(context)
+    }
 }

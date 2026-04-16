@@ -1,4 +1,4 @@
-package com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security
+package com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security.changepassword
 
 import com.minhtu.firesocialmedia.domain.entity.settings.ChangePasswordState
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance

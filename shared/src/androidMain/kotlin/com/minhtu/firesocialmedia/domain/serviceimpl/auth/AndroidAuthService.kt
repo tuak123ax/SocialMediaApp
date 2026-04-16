@@ -19,6 +19,8 @@ import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.auth
 import com.google.firebase.database.FirebaseDatabase
 import com.minhtu.firesocialmedia.constants.Constants
+import com.minhtu.firesocialmedia.domain.entity.authentication.TwoFARequest
+import com.minhtu.firesocialmedia.domain.entity.authentication.TwoFAResponse
 import com.minhtu.firesocialmedia.data.remote.dto.user.UserDTO
 import com.minhtu.firesocialmedia.data.remote.service.auth.AuthService
 import com.minhtu.firesocialmedia.domain.entity.forgotpassword.EmailExistResult
@@ -26,11 +28,15 @@ import com.minhtu.firesocialmedia.domain.entity.settings.ChangePasswordState
 import com.minhtu.firesocialmedia.domain.error.changepassword.ChangePasswordError
 import com.minhtu.firesocialmedia.domain.error.signin.SignInError
 import com.minhtu.firesocialmedia.domain.error.signup.SignUpError
+import com.minhtu.firesocialmedia.platform.AppConfig
 import com.minhtu.firesocialmedia.platform.logMessage
+import com.minhtu.firesocialmedia.platform.send2FARequest
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.tasks.await
+import java.security.SecureRandom
 import kotlin.coroutines.cancellation.CancellationException
+import kotlin.math.log
 
 class AndroidAuthService(var context: Context) : AuthService{
     override suspend fun signInWithEmailAndPassword(
@@ -250,6 +256,89 @@ class AndroidAuthService(var context: Context) : AuthService{
 
         } catch (e: Exception) {
             ChangePasswordState(false, ChangePasswordError.Unknown(e.message ?: ""))
+        }
+    }
+
+    private val BASE32_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567"
+    private val secureRandom = SecureRandom()
+
+    override suspend fun generateSecretFor2FA(): String {
+        val length = 16
+        val result = StringBuilder(length)
+        repeat(length) {
+            val index = secureRandom.nextInt(BASE32_CHARS.length)
+            result.append(BASE32_CHARS[index])
+        }
+        return result.toString()
+    }
+
+    override suspend fun enableOTP(userId : String,
+                                   secret : String,
+                                   otpToVerify: String) : TwoFAResponse {
+        return try {
+            send2FARequest(
+                TwoFARequest(
+                    apiKey = AppConfig.twoFAApiKey,
+                    action = "enable",
+                    userId = userId,
+                    secret = secret,
+                    otp = otpToVerify
+                )
+            )
+        } catch(e : Exception) {
+            logMessage("enableOTP", { "Exception happened: " + e.message })
+            TwoFAResponse(false, "Exception happened!")
+        }
+    }
+
+    override suspend fun verifyOTP(userId : String,
+                                   otpToVerify: String) : TwoFAResponse {
+        return try{
+            send2FARequest(
+                TwoFARequest(
+                    apiKey = AppConfig.twoFAApiKey,
+                    action = "verify",
+                    userId = userId,
+                    otp = otpToVerify
+                )
+            )
+        } catch (e : Exception) {
+            logMessage("verifyOTP", { "Exception happened: " + e.message })
+            TwoFAResponse(false, "Exception happened!")
+        }
+    }
+
+    override suspend fun disable2FA(userId: String) : TwoFAResponse {
+        return try{
+            send2FARequest(
+                TwoFARequest(
+                    apiKey = AppConfig.twoFAApiKey,
+                    action = "disable",
+                    userId = userId
+                )
+            )
+        } catch (e : Exception) {
+            logMessage("disable2FA", { "Exception happened: " + e.message })
+            TwoFAResponse(false, "Exception happened!")
+        }
+    }
+
+    override suspend fun verifyBackupCode(
+        userId: String,
+        backupCode: String
+    ): TwoFAResponse {
+        return try{
+            send2FARequest(
+                TwoFARequest(
+                    apiKey = AppConfig.twoFAApiKey,
+                    action = "verify_backup",
+                    userId = userId,
+                    backupCode = backupCode
+                )
+            )
+        } catch (e : Exception) {
+            logMessage("verifyBackupCode", { "Exception happened: " + e.message })
+            TwoFAResponse(false, "Exception happened!")
         }
     }
 }
