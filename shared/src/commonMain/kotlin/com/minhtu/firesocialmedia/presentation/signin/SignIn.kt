@@ -102,7 +102,7 @@ class SignIn{
                     if (signInStatus.value.error == SignInError.AccountNotExist) {
                         onNavigateToInformationScreen()
                     } else {
-                        //Fetch user info to check 2FA
+                        // Fetch user info to check 2FA
                         signInViewModel.check2FAStatus()
                     }
                 } else {

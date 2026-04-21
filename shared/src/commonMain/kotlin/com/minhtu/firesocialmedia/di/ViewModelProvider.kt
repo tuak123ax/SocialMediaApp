@@ -19,6 +19,7 @@ import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.Se
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.notificationconfigs.NotificationConfigsViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security.SecuritySettingsViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security.changepassword.ChangePasswordViewModel
+import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security.loginhistory.LoginHistoryViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security.twoFA.BackUpCodeViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security.twoFA.TwoFAViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security.twoFA.TwoFactorEnabledViewModel
@@ -35,6 +36,7 @@ object ViewModelProvider {
     fun createSignInViewModel(platformContext: PlatformContext): SignInViewModel {
         val authenticationRepository = AppModule.provideAuthenticationRepository(platformContext)
         val userRepository = AppModule.provideUserRepository(platformContext)
+        val commonDbRepository = AppModule.provideCommonDbRepository(platformContext)
         val signInUseCase = AppModule.provideSignInUseCase(authenticationRepository)
         val rememberPasswordUseCase =
             AppModule.provideRememberPasswordUseCase(authenticationRepository)
@@ -46,6 +48,7 @@ object ViewModelProvider {
             AppModule.provideHandleSignInGoogleResultUseCase(authenticationRepository)
         val getCurrentUserUidUseCase = AppModule.provideGetCurrentUserUidUseCase(userRepository)
         val getUserUseCase = AppModule.provideGetUserUseCase(userRepository)
+        val saveLoginActivityInfoUseCase = AppModule.provideSaveLoginActivityInfoUseCase(commonDbRepository)
         return AppModule.provideSignInViewModel(
             signInUseCase,
             rememberPasswordUseCase,
@@ -53,7 +56,8 @@ object ViewModelProvider {
             checkLocalAccountUseCase,
             handleSignInGoogleResult,
             getCurrentUserUidUseCase,
-            getUserUseCase
+            getUserUseCase,
+            saveLoginActivityInfoUseCase
         )
     }
 
@@ -79,15 +83,18 @@ object ViewModelProvider {
         val informationRepository = AppModule.provideInformationRepository(platformContext)
         val userRepository = AppModule.provideUserRepository(platformContext)
         val localRepository = AppModule.provideLocalRepository(platformContext)
+        val commonDbRepository = AppModule.provideCommonDbRepository(platformContext)
 
         val saveSignUpInformationUseCase =
             AppModule.provideSaveSignUpInformationUseCase(informationRepository)
         val getCurrentUserUidUseCase = AppModule.provideGetCurrentUserUidUseCase(userRepository)
         val getFCMTokenUseCase = AppModule.provideGetFCMTokenUseCase(localRepository)
+        val saveLoginActivityInfoUseCase = AppModule.provideSaveLoginActivityInfoUseCase(commonDbRepository)
         return AppModule.provideInformationViewModel(
             saveSignUpInformationUseCase,
             getCurrentUserUidUseCase,
-            getFCMTokenUseCase
+            getFCMTokenUseCase,
+            saveLoginActivityInfoUseCase
         )
     }
 
@@ -524,5 +531,11 @@ object ViewModelProvider {
             getUserUseCase,
             get2FAVerifiedStatusUseCase
         )
+    }
+
+    fun createLoginHistoryViewModel(platformContext: PlatformContext): LoginHistoryViewModel {
+        val settingsRepository = AppModule.provideSettingsRepository(platformContext)
+        val fetchLoginHistoryListUseCase = AppModule.provideFetchLoginHistoryListUseCase(settingsRepository)
+        return LoginHistoryViewModel(fetchLoginHistoryListUseCase)
     }
 }

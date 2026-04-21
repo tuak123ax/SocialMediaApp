@@ -79,6 +79,8 @@ class Information {
                 if (addInformationStatus.value != null) {
                     if (addInformationStatus.value!!) {
                         showToast("Sign up successfully!!!")
+                        // Signup successfully, track this activity
+                        informationViewModel.saveLoginActivityInfo()
                         onNavigateToHomeScreen()
                     } else {
                         showToast("Error happened!!!")

@@ -20,6 +20,8 @@ import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
+import com.minhtu.firesocialmedia.domain.usecases.signin.SaveLoginActivityInfoUseCase
+import com.minhtu.firesocialmedia.platform.logMessage
 
 class SignInViewModel(
     private val signInUseCase: SignInUseCase,
@@ -29,6 +31,7 @@ class SignInViewModel(
     private val handleSignInGoogleResult: HandleSignInGoogleResultUseCase,
     private val getCurrentUserUidUseCase: GetCurrentUserUidUseCase,
     private val getUserUseCase: GetUserUseCase,
+    private val saveLoginActivityInfoUseCase : SaveLoginActivityInfoUseCase,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : ViewModel() {
     private var launcher: SignInLauncher? = null
@@ -134,6 +137,8 @@ class SignInViewModel(
                 if(user != null) {
                     currentUser.value = user
                     _check2FAStatus.value = user.twoFAEnabled
+                    // Login successfully, track this activity after getting current user info
+                    saveLoginActivityInfo(user)
                 }
             }
         }
@@ -141,5 +146,10 @@ class SignInViewModel(
 
     fun resetCheck2FAStatus() {
         _check2FAStatus.value = null
+    }
+
+    private suspend fun saveLoginActivityInfo(user : UserInstance) {
+        logMessage("saveLoginActivityInfo", { "start save login activity info" })
+        saveLoginActivityInfoUseCase.invoke(user.uid)
     }
 }

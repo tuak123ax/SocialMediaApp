@@ -115,6 +115,7 @@ import com.minhtu.firesocialmedia.domain.usecases.settings.ChangePasswordUseCase
 import com.minhtu.firesocialmedia.domain.usecases.settings.CopyUseCase
 import com.minhtu.firesocialmedia.domain.usecases.settings.Disable2FAUseCase
 import com.minhtu.firesocialmedia.domain.usecases.settings.Enable2FAUseCase
+import com.minhtu.firesocialmedia.domain.usecases.settings.FetchLoginHistoryListUseCase
 import com.minhtu.firesocialmedia.domain.usecases.settings.GenerateSecretFor2FAUseCase
 import com.minhtu.firesocialmedia.domain.usecases.settings.Get2FAVerifiedStatusUseCase
 import com.minhtu.firesocialmedia.domain.usecases.settings.UpdateVerify2FASuccessUseCase
@@ -127,6 +128,7 @@ import com.minhtu.firesocialmedia.domain.usecases.signin.CheckLocalAccountUseCas
 import com.minhtu.firesocialmedia.domain.usecases.signin.CheckUserExistsUseCase
 import com.minhtu.firesocialmedia.domain.usecases.signin.HandleSignInGoogleResultUseCase
 import com.minhtu.firesocialmedia.domain.usecases.signin.RememberPasswordUseCase
+import com.minhtu.firesocialmedia.domain.usecases.signin.SaveLoginActivityInfoUseCase
 import com.minhtu.firesocialmedia.domain.usecases.signin.SignInUseCase
 import com.minhtu.firesocialmedia.domain.usecases.signup.SignUpUseCase
 import com.minhtu.firesocialmedia.domain.usecases.sync.LoadNewsPostedWhenOfflineUseCase
@@ -186,7 +188,8 @@ object AppModule {
                                checkLocalAccountUseCase : CheckLocalAccountUseCase,
                                handleSignInGoogleResult: HandleSignInGoogleResultUseCase,
                                getCurrentUserUidUseCase: GetCurrentUserUidUseCase,
-                               getUserUseCase: GetUserUseCase) : SignInViewModel{
+                               getUserUseCase: GetUserUseCase,
+                               saveLoginActivityInfoUseCase: SaveLoginActivityInfoUseCase) : SignInViewModel{
         return SignInViewModel(
             signInUseCase,
             rememberPasswordUseCase,
@@ -194,7 +197,8 @@ object AppModule {
             checkLocalAccountUseCase,
             handleSignInGoogleResult,
             getCurrentUserUidUseCase,
-            getUserUseCase
+            getUserUseCase,
+            saveLoginActivityInfoUseCase
         )
     }
 
@@ -248,12 +252,14 @@ object AppModule {
     fun provideInformationViewModel(
         saveSignUpInformationUseCase: SaveSignUpInformationUseCase,
         getCurrentUserUidUseCase: GetCurrentUserUidUseCase,
-        getFCMTokenUseCase: GetFCMTokenUseCase
+        getFCMTokenUseCase: GetFCMTokenUseCase,
+        saveLoginActivityInfoUseCase: SaveLoginActivityInfoUseCase
     ) : InformationViewModel {
         return InformationViewModel(
             saveSignUpInformationUseCase,
             getCurrentUserUidUseCase,
-            getFCMTokenUseCase)
+            getFCMTokenUseCase,
+            saveLoginActivityInfoUseCase)
     }
 
     //---------------------------Loading----------------------------------------//
@@ -800,5 +806,13 @@ object AppModule {
 
     fun provideGet2FAVerifiedStatusUseCase(settingsRepository: SettingsRepository) : Get2FAVerifiedStatusUseCase {
         return Get2FAVerifiedStatusUseCase(settingsRepository)
+    }
+
+    fun provideFetchLoginHistoryListUseCase(settingsRepository: SettingsRepository) : FetchLoginHistoryListUseCase {
+        return FetchLoginHistoryListUseCase(settingsRepository)
+    }
+
+    fun provideSaveLoginActivityInfoUseCase(commonDbRepository: CommonDbRepository) : SaveLoginActivityInfoUseCase {
+        return SaveLoginActivityInfoUseCase(commonDbRepository)
     }
 }

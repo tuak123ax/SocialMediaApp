@@ -2,6 +2,7 @@ package com.minhtu.firesocialmedia.domain.repository
 
 import com.minhtu.firesocialmedia.domain.entity.authentication.TwoFAResponse
 import com.minhtu.firesocialmedia.domain.entity.settings.ChangePasswordState
+import com.minhtu.firesocialmedia.domain.entity.settings.SessionItem
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 
 interface SettingsRepository {
@@ -38,4 +39,5 @@ interface SettingsRepository {
     suspend fun updateVerify2FASuccess()
     suspend fun get2FAVerifiedStatus() : Boolean
     suspend fun delete2FAStatusInLocal()
+    suspend fun fetchLoginHistoryList(userId: String): List<SessionItem>
 }

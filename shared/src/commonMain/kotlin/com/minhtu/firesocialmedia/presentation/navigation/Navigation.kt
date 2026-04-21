@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
@@ -80,6 +81,8 @@ import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security.changepassword.ChangePasswordViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security.SecuritySettings
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security.SecuritySettingsViewModel
+import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security.loginhistory.LoginHistory
+import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security.loginhistory.LoginHistoryViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security.twoFA.BackUpCode
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security.twoFA.BackUpCodeViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security.twoFA.TwoFA
@@ -211,6 +214,9 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
         platformViewModel { ViewModelProvider.createBackUpCodeViewModel(platformContext) }
     var isEnable2FAFlow = false
     val routerViewModel: RouterViewModel = platformViewModel { ViewModelProvider.createRouterViewModel(platformContext) }
+
+    //Login History
+    val loginHistoryViewModel : LoginHistoryViewModel = platformViewModel { ViewModelProvider.createLoginHistoryViewModel(platformContext) }
 
     LaunchedEffect(networkStatus) {
         if (networkStatus != null) {
@@ -1291,6 +1297,9 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                             },
                             onNavigateTo2FAScreen = {
                                 navController.navigate(TwoFA.getScreenName())
+                            },
+                            onLoginActivity = {
+                                navController.navigate(LoginHistory.getScreenName())
                             }
                         )
                     } else {
@@ -1448,6 +1457,24 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                             backupCode = newBackupCode
                             isEnable2FAFlow = false
                             navController.navigate(route = TwoFactorEnabled.getScreenName())
+                        }
+                    )
+                }
+
+                composable(
+                    route = LoginHistory.getScreenName(),
+                    enterTransition = DefaultNavAnimations.enter,
+                    popEnterTransition = DefaultNavAnimations.popEnter,
+                    exitTransition = DefaultNavAnimations.exit,
+                    popExitTransition = DefaultNavAnimations.popExit
+                ) {
+                    LoginHistory.LoginHistoryScreen(
+                        currentUser = homeViewModel.currentUser ?: UserInstance(),
+                        loginHistoryViewModel,
+                        modifier = Modifier
+                            .padding(paddingValues),
+                        onNavigateBack = {
+                            navController.popBackStack()
                         }
                     )
                 }

@@ -804,4 +804,9 @@ class IosDatabaseService() : DatabaseService {
     ): Result<Unit> {
         TODO("Not yet implemented")
     }
+
+    override fun getLocalSessionId(): String {
+        // TODO: Implement iOS local session ID storage (e.g., NSUserDefaults/Keychain)
+        return ""
+    }
 }

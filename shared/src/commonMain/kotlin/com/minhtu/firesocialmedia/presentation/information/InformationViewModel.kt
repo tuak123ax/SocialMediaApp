@@ -8,6 +8,8 @@ import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.domain.usecases.common.GetCurrentUserUidUseCase
 import com.minhtu.firesocialmedia.domain.usecases.common.GetFCMTokenUseCase
 import com.minhtu.firesocialmedia.domain.usecases.information.SaveSignUpInformationUseCase
+import com.minhtu.firesocialmedia.domain.usecases.signin.SaveLoginActivityInfoUseCase
+import com.minhtu.firesocialmedia.platform.logMessage
 import com.rickclephas.kmp.observableviewmodel.ViewModel
 import com.rickclephas.kmp.observableviewmodel.launch
 import kotlinx.coroutines.CoroutineDispatcher
@@ -20,6 +22,7 @@ class InformationViewModel(
     private val saveSignUpInformationUseCase: SaveSignUpInformationUseCase,
     private val getCurrentUserUidUseCase: GetCurrentUserUidUseCase,
     private val getFCMTokenUseCase: GetFCMTokenUseCase,
+    private val saveLoginActivityInfoUseCase : SaveLoginActivityInfoUseCase,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : ViewModel() {
     private val _addInformationStatus = MutableStateFlow<Boolean?>(null)
@@ -45,23 +48,33 @@ class InformationViewModel(
         username = input
     }
 
+    private val currentUserId = mutableStateOf<String?>(null)
     fun finishSignUpStage(){
         viewModelScope.launch(ioDispatcher) {
             if(username.isEmpty()) {
                 _addInformationStatus.value = false
             } else {
-                val uid = getCurrentUserUidUseCase.invoke()
+                currentUserId.value = getCurrentUserUidUseCase.invoke()
                 val userInstance = UserInstance(
                     email,
                     avatar,
                     username,
                     "",
                     getFCMTokenUseCase.invoke(),
-                    uid!!,
+                    currentUserId.value ?: "",
                     HashMap()
                 )
                 val result = saveSignUpInformationUseCase.invoke(userInstance)
                 _addInformationStatus.value = result
+            }
+        }
+    }
+
+    fun saveLoginActivityInfo() {
+        viewModelScope.launch(ioDispatcher) {
+            if(currentUserId.value != null) {
+                logMessage("saveLoginActivityInfo", { "start save login activity info" })
+                saveLoginActivityInfoUseCase.invoke(currentUserId.value!!)
             }
         }
     }
