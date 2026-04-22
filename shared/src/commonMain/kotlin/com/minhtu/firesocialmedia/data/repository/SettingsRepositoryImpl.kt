@@ -119,4 +119,13 @@ class SettingsRepositoryImpl(
             it.toDomain(currentSessionId, currentTimeMillis)
         }
     }
+
+    override suspend fun updateUserTimestamp(userId: String, fieldPath: String, value: Long): Boolean {
+        return databaseService.updateUserLongField(
+            userId,
+            fieldPath,
+            value,
+            DataConstant.USER_PATH
+        )
+    }
 }

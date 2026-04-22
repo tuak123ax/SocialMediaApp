@@ -964,4 +964,13 @@ class AndroidDatabaseService(context: Context) : DatabaseService {
     ) {
         AndroidDatabaseHelper.saveLoginActivityInfo(appContext, userId, historyPath, loginHistoryPath)
     }
+
+    override suspend fun updateUserLongField(
+        userId: String,
+        fieldPath: String,
+        value: Long,
+        userPath: String
+    ): Boolean {
+        return AndroidDatabaseHelper.updateUserLongField(userId, fieldPath, value, userPath)
+    }
 }

@@ -2379,7 +2379,8 @@ class UiUtils {
             value: String,
             onValueChange: (String) -> Unit,
             isVisible: Boolean,
-            onToggleVisibility: () -> Unit
+            onToggleVisibility: () -> Unit,
+            minHeight: androidx.compose.ui.unit.Dp = 56.dp
         ) {
             Column {
                 Text(
@@ -2391,7 +2392,9 @@ class UiUtils {
                 OutlinedTextField(
                     value = value,
                     onValueChange = onValueChange,
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .defaultMinSize(minHeight = minHeight),
                     singleLine = true,
                     visualTransformation = if (isVisible) VisualTransformation.None else PasswordVisualTransformation(),
                     trailingIcon = {

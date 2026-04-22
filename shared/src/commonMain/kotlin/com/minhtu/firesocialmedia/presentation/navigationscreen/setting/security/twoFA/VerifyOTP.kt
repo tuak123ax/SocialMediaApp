@@ -29,6 +29,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
@@ -134,13 +135,14 @@ class VerifyOTP {
 
                     UiUtils.BackAndTitleAndMoreOptionsRow(
                         title = "Verify OTP",
-                        titleStyle = MaterialTheme.typography.titleLarge,
                         showBackButton = true,
                         navigateBack = {
                             showCancelBottomSheet = true
                         }
                     )
+                    Divider(color = Color(0xFFF0F0F0))
 
+                    Spacer(modifier = Modifier.height(20.dp))
                     // SECURITY LABEL
                     Text(
                         text = "SECURITY LAYER",

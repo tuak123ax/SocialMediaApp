@@ -50,7 +50,8 @@ class Privacy {
         @OptIn(ExperimentalMaterial3Api::class)
         @Composable
         fun PrivacyScreen(
-            onClickBack: () -> Unit
+            onClickBack: () -> Unit,
+            onUnderstandClicked: () -> Unit = {}
         ) {
             Scaffold(
                 containerColor = Color.White,
@@ -153,6 +154,7 @@ class Privacy {
                     item {
                         Button(
                             onClick = {
+                                onUnderstandClicked()
                                 onClickBack()
                             },
                             shape = RoundedCornerShape(10.dp),

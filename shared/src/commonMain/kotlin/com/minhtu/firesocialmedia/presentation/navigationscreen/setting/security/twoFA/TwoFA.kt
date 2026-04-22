@@ -28,6 +28,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -99,12 +100,12 @@ class TwoFA {
 
                     UiUtils.BackAndTitleAndMoreOptionsRow(
                         title = "2FA",
-                        titleStyle = MaterialTheme.typography.titleLarge,
                         navigateBack = onNavigateBack
                     )
+                    Divider(color = Color(0xFFF0F0F0))
 
                     Column(
-                        modifier = Modifier.padding(horizontal = 20.dp)
+                        modifier = Modifier.padding(20.dp)
                     ) {
 
                         // Label

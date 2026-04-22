@@ -2005,5 +2005,41 @@ class AndroidDatabaseHelper {
             val locale = context.resources.configuration.locales[0]
             return "${locale.country}"
         }
+
+        suspend fun updateUserLongField(
+            userId: String,
+            fieldPath: String,
+            value: Long,
+            userPath: String
+        ): Boolean {
+            val ref = FirebaseDatabase.getInstance()
+                .reference
+                .child(userPath)
+                .child(userId)
+                .child(fieldPath)
+
+            var delayTime = 200L
+
+            repeat(3) { attempt ->
+                try {
+                    withTimeout(3000) {
+                        ref.setValue(value).await()
+                    }
+                    return true
+                } catch (e: Exception) {
+                    val shouldRetry = e is IOException
+
+                    if (attempt < 2 && shouldRetry) {
+                        delay(delayTime)
+                        delayTime *= 2
+                    } else {
+                        Log.e("Firebase", "Failed to update user long field", e)
+                        return false
+                    }
+                }
+            }
+
+            return false
+        }
     }
 }

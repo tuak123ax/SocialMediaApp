@@ -1273,6 +1273,11 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                     Privacy.PrivacyScreen(
                         onClickBack = {
                             navController.popBackStack()
+                        },
+                        onUnderstandClicked = {
+                            homeViewModel.currentUser?.let { user ->
+                                loginHistoryViewModel.acknowledgePrivacyRead(user)
+                            }
                         }
                     )
                 }

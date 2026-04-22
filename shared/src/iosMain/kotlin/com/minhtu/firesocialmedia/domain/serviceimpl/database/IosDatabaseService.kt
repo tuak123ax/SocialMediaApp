@@ -809,4 +809,14 @@ class IosDatabaseService() : DatabaseService {
         // TODO: Implement iOS local session ID storage (e.g., NSUserDefaults/Keychain)
         return ""
     }
+
+    override suspend fun updateUserLongField(
+        userId: String,
+        fieldPath: String,
+        value: Long,
+        userPath: String
+    ): Boolean {
+        // TODO: Implement iOS updateUserLongField
+        return false
+    }
 }

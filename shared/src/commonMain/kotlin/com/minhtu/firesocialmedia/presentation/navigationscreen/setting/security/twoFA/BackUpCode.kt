@@ -35,6 +35,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -105,10 +106,10 @@ class BackUpCode {
                     // HEADER
                     UiUtils.BackAndTitleAndMoreOptionsRow(
                         title = "Enter Backup Code",
-                        titleStyle = MaterialTheme.typography.titleLarge,
                         navigateBack = onNavigateBack
                     )
-
+                    Divider(color = Color(0xFFF0F0F0))
+                    Spacer(modifier = Modifier.height(20.dp))
                     // CONTENT
                     Column(
                         modifier = Modifier

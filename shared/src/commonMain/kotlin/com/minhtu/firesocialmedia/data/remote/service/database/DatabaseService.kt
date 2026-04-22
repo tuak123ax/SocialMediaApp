@@ -339,4 +339,11 @@ interface DatabaseService {
         historyPath: String,
         loginHistoryPath: String
     )
+
+    suspend fun updateUserLongField(
+        userId: String,
+        fieldPath: String,
+        value: Long,
+        userPath: String
+    ): Boolean
 }

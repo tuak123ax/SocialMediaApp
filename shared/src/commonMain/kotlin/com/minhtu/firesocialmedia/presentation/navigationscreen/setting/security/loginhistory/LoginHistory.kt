@@ -25,12 +25,15 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.PhoneAndroid
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -39,6 +42,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -63,6 +69,15 @@ class LoginHistory {
             onNavigateBack: () -> Unit
         ) {
             val loginHistoryStatus by loginHistoryViewModel.loginHistoryUiState.collectAsState()
+            val acknowledgeStatus by loginHistoryViewModel.acknowledgeStatus.collectAsState()
+
+            LaunchedEffect(acknowledgeStatus) {
+                if (acknowledgeStatus == AcknowledgeStatus.SUCCESS) {
+                    kotlinx.coroutines.delay(1200)
+                    loginHistoryViewModel.resetAcknowledgeStatus()
+                    onNavigateBack()
+                }
+            }
 
             val deviceCount = when (loginHistoryStatus) {
                 is LoginHistoryUiState.Success ->
@@ -92,9 +107,9 @@ class LoginHistory {
                     item {
                         UiUtils.BackAndTitleAndMoreOptionsRow(
                             title = "Login History",
-                            titleStyle = MaterialTheme.typography.titleLarge,
                             navigateBack = onNavigateBack
                         )
+                        Divider(color = Color(0xFFF0F0F0))
                     }
 
                     item {
@@ -105,10 +120,9 @@ class LoginHistory {
                         item {
                             SecurityWarningCard()
                         }
-                    }
-
-                    item {
-                        Spacer(Modifier.height(16.dp))
+                        item {
+                            Spacer(Modifier.height(16.dp))
+                        }
                     }
 
                     item {
@@ -166,6 +180,68 @@ class LoginHistory {
 //                    }
 
                     item {
+                        Spacer(Modifier.height(16.dp))
+                    }
+
+                    item {
+                        val buttonColor = when (acknowledgeStatus) {
+                            AcknowledgeStatus.SUCCESS -> Color(0xFF43A047)
+                            AcknowledgeStatus.ERROR   -> Color(0xFFEF5350)
+                            else                      -> Color(0xFFE53935)
+                        }
+
+                        Button(
+                            onClick = {
+                                if (acknowledgeStatus == AcknowledgeStatus.IDLE ||
+                                    acknowledgeStatus == AcknowledgeStatus.ERROR
+                                ) {
+                                    loginHistoryViewModel.acknowledgeLoginHistory(currentUser)
+                                }
+                            },
+                            enabled = acknowledgeStatus != AcknowledgeStatus.LOADING,
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = buttonColor,
+                                disabledContainerColor = buttonColor,
+                                disabledContentColor = Color.White
+                            ),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            when (acknowledgeStatus) {
+                                AcknowledgeStatus.LOADING -> {
+                                    CircularProgressIndicator(
+                                        color = Color.White,
+                                        strokeWidth = 2.dp,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                    Spacer(Modifier.width(8.dp))
+                                    Text("Saving...", color = Color.White)
+                                }
+                                AcknowledgeStatus.SUCCESS -> {
+                                    Icon(
+                                        Icons.Default.CheckCircle,
+                                        contentDescription = null,
+                                        tint = Color.White,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                    Spacer(Modifier.width(8.dp))
+                                    Text("Acknowledged!", color = Color.White, fontWeight = FontWeight.Bold)
+                                }
+                                AcknowledgeStatus.ERROR -> {
+                                    Icon(
+                                        Icons.Default.Warning,
+                                        contentDescription = null,
+                                        tint = Color.White,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                    Spacer(Modifier.width(8.dp))
+                                    Text("Failed. Tap to retry", color = Color.White)
+                                }
+                                else -> {
+                                    Text("I'm aware of all sessions", color = Color.White)
+                                }
+                            }
+                        }
                         Spacer(Modifier.height(16.dp))
                     }
                 }

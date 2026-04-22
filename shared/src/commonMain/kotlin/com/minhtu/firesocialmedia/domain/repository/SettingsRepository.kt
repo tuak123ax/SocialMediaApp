@@ -40,4 +40,5 @@ interface SettingsRepository {
     suspend fun get2FAVerifiedStatus() : Boolean
     suspend fun delete2FAStatusInLocal()
     suspend fun fetchLoginHistoryList(userId: String): List<SessionItem>
+    suspend fun updateUserTimestamp(userId: String, fieldPath: String, value: Long): Boolean
 }

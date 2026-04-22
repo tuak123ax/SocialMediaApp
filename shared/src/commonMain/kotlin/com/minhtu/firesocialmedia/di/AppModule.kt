@@ -123,6 +123,7 @@ import com.minhtu.firesocialmedia.domain.usecases.settings.ValidateNewPasswordUs
 import com.minhtu.firesocialmedia.domain.usecases.settings.Verify2FAUseCase
 import com.minhtu.firesocialmedia.domain.usecases.settings.VerifyBackupCodeUseCase
 import com.minhtu.firesocialmedia.domain.usecases.settings.VerifyCurrentPasswordUseCase
+import com.minhtu.firesocialmedia.domain.usecases.settings.UpdateUserTimestampUseCase
 import com.minhtu.firesocialmedia.domain.usecases.showimage.DownloadImageUseCase
 import com.minhtu.firesocialmedia.domain.usecases.signin.CheckLocalAccountUseCase
 import com.minhtu.firesocialmedia.domain.usecases.signin.CheckUserExistsUseCase
@@ -810,6 +811,10 @@ object AppModule {
 
     fun provideFetchLoginHistoryListUseCase(settingsRepository: SettingsRepository) : FetchLoginHistoryListUseCase {
         return FetchLoginHistoryListUseCase(settingsRepository)
+    }
+
+    fun provideUpdateUserTimestampUseCase(settingsRepository: SettingsRepository) : UpdateUserTimestampUseCase {
+        return UpdateUserTimestampUseCase(settingsRepository)
     }
 
     fun provideSaveLoginActivityInfoUseCase(commonDbRepository: CommonDbRepository) : SaveLoginActivityInfoUseCase {

@@ -536,6 +536,7 @@ object ViewModelProvider {
     fun createLoginHistoryViewModel(platformContext: PlatformContext): LoginHistoryViewModel {
         val settingsRepository = AppModule.provideSettingsRepository(platformContext)
         val fetchLoginHistoryListUseCase = AppModule.provideFetchLoginHistoryListUseCase(settingsRepository)
-        return LoginHistoryViewModel(fetchLoginHistoryListUseCase)
+        val updateUserTimestampUseCase = AppModule.provideUpdateUserTimestampUseCase(settingsRepository)
+        return LoginHistoryViewModel(fetchLoginHistoryListUseCase, updateUserTimestampUseCase)
     }
 }

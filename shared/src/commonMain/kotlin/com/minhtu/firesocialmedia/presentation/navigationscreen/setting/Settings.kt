@@ -121,24 +121,25 @@ class Settings {
                                 }
                             )
                         } else {
-                            SettingsPartWithSwitch(
-                                title = settingPart.first,
-                                darkMode,
-                                listItems = settingPart.second,
-                                onCheckedChange = {
-                                    darkMode = it
-                                },
-                                onClickSettingItem = { settingName ->
-                                    when(settingName) {
-                                        "Notifications" -> {
-                                            onNavigateToNotificationConfigsScreen()
-                                        }
-                                        "Dark Mode" -> {
-
-                                        }
-                                    }
-                                }
-                            )
+                            //Comment out this part, will implement on next version
+//                            SettingsPartWithSwitch(
+//                                title = settingPart.first,
+//                                darkMode,
+//                                listItems = settingPart.second,
+//                                onCheckedChange = {
+//                                    darkMode = it
+//                                },
+//                                onClickSettingItem = { settingName ->
+//                                    when(settingName) {
+//                                        "Notifications" -> {
+//                                            onNavigateToNotificationConfigsScreen()
+//                                        }
+//                                        "Dark Mode" -> {
+//
+//                                        }
+//                                    }
+//                                }
+//                            )
                         }
                     }
                 }

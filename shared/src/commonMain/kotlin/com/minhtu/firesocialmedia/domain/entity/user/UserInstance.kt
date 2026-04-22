@@ -13,7 +13,9 @@ data class UserInstance(var email: String = "", var image: String = "", var name
                         var likedComments : HashMap<String,Int> = HashMap(),
                         var groups: HashMap<String, GroupInstance> = HashMap(),
                         var lastTimeChangePassword: Long = 0,
-                        var twoFAEnabled : Boolean = false
+                        var twoFAEnabled : Boolean = false,
+                        var lastTimeReadPrivacy: Long = 0,
+                        var lastTimeAcknowledgedLoginHistory: Long = 0
 )
 {
     fun addFriend(friend: String){
@@ -53,6 +55,8 @@ fun UserInstance.toMap(): Map<String, Any?> = mapOf(
     "notifications" to notifications.map { it.toMap() },
     "groups" to groups,
     "lastTimeChangePassword" to lastTimeChangePassword,
-    "twoFAEnabled" to twoFAEnabled
+    "twoFAEnabled" to twoFAEnabled,
+    "lastTimeReadPrivacy" to lastTimeReadPrivacy,
+    "lastTimeAcknowledgedLoginHistory" to lastTimeAcknowledgedLoginHistory
 )
 
