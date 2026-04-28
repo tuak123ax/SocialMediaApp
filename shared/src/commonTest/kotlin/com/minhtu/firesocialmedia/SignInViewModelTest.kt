@@ -84,6 +84,7 @@ class SignInViewModelTest {
         override suspend fun observePhoneCallWithoutCheckingInCall(currentUserId: String, phoneCallCallBack: (com.minhtu.firesocialmedia.data.remote.dto.call.CallingRequestDTO) -> Unit, endCallSession: (Boolean) -> Unit, whoEndCallCallBack: (String) -> Unit, iceCandidateCallBack: (iceCandidates: Map<String, com.minhtu.firesocialmedia.data.remote.dto.call.IceCandidateDTO>?) -> Unit) {}
         override suspend fun sendAnswerToFirebase(sessionId: String, answer: com.minhtu.firesocialmedia.data.remote.dto.call.OfferAnswerDTO, sendIceCandidateCallBack: com.minhtu.firesocialmedia.utils.Utils.Companion.BasicCallBack) {}
         override suspend fun updateAnswerInFirebase(sessionId: String, updateContent: String, updateField: String, updateAnswerCallBack: com.minhtu.firesocialmedia.utils.Utils.Companion.BasicCallBack) {}
+        override suspend fun clearAnswerInFirebase(sessionId: String) {}
         override suspend fun updateOfferInFirebase(sessionId: String, updateContent: String, updateField: String, updateOfferCallBack: com.minhtu.firesocialmedia.utils.Utils.Companion.BasicCallBack) {}
         override suspend fun isCalleeInActiveCall(calleeId: String, callPath: String): Boolean? = null
         override suspend fun observeAnswerFromCallee(sessionId: String, answerCallBack: (com.minhtu.firesocialmedia.data.remote.dto.call.OfferAnswerDTO) -> Unit, rejectCallBack: () -> Unit) {}
@@ -94,6 +95,7 @@ class SignInViewModelTest {
         override suspend fun searchUserByName(name: String, path: String) = null
         override suspend fun sendWhoEndCall(sessionId: String, whoEndCall: String) = true
         override fun stopObservePhoneCall() {}
+        override fun stopObservePhoneCallWithoutCheckingInCall() {}
 
         // -------- Group APIs (stubs) ----------
         override suspend fun saveGroupAndUserGroups(
@@ -205,7 +207,7 @@ class SignInViewModelTest {
         override val clipboard: ClipboardService = object : ClipboardService { override fun copy(text: String) {} }
         override val audioCall: AudioCallService = object : AudioCallService {
             override suspend fun startCallService(sessionId: String, caller: com.minhtu.firesocialmedia.data.remote.dto.user.UserDTO, callee: com.minhtu.firesocialmedia.data.remote.dto.user.UserDTO) {}
-            override suspend fun startVideoCall(onStartVideoCall: suspend (videoTrack: com.minhtu.firesocialmedia.platform.WebRTCVideoTrack) -> Unit) {}
+            override suspend fun startVideoCall(isVideoInitiator: Boolean, onStartVideoCall: suspend (videoTrack: com.minhtu.firesocialmedia.platform.WebRTCVideoTrack) -> Unit) {}
             override suspend fun startVideoCallService(sessionId: String, caller: com.minhtu.firesocialmedia.data.remote.dto.user.UserDTO, callee: com.minhtu.firesocialmedia.data.remote.dto.user.UserDTO, currentUserId: String?, remoteVideoOffer: com.minhtu.firesocialmedia.data.remote.dto.call.OfferAnswerDTO?) {}
             override suspend fun initialize(onInitializeFinished: () -> Unit, onIceCandidateCreated: (iceCandidateData: com.minhtu.firesocialmedia.data.remote.dto.call.IceCandidateDTO) -> Unit, onRemoteVideoTrackReceived: (remoteVideoTrack: com.minhtu.firesocialmedia.platform.WebRTCVideoTrack) -> Unit) {}
             override suspend fun stopCall() {}
@@ -213,6 +215,7 @@ class SignInViewModelTest {
             override suspend fun callerEndCallFromApp(currentUser: String) {}
             override suspend fun calleeEndCallFromApp(sessionId: String, currentUser: String) {}
             override suspend fun rejectVideoCall() {}
+            override suspend fun resetVideoCallStartedState() {}
             override suspend fun createOffer(onOfferCreated: (offer: com.minhtu.firesocialmedia.data.remote.dto.call.OfferAnswerDTO) -> Unit) {}
             override suspend fun createVideoOffer(onOfferCreated: (offer: com.minhtu.firesocialmedia.data.remote.dto.call.OfferAnswerDTO) -> Unit) {}
             override suspend fun createAnswer(videoSupport: Boolean, onAnswerCreated: (answer: com.minhtu.firesocialmedia.data.remote.dto.call.OfferAnswerDTO) -> Unit) {}
@@ -220,6 +223,9 @@ class SignInViewModelTest {
             override suspend fun addIceCandidate(sdp: String, sdpMid: String, sdpMLineIndex: Int) {}
             override suspend fun setupAudioTrack() {}
             override suspend fun releaseResources() {}
+            override suspend fun updateMuteStatus(muted: Boolean) {}
+            override suspend fun updateCameraStatus(cameraOff: Boolean) {}
+            override suspend fun updateSpeakerStatus(speakerType: com.minhtu.firesocialmedia.domain.entity.call.SpeakerType) {}
         }
         override val room: RoomService = object : RoomService {
             override suspend fun storeUserFriendsToRoom(friends: List<com.minhtu.firesocialmedia.data.local.entity.UserEntity?>) {}

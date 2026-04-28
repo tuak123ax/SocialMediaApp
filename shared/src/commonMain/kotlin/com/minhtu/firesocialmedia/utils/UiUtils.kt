@@ -20,9 +20,11 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -36,9 +38,16 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.outlined.Block
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Badge
@@ -59,6 +68,7 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarDefaults
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Snackbar
@@ -69,6 +79,7 @@ import androidx.compose.material3.TabRow
 import androidx.compose.material3.TabRowDefaults
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -91,21 +102,27 @@ import androidx.compose.ui.composed
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.SoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import com.minhtu.firesocialmedia.constants.TestTag
 import com.minhtu.firesocialmedia.domain.entity.home.deeplinks.ShareApp
 import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
@@ -116,6 +133,7 @@ import com.minhtu.firesocialmedia.platform.convertTimeToDateString
 import com.minhtu.firesocialmedia.platform.getUriStringFromLocalPath
 import com.minhtu.firesocialmedia.platform.launchShareAppWithDeepLink
 import com.minhtu.firesocialmedia.platform.queryShareApps
+import com.minhtu.firesocialmedia.platform.toHex
 import com.minhtu.firesocialmedia.presentation.home.Home
 import com.minhtu.firesocialmedia.presentation.home.HomeViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.Screen
@@ -125,7 +143,8 @@ import com.minhtu.firesocialmedia.presentation.navigationscreen.notification.Not
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.Settings
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.GroupDetails.Companion.DropdownMenuForMoreOptionsInGroup
 import com.minhtu.firesocialmedia.presentation.search.SearchViewModel
-import com.minhtu.firesocialmedia.utils.Utils.Companion.hexToColor
+import com.minhtu.sharedmodule.ui.theme.loginBackgroundColor
+import com.minhtu.sharedmodule.ui.theme.memberCardColor
 import com.seiko.imageloader.asImageBitmap
 import com.seiko.imageloader.ui.AutoSizeImage
 import kotlinx.coroutines.delay
@@ -156,7 +175,7 @@ class UiUtils {
             }
             Card(
                 modifier = Modifier
-                    .padding(start = 10.dp, end = 10.dp, top = 5.dp)
+                    .padding(start = 10.dp, end = 10.dp, top = 10.dp)
                     .fillMaxWidth()
                     .testTag(TestTag.TAG_POST_IN_COLUMN)
                     .semantics{
@@ -193,6 +212,7 @@ class UiUtils {
                             Text(
                                 text = news.posterName,
                                 color = Color.Black,
+                                fontWeight = FontWeight.Bold,
                                 modifier = Modifier.padding(horizontal = 2.dp)
                             )
                             Text(
@@ -237,7 +257,8 @@ class UiUtils {
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .height(300.dp)
-                                    .padding(5.dp)
+                                    .padding(10.dp)
+                                    .clip(RoundedCornerShape(10.dp))
                                     .clickable {
                                         onNavigateToShowImageScreen(news.image)
                                     }
@@ -260,7 +281,7 @@ class UiUtils {
                                     Modifier
                                         .fillMaxWidth()
                                         .height(300.dp)
-                                        .padding(5.dp)
+                                        .padding(10.dp)
                                         .testTag(TestTag.TAG_POST_VIDEO)
                                         .semantics{
                                             contentDescription = TestTag.TAG_POST_VIDEO
@@ -269,87 +290,39 @@ class UiUtils {
                         }
                     }
                     if(likeCommentAndShareButtonEnable) {
-                        Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp),
-                            horizontalArrangement = Arrangement.Start) {
+                        val likeCount = likeCountList[news.id] ?: 0
+                        val commentCount = commentCountList[news.id] ?: 0
+                        Row(modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically) {
                             Text(
-                                text = "Like: ${likeCountList[news.id] ?: 0}",
+                                text = if(likeCount > 1) "$likeCount Likes" else "$likeCount Like",
                                 fontSize = 12.sp,
                                 color = Color.Black,
                                 modifier = Modifier.padding(2.dp)
                             )
                             Spacer(modifier = Modifier.weight(1f))
                             Text(
-                                text = "Comment: ${commentCountList[news.id] ?: 0}",
+                                text = if(commentCount > 1) "$commentCount Comments" else "$commentCount Comment",
                                 fontSize = 12.sp,
                                 color = Color.Black,
                                 modifier = Modifier.padding(2.dp)
                             )
                         }
-                        Row(modifier = Modifier.fillMaxWidth().padding(bottom = 5.dp, start = 10.dp, end = 10.dp)) {
-                            Button(onClick = {
+                        LikeCommentAndShareButton(
+                            isLiked,
+                            clickLikeButton = {
                                 homeViewModel.clickLikeButton(news)
                             },
-                                elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp),
-                                colors = if(isLiked) ButtonDefaults.buttonColors(Color.Cyan)
-                                else ButtonDefaults.buttonColors(Color.White),
-                                modifier = Modifier.height(35.dp).weight(1f)
-                                    .testTag(TestTag.TAG_BUTTON_LIKE)
-                                    .semantics{
-                                        contentDescription = TestTag.TAG_BUTTON_LIKE
-                                    }){
-                                CrossPlatformIcon(
-                                    icon = "like",
-                                    backgroundColor = if(isLiked) "#00FFFF" else "#FFFFFFFF",
-                                    contentDescription = "Like",
-                                    tint = if(isLiked) hexToColor("FF1565C0") else Color.Black,
-                                    modifier = Modifier
-                                        .size(25.dp)
-                                )
-                                Text(text = if(isLiked) "Liked" else "Like", color = Color.Black)
-                            }
-                            Spacer(modifier = Modifier.width(10.dp))
-                            Button(onClick = {
+                            clickCommentButton = {
                                 homeViewModel.clickCommentButton(news)
                             },
-                                elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp),
-                                colors = ButtonDefaults.buttonColors(Color.White),
-                                modifier = Modifier.height(35.dp).weight(1f)
-                                    .testTag(TestTag.TAG_BUTTON_COMMENT)
-                                    .semantics{
-                                        contentDescription = TestTag.TAG_BUTTON_COMMENT
-                                    }){
-                                CrossPlatformIcon(
-                                    icon = "comment",
-                                    backgroundColor = "#FFFFFFFF",
-                                    contentDescription = "Comment",
-                                    modifier = Modifier
-                                        .size(25.dp)
-                                )
-                                Text(text = "Comment", color = Color.Black)
-                            }
-                        }
-                        Row(modifier = Modifier.fillMaxWidth().padding(bottom = 5.dp, start = 10.dp, end = 10.dp)) {
-                            Button(onClick = {
+                            clickShareButton = {
                                 //Show bottom sheet
                                 showBottomSheet(news)
-                            },
-                                elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp),
-                                colors = ButtonDefaults.buttonColors(Color.White),
-                                modifier = Modifier.height(35.dp).weight(1f)
-                                    .testTag(TestTag.TAG_BUTTON_SHARE)
-                                    .semantics{
-                                        contentDescription = TestTag.TAG_BUTTON_SHARE
-                                    }){
-                                CrossPlatformIcon(
-                                    icon = "share",
-                                    backgroundColor = "#FFFFFFFF",
-                                    contentDescription = "Share",
-                                    modifier = Modifier
-                                        .size(25.dp)
-                                )
-                                Text(text = "Share", color = Color.Black)
                             }
-                        }
+                        )
                     }
                 }
             }
@@ -381,7 +354,7 @@ class UiUtils {
             val ownerUser = loadedUsers[sharedNew.posterId]
             Card(
                 modifier = Modifier
-                    .padding(start = 10.dp, end = 10.dp, top = 5.dp)
+                    .padding(start = 10.dp, end = 10.dp, top = 10.dp)
                     .fillMaxWidth()
                     .testTag(TestTag.TAG_POST_IN_COLUMN)
                     .semantics{
@@ -418,6 +391,7 @@ class UiUtils {
                             Text(
                                 text = news.posterName,
                                 color = Color.Black,
+                                fontWeight = FontWeight.Bold,
                                 modifier = Modifier.padding(horizontal = 2.dp)
                             )
                             Text(
@@ -449,7 +423,9 @@ class UiUtils {
                         }
                     }
                     //Message
-                    ExpandableText(news.message)
+                    if(news.message.isNotEmpty()) {
+                        ExpandableText(news.message)
+                    }
                     if(ownerUser != null) {
                         //Shared content
                         Column(
@@ -460,7 +436,7 @@ class UiUtils {
                         ) {
                             NewsCard(
                                 sharedNew,
-                                ownerUser!!,
+                                ownerUser,
                                 isLiked,
                                 likeCountList,
                                 commentCountList,
@@ -482,157 +458,261 @@ class UiUtils {
                     //Like and comment part
                     Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp),
                         horizontalArrangement = Arrangement.Start) {
+                        val likeCount = likeCountList[news.id] ?: 0
+                        val commentCount = commentCountList[news.id] ?: 0
                         Text(
-                            text = "Like: ${likeCountList[news.id] ?: 0}",
+                            text = if(likeCount > 1) "$likeCount Likes" else "$likeCount Like",
                             fontSize = 12.sp,
                             color = Color.Black,
                             modifier = Modifier.padding(2.dp)
                         )
                         Spacer(modifier = Modifier.weight(1f))
                         Text(
-                            text = "Comment: ${commentCountList[news.id] ?: 0}",
+                            text = if(commentCount > 1) "$commentCount Comments" else "$commentCount Comment",
                             fontSize = 12.sp,
                             color = Color.Black,
                             modifier = Modifier.padding(2.dp)
                         )
                     }
-                    Row(modifier = Modifier.fillMaxWidth().padding(bottom = 5.dp, start = 10.dp, end = 10.dp)) {
-                        Button(onClick = {
+
+                    LikeCommentAndShareButton(
+                        isLiked,
+                        clickLikeButton = {
                             homeViewModel.clickLikeButton(news)
                         },
-                            elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp),
-                            colors = if(isLiked) ButtonDefaults.buttonColors(Color.Cyan)
-                            else ButtonDefaults.buttonColors(Color.White),
-                            modifier = Modifier.height(35.dp).weight(1f)
-                                .testTag(TestTag.TAG_BUTTON_LIKE)
-                                .semantics{
-                                    contentDescription = TestTag.TAG_BUTTON_LIKE
-                                }){
-                            CrossPlatformIcon(
-                                icon = "like",
-                                backgroundColor = if(isLiked) "#00FFFF" else "#FFFFFFFF",
-                                contentDescription = "Like",
-                                tint = if(isLiked) hexToColor("FF1565C0") else Color.Black,
-                                modifier = Modifier
-                                    .size(25.dp)
-                                    .padding(end = 5.dp)
-                            )
-                            Text(text = if(isLiked) "Liked" else "Like", color = Color.Black)
-                        }
-                        Spacer(modifier = Modifier.width(10.dp))
-                        Button(onClick = {
+                        clickCommentButton = {
                             homeViewModel.clickCommentButton(news)
                         },
-                            elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp),
-                            colors = ButtonDefaults.buttonColors(Color.White),
-                            modifier = Modifier.height(35.dp).weight(1f)
-                                .testTag(TestTag.TAG_BUTTON_COMMENT)
-                                .semantics{
-                                    contentDescription = TestTag.TAG_BUTTON_COMMENT
-                                }){
-                            CrossPlatformIcon(
-                                icon = "comment",
-                                backgroundColor = "#FFFFFFFF",
-                                contentDescription = "Comment",
-                                modifier = Modifier
-                                    .size(25.dp)
-                                    .padding(end = 5.dp)
-                            )
-                            Text(text = "Comment", color = Color.Black)
-                        }
-                    }
-                    Row(modifier = Modifier.fillMaxWidth().padding(bottom = 5.dp, start = 10.dp, end = 10.dp)) {
-                        Button(onClick = {
+                        clickShareButton = {
                             //Show bottom sheet
                             showBottomSheet(news)
-                        },
-                            elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp),
-                            colors = ButtonDefaults.buttonColors(Color.White),
-                            modifier = Modifier.height(35.dp).weight(1f)
-                                .testTag(TestTag.TAG_BUTTON_SHARE)
-                                .semantics{
-                                    contentDescription = TestTag.TAG_BUTTON_SHARE
-                                }){
-                            CrossPlatformIcon(
-                                icon = "share",
-                                backgroundColor = "#FFFFFFFF",
-                                contentDescription = "Share",
-                                modifier = Modifier
-                                    .size(25.dp)
-                                    .padding(end = 5.dp)
+                        }
+                    )
+                }
+            }
+        }
+
+        @Composable
+        fun ShowDiscardDialog(
+            title: String,
+            message: String,
+            icon : ImageVector,
+            iconBackground : Color,
+            onDiscard: () -> Unit,
+            onCancel: () -> Unit = {},
+            showDialog: MutableState<Boolean>
+        ) {
+            if (!showDialog.value) return
+
+            Dialog(
+                onDismissRequest = { showDialog.value = false }
+            ) {
+                Card(
+                    shape = RoundedCornerShape(28.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color.White
+                    )
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .padding(horizontal = 24.dp, vertical = 32.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+
+                        // Icon Circle
+                        Box(
+                            modifier = Modifier
+                                .size(72.dp)
+                                .clip(CircleShape)
+                                .background(iconBackground),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = icon,
+                                contentDescription = null,
+                                tint = Color(0xFFFF9800),
+                                modifier = Modifier.size(36.dp)
                             )
-                            Text(text = "Share", color = Color.Black)
+                        }
+
+                        Spacer(modifier = Modifier.height(24.dp))
+
+                        // Title
+                        Text(
+                            text = title,
+                            style = MaterialTheme.typography.titleLarge.copy(
+                                fontWeight = FontWeight.Bold
+                            ),
+                            textAlign = TextAlign.Center
+                        )
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        // Message
+                        Text(
+                            text = message,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color.Gray,
+                            textAlign = TextAlign.Center
+                        )
+
+                        Spacer(modifier = Modifier.height(28.dp))
+
+                        // Discard Button
+                        Button(
+                            onClick = {
+                                showDialog.value = false
+                                onDiscard()
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(56.dp)
+                                .shadow(8.dp, RoundedCornerShape(16.dp)),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFFE53935) // Modern red
+                            )
+                        ) {
+                            Text(
+                                "Discard",
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        // Cancel Button
+                        TextButton(
+                            onClick = {
+                                showDialog.value = false
+                                onCancel() },
+                            modifier = Modifier
+                                .testTag(TestTag.TAG_BUTTON_NO)
+                        ) {
+                            Text(
+                                "Cancel",
+                                color = Color.Gray,
+                                fontWeight = FontWeight.Medium
+                            )
                         }
                     }
                 }
             }
         }
 
+        @OptIn(ExperimentalMaterial3Api::class)
         @Composable
-        fun ShowAlertDialog(title : String, message : String, resetAndBack:() -> Unit, showDialog : MutableState<Boolean>) {
-            if (showDialog.value) {
-                AlertDialog(
-                    onDismissRequest = { showDialog.value = false },
-                    title = { Text(title) },
-                    text = { Text(message) },
-                    confirmButton = {
-                        Button(
-                            onClick = {
-                            resetAndBack()
-                        },
-                            modifier = Modifier
-                                .testTag(TestTag.TAG_BUTTON_YES)
-                                .semantics{
-                                    contentDescription = TestTag.TAG_BUTTON_YES
-                                }
-                            ) {
-                            Text("Yes")
-                        }
-                    },
-                    dismissButton = {
-                        Button(onClick = { showDialog.value = false },
-                            modifier = Modifier.testTag(TestTag.TAG_BUTTON_NO)
-                                .semantics{
-                                    contentDescription = TestTag.TAG_BUTTON_NO
-                                }) {
-                            Text("No")
-                        }
-                    }
-                )
-            }
-        }
-
-        @Composable
-        fun ShowAlertDialogToLogout(
+        fun LogoutBottomSheet(
             onClickConfirm: () -> Unit,
             onNavigateToSignIn: () -> Unit,
-            showDialog: MutableState<Boolean>
+            showSheet: MutableState<Boolean>
         ) {
             val coroutineScope = rememberCoroutineScope()
+            val sheetState = rememberModalBottomSheetState(
+                skipPartiallyExpanded = true
+            )
 
-            if (showDialog.value) {
-                AlertDialog(
-                    onDismissRequest = { showDialog.value = false },
-                    title = { Text("Logout") },
-                    text = { Text("Are you sure you want to logout?") },
-                    confirmButton = {
-                        Button(onClick = {
-                            onClickConfirm()
-                            showDialog.value = false
-                            coroutineScope.launch {
-                                delay(100) // let the dialog close properly
-                                onNavigateToSignIn()
-                            }
-                        }) {
-                            Text("Yes")
+            if (showSheet.value) {
+
+                ModalBottomSheet(
+                    onDismissRequest = { showSheet.value = false },
+                    sheetState = sheetState,
+                    shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+                    containerColor = Color.White
+                ) {
+
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 24.dp, vertical = 16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        // Icon Circle
+                        Box(
+                            modifier = Modifier
+                                .size(80.dp)
+                                .clip(CircleShape)
+                                .background(Color(0xFFFFEBEE)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ExitToApp,
+                                contentDescription = "Logout Icon",
+                                tint = Color(0xFFFF3B30),
+                                modifier = Modifier.size(36.dp)
+                            )
                         }
-                    },
-                    dismissButton = {
-                        Button(onClick = { showDialog.value = false }) {
-                            Text("No")
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        Text(
+                            text = "Logout",
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Bold
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Text(
+                            text = "Are you sure you want to log out? You can always log back in later.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color.Gray,
+                            textAlign = TextAlign.Center
+                        )
+
+                        Spacer(modifier = Modifier.height(24.dp))
+
+                        // Log Out Button
+                        Button(
+                            onClick = {
+                                onClickConfirm()
+                                showSheet.value = false
+                                coroutineScope.launch {
+                                    delay(200)
+                                    onNavigateToSignIn()
+                                }
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(56.dp),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFFFF3B30)
+                            )
+                        ) {
+                            Text(
+                                text = "Log Out",
+                                color = Color.White,
+                                style = MaterialTheme.typography.titleMedium
+                            )
                         }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        // Cancel Button
+                        OutlinedButton(
+                            onClick = { showSheet.value = false },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(56.dp),
+                            shape = RoundedCornerShape(16.dp)
+                        ) {
+                            Text(
+                                text = "Cancel",
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
                     }
-                )
+                }
             }
         }
 
@@ -732,31 +812,29 @@ class UiUtils {
                 }
 
                 //Floating action button
-                Box(
-                    contentAlignment = Alignment.Center,
+                FloatingActionButton(
+                    onClick = { onNavigateToUploadNews() },
                     modifier = Modifier
                         .size(56.dp)
                         .offset(y = (-30).dp)
-                        .shadow(8.dp, CircleShape) // Shadow before clipping
-                        .clip(CircleShape)
-                        .background(
-                            Brush.linearGradient(
-                                colors = listOf(Color.Red, Color.White)
-                            )
-                        )
                         .align(Alignment.BottomCenter)
-                ) {
-                    FloatingActionButton(
-                        onClick = {
-                            onNavigateToUploadNews()
+                        .testTag(TestTag.TAG_BOTTOM_ACTION_BUTTON)
+                        .semantics{
+                            contentDescription = TestTag.TAG_BOTTOM_ACTION_BUTTON
                         },
-                        shape = CircleShape,
-                        containerColor = Color.Transparent, // Transparent to let gradient show
-                        elevation = FloatingActionButtonDefaults.elevation(0.dp)
-                    ) {
-                        Icon(Icons.Default.Add, contentDescription = "Add", tint = Color.Black)
-                    }
+                    shape = CircleShape,
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    elevation = FloatingActionButtonDefaults.elevation(
+                        defaultElevation = 8.dp
+                    )
+                ) {
+                    Icon(
+                        Icons.Default.Add,
+                        contentDescription = "Add",
+                        tint = Color.White
+                    )
                 }
+
             }
         }
         @Composable
@@ -806,14 +884,17 @@ class UiUtils {
         @Composable
         fun BackAndTitleAndMoreOptionsRow(
             title : String,
+            titleColor : Color = Color.Black,
+            titleStyle : TextStyle = MaterialTheme.typography.titleMedium,
             subTitle : String = "",
             trailingIcon : String = "",
             trailingIconTint : Color = Color.Black,
             showMoreOptionsMenu : Boolean = false,
+            showBackButton : Boolean = true,
             isMember : Boolean = true,
             isAdmin : Boolean = false,
             iconSize : Dp = 35.dp,
-            navigateBack : () -> Unit,
+            navigateBack : () -> Unit = {},
             onClickMoreOptions : () -> Unit = {},
             onDismissRequest : () -> Unit = {},
             onLeaveGroup : () -> Unit = {},
@@ -825,19 +906,21 @@ class UiUtils {
                     .background(Color.White)
                     .padding(10.dp)
             ) {
-                CrossPlatformIcon(
-                    icon = "arrow_back",
-                    backgroundColor = "#FFFFFFFF",
-                    contentDescription = "Back",
-                    tint = Color.Black,
-                    modifier = Modifier
-                        .size(iconSize)
-                        .padding(4.dp)
-                        .clip(CircleShape)
-                        .testTag(TestTag.TAG_BUTTON_BACK)
-                        .semantics { contentDescription = TestTag.TAG_BUTTON_BACK }
-                        .clickable { navigateBack() }
-                )
+                if(showBackButton) {
+                    CrossPlatformIcon(
+                        icon = "arrow_back",
+                        backgroundColor = "#FFFFFFFF",
+                        contentDescription = "Back",
+                        tint = Color.Black,
+                        modifier = Modifier
+                            .size(iconSize)
+                            .padding(4.dp)
+                            .clip(CircleShape)
+                            .testTag(TestTag.TAG_BUTTON_BACK)
+                            .semantics { contentDescription = TestTag.TAG_BUTTON_BACK }
+                            .clickable { navigateBack() }
+                    )
+                }
 
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
@@ -848,15 +931,15 @@ class UiUtils {
                 ) {
                     Text(
                         text = title,
-                        color = Color.Black,
+                        color = titleColor,
                         fontWeight = FontWeight.Bold,
-                        style = MaterialTheme.typography.titleMedium,
+                        style = titleStyle,
                         textAlign = TextAlign.Center
                     )
                     if(subTitle.isNotEmpty()) {
                         Text(
                             text = subTitle,
-                            color = Color.LightGray,
+                            color = Color.Gray,
                             style = MaterialTheme.typography.bodyMedium,
                             textAlign = TextAlign.Center
                         )
@@ -936,26 +1019,44 @@ class UiUtils {
                                     selectedTabIndex = index
                                 },
                                 text = {
-                                    Text(text = title, fontSize = 18.sp)
+                                    Text(
+                                        text = title,
+                                        style = MaterialTheme.typography.titleMedium,
+                                        color = if(selectedTabIndex == index) Color.Red else Color.Gray
+                                    )
                                 }
                             )
                         }
                     }
                     when(selectedTabIndex){
                         0 -> {
-                            var searchList by remember { mutableStateOf<List<UserInstance>>(emptyList()) }
-                            // Filtered List
-                            LaunchedEffect(searchViewModel.query) {
-                                searchList = homeViewModel.searchUserByName(searchViewModel.query)
-                            }
-                            LazyColumn(modifier = Modifier
-                                .testTag(TestTag.TAG_PEOPLE_COLUMN)
-                                .semantics {
-                                    contentDescription = TestTag.TAG_PEOPLE_COLUMN
+                            if(searchViewModel.query.isNotEmpty()) {
+                                var searchList by remember { mutableStateOf<List<UserInstance>>(emptyList()) }
+                                // Filtered List
+                                LaunchedEffect(searchViewModel.query) {
+                                    searchList = homeViewModel.searchUserByName(searchViewModel.query)
                                 }
-                            ) {
-                                items(searchList){user ->
-                                    UserRow(user,localImageLoaderValue, onNavigateToUserInformation)
+                                LazyColumn(modifier = Modifier
+                                    .testTag(TestTag.TAG_PEOPLE_COLUMN)
+                                    .semantics {
+                                        contentDescription = TestTag.TAG_PEOPLE_COLUMN
+                                    }
+                                ) {
+                                    items(searchList){user ->
+                                        SearchUserCard(
+                                            user,
+                                            localImageLoaderValue,
+                                            onClickViewProfileButton = {
+                                                onNavigateToUserInformation(user)
+                                            }
+                                        )
+                                    }
+                                }
+                            } else {
+                                Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center,
+                                    modifier = Modifier.fillMaxSize()){
+                                    Text(text = "Please input person you want to search",
+                                        textAlign = TextAlign.Center)
                                 }
                             }
                         }
@@ -1047,56 +1148,69 @@ class UiUtils {
                           currentUser : UserInstance,
                           onNavigateToUserInformation: (user: UserInstance) -> Unit,
                           friendViewModel: FriendViewModel) {
-            Row(horizontalArrangement = Arrangement.Start,
-                verticalAlignment = Alignment.CenterVertically,
+            Column(
+                verticalArrangement = Arrangement.Center,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable {
-                        onNavigateToUserInformation(requester)
+                    .padding(10.dp)
+            ) {
+                Row(horizontalArrangement = Arrangement.Start,
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable {
+                            onNavigateToUserInformation(requester)
+                        }
+                        .testTag(TestTag.TAG_FRIEND_REQUEST)
+                        .semantics{
+                            contentDescription = TestTag.TAG_FRIEND_REQUEST
+                        }){
+                    CompositionLocalProvider(
+                        localImageLoaderValue
+                    ) {
+                        AutoSizeImage(
+                            requester.image,
+                            contentDescription = "Avatar",
+                            contentScale = ContentScale.Crop,
+                            modifier =  Modifier
+                                .size(80.dp)
+                                .padding(10.dp)
+                                .clip(CircleShape)
+                        )
                     }
-                    .testTag(TestTag.TAG_FRIEND_REQUEST)
-                    .semantics{
-                        contentDescription = TestTag.TAG_FRIEND_REQUEST
-                    }){
-                CompositionLocalProvider(
-                    localImageLoaderValue
-                ) {
-                    AutoSizeImage(
-                        requester.image,
-                        contentDescription = "Avatar",
-                        contentScale = ContentScale.Crop,
-                        modifier =  Modifier
-                            .size(100.dp)
-                            .padding(10.dp)
-                            .clip(CircleShape)
-                    )
+                    Column(modifier = Modifier.padding(end = 5.dp)) {
+                        Text(
+                            text = requester.name,
+                            color = Color.Black,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier
+                                .padding(5.dp)
+                        )
+                    }
                 }
-                Column(modifier = Modifier.padding(end = 5.dp)) {
-                    Text(
-                        text = requester.name,
-                        color = Color.Black,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(5.dp)
-                    )
-                    Row(horizontalArrangement = Arrangement.Center,
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = 5.dp)){
-                        Button(onClick = {
-                            friendViewModel.acceptFriendRequest(requester, currentUser)
-                        },
-                            elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp),
-                            colors = ButtonDefaults.buttonColors(Color.Cyan),
-                            modifier = Modifier.height(35.dp).weight(1f)){
-                            Text(text = "Accept", color = Color.Black)
-                        }
-                        Spacer(modifier = Modifier.width(10.dp))
-                        Button(onClick = {
-                            friendViewModel.rejectFriendRequest(requester, currentUser)
-                        },
-                            elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp),
-                            colors = ButtonDefaults.buttonColors(Color.White),
-                            modifier = Modifier.height(35.dp).weight(1f)){
-                            Text(text = "Reject", color = Color.Black)
-                        }
+                Row(horizontalArrangement = Arrangement.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()){
+                    Button(onClick = {
+                        friendViewModel.acceptFriendRequest(requester, currentUser)
+                    },
+                        elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp),
+                        colors = ButtonDefaults.buttonColors(Color.Red),
+                        modifier = Modifier
+                            .weight(1f)
+                    ){
+                        Text(text = "Accept",
+                            color = Color.White)
+                    }
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Button(onClick = {
+                        friendViewModel.rejectFriendRequest(requester, currentUser)
+                    },
+                        elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp),
+                        colors = ButtonDefaults.buttonColors(memberCardColor),
+                        modifier = Modifier
+                            .weight(1f)){
+                        Text(text = "Decline", color = Color.Black)
                     }
                 }
             }
@@ -1908,6 +2022,432 @@ class UiUtils {
                 color = Color.LightGray.copy(alpha = alpha),
                 shape = RoundedCornerShape(6.dp)
             )
+        }
+
+        @Composable
+        fun PasswordVisibilityIcon(passwordVisibility : Boolean,
+                                   tint : Color,
+                                   backgroundColor : String) {
+            val icon = if(passwordVisibility) "visibility" else "visibility_off"
+            val descriptionOfIcon = if(passwordVisibility) "Hide password" else "Show password"
+            CrossPlatformIcon(
+                icon = icon,
+                backgroundColor = backgroundColor,
+                tint = tint,
+                contentDescription = descriptionOfIcon,
+                modifier = Modifier
+                    .size(30.dp)
+                    .padding(4.dp)
+            )
+        }
+
+        @Composable
+        fun IconAndTitle(hasIcon : Boolean = true,
+                         hasTitle : Boolean = true,
+                         icon : String = "",
+                         title : String = "",
+                         titleColor : Color = Color.Red,
+                         modifier: Modifier = Modifier
+        ) {
+            Row(
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = modifier
+            ) {
+                if(hasIcon) {
+                    CrossPlatformIcon(
+                        icon = "fire_chat_icon",
+                        backgroundColor = loginBackgroundColor.toHex(),
+                        modifier = Modifier
+                            .size(30.dp)
+                    )
+                }
+                if(hasTitle) {
+                    Text(
+                        text = title,
+                        color = titleColor,
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+        }
+
+        @Composable
+        fun SubTitle(
+            subTitle : String,
+            modifier: Modifier = Modifier) {
+            Row(
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = modifier
+            ) {
+                Text(
+                    text = subTitle,
+                    color = Color.LightGray,
+                    style = MaterialTheme.typography.titleSmall,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        }
+
+        @Composable
+        fun TextFieldWithLeadingIcon(
+            value : String,
+            onValueChange : (String) -> Unit,
+            label : String,
+            testTag : String
+        ) {
+            OutlinedTextField(
+                value = value,
+                onValueChange = {
+                    onValueChange(it)
+                },
+                shape = RoundedCornerShape(10.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(20.dp)
+                    .testTag(testTag)
+                    .semantics {
+                        contentDescription = testTag
+                    },
+                leadingIcon = {
+                    Icon(
+                        Icons.Default.Person,
+                        label
+                    )
+                },
+                label = { Text(text = label) },
+                singleLine = true,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = Color.White,
+                    unfocusedTextColor = Color.White
+                ),
+                textStyle = TextStyle(Color.White)
+            )
+        }
+
+        @Composable
+        fun ActionButton(
+            modifier: Modifier = Modifier,
+            icon: String,
+            text: String,
+            onClick: () -> Unit,
+            buttonColor : Color,
+            backgroundColor: String,
+            textColor : Color = Color.Gray,
+            tint: Color = Color.Gray
+        ) {
+            Button(
+                onClick = onClick,
+                modifier = modifier.height(34.dp),
+                shape = RoundedCornerShape(10.dp),
+                elevation = ButtonDefaults.buttonElevation(4.dp),
+                contentPadding = PaddingValues(horizontal = 6.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = buttonColor
+                )
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    CrossPlatformIcon(
+                        icon = icon,
+                        contentDescription = text,
+                        tint = tint,
+                        backgroundColor = backgroundColor,
+                        modifier = Modifier.size(16.dp)
+                    )
+
+                    Spacer(modifier = Modifier.width(4.dp))
+
+                    Text(
+                        text = text,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        fontSize = 12.sp,
+                        color = textColor
+                    )
+                }
+            }
+        }
+
+        @Composable
+        fun LikeCommentAndShareButton(
+            isLiked : Boolean,
+            clickLikeButton : () -> Unit,
+            clickCommentButton : () -> Unit,
+            clickShareButton : () -> Unit
+        ) {
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 10.dp, start = 10.dp, end = 10.dp)) {
+                //Like button
+                ActionButton(
+                    modifier = Modifier
+                        .height(35.dp)
+                        .weight(1f)
+                        .testTag(TestTag.TAG_BUTTON_LIKE)
+                        .semantics{
+                            contentDescription = TestTag.TAG_BUTTON_LIKE
+                        },
+                    icon = "like",
+                    text = if(isLiked) "Liked" else "Like",
+                    onClick = {
+                        clickLikeButton()
+                    },
+                    buttonColor = Color.White,
+                    backgroundColor = Color.White.toHex(),
+                    textColor = if(isLiked) Color.Red else Color.Gray,
+                    tint = if(isLiked) Color.Red else Color.Black
+                )
+                //Comment button
+                ActionButton(
+                    modifier = Modifier
+                        .height(35.dp)
+                        .weight(1f)
+                        .testTag(TestTag.TAG_BUTTON_COMMENT)
+                        .semantics{
+                            contentDescription = TestTag.TAG_BUTTON_COMMENT
+                        },
+                    icon = "comment",
+                    text = "Comment",
+                    onClick = {
+                        clickCommentButton()
+                    },
+                    buttonColor = Color.White,
+                    backgroundColor = Color.White.toHex(),
+                    tint = Color.Black
+                )
+                //Share button
+                ActionButton(
+                    modifier = Modifier
+                        .height(35.dp)
+                        .weight(1f)
+                        .testTag(TestTag.TAG_BUTTON_SHARE)
+                        .semantics{
+                            contentDescription = TestTag.TAG_BUTTON_SHARE
+                        },
+                    icon = "share",
+                    text = "Share",
+                    onClick = {
+                        clickShareButton()
+                    },
+                    buttonColor = Color.White,
+                    backgroundColor = Color.White.toHex(),
+                    tint = Color.Black
+                )
+            }
+        }
+
+        @Composable
+        fun SearchUserCard(
+            user : UserInstance,
+            localImageLoaderValue : ProvidedValue<*>,
+            onClickViewProfileButton : () -> Unit,
+            modifier: Modifier = Modifier
+        ) {
+            Card(
+                colors = CardDefaults.cardColors(
+                    containerColor = memberCardColor
+                ),
+                modifier = modifier
+                    .fillMaxWidth()
+                    .padding(10.dp)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .animateContentSize()
+                        .padding(10.dp)
+                ) {
+                    CompositionLocalProvider(localImageLoaderValue) {
+                        AutoSizeImage(
+                            user.image,
+                            contentDescription = "Avatar",
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier
+                                .size(50.dp)
+                                .clip(CircleShape)
+                        )
+                    }
+
+                    Spacer(Modifier.width(10.dp))
+
+                    Text(
+                        text = user.name,
+                        color = Color.Black,
+                        fontWeight = FontWeight.Bold,
+                        overflow = TextOverflow.Ellipsis,
+                        maxLines = 2,
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(horizontal = 5.dp)
+                    )
+
+                    Spacer(Modifier.width(8.dp))
+
+                    OutlinedButton(
+                        onClick = onClickViewProfileButton,
+                        shape = RoundedCornerShape(20.dp),
+                        border = BorderStroke(
+                            width = 0.5.dp,
+                            color = MaterialTheme.colorScheme.primary
+                        ),
+                        contentPadding = PaddingValues(
+                            horizontal = 18.dp,
+                            vertical = 6.dp
+                        ),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = Color.White
+                        ),
+                        modifier = Modifier.defaultMinSize(
+                            minHeight = 0.dp,
+                            minWidth = 0.dp
+                        )
+                    ) {
+                        Text(text = "View", fontSize = 14.sp)
+                    }
+                }
+            }
+        }
+
+        @Composable
+        fun CustomEditText(
+            text: String,
+            onTextChange: (String) -> Unit,
+            modifier: Modifier,
+            placeholder: String,
+            keyboardController : SoftwareKeyboardController? = null
+        ) {
+            Box(
+                modifier = modifier
+                    .height(45.dp)
+                    .background(
+                        color = Color.White,
+                        shape = RoundedCornerShape(10.dp)
+                    )
+                    .border(
+                        width = 1.dp,
+                        color = MaterialTheme.colorScheme.outline,
+                        shape = RoundedCornerShape(10.dp)
+                    )
+                    .padding(horizontal = 12.dp),
+                contentAlignment = Alignment.CenterStart
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    BasicTextField(
+                        value = text,
+                        onValueChange = onTextChange,
+                        maxLines = 4,
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(vertical = 8.dp),
+                        textStyle = MaterialTheme.typography.bodyMedium.copy(
+                            color = MaterialTheme.colorScheme.onSurface
+                        ),
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                        keyboardActions = KeyboardActions(
+                            onDone = { keyboardController?.hide() }
+                        ),
+                        decorationBox = { innerTextField ->
+                            if (text.isEmpty()) {
+                                Text(
+                                    text = placeholder,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                            innerTextField()
+                        }
+                    )
+                }
+            }
+        }
+
+        @Composable
+        fun PasswordField(
+            label: String,
+            value: String,
+            onValueChange: (String) -> Unit,
+            isVisible: Boolean,
+            onToggleVisibility: () -> Unit,
+            minHeight: androidx.compose.ui.unit.Dp = 56.dp
+        ) {
+            Column {
+                Text(
+                    text = label,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                OutlinedTextField(
+                    value = value,
+                    onValueChange = onValueChange,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .defaultMinSize(minHeight = minHeight),
+                    singleLine = true,
+                    visualTransformation = if (isVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                    trailingIcon = {
+                        IconButton(onClick = onToggleVisibility) {
+                            Icon(
+                                imageVector = if (isVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                                contentDescription = null
+                            )
+                        }
+                    },
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                        focusedLabelColor = MaterialTheme.colorScheme.primary
+                    )
+                )
+            }
+        }
+
+        @Composable
+        fun QuestionTextAndClickableText(
+            questionText : String,
+            questionTextColor : Color = Color.Black,
+            clickableText : String,
+            clickableTextColor : Color = Color.Black,
+            onClick: () -> Unit,
+            modifier: Modifier = Modifier
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = questionText,
+                    color = questionTextColor,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+
+                Spacer(Modifier.width(5.dp))
+
+                Text(
+                    text = clickableText,
+                    color = clickableTextColor,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold,
+                    modifier = modifier
+                        .clickable {
+                            onClick()
+                        }
+                )
+            }
         }
     }
 }

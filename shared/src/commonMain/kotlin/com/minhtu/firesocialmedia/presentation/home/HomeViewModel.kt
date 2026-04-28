@@ -34,6 +34,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -237,14 +238,10 @@ class HomeViewModel(
                 logMessage("getAllNotifications",
                     { notification.id + "isRead: "+ notification.beRead })
             }
-            if(notifications != null) {
-                listNotificationOfCurrentUser.clear()
-                listNotificationOfCurrentUser.addAll(notifications)
-                updateNotifications(ArrayList(listNotificationOfCurrentUser.toList()))
-                _getAllNotificationsOfCurrentUser.value = true
-            } else {
-                _getAllNotificationsOfCurrentUser.value = false
-            }
+            listNotificationOfCurrentUser.clear()
+            listNotificationOfCurrentUser.addAll(notifications)
+            updateNotifications(ArrayList(listNotificationOfCurrentUser.toList()))
+            _getAllNotificationsOfCurrentUser.value = true
         }
     }
 
@@ -506,6 +503,11 @@ class HomeViewModel(
                         onEndCall = {
                             logMessage("observePhoneCall", { "onEndCall" })
                             _endCallStatus.value = true
+                            resetPhoneCallRequestStatus()
+                            //Send StopVideoCall first for user who is in video call screen.
+                            CallEventFlow.events.value = CallEvent.StopVideoCall
+                            //Delay to wait to back to audio call screen.
+                            delay(2000)
                             viewModelScope.launch(ioDispatcher) {
                                 if(CallEventFlow.events.value != CallEvent.StopCalling &&
                                     CallEventFlow.events.value != CallEvent.CallEnded) {
@@ -530,11 +532,12 @@ class HomeViewModel(
                                         }
                                     }
                                 }
-                                resetPhoneCallRequestStatus()
                                 isInCall.value = false
-                                CallEventFlow.localVideoTrack.value = null
-                                CallEventFlow.remoteVideoTrack.value = null
-                                CallEventFlow.videoCallState.value = null
+                                // Reset all call state after a delay so next call starts clean (if user wasn't on Calling screen to trigger reset there)
+                                viewModelScope.launch {
+                                    delay(2000L);
+                                    CallEventFlow.reset()
+                                }
                             }
                         }
                     )

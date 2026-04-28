@@ -4,6 +4,7 @@ import android.app.Application
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.os.Build
+import android.os.StrictMode
 import com.google.firebase.database.FirebaseDatabase
 import com.minhtu.firesocialmedia.constants.Constants
 import com.minhtu.firesocialmedia.platform.initPlatformContext
@@ -13,6 +14,21 @@ class AppApplication : Application() {
         super.onCreate()
         initPlatformContext(this)
         createChannelNotification()
+        if (BuildConfig.DEBUG) {
+            StrictMode.setThreadPolicy(
+                StrictMode.ThreadPolicy.Builder()
+                    .detectAll()
+                    .penaltyLog()
+                    .build()
+            )
+
+            StrictMode.setVmPolicy(
+                StrictMode.VmPolicy.Builder()
+                    .detectAll()
+                    .penaltyLog()
+                    .build()
+            )
+        }
     }
     private fun createChannelNotification() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {

@@ -6,12 +6,16 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.ComponentName
 import android.content.Context
+import android.content.Context.NOTIFICATION_SERVICE
 import android.content.Intent
+import android.media.AudioAttributes
+import android.media.RingtoneManager
 import android.os.Build
 import androidx.core.app.NotificationCompat
 import com.minhtu.firesocialmedia.R
 import com.minhtu.firesocialmedia.constants.Constants
 import com.minhtu.firesocialmedia.domain.entity.call.CallAction
+import com.minhtu.firesocialmedia.domain.entity.call.CallEventFlow
 import com.minhtu.firesocialmedia.utils.PermissionRequestActivity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -26,9 +30,16 @@ class CallNotificationManager(private val context: Context) {
         const val channelId = "call_channel"
         const val timerChannelId = "timer_channel"
         const val PERMISSION_ID = 8888
-    }
 
-    private var timerJob: Job? = null
+        /** Global timer job so any instance can cancel the previous call's timer when starting a new call or when the service is recreated. */
+        private var currentTimerJob: Job? = null
+
+        internal fun cancelTimerJob() {
+            currentTimerJob?.cancel()
+            currentTimerJob = null
+            CallEventFlow.callDurationSeconds.value = 0
+        }
+    }
 
     fun startTimerNotification(
         sessionId: String,
@@ -36,7 +47,11 @@ class CallNotificationManager(private val context: Context) {
         calleeId: String,
         isCaller : Boolean
     ): Notification {
+        // Stop any previous call's timer (e.g. from a prior call when service was recreated or when starting a new call in same instance).
+        cancelTimerJob()
+
         var seconds = 0
+        CallEventFlow.callDurationSeconds.value = 0
 
         val stopIntent = Intent(context, CallActionBroadcastReceiver::class.java).apply {
             action = if(isCaller) CallAction.STOP_CALL_ACTION_FROM_CALLER
@@ -66,8 +81,8 @@ class CallNotificationManager(private val context: Context) {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        // Start timer to update the notification every second
-        timerJob = CoroutineScope(Dispatchers.Main).launch {
+        // Start timer to update the notification every second; also push to CallEventFlow so UI stays in sync
+        currentTimerJob = CoroutineScope(Dispatchers.Main).launch {
             while (isActive) {
                 val timeText = String.format("Call in progress: %02d:%02d", seconds / 60, seconds % 60)
 
@@ -76,11 +91,12 @@ class CallNotificationManager(private val context: Context) {
                 context.getSystemService(NotificationManager::class.java).notify(NOTIF_ID, updatedNotification)
 
                 seconds++
+                CallEventFlow.callDurationSeconds.value = seconds
                 delay(1000L)
             }
         }
 
-        // ⏱️ Build and return the **initial** notification immediately
+        // Build and return the **initial** notification immediately
         val initialText = String.format("Call in progress: %02d:%02d", seconds / 60, seconds % 60)
         return buildTimerNotification(initialText, stopPendingIntent, callPendingIntent)
     }
@@ -112,8 +128,12 @@ class CallNotificationManager(private val context: Context) {
     }
 
     fun stopTimerNotificationUpdates() {
-        timerJob?.cancel()
-        timerJob = null
+        cancelTimerJob()
+    }
+    fun stopIncomingCallNotification() {
+        CallSoundManager.stopRingtone()
+        val notificationManager = context.getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.cancel(NOTIF_ID)
     }
 
     fun showPermissionNotification() {
@@ -138,12 +158,28 @@ class CallNotificationManager(private val context: Context) {
         context.getSystemService(NotificationManager::class.java).notify(PERMISSION_ID, notification)
     }
 
-    fun buildCallNotification(calleeName : String, callerId : String) : Notification {
+    fun buildCallNotification(calleeName: String, callerId: String): Notification {
+        val channelId = "call_channel_v2"
         val channelName = "Call Service"
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(channelId, channelName, NotificationManager.IMPORTANCE_HIGH)
-            context.getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
+            val channel = NotificationChannel(
+                channelId,
+                channelName,
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                // without this → no sound
+                setSound(
+                    RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE),
+                    AudioAttributes.Builder()
+                        .setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
+                        .build()
+                )
+                enableVibration(true)
+            }
+
+            context.getSystemService(NotificationManager::class.java)
+                .createNotificationChannel(channel)
         }
 
         val rejectIntent = Intent(context, CallActionBroadcastReceiver::class.java).apply {
@@ -158,14 +194,14 @@ class CallNotificationManager(private val context: Context) {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        val notification = NotificationCompat.Builder(context, channelId)
-            .setContentTitle("Incoming Call")
+        return NotificationCompat.Builder(context, channelId)
             .setContentTitle("Calling")
             .setContentText("You are calling $calleeName")
-            .addAction(R.drawable.ic_reject_call, "Stop", rejectPendingIntent)
             .setSmallIcon(R.drawable.notification)
             .setOngoing(true)
-
-        return notification.build()
+            .setCategory(NotificationCompat.CATEGORY_CALL)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .addAction(R.drawable.ic_reject_call, "Stop", rejectPendingIntent)
+            .build()
     }
 }

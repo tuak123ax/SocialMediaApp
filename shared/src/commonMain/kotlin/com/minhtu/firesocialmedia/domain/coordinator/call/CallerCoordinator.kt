@@ -73,6 +73,7 @@ class CallerCoordinator(
             onEndCall = {
                 val deleteCallSessionResult = callerUseCases.endCall.invoke(audioCallSession.sessionId)
                 if(deleteCallSessionResult) {
+                    logMessage("DeleteCallSession", { "DeleteCallSession success by caller" })
                     onEndCall()
                 }
             }
@@ -81,27 +82,33 @@ class CallerCoordinator(
 
     suspend fun startVideoCall(currentUserId : String?,
                                sessionId : String,
-                               onLocalVideoTrackCreated : suspend (localVideoTrack : WebRTCVideoTrack) -> Unit) {
+                               onLocalVideoTrackCreated : suspend (localVideoTrack : WebRTCVideoTrack) -> Unit,
+                               onRejectVideoCall : suspend () -> Unit = {}) {
         videoCallUseCase.startVideoCall(
+            isVideoInitiator = true,
             onLocalVideoTrackCreated = { localVideoTrack ->
                 onLocalVideoTrackCreated(localVideoTrack)
                 //Create video offer
                 initializeCallUseCase.createVideoOffer(
                     currentUserId,
                     videoOfferCreated = { videoOffer ->
+                        // Clear previous "Reject" in answer so the new observer is not triggered immediately and the callee can receive this offer
+                        sendSignalingDataUseCase.clearAnswerInFirebaseForNewVideoOffer(sessionId)
                         //Send offer to DB after created
                         sendSignalingDataUseCase.sendOfferToFireBase(
                             sessionId,
                             videoOffer
                         )
 
-                        //Observe answer from callee
+                        //Observe answer from callee (accept or reject)
                         sendSignalingDataUseCase.observeAnswerFromCallee(
                             sessionId,
                             currentUserId,
+                            expectVideoAnswer = true,
                             onGetAnswerFromCallee = {
                             },
                             onRejectVideoCall = {
+                                onRejectVideoCall()
                             }
                         )
                     })

@@ -3,6 +3,7 @@ package com.minhtu.firesocialmedia.data.remote.service.call
 import com.minhtu.firesocialmedia.data.remote.dto.call.IceCandidateDTO
 import com.minhtu.firesocialmedia.data.remote.dto.call.OfferAnswerDTO
 import com.minhtu.firesocialmedia.data.remote.dto.user.UserDTO
+import com.minhtu.firesocialmedia.domain.entity.call.SpeakerType
 import com.minhtu.firesocialmedia.platform.WebRTCVideoTrack
 
 interface AudioCallService{
@@ -17,10 +18,10 @@ interface AudioCallService{
 
     /**
      * This function is used to start video call.
-     * @Param:
-     * onStartVideoCall: return local video track when it is available.
-     * */
-    suspend fun startVideoCall(onStartVideoCall : suspend (videoTrack : WebRTCVideoTrack) -> Unit)
+     * @param isVideoInitiator true when this device is creating the video offer (caller); false when answering (callee). When true, re-entry does a full teardown before creating track; when false, we must not tear down after setRemoteDescription.
+     * @param onStartVideoCall return local video track when it is available.
+     */
+    suspend fun startVideoCall(isVideoInitiator: Boolean, onStartVideoCall : suspend (videoTrack : WebRTCVideoTrack) -> Unit)
 
     /**
      * This function is used to start video call foreground service.
@@ -76,6 +77,24 @@ interface AudioCallService{
     suspend fun rejectVideoCall()
 
     /**
+     * Prepare for an incoming video renegotiation on an existing audio call by queuing any
+     * remote ICE until the new remote video offer/answer is applied.
+     */
+    suspend fun prepareForIncomingVideoNegotiation()
+
+    /**
+     * Reset video-call-started state so the next startVideoCall can create and send a new offer (e.g. after leaving VideoCall screen or after callee declined).
+     */
+    suspend fun resetVideoCallStartedState()
+
+    /**
+     * Stop video-specific resources (capturer, video source/track, video sender) after a
+     * video call decline or exit, without tearing down the underlying audio peer connection.
+     * Also resets hasStarted so the next attempt can create fresh resources.
+     */
+    suspend fun stopVideoCallResources()
+
+    /**
      * This function is used to create audio offer for caller.
      * @Param:
      * onOfferCreated: return created audio offer to process next step.
@@ -118,4 +137,19 @@ interface AudioCallService{
      * This function is used to release all resources of foreground service.
      * */
     suspend fun releaseResources()
+
+    /**
+     * This function is used to mute/unmute mic.
+     * */
+    suspend fun updateMuteStatus(muted: Boolean)
+
+    /**
+     * This function is used to turn video track on/off (when user turns camera off, remote stops receiving video).
+     * */
+    suspend fun updateCameraStatus(cameraOff: Boolean)
+
+    /**
+     * This function is used to change speaker type.
+     * */
+    suspend fun updateSpeakerStatus(speakerType: SpeakerType)
 }

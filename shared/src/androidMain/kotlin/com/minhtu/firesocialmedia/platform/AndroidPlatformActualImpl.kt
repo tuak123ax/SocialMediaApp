@@ -7,13 +7,15 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.drawable.BitmapDrawable
+import android.os.Build
 import android.util.Log
-import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.OptIn
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -21,10 +23,15 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -35,13 +42,13 @@ import androidx.core.graphics.drawable.toBitmap
 import androidx.core.uri.Uri
 import androidx.media3.common.MediaItem
 import androidx.media3.common.util.UnstableApi
-import androidx.media3.exoplayer.ExoPlayer
-import androidx.media3.exoplayer.source.ProgressiveMediaSource
 import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.datasource.cache.CacheDataSource
 import androidx.media3.datasource.cache.LeastRecentlyUsedCacheEvictor
 import androidx.media3.datasource.cache.SimpleCache
+import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.source.ProgressiveMediaSource
 import androidx.media3.ui.PlayerView
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -49,20 +56,24 @@ import com.google.android.gms.auth.api.identity.BeginSignInRequest
 import com.google.android.gms.auth.api.identity.Identity
 import com.minhtu.firesocialmedia.R
 import com.minhtu.firesocialmedia.constants.Constants
+import com.minhtu.firesocialmedia.domain.entity.authentication.TwoFARequest
+import com.minhtu.firesocialmedia.domain.entity.authentication.TwoFAResponse
 import com.minhtu.firesocialmedia.data.remote.service.imagepicker.ImagePicker
 import com.minhtu.firesocialmedia.data.remote.service.signinlauncher.SignInLauncher
 import com.minhtu.firesocialmedia.di.PlatformContext
 import com.minhtu.firesocialmedia.domain.entity.home.deeplinks.ShareApp
 import com.minhtu.firesocialmedia.domain.entity.signin.SignInState
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
+import com.minhtu.firesocialmedia.domain.serviceimpl.auth.AuthenticationApiService
 import com.minhtu.firesocialmedia.domain.serviceimpl.call.WebRTCManager
 import com.minhtu.firesocialmedia.domain.serviceimpl.crypto.AndroidCryptoHelper
 import com.minhtu.firesocialmedia.domain.serviceimpl.imagepicker.AndroidImagePicker
 import com.minhtu.firesocialmedia.domain.serviceimpl.notification.Client
 import com.minhtu.firesocialmedia.domain.serviceimpl.notification.NotificationApiService
 import com.minhtu.firesocialmedia.presentation.signin.SignInViewModel
+import com.minhtu.firesocialmedia.presentation.toast.ToastController
 import com.minhtu.firesocialmedia.utils.NavigationHandler
-import com.russhwolf.settings.BuildConfig
+import com.minhtu.firesocialmedia.BuildConfig
 import com.russhwolf.settings.Settings
 import com.seiko.imageloader.ImageLoader
 import com.seiko.imageloader.cache.memory.maxSizePercent
@@ -74,12 +85,15 @@ import com.seiko.imageloader.option.androidContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import okio.Path.Companion.toOkioPath
 import org.json.JSONArray
 import org.json.JSONObject
 import org.webrtc.EglBase
+import org.webrtc.RendererCommon
 import org.webrtc.SurfaceViewRenderer
 import org.webrtc.VideoTrack
+import qrcode.QRCode
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.text.SimpleDateFormat
@@ -118,7 +132,9 @@ private fun getVideoCache(context: Context): SimpleCache {
     }
 }
 actual fun showToast(message: String) {
-    Toast.makeText(appContext, message, Toast.LENGTH_SHORT).show()
+    CoroutineScope(Dispatchers.Main).launch {
+        ToastController.show(message)
+    }
 }
 
 @Composable
@@ -154,6 +170,14 @@ actual fun getIconPainter(icon : String): Painter? {
         "right_arrow" -> painterResource(id = R.drawable.right_arrow)
         "global" -> painterResource(id = R.drawable.global)
         "add_member" -> painterResource(id = R.drawable.add_member)
+        "image" -> painterResource(id = R.drawable.image)
+        "mute" -> painterResource(id = R.drawable.mute)
+        "unmute" -> painterResource(id = R.drawable.unmute)
+        "speaker" -> painterResource(id = R.drawable.speaker)
+        "no_sound" -> painterResource(id = R.drawable.no_sound)
+        "audio" -> painterResource(id = R.drawable.audio)
+        "video_call" -> painterResource(id = R.drawable.video_call)
+        "toast" -> painterResource(id = R.drawable.toast_icon)
         else -> null
     }
 }
@@ -161,6 +185,7 @@ actual fun getIconPainter(icon : String): Painter? {
 actual fun getResId(icon : String): Int {
     return when(icon) {
         "loading_gif" -> R.raw.loading_gif
+        "dialga" -> R.raw.dialga
         else -> {0}
     }
 }
@@ -171,20 +196,6 @@ actual fun getIconComposable(icon: String, bgColor : String, tint : String?, mod
 @Composable
 actual fun CommonBackHandler(enabled: Boolean, onBack: () -> Unit) {
     AndroidBackHandler(enabled, onBack)
-}
-
-@Composable
-actual fun PasswordVisibilityIcon(passwordVisibility : Boolean) {
-    val icon = if(passwordVisibility) "visibility" else "visibility_off"
-    val descriptionOfIcon = if(passwordVisibility) "Hide password" else "Show password"
-    CrossPlatformIcon(
-        icon = icon,
-        backgroundColor = "#00FFFFFF",
-        contentDescription = descriptionOfIcon,
-        modifier = Modifier
-            .size(30.dp)
-            .padding(4.dp)
-    )
 }
 
 actual fun exitApp() {
@@ -276,6 +287,34 @@ actual fun sendMessageToServer(request: String) {
         }
     }
 }
+actual suspend fun send2FARequest(request: TwoFARequest): TwoFAResponse {
+    logMessage("sendVerifyOTPRequest") {
+        "UserId : " + request.userId + "\n" + "secret: " + request.secret + "\n" + "apiKey: " + request.apiKey+ "\n" + "otp: " + request.otp + "\n" + "action: " + request.action
+    }
+    val response = Client.getClient(Constants.APP_SCRIPT_URL)
+        ?.create(AuthenticationApiService::class.java)!!
+        .sendVerifyRequestToAppScript(request)
+        .execute()
+
+    return if (response.isSuccessful) {
+        val twoFAResponse = response.body()
+        logMessage("sendVerifyOTPRequest") {
+            "Success: ${response.code()} | success=${twoFAResponse?.success} | message=${twoFAResponse?.message}"
+        }
+        twoFAResponse ?: TwoFAResponse(false, "Error happened. Please try again!")
+    } else {
+        val errorBody = response.errorBody()?.string()
+        logMessage("sendVerifyOTPRequest") {
+            """
+            Request failed:
+            - Code: ${response.code()}
+            - Message: ${response.message()}
+            - Error Body: $errorBody
+            """.trimIndent()
+        }
+        TwoFAResponse(false, response.code().toString())
+    }
+}
 
 actual object TokenStorage {
     actual fun updateTokenInStorage(token: String?) {
@@ -311,14 +350,14 @@ actual fun getRandomIdForNotification() : String {
     return "Noti-" + UUID.randomUUID().toString()
 }
 
-actual suspend fun getImageBytesFromDrawable(name: String): ByteArray?{
+actual suspend fun getImageBytesFromDrawable(name: String): ByteArray? = withContext(Dispatchers.IO) {
     val resId = appContext.resources.getIdentifier(name, "drawable", appContext.packageName)
-    val drawable = appContext.getDrawable(resId) ?: return null
+    val drawable = appContext.getDrawable(resId) ?: return@withContext null
 
     val bitmap = (drawable as BitmapDrawable).bitmap
     val stream = ByteArrayOutputStream()
     bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)
-    return stream.toByteArray()
+    stream.toByteArray()
 }
 
 actual fun generateImageLoader(): ImageLoader {
@@ -423,30 +462,50 @@ actual fun VideoPlayer(uri: String, modifier: Modifier) {
 
 actual class WebRTCVideoTrack(val track: VideoTrack?)
 
+fun isUsableVideoTrack(track: VideoTrack?): Boolean {
+    if (track == null) return false
+
+    return try {
+        track.enabled()
+    } catch (e: Exception) {
+        false
+    }
+}
+
 @Composable
 actual fun WebRTCVideoView(
     localTrack: WebRTCVideoTrack?,
     remoteTrack: WebRTCVideoTrack?,
+    isLocalVideoOff : Boolean,
     modifier: Modifier
 ) {
-    Box(modifier = Modifier.fillMaxSize()) {
-        remoteTrack?.track?.let {
+    Box(modifier = modifier) {
+        // Keep a black remote canvas when remote video is absent.
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black)
+        )
+
+        remoteTrack?.track?.takeIf { isUsableVideoTrack(it) }?.let { track ->
             RemoteVideoView(
                 eglBaseContext = WebRTCManager.eglBase.eglBaseContext,
-                videoTrack = it,
+                videoTrack = track,
                 modifier = Modifier.fillMaxSize()
             )
         }
 
-        localTrack?.track?.let {
-            LocalVideoView(
-                eglBaseContext = WebRTCManager.eglBase.eglBaseContext,
-                videoTrack = it,
-                modifier = Modifier
-                    .size(150.dp)
-                    .align(Alignment.BottomEnd)
-                    .padding(16.dp)
-            )
+        if(!isLocalVideoOff) {
+            localTrack?.track?.takeIf { isUsableVideoTrack(it) }?.let {
+                LocalVideoView(
+                    eglBaseContext = WebRTCManager.eglBase.eglBaseContext,
+                    videoTrack = it,
+                    modifier = Modifier
+                        .size(150.dp)
+                        .align(Alignment.BottomEnd)
+                        .padding(16.dp)
+                )
+            }
         }
     }
 }
@@ -457,36 +516,51 @@ fun LocalVideoView(
     videoTrack: VideoTrack,
     modifier: Modifier = Modifier
 ) {
-    val context = LocalContext.current
+    var currentRenderer by remember { mutableStateOf<SurfaceViewRenderer?>(null) }
 
-    val renderer = remember {
-        SurfaceViewRenderer(context).apply {
-            init(eglBaseContext, null)
-            setZOrderMediaOverlay(true)
-            setMirror(true)
-            setEnableHardwareScaler(true)
+    DisposableEffect(videoTrack, currentRenderer) {
+        val renderer = currentRenderer
+        if (renderer != null && isUsableVideoTrack(videoTrack)) {
+            // Defensive rebind for renegotiation/rejoin: ensure stale bindings are detached first.
+            runCatching { videoTrack.removeSink(renderer) }
+            runCatching { videoTrack.addSink(renderer) }
+                .onFailure { Log.w("LocalVideoView", "Skip addSink on disposed local track", it) }
         }
-    }
-
-    DisposableEffect(videoTrack) {
-        videoTrack.addSink(renderer)
-
         onDispose {
-            runCatching {
-                videoTrack.removeSink(renderer)
-            }.onFailure {
-                Log.e("LocalVideoView", "Failed to remove sink", it)
-            }
-
-            runCatching {
-                renderer.release()
-            }.onFailure {
-                Log.e("LocalVideoView", "Failed to release renderer", it)
+            if (renderer != null && isUsableVideoTrack(videoTrack)) {
+                runCatching { videoTrack.removeSink(renderer) }
+                    .onFailure { Log.e("LocalVideoView", "Failed to remove sink", it) }
+                renderer.clearImage()
             }
         }
     }
 
-    AndroidView(factory = { renderer }, modifier = modifier)
+    AndroidView(
+        factory = { context ->
+            SurfaceViewRenderer(context).apply {
+                init(eglBaseContext, null)
+                setZOrderMediaOverlay(true)
+                setMirror(true)
+                setScalingType(RendererCommon.ScalingType.SCALE_ASPECT_FIT)
+                // Avoid SurfaceFlinger buffer-size rejection on dynamic Compose layouts.
+                setEnableHardwareScaler(false)
+                currentRenderer = this
+            }
+        },
+        onRelease = { renderer ->
+            currentRenderer = null
+            if (isUsableVideoTrack(videoTrack)) {
+                runCatching {
+                    try {
+                        videoTrack.removeSink(renderer)
+                    } catch (_: Exception) {}
+                }
+            }
+            renderer.clearImage()
+            renderer.release()
+        },
+        modifier = modifier
+    )
 }
 
 
@@ -496,35 +570,49 @@ fun RemoteVideoView(
     videoTrack: VideoTrack,
     modifier: Modifier = Modifier
 ) {
-    val context = LocalContext.current
+    var currentRenderer by remember { mutableStateOf<SurfaceViewRenderer?>(null) }
 
-    val renderer = remember {
-        SurfaceViewRenderer(context).apply {
-            init(eglBaseContext, null)
-            setMirror(false)
-            setEnableHardwareScaler(true)
+    DisposableEffect(videoTrack, currentRenderer) {
+        val renderer = currentRenderer
+        if (renderer != null) {
+            // Defensive rebind: if this renderer was previously attached to another
+            // wrapper, detach first so renegotiation can rebind cleanly.
+            runCatching { videoTrack.removeSink(renderer) }
+            runCatching { videoTrack.addSink(renderer) }
+                .onFailure { Log.w("RemoteVideoView", "Failed to add remote sink", it) }
         }
-    }
-
-    DisposableEffect(videoTrack) {
-        videoTrack.addSink(renderer)
-
         onDispose {
-            runCatching {
-                videoTrack.removeSink(renderer)
-            }.onFailure {
-                Log.e("RemoteVideoView", "Failed to remove sink", it)
-            }
-
-            runCatching {
-                renderer.release()
-            }.onFailure {
-                Log.e("RemoteVideoView", "Failed to release renderer", it)
+            if (renderer != null) {
+                runCatching { videoTrack.removeSink(renderer) }
+                    .onFailure { Log.e("RemoteVideoView", "Failed to remove sink", it) }
+                renderer.clearImage()
             }
         }
     }
 
-    AndroidView(factory = { renderer }, modifier = modifier)
+    AndroidView(
+        factory = { context ->
+            SurfaceViewRenderer(context).apply {
+                init(eglBaseContext, null)
+                setMirror(false)
+                setScalingType(RendererCommon.ScalingType.SCALE_ASPECT_FIT)
+                // Avoid SurfaceFlinger buffer-size rejection on dynamic Compose layouts.
+                setEnableHardwareScaler(false)
+                currentRenderer = this
+            }
+        },
+        onRelease = { renderer ->
+            currentRenderer = null
+            runCatching {
+                try {
+                    videoTrack.removeSink(renderer)
+                } catch (_: Exception) {}
+            }
+            renderer.clearImage()
+            renderer.release()
+        },
+        modifier = modifier
+    )
 }
 
 @Composable
@@ -641,4 +729,29 @@ actual fun launchShareAppWithDeepLink(app : ShareApp, deepLink : String) {
         flags = Intent.FLAG_ACTIVITY_NEW_TASK
     }
     appContext.startActivity(intent)
+}
+
+actual fun getAppVersion(): String {
+    val pm = appContext.packageManager
+    val pkg = appContext.packageName
+
+    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        pm.getPackageInfo(
+            pkg,
+            PackageManager.PackageInfoFlags.of(0)
+        ).versionName
+    } else {
+        @Suppress("DEPRECATION")
+        pm.getPackageInfo(pkg, 0).versionName
+    } ?: ""
+}
+
+actual fun generateQrImage(content: String): ImageBitmap {
+    val bytes = QRCode.ofSquares().build(content).renderToBytes()
+    val bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+    return bitmap.asImageBitmap()
+}
+
+actual object AppConfig {
+    actual val twoFAApiKey: String = BuildConfig.APP_SCRIPT_FOR_2FA_AUTHENTICATION_API_KEY
 }

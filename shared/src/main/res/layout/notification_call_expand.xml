@@ -1,90 +1,103 @@
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/call_notification_layout"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:padding="16dp">
+    android:orientation="vertical"
+    android:gravity="center_horizontal"
+    android:padding="12dp">
 
-    <!-- Caller Image -->
+    <!-- Avatar -->
     <ImageView
         android:id="@+id/image_caller"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
+        android:layout_width="56dp"
+        android:layout_height="56dp"
         android:src="@drawable/unknownavatar"
-        android:layout_alignParentStart="true"
-        android:layout_marginEnd="12dp"
-        android:contentDescription="Caller Image" />
+        android:scaleType="centerCrop"
+        android:layout_marginTop="4dp"/>
 
     <!-- Caller Name -->
     <TextView
         android:id="@+id/text_caller_name"
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Caller Name"
+        android:text="Unknown"
         android:textSize="16sp"
         android:textStyle="bold"
-        android:textColor="@android:color/black"
-        android:layout_toEndOf="@id/image_caller"
-        android:layout_alignTop="@id/image_caller" />
+        android:textColor="#222222"
+        android:layout_marginTop="6dp"/>
 
-    <!-- Call Type / Status -->
+    <!-- Call Status -->
     <TextView
         android:id="@+id/text_call_status"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Incoming Call"
-        android:textSize="14sp"
-        android:textColor="@android:color/darker_gray"
-        android:layout_below="@id/text_caller_name"
-        android:layout_alignStart="@id/text_caller_name"
-        android:layout_marginTop="4dp" />
+        android:text="• INCOMING CALL"
+        android:textSize="12sp"
+        android:textColor="#32C55F"
+        android:layout_marginTop="2dp"/>
 
+    <!-- Buttons -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:layout_below="@id/text_call_status"
-        android:layout_marginTop="5dp">
+        android:gravity="center"
+        android:layout_marginTop="14dp">
 
-        <!-- Left Spacer -->
-        <ImageView
+        <!-- Decline -->
+        <LinearLayout
             android:layout_width="0dp"
-            android:layout_height="1dp"
+            android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:background="@android:color/transparent" />
+            android:orientation="vertical"
+            android:gravity="center">
 
-        <!-- Accept Button -->
-        <ImageButton
-            android:id="@+id/btn_accept"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:background="@android:color/transparent"
-            android:src="@drawable/ic_accept_call"
-            android:contentDescription="Accept"
-            android:scaleType="fitCenter"/>
+            <ImageButton
+                android:id="@+id/btn_reject"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:background="@drawable/bg_call_reject"
+                android:src="@drawable/ic_reject_call"
+                android:scaleType="center"
+                android:padding="12dp"
+                android:contentDescription="Reject"/>
 
-        <!-- Middle Spacer -->
-        <ImageView
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="DECLINE"
+                android:textSize="10sp"
+                android:textColor="#777777"
+                android:layout_marginTop="4dp"/>
+        </LinearLayout>
+
+        <!-- Accept -->
+        <LinearLayout
             android:layout_width="0dp"
-            android:layout_height="1dp"
+            android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:background="@android:color/transparent" />
+            android:orientation="vertical"
+            android:gravity="center">
 
-        <!-- Reject Button -->
-        <ImageButton
-            android:id="@+id/btn_reject"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:background="@android:color/transparent"
-            android:src="@drawable/ic_reject_call"
-            android:contentDescription="Reject"
-            android:scaleType="fitCenter"/>
+            <ImageButton
+                android:id="@+id/btn_accept"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:background="@drawable/bg_call_accept"
+                android:src="@drawable/ic_accept_call"
+                android:scaleType="center"
+                android:padding="12dp"
+                android:contentDescription="Accept"/>
 
-        <!-- Right Spacer -->
-        <ImageView
-            android:layout_width="0dp"
-            android:layout_height="1dp"
-            android:layout_weight="1"
-            android:background="@android:color/transparent" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="ACCEPT"
+                android:textSize="10sp"
+                android:textColor="#777777"
+                android:layout_marginTop="4dp"/>
+        </LinearLayout>
+
     </LinearLayout>
-</RelativeLayout>
+
+</LinearLayout>

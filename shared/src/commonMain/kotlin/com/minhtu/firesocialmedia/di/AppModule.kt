@@ -14,6 +14,7 @@ import com.minhtu.firesocialmedia.data.repository.LocalRepositoryImpl
 import com.minhtu.firesocialmedia.data.repository.NetworkRepositoryImpl
 import com.minhtu.firesocialmedia.data.repository.NewsRepositoryImpl
 import com.minhtu.firesocialmedia.data.repository.NotificationRepositoryImpl
+import com.minhtu.firesocialmedia.data.repository.SettingsRepositoryImpl
 import com.minhtu.firesocialmedia.data.repository.ShowImageRepositoryImpl
 import com.minhtu.firesocialmedia.data.repository.UserRepositoryImpl
 import com.minhtu.firesocialmedia.domain.interactor.comment.CommentInteractor
@@ -30,6 +31,7 @@ import com.minhtu.firesocialmedia.domain.repository.LocalRepository
 import com.minhtu.firesocialmedia.domain.repository.NetworkRepository
 import com.minhtu.firesocialmedia.domain.repository.NewsRepository
 import com.minhtu.firesocialmedia.domain.repository.NotificationRepository
+import com.minhtu.firesocialmedia.domain.repository.SettingsRepository
 import com.minhtu.firesocialmedia.domain.repository.ShowImageRepository
 import com.minhtu.firesocialmedia.domain.repository.UserRepository
 import com.minhtu.firesocialmedia.domain.usecases.call.InitializeCallUseCase
@@ -42,6 +44,9 @@ import com.minhtu.firesocialmedia.domain.usecases.call.StartCallServiceUseCase
 import com.minhtu.firesocialmedia.domain.usecases.call.StartVideoCallServiceUseCase
 import com.minhtu.firesocialmedia.domain.usecases.call.StopCallServiceUseCase
 import com.minhtu.firesocialmedia.domain.usecases.call.StopObservePhoneCallUseCase
+import com.minhtu.firesocialmedia.domain.usecases.call.UpdateCameraStatusUseCase
+import com.minhtu.firesocialmedia.domain.usecases.call.UpdateMicStatusUseCase
+import com.minhtu.firesocialmedia.domain.usecases.call.UpdateSpeakerStatusUseCase
 import com.minhtu.firesocialmedia.domain.usecases.call.VideoCallUseCase
 import com.minhtu.firesocialmedia.domain.usecases.comment.DeleteCommentFromDatabaseUseCase
 import com.minhtu.firesocialmedia.domain.usecases.comment.DeleteSubCommentFromDatabaseUseCase
@@ -99,16 +104,32 @@ import com.minhtu.firesocialmedia.domain.usecases.newsfeed.DeleteAllDraftPostsUs
 import com.minhtu.firesocialmedia.domain.usecases.newsfeed.DeleteDraftPostUseCase
 import com.minhtu.firesocialmedia.domain.usecases.newsfeed.SaveNewToDatabaseUseCase
 import com.minhtu.firesocialmedia.domain.usecases.newsfeed.UpdateNewsFromDatabaseUseCase
+import com.minhtu.firesocialmedia.domain.usecases.notification.DeleteAllNotificationsUseCase
 import com.minhtu.firesocialmedia.domain.usecases.notification.DeleteNotificationFromDatabaseUseCase
 import com.minhtu.firesocialmedia.domain.usecases.notification.FindNewByIdInDbUseCase
 import com.minhtu.firesocialmedia.domain.usecases.notification.GetAllNotificationOfUserUseCase
 import com.minhtu.firesocialmedia.domain.usecases.notification.SaveNotificationToDatabaseUseCase
 import com.minhtu.firesocialmedia.domain.usecases.notification.UpdateIsReadStatusOfNotificationUseCase
+import com.minhtu.firesocialmedia.domain.usecases.settings.BuildOtpAuthUrlUseCase
+import com.minhtu.firesocialmedia.domain.usecases.settings.ChangePasswordUseCase
+import com.minhtu.firesocialmedia.domain.usecases.settings.CopyUseCase
+import com.minhtu.firesocialmedia.domain.usecases.settings.Disable2FAUseCase
+import com.minhtu.firesocialmedia.domain.usecases.settings.Enable2FAUseCase
+import com.minhtu.firesocialmedia.domain.usecases.settings.FetchLoginHistoryListUseCase
+import com.minhtu.firesocialmedia.domain.usecases.settings.GenerateSecretFor2FAUseCase
+import com.minhtu.firesocialmedia.domain.usecases.settings.Get2FAVerifiedStatusUseCase
+import com.minhtu.firesocialmedia.domain.usecases.settings.UpdateVerify2FASuccessUseCase
+import com.minhtu.firesocialmedia.domain.usecases.settings.ValidateNewPasswordUseCase
+import com.minhtu.firesocialmedia.domain.usecases.settings.Verify2FAUseCase
+import com.minhtu.firesocialmedia.domain.usecases.settings.VerifyBackupCodeUseCase
+import com.minhtu.firesocialmedia.domain.usecases.settings.VerifyCurrentPasswordUseCase
+import com.minhtu.firesocialmedia.domain.usecases.settings.UpdateUserTimestampUseCase
 import com.minhtu.firesocialmedia.domain.usecases.showimage.DownloadImageUseCase
 import com.minhtu.firesocialmedia.domain.usecases.signin.CheckLocalAccountUseCase
 import com.minhtu.firesocialmedia.domain.usecases.signin.CheckUserExistsUseCase
 import com.minhtu.firesocialmedia.domain.usecases.signin.HandleSignInGoogleResultUseCase
 import com.minhtu.firesocialmedia.domain.usecases.signin.RememberPasswordUseCase
+import com.minhtu.firesocialmedia.domain.usecases.signin.SaveLoginActivityInfoUseCase
 import com.minhtu.firesocialmedia.domain.usecases.signin.SignInUseCase
 import com.minhtu.firesocialmedia.domain.usecases.signup.SignUpUseCase
 import com.minhtu.firesocialmedia.domain.usecases.sync.LoadNewsPostedWhenOfflineUseCase
@@ -166,13 +187,19 @@ object AppModule {
                                rememberPasswordUseCase: RememberPasswordUseCase,
                                checkUserExistsUseCase: CheckUserExistsUseCase,
                                checkLocalAccountUseCase : CheckLocalAccountUseCase,
-                               handleSignInGoogleResult: HandleSignInGoogleResultUseCase) : SignInViewModel{
+                               handleSignInGoogleResult: HandleSignInGoogleResultUseCase,
+                               getCurrentUserUidUseCase: GetCurrentUserUidUseCase,
+                               getUserUseCase: GetUserUseCase,
+                               saveLoginActivityInfoUseCase: SaveLoginActivityInfoUseCase) : SignInViewModel{
         return SignInViewModel(
             signInUseCase,
             rememberPasswordUseCase,
             checkUserExistsUseCase,
             checkLocalAccountUseCase,
-            handleSignInGoogleResult
+            handleSignInGoogleResult,
+            getCurrentUserUidUseCase,
+            getUserUseCase,
+            saveLoginActivityInfoUseCase
         )
     }
 
@@ -226,12 +253,14 @@ object AppModule {
     fun provideInformationViewModel(
         saveSignUpInformationUseCase: SaveSignUpInformationUseCase,
         getCurrentUserUidUseCase: GetCurrentUserUidUseCase,
-        getFCMTokenUseCase: GetFCMTokenUseCase
+        getFCMTokenUseCase: GetFCMTokenUseCase,
+        saveLoginActivityInfoUseCase: SaveLoginActivityInfoUseCase
     ) : InformationViewModel {
         return InformationViewModel(
             saveSignUpInformationUseCase,
             getCurrentUserUidUseCase,
-            getFCMTokenUseCase)
+            getFCMTokenUseCase,
+            saveLoginActivityInfoUseCase)
     }
 
     //---------------------------Loading----------------------------------------//
@@ -251,8 +280,8 @@ object AppModule {
     fun provideUpdateFCMTokenUseCase(userRepository: UserRepository) : UpdateFCMTokenUseCase {
         return UpdateFCMTokenUseCase(userRepository)
     }
-    fun provideClearAccountUseCase(homeRepository: AuthenticationRepository) : ClearAccountUseCase {
-        return ClearAccountUseCase(homeRepository)
+    fun provideClearAccountUseCase(authenticationRepository: AuthenticationRepository) : ClearAccountUseCase {
+        return ClearAccountUseCase(authenticationRepository)
     }
     fun provideUpdateCountValueInDatabase(commonDbRepository: CommonDbRepository) : UpdateLikeCountForNewUseCase {
         return UpdateLikeCountForNewUseCase(commonDbRepository)
@@ -538,12 +567,14 @@ object AppModule {
     fun provideNotificationViewModel(
         getUserUseCase: GetUserUseCase,
         findNewByIdInDbUseCase: FindNewByIdInDbUseCase,
-        updateIsReadStatusOfNotificationUseCase : UpdateIsReadStatusOfNotificationUseCase
+        updateIsReadStatusOfNotificationUseCase : UpdateIsReadStatusOfNotificationUseCase,
+        deleteAllNotificationsUseCase: DeleteAllNotificationsUseCase
     ) : NotificationViewModel {
         return NotificationViewModel(
             getUserUseCase,
             findNewByIdInDbUseCase,
-            updateIsReadStatusOfNotificationUseCase
+            updateIsReadStatusOfNotificationUseCase,
+            deleteAllNotificationsUseCase
         )
     }
     //---------------------------Call----------------------------------------//
@@ -703,5 +734,90 @@ object AppModule {
 
     fun provideUpdateIsReadStatusOfNotificationUseCase(notificationRepository: NotificationRepository) : UpdateIsReadStatusOfNotificationUseCase {
         return UpdateIsReadStatusOfNotificationUseCase(notificationRepository)
+    }
+
+    fun provideDeleteAllNotificationsUseCase(notificationRepository: NotificationRepository) : DeleteAllNotificationsUseCase{
+        return DeleteAllNotificationsUseCase(notificationRepository)
+    }
+
+    fun provideUpdateMicStatusUseCase(callRepository: CallRepository) : UpdateMicStatusUseCase{
+        return UpdateMicStatusUseCase(callRepository)
+    }
+
+    fun provideUpdateCameraStatusUseCase(callRepository: CallRepository) : UpdateCameraStatusUseCase{
+        return UpdateCameraStatusUseCase(callRepository)
+    }
+
+    fun provideUpdateSpeakerStatusUseCase(callRepository: CallRepository) : UpdateSpeakerStatusUseCase{
+        return UpdateSpeakerStatusUseCase(callRepository)
+    }
+
+    fun provideSettingsRepository(platformContext: PlatformContext) : SettingsRepository {
+        return SettingsRepositoryImpl(
+            platformContext.auth,
+            platformContext.database,
+            platformContext.clipboard,
+            platformContext.crypto)
+    }
+
+    fun provideVerifyCurrentPasswordUseCase(settingsRepository: SettingsRepository) : VerifyCurrentPasswordUseCase {
+        return VerifyCurrentPasswordUseCase(settingsRepository)
+    }
+
+    fun provideValidateNewPasswordUseCase() : ValidateNewPasswordUseCase {
+        return ValidateNewPasswordUseCase()
+    }
+
+    fun provideChangePasswordUseCase(settingsRepository: SettingsRepository) : ChangePasswordUseCase {
+        return ChangePasswordUseCase(settingsRepository)
+    }
+
+    fun provideGenerateSecretFor2FAUseCase(settingsRepository: SettingsRepository) : GenerateSecretFor2FAUseCase {
+        return GenerateSecretFor2FAUseCase(settingsRepository)
+    }
+
+    fun provideBuildOtpAuthUrlUseCase() : BuildOtpAuthUrlUseCase {
+        return BuildOtpAuthUrlUseCase()
+    }
+
+    fun provideCopyUseCase(settingsRepository: SettingsRepository) : CopyUseCase {
+        return CopyUseCase(settingsRepository)
+    }
+
+    fun provideEnable2FAUseCase(settingsRepository: SettingsRepository) : Enable2FAUseCase {
+        return Enable2FAUseCase(settingsRepository)
+    }
+
+    fun provideDisable2FAUseCase(settingsRepository: SettingsRepository) : Disable2FAUseCase {
+        return Disable2FAUseCase(settingsRepository)
+
+    }
+
+    fun provideVerify2FAUseCase(settingsRepository: SettingsRepository) : Verify2FAUseCase {
+        return Verify2FAUseCase(settingsRepository)
+    }
+
+    fun provideVerifyBackupCodeUseCase(settingsRepository: SettingsRepository) : VerifyBackupCodeUseCase {
+        return VerifyBackupCodeUseCase(settingsRepository)
+    }
+
+    fun provideUpdateVerify2FASuccessUseCase(settingsRepository: SettingsRepository) : UpdateVerify2FASuccessUseCase {
+        return UpdateVerify2FASuccessUseCase(settingsRepository)
+    }
+
+    fun provideGet2FAVerifiedStatusUseCase(settingsRepository: SettingsRepository) : Get2FAVerifiedStatusUseCase {
+        return Get2FAVerifiedStatusUseCase(settingsRepository)
+    }
+
+    fun provideFetchLoginHistoryListUseCase(settingsRepository: SettingsRepository) : FetchLoginHistoryListUseCase {
+        return FetchLoginHistoryListUseCase(settingsRepository)
+    }
+
+    fun provideUpdateUserTimestampUseCase(settingsRepository: SettingsRepository) : UpdateUserTimestampUseCase {
+        return UpdateUserTimestampUseCase(settingsRepository)
+    }
+
+    fun provideSaveLoginActivityInfoUseCase(commonDbRepository: CommonDbRepository) : SaveLoginActivityInfoUseCase {
+        return SaveLoginActivityInfoUseCase(commonDbRepository)
     }
 }

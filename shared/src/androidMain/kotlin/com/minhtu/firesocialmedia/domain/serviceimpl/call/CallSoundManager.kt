@@ -1,6 +1,7 @@
 package com.minhtu.firesocialmedia.domain.serviceimpl.call
 
 import android.content.Context
+import android.media.AudioAttributes
 import android.media.AudioManager
 import android.media.MediaPlayer
 import com.minhtu.firesocialmedia.R
@@ -31,6 +32,50 @@ object CallSoundManager {
     }
 
     fun stopRingtone() {
+        mediaPlayer?.apply {
+            stop()
+            release()
+        }
+        mediaPlayer = null
+        isRingtonePlayed = false
+    }
+
+    fun playRingtoneForCaller(context: Context) {
+        if (isRingtonePlayed) return
+
+        stopRingtoneForCaller()
+
+        try {
+            val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+            
+            audioManager.mode = AudioManager.MODE_RINGTONE
+            audioManager.isSpeakerphoneOn = true
+
+            val afd = context.resources.openRawResourceFd(R.raw.calling_ringtone)
+
+            mediaPlayer = MediaPlayer().apply {
+                setAudioAttributes(
+                    AudioAttributes.Builder()
+                        .setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
+                        .build()
+                )
+
+                setDataSource(afd.fileDescriptor, afd.startOffset, afd.length)
+                isLooping = true
+
+                setOnPreparedListener { start() }
+
+                prepareAsync()
+            }
+
+            isRingtonePlayed = true
+
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    fun stopRingtoneForCaller() {
         mediaPlayer?.apply {
             stop()
             release()

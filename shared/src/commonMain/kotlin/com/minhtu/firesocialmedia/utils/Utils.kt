@@ -13,6 +13,8 @@ import com.minhtu.firesocialmedia.platform.logMessage
 import com.minhtu.firesocialmedia.platform.sendMessageToServer
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
+import kotlin.time.Clock.System
+import kotlin.time.ExperimentalTime
 
 class Utils {
     companion object{
@@ -127,6 +129,44 @@ class Utils {
                 (number/1000000).toString() + "M"
             } else {
                 (number/1000000000).toString() + "M"
+            }
+        }
+
+        @OptIn(ExperimentalTime::class)
+        fun Long.toTimeAgo(): String {
+            val now = System.now().toEpochMilliseconds()
+            val diff = now - this
+
+            val seconds = diff / 1000
+            val minutes = seconds / 60
+            val hours = minutes / 60
+            val days = hours / 24
+            val weeks = days / 7
+            val months = days / 30
+            val years = days / 365
+
+            fun format(value: Long, unit: String): String {
+                return if (value == 1L) {
+                    "$value $unit ago"
+                } else {
+                    "$value ${unit}s ago"
+                }
+            }
+
+            return when {
+                seconds < 60 -> "just now"
+
+                minutes < 60 -> format(minutes, "minute")
+
+                hours < 24 -> format(hours, "hour")
+
+                days < 7 -> format(days, "day")
+
+                days < 30 -> format(weeks, "week")
+
+                months < 12 -> format(months, "month")
+
+                else -> format(years, "year")
             }
         }
     }

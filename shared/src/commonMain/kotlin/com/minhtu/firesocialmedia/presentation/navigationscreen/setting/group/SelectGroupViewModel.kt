@@ -3,7 +3,6 @@ package com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.minhtu.firesocialmedia.domain.entity.group.GroupInstance
-import com.minhtu.firesocialmedia.domain.usecases.group.FindGroupInformationUseCase
 import com.minhtu.firesocialmedia.domain.usecases.group.GetAllGroupsUseCase
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers

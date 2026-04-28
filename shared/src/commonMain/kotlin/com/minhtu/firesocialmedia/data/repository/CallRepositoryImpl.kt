@@ -13,6 +13,7 @@ import com.minhtu.firesocialmedia.domain.entity.call.CallStatus
 import com.minhtu.firesocialmedia.domain.entity.call.CallingRequestData
 import com.minhtu.firesocialmedia.domain.entity.call.IceCandidateData
 import com.minhtu.firesocialmedia.domain.entity.call.OfferAnswer
+import com.minhtu.firesocialmedia.domain.entity.call.SpeakerType
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.domain.repository.CallRepository
 import com.minhtu.firesocialmedia.platform.WebRTCVideoTrack
@@ -180,6 +181,14 @@ class CallRepositoryImpl(
         audioCallService.rejectVideoCall()
     }
 
+    override suspend fun resetVideoCallStartedState() {
+        audioCallService.resetVideoCallStartedState()
+    }
+
+    override suspend fun stopVideoCallResources() {
+        audioCallService.stopVideoCallResources()
+    }
+
     override suspend fun requestCameraAndAudioPermissions(): Boolean {
         return permissionManager.requestCameraAndAudioPermissions()
     }
@@ -220,8 +229,12 @@ class CallRepositoryImpl(
             })
     }
 
-    override suspend fun startVideoCall(onStartVideoCall: suspend (WebRTCVideoTrack) -> Unit) {
+    override suspend fun startVideoCall(
+        isVideoInitiator: Boolean,
+        onStartVideoCall: suspend (WebRTCVideoTrack) -> Unit
+    ) {
         audioCallService.startVideoCall(
+            isVideoInitiator = isVideoInitiator,
             onStartVideoCall = { localVideoTrack ->
                 onStartVideoCall(localVideoTrack)
             }
@@ -330,6 +343,11 @@ class CallRepositoryImpl(
         )
     }
 
+    override suspend fun clearAnswerInFirebase(sessionId: String) {
+        databaseService.clearAnswerInFirebase(sessionId)
+        logMessage("clearAnswerInFirebase", { "clear Answer completed" })
+    }
+
     override suspend fun observePhoneCallWithoutCheckingInCall(
         currentUserId: String,
         phoneCallCallBack: (CallingRequestData) -> Unit,
@@ -381,6 +399,18 @@ class CallRepositoryImpl(
 
     override fun stopObservePhoneCall() {
         databaseService.stopObservePhoneCall()
+    }
+
+    override suspend fun updateMuteStatus(muted: Boolean) {
+        audioCallService.updateMuteStatus(muted)
+    }
+
+    override suspend fun updateCameraStatus(cameraOff: Boolean) {
+        audioCallService.updateCameraStatus(cameraOff)
+    }
+
+    override suspend fun updateSpeakerStatus(speakerType: SpeakerType) {
+        audioCallService.updateSpeakerStatus(speakerType)
     }
 
     override suspend fun sendIceCandidateToFireBase(

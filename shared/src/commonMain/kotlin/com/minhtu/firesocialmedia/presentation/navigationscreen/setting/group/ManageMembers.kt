@@ -27,6 +27,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -35,6 +36,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.PersonRemove
 import androidx.compose.material.icons.filled.VerifiedUser
 import androidx.compose.material.icons.outlined.ArrowDownward
 import androidx.compose.material3.ButtonDefaults
@@ -371,10 +373,12 @@ class ManageMembers {
                     }
 
                     adminToDelete?.let { admin ->
-                        UiUtils.ShowBasicAlertDialog(
-                            "Remove Admin",
-                            "Are you sure you want to remove this admin from this group?",
-                            onClickConfirm = {
+                        UiUtils.ShowDiscardDialog(
+                            "Remove Admin?",
+                            "Are you sure you want to remove this admin from the group? This action cannot be undone.",
+                            icon = Icons.Default.PersonRemove,
+                            iconBackground = Color(0xFFD32F2F),
+                            onDiscard = {
                                 //If you are the last admin and there are members in group. Cannot remove you
                                 if (adminList.size <= 1 && memberSet.isNotEmpty()) {
                                     //Cannot remove the last admin
@@ -384,8 +388,7 @@ class ManageMembers {
                                     showAlertDialog.value = false
                                 }
                             },
-                            onClickReject = {
-                                showAlertDialog.value = false
+                            onCancel = {
                                 adminToDelete = null
                             },
                             showAlertDialog
@@ -449,6 +452,7 @@ class ManageMembers {
                                     .clip(CircleShape)
                             )
                         }
+                        Spacer(Modifier.width(10.dp))
                         Text(
                             text = user.name,
                             color = Color.Black,
@@ -456,8 +460,9 @@ class ManageMembers {
                             overflow = TextOverflow.Ellipsis,
                             maxLines = 2,
                             modifier = Modifier
+                                .weight(1f)
                                 .padding(horizontal = 5.dp))
-                        Spacer(Modifier.weight(1f))
+                        Spacer(Modifier.width(8.dp))
                         OutlinedButton(
                             onClick = {
                                 expanded = !expanded

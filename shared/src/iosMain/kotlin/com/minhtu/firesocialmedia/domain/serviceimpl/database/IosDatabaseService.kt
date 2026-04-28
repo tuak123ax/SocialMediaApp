@@ -14,12 +14,12 @@ import com.minhtu.firesocialmedia.data.remote.dto.call.CallingRequestDTO
 import com.minhtu.firesocialmedia.data.remote.dto.call.IceCandidateDTO
 import com.minhtu.firesocialmedia.data.remote.dto.call.OfferAnswerDTO
 import com.minhtu.firesocialmedia.data.remote.dto.comment.CommentDTO
+import com.minhtu.firesocialmedia.data.remote.dto.group.GroupDTO
+import com.minhtu.firesocialmedia.data.remote.dto.group.GroupSummaryDTO
 import com.minhtu.firesocialmedia.data.remote.dto.home.LatestNewsDTO
 import com.minhtu.firesocialmedia.data.remote.dto.news.NewsDTO
 import com.minhtu.firesocialmedia.data.remote.dto.notification.NotificationDTO
 import com.minhtu.firesocialmedia.data.remote.dto.notification.fromMap
-import com.minhtu.firesocialmedia.data.remote.dto.group.GroupDTO
-import com.minhtu.firesocialmedia.data.remote.dto.group.GroupSummaryDTO
 import com.minhtu.firesocialmedia.data.remote.dto.signin.SignInDTO
 import com.minhtu.firesocialmedia.data.remote.dto.user.UserDTO
 import com.minhtu.firesocialmedia.data.remote.dto.user.toMap
@@ -411,7 +411,9 @@ class IosDatabaseService() : DatabaseService {
         val storageReference: FIRStorageReference = FIRStorage.storage().reference().child("avatar").child(user.uid)
         val databaseReference: FIRDatabaseReference = FIRDatabase.database().reference().child("users").child(user.uid)
         try {
-            if (user.image != Constants.DEFAULT_AVATAR_URL) {
+            if (user.image != Constants.DEFAULT_AVATAR_URL &&
+                user.image != Constants.DEFAULT_DECADE_AVATAR_URL &&
+                user.image != Constants.DEFAULT_ARK_AVATAR_URL_FOR_GROUP) {
                 val nsDataAvatar = Base64.decode(user.image).toNSData()
                 val metadata = FIRStorageMetadata().apply {
                     setContentType("image/jpeg")
@@ -531,6 +533,12 @@ class IosDatabaseService() : DatabaseService {
         // iOS implementation will be added later
     }
 
+    override suspend fun clearAnswerInFirebase(
+        sessionId: String
+    ) {
+        // iOS implementation will be added later
+    }
+
     override suspend fun updateOfferInFirebase(
         sessionId: String,
         updateContent: String,
@@ -590,6 +598,10 @@ class IosDatabaseService() : DatabaseService {
     }
 
     override fun stopObservePhoneCall() {
+        // iOS implementation will be added later
+    }
+
+    override fun stopObservePhoneCallWithoutCheckingInCall() {
         // iOS implementation will be added later
     }
 
@@ -774,5 +786,37 @@ class IosDatabaseService() : DatabaseService {
     ): List<GroupDTO> {
         // TODO: Implement iOS fetch recommend/feature groups
         return emptyList()
+    }
+
+    override suspend fun updateIsReadStatusOfNotification(
+        userId: String,
+        notificationId: String,
+        userPath: String,
+        notificationPath: String
+    ) {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun deleteAllNotifications(
+        uid: String,
+        userPath: String,
+        notificationPath: String
+    ): Result<Unit> {
+        TODO("Not yet implemented")
+    }
+
+    override fun getLocalSessionId(): String {
+        // TODO: Implement iOS local session ID storage (e.g., NSUserDefaults/Keychain)
+        return ""
+    }
+
+    override suspend fun updateUserLongField(
+        userId: String,
+        fieldPath: String,
+        value: Long,
+        userPath: String
+    ): Boolean {
+        // TODO: Implement iOS updateUserLongField
+        return false
     }
 }

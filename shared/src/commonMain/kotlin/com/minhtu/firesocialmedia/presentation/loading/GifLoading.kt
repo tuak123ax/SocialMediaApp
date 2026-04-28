@@ -26,6 +26,7 @@ class GifLoading {
         @OptIn(ExperimentalResourceApi::class)
         @Composable
         fun GifLoadingScreen(localImageLoaderValue : ProvidedValue<*>,
+                             gifName : String,
                              message : String) {
             Box(
                 contentAlignment = Alignment.Center,
@@ -40,17 +41,17 @@ class GifLoading {
                         localImageLoaderValue
                     ) {
                         AutoSizeImage(
-                            getResId("loading_gif"),
+                            getResId(gifName),
                             contentDescription = "Poster Avatar",
                             contentScale = ContentScale.Fit,
                             modifier = Modifier
-                                .size(100.dp)
+                                .size(120.dp)
                         )
                     }
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
                         text = message,
-                        style = MaterialTheme.typography.bodyMedium,
+                        style = MaterialTheme.typography.bodyLarge,
                         color = Color.Gray
                     )
                 }

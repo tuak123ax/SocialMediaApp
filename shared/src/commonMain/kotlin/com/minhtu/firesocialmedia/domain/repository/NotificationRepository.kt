@@ -14,4 +14,6 @@ interface NotificationRepository {
 
     suspend fun updateIsReadStatusOfNotification(user : UserInstance,
                                                  notification: NotificationInstance)
+
+    suspend fun deleteAllNotifications(user : UserInstance): Result<Unit>
 }

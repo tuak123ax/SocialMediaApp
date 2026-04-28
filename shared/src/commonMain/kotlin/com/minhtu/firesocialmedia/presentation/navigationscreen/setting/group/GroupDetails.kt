@@ -31,6 +31,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.NotificationsOff
@@ -86,7 +87,6 @@ import com.minhtu.firesocialmedia.domain.entity.group.GroupInstance
 import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.platform.CommonBackHandler
-import com.minhtu.firesocialmedia.platform.CrossPlatformIcon
 import com.minhtu.firesocialmedia.platform.getImageBytesFromDrawable
 import com.minhtu.firesocialmedia.platform.showToast
 import com.minhtu.firesocialmedia.presentation.home.HomeViewModel
@@ -96,8 +96,8 @@ import com.minhtu.firesocialmedia.presentation.search.SearchViewModel
 import com.minhtu.firesocialmedia.presentation.userinformation.UserInformation.Companion.DropdownMenuForCoverPhoto
 import com.minhtu.firesocialmedia.utils.UiUtils
 import com.minhtu.firesocialmedia.utils.UiUtils.Companion.LazyColumnOfNewsWithSlideOutAnimationAndLoadMore
+import com.minhtu.firesocialmedia.utils.UiUtils.Companion.SearchUserCard
 import com.minhtu.firesocialmedia.utils.UiUtils.Companion.ShareBottomSheet
-import com.minhtu.firesocialmedia.utils.UiUtils.Companion.UserRow
 import com.minhtu.firesocialmedia.utils.Utils.Companion.convertToNumberString
 import com.seiko.imageloader.ui.AutoSizeImage
 import kotlinx.coroutines.async
@@ -210,10 +210,12 @@ class GroupDetails {
             }
 
             val showAlertDialog = remember { mutableStateOf(false) }
-            UiUtils.ShowBasicAlertDialog(
+            UiUtils.ShowDiscardDialog(
                     "Leave Group",
             "Are you sure you want to leave this group?",
-            onClickConfirm = {
+                icon = Icons.AutoMirrored.Filled.Logout,
+                iconBackground = Color(0xFFFDEAEA),
+                onDiscard = {
                 if(fetchGroupInfoState != null) {
                     val adminSet = fetchGroupInfoState!!.members.filterValues {it == "admin"}.keys
                     val memberSet = fetchGroupInfoState!!.members.filterValues {it == "member"}.keys
@@ -228,10 +230,7 @@ class GroupDetails {
                     }
                 }
             },
-            onClickReject = {
-                showAlertDialog.value = false
-            },
-            showAlertDialog
+                showDialog = showAlertDialog
             )
             val leaveGroupStatus by groupDetailsViewModel.leaveGroupStatus.collectAsState()
             LaunchedEffect(leaveGroupStatus) {
@@ -388,15 +387,6 @@ class GroupDetails {
                                         modifier = Modifier
                                             .fillMaxWidth()
                                     ){
-                                        CrossPlatformIcon(
-                                            icon = "global",
-                                            backgroundColor = "#FFFFFFFF",
-                                            contentDescription = "Global",
-                                            modifier = Modifier
-                                                .size(25.dp)
-                                                .padding(end = 5.dp)
-                                        )
-                                        Spacer(Modifier.width(5.dp))
                                         if(fetchGroupInfoState != null) {
                                             Text(
                                                 text = if(fetchGroupInfoState!!.password.isNotEmpty()) "Private Group" else "Public Group",
@@ -562,7 +552,7 @@ class GroupDetails {
                     }
                 }
                 UiUtils.BackAndTitleAndMoreOptionsRow(
-                    "GroupDetails",
+                    "Group Details",
                     trailingIcon = "more_horiz",
                     showMoreOptionsMenu = showMoreOptionsMenu,
                     isMember = isMember,
@@ -734,7 +724,13 @@ class GroupDetails {
                                         .semantics { contentDescription = TestTag.TAG_MEMBERS_TAB }
                                 ) {
                                     items(memberList) { user ->
-                                        UserRow(user, localImageLoaderValue, onNavigateToUserInformation)
+                                        SearchUserCard(
+                                            user,
+                                            localImageLoaderValue,
+                                            onClickViewProfileButton = {
+                                                onNavigateToUserInformation(user)
+                                            }
+                                        )
                                     }
                                 }
                                 if(isLoading) {

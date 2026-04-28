@@ -1,7 +1,7 @@
 package com.minhtu.firesocialmedia.presentation.information
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -9,11 +9,19 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -29,24 +37,26 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.minhtu.firesocialmedia.constants.Constants
 import com.minhtu.firesocialmedia.constants.TestTag
 import com.minhtu.firesocialmedia.data.remote.service.imagepicker.ImagePicker
 import com.minhtu.firesocialmedia.di.PlatformContext
+import com.minhtu.firesocialmedia.platform.CommonBackHandler
 import com.minhtu.firesocialmedia.platform.getImageBytesFromDrawable
 import com.minhtu.firesocialmedia.platform.showToast
 import com.minhtu.firesocialmedia.presentation.loading.Loading
 import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
 import com.minhtu.firesocialmedia.presentation.signup.SignUpViewModel
+import com.minhtu.firesocialmedia.utils.UiUtils
+import com.minhtu.sharedmodule.ui.theme.avatarGrayBackground
 
 class Information {
     companion object{
         @Composable
-        fun InformationScreen(modifier: Modifier,
-                              platform: PlatformContext,
+        fun InformationScreen(platform: PlatformContext,
                               imagePicker: ImagePicker,
                               signUpViewModel: SignUpViewModel,
                               informationViewModel: InformationViewModel,
@@ -69,79 +79,125 @@ class Information {
                 if (addInformationStatus.value != null) {
                     if (addInformationStatus.value!!) {
                         showToast("Sign up successfully!!!")
+                        // Signup successfully, track this activity
+                        informationViewModel.saveLoginActivityInfo()
                         onNavigateToHomeScreen()
                     } else {
                         showToast("Error happened!!!")
                     }
                 }
             }
+            CommonBackHandler {
+                showToast("Please finish sign up process!")
+            }
             Box(modifier = Modifier.fillMaxSize()) {
                 val avatarModifier = Modifier
                     .size(160.dp)
+                    .background(avatarGrayBackground)
                     .clip(CircleShape)
-                    .border(1.dp, Color.Gray, CircleShape)
-                    .clickable {
-                        imagePicker.pickImage()
-                    }
+                    .border(2.dp, MaterialTheme.colorScheme.primary, CircleShape)
                     .testTag(TestTag.TAG_SELECT_AVATAR)
                     .semantics {
                         contentDescription = TestTag.TAG_SELECT_AVATAR
                     }
                 Column(
-                    modifier = modifier,
-                    verticalArrangement = Arrangement.Center,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.White),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text(
-                        text = "Please select your avatar",
-                        color = Color.White,
-                        fontSize = 25.sp,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(20.dp)
+                    Spacer(Modifier.height(20.dp))
+                    UiUtils.BackAndTitleAndMoreOptionsRow(
+                        "Create Your Profile",
+                        titleStyle = MaterialTheme.typography.titleLarge,
+                        subTitle = "Customize how you appear to others",
+                        showBackButton = false
                     )
                     Spacer(modifier = Modifier.padding(20.dp))
                     val imageBytes =
                         produceState<ByteArray?>(initialValue = null, informationViewModel.avatar) {
-                            if (informationViewModel.avatar == Constants.DEFAULT_AVATAR_URL) {
-                                value = getImageBytesFromDrawable("unknownavatar")
+                            value = if (informationViewModel.avatar == Constants.DEFAULT_DECADE_AVATAR_URL) {
+                                getImageBytesFromDrawable("decadeavatar")
                             } else {
-                                value = imagePicker.loadImageBytes(informationViewModel.avatar)
+                                imagePicker.loadImageBytes(informationViewModel.avatar)
                             }
                         }
                     if (imageBytes.value != null) {
-                        imagePicker.ByteArrayImage(
-                            imageBytes.value,
-                            modifier = avatarModifier
-                        )
+                        Box(
+                            contentAlignment = Alignment.Center
+                        ) {
+                            imagePicker.ByteArrayImage(
+                                imageBytes.value,
+                                modifier = avatarModifier
+                            )
+                            IconButton(
+                                colors = IconButtonDefaults.iconButtonColors(
+                                    containerColor = MaterialTheme.colorScheme.primary
+                                ),
+                                onClick = {
+                                    imagePicker.pickImage()
+                                }
+                            ) {
+                                Icon(
+                                    Icons.Default.CameraAlt,
+                                    "Select avatar",
+                                    tint = Color.White
+                                )
+                            }
+                        }
                     }
-                    Spacer(modifier = Modifier.padding(20.dp))
                     Text(
-                        text = "And input your name below",
-                        color = Color.White,
-                        fontSize = 30.sp,
+                        text = "CHANGE AVATAR",
+                        color = MaterialTheme.colorScheme.primary,
+                        style = MaterialTheme.typography.titleMedium,
                         textAlign = TextAlign.Center,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(10.dp)
                     )
-                    Spacer(modifier = Modifier.padding(20.dp))
+                    Spacer(modifier = Modifier.padding(30.dp))
+                    Text(
+                        text = "Your name",
+                        color = Color.Black,
+                        style = MaterialTheme.typography.bodyMedium,
+                        textAlign = TextAlign.Start,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp)
+                    )
                     OutlinedTextField(
                         value = informationViewModel.username,
-                        shape = RoundedCornerShape(30.dp),
-                        textStyle = TextStyle(color = Color.White),
+                        shape = RoundedCornerShape(10.dp),
+                        textStyle = TextStyle(color = Color.Black),
+                        leadingIcon = {
+                            Icon(
+                                Icons.Default.Person,
+                                "Name"
+                            )
+                        },
                         onValueChange = {
                             informationViewModel.updateUsername(it)
                         }, modifier = Modifier
                             .fillMaxWidth()
-                            .padding(20.dp)
+                            .padding(horizontal = 20.dp)
                             .testTag(TestTag.TAG_SELECT_NAME)
                             .semantics {
                                 contentDescription = TestTag.TAG_SELECT_NAME
                             },
-                        label = { Text(text = "Name") },
+                        label = { Text(text = "Input Your Name") },
                         singleLine = true
                     )
-                    Spacer(modifier = Modifier.padding(20.dp))
+                    Text(
+                        text = "This name will be visible to your friends and in public interactions.",
+                        color = Color.Gray,
+                        style = MaterialTheme.typography.bodyMedium,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(30.dp)
+                    )
+                    Spacer(modifier = Modifier.weight(1f))
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.Center
@@ -151,13 +207,26 @@ class Information {
                                 loadingViewModel.showLoading()
                                 informationViewModel.finishSignUpStage()
                             },
-                            modifier = Modifier.testTag(TestTag.TAG_BUTTON_NEXT)
+                            shape = RoundedCornerShape(10.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(20.dp)
+                                .testTag(TestTag.TAG_BUTTON_NEXT)
                                 .semantics {
                                     contentDescription = TestTag.TAG_BUTTON_NEXT
                                 }) {
-                            Text(text = "Next")
+                            Text(text = "Next Step →")
                         }
                     }
+                    Text(
+                        text = "You can change these details later in settings",
+                        color = Color.LightGray,
+                        style = MaterialTheme.typography.bodyMedium,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                    )
+                    Spacer(Modifier.height(20.dp))
                 }
                 if (isLoading) {
                     Loading.LoadingScreen()

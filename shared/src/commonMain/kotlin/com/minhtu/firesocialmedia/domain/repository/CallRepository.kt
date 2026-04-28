@@ -5,6 +5,7 @@ import com.minhtu.firesocialmedia.domain.entity.call.CallStatus
 import com.minhtu.firesocialmedia.domain.entity.call.CallingRequestData
 import com.minhtu.firesocialmedia.domain.entity.call.IceCandidateData
 import com.minhtu.firesocialmedia.domain.entity.call.OfferAnswer
+import com.minhtu.firesocialmedia.domain.entity.call.SpeakerType
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.platform.WebRTCVideoTrack
 import com.minhtu.firesocialmedia.utils.Utils
@@ -66,6 +67,10 @@ interface CallRepository {
 
     suspend fun rejectVideoCall()
 
+    suspend fun resetVideoCallStartedState()
+
+    suspend fun stopVideoCallResources()
+
     suspend fun requestCameraAndAudioPermissions(): Boolean
 
     suspend fun requestAudioPermission(): Boolean
@@ -79,6 +84,7 @@ interface CallRepository {
     )
 
     suspend fun startVideoCall(
+        isVideoInitiator: Boolean,
         onStartVideoCall : suspend (videoTrack : WebRTCVideoTrack) -> Unit)
 
     suspend fun observeVideoCall(
@@ -113,6 +119,8 @@ interface CallRepository {
         updateAnswerCallBack : Utils.Companion.BasicCallBack
     )
 
+    suspend fun clearAnswerInFirebase(sessionId : String)
+
     suspend fun observePhoneCallWithoutCheckingInCall(
         currentUserId : String,
         phoneCallCallBack : (CallingRequestData) -> Unit,
@@ -136,4 +144,10 @@ interface CallRepository {
     suspend fun sendWhoEndCall(sessionId: String, whoEndCall: String): Boolean
     suspend fun stopCallService()
     fun stopObservePhoneCall()
+    suspend fun updateMuteStatus(muted: Boolean)
+
+    /** Turn local video track on/off; when off, remote peer stops receiving our video. */
+    suspend fun updateCameraStatus(cameraOff: Boolean)
+
+    suspend fun updateSpeakerStatus(speakerType: SpeakerType)
 }

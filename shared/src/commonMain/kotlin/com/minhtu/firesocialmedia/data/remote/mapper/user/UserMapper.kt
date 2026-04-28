@@ -24,11 +24,15 @@ fun UserDTO.toDomain() : UserInstance {
         notifications.toDomainNotifications(),
         friends,
         likedComments,
-        HashMap(groups.mapValues { (_,v) -> v.toGroupDTO().toDomain() })
+        HashMap(groups.mapValues { (_,v) -> v.toGroupDTO().toDomain() }),
+        lastTimeChangePassword,
+        twoFAEnabled,
+        lastTimeReadPrivacy,
+        lastTimeAcknowledgedLoginHistory
     )
 }
 
-fun UserInstance.toDto() : UserDTO {
+fun UserInstance.toDto(): UserDTO {
     return UserDTO(
         email,
         image,
@@ -41,7 +45,11 @@ fun UserInstance.toDto() : UserDTO {
         notifications.toDTONotifications(),
         friends,
         likedComments,
-        HashMap(groups.mapValues { (_,v) -> v.toDto().GroupSummaryDTO() })
+        HashMap(groups.mapValues { (_,v) -> v.toDto().GroupSummaryDTO() }),
+        lastTimeChangePassword,
+        twoFAEnabled,
+        lastTimeReadPrivacy,
+        lastTimeAcknowledgedLoginHistory
     )
 }
 
