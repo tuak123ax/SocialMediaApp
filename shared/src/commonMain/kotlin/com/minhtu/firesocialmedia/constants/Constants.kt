@@ -14,10 +14,14 @@ class Constants {
         const val EMAIL_SERVER_ERROR = "EMAIL_SERVER_ERROR"
         const val EMAIL_NOT_EXISTED = "EMAIL_NOT_EXISTED"
         const val EMAIL_EXISTED = "EMAIL_EXISTED"
+        const val DATA_EMPTY = "Please fill all information!"
+        const val PASSWORD_MISMATCH = "Passwords are different!"
+        const val PASSWORD_SHORT = "Password is too short!"
 
-        const val DEFAULT_AVATAR_URL = "https://firebasestorage.googleapis.com/v0/b/firechat-aa433.appspot.com/o/unknownavatar.png?alt=media&token=9a49ff27-e5fa-4813-97d4-47bd15281550"
-        const val DEFAULT_DECADE_AVATAR_URL = "https://firebasestorage.googleapis.com/v0/b/firechat-aa433.appspot.com/o/decadeAvatar.png?alt=media&token=062af105-6d07-4cc0-8784-d0af3cfecbb9"
-        const val DEFAULT_ARK_AVATAR_URL_FOR_GROUP = "https://firebasestorage.googleapis.com/v0/b/firechat-aa433.appspot.com/o/arkavatar.png?alt=media&token=2d95a489-c480-402b-bb3f-cb32542bac75"
+        const val SUPABASE_STORAGE_BASE_URL = "https://pcklhkkafpomfvhboini.supabase.co/storage/v1/object/public/uploads/"
+        val DEFAULT_AVATAR_URL get() = com.minhtu.firesocialmedia.storage.SupabaseStorageProvider.DEFAULT_AVATAR_URL
+        val DEFAULT_DECADE_AVATAR_URL get() = com.minhtu.firesocialmedia.storage.SupabaseStorageProvider.DEFAULT_DECADE_AVATAR_URL
+        val DEFAULT_ARK_AVATAR_URL_FOR_GROUP get() = com.minhtu.firesocialmedia.storage.SupabaseStorageProvider.DEFAULT_GROUP_AVATAR_URL
         const val REMOTE_MSG_AUTHORIZATION = "Authorization"
         const val REMOTE_MSG_CONTENT_TYPE = "Content-Type"
 

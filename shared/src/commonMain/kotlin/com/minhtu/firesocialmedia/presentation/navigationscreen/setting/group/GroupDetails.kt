@@ -99,6 +99,7 @@ import com.minhtu.firesocialmedia.utils.UiUtils.Companion.LazyColumnOfNewsWithSl
 import com.minhtu.firesocialmedia.utils.UiUtils.Companion.SearchUserCard
 import com.minhtu.firesocialmedia.utils.UiUtils.Companion.ShareBottomSheet
 import com.minhtu.firesocialmedia.utils.Utils.Companion.convertToNumberString
+import com.minhtu.firesocialmedia.storage.toStorageUrl
 import com.seiko.imageloader.ui.AutoSizeImage
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -328,7 +329,7 @@ class GroupDetails {
                                         ) {
                                             if(fetchGroupInfoState != null) {
                                                 AutoSizeImage(
-                                                    fetchGroupInfoState!!.avatar,
+                                                    fetchGroupInfoState!!.avatar.toStorageUrl(),
                                                     contentDescription = "image",
                                                     contentScale = ContentScale.Crop,
                                                     modifier = Modifier
@@ -796,7 +797,7 @@ class GroupDetails {
                     localImageLoaderValue
                 ) {
                     AutoSizeImage(
-                        avatar,
+                        avatar.toStorageUrl(),
                         contentDescription = "Poster Avatar",
                         contentScale = ContentScale.Crop,
                         modifier = Modifier
@@ -899,7 +900,7 @@ class GroupDetails {
                     localImageLoaderValue
                 ) {
                     AutoSizeImage(
-                        imageUrl,
+                        imageUrl.toStorageUrl(),
                         contentDescription = "Image",
                         contentScale = ContentScale.Crop,
                         modifier = Modifier.fillMaxSize()

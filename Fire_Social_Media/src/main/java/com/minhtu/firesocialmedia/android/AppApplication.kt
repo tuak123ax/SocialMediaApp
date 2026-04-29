@@ -7,12 +7,14 @@ import android.os.Build
 import android.os.StrictMode
 import com.google.firebase.database.FirebaseDatabase
 import com.minhtu.firesocialmedia.constants.Constants
+import com.minhtu.firesocialmedia.domain.serviceimpl.database.supabase.SupabaseStorageHelper
 import com.minhtu.firesocialmedia.platform.initPlatformContext
 
 class AppApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         initPlatformContext(this)
+        SupabaseStorageHelper.initExtensionCache(this)
         createChannelNotification()
         if (BuildConfig.DEBUG) {
             StrictMode.setThreadPolicy(

@@ -87,6 +87,7 @@ import com.minhtu.sharedmodule.ui.theme.adminCardColor
 import com.minhtu.sharedmodule.ui.theme.memberCardColor
 import com.minhtu.sharedmodule.ui.theme.positiveBackgroundButtonColor
 import com.minhtu.sharedmodule.ui.theme.positiveTintColor
+import com.minhtu.firesocialmedia.storage.toStorageUrl
 import com.seiko.imageloader.ui.AutoSizeImage
 import kotlinx.coroutines.delay
 
@@ -444,7 +445,7 @@ class ManageMembers {
                             localImageLoaderValue
                         ) {
                             AutoSizeImage(
-                                user.image,
+                                user.image.toStorageUrl(),
                                 contentDescription = "Avatar",
                                 contentScale = ContentScale.Crop,
                                 modifier = Modifier

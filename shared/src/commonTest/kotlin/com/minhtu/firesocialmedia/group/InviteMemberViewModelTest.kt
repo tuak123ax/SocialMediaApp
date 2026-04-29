@@ -111,8 +111,44 @@ class InviteMemberViewModelTest {
 		advanceUntilIdle()
 
 		assertEquals(friend, repo.lastInvited)
-		assertTrue(friend.notifications.isNotEmpty())
-	}
+        assertTrue(friend.notifications.isNotEmpty())
+    }
+
+    @Test
+    fun `findUserById returns null when user not found`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val repo = FakeInviteGroupRepository()
+        val userRepo = FakeUserRepoForInvite()  // empty users map
+        val vm = InviteMemberViewModel(
+            copyLinkUseCase = CopyLinkUseCase(repo),
+            getUserUseCase = GetUserUseCase(userRepo),
+            inviteFriendToGroupUseCase = InviteFriendToGroupUseCase(repo),
+            ioDispatcher = dispatcher
+        )
+        val result = vm.findUserById("nonexistent")
+        assertEquals(null, result)
+    }
+
+    @Test
+    fun `inviteFriendToGroup with empty token skips push notification`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val repo = FakeInviteGroupRepository()
+        val userRepo = FakeUserRepoForInvite()
+        val vm = InviteMemberViewModel(
+            copyLinkUseCase = CopyLinkUseCase(repo),
+            getUserUseCase = GetUserUseCase(userRepo),
+            inviteFriendToGroupUseCase = InviteFriendToGroupUseCase(repo),
+            ioDispatcher = dispatcher
+        )
+        val current = UserInstance(uid = "me", name = "Me", image = "img")
+        val friend = UserInstance(uid = "f1", token = "")  // empty token
+        val group = GroupInstance(id = "g1", name = "Group")
+
+        vm.inviteFriendToGroup(current, friend, group)
+        advanceUntilIdle()
+
+        // Notification still added to friend list even without push
+        assertEquals(friend, repo.lastInvited)
+        assertEquals(1, friend.notifications.size)
+    }
 }
-
-

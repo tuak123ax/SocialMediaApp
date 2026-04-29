@@ -235,6 +235,11 @@ android {
             "APP_SCRIPT_FOR_2FA_AUTHENTICATION_API_KEY",
             "\"${localProperties.getProperty("APP_SCRIPT_FOR_2FA_AUTHENTICATION_API_KEY", "")}\""
         )
+        buildConfigField(
+            "String",
+            "SUPABASE_API_KEY",
+            "\"${localProperties.getProperty("SUPABASE_API_KEY", "")}\""
+        )
     }
     buildFeatures {
         buildConfig = true

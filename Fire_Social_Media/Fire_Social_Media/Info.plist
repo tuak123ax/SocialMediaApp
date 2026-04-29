@@ -35,6 +35,10 @@
 	<array>
 		<string>remote-notification</string>
 	</array>
+	<key>APP_SCRIPT_FOR_2FA_AUTHENTICATION_API_KEY</key>
+	<string>$(APP_SCRIPT_FOR_2FA_AUTHENTICATION_API_KEY)</string>
+	<key>SUPABASE_API_KEY</key>
+	<string>$(SUPABASE_API_KEY)</string>
 	<key>UILaunchScreen</key>
 	<dict/>
 	<key>UIRequiredDeviceCapabilities</key>

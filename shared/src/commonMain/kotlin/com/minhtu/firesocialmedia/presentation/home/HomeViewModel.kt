@@ -234,14 +234,18 @@ class HomeViewModel(
         if(currentUserId != null) {
             val notifications = notificationInteractor.allNotificationsOf(
                 currentUserId)
-            for(notification in notifications!!) {
-                logMessage("getAllNotifications",
-                    { notification.id + "isRead: "+ notification.beRead })
+            if (notifications != null) {
+                for(notification in notifications) {
+                    logMessage("getAllNotifications",
+                        { notification.id + "isRead: "+ notification.beRead })
+                }
+                listNotificationOfCurrentUser.clear()
+                listNotificationOfCurrentUser.addAll(notifications)
+                updateNotifications(ArrayList(listNotificationOfCurrentUser.toList()))
+                _getAllNotificationsOfCurrentUser.value = true
+            } else {
+                _getAllNotificationsOfCurrentUser.value = false
             }
-            listNotificationOfCurrentUser.clear()
-            listNotificationOfCurrentUser.addAll(notifications)
-            updateNotifications(ArrayList(listNotificationOfCurrentUser.toList()))
-            _getAllNotificationsOfCurrentUser.value = true
         }
     }
 

@@ -68,6 +68,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.minhtu.firesocialmedia.constants.TestTag
+import com.minhtu.firesocialmedia.storage.toStorageUrl
 import com.minhtu.firesocialmedia.domain.core.DecentralizationType
 import com.minhtu.firesocialmedia.domain.entity.call.CallingRequestData
 import com.minhtu.firesocialmedia.domain.entity.home.deeplinks.DeepLinksData
@@ -303,7 +304,7 @@ class Home {
                             ) {
                                 //Current user avatar
                                 if (currentUserState != null) {
-                                    val userImage = currentUserState.image // Avoid force unwrapping
+                                    val userImage = currentUserState.image.toStorageUrl() // Avoid force unwrapping
 
                                     CompositionLocalProvider(
                                         localImageLoaderValue
@@ -497,7 +498,7 @@ class Home {
                         localImageLoaderValue
                     ) {
                         AutoSizeImage(
-                            user.image,
+                            user.image.toStorageUrl(),
                             contentDescription = "User Avatar",
                             contentScale = ContentScale.Crop,
                             modifier = Modifier

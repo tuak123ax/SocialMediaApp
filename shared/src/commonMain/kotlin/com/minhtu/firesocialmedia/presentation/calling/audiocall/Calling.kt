@@ -68,6 +68,7 @@ import com.minhtu.firesocialmedia.presentation.home.HomeViewModel
 import com.minhtu.firesocialmedia.utils.NavigationHandler
 import com.minhtu.firesocialmedia.utils.Utils.Companion.sendNotification
 import com.minhtu.sharedmodule.ui.theme.iconButtonBackgroundColor
+import com.minhtu.firesocialmedia.storage.toStorageUrl
 import com.seiko.imageloader.ui.AutoSizeImage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -237,7 +238,7 @@ class Calling {
             //Dialog to accept/reject video call — use ViewModel's pending offer so Accept always navigates (survives recomposition)
             IncomingCallBottomSheet(
                 callerName = if(isCalling) callee.name else caller.name,
-                callerImage = if(isCalling) callee.image else caller.image,
+                callerImage = if(isCalling) callee.image.toStorageUrl() else caller.image.toStorageUrl(),
                 localImageLoaderValue,
                 onAccept = {
                     val offer = callingViewModel.pendingVideoOfferForAccept.value

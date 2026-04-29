@@ -167,6 +167,6 @@ class SignUpViewModelTest {
         advanceUntilIdle()
         val signUpStatus = signUpViewModel.signUpStatus.value
         assertEquals(false, signUpStatus.signUpStatus)
-        assertEquals(Constants.SIGNUP_FAIL, signUpStatus.message)
+        assertEquals("Sign up failed", signUpStatus.message)
     }
 }

@@ -27,6 +27,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.minhtu.firesocialmedia.constants.TestTag
 import com.minhtu.firesocialmedia.platform.CrossPlatformIcon
+import com.minhtu.firesocialmedia.storage.toStorageUrl
 import com.seiko.imageloader.ui.AutoSizeImage
 
 class ShowImage {
@@ -96,7 +97,7 @@ class ShowImage {
                         localImageLoaderValue
                     ) {
                         AutoSizeImage(
-                            image,
+                            image.toStorageUrl(),
                             contentDescription = "image",
                             modifier = Modifier
                                 .fillMaxWidth()

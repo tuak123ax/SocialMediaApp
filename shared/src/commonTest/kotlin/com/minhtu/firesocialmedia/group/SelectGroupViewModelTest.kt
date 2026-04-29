@@ -64,8 +64,24 @@ class SelectGroupViewModelTest {
 
 		val state = vm.getAllGroupsState.value
 		assertTrue(state != null)
-		assertEquals(2, state!!.size)
-	}
+        assertEquals(2, state!!.size)
+    }
+
+    @Test
+    fun `getAllGroupsOfUser with no groups returns empty set`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val repo = FakeGroupRepoForSelect().apply { groupsForUser = emptySet() }
+        val vm = SelectGroupViewModel(
+            getAllGroupsUseCase = GetAllGroupsUseCase(repo),
+            ioDispatcher = dispatcher
+        )
+
+        Dispatchers.setMain(dispatcher)
+        vm.getAllGroupsOfUser("u99")
+        advanceUntilIdle()
+        Dispatchers.resetMain()
+
+        val state = vm.getAllGroupsState.value
+        assertEquals(0, state?.size)
+    }
 }
-
-

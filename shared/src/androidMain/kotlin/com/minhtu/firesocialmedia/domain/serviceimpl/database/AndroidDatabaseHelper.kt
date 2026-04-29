@@ -15,7 +15,6 @@ import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.GenericTypeIndicator
 import com.google.firebase.database.ServerValue
 import com.google.firebase.database.ValueEventListener
-import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.StorageMetadata
 import com.google.firebase.storage.StorageReference
 import com.minhtu.firesocialmedia.constants.Constants
@@ -26,17 +25,20 @@ import com.minhtu.firesocialmedia.data.remote.dto.call.IceCandidateDTO
 import com.minhtu.firesocialmedia.data.remote.dto.call.OfferAnswerDTO
 import com.minhtu.firesocialmedia.data.remote.dto.group.GroupDTO
 import com.minhtu.firesocialmedia.data.remote.dto.group.GroupSummaryDTO
-import com.minhtu.firesocialmedia.data.remote.dto.news.NewsDTO
 import com.minhtu.firesocialmedia.data.remote.dto.notification.NotificationDTO
 import com.minhtu.firesocialmedia.data.remote.dto.settings.SessionItemDTO
 import com.minhtu.firesocialmedia.data.remote.dto.user.UserDTO
 import com.minhtu.firesocialmedia.domain.entity.base.BaseNewsInstance
 import com.minhtu.firesocialmedia.domain.entity.call.CallStatus
-import com.minhtu.firesocialmedia.domain.entity.settings.SessionItem
+import com.minhtu.firesocialmedia.domain.serviceimpl.database.supabase.SupabaseStorageHelper.Companion.resolveMediaUrl
+import com.minhtu.firesocialmedia.domain.serviceimpl.database.supabase.SupabaseStorageHelper.Companion.resolveMediaUrlAsync
 import com.minhtu.firesocialmedia.platform.logMessage
 import com.minhtu.firesocialmedia.utils.Utils
 import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -51,75 +53,6 @@ import java.util.Locale
 
 class AndroidDatabaseHelper {
     companion object {
-        suspend fun saveInstanceToDatabase(
-            commentId: String,
-            path: String,
-            instance: BaseNewsInstance
-        ): Boolean = suspendCancellableCoroutine { continuation ->
-            Log.d("Task", "saveInstanceToDatabase")
-            val storageReference = FirebaseStorage.getInstance().getReference()
-                .child(path).child(commentId)
-            val databaseReference = FirebaseDatabase.getInstance().getReference()
-                .child(path).child(commentId)
-            if (instance.image.isNotEmpty()) {
-                try {
-                    val metadata = StorageMetadata.Builder()
-                        .setCacheControl("public,max-age=604800,immutable")
-                        .build()
-                    storageReference.putFile(instance.image.toUri(), metadata)
-                        .addOnCompleteListener { putFileTask ->
-                            if (putFileTask.isSuccessful) {
-                                storageReference.downloadUrl.addOnSuccessListener { dataUrl ->
-                                    instance.updateImage(dataUrl.toString())
-                                    databaseReference.setValue(instance)
-                                        .addOnCompleteListener { addUserTask ->
-                                            if (continuation.isActive) continuation.resume(
-                                                addUserTask.isSuccessful,
-                                                onCancellation = {})
-                                        }
-                                }
-                            }
-                        }
-                } catch (ex: Exception) {
-                    logMessage(
-                        "saveInstanceToDatabase",
-                        { "Exception when send image to Firebase: " + ex.message.toString() })
-                }
-            } else {
-                if (instance.video.isNotEmpty()) {
-                    try {
-                        val metadata = StorageMetadata.Builder()
-                            .setCacheControl("public,max-age=604800,immutable")
-                            .build()
-                        storageReference.putFile(instance.video.toUri(), metadata)
-                            .addOnCompleteListener { putFileTask ->
-                                if (putFileTask.isSuccessful) {
-                                    storageReference.downloadUrl.addOnSuccessListener { dataUrl ->
-                                        instance.updateVideo(dataUrl.toString())
-                                        databaseReference.setValue(instance)
-                                            .addOnCompleteListener { addUserTask ->
-                                                if (continuation.isActive) continuation.resume(
-                                                    addUserTask.isSuccessful,
-                                                    onCancellation = {})
-                                            }
-                                    }
-                                }
-                            }
-                    } catch (ex: Exception) {
-                        logMessage(
-                            "saveInstanceToDatabase",
-                            { "Exception when send video to Firebase: " + ex.message.toString() })
-                    }
-                } else {
-                    databaseReference.setValue(instance).addOnCompleteListener { addNewsTask ->
-                        if (continuation.isActive) continuation.resume(
-                            addNewsTask.isSuccessful,
-                            onCancellation = {})
-                    }
-                }
-            }
-        }
-
         suspend fun saveValueToDatabase(
             id: String,
             path: String,
@@ -237,30 +170,6 @@ class AndroidDatabaseHelper {
             }
         }
 
-        suspend fun deleteNewsFromDatabase(path: String, new: NewsDTO) {
-            Log.d("Task", "deleteNewsFromDatabase")
-
-            FirebaseDatabase.getInstance()
-                .getReference()
-                .child(path)
-                .child(new.id)
-                .removeValue()
-                .await()
-
-            if (new.image.isNotEmpty() || new.video.isNotEmpty()) {
-                try {
-                    FirebaseStorage.getInstance()
-                        .getReference()
-                        .child(path)
-                        .child(new.id)
-                        .delete()
-                        .await()
-                } catch (e: Exception) {
-                    Log.w("Task", "Storage delete: ${e.message}")
-                }
-            }
-        }
-
         suspend fun deleteCommentFromDatabase(
             path: String,
             comment: BaseNewsInstance
@@ -269,77 +178,6 @@ class AndroidDatabaseHelper {
             //Delete data in realtime database
             FirebaseDatabase.getInstance().getReference()
                 .child(path).child(comment.id).removeValue().await()
-        }
-
-        suspend fun updateNewsFromDatabase(
-            path: String,
-            newContent: String,
-            newImage: String,
-            newVideo: String,
-            new: NewsDTO
-        ): Boolean {
-            Log.d("Task", "updateNewsFromDatabase")
-
-            val dbRef = FirebaseDatabase.getInstance()
-                .getReference(path)
-                .child(new.id)
-
-            val storageRef = FirebaseStorage.getInstance()
-                .getReference(path)
-                .child(new.id)
-
-            return try {
-                val updates = mutableMapOf<String, Any>("message" to newContent)
-
-                when {
-                    // Image branch
-                    newImage.isNotEmpty() -> {
-                        if (newImage != new.image) {
-                            val metadata = StorageMetadata.Builder()
-                                .setCacheControl("public,max-age=604800,immutable")
-                                .build()
-                            storageRef.putFile(newImage.toUri(), metadata).await()
-                            val imageUrl = storageRef.downloadUrl.await().toString()
-                            updates["image"] = imageUrl
-                            updates["video"] = ""
-                        } else {
-                            updates["image"] = newImage
-                            updates["video"] = ""
-                        }
-                    }
-
-                    // Video branch
-                    newVideo.isNotEmpty() -> {
-                        if (newVideo != new.video) {
-                            val metadata = StorageMetadata.Builder()
-                                .setCacheControl("public,max-age=604800,immutable")
-                                .build()
-                            storageRef.putFile(newVideo.toUri(), metadata).await()
-                            val videoUrl = storageRef.downloadUrl.await().toString()
-                            updates["video"] = videoUrl
-                            updates["image"] = ""
-                        } else {
-                            updates["video"] = newVideo
-                            updates["image"] = ""
-                        }
-                    }
-
-                    // No media: clear both, delete old storage object if any
-                    else -> {
-                        updates["image"] = ""
-                        updates["video"] = ""
-                        if (new.image.isNotEmpty() || new.video.isNotEmpty()) {
-                            runCatching { storageRef.delete().await() }
-                        }
-                    }
-                }
-
-                dbRef.updateChildren(updates).await()
-                true
-            } catch (t: Throwable) {
-                Log.e("Task", "updateNewsFromDatabase failed", t)
-                false
-            }
         }
 
         suspend fun downloadImage(context: Context, image: String, fileName: String): Boolean =
@@ -1331,105 +1169,6 @@ class AndroidDatabaseHelper {
             error("No readable source for upload (uri=$originalUriStr, localPath=$localPath)")
         }
 
-        suspend fun saveNewToDatabase(
-            commentId: String,
-            path: String,
-            instance: NewsDTO
-        ): Boolean {
-            return runCatching {
-                val storageRef =
-                    FirebaseStorage.getInstance().getReference().child(path).child(commentId)
-                val dbRef =
-                    FirebaseDatabase.getInstance().getReference().child(path).child(commentId)
-
-                when {
-                    instance.image.isNotEmpty() -> {
-                        val url = uploadMediaAndGetUrl(
-                            storageRef = storageRef,
-                            originalUriStr = instance.image,
-                            localPath = instance.localPath
-                        )
-                        instance.updateImage(url)
-                    }
-
-                    instance.video.isNotEmpty() -> {
-                        val url = uploadMediaAndGetUrl(
-                            storageRef = storageRef,
-                            originalUriStr = instance.video,
-                            localPath = instance.localPath
-                        )
-                        instance.updateVideo(url)
-                    }
-
-                    else -> {
-                        // No media, just write the post
-                    }
-                }
-
-                dbRef.setValue(instance).await()
-                true
-            }.getOrElse { e ->
-                // optional: log e
-                false
-            }
-        }
-
-        suspend fun saveGroupAndUserGroups(
-            groupRootPath: String,
-            userRootPath: String,
-            userGroupsField: String,
-            groupAvatarsStoragePath: String,
-            group: GroupDTO,
-            userId: String
-        ): Boolean = suspendCancellableCoroutine { continuation ->
-
-            val databaseRef = FirebaseDatabase.getInstance().reference
-            val storageRef = FirebaseStorage.getInstance().reference.child(groupRootPath)
-                .child(groupAvatarsStoragePath).child(group.id)
-
-            //Store the avatar to the firebase storage first
-            try {
-                val metadata = StorageMetadata.Builder()
-                    .setCacheControl("public,max-age=604800,immutable")
-                    .build()
-                if (group.avatar != Constants.DEFAULT_AVATAR_URL && group.avatar != Constants.DEFAULT_DECADE_AVATAR_URL && group.avatar != Constants.DEFAULT_ARK_AVATAR_URL_FOR_GROUP) {
-                    storageRef.putFile(group.avatar.toUri(), metadata)
-                        .addOnCompleteListener { putFileTask ->
-                            if (putFileTask.isSuccessful) {
-                                storageRef.downloadUrl.addOnSuccessListener { dataUrl ->
-                                    //Get the new url of avatar on remote
-                                    group.avatar = dataUrl.toString()
-
-                                    updateGroupDataOnServer(
-                                        databaseRef,
-                                        groupRootPath,
-                                        userRootPath,
-                                        userGroupsField,
-                                        group,
-                                        userId,
-                                        continuation
-                                    )
-                                }
-                            }
-                        }
-                } else {
-                    updateGroupDataOnServer(
-                        databaseRef,
-                        groupRootPath,
-                        userRootPath,
-                        userGroupsField,
-                        group,
-                        userId,
-                        continuation
-                    )
-                }
-            } catch (ex: Exception) {
-                logMessage(
-                    "saveGroupAndUserGroups",
-                    { "Exception when save Group And User Groups: " + ex.message.toString() })
-            }
-        }
-
         fun updateGroupDataOnServer(
             databaseRef: DatabaseReference,
             groupRootPath: String,
@@ -1472,6 +1211,7 @@ class AndroidDatabaseHelper {
             groupPath: String,
             userId: String
         ): Set<GroupSummaryDTO> {
+
             val snapshot = FirebaseDatabase
                 .getInstance()
                 .reference
@@ -1483,6 +1223,13 @@ class AndroidDatabaseHelper {
 
             return snapshot.children
                 .mapNotNull { it.getValue(GroupSummaryDTO::class.java) }
+                .let { groups ->
+                    coroutineScope {
+                        groups.map { group ->
+                            async { group.copy(avatar = resolveMediaUrlAsync(group.avatar)) }
+                        }.awaitAll()
+                    }
+                }
                 .toSet()
         }
 
@@ -1490,6 +1237,7 @@ class AndroidDatabaseHelper {
             groupId: String,
             groupPath: String
         ): GroupDTO? {
+
             val snapshot = FirebaseDatabase
                 .getInstance()
                 .reference
@@ -1498,54 +1246,11 @@ class AndroidDatabaseHelper {
                 .get()
                 .await()
 
-            return snapshot.getValue(GroupDTO::class.java)
-        }
+            val group = snapshot.getValue(GroupDTO::class.java)
 
-        suspend fun saveNewToGroup(
-            newsDTO: NewsDTO,
-            groupId: String,
-            groupPath: String,
-            postsPath: String,
-            imagePath: String
-        ): Boolean {
-            return runCatching {
-                val storageRef =
-                    FirebaseStorage.getInstance().getReference().child(groupPath).child(groupId)
-                        .child(imagePath).child(newsDTO.id)
-                val dbRef =
-                    FirebaseDatabase.getInstance().getReference().child(groupPath).child(groupId)
-                        .child(postsPath).child(newsDTO.id)
-
-                when {
-                    newsDTO.image.isNotEmpty() -> {
-                        val url = uploadMediaAndGetUrl(
-                            storageRef = storageRef,
-                            originalUriStr = newsDTO.image,
-                            localPath = newsDTO.localPath
-                        )
-                        newsDTO.updateImage(url)
-                    }
-
-                    newsDTO.video.isNotEmpty() -> {
-                        val url = uploadMediaAndGetUrl(
-                            storageRef = storageRef,
-                            originalUriStr = newsDTO.video,
-                            localPath = newsDTO.localPath
-                        )
-                        newsDTO.updateVideo(url)
-                    }
-
-                    else -> {
-                        // No media, just write the post
-                    }
-                }
-
-                dbRef.setValue(newsDTO).await()
-                true
-            }.getOrElse { e ->
-                // optional: log e
-                false
-            }
+            return group?.copy(
+                avatar = resolveMediaUrlAsync(group.avatar)
+            )
         }
 
         suspend fun updateNotificationStatus(
@@ -1607,7 +1312,8 @@ class AndroidDatabaseHelper {
             userPath: String,
             groupPath: String
         ): GroupSummaryDTO {
-            return runCatching {
+
+            return try {
                 val snapshot = FirebaseDatabase
                     .getInstance()
                     .getReference()
@@ -1617,8 +1323,14 @@ class AndroidDatabaseHelper {
                     .child(groupId)
                     .get()
                     .await()
-                snapshot.getValue(GroupSummaryDTO::class.java) ?: GroupSummaryDTO()
-            }.getOrElse {
+
+                val group = snapshot.getValue(GroupSummaryDTO::class.java)
+
+                group?.copy(
+                    avatar = resolveMediaUrlAsync(group.avatar)
+                ) ?: GroupSummaryDTO()
+
+            } catch (e: Exception) {
                 GroupSummaryDTO()
             }
         }
@@ -1669,20 +1381,21 @@ class AndroidDatabaseHelper {
             memberPath: String,
             memberCountPath: String
         ): Boolean = suspendCancellableCoroutine { continuation ->
+
             val databaseRef = FirebaseDatabase.getInstance().reference
 
-            // Store only necessary fields under user
             val groupSummary = GroupSummaryDTO(
                 id = group.id,
                 name = group.name,
-                avatar = group.avatar
+                avatar = group.avatar  // store raw path, not resolved URL
             )
 
             val updates = hashMapOf<String, Any?>(
                 "$groupPath/${group.id}/$memberPath/${user.uid}" to "member",
 
                 "$userPath/${user.uid}/$groupPath/${group.id}" to groupSummary,
-                "$groupPath/${group.id}/$memberCountPath" to ServerValue.increment(+1)
+
+                "$groupPath/${group.id}/$memberCountPath" to ServerValue.increment(1)
             )
 
             databaseRef.updateChildren(updates)
@@ -1787,6 +1500,7 @@ class AndroidDatabaseHelper {
             groupPath: String,
             memberCountPath: String
         ): List<GroupDTO> = suspendCancellableCoroutine { continuation ->
+
             val databaseRef = FirebaseDatabase
                 .getInstance()
                 .reference
@@ -1796,19 +1510,21 @@ class AndroidDatabaseHelper {
                 .orderByChild(memberCountPath)
                 .limitToLast(limit)
                 .addListenerForSingleValueEvent(object : ValueEventListener {
+
                     override fun onDataChange(snapshot: DataSnapshot) {
-                        val list = snapshot.children
+                        val rawList = snapshot.children
                             .mapNotNull { it.getValue(GroupDTO::class.java) }
                             .sortedByDescending { it.memberCount }
-                        if (continuation.isActive) continuation.resume(
-                            list,
-                            onCancellation = {})
+
+                        if (continuation.isActive) {
+                            continuation.resume(rawList, onCancellation = {})
+                        }
                     }
 
                     override fun onCancelled(error: DatabaseError) {
-                        if (continuation.isActive) continuation.resume(
-                            emptyList(),
-                            onCancellation = {})
+                        if (continuation.isActive) {
+                            continuation.resume(emptyList(), onCancellation = {})
+                        }
                     }
                 })
         }

@@ -65,6 +65,7 @@ import com.minhtu.firesocialmedia.platform.logMessage
 import com.minhtu.firesocialmedia.platform.showToast
 import com.minhtu.firesocialmedia.utils.UiUtils
 import com.rickclephas.kmp.observableviewmodel.launch
+import com.minhtu.firesocialmedia.storage.toStorageUrl
 import com.seiko.imageloader.ui.AutoSizeImage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -331,7 +332,7 @@ class Comment {
                                     localImageLoaderValue
                                 ) {
                                     AutoSizeImage(
-                                        comment.avatar,
+                                        comment.avatar.toStorageUrl(),
                                         contentDescription = "Poster Avatar",
                                         contentScale = ContentScale.Crop,
                                         modifier = Modifier
@@ -392,7 +393,7 @@ class Comment {
                                     localImageLoaderValue
                                 ) {
                                     AutoSizeImage(
-                                        comment.image,
+                                        comment.image.toStorageUrl(),
                                         contentDescription = "Image",
                                         contentScale = ContentScale.Fit,
                                         modifier = Modifier
