@@ -4,9 +4,6 @@ import cocoapods.FirebaseDatabase.FIRDataEventType
 import cocoapods.FirebaseDatabase.FIRDataSnapshot
 import cocoapods.FirebaseDatabase.FIRDatabase
 import cocoapods.FirebaseDatabase.FIRDatabaseReference
-import cocoapods.FirebaseStorage.FIRStorage
-import cocoapods.FirebaseStorage.FIRStorageMetadata
-import cocoapods.FirebaseStorage.FIRStorageReference
 import com.minhtu.firesocialmedia.constants.Constants
 import com.minhtu.firesocialmedia.data.remote.constant.DataConstant
 import com.minhtu.firesocialmedia.data.remote.dto.call.AudioCallSessionDTO
@@ -27,12 +24,16 @@ import com.minhtu.firesocialmedia.data.remote.service.database.DatabaseService
 import com.minhtu.firesocialmedia.domain.entity.base.BaseNewsInstance
 import com.minhtu.firesocialmedia.domain.entity.call.CallStatus
 import com.minhtu.firesocialmedia.domain.serviceimpl.crypto.IosCryptoHelper
+import com.minhtu.firesocialmedia.domain.serviceimpl.database.supabase.SupabaseStorageHelper
 import com.minhtu.firesocialmedia.platform.logMessage
 import com.minhtu.firesocialmedia.platform.toNSData
 import com.minhtu.firesocialmedia.utils.IosUtils.Companion.toCommentDTO
 import com.minhtu.firesocialmedia.utils.IosUtils.Companion.toNewsDTO
 import com.minhtu.firesocialmedia.utils.IosUtils.Companion.toUserDTO
 import com.minhtu.firesocialmedia.utils.Utils
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.suspendCancellableCoroutine
 import platform.Foundation.NSDictionary
@@ -138,49 +139,48 @@ class IosDatabaseService() : DatabaseService {
             instance)
     }
 
-    override suspend fun saveNewToDatabase(
-        commentId: String,
-        path: String,
-        instance: NewsDTO
-    ): Boolean {
-        return IosDatabaseHelper.saveInstanceToDatabase(
-            commentId,
-            path,
-            instance
-        )
-    }
+    override suspend fun getAllUsers(path: String): ArrayList<UserDTO>? {
+        val rawList = suspendCancellableCoroutine<ArrayList<UserDTO>?> { continuation ->
+            val result = ArrayList<UserDTO>()
+            val databaseReference = FIRDatabase.database().reference().child(path)
 
-    override suspend fun getAllUsers(path: String): ArrayList<UserDTO>? = suspendCancellableCoroutine{ continuation ->
-        val result = ArrayList<UserDTO>()
-        val databaseReference = FIRDatabase.database().reference().child(path)
+            databaseReference.observeSingleEventOfType(
+                FIRDataEventType.FIRDataEventTypeValue,
+                withBlock = { snapshot ->
+                    if (snapshot != null && snapshot.exists()) {
+                        result.clear()
+                        val children = snapshot.children
+                        while (true) {
+                            val child = children.nextObject() as? FIRDataSnapshot ?: break
+                            val value = child.value as? Map<*, *> ?: continue
 
-        databaseReference.observeSingleEventOfType(
-            FIRDataEventType.FIRDataEventTypeValue,
-            withBlock = { snapshot ->
-                if (snapshot != null && snapshot.exists()) {
-                    result.clear()
-                    val children = snapshot.children
-                    while (true) {
-                        val child = children.nextObject() as? FIRDataSnapshot ?: break
-                        val value = child.value as? Map<*, *> ?: continue
-
-                        try {
-                            val user = value.toUserDTO()
-                            result.add(user)
-                        } catch (e: Exception) {
-                            e.printStackTrace()
+                            try {
+                                val user = value.toUserDTO()
+                                result.add(user)
+                            } catch (e: Exception) {
+                                e.printStackTrace()
+                            }
                         }
+                        if (continuation.isActive) continuation.resume(result, onCancellation = {})
+                    } else {
+                        if (continuation.isActive) continuation.resume(null, onCancellation = {})
                     }
-                    if(continuation.isActive) continuation.resume(result, onCancellation = {})
-                } else {
-                    if(continuation.isActive) continuation.resume(null, onCancellation = {})
                 }
-            }
-        )
+            )
+        } ?: return null
+
+        return coroutineScope {
+            rawList.map { user ->
+                async {
+                    if (user.image.isNotEmpty()) user.updateImage(SupabaseStorageHelper.resolveMediaUrlAsync(user.image))
+                    user
+                }
+            }.awaitAll().let { ArrayList(it) }
+        }
     }
 
     override suspend fun getUser(userId: String): UserDTO? {
-        return suspendCancellableCoroutine { continuation ->
+        val rawUser = suspendCancellableCoroutine<UserDTO?> { continuation ->
             val database = FIRDatabase.database()
             val databaseReference = database.reference()
                 .child(DataConstant.USER_PATH)
@@ -205,14 +205,26 @@ class IosDatabaseService() : DatabaseService {
                         continuation.resume(null) {}
                     }
                 }
-            ) { error ->
-                continuation.resume(null) {}
-            }
+            ) { _ -> continuation.resume(null) {} }
+        } ?: return null
+
+        // Phase 2: resolve user avatar + all group avatars in parallel
+        if (rawUser.image.isNotEmpty()) rawUser.updateImage(SupabaseStorageHelper.resolveMediaUrlAsync(rawUser.image))
+        coroutineScope {
+            rawUser.groups.entries.map { (groupId, summary) ->
+                async {
+                    if (summary.avatar.isNotEmpty()) {
+                        val resolved = SupabaseStorageHelper.resolveMediaUrlAsync(summary.avatar)
+                        rawUser.groups[groupId] = summary.copy(avatar = resolved)
+                    }
+                }
+            }.awaitAll()
         }
+        return rawUser
     }
 
     override suspend fun getNew(newId: String): NewsDTO? {
-        return suspendCancellableCoroutine { continuation ->
+        val rawNews = suspendCancellableCoroutine<NewsDTO?> { continuation ->
             val database = FIRDatabase.database()
             val databaseReference = database.reference()
                 .child(DataConstant.NEWS_PATH)
@@ -229,7 +241,7 @@ class IosDatabaseService() : DatabaseService {
                                 val value = rawValue.entries.associate {
                                     (it.key as? String) to it.value
                                 }.filterKeys { it != null } as Map<String, Any?>
-                                
+
                                 val news = value.toNewsDTO()
                                 continuation.resume(news) {}
                             } catch (_: Exception) {
@@ -242,10 +254,14 @@ class IosDatabaseService() : DatabaseService {
                         continuation.resume(null) {}
                     }
                 }
-            ) { error ->
-                continuation.resume(null) {}
-            }
-        }
+            ) { _ -> continuation.resume(null) {} }
+        } ?: return null
+
+        // Phase 2: resolve avatar, image, video
+        if (rawNews.avatar.isNotEmpty()) rawNews.avatar = SupabaseStorageHelper.resolveMediaUrlAsync(rawNews.avatar)
+        if (rawNews.image.isNotEmpty()) rawNews.updateImage(SupabaseStorageHelper.resolveMediaUrlAsync(rawNews.image))
+        if (rawNews.video.isNotEmpty()) rawNews.updateVideo(SupabaseStorageHelper.resolveMediaUrlAsync(rawNews.video))
+        return rawNews
     }
 
     override suspend fun getLatestNews(
@@ -253,130 +269,176 @@ class IosDatabaseService() : DatabaseService {
         lastTimePosted: Double?,
         lastKey: String?,
         path: String
-    ): LatestNewsDTO = suspendCancellableCoroutine{ continuation ->
-        val query = FIRDatabase.database()
-            .referenceWithPath(path)
-            .queryOrderedByChild("timePosted")
-            .let { base ->
-                if (lastTimePosted != null && lastKey != null) {
-                    base.queryEndingBeforeValue(lastTimePosted, childKey = lastKey)
-                } else base
-            }
-            .queryLimitedToLast(number.toULong())
+    ): LatestNewsDTO {
+        val raw = suspendCancellableCoroutine<LatestNewsDTO> { continuation ->
+            val query = FIRDatabase.database()
+                .referenceWithPath(path)
+                .queryOrderedByChild("timePosted")
+                .let { base ->
+                    if (lastTimePosted != null && lastKey != null) {
+                        base.queryEndingBeforeValue(lastTimePosted, childKey = lastKey)
+                    } else base
+                }
+                .queryLimitedToLast(number.toULong())
 
-        query.observeSingleEventOfType(
-            FIRDataEventType.FIRDataEventTypeValue,
-            withBlock = { snapshot ->
-                val enumerator = snapshot?.children
-                val newsList = mutableListOf<NewsDTO>()
-                if (enumerator != null) {
-                    while (true) {
-                        val child = enumerator.nextObject() as? FIRDataSnapshot ?: break
-                        val raw = child.value as? Map<*, *> ?: continue
-                        val value = raw.entries
-                            .associate { (k, v) -> (k as? String) to v }
-                            .filterKeys { it != null } as Map<String, Any?>
-                        try {
-                            newsList.add(value.toNewsDTO())
-                        } catch (_: Exception) {
+            query.observeSingleEventOfType(
+                FIRDataEventType.FIRDataEventTypeValue,
+                withBlock = { snapshot ->
+                    val enumerator = snapshot?.children
+                    val newsList = mutableListOf<NewsDTO>()
+                    if (enumerator != null) {
+                        while (true) {
+                            val child = enumerator.nextObject() as? FIRDataSnapshot ?: break
+                            val raw = child.value as? Map<*, *> ?: continue
+                            val value = raw.entries
+                                .associate { (k, v) -> (k as? String) to v }
+                                .filterKeys { it != null } as Map<String, Any?>
+                            try {
+                                newsList.add(value.toNewsDTO())
+                            } catch (_: Exception) {
+                            }
                         }
                     }
-                }
 
-                if (newsList.isNotEmpty()) {
-                    val sorted = newsList.sortedByDescending { it.timePosted }
-                    val oldest = sorted.last()
-
-                    if(continuation.isActive) continuation.resume(LatestNewsDTO(
-                        sorted,
-                        if (newsList.size < number) null else oldest.timePosted.toDouble(),
-                        oldest.id
-                    ), onCancellation = {})
+                    if (newsList.isNotEmpty()) {
+                        val sorted = newsList.sortedByDescending { it.timePosted }
+                        val oldest = sorted.last()
+                        if (continuation.isActive) continuation.resume(LatestNewsDTO(
+                            sorted,
+                            if (newsList.size < number) null else oldest.timePosted.toDouble(),
+                            oldest.id
+                        ), onCancellation = {})
+                    } else {
+                        if (continuation.isActive) continuation.resume(
+                            LatestNewsDTO(emptyList(), null, null), onCancellation = {}
+                        )
+                    }
                 }
+            ) { _ ->
+                continuation.resume(LatestNewsDTO(null, null, null), onCancellation = {})
             }
-        ) { _ ->
-            continuation.resume(LatestNewsDTO(null, null, null), onCancellation = {})
         }
+
+        // Phase 2: resolve avatar, image, video for every post in parallel
+        val resolvedNews = raw.news?.let { list ->
+            coroutineScope {
+                list.map { news ->
+                    async {
+                        if (news.avatar.isNotEmpty()) news.avatar = SupabaseStorageHelper.resolveMediaUrlAsync(news.avatar)
+                        if (news.image.isNotEmpty()) news.updateImage(SupabaseStorageHelper.resolveMediaUrlAsync(news.image))
+                        if (news.video.isNotEmpty()) news.updateVideo(SupabaseStorageHelper.resolveMediaUrlAsync(news.video))
+                        news
+                    }
+                }.awaitAll()
+            }
+        }
+        return LatestNewsDTO(resolvedNews, raw.lastTimePostedValue, raw.lastKeyValue)
     }
 
     override suspend fun getAllComments(
         path: String,
         newsId: String
-    ): List<CommentDTO>? = suspendCancellableCoroutine { continuation ->
-        val result = mutableListOf<CommentDTO>()
-        val databaseReference = FIRDatabase
-            .database()
-            .reference()
-            .child(DataConstant.NEWS_PATH)
-            .child(newsId)
-            .child(path)
+    ): List<CommentDTO>? {
+        val rawList = suspendCancellableCoroutine<List<CommentDTO>?> { continuation ->
+            val result = mutableListOf<CommentDTO>()
+            val databaseReference = FIRDatabase
+                .database()
+                .reference()
+                .child(DataConstant.NEWS_PATH)
+                .child(newsId)
+                .child(path)
 
-        databaseReference.observeSingleEventOfType(
-            FIRDataEventType.FIRDataEventTypeValue,
-            withBlock = { snapshot ->
-                if (snapshot != null && snapshot.exists()) {
-                    result.clear()
-                    val children = snapshot.children
-                    while (true) {
-                        val child = children.nextObject() as? FIRDataSnapshot ?: break
-                        val rawValue = child.value as? Map<*, *> ?: continue
+            databaseReference.observeSingleEventOfType(
+                FIRDataEventType.FIRDataEventTypeValue,
+                withBlock = { snapshot ->
+                    if (snapshot != null && snapshot.exists()) {
+                        result.clear()
+                        val children = snapshot.children
+                        while (true) {
+                            val child = children.nextObject() as? FIRDataSnapshot ?: break
+                            val rawValue = child.value as? Map<*, *> ?: continue
 
-                        // Safely cast Map<*, *> to Map<String, Any?>
-                        val value = rawValue.entries.associate {
-                            (it.key as? String) to it.value
-                        }.filterKeys { it != null } as Map<String, Any?>
+                            // Safely cast Map<*, *> to Map<String, Any?>
+                            val value = rawValue.entries.associate {
+                                (it.key as? String) to it.value
+                            }.filterKeys { it != null } as Map<String, Any?>
 
-                        try {
-                            val comment = value.toCommentDTO()
-                            result.add(comment)
-                        } catch (e: Exception) {
-                            e.printStackTrace()
+                            try {
+                                val comment = value.toCommentDTO()
+                                result.add(comment)
+                            } catch (e: Exception) {
+                                e.printStackTrace()
+                            }
                         }
+                        if (continuation.isActive) continuation.resume(ArrayList(result), onCancellation = {})
+                    } else {
+                        if (continuation.isActive) continuation.resume(null, onCancellation = {})
                     }
-                    if(continuation.isActive) continuation.resume(ArrayList(result), onCancellation = {})
-                } else {
-                    if(continuation.isActive) continuation.resume(null, onCancellation = {})
                 }
-            }
-        )
+            )
+        } ?: return null
+
+        return coroutineScope {
+            rawList.map { comment ->
+                async {
+                    if (comment.avatar.isNotEmpty()) comment.avatar = SupabaseStorageHelper.resolveMediaUrlAsync(comment.avatar)
+                    if (comment.image.isNotEmpty()) comment.updateImage(SupabaseStorageHelper.resolveMediaUrlAsync(comment.image))
+                    if (comment.video.isNotEmpty()) comment.updateVideo(SupabaseStorageHelper.resolveMediaUrlAsync(comment.video))
+                    comment
+                }
+            }.awaitAll()
+        }
     }
 
     override suspend fun getAllNotificationsOfUser(
         path: String,
         currentUserUid: String
-    ): List<NotificationDTO>? = suspendCancellableCoroutine { continuation ->
-        val result = mutableListOf<NotificationDTO>()
-        val databaseReference = FIRDatabase.database().reference()
-            .child(DataConstant.USER_PATH)
-            .child(currentUserUid)
-            .child(path)
+    ): List<NotificationDTO>? {
+        val rawList = suspendCancellableCoroutine<List<NotificationDTO>?> { continuation ->
+            val result = mutableListOf<NotificationDTO>()
+            val databaseReference = FIRDatabase.database().reference()
+                .child(DataConstant.USER_PATH)
+                .child(currentUserUid)
+                .child(path)
 
-        databaseReference.observeSingleEventOfType(
-            FIRDataEventType.FIRDataEventTypeValue,
-            withBlock = { snapshot ->
-                result.clear()
-                if (snapshot != null && snapshot.exists()) {
-                    val children = snapshot.children
-                    while (true) {
-                        val child = children.nextObject() as? FIRDataSnapshot ?: break
-                        val value = child.value as? Map<*, *> ?: continue
+            databaseReference.observeSingleEventOfType(
+                FIRDataEventType.FIRDataEventTypeValue,
+                withBlock = { snapshot ->
+                    result.clear()
+                    if (snapshot != null && snapshot.exists()) {
+                        val children = snapshot.children
+                        while (true) {
+                            val child = children.nextObject() as? FIRDataSnapshot ?: break
+                            val value = child.value as? Map<*, *> ?: continue
 
-                        try {
-                            val notification = NotificationDTO.fromMap(value as Map<String,Any>)
-                            result.add(notification)
-                        } catch (e: Exception) {
-                            e.printStackTrace()
+                            try {
+                                val notification = NotificationDTO.fromMap(value as Map<String, Any>)
+                                result.add(notification)
+                            } catch (e: Exception) {
+                                e.printStackTrace()
+                            }
                         }
+                        if (continuation.isActive) continuation.resume(result, onCancellation = {})
+                    } else {
+                        if (continuation.isActive) continuation.resume(null, onCancellation = {})
                     }
-                    if(continuation.isActive) continuation.resume(result, onCancellation = {})
-                } else {
-                    if(continuation.isActive) continuation.resume(null, onCancellation = {})
                 }
+            ) { error ->
+                logMessage("getAllNotificationsOfUser", { "Error: ${error?.localizedDescription}" })
+                if (continuation.isActive) continuation.resume(null, onCancellation = {})
             }
-        ) { error ->
-            // Handle error case
-            logMessage("getAllNotificationsOfUser", { "Error: ${error?.localizedDescription}" })
-            if(continuation.isActive) continuation.resume(null, onCancellation = {})
+        } ?: return null
+
+        // Phase 2: resolve notification avatars — NotificationDTO.avatar is val, use copy()
+        return coroutineScope {
+            rawList.map { notification ->
+                async {
+                    val resolvedAvatar = if (notification.avatar.isNotEmpty())
+                        SupabaseStorageHelper.resolveMediaUrlAsync(notification.avatar)
+                    else notification.avatar
+                    notification.copy(avatar = resolvedAvatar)
+                }
+            }.awaitAll()
         }
     }
 
@@ -404,40 +466,6 @@ class IosDatabaseService() : DatabaseService {
         new: NewsDTO
     ): Boolean {
         return IosDatabaseHelper.updateNewsFromDatabase(path,newContent,newImage, newVideo,new)
-    }
-
-    @OptIn(ExperimentalEncodingApi::class)
-    override suspend fun saveSignUpInformation(user: UserDTO): Boolean {
-        val storageReference: FIRStorageReference = FIRStorage.storage().reference().child("avatar").child(user.uid)
-        val databaseReference: FIRDatabaseReference = FIRDatabase.database().reference().child("users").child(user.uid)
-        try {
-            if (user.image != Constants.DEFAULT_AVATAR_URL &&
-                user.image != Constants.DEFAULT_DECADE_AVATAR_URL &&
-                user.image != Constants.DEFAULT_ARK_AVATAR_URL_FOR_GROUP) {
-                val nsDataAvatar = Base64.decode(user.image).toNSData()
-                val metadata = FIRStorageMetadata().apply {
-                    setContentType("image/jpeg")
-                    setCacheControl("public,max-age=604800,immutable")
-                }
-
-                try{
-                    val avatarRemoteUrl = IosDatabaseHelper.uploadAndGetRemoteURL(storageReference,nsDataAvatar,metadata)
-                    user.updateImage(avatarRemoteUrl)
-                } catch(e : Exception) {
-                    logMessage("saveSignUpInformation") { e.message.toString() }
-                }
-            }
-
-            // Convert user to Firebase-compatible Map
-            val userMap = user.toMap() as NSDictionary
-
-            // Save user object in Realtime Database
-            databaseReference.setValue(userMap)
-            return true
-        } catch (e: Exception) {
-            e.printStackTrace()
-            return false
-        }
     }
 
     override suspend fun saveNotificationToDatabase(
@@ -609,7 +637,7 @@ class IosDatabaseService() : DatabaseService {
         name: String,
         path: String
     ): List<UserDTO>? {
-        return suspendCancellableCoroutine { continuation ->
+        val rawList = suspendCancellableCoroutine<List<UserDTO>?> { continuation ->
             val database = FIRDatabase.database()
             val databaseReference = database.reference().child(DataConstant.USER_PATH)
 
@@ -619,11 +647,11 @@ class IosDatabaseService() : DatabaseService {
                     if (snapshot != null && snapshot.exists()) {
                         val users = mutableListOf<UserDTO>()
                         val children = snapshot.children
-                        
+
                         while (true) {
                             val child = children.nextObject() as? FIRDataSnapshot ?: break
                             val value = child.value as? Map<*, *> ?: continue
-                            
+
                             try {
                                 val user = value.toUserDTO()
                                 if (user.name.contains(name, ignoreCase = true)) {
@@ -634,31 +662,26 @@ class IosDatabaseService() : DatabaseService {
                                 continue
                             }
                         }
-                        
+
                         continuation.resume(users) {}
                     } else {
                         continuation.resume(emptyList<UserDTO>()) {}
                     }
                 }
-            ) { error ->
-                continuation.resume(null) {}
-            }
+            ) { _ -> continuation.resume(null) {} }
+        } ?: return null
+
+        return coroutineScope {
+            rawList.map { user ->
+                async {
+                    if (user.image.isNotEmpty()) user.updateImage(SupabaseStorageHelper.resolveMediaUrlAsync(user.image))
+                    user
+                }
+            }.awaitAll()
         }
     }
 
     // -------------------- Group placeholder implementations (iOS) -------------------- //
-    override suspend fun saveGroupAndUserGroups(
-        groupRootPath: String,
-        userRootPath: String,
-        userGroupsField: String,
-        groupAvatarsStoragePath: String,
-        group: GroupDTO,
-        userId: String
-    ): Boolean {
-        // TODO: Implement iOS group creation flow
-        return false
-    }
-
     override suspend fun getAllGroups(
         userPath: String,
         groupPath: String,
@@ -671,17 +694,6 @@ class IosDatabaseService() : DatabaseService {
     override suspend fun fetchGroupInfo(groupId: String, groupPath: String): GroupDTO? {
         // TODO: Implement iOS fetch group info
         return null
-    }
-
-    override suspend fun saveNewToGroup(
-        newsDTO: NewsDTO,
-        groupId: String,
-        groupPath: String,
-        postsPath: String,
-        imagePath: String
-    ): Boolean {
-        // TODO: Implement iOS save new to group
-        return false
     }
 
     override suspend fun updateNotificationStatus(

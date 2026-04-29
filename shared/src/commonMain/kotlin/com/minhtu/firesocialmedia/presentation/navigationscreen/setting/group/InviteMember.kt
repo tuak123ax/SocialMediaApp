@@ -69,6 +69,7 @@ import com.minhtu.firesocialmedia.presentation.search.Search
 import com.minhtu.firesocialmedia.presentation.search.SearchViewModel
 import com.minhtu.firesocialmedia.utils.UiUtils
 import com.minhtu.firesocialmedia.utils.UiUtils.Companion.ShareAppRow
+import com.minhtu.firesocialmedia.storage.toStorageUrl
 import com.seiko.imageloader.ui.AutoSizeImage
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -448,7 +449,7 @@ class InviteMember {
                     localImageLoaderValue
                 ) {
                     AutoSizeImage(
-                        user.image,
+                        user.image.toStorageUrl(),
                         contentDescription = "Friend Avatar",
                         contentScale = ContentScale.Crop,
                         modifier = Modifier

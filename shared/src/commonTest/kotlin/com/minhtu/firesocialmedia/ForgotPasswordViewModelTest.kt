@@ -149,4 +149,41 @@ class ForgotPasswordViewModelTest {
         val status = viewModel.emailSent.value
         assertEquals(false, status)
     }
+
+    @Test
+    fun `resetEmailExistStatus sets state to null`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val viewModel = ForgotPasswordViewModel(
+            CheckIfEmailExistsUseCase(repo),
+            SendEmailResetPasswordUseCase(repo),
+            dispatcher
+        )
+        viewModel.updateEmail("test@gmail.com")
+        repo.emailExistResult = EmailExistResult(true, Constants.EMAIL_EXISTED)
+        viewModel.checkIfEmailExists()
+        advanceUntilIdle()
+        // Sanity: non-null before reset
+        assertEquals(true, viewModel.emailExisted.value?.exist)
+
+        viewModel.resetEmailExistStatus()
+        assertEquals(null, viewModel.emailExisted.value)
+    }
+
+    @Test
+    fun `resetEmailResetPassword sets state to null`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val viewModel = ForgotPasswordViewModel(
+            CheckIfEmailExistsUseCase(repo),
+            SendEmailResetPasswordUseCase(repo),
+            dispatcher
+        )
+        viewModel.updateEmail("test@gmail.com")
+        repo.sendResetResult = true
+        viewModel.sendEmailResetPassword()
+        advanceUntilIdle()
+        assertEquals(true, viewModel.emailSent.value)
+
+        viewModel.resetEmailResetPassword()
+        assertEquals(null, viewModel.emailSent.value)
+    }
 }

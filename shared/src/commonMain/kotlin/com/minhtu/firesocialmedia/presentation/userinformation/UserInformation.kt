@@ -71,6 +71,7 @@ import com.minhtu.firesocialmedia.presentation.loading.Loading
 import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.friend.FriendViewModel
 import com.minhtu.firesocialmedia.utils.UiUtils
+import com.minhtu.firesocialmedia.storage.toStorageUrl
 import com.seiko.imageloader.ui.AutoSizeImage
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -268,7 +269,7 @@ class UserInformation {
                                             localImageLoaderValue
                                         ) {
                                             AutoSizeImage(
-                                                fetchedUser!!.image,
+                                                fetchedUser!!.image.toStorageUrl(),
                                                 contentDescription = "image",
                                                 contentScale = ContentScale.Crop,
                                                 modifier = Modifier

@@ -810,3 +810,14 @@ actual suspend fun queryShareApps(text: String): MutableList<ShareApp> {
         .objectForInfoDictionaryKey("CFBundleShortVersionString")
         ?.toString() ?: ""
 }
+
+actual object AppConfig {
+    actual val twoFAApiKey: String =
+        NSBundle.mainBundle
+            .objectForInfoDictionaryKey("APP_SCRIPT_FOR_2FA_AUTHENTICATION_API_KEY")
+            ?.toString() ?: ""
+    actual val supabaseApiKey: String =
+        NSBundle.mainBundle
+            .objectForInfoDictionaryKey("SUPABASE_API_KEY")
+            ?.toString() ?: ""
+}

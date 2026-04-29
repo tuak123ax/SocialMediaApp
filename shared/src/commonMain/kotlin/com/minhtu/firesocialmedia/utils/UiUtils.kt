@@ -124,6 +124,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.minhtu.firesocialmedia.constants.TestTag
+import com.minhtu.firesocialmedia.storage.toStorageUrl
 import com.minhtu.firesocialmedia.domain.entity.home.deeplinks.ShareApp
 import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
@@ -193,8 +194,9 @@ class UiUtils {
                         CompositionLocalProvider(
                             localImageLoaderValue
                         ) {
+                            val avatarUrl = news.avatar.toStorageUrl()
                             AutoSizeImage(
-                                news.avatar,
+                                avatarUrl,
                                 contentDescription = "Poster Avatar",
                                 contentScale = ContentScale.Crop,
                                 modifier = Modifier
@@ -250,8 +252,9 @@ class UiUtils {
                         CompositionLocalProvider(
                             localImageLoaderValue
                         ) {
+                            val postImageUrl = news.image.toStorageUrl()
                             AutoSizeImage(
-                                news.image,
+                                postImageUrl,
                                 contentDescription = "Image",
                                 contentScale = ContentScale.Crop,
                                 modifier = Modifier
@@ -274,7 +277,7 @@ class UiUtils {
                                 //Load video from local storage
                                 getUriStringFromLocalPath(news.localPath)
                             } else {
-                                news.video
+                                news.video.toStorageUrl()
                             }
                             if(videoUri.isNotEmpty()) {
                                 VideoPlayer(videoUri,
@@ -372,8 +375,9 @@ class UiUtils {
                         CompositionLocalProvider(
                             localImageLoaderValue
                         ) {
+                            val avatarUrl2 = news.avatar.toStorageUrl()
                             AutoSizeImage(
-                                news.avatar,
+                                avatarUrl2,
                                 contentDescription = "Poster Avatar",
                                 contentScale = ContentScale.Crop,
                                 modifier = Modifier
@@ -1124,7 +1128,7 @@ class UiUtils {
                     localImageLoaderValue
                 ) {
                     AutoSizeImage(
-                        user.image,
+                        user.image.toStorageUrl(),
                         contentDescription = "Avatar",
                         contentScale = ContentScale.Crop,
                         modifier =  Modifier
@@ -1169,7 +1173,7 @@ class UiUtils {
                         localImageLoaderValue
                     ) {
                         AutoSizeImage(
-                            requester.image,
+                            requester.image.toStorageUrl(),
                             contentDescription = "Avatar",
                             contentScale = ContentScale.Crop,
                             modifier =  Modifier
@@ -1629,7 +1633,7 @@ class UiUtils {
                             localImageLoaderValue
                         ) {
                             AutoSizeImage(
-                                news.avatar,
+                                news.avatar.toStorageUrl(),
                                 contentDescription = "Poster Avatar",
                                 contentScale = ContentScale.Crop,
                                 modifier = Modifier
@@ -1662,7 +1666,7 @@ class UiUtils {
                             localImageLoaderValue
                         ) {
                             AutoSizeImage(
-                                news.image,
+                                news.image.toStorageUrl(),
                                 contentDescription = "Image",
                                 contentScale = ContentScale.Fit,
                                 modifier = Modifier
@@ -1681,7 +1685,7 @@ class UiUtils {
                                 //Load video from local storage
                                 getUriStringFromLocalPath(news.localPath)
                             } else {
-                                news.video
+                                news.video.toStorageUrl()
                             }
                             if(videoUri.isNotEmpty()) {
                                 VideoPlayer(
@@ -2267,7 +2271,7 @@ class UiUtils {
                 ) {
                     CompositionLocalProvider(localImageLoaderValue) {
                         AutoSizeImage(
-                            user.image,
+                            user.image.toStorageUrl(),
                             contentDescription = "Avatar",
                             contentScale = ContentScale.Crop,
                             modifier = Modifier

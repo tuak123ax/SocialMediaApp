@@ -178,12 +178,57 @@ class ManageMembersViewModelTest {
 		assertTrue(!vm.fetchMemberListStatus.value.contains(extraMember))
 
 		vm.resetAdminAndMemberList()
-		assertTrue(vm.fetchAdminListStatus.value.isEmpty())
-		assertTrue(vm.fetchMemberListStatus.value.isEmpty())
-	}
+        assertTrue(vm.fetchAdminListStatus.value.isEmpty())
+        assertTrue(vm.fetchMemberListStatus.value.isEmpty())
+    }
+
+    @Test
+    fun `removeMember failure sets status to false`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val groupRepo = FakeGroupRepoForManage().apply { removeResult = false }
+        val userRepo = FakeUserRepoForManage()
+        val vm = ManageMembersViewModel(
+            getUserUseCase = GetUserUseCase(userRepo),
+            removeMemberUseCase = RemoveMemberUseCase(groupRepo),
+            promoteMemberUseCase = PromoteMemberUseCase(groupRepo),
+            demoteMemberUseCase = DemoteMemberUseCase(groupRepo),
+            ioDispatcher = dispatcher
+        )
+        val member = UserInstance(uid = "u1")
+        val group = GroupInstance(id = "g1")
+        group.members["u1"] = "member"
+        member.groups["g1"] = group
+
+        vm.removeMember(member, group)
+        advanceUntilIdle()
+
+        assertEquals(false, vm.removeMemberStatus.value)
+        // members/groups still cleaned up regardless of result
+        assertTrue("u1" !in group.members.keys)
+        assertTrue("g1" !in member.groups.keys)
+    }
+
+    @Test
+    fun `findUserById returns correct user`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val groupRepo = FakeGroupRepoForManage()
+        val userRepo = FakeUserRepoForManage().apply {
+            users["u5"] = UserInstance(uid = "u5", name = "Charlie")
+        }
+        val vm = ManageMembersViewModel(
+            getUserUseCase = GetUserUseCase(userRepo),
+            removeMemberUseCase = RemoveMemberUseCase(groupRepo),
+            promoteMemberUseCase = PromoteMemberUseCase(groupRepo),
+            demoteMemberUseCase = DemoteMemberUseCase(groupRepo),
+            ioDispatcher = dispatcher
+        )
+        val result = vm.findUserById("u5")
+        assertEquals("Charlie", result?.name)
+
+        val missing = vm.findUserById("unknown")
+        assertEquals(null, missing)
+    }
 }
-
-
 
 
 

@@ -106,6 +106,7 @@ private lateinit var appContext: Context
 fun initPlatformContext(context: Context) {
     appContext = context
 }
+internal fun getAppContext(): Context = appContext
 
 @SuppressLint("UnsafeOptInUsageError")
 @Volatile
@@ -754,4 +755,5 @@ actual fun generateQrImage(content: String): ImageBitmap {
 
 actual object AppConfig {
     actual val twoFAApiKey: String = BuildConfig.APP_SCRIPT_FOR_2FA_AUTHENTICATION_API_KEY
+    actual val supabaseApiKey: String = BuildConfig.SUPABASE_API_KEY
 }

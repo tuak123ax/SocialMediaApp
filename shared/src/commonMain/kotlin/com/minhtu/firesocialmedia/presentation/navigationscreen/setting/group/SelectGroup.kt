@@ -50,6 +50,7 @@ import com.minhtu.firesocialmedia.platform.CrossPlatformIcon
 import com.minhtu.firesocialmedia.platform.showToast
 import com.minhtu.firesocialmedia.presentation.search.Search
 import com.minhtu.firesocialmedia.presentation.search.SearchViewModel
+import com.minhtu.firesocialmedia.storage.toStorageUrl
 import com.seiko.imageloader.ui.AutoSizeImage
 
 class SelectGroup {
@@ -199,7 +200,7 @@ class SelectGroup {
                     localImageLoaderValue
                 ) {
                     AutoSizeImage(
-                        group.avatar,
+                        group.avatar.toStorageUrl(),
                         contentDescription = "Group Avatar",
                         contentScale = ContentScale.Crop,
                         modifier = Modifier

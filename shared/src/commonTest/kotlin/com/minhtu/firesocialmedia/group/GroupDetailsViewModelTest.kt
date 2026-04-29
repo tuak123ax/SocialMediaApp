@@ -173,6 +173,77 @@ class GroupDetailsViewModelTest {
         assertTrue("u1" !in groupSolo.members.keys)
         assertTrue("g2" !in user.groups.keys)
     }
+
+    @Test
+    fun `resetFetchGroupInfoState clears state`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(dispatcher)
+        val repo = DetailsRepo().apply { groupInfo = GroupInstance(id = "gid", name = "Test") }
+        val viewModel = vm(repo, dispatcher)
+        viewModel.fetchGroupInfo("gid")
+        advanceUntilIdle()
+        assertEquals("gid", viewModel.fetchGroupInfoState.value?.id)
+
+        viewModel.resetFetchGroupInfoState()
+        assertEquals(null, viewModel.fetchGroupInfoState.value)
+        Dispatchers.resetMain()
+    }
+
+    @Test
+    fun `joinGroup failure sets status to false`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val repo = DetailsRepo().apply { joinResult = false }
+        val viewModel = vm(repo, dispatcher)
+
+        viewModel.joinGroup(UserInstance(uid = "u1"), GroupInstance(id = "g1"))
+        advanceUntilIdle()
+
+        assertEquals(false, viewModel.joinGroupStatus.value)
+    }
+
+    @Test
+    fun `init populates visibleImages with first page`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val repo = DetailsRepo()
+        val viewModel = vm(repo, dispatcher)
+        val posts = (1..50).map { NewsInstance(id = "n$it", image = "img$it") }
+
+        viewModel.init(posts)
+
+        // Default page size is 30
+        assertEquals(30, viewModel.visibleImages.size)
+    }
+
+    @Test
+    fun `loadMore appends next page of visibleImages`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val repo = DetailsRepo()
+        val viewModel = vm(repo, dispatcher)
+        val posts = (1..50).map { NewsInstance(id = "n$it", image = "img$it") }
+        viewModel.init(posts)
+        assertEquals(30, viewModel.visibleImages.size)
+
+        viewModel.loadMore()
+
+        assertEquals(50, viewModel.visibleImages.size)
+    }
+
+    @Test
+    fun `onPostsUpdated adds new posts at top`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val repo = DetailsRepo()
+        val viewModel = vm(repo, dispatcher)
+        val initial = (1..5).map { NewsInstance(id = "n$it", image = "img$it", timePosted = it.toLong()) }
+        viewModel.init(initial)
+        assertEquals(5, viewModel.visibleImages.size)
+
+        val updated = initial + NewsInstance(id = "n6", image = "newImg", timePosted = 100L)
+        viewModel.onPostsUpdated(updated)
+
+        // New image inserted at top (newest first)
+        assertEquals("newImg", viewModel.visibleImages.first())
+        assertEquals(6, viewModel.visibleImages.size)
+    }
 }
 
 

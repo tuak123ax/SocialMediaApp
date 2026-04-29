@@ -31,6 +31,7 @@ import com.minhtu.firesocialmedia.domain.entity.call.OfferAnswer
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.domain.serviceimpl.call.CallNotificationManager.Companion.NOTIF_ID
 import com.minhtu.firesocialmedia.domain.serviceimpl.database.AndroidDatabaseService
+import com.minhtu.firesocialmedia.domain.serviceimpl.database.supabase.SupabaseStorageHelper
 import com.minhtu.firesocialmedia.domain.serviceimpl.permission.AndroidPermissionManager
 import com.minhtu.firesocialmedia.domain.usecases.call.AcceptCallUseCase
 import com.minhtu.firesocialmedia.domain.usecases.call.AddIceCandidatesUseCase
@@ -106,7 +107,7 @@ class CallForegroundService : Service() {
         val callRepository = AppModule.provideCallRepository(platformContext)
         // Use the same AudioCallService instance across repository and service to avoid leaks
         callManager = platformContext.audioCall
-        databaseService = AndroidDatabaseService(applicationContext)
+        databaseService = AndroidDatabaseService(applicationContext, SupabaseStorageHelper())
         //Initialize use cases
         initializeCallUseCase = AppModule.provideInitializeCallUseCase(callRepository)
         sendSignalingDataUseCase = AppModule.provideSendSignalingDataUseCase(callRepository)

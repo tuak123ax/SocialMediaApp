@@ -1,14 +1,11 @@
 package com.minhtu.firesocialmedia.domain.serviceimpl.database
 
 import android.content.Context
-import androidx.core.net.toUri
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
-import com.google.firebase.storage.FirebaseStorage
-import com.google.firebase.storage.StorageMetadata
 import com.minhtu.firesocialmedia.constants.Constants
 import com.minhtu.firesocialmedia.data.remote.constant.DataConstant
 import com.minhtu.firesocialmedia.data.remote.dto.call.AudioCallSessionDTO
@@ -29,15 +26,21 @@ import com.minhtu.firesocialmedia.domain.entity.base.BaseNewsInstance
 import com.minhtu.firesocialmedia.domain.entity.call.CallStatus
 import com.minhtu.firesocialmedia.domain.error.signin.SignInError
 import com.minhtu.firesocialmedia.domain.serviceimpl.crypto.AndroidCryptoHelper
+import com.minhtu.firesocialmedia.domain.serviceimpl.database.supabase.SupabaseStorageHelper.Companion.resolveMediaUrlAsync
 import com.minhtu.firesocialmedia.platform.logMessage
 import com.minhtu.firesocialmedia.utils.Utils
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeout
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
-class AndroidDatabaseService(context: Context) : DatabaseService {
+class AndroidDatabaseService(
+    context: Context,
+    private val storageHelper : StorageHelperInterface) : DatabaseService {
     // Never hold a Service context to avoid leaks; keep only applicationContext
     private val appContext: Context = context.applicationContext
     override suspend fun updateFCMTokenForCurrentUser(currentUser: UserDTO) {
@@ -115,7 +118,7 @@ class AndroidDatabaseService(context: Context) : DatabaseService {
         path: String,
         new: NewsDTO
     ) {
-        AndroidDatabaseHelper.deleteNewsFromDatabase(path, new)
+        storageHelper.deleteNewsFromDatabase(path, new)
     }
 
     override suspend fun deleteCommentFromDatabase(
@@ -130,7 +133,7 @@ class AndroidDatabaseService(context: Context) : DatabaseService {
         path: String,
         instance: BaseNewsInstance
     ): Boolean {
-        return AndroidDatabaseHelper.saveInstanceToDatabase(
+        return storageHelper.saveInstanceToDatabase(
             commentId,
             path,
             instance
@@ -142,34 +145,33 @@ class AndroidDatabaseService(context: Context) : DatabaseService {
         path: String,
         instance: NewsDTO
     ): Boolean {
-        return AndroidDatabaseHelper.saveNewToDatabase(
+        return storageHelper.saveNewToDatabase(
             commentId,
             path,
             instance
         )
     }
 
-    override suspend fun getAllUsers(path: String): ArrayList<UserDTO>? =
-        suspendCancellableCoroutine { continuation ->
+    override suspend fun getAllUsers(path: String): ArrayList<UserDTO>? {
+        // Phase 1: fetch raw list from Firebase (main-thread callback, no network calls)
+        val raw = suspendCancellableCoroutine<ArrayList<UserDTO>?> { continuation ->
             val result = ArrayList<UserDTO>()
             val database = FirebaseDatabase.getInstance()
             val databaseReference: DatabaseReference =
                 database.getReference().child(DataConstant.USER_PATH)
+
             val listener = object : ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
                     result.clear()
-                    for (dataSnapshot in snapshot.getChildren()) {
+                    for (dataSnapshot in snapshot.children) {
                         val user: UserDTO? = dataSnapshot.getValue(UserDTO::class.java)
-                        if (user != null) {
-                            result.add(user)
-                        }
+                        if (user != null) result.add(user)
                     }
                     if (continuation.isActive) {
                         databaseReference.removeEventListener(this)
                         continuation.resume(result)
                     }
                 }
-
                 override fun onCancelled(error: DatabaseError) {
                     if (continuation.isActive) {
                         databaseReference.removeEventListener(this)
@@ -179,207 +181,258 @@ class AndroidDatabaseService(context: Context) : DatabaseService {
             }
             databaseReference.addValueEventListener(listener)
             continuation.invokeOnCancellation { databaseReference.removeEventListener(listener) }
-        }
+        } ?: return null
 
-    override suspend fun getUser(userId: String): UserDTO? =
-        withTimeout(5000) {
-            suspendCoroutine { continuation ->
+        // Phase 2: async resolve each image URL in parallel
+        return ArrayList(
+            coroutineScope {
+                raw.map { user ->
+                    async { user.apply { image = resolveMediaUrlAsync(image) } }
+                }.awaitAll()
+            }
+        )
+    }
+
+    override suspend fun getUser(userId: String): UserDTO? {
+        // Phase 1: fetch raw user from Firebase
+        val raw = withTimeout(5000) {
+            suspendCoroutine<UserDTO?> { continuation ->
                 val database = FirebaseDatabase.getInstance()
                 val databaseReference = database.getReference()
                     .child(DataConstant.USER_PATH)
                     .child(userId)
-
                 databaseReference.addListenerForSingleValueEvent(object : ValueEventListener {
                     override fun onDataChange(snapshot: DataSnapshot) {
-                        val user = snapshot.getValue(UserDTO::class.java)
-                        continuation.resume(user)
+                        continuation.resume(snapshot.getValue(UserDTO::class.java))
                     }
-
                     override fun onCancelled(error: DatabaseError) {
                         continuation.resume(null)
                     }
                 })
             }
+        } ?: return null
+
+        // Phase 2: async resolve image URL and all embedded group avatars in parallel
+        coroutineScope {
+            val imageJob = async { resolveMediaUrlAsync(raw.image) }
+            val groupJobs = raw.groups.entries.map { (key, summary) ->
+                async { key to summary.copy(avatar = resolveMediaUrlAsync(summary.avatar)) }
+            }
+            raw.image = imageJob.await()
+            val resolvedGroups = groupJobs.awaitAll()
+            resolvedGroups.forEach { (key, resolved) -> raw.groups[key] = resolved }
         }
-
-    override suspend fun getNew(newId: String): NewsDTO? = withTimeout(5000) {
-        suspendCoroutine { continuation ->
-            val database = FirebaseDatabase.getInstance()
-            val databaseReference = database.getReference()
-                .child(DataConstant.NEWS_PATH)
-                .child(newId)
-
-            databaseReference.addListenerForSingleValueEvent(object : ValueEventListener {
-                override fun onDataChange(snapshot: DataSnapshot) {
-                    val new = snapshot.getValue(NewsDTO::class.java)
-                    if (new != null) {
-                        continuation.resume(new)
-                    } else {
-                        continuation.resume(null)
-                    }
-                }
-
-                override fun onCancelled(error: DatabaseError) {
-                    continuation.resume(null)
-                }
-            })
-        }
+        return raw
     }
 
-    override suspend fun searchUserByName(name: String, path: String): List<UserDTO>? =
-        withTimeout(5000) {
+    override suspend fun getNew(newId: String): NewsDTO? {
+        // Phase 1: fetch raw news from Firebase
+        val raw = withTimeout(5000) {
+            suspendCoroutine<NewsDTO?> { continuation ->
+                val database = FirebaseDatabase.getInstance()
+                val databaseReference = database.getReference()
+                    .child(DataConstant.NEWS_PATH)
+                    .child(newId)
+                databaseReference.addListenerForSingleValueEvent(object : ValueEventListener {
+                    override fun onDataChange(snapshot: DataSnapshot) {
+                        continuation.resume(snapshot.getValue(NewsDTO::class.java))
+                    }
+                    override fun onCancelled(error: DatabaseError) {
+                        continuation.resume(null)
+                    }
+                })
+            }
+        } ?: return null
+
+        // Phase 2: async resolve media URLs
+        raw.avatar = resolveMediaUrlAsync(raw.avatar)
+        raw.image = resolveMediaUrlAsync(raw.image)
+        raw.video = resolveMediaUrlAsync(raw.video)
+        return raw
+    }
+
+    override suspend fun searchUserByName(
+        name: String,
+        path: String
+    ): List<UserDTO>? {
+        // Phase 1: fetch raw users from Firebase
+        val raw = withTimeout(5000) {
             val database = FirebaseDatabase.getInstance()
             val databaseReference = database.getReference(path)
-
-            suspendCoroutine { continuation ->
+            suspendCoroutine<List<UserDTO>?> { continuation ->
                 databaseReference.addListenerForSingleValueEvent(object : ValueEventListener {
                     override fun onDataChange(snapshot: DataSnapshot) {
                         val users = snapshot.children
                             .mapNotNull { it.getValue(UserDTO::class.java) }
                             .filter { it.name.contains(name, ignoreCase = true) }
-                            .take(5) // only return first 5 matches
-
+                            .take(5)
                         continuation.resume(users)
                     }
-
                     override fun onCancelled(error: DatabaseError) {
                         continuation.resume(null)
                     }
                 })
             }
+        } ?: return null
+
+        // Phase 2: async resolve image URLs in parallel
+        return coroutineScope {
+            raw.map { user ->
+                async { user.copy(image = resolveMediaUrlAsync(user.image)) }
+            }.awaitAll()
         }
+    }
 
     override suspend fun getLatestNews(
         number: Int,
         lastTimePosted: Double?,
         lastKey: String?,
         path: String
-    ): LatestNewsDTO = suspendCancellableCoroutine { continuation ->
-        val dbRef = FirebaseDatabase.getInstance()
-            .getReference(path)
-            .orderByChild("timePosted")
-            .let { query ->
-                when {
-                    lastTimePosted != null && !lastKey.isNullOrBlank() -> {
-                        // Use both value and key for stable pagination when key is valid
-                        query.endBefore(lastTimePosted, lastKey)
+    ): LatestNewsDTO {
+        // Phase 1: fetch raw news list from Firebase (sync, no network calls)
+        val raw = suspendCancellableCoroutine { continuation ->
+            val query = FirebaseDatabase.getInstance()
+                .getReference(path)
+                .orderByChild("timePosted")
+                .let { q ->
+                    when {
+                        lastTimePosted != null && !lastKey.isNullOrBlank() -> q.endBefore(lastTimePosted, lastKey)
+                        lastTimePosted != null -> q.endBefore(lastTimePosted)
+                        else -> q
                     }
-
-                    lastTimePosted != null -> {
-                        // Fallback: paginate by value only when key is null/blank
-                        query.endBefore(lastTimePosted)
-                    }
-
-                    else -> query
                 }
-            }
-            .limitToLast(number)
+                .limitToLast(number)
 
-        val listener = object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                val newsList = snapshot.children.mapNotNull { it.getValue(NewsDTO::class.java) }
-
-                if (newsList.isNotEmpty()) {
-                    // Sort newest → oldest
-                    val sorted = newsList.sortedByDescending { it.timePosted }.map { it }
+            val listener = object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    if (!continuation.isActive) return
+                    val newsList = snapshot.children.mapNotNull { it.getValue(NewsDTO::class.java) }
+                    if (newsList.isEmpty()) {
+                        query.removeEventListener(this)
+                        continuation.resume(LatestNewsDTO())
+                        return
+                    }
+                    val sorted = newsList.sortedByDescending { it.timePosted }
                     val oldest = sorted.last()
-                    if (continuation.isActive) {
-                        dbRef.removeEventListener(this)
-                        continuation.resume(
-                            LatestNewsDTO(
-                                sorted,
-                                if (newsList.size < number) null else oldest.timePosted.toDouble(),
-                                oldest.id // Return both for next pagination
-                            )
+                    query.removeEventListener(this)
+                    continuation.resume(
+                        LatestNewsDTO(
+                            news = sorted,
+                            lastTimePostedValue = if (newsList.size < number) null else oldest.timePosted.toDouble(),
+                            lastKeyValue = oldest.id
                         )
-                    }
+                    )
                 }
-            }
-
-            override fun onCancelled(error: DatabaseError) {
-                if (continuation.isActive) {
-                    dbRef.removeEventListener(this)
+                override fun onCancelled(error: DatabaseError) {
+                    if (!continuation.isActive) return
+                    query.removeEventListener(this)
                     continuation.resume(LatestNewsDTO())
                 }
             }
+            query.addValueEventListener(listener)
+            continuation.invokeOnCancellation { query.removeEventListener(listener) }
         }
-        dbRef.addValueEventListener(listener)
-        continuation.invokeOnCancellation { dbRef.removeEventListener(listener) }
+
+        if (raw.news.isNullOrEmpty()) return raw
+
+        // Phase 2: resolve all post media URLs in parallel (one coroutine per post)
+        val resolved = coroutineScope {
+            raw.news.map { news ->
+                async {
+                    news.copy(
+                        avatar = resolveMediaUrlAsync(news.avatar),
+                        image = resolveMediaUrlAsync(news.image),
+                        video = resolveMediaUrlAsync(news.video)
+                    )
+                }
+            }.awaitAll()
+        }
+        return raw.copy(news = resolved)
     }
 
 
     override suspend fun getAllComments(
         path: String,
         newsId: String
-    ): List<CommentDTO>? = suspendCancellableCoroutine { continuation ->
-        val result = ArrayList<CommentDTO>()
-        val database = FirebaseDatabase.getInstance()
-        val databaseReference: DatabaseReference = database.getReference()
-            .child(DataConstant.NEWS_PATH)
-            .child(newsId)
-            .child(path)
-        val listener = object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                result.clear()
-                for (dataSnapshot in snapshot.getChildren()) {
-                    val comments: CommentDTO? = dataSnapshot.getValue(CommentDTO::class.java)
-                    if (comments != null) {
-                        result.add(comments)
-                    }
-                }
-                if (continuation.isActive) {
+    ): List<CommentDTO>? {
+        // Phase 1: fetch raw comments from Firebase
+        val raw = suspendCancellableCoroutine<List<CommentDTO>?> { continuation ->
+            val databaseReference: DatabaseReference = FirebaseDatabase.getInstance()
+                .getReference()
+                .child(DataConstant.NEWS_PATH)
+                .child(newsId)
+                .child(path)
+            val listener = object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    if (!continuation.isActive) return
+                    val comments = snapshot.children.mapNotNull { it.getValue(CommentDTO::class.java) }
                     databaseReference.removeEventListener(this)
-                    continuation.resume(result)
+                    continuation.resume(comments)
                 }
-            }
-
-            override fun onCancelled(error: DatabaseError) {
-                if (continuation.isActive) {
+                override fun onCancelled(error: DatabaseError) {
+                    if (!continuation.isActive) return
                     databaseReference.removeEventListener(this)
                     continuation.resume(null)
                 }
             }
+            databaseReference.addValueEventListener(listener)
+            continuation.invokeOnCancellation { databaseReference.removeEventListener(listener) }
+        } ?: return null
+
+        // Phase 2: async resolve media URLs in parallel
+        return coroutineScope {
+            raw.map { comment ->
+                async {
+                    comment.copy(
+                        avatar = resolveMediaUrlAsync(comment.avatar),
+                        image = resolveMediaUrlAsync(comment.image),
+                        video = resolveMediaUrlAsync(comment.video)
+                    )
+                }
+            }.awaitAll()
         }
-        databaseReference.addValueEventListener(listener)
-        continuation.invokeOnCancellation { databaseReference.removeEventListener(listener) }
     }
 
     override suspend fun getAllNotificationsOfUser(
         path: String,
         currentUserUid: String
-    ): List<NotificationDTO>? = suspendCancellableCoroutine { continuation ->
-        val result = ArrayList<NotificationDTO>()
-        val database = FirebaseDatabase.getInstance()
-        val databaseReference: DatabaseReference =
-            database.getReference().child(DataConstant.USER_PATH)
-                .child(currentUserUid).child(path)
-        val listener = object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                result.clear()
-                for (dataSnapshot in snapshot.getChildren()) {
-                    val notification = dataSnapshot.getValue(NotificationDTO::class.java)
-                    if (notification != null) {
-                        logMessage(
-                            "getAllNotificationsOfUser",
-                            { notification.id + "isRead: " + notification.beRead })
-                        result.add(notification)
+    ): List<NotificationDTO>? {
+        // Phase 1: fetch raw notifications from Firebase
+        val raw = suspendCancellableCoroutine<List<NotificationDTO>?> { continuation ->
+            val databaseReference = FirebaseDatabase.getInstance()
+                .getReference(DataConstant.USER_PATH)
+                .child(currentUserUid)
+                .child(path)
+            val listener = object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    val result = snapshot.children
+                        .mapNotNull { it.getValue(NotificationDTO::class.java) }
+                    if (continuation.isActive) {
+                        databaseReference.removeEventListener(this)
+                        continuation.resume(result)
                     }
                 }
-                if (continuation.isActive) {
-                    databaseReference.removeEventListener(this)
-                    continuation.resume(result)
+                override fun onCancelled(error: DatabaseError) {
+                    if (continuation.isActive) {
+                        databaseReference.removeEventListener(this)
+                        continuation.resume(null)
+                    }
                 }
             }
+            databaseReference.addValueEventListener(listener)
+            continuation.invokeOnCancellation { databaseReference.removeEventListener(listener) }
+        } ?: return null
 
-            override fun onCancelled(error: DatabaseError) {
-                if (continuation.isActive) {
-                    databaseReference.removeEventListener(this)
-                    continuation.resume(null)
+        // Phase 2: async resolve avatar URLs in parallel
+        return coroutineScope {
+            raw.map { notification ->
+                async {
+                    val resolved = notification.copy(avatar = resolveMediaUrlAsync(notification.avatar))
+                    logMessage("getAllNotificationsOfUser") { "${resolved.id} isRead: ${resolved.beRead}" }
+                    resolved
                 }
-            }
+            }.awaitAll()
         }
-        databaseReference.addValueEventListener(listener)
-        continuation.invokeOnCancellation { databaseReference.removeEventListener(listener) }
     }
 
     override suspend fun saveListToDatabase(
@@ -402,7 +455,7 @@ class AndroidDatabaseService(context: Context) : DatabaseService {
         newVideo: String,
         new: NewsDTO
     ): Boolean {
-        return AndroidDatabaseHelper.updateNewsFromDatabase(
+        return storageHelper.updateNewsFromDatabase(
             path,
             newContent,
             newImage,
@@ -412,42 +465,7 @@ class AndroidDatabaseService(context: Context) : DatabaseService {
     }
 
     override suspend fun saveSignUpInformation(user: UserDTO): Boolean =
-        suspendCancellableCoroutine { continuation ->
-            val storageReference = FirebaseStorage.getInstance().getReference()
-                .child("avatar").child(user.uid)
-            val databaseReference = FirebaseDatabase.getInstance().getReference()
-                .child("users").child(user.uid)
-
-            if (user.image != Constants.DEFAULT_AVATAR_URL && user.image != Constants.DEFAULT_DECADE_AVATAR_URL && user.image != Constants.DEFAULT_ARK_AVATAR_URL_FOR_GROUP) {
-                val metadata = StorageMetadata.Builder()
-                    .setCacheControl("public,max-age=604800,immutable")
-                    .build()
-                storageReference.putFile(user.image.toUri(), metadata)
-                    .addOnCompleteListener { putFileTask ->
-                        if (putFileTask.isSuccessful) {
-                            storageReference.downloadUrl.addOnSuccessListener { avatarUrl ->
-                                user.updateImage(avatarUrl.toString())
-                                databaseReference.setValue(user)
-                                    .addOnCompleteListener { addUserTask ->
-                                        if (addUserTask.isSuccessful) {
-                                            if (continuation.isActive) continuation.resume(true)
-                                        } else {
-                                            if (continuation.isActive) continuation.resume(false)
-                                        }
-                                    }
-                            }
-                        }
-                    }
-            } else {
-                databaseReference.setValue(user).addOnCompleteListener { addUserTask ->
-                    if (addUserTask.isSuccessful) {
-                        if (continuation.isActive) continuation.resume(true)
-                    } else {
-                        if (continuation.isActive) continuation.resume(false)
-                    }
-                }
-            }
-        }
+        storageHelper.saveSignUpInformation(user)
 
     override suspend fun saveNotificationToDatabase(
         id: String,
@@ -561,7 +579,7 @@ class AndroidDatabaseService(context: Context) : DatabaseService {
         group: GroupDTO,
         userId: String
     ): Boolean {
-        return AndroidDatabaseHelper.saveGroupAndUserGroups(
+        return storageHelper.saveGroupAndUserGroups(
             groupRootPath,
             userRootPath,
             userGroupsField,
@@ -593,7 +611,7 @@ class AndroidDatabaseService(context: Context) : DatabaseService {
         postsPath: String,
         imagePath: String
     ): Boolean {
-        return AndroidDatabaseHelper.saveNewToGroup(
+        return storageHelper.saveNewToGroup(
             newsDTO,
             groupId,
             groupPath,
@@ -745,11 +763,10 @@ class AndroidDatabaseService(context: Context) : DatabaseService {
         groupPath: String,
         memberCountPath: String
     ): List<GroupDTO> {
-        return AndroidDatabaseHelper.fetchGroupsByMemberCount(
-            limit,
-            groupPath,
-            memberCountPath
-        )
+        val raw = AndroidDatabaseHelper.fetchGroupsByMemberCount(limit, groupPath, memberCountPath)
+        return coroutineScope {
+            raw.map { group -> async { group.copy(avatar = resolveMediaUrlAsync(group.avatar)) } }.awaitAll()
+        }
     }
 
     override suspend fun updateIsReadStatusOfNotification(

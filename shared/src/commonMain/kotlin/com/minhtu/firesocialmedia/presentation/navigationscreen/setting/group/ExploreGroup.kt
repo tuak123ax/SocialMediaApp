@@ -55,6 +55,7 @@ import com.minhtu.firesocialmedia.utils.UiUtils
 import com.minhtu.firesocialmedia.utils.UiUtils.Companion.TitleAndSubTitleBelow
 import com.minhtu.firesocialmedia.utils.Utils
 import com.minhtu.sharedmodule.ui.theme.memberCardColor
+import com.minhtu.firesocialmedia.storage.toStorageUrl
 import com.seiko.imageloader.ui.AutoSizeImage
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
@@ -258,7 +259,7 @@ class ExploreGroup {
                     localImageLoaderValue
                 ) {
                     AutoSizeImage(
-                        group.avatar,
+                        group.avatar.toStorageUrl(),
                         contentDescription = "group avatar",
                         contentScale = ContentScale.FillBounds,
                         modifier = Modifier
@@ -326,7 +327,7 @@ class ExploreGroup {
                 ) {
                     CompositionLocalProvider(localImageLoaderValue) {
                         AutoSizeImage(
-                            group.avatar,
+                            group.avatar.toStorageUrl(),
                             contentDescription = "Group Avatar",
                             contentScale = ContentScale.Crop,
                             modifier = Modifier

@@ -33,13 +33,21 @@ class SignInViewModelTest {
     private class FakeAuthService : AuthService {
         var signInError: SignInError? = null
         var googleResult: String? = null
+        var currentUid: String? = null
         override suspend fun signInWithEmailAndPassword(email: String, password: String): SignInError? = signInError
         override suspend fun signUpWithEmailAndPassword(email: String, password: String) = Result.success(Unit)
-        override suspend fun getCurrentUserUid(): String? = null
+        override suspend fun getCurrentUserUid(): String? = currentUid
         override suspend fun getCurrentUserEmail(): String? = null
         override suspend fun fetchSignInMethodsForEmail(email: String) = com.minhtu.firesocialmedia.domain.entity.forgotpassword.EmailExistResult(false, "")
         override suspend fun sendPasswordResetEmail(email: String) = true
         override suspend fun handleSignInGoogleResult(credentialsDTO: Any): String? = googleResult
+        override suspend fun reAuthenticate(currentUserEmail: String, currentPassword: String): Boolean = false
+        override suspend fun changePassword(userDTO: com.minhtu.firesocialmedia.data.remote.dto.user.UserDTO, newPassword: String, userPath: String, lastTimeChangePasswordPath: String): com.minhtu.firesocialmedia.domain.entity.settings.ChangePasswordState = com.minhtu.firesocialmedia.domain.entity.settings.ChangePasswordState()
+        override suspend fun generateSecretFor2FA(): String = ""
+        override suspend fun enableOTP(userId: String, secret: String, otpToVerify: String): com.minhtu.firesocialmedia.domain.entity.authentication.TwoFAResponse = com.minhtu.firesocialmedia.domain.entity.authentication.TwoFAResponse(false, "")
+        override suspend fun verifyOTP(userId: String, otpToVerify: String): com.minhtu.firesocialmedia.domain.entity.authentication.TwoFAResponse = com.minhtu.firesocialmedia.domain.entity.authentication.TwoFAResponse(false, "")
+        override suspend fun disable2FA(userId: String): com.minhtu.firesocialmedia.domain.entity.authentication.TwoFAResponse = com.minhtu.firesocialmedia.domain.entity.authentication.TwoFAResponse(false, "")
+        override suspend fun verifyBackupCode(userId: String, backupCode: String): com.minhtu.firesocialmedia.domain.entity.authentication.TwoFAResponse = com.minhtu.firesocialmedia.domain.entity.authentication.TwoFAResponse(false, "")
     }
 
     private class FakeCryptoService : CryptoService {
@@ -51,10 +59,14 @@ class SignInViewModelTest {
         override suspend fun getFCMToken(): String = ""
         override suspend fun saveCurrentUserInfo(user: com.minhtu.firesocialmedia.data.remote.dto.user.UserDTO) {}
         override suspend fun getCurrentUserInfo(): com.minhtu.firesocialmedia.data.remote.dto.user.UserDTO? = null
+        override suspend fun save2FAStatus(status: Boolean) {}
+        override suspend fun get2FAStatus(): Boolean = false
+        override suspend fun delete2FAStatus() {}
     }
 
     private class FakeDatabaseService : DatabaseService {
         var userExists: Boolean = true
+        var userForGet: com.minhtu.firesocialmedia.data.remote.dto.user.UserDTO? = null
         override suspend fun updateFCMTokenForCurrentUser(currentUser: com.minhtu.firesocialmedia.data.remote.dto.user.UserDTO) {}
         override suspend fun checkUserExists(email: String): SignInDTO = SignInDTO(userExists, "")
         override suspend fun saveValueToDatabase(id: String, path: String, value: HashMap<String, Int>, externalPath: String) = true
@@ -64,7 +76,7 @@ class SignInViewModelTest {
         override suspend fun saveInstanceToDatabase(commentId: String, path: String, instance: com.minhtu.firesocialmedia.domain.entity.base.BaseNewsInstance) = true
         override suspend fun saveNewToDatabase(commentId: String, path: String, instance: com.minhtu.firesocialmedia.data.remote.dto.news.NewsDTO) = true
         override suspend fun getAllUsers(path: String) = null
-        override suspend fun getUser(userId: String) = null
+        override suspend fun getUser(userId: String) = userForGet
         override suspend fun getNew(newId: String) = null
         override suspend fun getLatestNews(number: Int, lastTimePosted: Double?, lastKey: String?, path: String) = com.minhtu.firesocialmedia.data.remote.dto.home.LatestNewsDTO(emptyList(), null, null)
         override suspend fun getAllComments(path: String, newsId: String) = null
@@ -197,6 +209,14 @@ class SignInViewModelTest {
             groupPath: String,
             memberCountPath: String
         ): List<com.minhtu.firesocialmedia.data.remote.dto.group.GroupDTO> = emptyList()
+
+        override suspend fun updateIsReadStatusOfNotification(userId: String, notificationId: String, userPath: String, notificationPath: String) {}
+        override suspend fun deleteAllNotifications(uid: String, userPath: String, notificationPath: String): Result<Unit> = Result.success(Unit)
+        override suspend fun updateTwoFAEnabledFlagForUser(userId: String, twoFAEnabled: Boolean, userPath: String, twoFaEnabledPath: String): Boolean = true
+        override suspend fun fetchLoginHistoryList(userId: String, historyPath: String, loginHistoryPath: String): List<com.minhtu.firesocialmedia.data.remote.dto.settings.SessionItemDTO> = emptyList()
+        override fun getLocalSessionId(): String = ""
+        override suspend fun saveLoginActivityInfo(userId: String, historyPath: String, loginHistoryPath: String) {}
+        override suspend fun updateUserLongField(userId: String, fieldPath: String, value: Long, userPath: String): Boolean = true
     }
 
     private class FakePlatformContext(
@@ -215,7 +235,9 @@ class SignInViewModelTest {
             override suspend fun callerEndCallFromApp(currentUser: String) {}
             override suspend fun calleeEndCallFromApp(sessionId: String, currentUser: String) {}
             override suspend fun rejectVideoCall() {}
+            override suspend fun prepareForIncomingVideoNegotiation() {}
             override suspend fun resetVideoCallStartedState() {}
+            override suspend fun stopVideoCallResources() {}
             override suspend fun createOffer(onOfferCreated: (offer: com.minhtu.firesocialmedia.data.remote.dto.call.OfferAnswerDTO) -> Unit) {}
             override suspend fun createVideoOffer(onOfferCreated: (offer: com.minhtu.firesocialmedia.data.remote.dto.call.OfferAnswerDTO) -> Unit) {}
             override suspend fun createAnswer(videoSupport: Boolean, onAnswerCreated: (answer: com.minhtu.firesocialmedia.data.remote.dto.call.OfferAnswerDTO) -> Unit) {}
@@ -279,12 +301,20 @@ class SignInViewModelTest {
         val checkUserExistsUseCase = com.minhtu.firesocialmedia.di.AppModule.provideCheckUserExistsUseCase(repo)
         val checkLocalAccountUseCase = com.minhtu.firesocialmedia.di.AppModule.provideCheckLocalAccountUseCase(repo)
         val handleSignInGoogleResultUseCase = com.minhtu.firesocialmedia.di.AppModule.provideHandleSignInGoogleResultUseCase(repo)
+        val userRepo = com.minhtu.firesocialmedia.di.AppModule.provideUserRepository(platform)
+        val getCurrentUserUidUseCase = com.minhtu.firesocialmedia.di.AppModule.provideGetCurrentUserUidUseCase(userRepo)
+        val getUserUseCase = com.minhtu.firesocialmedia.di.AppModule.provideGetUserUseCase(userRepo)
+        val commonDbRepo = com.minhtu.firesocialmedia.di.AppModule.provideCommonDbRepository(platform)
+        val saveLoginActivityInfoUseCase = com.minhtu.firesocialmedia.di.AppModule.provideSaveLoginActivityInfoUseCase(commonDbRepo)
         return SignInViewModel(
             signInUseCase,
             rememberPasswordUseCase,
             checkUserExistsUseCase,
             checkLocalAccountUseCase,
             handleSignInGoogleResultUseCase,
+            getCurrentUserUidUseCase,
+            getUserUseCase,
+            saveLoginActivityInfoUseCase,
             dispatcher
         )
     }
@@ -429,6 +459,66 @@ class SignInViewModelTest {
 
         val signInState = viewModel.signInState.value
         assertEquals(false, signInState.signInStatus)
+    }
+
+    @Test
+    fun `reset clears email password rememberPassword and signIn state`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val viewModel = vm(dispatcher)
+        viewModel.updateEmail("test@test.com")
+        viewModel.updatePassword("password")
+        viewModel.updateRememberPassword(true)
+        viewModel.updateSignInStatus(com.minhtu.firesocialmedia.domain.entity.signin.SignInState(true, null))
+
+        viewModel.reset()
+
+        assertEquals("", viewModel.email.value)
+        assertEquals("", viewModel.password.value)
+        assertEquals(false, viewModel.rememberPassword.value)
+        assertEquals(false, viewModel.signInState.value.signInStatus)
+    }
+
+    @Test
+    fun `check2FAStatus with null userId does not update status`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        authService.currentUid = null  // getCurrentUserUid returns null
+        val viewModel = vm(dispatcher)
+
+        viewModel.check2FAStatus()
+        advanceUntilIdle()
+
+        assertEquals(null, viewModel.check2FAStatus.value)
+    }
+
+    @Test
+    fun `check2FAStatus with valid user sets twoFA status`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        authService.currentUid = "uid1"
+        databaseService.userForGet = com.minhtu.firesocialmedia.data.remote.dto.user.UserDTO(
+            uid = "uid1",
+            email = "test@test.com",
+            twoFAEnabled = true
+        )
+        val viewModel = vm(dispatcher)
+
+        viewModel.check2FAStatus()
+        advanceUntilIdle()
+
+        assertEquals(true, viewModel.check2FAStatus.value)
+    }
+
+    @Test
+    fun `resetCheck2FAStatus clears status`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        authService.currentUid = "uid1"
+        databaseService.userForGet = com.minhtu.firesocialmedia.data.remote.dto.user.UserDTO(uid = "uid1", twoFAEnabled = false)
+        val viewModel = vm(dispatcher)
+        viewModel.check2FAStatus()
+        advanceUntilIdle()
+        assertEquals(false, viewModel.check2FAStatus.value)
+
+        viewModel.resetCheck2FAStatus()
+        assertEquals(null, viewModel.check2FAStatus.value)
     }
 }
 

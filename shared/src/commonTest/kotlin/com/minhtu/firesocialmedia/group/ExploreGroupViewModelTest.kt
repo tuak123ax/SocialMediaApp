@@ -117,6 +117,67 @@ class ExploreGroupViewModelTest {
             .size
         assertEquals(expected, second.size)
     }
+
+    @Test
+    fun `resetFetchRecommendGroups clears the list`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val repo = ExploreRepo().apply {
+            recommendBacking = (1..5).map { GroupInstance(id = "g$it") }
+        }
+        val vm = ExploreGroupViewModel(
+            fetchRecommendGroupsUseCase = FetchRecommendGroupsUseCase(repo),
+            fetchFeatureGroupsUseCase = FetchFeatureGroupsUseCase(repo),
+            ioDispatcher = dispatcher
+        )
+        vm.loadInitialRecommendGroups(UserInstance(uid = "u"), "")
+        advanceUntilIdle()
+        assertEquals(5, vm.fetchRecommendGroups.value.size)
+
+        vm.resetFetchRecommendGroups()
+        assertEquals(0, vm.fetchRecommendGroups.value.size)
+    }
+
+    @Test
+    fun `resetFetchFeatureGroups clears the list`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val repo = ExploreRepo().apply {
+            featureBacking = (1..5).map { GroupInstance(id = "f$it") }
+        }
+        val vm = ExploreGroupViewModel(
+            fetchRecommendGroupsUseCase = FetchRecommendGroupsUseCase(repo),
+            fetchFeatureGroupsUseCase = FetchFeatureGroupsUseCase(repo),
+            ioDispatcher = dispatcher
+        )
+        vm.loadInitialFeatureGroups(UserInstance(uid = "u"), "")
+        advanceUntilIdle()
+        assertTrue(vm.fetchFeatureGroups.value.isNotEmpty())
+
+        vm.resetFetchFeatureGroups()
+        assertEquals(0, vm.fetchFeatureGroups.value.size)
+    }
+
+    @Test
+    fun `endReached stops loadMoreRecommendGroups from refetching`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val repo = ExploreRepo().apply {
+            // Only 3 groups -> less than page size 10 -> endReached after first load
+            recommendBacking = (1..3).map { GroupInstance(id = "r$it") }
+        }
+        val vm = ExploreGroupViewModel(
+            fetchRecommendGroupsUseCase = FetchRecommendGroupsUseCase(repo),
+            fetchFeatureGroupsUseCase = FetchFeatureGroupsUseCase(repo),
+            ioDispatcher = dispatcher
+        )
+        vm.loadInitialRecommendGroups(UserInstance(uid = "u"), "")
+        advanceUntilIdle()
+        assertEquals(3, vm.fetchRecommendGroups.value.size)
+
+        // Second call should be blocked (endReached)
+        vm.loadMoreRecommendGroups(UserInstance(uid = "u"), "")
+        advanceUntilIdle()
+        // Count should still be 3
+        assertEquals(3, vm.fetchRecommendGroups.value.size)
+    }
 }
 
 

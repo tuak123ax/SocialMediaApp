@@ -55,6 +55,7 @@ import com.minhtu.firesocialmedia.utils.UiUtils.Companion.NewsCardPlaceholder
 import com.minhtu.firesocialmedia.utils.UiUtils.Companion.NewsCardUnavailable
 import com.minhtu.firesocialmedia.utils.UiUtils.Companion.NewsCardWithSharedContent
 import com.minhtu.firesocialmedia.utils.Utils.Companion.hexToColor
+import com.minhtu.firesocialmedia.storage.toStorageUrl
 import com.seiko.imageloader.ui.AutoSizeImage
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -134,7 +135,7 @@ class PostInformation {
                                     localImageLoaderValue
                                 ) {
                                     AutoSizeImage(
-                                        news.avatar,
+                                        news.avatar.toStorageUrl(),
                                         contentDescription = "Poster Avatar",
                                         contentScale = ContentScale.Crop,
                                         modifier = Modifier
@@ -167,7 +168,7 @@ class PostInformation {
                                     localImageLoaderValue
                                 ) {
                                     AutoSizeImage(
-                                        news.image,
+                                        news.image.toStorageUrl(),
                                         contentDescription = "Image",
                                         contentScale = ContentScale.Fit,
                                         modifier = Modifier
