@@ -10,6 +10,7 @@ import com.minhtu.firesocialmedia.data.remote.mapper.user.toDTONotifications
 import com.minhtu.firesocialmedia.data.remote.service.database.DatabaseService
 import com.minhtu.firesocialmedia.domain.core.NetworkMonitor
 import com.minhtu.firesocialmedia.domain.entity.notification.NotificationInstance
+import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.domain.repository.NotificationRepository
 import kotlinx.coroutines.flow.first
 
@@ -51,5 +52,28 @@ class NotificationRepositoryImpl(
             id,
             DataConstant.USER_PATH,
             notification.toDto())
+    }
+
+    override suspend fun updateIsReadStatusOfNotification(user : UserInstance,
+                                                          notification: NotificationInstance) {
+        databaseService.updateIsReadStatusOfNotification(
+            user.uid,
+            notification.id,
+            DataConstant.USER_PATH,
+            DataConstant.NOTIFICATION_PATH
+        )
+    }
+
+    override suspend fun deleteAllNotifications(user: UserInstance): Result<Unit> {
+        val isOnline = networkMonitor.isOnline.first()
+        return if(isOnline) {
+            databaseService.deleteAllNotifications(
+                user.uid,
+                DataConstant.USER_PATH,
+                DataConstant.NOTIFICATION_PATH
+            )
+        } else {
+            Result.failure(Throwable("No network!"))
+        }
     }
 }

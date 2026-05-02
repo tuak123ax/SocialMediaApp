@@ -78,6 +78,7 @@ import platform.AVFoundation.replaceCurrentItemWithPlayerItem
 import platform.CoreGraphics.CGRectMake
 import platform.CoreGraphics.CGRectZero
 import platform.CoreGraphics.CGSizeMake
+import platform.Foundation.NSBundle
 import platform.Foundation.NSCachesDirectory
 import platform.Foundation.NSData
 import platform.Foundation.NSDate
@@ -262,18 +263,6 @@ fun UIColor.Companion.fromHex(hex: String): UIColor {
 @Composable
 actual fun CommonBackHandler(enabled: Boolean, onBack: () -> Unit) {
 
-}
-
-@Composable
-actual fun PasswordVisibilityIcon(passwordVisibility: Boolean) {
-    val iconName = if (passwordVisibility) "visibility" else "visibility_off"
-    val descriptionOfIcon = if(passwordVisibility) "Hide password" else "Show password"
-    CrossPlatformIcon(
-        icon = iconName,
-        backgroundColor = "#FF132026",
-        contentDescription = descriptionOfIcon,
-        Modifier.size(24.dp)
-    )
 }
 
 actual fun exitApp() {
@@ -758,6 +747,7 @@ actual class WebRTCVideoTrack
 actual fun WebRTCVideoView(
     localTrack: WebRTCVideoTrack?,
     remoteTrack: WebRTCVideoTrack?,
+    isLocalVideoOff : Boolean,
     modifier: Modifier
 ) {
     // iOS implementation will be added later
@@ -809,13 +799,25 @@ actual fun getUriStringFromLocalPath(localPath: String): String {
 actual suspend fun queryShareApps(text: String): MutableList<ShareApp> {
     // iOS doesn't expose a direct list of share targets; return empty placeholder
     return mutableListOf()
-}
-
-actual fun launchShareAppWithDeepLink(app: ShareApp, deepLink: String) {
+}actual fun launchShareAppWithDeepLink(app: ShareApp, deepLink: String) {
     // Minimal attempt to open the deep link; fallback is no-op
     val url = NSURL.URLWithString(deepLink)
     if (url != null) {
         UIApplication.sharedApplication.openURL(url)
     }
+}actual fun getAppVersion(): String {
+    return NSBundle.mainBundle
+        .objectForInfoDictionaryKey("CFBundleShortVersionString")
+        ?.toString() ?: ""
 }
 
+actual object AppConfig {
+    actual val twoFAApiKey: String =
+        NSBundle.mainBundle
+            .objectForInfoDictionaryKey("APP_SCRIPT_FOR_2FA_AUTHENTICATION_API_KEY")
+            ?.toString() ?: ""
+    actual val supabaseApiKey: String =
+        NSBundle.mainBundle
+            .objectForInfoDictionaryKey("SUPABASE_API_KEY")
+            ?.toString() ?: ""
+}

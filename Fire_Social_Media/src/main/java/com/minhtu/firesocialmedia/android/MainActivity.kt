@@ -1,27 +1,20 @@
 package com.minhtu.firesocialmedia.android
 
 import android.Manifest
-import android.annotation.SuppressLint
-import android.app.DownloadManager
 import android.content.BroadcastReceiver
-import android.content.Context
 import android.content.Intent
-import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.content.ContextCompat
 import com.google.firebase.messaging.FirebaseMessaging
 import com.minhtu.firesocialmedia.constants.Constants
@@ -82,7 +75,7 @@ class MainActivity : ComponentActivity() {
                     checkFCMToken()
                     askNotificationPermission()
                     //Listen download event here to show toast on all screens
-                    listenDownloadImageEvent()
+//                    listenDownloadImageEvent()
                 }
             }
         }
@@ -95,38 +88,44 @@ class MainActivity : ComponentActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-        unregisterReceiver(downloadReceiver)
-    }
-
-    @SuppressLint("UnspecifiedRegisterReceiverFlag")
-    private fun listenDownloadImageEvent() {
-        if(downloadReceiver == null) {
-            downloadReceiver = object : BroadcastReceiver() {
-                override fun onReceive(
-                    context: Context?,
-                    intent: Intent?
-                ) {
-                    if(intent != null && intent.action == DownloadManager.ACTION_DOWNLOAD_COMPLETE) {
-                        val downloadId = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1)
-                        if(downloadId > -1) {
-                            Toast.makeText(this@MainActivity, "Download image successfully!", Toast.LENGTH_SHORT).show()
-                        }
-                    }
-                }
-
-            }
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                registerReceiver(
-                    downloadReceiver,
-                    IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE),
-                    RECEIVER_EXPORTED
-                )
-            } else {
-                registerReceiver(downloadReceiver, IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE))
-            }
+        try {
+            downloadReceiver?.let { unregisterReceiver(it) }
+        } catch (_: Exception) {
+        } finally {
+            downloadReceiver = null
         }
+        runCatching { permissionManager.clear() }
     }
+
+//    @SuppressLint("UnspecifiedRegisterReceiverFlag")
+//    private fun listenDownloadImageEvent() {
+//        if(downloadReceiver == null) {
+//            downloadReceiver = object : BroadcastReceiver() {
+//                override fun onReceive(
+//                    context: Context?,
+//                    intent: Intent?
+//                ) {
+//                    if(intent != null && intent.action == DownloadManager.ACTION_DOWNLOAD_COMPLETE) {
+//                        val downloadId = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1)
+//                        if(downloadId > -1) {
+//                            Toast.makeText(this@MainActivity, "Download image successfully!", Toast.LENGTH_SHORT).show()
+//                        }
+//                    }
+//                }
+//
+//            }
+//
+//            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+//                registerReceiver(
+//                    downloadReceiver,
+//                    IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE),
+//                    RECEIVER_EXPORTED
+//                )
+//            } else {
+//                registerReceiver(downloadReceiver, IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE))
+//            }
+//        }
+//    }
 
     private fun checkFCMToken() {
         FirebaseMessaging.getInstance().token
@@ -183,10 +182,5 @@ class MainActivity : ComponentActivity() {
 
         // Forward to your permission manager
         permissionManager.onRequestPermissionsResult(requestCode, grantResults)
-    }
-
-    @Preview(showBackground = true, showSystemUi = true)
-    @Composable
-    fun GreetingPreview() {
     }
 }

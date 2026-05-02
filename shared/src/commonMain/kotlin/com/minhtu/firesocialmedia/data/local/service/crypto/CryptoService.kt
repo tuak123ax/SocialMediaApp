@@ -12,5 +12,8 @@ interface CryptoService {
     suspend fun getFCMToken() : String
     suspend fun saveCurrentUserInfo(user: UserDTO)
     suspend fun getCurrentUserInfo() : UserDTO?
+    suspend fun save2FAStatus(status: Boolean)
 
+    suspend fun get2FAStatus() : Boolean
+    suspend fun delete2FAStatus()
 }

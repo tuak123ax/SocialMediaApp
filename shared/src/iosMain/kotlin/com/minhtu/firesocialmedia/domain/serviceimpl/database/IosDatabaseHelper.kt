@@ -4,22 +4,17 @@ import cocoapods.FirebaseDatabase.FIRDataEventType
 import cocoapods.FirebaseDatabase.FIRDataSnapshot
 import cocoapods.FirebaseDatabase.FIRDatabase
 import cocoapods.FirebaseDatabase.FIRDatabaseReference
-import cocoapods.FirebaseStorage.FIRStorage
 import cocoapods.FirebaseStorage.FIRStorageMetadata
 import cocoapods.FirebaseStorage.FIRStorageReference
 import cocoapods.FirebaseStorage.FIRStorageTaskStatusFailure
 import cocoapods.FirebaseStorage.FIRStorageTaskStatusSuccess
-import com.minhtu.firesocialmedia.data.remote.dto.news.NewsDTO
 import com.minhtu.firesocialmedia.data.remote.dto.notification.NotificationDTO
 import com.minhtu.firesocialmedia.data.remote.dto.notification.fromMap
 import com.minhtu.firesocialmedia.data.remote.dto.notification.toMap
 import com.minhtu.firesocialmedia.domain.entity.base.BaseNewsInstance
-import com.minhtu.firesocialmedia.platform.logMessage
-import com.minhtu.firesocialmedia.platform.toNSData
 import kotlinx.cinterop.BetaInteropApi
 import kotlinx.coroutines.suspendCancellableCoroutine
 import platform.Foundation.NSData
-import platform.Foundation.NSDictionary
 import platform.Foundation.NSDocumentDirectory
 import platform.Foundation.NSMutableArray
 import platform.Foundation.NSMutableDictionary
@@ -40,143 +35,10 @@ import platform.UIKit.UIImage
 import platform.UIKit.UIImageWriteToSavedPhotosAlbum
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
-import kotlin.io.encoding.Base64
-import kotlin.io.encoding.ExperimentalEncodingApi
 
 class IosDatabaseHelper {
     companion object {
         private val database: FIRDatabaseReference = FIRDatabase.database().reference()
-        private val storage: FIRStorageReference = FIRStorage.storage().reference()
-
-        @OptIn(ExperimentalEncodingApi::class)
-        suspend fun saveInstanceToDatabase(
-            id: String,
-            path: String,
-            instance: BaseNewsInstance
-        ): Boolean {
-            val storageRef = storage.child(path).child(id)
-            val dbRef = database.child(path).child(id)
-
-            return try {
-                when {
-                    instance.image.isNotEmpty() -> {
-                        // Upload image, set URL back
-                        val data = Base64.decode(instance.image).toNSData()
-                        val metadata = FIRStorageMetadata().apply {
-                            setContentType("image/jpeg")
-                            setCacheControl("public,max-age=604800,immutable")
-                        }
-                        val imageUrl = uploadAndGetRemoteURL(storageRef, data, metadata)
-                        logMessage("saveInstanceToDatabase") { "imageUrl=$imageUrl" }
-                        instance.updateImage(imageUrl)
-
-                        val map = instance.toMap() as NSDictionary
-                        setValue(dbRef, map)  // suspend, should throw on failure
-                        true
-                    }
-
-                    instance.video.isNotEmpty() -> {
-                        // Upload video, set URL back
-                        val data = Base64.decode(instance.video).toNSData()
-                        val metadata = FIRStorageMetadata().apply {
-                            setContentType("video/mp4")
-                            setCacheControl("public,max-age=604800,immutable")
-                        }
-                        val videoUrl = uploadAndGetRemoteURL(storageRef, data, metadata)
-                        logMessage("saveInstanceToDatabase") { "videoUrl=$videoUrl" }
-                        instance.updateVideo(videoUrl)
-
-                        val map = instance.toMap() as NSDictionary
-                        setValue(dbRef, map)
-                        true
-                    }
-
-                    else -> {
-                        // No media: write instance as is
-                        val map = instance.toMap() as NSDictionary
-                        setValue(dbRef, map)
-                        true
-                    }
-                }
-            } catch (e: Throwable) {
-                e.printStackTrace()
-                false
-            }
-        }
-
-//        @OptIn(ExperimentalEncodingApi::class)
-//        suspend fun saveInstanceToDatabase(
-//            id: String,
-//            path: String,
-//            instance: BaseNewsInstance
-//        ) : Boolean {
-//            val storageReference = storage.child(path).child(id)
-//            val databaseReference = database.child(path).child(id)
-//
-//            try {
-//                if (instance.image.isNotEmpty()) {
-//                    val nsDataImage = Base64.decode(instance.image).toNSData()
-//                    val metadata = FIRStorageMetadata().apply {
-//                        setContentType("image/jpeg")
-//                    }
-//
-//                    val imageUrl = uploadAndGetRemoteURL(storageReference, nsDataImage, metadata)
-//                    logMessage("saveInstanceToDatabase") { imageUrl }
-//                    instance.updateImage(imageUrl)
-//                } else {
-//                    if(instance.video.isNotEmpty()) {
-//                        val nsDataVideo = Base64.decode(instance.video).toNSData()
-//                        val metadata = FIRStorageMetadata().apply {
-//                            setContentType("video/mp4")
-//                        }
-//
-//                        val videoUrl = uploadAndGetRemoteURL(storageReference, nsDataVideo, metadata)
-//                        logMessage("saveInstanceToDatabase") { videoUrl }
-//                        instance.updateVideo(videoUrl)
-//                    }
-//                }
-//                // Convert instance to Firebase-compatible Map
-//                val newMap = instance.toMap() as NSDictionary
-//                // Save user object in Realtime Database
-//                setValue(databaseReference, newMap)
-//                return true
-//            } catch (e: Exception) {
-//                e.printStackTrace()
-//                return false
-//            }
-//        }
-
-//        @OptIn(ExperimentalEncodingApi::class)
-//        suspend fun saveInstanceToDatabase(
-//            id: String,
-//            path: String,
-//            instance: BaseNewsInstance
-//        ) : Boolean{
-//            val storageReference = storage.child(path).child(id)
-//            val databaseReference = database.child(path).child(id)
-//
-//            return try {
-//                if (instance.image.isNotEmpty()) {
-//                    val nsDataImage = Base64.decode(instance.image).toNSData()
-//                    val metadata = FIRStorageMetadata().apply {
-//                        setContentType("image/jpeg")
-//                    }
-//
-//                    val imageUrl = uploadAndGetRemoteURL(storageReference, nsDataImage, metadata)
-//                    logMessage("saveInstanceToDatabase") { imageUrl }
-//                    instance.updateImage(imageUrl)
-//                }
-//                // Convert instance to Firebase-compatible Map
-//                val commentMap = instance.toMap() as NSDictionary
-//                logMessage("saveInstanceToDatabase") { "After convert to NSDictionary: $commentMap" }
-//                // Save user object in Realtime Database
-//                setValue(databaseReference, commentMap)
-//                true
-//            } catch (e: Exception) {
-//                e.printStackTrace()
-//                false
-//            }
-//        }
 
         suspend fun saveValueToDatabase(
             id: String,
@@ -279,89 +141,12 @@ class IosDatabaseHelper {
             }
         }
 
-        suspend fun deleteNewsFromDatabase(path: String, new: NewsDTO) {
-            try {
-                val dbRef = database.child(path).child(new.id)
-                val storageRef = storage.child(path).child(new.id)
-                removeValue(dbRef)
-                if (new.image.isNotEmpty()) delete(storageRef)
-            } catch (e : Exception) {
-                e.printStackTrace()
-            }
-        }
-
         suspend fun deleteCommentFromDatabase(path: String, comment: BaseNewsInstance) {
             try {
                 val dbRef = database.child(path).child(comment.id)
                 removeValue(dbRef)
             } catch (e : Exception) {
                 e.printStackTrace()
-            }
-        }
-
-        @OptIn(ExperimentalEncodingApi::class)
-        suspend fun updateNewsFromDatabase(
-            path: String,
-            newContent: String,
-            newImage: String,
-            newVideo : String,
-            news: NewsDTO,
-        ) : Boolean {
-            logMessage("updateNewsFromDatabase") { newImage }
-            try {
-                val storageReference = storage.child(path).child(news.id)
-                var updates = mutableMapOf<String, Any>("message" to newContent)
-                if(newImage.isNotEmpty()){
-                    if(newImage != news.image) {
-                        val nsDataImage = Base64.decode(newImage).toNSData()
-                        val metadata = FIRStorageMetadata().apply {
-                            setContentType("image/jpeg")
-                            setCacheControl("public,max-age=604800,immutable")
-                        }
-
-                        val imageUrl = uploadAndGetRemoteURL(storageReference, nsDataImage, metadata)
-                        logMessage("updateNewsFromDatabase") { imageUrl }
-                        updates["image"] = imageUrl
-                    } else {
-                        updates = mutableMapOf<String, Any>(
-                            "message" to newContent,
-                            "image" to newImage
-                        )
-                    }
-                } else {
-                    if(newVideo.isNotEmpty()) {
-                        if(newVideo != news.video) {
-                            val nsDataVideo = Base64.decode(newVideo).toNSData()
-                            val metadata = FIRStorageMetadata().apply {
-                                setContentType("video/mp4")
-                                setCacheControl("public,max-age=604800,immutable")
-                            }
-
-                            val videoUrl = uploadAndGetRemoteURL(storageReference, nsDataVideo, metadata)
-                            logMessage("updateNewsFromDatabase") { videoUrl }
-                            updates["video"] = videoUrl
-                        } else {
-                            updates = mutableMapOf<String, Any>(
-                                "message" to newContent,
-                                "video" to newVideo
-                            )
-                        }
-                    } else {
-                        updates = mutableMapOf<String, Any>(
-                            "message" to newContent,
-                            "image" to "",
-                            "video" to ""
-                        )
-                        if(news.image.isNotEmpty() || news.video.isNotEmpty()) {
-                            delete(storageReference)
-                        }
-                    }
-                }
-                updateChildren(database.child(path).child(news.id), updates)
-                return true
-            } catch (e: Throwable) {
-                e.printStackTrace()
-                return false
             }
         }
 

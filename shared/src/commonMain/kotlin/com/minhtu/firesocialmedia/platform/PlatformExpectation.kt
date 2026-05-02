@@ -1,16 +1,17 @@
 package com.minhtu.firesocialmedia.platform
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.unit.dp
 import com.minhtu.firesocialmedia.data.remote.service.imagepicker.ImagePicker
 import com.minhtu.firesocialmedia.di.PlatformContext
+import com.minhtu.firesocialmedia.domain.entity.authentication.TwoFARequest
+import com.minhtu.firesocialmedia.domain.entity.authentication.TwoFAResponse
 import com.minhtu.firesocialmedia.domain.entity.home.deeplinks.ShareApp
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.presentation.signin.SignInViewModel
@@ -45,8 +46,7 @@ fun CrossPlatformIcon(
             Image(
                 painter = iconPainter,
                 contentDescription = contentDescription,
-                modifier = modifier
-                    .padding(4.dp),
+                modifier = modifier,
                 contentScale = contentScale,
                 colorFilter = if (tint != Color.Unspecified) ColorFilter.tint(tint) else null
             )
@@ -83,9 +83,6 @@ fun Color.toHex(): String {
 @Composable
 expect fun CommonBackHandler(enabled: Boolean = true, onBack: () -> Unit)
 
-@Composable
-expect fun PasswordVisibilityIcon(passwordVisibility : Boolean)
-
 expect fun exitApp()
 
 expect fun createMessageForServer(message: String, tokenList : ArrayList<String>, sender : UserInstance, type : String): String
@@ -93,6 +90,7 @@ expect fun createMessageForServer(message: String, tokenList : ArrayList<String>
 expect fun createCallMessage(message: String, tokenList : ArrayList<String>, sessionId : String, sender : UserInstance, receiver : UserInstance, type : String) : String
 
 expect fun sendMessageToServer(request: String)
+expect suspend fun send2FARequest(request: TwoFARequest) : TwoFAResponse
 
 expect object TokenStorage {
     fun updateTokenInStorage(token: String?)
@@ -162,6 +160,7 @@ expect class WebRTCVideoTrack
 expect fun WebRTCVideoView(
     localTrack: WebRTCVideoTrack?,
     remoteTrack: WebRTCVideoTrack?,
+    isLocalVideoOff : Boolean,
     modifier: Modifier
 )
 
@@ -191,3 +190,11 @@ expect fun getUriStringFromLocalPath(localPath : String) : String
 expect suspend fun queryShareApps(text: String): MutableList<ShareApp>
 
 expect fun launchShareAppWithDeepLink(app : ShareApp, deepLink : String)
+
+expect fun getAppVersion(): String
+
+expect fun generateQrImage(content: String): ImageBitmap
+expect object AppConfig {
+    val twoFAApiKey: String
+    val supabaseApiKey: String
+}

@@ -17,6 +17,7 @@ import com.minhtu.firesocialmedia.domain.serviceimpl.call.AndroidAudioCallServic
 import com.minhtu.firesocialmedia.domain.serviceimpl.clipboard.AndroidClipboardService
 import com.minhtu.firesocialmedia.domain.serviceimpl.crypto.AndroidCryptoService
 import com.minhtu.firesocialmedia.domain.serviceimpl.database.AndroidDatabaseService
+import com.minhtu.firesocialmedia.domain.serviceimpl.database.supabase.SupabaseStorageHelper
 import com.minhtu.firesocialmedia.domain.serviceimpl.room.AndroidRoomService
 
 class AndroidPlatformContext(
@@ -32,9 +33,9 @@ class AndroidPlatformContext(
     }
     override val auth: AuthService = AndroidAuthService(context)
     override val crypto: CryptoService = AndroidCryptoService(context)
-    override val database: DatabaseService = AndroidDatabaseService(context)
+    override val database: DatabaseService = AndroidDatabaseService(context, SupabaseStorageHelper())
     override val clipboard : ClipboardService = AndroidClipboardService(context)
-    override val audioCall: AudioCallService = AndroidAudioCallService(context)
+    override val audioCall: AudioCallService by lazy { AndroidAudioCallService.get(context) }
     override val room: RoomService = AndroidRoomService(
         context,
         localDatabase.userDao(),

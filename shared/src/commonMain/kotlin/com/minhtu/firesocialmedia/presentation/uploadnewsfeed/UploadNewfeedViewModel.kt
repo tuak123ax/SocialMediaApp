@@ -38,7 +38,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlin.let
 
 class UploadNewfeedViewModel(
     private val getUserUseCase: GetUserUseCase,
@@ -113,7 +112,7 @@ class UploadNewfeedViewModel(
         viewModelScope.launch {
             withContext(ioDispatcher) {
                 val newsRandomId = generateRandomId()
-                if(message.isNotEmpty() || image.isNotEmpty() || video.isNotEmpty()) {
+                if(message.isNotBlank() || image.isNotBlank() || video.isNotBlank()) {
                     //Save post to db
                     val newsInstance = NewsInstance(
                         newsRandomId,

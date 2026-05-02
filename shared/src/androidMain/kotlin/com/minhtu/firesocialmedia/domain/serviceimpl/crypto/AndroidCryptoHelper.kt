@@ -20,7 +20,7 @@ import javax.crypto.spec.GCMParameterSpec
 import javax.crypto.spec.SecretKeySpec
 
 class AndroidCryptoHelper {
-    companion object{
+    companion object {
         private const val MASTER_KEY_ALIAS = "_androidx_security_master_key_"
         suspend fun getEncryptedSharedPreferences(context: Context): SharedPreferences {
             return try {
@@ -77,7 +77,9 @@ class AndroidCryptoHelper {
 
             // Delete EncryptedSharedPreferences files
             val prefsDir = File(context.dataDir, "shared_prefs")
-            val filesToDelete = prefsDir.listFiles()?.filter { it.name.contains("secure_prefs_file") } ?: emptyList()
+            val filesToDelete =
+                prefsDir.listFiles()?.filter { it.name.contains("secure_prefs_file") }
+                    ?: emptyList()
 
             for (file in filesToDelete) {
                 if (file.exists()) {
@@ -90,7 +92,7 @@ class AndroidCryptoHelper {
         const val GCM_IV_SIZE = 12   // IV size in bytes (96 bits)
         const val GCM_TAG_SIZE = 128 // Authentication tag size in bits
 
-        fun encryptAESGCM(data: ByteArray, secretKeyString: String, ivString : String): ByteArray {
+        fun encryptAESGCM(data: ByteArray, secretKeyString: String, ivString: String): ByteArray {
             val secretKeyByte = android.util.Base64.decode(secretKeyString, 0)
             // Create a SecretKey object from the byte array
             val secretKey = SecretKeySpec(secretKeyByte, 0, secretKeyByte.size, "AES")
@@ -106,34 +108,38 @@ class AndroidCryptoHelper {
             // Create a SecretKey object from the byte array
             val secretKey = SecretKeySpec(secretKeyByte, 0, secretKeyByte.size, "AES")
             val iv = encryptedData.copyOfRange(0, GCM_IV_SIZE) // Extract IV
-            val cipherText = encryptedData.copyOfRange(GCM_IV_SIZE, encryptedData.size) // Extract ciphertext
+            val cipherText =
+                encryptedData.copyOfRange(GCM_IV_SIZE, encryptedData.size) // Extract ciphertext
             val cipher = Cipher.getInstance("AES/GCM/NoPadding")
             cipher.init(Cipher.DECRYPT_MODE, secretKey, GCMParameterSpec(GCM_TAG_SIZE, iv))
             return cipher.doFinal(cipherText)
         }
 
-        fun saveAccount(context: Context, email: String, password: String){
+        fun saveAccount(context: Context, email: String, password: String) {
             CoroutineScope(Dispatchers.IO).launch {
-                val secureSharedPreferences: SharedPreferences = getEncryptedSharedPreferences(context)
+                val secureSharedPreferences: SharedPreferences =
+                    getEncryptedSharedPreferences(context)
                 secureSharedPreferences.edit().putString(Constants.KEY_EMAIL, email).apply()
                 secureSharedPreferences.edit().putString(Constants.KEY_PASSWORD, password).apply()
             }
         }
 
-        suspend fun clearAccount(context: Context){
+        suspend fun clearAccount(context: Context) {
             val secureSharedPreferences: SharedPreferences = getEncryptedSharedPreferences(context)
             secureSharedPreferences.edit().clear().apply()
         }
 
-        suspend fun saveCurrentUserInfo(context : Context, user: UserDTO) {
+        suspend fun saveCurrentUserInfo(context: Context, user: UserDTO) {
             val secureSharedPreferences: SharedPreferences = getEncryptedSharedPreferences(context)
             secureSharedPreferences.edit().putString(Constants.KEY_AVATAR, user.image).apply()
             secureSharedPreferences.edit().putString(Constants.KEY_NAME, user.name).apply()
             secureSharedPreferences.edit().putString(Constants.KEY_STATUS, user.status).apply()
             secureSharedPreferences.edit().putString(Constants.KEY_FCM_TOKEN, user.token).apply()
             secureSharedPreferences.edit().putString(Constants.KEY_USER_ID, user.uid).apply()
-            secureSharedPreferences.edit().putStringSet(Constants.KEY_FRIENDS, user.friends.toSet()).apply()
-            secureSharedPreferences.edit().putStringSet(Constants.KEY_FRIEND_REQUEST, user.friendRequests.toSet()).apply()
+            secureSharedPreferences.edit().putStringSet(Constants.KEY_FRIENDS, user.friends.toSet())
+                .apply()
+            secureSharedPreferences.edit()
+                .putStringSet(Constants.KEY_FRIEND_REQUEST, user.friendRequests.toSet()).apply()
 
         }
 
@@ -145,11 +151,13 @@ class AndroidCryptoHelper {
             val token = secureSharedPreferences.getString(Constants.KEY_FCM_TOKEN, "")
             val uid = secureSharedPreferences.getString(Constants.KEY_USER_ID, "")
             val friends = secureSharedPreferences.getStringSet(Constants.KEY_FRIENDS, emptySet())
-            val friendRequests = secureSharedPreferences.getStringSet(Constants.KEY_FRIEND_REQUEST, emptySet())
-            return if(!uid.isNullOrEmpty() &&
+            val friendRequests =
+                secureSharedPreferences.getStringSet(Constants.KEY_FRIEND_REQUEST, emptySet())
+            return if (!uid.isNullOrEmpty() &&
                 !name.isNullOrEmpty() &&
                 !image.isNullOrEmpty() &&
-                status != null && token != null && friends != null && friendRequests != null){
+                status != null && token != null && friends != null && friendRequests != null
+            ) {
                 UserDTO(
                     image = image,
                     name = name,
@@ -162,6 +170,23 @@ class AndroidCryptoHelper {
             } else {
                 null
             }
+        }
+
+        suspend fun save2FAStatus(context: Context, status: Boolean) {
+            val secureSharedPreferences: SharedPreferences = getEncryptedSharedPreferences(context)
+            secureSharedPreferences.edit().putBoolean(Constants.KEY_2FA_VERIFIED, status).apply()
+        }
+
+        suspend fun get2FAStatus(context: Context): Boolean {
+            val secureSharedPreferences: SharedPreferences = getEncryptedSharedPreferences(context)
+            return secureSharedPreferences.getBoolean(Constants.KEY_2FA_VERIFIED, false)
+        }
+
+        suspend fun delete2FAStatus(context: Context) {
+            val secureSharedPreferences = getEncryptedSharedPreferences(context)
+            secureSharedPreferences.edit()
+                .remove(Constants.KEY_2FA_VERIFIED)
+                .apply()
         }
     }
 }

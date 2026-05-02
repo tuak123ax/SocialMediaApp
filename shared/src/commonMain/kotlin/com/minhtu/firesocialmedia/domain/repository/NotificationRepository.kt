@@ -1,6 +1,7 @@
 package com.minhtu.firesocialmedia.domain.repository
 
 import com.minhtu.firesocialmedia.domain.entity.notification.NotificationInstance
+import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 
 interface NotificationRepository {
     suspend fun getAllNotificationsOfUser(currentUserUid: String) : List<NotificationInstance>?
@@ -10,4 +11,9 @@ interface NotificationRepository {
         id: String,
         notification: NotificationInstance
     )
+
+    suspend fun updateIsReadStatusOfNotification(user : UserInstance,
+                                                 notification: NotificationInstance)
+
+    suspend fun deleteAllNotifications(user : UserInstance): Result<Unit>
 }

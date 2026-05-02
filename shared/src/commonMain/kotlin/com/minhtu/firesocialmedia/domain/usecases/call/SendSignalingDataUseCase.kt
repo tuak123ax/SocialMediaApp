@@ -11,12 +11,13 @@ import com.minhtu.firesocialmedia.utils.Utils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 
 class SendSignalingDataUseCase(
     val callRepository: CallRepository,
-    val coroutineScope: CoroutineScope = CoroutineScope(Dispatchers.IO)
+    val coroutineScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 ) {
     suspend fun sendCallSessionToFirebase(audioCallSession : AudioCallSession,
                                   sendCallSessionCallBack : Utils.Companion.BasicCallBack){
@@ -55,22 +56,41 @@ class SendSignalingDataUseCase(
          )
     }
 
-    suspend fun observeAnswerFromCallee(sessionId : String,
-                                callerId : String?,
-                                onGetAnswerFromCallee : () -> Unit,
-                                onRejectVideoCall: suspend () -> Unit) {
+    suspend fun observeAnswerFromCallee(
+        sessionId : String,
+        callerId : String?,
+        expectVideoAnswer: Boolean = false,
+        onGetAnswerFromCallee : () -> Unit,
+        onRejectVideoCall: suspend () -> Unit
+    ) {
         logMessage("observeAnswerFromCallee", { "observe in service" })
         //Observe answer from callee.
         callRepository.observeAnswerFromCallee(
             sessionId,
-            answerCallBack = { remoteAnswer ->
-                //Set remote description when received answer from callee.
-                coroutineScope.launch {
-                    if(callerId != null && callerId != remoteAnswer.initiator)
-                        logMessage("observeAnswerFromCallee", { "setRemoteDescription" })
-                    callRepository.setRemoteDescription(remoteAnswer)
+            answerCallBack = answerObserver@ { remoteAnswer ->
+                val initiator = remoteAnswer.initiator
+                val isVideoAnswer = remoteAnswer.sdp?.contains("m=video") == true
+
+                // Ignore answers authored by this device. This protects the callee side from any
+                // stale answer observer that might still be attached during video upgrade.
+                if (!callerId.isNullOrEmpty() && initiator == callerId) {
+                    logMessage("observeAnswerFromCallee", { "ignore self-authored answer" })
+                    return@answerObserver
                 }
-                onGetAnswerFromCallee()
+
+                // When starting a video upgrade, the old audio answer may still be present in the
+                // shared Firebase answer node. Ignore that stale audio answer and wait for the
+                // fresh video answer, otherwise the peer connection goes back to STABLE too early.
+                if (expectVideoAnswer && !isVideoAnswer) {
+                    logMessage("observeAnswerFromCallee", { "ignore stale audio answer while waiting for video answer" })
+                    return@answerObserver
+                }
+
+                coroutineScope.launch {
+                    logMessage("observeAnswerFromCallee", { "setRemoteDescription" })
+                    callRepository.setRemoteDescription(remoteAnswer)
+                    onGetAnswerFromCallee()
+                }
             },
             rejectCallBack = {
                 //Update offer data on DB in case reject video call.
@@ -139,6 +159,11 @@ class SendSignalingDataUseCase(
 
             }
         )
+    }
+
+    /** Clear the answer node so a new video offer attempt is not hit by a stale "Reject" from a previous decline. */
+    suspend fun clearAnswerInFirebaseForNewVideoOffer(sessionId : String) {
+        callRepository.clearAnswerInFirebase(sessionId)
     }
 
     suspend fun sendOfferToFireBase(sessionId : String, offer : OfferAnswer) {

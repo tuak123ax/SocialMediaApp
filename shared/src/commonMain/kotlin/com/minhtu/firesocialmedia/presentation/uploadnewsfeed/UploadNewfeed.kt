@@ -1,9 +1,13 @@
 package com.minhtu.firesocialmedia.presentation.uploadnewsfeed
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,12 +18,19 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Button
@@ -50,14 +61,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.minhtu.firesocialmedia.constants.TestTag
 import com.minhtu.firesocialmedia.data.remote.service.imagepicker.ImagePicker
@@ -68,17 +80,19 @@ import com.minhtu.firesocialmedia.platform.CrossPlatformIcon
 import com.minhtu.firesocialmedia.platform.VideoPlayer
 import com.minhtu.firesocialmedia.platform.getUriStringFromLocalPath
 import com.minhtu.firesocialmedia.platform.showToast
+import com.minhtu.firesocialmedia.platform.toHex
 import com.minhtu.firesocialmedia.presentation.home.HomeViewModel
 import com.minhtu.firesocialmedia.presentation.loading.Loading
 import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
 import com.minhtu.firesocialmedia.utils.UiUtils
+import com.minhtu.firesocialmedia.utils.UiUtils.Companion.ActionButton
 import com.seiko.imageloader.ui.AutoSizeImage
 import kotlinx.coroutines.delay
 
 class UploadNewsfeed {
     companion object{
         @Composable
-        fun UploadNewsfeedScreen(modifier: Modifier,
+        fun UploadNewsfeedScreen(paddingValues : PaddingValues,
                                  imagePicker: ImagePicker,
                                  localImageLoaderValue : ProvidedValue<*>,
                                  homeViewModel: HomeViewModel,
@@ -88,11 +102,11 @@ class UploadNewsfeed {
                                  onNavigateBack: () -> Unit){
             val isLoading by loadingViewModel.isLoading.collectAsState()
             uploadNewsfeedViewModel.updateCurrentUser(homeViewModel.currentUser!!)
-
+            val textScrollState = rememberScrollState()
             imagePicker.RegisterLauncher({loadingViewModel.hideLoading()})
             val postStatus = uploadNewsfeedViewModel.createPostStatus.collectAsState()
             val updateStatus = uploadNewsfeedViewModel.updatePostStatus.collectAsState()
-            val postError = uploadNewsfeedViewModel.postError.collectAsState()
+            val postError by uploadNewsfeedViewModel.postError.collectAsState()
             var isUpdated by remember { mutableStateOf(false) }
             var showAccessPermissionSheet by remember { mutableStateOf(false) }
             val currentAccessPermission = uploadNewsfeedViewModel.accessPermission.collectAsState()
@@ -132,9 +146,11 @@ class UploadNewsfeed {
                     onNavigateBack()
                 }
             }
-            LaunchedEffect(postError.value) {
-                if(postError.value != null) {
+            LaunchedEffect(postError) {
+                if(postError != null) {
                     showToast("Please input message or image!")
+                    loadingViewModel.hideLoading()
+                    uploadNewsfeedViewModel.resetPostError()
                 }
             }
 
@@ -163,10 +179,12 @@ class UploadNewsfeed {
                 showDialog.value = true
             }
             if (showDialog.value) {
-                UiUtils.ShowAlertDialog(
+                UiUtils.ShowDiscardDialog(
                     title = "Warning",
                     message = "Are you sure you want to exit? All data will be lost!",
-                    resetAndBack = {
+                    icon = Icons.Default.Warning,
+                    iconBackground = Color(0xFFFFF3E0),
+                    onDiscard = {
                         uploadNewsfeedViewModel.resetPostError()
                         uploadNewsfeedViewModel.resetBackValue()
                         uploadNewsfeedViewModel.resetPostStatus()
@@ -178,91 +196,215 @@ class UploadNewsfeed {
                 )
             }
             var showDraftPickerDialog by remember { mutableStateOf(false) }
-            Box(modifier = Modifier.fillMaxSize()) {
-                Column(verticalArrangement = Arrangement.Center, modifier = modifier) {
-                    //Title
-                    Text(
-                        text = if(isUpdated) "Update Post" else "Create Post",
-                        color = Color.Black,
-                        fontSize = 30.sp,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.fillMaxWidth()
+            Box(modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    //Close and draft buttons
+                    CloseAndDraftButtons(
+                        newsPostedWhenOffline,
+                        onClickCloseButton = {
+                            uploadNewsfeedViewModel.onClickBackButton()
+                        },
+                        onClickDraftBoxButton = {
+                            showDraftPickerDialog = true
+                        }
                     )
-                    Spacer(modifier = Modifier.padding(bottom = 10.dp))
-                    Row(horizontalArrangement = Arrangement.Center,
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp)
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            OutlinedButton(
-                                onClick = {
-                                    //Show bottom sheet to choose access permission
-                                    showAccessPermissionSheet = true
-                                },
-                                colors = ButtonDefaults.outlinedButtonColors(
-                                    containerColor = Color.White,
-                                    contentColor = Color.Black
-                                ),
-                                modifier = Modifier
-                                    .testTag(TestTag.TAG_BUTTON_ACCESS_MODIFIER)
-                                    .semantics {
-                                        contentDescription = TestTag.TAG_BUTTON_ACCESS_MODIFIER
-                                    }
-                            ) {
-                                AccessPermissionButtonContent(currentAccessPermission.value)
-                            }
-                            if(showAccessPermissionSheet) {
-                                //Access permission sheet
-                                AccessPermissionBottomSheet(
-                                    title = "Who can see your post?",
-                                    currentAccessPermission.value,
-                                    onDismiss = {
-                                        showAccessPermissionSheet = false
+
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center,
+                        modifier = Modifier
+                            .padding(vertical = 10.dp)
+                            .background(Color.White)) {
+                        //Title
+                        Text(
+                            text = if(isUpdated) "Update Post" else "Create Post",
+                            color = Color.Black,
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 10.dp)
+                        )
+                        Row(horizontalArrangement = Arrangement.Center,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                OutlinedButton(
+                                    onClick = {
+                                        //Show bottom sheet to choose access permission
+                                        showAccessPermissionSheet = true
                                     },
-                                    onSelected = { selectedAccess ->
-                                        showAccessPermissionSheet = false
-                                        uploadNewsfeedViewModel.updateAccessPermission(selectedAccess)
+                                    colors = ButtonDefaults.outlinedButtonColors(
+                                        containerColor = Color.White,
+                                        contentColor = Color.Black
+                                    ),
+                                    modifier = Modifier
+                                        .testTag(TestTag.TAG_BUTTON_ACCESS_MODIFIER)
+                                        .semantics {
+                                            contentDescription = TestTag.TAG_BUTTON_ACCESS_MODIFIER
+                                        }
+                                ) {
+                                    AccessPermissionButtonContent(currentAccessPermission.value)
+                                }
+                                if(showAccessPermissionSheet) {
+                                    //Access permission sheet
+                                    AccessPermissionBottomSheet(
+                                        title = "Who can see your post?",
+                                        currentAccessPermission.value,
+                                        onDismiss = {
+                                            showAccessPermissionSheet = false
+                                        },
+                                        onSelected = { selectedAccess ->
+                                            showAccessPermissionSheet = false
+                                            uploadNewsfeedViewModel.updateAccessPermission(selectedAccess)
+                                        }
+                                    )
+                                }
+                            }
+                        }
+
+                        OutlinedTextField(
+                            value = uploadNewsfeedViewModel.message,
+                            onValueChange = {
+                                uploadNewsfeedViewModel.updateMessage(it)
+                            },
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedTextColor = Color.Black,
+                                unfocusedTextColor = Color.Black,
+                                disabledTextColor = Color.Black
+                            ),
+                            shape = RoundedCornerShape(10.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(20.dp)
+                                .heightIn(min = 100.dp, max = 140.dp)
+                                .verticalScroll(textScrollState)
+                                .animateContentSize(
+                                    animationSpec = tween(
+                                        durationMillis = 250,
+                                        easing = FastOutSlowInEasing
+                                    )
+                                ),
+                            label = { Text("What's on your mind?") },
+                            maxLines = Int.MAX_VALUE,
+                            singleLine = false
+                        )
+                        if (uploadNewsfeedViewModel.image.isNotEmpty()) {
+                            Row(
+                                horizontalArrangement = Arrangement.Center,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                            ) {
+                                val imageBytes = produceState<ByteArray?>(initialValue = null, uploadNewsfeedViewModel.image) {
+                                    value = imagePicker.loadImageBytes(uploadNewsfeedViewModel.image)
+                                }
+                                if(imageBytes.value != null) {
+                                    imagePicker.ByteArrayImage(
+                                        imageBytes.value,
+                                        modifier = Modifier
+                                            .height(250.dp)
+                                            .fillMaxWidth()
+                                            .padding(horizontal = 20.dp)
+                                            .border(1.dp, Color.Gray)
+                                    )
+                                } else {
+                                    if(uploadNewsfeedViewModel.image.isNotEmpty()){
+                                        CompositionLocalProvider(
+                                            localImageLoaderValue
+                                        ) {
+                                            AutoSizeImage(
+                                                uploadNewsfeedViewModel.image,
+                                                contentDescription = "Image",
+                                                contentScale = ContentScale.Fit,
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .height(250.dp)
+                                                    .padding(horizontal = 20.dp)
+                                                    .testTag(TestTag.TAG_POST_IMAGE)
+                                                    .semantics{
+                                                        contentDescription = TestTag.TAG_POST_IMAGE
+                                                    }
+                                            )
+                                        }
                                     }
-                                )
+                                }
+                            }
+                        } else {
+                            if(uploadNewsfeedViewModel.video.isNotEmpty()) {
+                                Row(
+                                    horizontalArrangement = Arrangement.Center,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                ) {
+                                    val video = uploadNewsfeedViewModel.video
+                                    val videoUri: String = if(uploadNewsfeedViewModel.localPathOfSelectedDraft.value.isNotEmpty()) {
+                                        //Load video from local storage
+                                        getUriStringFromLocalPath(uploadNewsfeedViewModel.localPathOfSelectedDraft.value)
+                                    } else {
+                                        uploadNewsfeedViewModel.video
+                                    }
+                                    if(video.isNotEmpty()) {
+                                        VideoPlayer(videoUri,
+                                            modifier = Modifier
+                                                .height(250.dp)
+                                                .fillMaxWidth()
+                                                .padding(20.dp))
+                                    }
+                                }
                             }
                         }
                     }
-                    Spacer(modifier = Modifier.padding(bottom = 10.dp))
-                    OutlinedTextField(
-                        value = uploadNewsfeedViewModel.message,
-                        onValueChange = {
-                            uploadNewsfeedViewModel.updateMessage(it)
-                        },
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedTextColor = Color.Black,
-                            unfocusedTextColor = Color.Black,
-                            disabledTextColor = Color.Black
-                        ),
-                        maxLines = 4,
+                    Spacer(Modifier.weight(1f))
+                    //Delete and upload image row
+                    Row(horizontalArrangement = Arrangement.End,
+                        verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(20.dp)
-                            .testTag(TestTag.TAG_POST_MESSAGE)
-                            .semantics{
-                                contentDescription = TestTag.TAG_POST_MESSAGE
+                            .padding(20.dp)){
+                        if(uploadNewsfeedViewModel.image.isNotEmpty() || uploadNewsfeedViewModel.video.isNotEmpty()) {
+                            Button(
+                                onClick = {
+                                uploadNewsfeedViewModel.updateImage("")
+                                uploadNewsfeedViewModel.updateVideo("")
                             },
-                        label = { Text(text = "Message") }
-                    )
-                    Spacer(modifier = Modifier.padding(bottom = 10.dp))
-                    Row(horizontalArrangement = Arrangement.Center,
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp)
-                    ) {
+                                shape = RoundedCornerShape(10.dp),
+                                elevation = ButtonDefaults.buttonElevation(4.dp),
+                                contentPadding = PaddingValues(horizontal = 6.dp),
+                                modifier = Modifier
+                                    .testTag(TestTag.TAG_BUTTON_DELETE)
+                                    .semantics{
+                                        contentDescription = TestTag.TAG_BUTTON_DELETE
+                                    }
+                            ) {
+                                Text(text = "Delete")
+                            }
+                            Spacer(Modifier.weight(1f))
+                        }
                         Box(contentAlignment = Alignment.Center) {
                             var showMenu by remember { mutableStateOf(false) }
-                            Button(onClick = {
-                                showMenu = true
-                            },
-                                modifier = Modifier.testTag(TestTag.TAG_BUTTON_UPLOAD)
+                            ActionButton(
+                                icon = "image",
+                                text = "Upload",
+                                textColor = Color.Red,
+                                buttonColor = Color.White,
+                                backgroundColor = Color.White.toHex(),
+                                tint = Color.Red,
+                                onClick = {
+                                    showMenu = true
+                                },
+                                modifier = Modifier
+                                    .testTag(TestTag.TAG_BUTTON_UPLOAD)
                                     .semantics{
                                         contentDescription = TestTag.TAG_BUTTON_UPLOAD
                                     }
-                                ) {
-                                Text(text = "Upload")
-                            }
+                            )
                             DropdownMenuForUpload(
                                 showMenu,
                                 onUploadImage = {
@@ -276,147 +418,51 @@ class UploadNewsfeed {
                             )
                         }
                     }
-                    Spacer(modifier = Modifier.padding(bottom = 10.dp))
-                    if (uploadNewsfeedViewModel.image.isNotEmpty()) {
-                        Row(
-                            horizontalArrangement = Arrangement.Center,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 10.dp)
-                        ) {
-                            val imageBytes = produceState<ByteArray?>(initialValue = null, uploadNewsfeedViewModel.image) {
-                                value = imagePicker.loadImageBytes(uploadNewsfeedViewModel.image)
-                            }
-                            if(imageBytes.value != null) {
-                                imagePicker.ByteArrayImage(
-                                    imageBytes.value,
-                                    modifier = Modifier
-                                        .height(300.dp)
-                                        .padding(20.dp)
-                                        .border(1.dp, Color.Gray))
-                            } else {
-                                if(uploadNewsfeedViewModel.image.isNotEmpty()){
-                                    CompositionLocalProvider(
-                                        localImageLoaderValue
-                                    ) {
-                                        AutoSizeImage(
-                                            uploadNewsfeedViewModel.image,
-                                            contentDescription = "Image",
-                                            contentScale = ContentScale.Fit,
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .height(200.dp)
-                                                .padding(5.dp)
-                                                .testTag(TestTag.TAG_POST_IMAGE)
-                                                .semantics{
-                                                    contentDescription = TestTag.TAG_POST_IMAGE
-                                                }
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    } else {
-                        if(uploadNewsfeedViewModel.video.isNotEmpty()) {
-                            Row(
-                                horizontalArrangement = Arrangement.Center,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 10.dp)
-                            ) {
-                                val video = uploadNewsfeedViewModel.video
-                                val videoUri: String = if(uploadNewsfeedViewModel.localPathOfSelectedDraft.value.isNotEmpty()) {
-                                    //Load video from local storage
-                                    getUriStringFromLocalPath(uploadNewsfeedViewModel.localPathOfSelectedDraft.value)
-                                } else {
-                                    uploadNewsfeedViewModel.video
-                                }
-                                if(video.isNotEmpty()) {
-                                    VideoPlayer(videoUri,
-                                        modifier = Modifier
-                                            .height(300.dp)
-                                            .fillMaxWidth()
-                                            .padding(20.dp))
-                                }
-                            }
-                        }
-                    }
-                    Spacer(modifier = Modifier.padding(bottom = 10.dp))
-                    Row(horizontalArrangement = Arrangement.SpaceAround, modifier = Modifier.fillMaxWidth().padding(5.dp)){
-                        Button(
-                            onClick = {
-                                uploadNewsfeedViewModel.onClickBackButton()
-                            },
-                            modifier = Modifier.testTag(TestTag.TAG_BUTTON_BACK)
-                                .semantics{
-                                    contentDescription = TestTag.TAG_BUTTON_BACK
-                                }
-
-                        ) {
-                            Text(text = "Back")
-                        }
-                        if(uploadNewsfeedViewModel.image.isNotEmpty() || uploadNewsfeedViewModel.video.isNotEmpty()) {
-                            Button(onClick = {
-                                uploadNewsfeedViewModel.updateImage("")
-                                uploadNewsfeedViewModel.updateVideo("")
-                            },
-                                modifier = Modifier.testTag(TestTag.TAG_BUTTON_DELETE)
-                                    .semantics{
-                                        contentDescription = TestTag.TAG_BUTTON_DELETE
-                                    }
-                            ) {
-                                Text(text = "Delete")
-                            }
-                        }
-                        Button(
-                            onClick = {
-                                loadingViewModel.showLoading()
-                                if(isUpdated) uploadNewsfeedViewModel.updateNewInformation(updateNew!!)
-                                else uploadNewsfeedViewModel.createPost(uploadNewsfeedViewModel.currentUser!!)
-                            },
-                            modifier = Modifier.testTag(TestTag.TAG_BUTTON_POST)
-                                .semantics{
-                                    contentDescription = TestTag.TAG_BUTTON_POST
-                                }
-                        ) {
-                            Text(text = if(isUpdated) "Update" else "Post")
-                        }
-                    }
-                }
-                Row(horizontalArrangement = Arrangement.End,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(end = 20.dp)) {
-                    OutlinedButton(
+                    //Post button
+                    Button(
                         onClick = {
-                            showDraftPickerDialog = true
+                            loadingViewModel.showLoading()
+                            if(isUpdated) uploadNewsfeedViewModel.updateNewInformation(updateNew!!)
+                            else uploadNewsfeedViewModel.createPost(uploadNewsfeedViewModel.currentUser!!)
                         },
-                        colors = ButtonDefaults.outlinedButtonColors(
-                            containerColor = Color.White,
-                            contentColor = Color.Black
+                        shape = RoundedCornerShape(10.dp),
+                        elevation = ButtonDefaults.buttonElevation(4.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary
                         ),
                         modifier = Modifier
-                            .testTag(TestTag.TAG_BUTTON_DRAFTPOST)
-                            .semantics {
-                                contentDescription = TestTag.TAG_BUTTON_DRAFTPOST
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp)
+                            .testTag(TestTag.TAG_BUTTON_POST)
+                            .semantics{
+                                contentDescription = TestTag.TAG_BUTTON_POST
                             }
                     ) {
-                        BadgedBox(
-                            badge = {
-                                if (newsPostedWhenOffline.isNotEmpty()) Badge { Text(if (newsPostedWhenOffline.size > 99) "99+" else "${newsPostedWhenOffline.size}") }
+                        Text(text = if(isUpdated) "Update" else "Post")
+                    }
+                    //Back button
+                    Button(
+                        onClick = {
+                            uploadNewsfeedViewModel.onClickBackButton()
+                        },
+                        shape = RoundedCornerShape(10.dp),
+                        elevation = ButtonDefaults.buttonElevation(4.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color.White
+                        ),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp)
+                            .padding(vertical = 10.dp)
+                            .testTag(TestTag.TAG_BUTTON_BACK)
+                            .semantics{
+                                contentDescription = TestTag.TAG_BUTTON_BACK
                             }
-                        ) {
-                            CrossPlatformIcon(
-                                "draft",
-                                backgroundColor = "#FFFFFFFF",
-                                "Draft",
-                                Modifier
-                                    .size(25.dp)
-                                    .padding(end = 5.dp)
-                            )
-                        }
-                        Spacer(Modifier.padding(horizontal = 5.dp))
-                        Text(text = "Your draft posts", color = Color.Black)
+                    ) {
+                        Text(
+                            text = "Back",
+                            color = Color.Gray
+                        )
                     }
                 }
                 DraftPostPickerDialog(
@@ -449,6 +495,69 @@ class UploadNewsfeed {
         }
 
         @Composable
+        fun CloseAndDraftButtons(
+            newsPostedWhenOffline : List<NewsInstance>,
+            onClickCloseButton : () -> Unit,
+            onClickDraftBoxButton : () -> Unit
+        ) {
+            Row(horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp)) {
+                CrossPlatformIcon(
+                    icon = "close",
+                    backgroundColor = Color.Black.toHex(),
+                    contentDescription = "Close Icon",
+                    contentScale = ContentScale.Fit,
+                    modifier = Modifier
+                        .size(30.dp)
+                        .padding(4.dp)
+                        .clip(CircleShape)
+                        .clickable {
+                            onClickCloseButton()
+                        }
+                        .testTag(TestTag.TAG_BUTTON_CLOSE)
+                        .semantics {
+                            contentDescription = TestTag.TAG_BUTTON_CLOSE
+                        }
+                )
+                Spacer(Modifier.weight(1f))
+                OutlinedButton(
+                    onClick = {
+                        onClickDraftBoxButton()
+                    },
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        containerColor = Color.White,
+                        contentColor = Color.Black
+                    ),
+                    modifier = Modifier
+                        .testTag(TestTag.TAG_BUTTON_DRAFTPOST)
+                        .semantics {
+                            contentDescription = TestTag.TAG_BUTTON_DRAFTPOST
+                        }
+                ) {
+                    BadgedBox(
+                        badge = {
+                            if (newsPostedWhenOffline.isNotEmpty()) Badge { Text(if (newsPostedWhenOffline.size > 99) "99+" else "${newsPostedWhenOffline.size}") }
+                        }
+                    ) {
+                        CrossPlatformIcon(
+                            "draft",
+                            backgroundColor = "#FFFFFFFF",
+                            "Draft",
+                            Modifier
+                                .size(25.dp)
+                                .padding(end = 5.dp)
+                        )
+                    }
+                    Spacer(Modifier.padding(horizontal = 5.dp))
+                    Text(text = "Your draft posts", color = Color.Black)
+                }
+            }
+        }
+
+        @Composable
         fun AccessPermissionButtonContent(currentAccessPermission: DecentralizationType) {
             CrossPlatformIcon(
                 when(currentAccessPermission) {
@@ -458,7 +567,8 @@ class UploadNewsfeed {
                     },
                     backgroundColor = "#FFFFFFFF",
                     "accessPermission",
-                    Modifier
+                    tint = Color.Red,
+                    modifier = Modifier
                         .size(25.dp)
                         .padding(end = 5.dp)
             )
@@ -643,7 +753,11 @@ class UploadNewsfeed {
             ) {
                 // Sheet Content
                 Column(Modifier.padding(16.dp)) {
-                    Text(title)
+                    Text(
+                        title,
+                        color = Color.Black,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
                     Spacer(Modifier.height(10.dp))
                     AccessPermissionRow(currentAccess) { access ->
                         selectedAccess = access

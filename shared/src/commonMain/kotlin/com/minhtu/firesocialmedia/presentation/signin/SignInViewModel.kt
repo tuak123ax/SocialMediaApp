@@ -4,11 +4,15 @@ import androidx.compose.runtime.mutableStateOf
 import com.minhtu.firesocialmedia.data.remote.service.signinlauncher.SignInLauncher
 import com.minhtu.firesocialmedia.domain.entity.crypto.Credentials
 import com.minhtu.firesocialmedia.domain.entity.signin.SignInState
+import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.domain.error.signin.SignInError
+import com.minhtu.firesocialmedia.domain.usecases.common.GetCurrentUserUidUseCase
+import com.minhtu.firesocialmedia.domain.usecases.common.GetUserUseCase
 import com.minhtu.firesocialmedia.domain.usecases.signin.CheckLocalAccountUseCase
 import com.minhtu.firesocialmedia.domain.usecases.signin.CheckUserExistsUseCase
 import com.minhtu.firesocialmedia.domain.usecases.signin.HandleSignInGoogleResultUseCase
 import com.minhtu.firesocialmedia.domain.usecases.signin.RememberPasswordUseCase
+import com.minhtu.firesocialmedia.domain.usecases.signin.SaveLoginActivityInfoUseCase
 import com.minhtu.firesocialmedia.domain.usecases.signin.SignInUseCase
 import com.minhtu.firesocialmedia.platform.logMessage
 import com.rickclephas.kmp.observableviewmodel.ViewModel
@@ -18,14 +22,16 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.withContext
 
 class SignInViewModel(
-    private val signInUseCase : SignInUseCase,
+    private val signInUseCase: SignInUseCase,
     private val rememberPasswordUseCase: RememberPasswordUseCase,
     private val checkUserExistsUseCase: CheckUserExistsUseCase,
-    private val checkLocalAccountUseCase : CheckLocalAccountUseCase,
+    private val checkLocalAccountUseCase: CheckLocalAccountUseCase,
     private val handleSignInGoogleResult: HandleSignInGoogleResultUseCase,
+    private val getCurrentUserUidUseCase: GetCurrentUserUidUseCase,
+    private val getUserUseCase: GetUserUseCase,
+    private val saveLoginActivityInfoUseCase : SaveLoginActivityInfoUseCase,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : ViewModel() {
     private var launcher: SignInLauncher? = null
@@ -34,31 +40,36 @@ class SignInViewModel(
         this.launcher = launcher
     }
 
-    private var _signInStatus = MutableStateFlow(SignInState(false,null))
+    private var _signInStatus = MutableStateFlow(SignInState(false, null))
     var signInState = _signInStatus.asStateFlow()
 
-    fun updateSignInStatus(state : SignInState) {
+    fun updateSignInStatus(state: SignInState) {
         _signInStatus.value = state
     }
+
     fun resetSignInStatus() {
         _signInStatus.value = SignInState(false, null)
     }
+
     var _rememberPassword = MutableStateFlow(false)
     var rememberPassword = _rememberPassword.asStateFlow()
-    fun updateRememberPassword(checked : Boolean){
+    fun updateRememberPassword(checked: Boolean) {
         _rememberPassword.value = checked
     }
+
     var email = MutableStateFlow("")
-    fun updateEmail(input : String){
+    fun updateEmail(input: String) {
         email.value = input
     }
 
     var password = MutableStateFlow("")
-    fun updatePassword(input : String){
-        password.value =  input
+    fun updatePassword(input: String) {
+        password.value = input
     }
 
-    fun signIn(showLoading : () -> Unit) {
+    var currentUser = mutableStateOf<UserInstance?>(null)
+
+    fun signIn(showLoading: () -> Unit) {
         viewModelScope.launch(ioDispatcher) {
             if (email.value.isBlank() || password.value.isBlank()) {
                 _signInStatus.value = SignInState(false, SignInError.DataEmpty)
@@ -73,7 +84,6 @@ class SignInViewModel(
                 }
                 checkEmailInDatabase(email.value)
             } else {
-                logMessage("signIn", { "Error when sign in" })
                 _signInStatus.value = SignInState(false, signInError)
             }
         }
@@ -85,23 +95,25 @@ class SignInViewModel(
     }
 
     val localCredentials = mutableStateOf<Credentials?>(null)
-    suspend fun checkLocalAccount() {
-        localCredentials.value = checkLocalAccountUseCase.invoke()
-        if (localCredentials.value != null) {
-            updateEmail(localCredentials.value!!.email)
-            updatePassword(localCredentials.value!!.password)
+    fun checkLocalAccount() {
+        viewModelScope.launch(ioDispatcher) {
+            localCredentials.value = checkLocalAccountUseCase.invoke()
+            if (localCredentials.value != null) {
+                updateEmail(localCredentials.value!!.email)
+                updatePassword(localCredentials.value!!.password)
+            }
         }
     }
 
     //-----------Sign in with Google------------//
-    fun signInWithGoogle(){
+    fun signInWithGoogle() {
         viewModelScope.launch(ioDispatcher) { launcher?.launchGoogleSignIn() }
     }
 
-    fun handleSignInResult(credential : Any) {
+    fun handleSignInResult(credential: Any) {
         viewModelScope.launch(ioDispatcher) {
             val result = handleSignInGoogleResult.invoke(credential)
-            if(!result.isNullOrEmpty()) {
+            if (!result.isNullOrEmpty()) {
                 checkEmailInDatabase(result)
             } else {
                 _signInStatus.value = SignInState(false, null)
@@ -114,5 +126,32 @@ class SignInViewModel(
         updateEmail("")
         updatePassword("")
         _rememberPassword.value = false
+        currentUser.value = null
+    }
+
+    private var _check2FAStatus = MutableStateFlow<Boolean?>(null)
+    var check2FAStatus = _check2FAStatus.asStateFlow()
+    fun check2FAStatus() {
+        viewModelScope.launch(ioDispatcher) {
+            val currentUserId = getCurrentUserUidUseCase.invoke()
+            if (currentUserId != null) {
+                val user = getUserUseCase.invoke(currentUserId, true)
+                if(user != null) {
+                    currentUser.value = user
+                    _check2FAStatus.value = user.twoFAEnabled
+                    // Login successfully, track this activity after getting current user info
+                    saveLoginActivityInfo(user)
+                }
+            }
+        }
+    }
+
+    fun resetCheck2FAStatus() {
+        _check2FAStatus.value = null
+    }
+
+    private suspend fun saveLoginActivityInfo(user : UserInstance) {
+        logMessage("saveLoginActivityInfo", { "start save login activity info" })
+        saveLoginActivityInfoUseCase.invoke(user.uid)
     }
 }

@@ -3,14 +3,9 @@ package com.minhtu.firesocialmedia.constants
 class Constants {
     companion object{
         const val CHANNEL_ID = "NotificationID"
-        const val PASSWORD = "Password"
-        const val CONFIRM_PASSWORD = "Confirm Password"
-        const val DATA_EMPTY = "DATA_EMPTY"
         const val POST_NEWS_SERVER_ERROR = "POST_AVATAR_SERVER_ERROR"
         const val POST_NEWS_EMPTY_ERROR = "POST_NEWS_EMPTY_ERROR"
         const val UPDATE_NEWS_EMPTY_ERROR = "UPDATE_NEWS_EMPTY_ERROR"
-        const val PASSWORD_MISMATCH = "PASSWORD_MISMATCH"
-        const val PASSWORD_SHORT = "PASSWORD_SHORT"
         const val ACCOUNT_EXISTED = "ACCOUNT_EXISTED"
         const val ACCOUNT_NOT_EXISTED = "ACCOUNT_NOT_EXISTED"
         const val LOGIN_ERROR = "LOGIN_ERROR"
@@ -19,8 +14,14 @@ class Constants {
         const val EMAIL_SERVER_ERROR = "EMAIL_SERVER_ERROR"
         const val EMAIL_NOT_EXISTED = "EMAIL_NOT_EXISTED"
         const val EMAIL_EXISTED = "EMAIL_EXISTED"
+        const val DATA_EMPTY = "Please fill all information!"
+        const val PASSWORD_MISMATCH = "Passwords are different!"
+        const val PASSWORD_SHORT = "Password is too short!"
 
-        const val DEFAULT_AVATAR_URL = "https://firebasestorage.googleapis.com/v0/b/firechat-aa433.appspot.com/o/unknownavatar.png?alt=media&token=9a49ff27-e5fa-4813-97d4-47bd15281550"
+        const val SUPABASE_STORAGE_BASE_URL = "https://pcklhkkafpomfvhboini.supabase.co/storage/v1/object/public/uploads/"
+        val DEFAULT_AVATAR_URL get() = com.minhtu.firesocialmedia.storage.SupabaseStorageProvider.DEFAULT_AVATAR_URL
+        val DEFAULT_DECADE_AVATAR_URL get() = com.minhtu.firesocialmedia.storage.SupabaseStorageProvider.DEFAULT_DECADE_AVATAR_URL
+        val DEFAULT_ARK_AVATAR_URL_FOR_GROUP get() = com.minhtu.firesocialmedia.storage.SupabaseStorageProvider.DEFAULT_GROUP_AVATAR_URL
         const val REMOTE_MSG_AUTHORIZATION = "Authorization"
         const val REMOTE_MSG_CONTENT_TYPE = "Content-Type"
 
@@ -38,10 +39,8 @@ class Constants {
         const val APP_SCRIPT_URL = "https://script.google.com/macros/s/"
         const val APP_SCRIPT_ENDPOINT = "AKfycbw4JXnBNCl-hoHi2l0_l-Ugp-9icTBWPJVR5PyKqe5o7-JJ-p26yFVpBO8kUZhxtUSzWA/exec"
 
+        const val APP_SCRIPT_2FA_ENDPOINT = "AKfycbwv3Jg31yCw4SiOsUwm8JA0BOZHvmk6xOqTBeOHM4_Vt0O6vQpFhwFgkofxavSDr1NJ0g/exec"
         const val KEY_FCM_TOKEN = "fcm_token"
-        const val PRIVATE_KEY = "PRIVATE_KEY"
-        const val IV = "IV"
-        const val KEY_MESSAGE = "message"
 
         const val KEY_USER_ID = "user_id"
         const val KEY_NAME = "name"
@@ -51,13 +50,6 @@ class Constants {
         const val KEY_FRIEND_REQUEST = "friend_request"
         const val KEY_EMAIL = "email"
         const val KEY_PASSWORD = "password"
-        fun getRemoteMsgHeaders(): HashMap<String, String> {
-            val remoteMsgHeaders: HashMap<String, String> = HashMap()
-            remoteMsgHeaders[REMOTE_MSG_AUTHORIZATION] =
-                "key=AAAArVU2EM0:APA91bFO912dkn-eLz9VVMkhh3_a3KDV4-cIKssP-uwXlzNhKhU35XyLj83BgLr_Y9v0ysjgd5OjP0dFpT-0TXuBnJHTQics2rCNrab7bZjCpdZsqNlB4ldER11tgJuyAHKpdBZs3QPG"
-            remoteMsgHeaders[REMOTE_MSG_CONTENT_TYPE] = "application/json"
-            return remoteMsgHeaders
-        }
 
         const val KEY_SESSION_ID = "session_id"
         const val KEY_CALLER_NAME = "caller_name"
@@ -67,5 +59,7 @@ class Constants {
         const val KEY_CALLEE_ID = "callee_id"
         const val KEY_CALLEE_AVATAR = "callee_avatar"
         const val FROM_NOTIFICATION = "FROM_NOTIFICATION"
+        const val SUPPORT_FACEBOOK_LINK = "https://www.facebook.com/nguyen.minh.tu.311112"
+        const val KEY_2FA_VERIFIED = "2fa_verified"
     }
 }

@@ -50,10 +50,12 @@ import com.minhtu.firesocialmedia.platform.showToast
 import com.minhtu.firesocialmedia.presentation.comment.Comment
 import com.minhtu.firesocialmedia.presentation.comment.CommentViewModel
 import com.minhtu.firesocialmedia.presentation.home.HomeViewModel
+import com.minhtu.firesocialmedia.storage.toStorageUrl
 import com.minhtu.firesocialmedia.utils.UiUtils
 import com.minhtu.firesocialmedia.utils.UiUtils.Companion.NewsCardPlaceholder
 import com.minhtu.firesocialmedia.utils.UiUtils.Companion.NewsCardUnavailable
 import com.minhtu.firesocialmedia.utils.UiUtils.Companion.NewsCardWithSharedContent
+import com.minhtu.firesocialmedia.utils.Utils.Companion.hexToColor
 import com.seiko.imageloader.ui.AutoSizeImage
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -133,7 +135,7 @@ class PostInformation {
                                     localImageLoaderValue
                                 ) {
                                     AutoSizeImage(
-                                        news.avatar,
+                                        news.avatar.toStorageUrl(),
                                         contentDescription = "Poster Avatar",
                                         contentScale = ContentScale.Crop,
                                         modifier = Modifier
@@ -166,7 +168,7 @@ class PostInformation {
                                     localImageLoaderValue
                                 ) {
                                     AutoSizeImage(
-                                        news.image,
+                                        news.image.toStorageUrl(),
                                         contentDescription = "Image",
                                         contentScale = ContentScale.Fit,
                                         modifier = Modifier
@@ -221,6 +223,7 @@ class PostInformation {
                                         icon = "like",
                                         backgroundColor = if (isLiked) "#00FFFF" else "#FFFFFFFF",
                                         contentDescription = "Like",
+                                        tint = if(isLiked) hexToColor("FF1565C0") else Color.Black,
                                         modifier = Modifier
                                             .size(25.dp)
                                             .padding(end = 5.dp)
@@ -318,8 +321,8 @@ class PostInformation {
                             modifier = Modifier
                                 .fillMaxSize()
                                 .background(color = Color.White),
-                            platform,
-                            localImageLoaderValue,
+                            platform = platform,
+                            localImageLoaderValue = localImageLoaderValue,
                             showCloseIcon = false,
                             commentViewModel = commentViewModel,
                             currentUser = homeViewModel.currentUser!!,

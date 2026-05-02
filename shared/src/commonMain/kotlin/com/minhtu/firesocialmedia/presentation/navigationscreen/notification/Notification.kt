@@ -33,10 +33,14 @@ import androidx.compose.material.icons.filled.IosShare
 import androidx.compose.material.icons.filled.ModeComment
 import androidx.compose.material.icons.filled.PersonAddAlt1
 import androidx.compose.material.icons.filled.PostAdd
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -46,11 +50,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
@@ -62,19 +68,23 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.minhtu.firesocialmedia.constants.TestTag
 import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
 import com.minhtu.firesocialmedia.domain.entity.notification.NotificationInstance
 import com.minhtu.firesocialmedia.domain.entity.notification.NotificationType
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
+import com.minhtu.firesocialmedia.platform.CrossPlatformIcon
 import com.minhtu.firesocialmedia.platform.showToast
 import com.minhtu.firesocialmedia.presentation.home.HomeViewModel
 import com.minhtu.firesocialmedia.presentation.loading.Loading
 import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
 import com.minhtu.firesocialmedia.presentation.search.SearchViewModel
+import com.minhtu.firesocialmedia.storage.toStorageUrl
+import com.minhtu.sharedmodule.ui.theme.adminCardColor
+import com.minhtu.sharedmodule.ui.theme.blurLikeColor
 import com.seiko.imageloader.ui.AutoSizeImage
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
 class Notification {
@@ -93,7 +103,7 @@ class Notification {
             val isLoading by loadingViewModel.isLoading.collectAsState()
             val getNeededUsersStatus by notificationViewModel.getNeededUsersStatus.collectAsState()
             val getAllNotificationsStatus = homeViewModel.getAllNotificationsOfCurrentUser.value
-            
+            var showDropDownMenu by remember { mutableStateOf(false) }
             LaunchedEffect(Unit) {
                 // Only show loading if notifications haven't been loaded yet
                 if (!getAllNotificationsStatus) {
@@ -111,17 +121,82 @@ class Notification {
                     loadingViewModel.hideLoading()
                 }
             }
+
+            val deleteAllNotificationsStatus by notificationViewModel.deleteAllNotificationsStatus.collectAsState()
+            LaunchedEffect(deleteAllNotificationsStatus) {
+                if(deleteAllNotificationsStatus != null) {
+                    if(deleteAllNotificationsStatus!!.success) {
+                        showToast("Delete all notifications successfully!")
+                        //Clear current notification data
+                        homeViewModel.listNotificationOfCurrentUser.clear()
+                    } else {
+                        showToast(deleteAllNotificationsStatus!!.message)
+                    }
+                    notificationViewModel.resetDeleteAllNotificationsStatus()
+                }
+            }
             Column(
                 verticalArrangement = Arrangement.Top,
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = modifier.padding(paddingValues)
             ) {
-                Text(
-                    text = "Notifications",
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 20.dp)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Color.White)
+                        .padding(10.dp)
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f)
+                            .padding(horizontal = 8.dp)
+                    ) {
+                        Text(
+                            text = "Notifications",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+
+                    Box{
+                        CrossPlatformIcon(
+                            icon = "more_horiz",
+                            backgroundColor = "#FFFFFFFF",
+                            contentDescription = "More Options",
+                            tint = Color.Black,
+                            modifier = Modifier
+                                .size(35.dp)
+                                .clip(CircleShape)
+                                .testTag(TestTag.TAG_BUTTON_MOREOPTIONS)
+                                .semantics { contentDescription = TestTag.TAG_BUTTON_MOREOPTIONS }
+                                .clickable {
+                                    showDropDownMenu = true
+                                }
+                                .padding(4.dp)
+                        )
+                        DropdownMenuForNotification(
+                            showDropDownMenu,
+                            onDismissRequest = {
+                                showDropDownMenu = false
+                            },
+                            onDeleteAll = {
+                                if(homeViewModel.currentUser != null) {
+                                    notificationViewModel.deleteAllNotifications(homeViewModel.currentUser!!)
+                                }
+                            }
+                        )
+                    }
+                }
+                HorizontalDivider(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 10.dp),
+                    thickness = 1.dp,
+                    color = Color.LightGray
                 )
                 //Sort notification list by timeSend
                 val notificationList = remember(homeViewModel.listNotificationOfCurrentUser) {
@@ -213,7 +288,8 @@ class Notification {
             var offsetX by remember { mutableFloatStateOf(0f) }
             val animatedOffsetX by animateFloatAsState(targetValue = offsetX)
             val swipeThreshold = -swipeDistancePx / 2
-
+            val currentUser = homeViewModel.currentUser
+            val coroutineScope = rememberCoroutineScope()
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -227,7 +303,7 @@ class Notification {
                 Row(
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(Color.White)
+                        .background(if(notification.beRead) Color.White else adminCardColor)
                         .testTag(TestTag.TAG_BUTTON_DELETE)
                         .semantics {
                             contentDescription = TestTag.TAG_BUTTON_DELETE
@@ -303,6 +379,22 @@ class Notification {
                             } else {
                                 showToast("This notification is from old version, cannot navigate to other screen!")
                             }
+                            //Mark as read
+                            if(currentUser != null) {
+                                coroutineScope.launch {
+                                    val updatedNotification = notification.copy(beRead = true)
+                                    notificationViewModel.updateIsReadStatusOfNotification(
+                                        updatedNotification,
+                                        currentUser
+                                    )
+                                    val updatedNotifications = homeViewModel.listNotificationOfCurrentUser.map {
+                                        if (it.id == updatedNotification.id) updatedNotification else it
+                                    }
+
+                                    homeViewModel.listNotificationOfCurrentUser.clear()
+                                    homeViewModel.listNotificationOfCurrentUser.addAll(updatedNotifications)
+                                }
+                            }
                         }
                 ) {
                     NotificationRow(notification, user, localImageLoaderValue)
@@ -319,18 +411,31 @@ class Notification {
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 10.dp, vertical = 8.dp)
+                    .background(
+                        color = if(notification.beRead) Color.White else adminCardColor
+                    )
             ) {
+                if(!notification.beRead) {
+                    VerticalDivider(
+                        modifier = Modifier,
+                        thickness = 3.dp,
+                        color = Color.Red
+                    )
+                }
                 CompositionLocalProvider(
                     localImageLoaderValue
                 ) {
                     AutoSizeImage(
-                        notification.avatar,
+                        notification.avatar.toStorageUrl(),
                         contentDescription = "Avatar",
                         contentScale = ContentScale.Crop,
                         modifier = Modifier
                             .size(60.dp)
+                            .padding(horizontal = 10.dp, vertical = 8.dp)
                             .clip(CircleShape)
+                            .graphicsLayer {
+                                if(notification.beRead) alpha = 0.75f
+                            }
                     )
                 }
 
@@ -343,10 +448,11 @@ class Notification {
                 ) {
                     Text(
                         text = user.name,
-                        color = Color.Black,
+                        fontWeight = FontWeight.Bold,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
-                        style = MaterialTheme.typography.bodyLarge
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = if(notification.beRead) blurLikeColor.copy(alpha = 0.75f) else Color.Black
                     )
                     Text(
                         text = when (notification.type) {
@@ -360,27 +466,33 @@ class Notification {
                                 "Unknown notification type!"
                             }
                         },
-                        color = Color.Gray,
+                        color = if(notification.beRead) blurLikeColor.copy(alpha = 0.75f) else Color.Gray,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                         style = MaterialTheme.typography.bodyMedium
                     )
                 }
 
-                ShowBasedOnNotificationType(notification.type)
+                ShowBasedOnNotificationType(
+                    notification.type,
+                    Modifier.graphicsLayer {
+                        if(notification.beRead) alpha = 0.5f
+                    })
             }
 
         }
 
         @Composable
-        private fun ShowBasedOnNotificationType(type: NotificationType) {
+        private fun ShowBasedOnNotificationType(type: NotificationType,
+                                                modifier: Modifier = Modifier) {
             when(type) {
                 NotificationType.LIKE -> {
                     IconButton(onClick = { /* Handle click */ }) {
                         Icon(
                             imageVector = Icons.Filled.Favorite,
                             contentDescription = "Like",
-                            tint = Color(0xFFFF4081) // Pink
+                            tint = Color(0xFFFF4081), // Pink
+                            modifier = modifier
                         )
                     }
                 }
@@ -389,7 +501,8 @@ class Notification {
                         Icon(
                             imageVector = Icons.Filled.ModeComment,
                             contentDescription = "Comment",
-                            tint = Color.Black
+                            tint = Color.Black,
+                            modifier = modifier
                         )
                     }
                 }
@@ -398,7 +511,8 @@ class Notification {
                         Icon(
                             imageVector = Icons.Filled.PersonAddAlt1,
                             contentDescription = "Add friend",
-                            tint = Color.Blue
+                            tint = Color.Blue,
+                            modifier = modifier
                         )
                     }
                 }
@@ -408,7 +522,8 @@ class Notification {
                         Icon(
                             imageVector = Icons.Filled.PostAdd,
                             contentDescription = "Upload new",
-                            tint = Color.Green
+                            tint = Color.Green,
+                            modifier = modifier
                         )
                     }
                 }
@@ -418,7 +533,8 @@ class Notification {
                         Icon(
                             imageVector = Icons.Filled.IosShare,
                             contentDescription = "Shared Post",
-                            tint = Color.Green
+                            tint = Color.Green,
+                            modifier = modifier
                         )
                     }
                 }
@@ -427,7 +543,8 @@ class Notification {
                         Icon(
                             imageVector = Icons.Default.Group,
                             contentDescription = "Invite to group",
-                            tint = Color.Cyan
+                            tint = Color.Cyan,
+                            modifier = modifier
                         )
                     }
                 }
@@ -436,10 +553,29 @@ class Notification {
                         Icon(
                             imageVector = Icons.Default.Error,
                             contentDescription = "Error",
-                            tint = Color.Red
+                            tint = Color.Red,
+                            modifier = modifier
                         )
                     }
                 }
+            }
+        }
+
+        @Composable
+        fun DropdownMenuForNotification(expanded : Boolean,
+                                        onDismissRequest: () -> Unit,
+                                        onDeleteAll: () -> Unit) {
+            DropdownMenu(
+                expanded = expanded,
+                onDismissRequest = onDismissRequest
+            ) {
+                DropdownMenuItem(
+                    text = { Text("Delete All") },
+                    onClick = {
+                        onDeleteAll()
+                        onDismissRequest()
+                    }
+                )
             }
         }
 

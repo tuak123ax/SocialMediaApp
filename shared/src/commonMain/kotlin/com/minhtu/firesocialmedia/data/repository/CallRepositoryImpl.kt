@@ -13,6 +13,7 @@ import com.minhtu.firesocialmedia.domain.entity.call.CallStatus
 import com.minhtu.firesocialmedia.domain.entity.call.CallingRequestData
 import com.minhtu.firesocialmedia.domain.entity.call.IceCandidateData
 import com.minhtu.firesocialmedia.domain.entity.call.OfferAnswer
+import com.minhtu.firesocialmedia.domain.entity.call.SpeakerType
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.domain.repository.CallRepository
 import com.minhtu.firesocialmedia.platform.WebRTCVideoTrack
@@ -21,11 +22,11 @@ import com.minhtu.firesocialmedia.utils.Utils
 import kotlinx.coroutines.flow.MutableStateFlow
 
 class CallRepositoryImpl(
-    private val audioCallService: AudioCallService,
+    private val audioCallServiceProvider: () -> AudioCallService,
     private val databaseService: DatabaseService,
-    private val callService: AudioCallService,
     private val permissionManager : PermissionManager
 ) : CallRepository {
+    private val audioCallService: AudioCallService by lazy { audioCallServiceProvider() }
     override suspend fun initialize(
         onInitializeFinished: () -> Unit,
         onIceCandidateCreated: (IceCandidateData) -> Unit,
@@ -53,7 +54,7 @@ class CallRepositoryImpl(
         caller: UserInstance,
         callee: UserInstance
     ) {
-        callService.startCallService(sessionId, caller.toDto(), callee.toDto())
+        audioCallService.startCallService(sessionId, caller.toDto(), callee.toDto())
     }
 
     override suspend fun startVideoCallService(
@@ -63,7 +64,7 @@ class CallRepositoryImpl(
         currentUserId: String?,
         remoteVideoOffer: OfferAnswer?
     ) {
-        callService.startVideoCallService(
+        audioCallService.startVideoCallService(
             sessionId,
             caller.toDto(),
             callee.toDto(),
@@ -180,6 +181,14 @@ class CallRepositoryImpl(
         audioCallService.rejectVideoCall()
     }
 
+    override suspend fun resetVideoCallStartedState() {
+        audioCallService.resetVideoCallStartedState()
+    }
+
+    override suspend fun stopVideoCallResources() {
+        audioCallService.stopVideoCallResources()
+    }
+
     override suspend fun requestCameraAndAudioPermissions(): Boolean {
         return permissionManager.requestCameraAndAudioPermissions()
     }
@@ -220,8 +229,12 @@ class CallRepositoryImpl(
             })
     }
 
-    override suspend fun startVideoCall(onStartVideoCall: suspend (WebRTCVideoTrack) -> Unit) {
+    override suspend fun startVideoCall(
+        isVideoInitiator: Boolean,
+        onStartVideoCall: suspend (WebRTCVideoTrack) -> Unit
+    ) {
         audioCallService.startVideoCall(
+            isVideoInitiator = isVideoInitiator,
             onStartVideoCall = { localVideoTrack ->
                 onStartVideoCall(localVideoTrack)
             }
@@ -330,6 +343,11 @@ class CallRepositoryImpl(
         )
     }
 
+    override suspend fun clearAnswerInFirebase(sessionId: String) {
+        databaseService.clearAnswerInFirebase(sessionId)
+        logMessage("clearAnswerInFirebase", { "clear Answer completed" })
+    }
+
     override suspend fun observePhoneCallWithoutCheckingInCall(
         currentUserId: String,
         phoneCallCallBack: (CallingRequestData) -> Unit,
@@ -383,6 +401,18 @@ class CallRepositoryImpl(
         databaseService.stopObservePhoneCall()
     }
 
+    override suspend fun updateMuteStatus(muted: Boolean) {
+        audioCallService.updateMuteStatus(muted)
+    }
+
+    override suspend fun updateCameraStatus(cameraOff: Boolean) {
+        audioCallService.updateCameraStatus(cameraOff)
+    }
+
+    override suspend fun updateSpeakerStatus(speakerType: SpeakerType) {
+        audioCallService.updateSpeakerStatus(speakerType)
+    }
+
     override suspend fun sendIceCandidateToFireBase(
         sessionId: String,
         iceCandidate: IceCandidateData,
@@ -407,6 +437,6 @@ class CallRepositoryImpl(
     }
 
     override suspend fun stopCallService() {
-        callService.stopCall()
+        audioCallService.stopCall()
     }
 }

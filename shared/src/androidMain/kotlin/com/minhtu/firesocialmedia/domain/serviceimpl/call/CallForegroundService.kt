@@ -31,6 +31,7 @@ import com.minhtu.firesocialmedia.domain.entity.call.OfferAnswer
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.domain.serviceimpl.call.CallNotificationManager.Companion.NOTIF_ID
 import com.minhtu.firesocialmedia.domain.serviceimpl.database.AndroidDatabaseService
+import com.minhtu.firesocialmedia.domain.serviceimpl.database.supabase.SupabaseStorageHelper
 import com.minhtu.firesocialmedia.domain.serviceimpl.permission.AndroidPermissionManager
 import com.minhtu.firesocialmedia.domain.usecases.call.AcceptCallUseCase
 import com.minhtu.firesocialmedia.domain.usecases.call.AddIceCandidatesUseCase
@@ -61,7 +62,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 
@@ -73,10 +73,16 @@ class CallForegroundService : Service() {
 
     private var sessionId = ""
     private var offer : OfferAnswer? = null
-    private var callerIdForCallee : String = ""
-    private var calleeIdForCallee : String = ""
+    private var callerIdForCalleeFlow : String = ""
+    private var calleeIdForCalleeFlow : String = ""
     private var callerFromApp : UserInstance? = null
     private var calleeFromApp : UserInstance? = null
+    private var inFlightStartVideoCallSignature: String? = null
+    /**
+     * SDP hash of the last video offer we processed as callee, used to ignore stale Firebase offers
+     * that fire again due to re-subscription (e.g. after Video→Audio navigation).
+     */
+    private var lastProcessedVideoOfferSdpHash: Int? = null
 
     private lateinit var initializeCallUseCase: InitializeCallUseCase
     private lateinit var sendSignalingDataUseCase : SendSignalingDataUseCase
@@ -86,6 +92,7 @@ class CallForegroundService : Service() {
     private lateinit var calleeUseCases : CalleeUseCases
     private lateinit var callerCoordinator: CallerCoordinator
     private lateinit var calleeCoordinator : CalleeCoordinator
+    private var isStopped : Boolean = false
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -94,13 +101,13 @@ class CallForegroundService : Service() {
         super.onCreate()
 
         //Initialize services
-        callManager = AndroidAudioCallService(this)
-        databaseService = AndroidDatabaseService(this)
         backgroundScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
         callNotificationManager = CallNotificationManager(this)
-
         val platformContext = AndroidPlatformContext(this, AndroidPermissionManager(null))
         val callRepository = AppModule.provideCallRepository(platformContext)
+        // Use the same AudioCallService instance across repository and service to avoid leaks
+        callManager = platformContext.audioCall
+        databaseService = AndroidDatabaseService(applicationContext, SupabaseStorageHelper())
         //Initialize use cases
         initializeCallUseCase = AppModule.provideInitializeCallUseCase(callRepository)
         sendSignalingDataUseCase = AppModule.provideSendSignalingDataUseCase(callRepository)
@@ -215,6 +222,8 @@ class CallForegroundService : Service() {
                             onSendCallSessionResult = { result ->
                                 if(result) {
                                     showCallNotification(callNotificationManager.buildCallNotification(callee.name, caller.uid))
+                                    //Play ringtone
+                                    CallSoundManager.playRingtoneForCaller(applicationContext)
                                     sendNotification("Is calling you", sessionId, caller, callee, "CALL")
                                 } else {
                                     logMessage("onSendCallSessionResult", { "send call session fail" })
@@ -225,6 +234,8 @@ class CallForegroundService : Service() {
                                 CallEventFlow.answerVideoCallState.emit(false)
                             },
                             onAcceptCall = {
+                                //Stop ringtone
+                                CallSoundManager.stopRingtoneForCaller()
                                 //Emit event for UI
                                 CallEventFlow.events.value = CallEvent.AnswerReceived
                                 //Show timer notification
@@ -236,11 +247,20 @@ class CallForegroundService : Service() {
                                         true))
                             },
                             onReceiveVideoCall = { videoOffer ->
-                                CallEventFlow.videoCallState.emit(videoOffer)
+                                handleIncomingVideoOffer(videoOffer)
                             },
                             onEndCall = {
-                                logMessage("onEndCallCaller", { "caller" })
-                                handleEndCall(CallEvent.CallEnded)
+                                //Stop ringtone
+                                CallSoundManager.stopRingtoneForCaller()
+                                if(!isStopped) {
+                                    logMessage("onEndCallCaller", { "caller" })
+                                    handleEndCall()
+                                    val deleteCallSessionResult = callerUseCases.endCall.invoke(sessionId)
+                                    if(deleteCallSessionResult) {
+                                        sendEventToUIAfterStopCall(CallEvent.CallEnded)
+                                    }
+                                    stopService()
+                                }
                             }
                         )
                     } catch (ex : Exception) {
@@ -264,28 +284,55 @@ class CallForegroundService : Service() {
     private fun startVideoCallAction(intent: Intent) {
         logMessage("START_VIDEO_CALL", { "START_VIDEO_CALL" })
         backgroundScope.launch {
+            val intentSessionId = intent.getStringExtra("sessionId").orEmpty()
             val remoteVideoOfferJsonString = intent.getStringExtra("remoteVideoOffer")
+            val currentUserId = intent.getStringExtra("currentUserId").orEmpty()
+            val offerHash = remoteVideoOfferJsonString?.hashCode() ?: 0
+            val startSignature = "$intentSessionId|$currentUserId|$offerHash"
+            if (inFlightStartVideoCallSignature == startSignature) {
+                logMessage("START_VIDEO_CALL", { "skip duplicate START_VIDEO_CALL signature=$startSignature" })
+                return@launch
+            }
+            inFlightStartVideoCallSignature = startSignature
+
+            // Keep existing tracks during video rejoin to avoid renderer/sender race conditions.
+            // Remote black-screen behavior should come from muted sender frames, not track disposal.
+            // Use sessionId from intent when present so we're in sync with the app (avoids stale member after multiple decline/accept)
+            intentSessionId.takeIf { it.isNotEmpty() }?.let { sessionIdFromIntent ->
+                sessionId = sessionIdFromIntent
+            }
             val remoteVideoOffer = remoteVideoOfferJsonString?.let { Json.decodeFromString<OfferAnswerDTO>(it).toDomain() }
-            val currentUserId = intent.getStringExtra("currentUserId")
-            //Remote video offer is null means this is caller side.
-            if(remoteVideoOffer == null) {
-                try{
+            val currentUserIdOrNull = currentUserId.ifEmpty { null }
+            try {
+                // Remote video offer is null means this is caller side.
+                if(remoteVideoOffer == null) {
+                    // We're initiating a new video offer: reset the stale-offer guard so that the
+                    // other user's fresh video offer (if they also click video call) is not blocked.
+                    lastProcessedVideoOfferSdpHash = null
+                    // Caller is initiating a fresh video upgrade, so don't apply incoming-offer prep.
                     callerCoordinator.startVideoCall(
-                        currentUserId,
+                        currentUserIdOrNull,
                         sessionId,
                         onLocalVideoTrackCreated = { localVideoTrack ->
                             //Received local video track
                             //Emit event to update UI
                             CallEventFlow.localVideoTrack.emit(localVideoTrack)
+                        },
+                        onRejectVideoCall = {
+                            // Clean up all video resources so the next attempt starts completely fresh
+                            backgroundScope.launch { callManager.stopVideoCallResources() }
+                            // Clear video track state for UI
+                            CallEventFlow.localVideoTrack.value = null
+                            CallEventFlow.remoteVideoTrack.value = null
+                            // Callee declined video call — set message for toast and notify UI to navigate back
+                            CallEventFlow.videoCallDeclinedMessage.value = calleeFromApp?.name?.let { "$it declined the video call" }
+                                ?: "The other person declined the video call"
+                            CallEventFlow.answerVideoCallState.value = false
                         })
-                } catch (ex : Exception) {
-                    logMessage("callerCoordinator start video call exception",
-                        { ex.message.toString() })
-                }
-            } else {
-                try {
+                } else {
+                    callManager.prepareForIncomingVideoNegotiation()
                     calleeCoordinator.startVideoCall(
-                        currentUserId,
+                        currentUserIdOrNull,
                         sessionId,
                         remoteVideoOffer,
                         onLocalVideoTrackCreated = { localVideoTrack ->
@@ -294,9 +341,13 @@ class CallForegroundService : Service() {
                             CallEventFlow.localVideoTrack.emit(localVideoTrack)
                         }
                     )
-                } catch (ex : Exception) {
-                    logMessage("calleeCoordinator start video call exception",
-                        { ex.message.toString() })
+                }
+            } catch (ex : Exception) {
+                val role = if (remoteVideoOffer == null) "caller" else "callee"
+                logMessage("${role}Coordinator start video call exception", { ex.message.toString() })
+            } finally {
+                if (inFlightStartVideoCallSignature == startSignature) {
+                    inFlightStartVideoCallSignature = null
                 }
             }
         }
@@ -304,6 +355,7 @@ class CallForegroundService : Service() {
 
     private fun stopCallActionFromCaller(intent: Intent) {
         backgroundScope.launch {
+            isStopped = true
             var callerId = ""
             logMessage("STOP_CALL_ACTION_FROM_CALLER", { "STOP_CALL_ACTION_FROM_CALLER" })
             if(callerFromApp != null && calleeFromApp != null) {
@@ -312,12 +364,20 @@ class CallForegroundService : Service() {
                 logMessage("STOP_CALL_ACTION_FROM_CALLER", { "calleeId:$calleeFromApp" })
                 sendNotification("", sessionId, callerFromApp!!, calleeFromApp!!, "STOP_CALL")
             }
-            if(intent.hasExtra(Constants.KEY_CALLER_ID)) {
-                callerId = intent.getStringExtra(Constants.KEY_CALLER_ID).toString()
+            if(callerFromApp != null) {
+                callerId = callerFromApp!!.uid
+            } else {
+                if(intent.hasExtra(Constants.KEY_CALLER_ID)) {
+                    callerId = intent.getStringExtra(Constants.KEY_CALLER_ID).toString()
+                }
             }
-            val sendWhoEndCall = calleeUseCases.sendWhoEndCallUseCase.invoke(sessionId, callerId)
-            val deleteCallSessionResult = calleeUseCases.endCallUseCase.invoke(sessionId)
-            handleEndCall(null)
+            val sendWhoEndCall = callerUseCases.sendWhoEndCallUseCase.invoke(sessionId, callerId)
+            handleEndCall()
+            val deleteCallSessionResult = callerUseCases.endCall.invoke(sessionId)
+            if(deleteCallSessionResult) {
+                sendEventToUIAfterStopCall(CallEvent.StopCalling)
+            }
+            stopService()
         }
     }
 
@@ -332,41 +392,46 @@ class CallForegroundService : Service() {
                 calleeId = intent.getStringExtra(Constants.KEY_CALLEE_ID).toString()
             }
             val sendWhoEndCall = calleeUseCases.sendWhoEndCallUseCase.invoke(sessionId, calleeId)
+            handleEndCall()
             val deleteCallSessionResult = calleeUseCases.endCallUseCase.invoke(sessionId)
-            handleEndCall(CallEvent.StopCalling)
+            if(deleteCallSessionResult) {
+                sendEventToUIAfterStopCall(CallEvent.StopCalling)
+            }
+            stopService()
         }
     }
 
     private fun rejectCallAction(intent: Intent){
         backgroundScope.launch {
-            var calleeId = ""
             logMessage("REJECT_CALL_ACTION", { "REJECT_CALL_ACTION" })
-            if(intent.hasExtra(Constants.KEY_SESSION_ID)) {
+            if(sessionId.isEmpty() && intent.hasExtra(Constants.KEY_SESSION_ID)) {
                 sessionId = intent.getStringExtra(Constants.KEY_SESSION_ID).toString()
             }
-            if(intent.hasExtra(Constants.KEY_CALLEE_ID)) {
-                calleeId = intent.getStringExtra(Constants.KEY_CALLEE_ID).toString()
+            if(calleeIdForCalleeFlow.isEmpty() && intent.hasExtra(Constants.KEY_CALLEE_ID)) {
+                calleeIdForCalleeFlow = intent.getStringExtra(Constants.KEY_CALLEE_ID).toString()
             }
-            //Emit stop calling event before end call, so that when homeViewModel observed
-            //end call action, it won't emit event again
-            CallEventFlow.events.value = CallEvent.StopCalling
-            val sendWhoEndCall = calleeUseCases.sendWhoEndCallUseCase.invoke(sessionId, calleeId)
+            val sendWhoEndCall = calleeUseCases.sendWhoEndCallUseCase.invoke(sessionId, calleeIdForCalleeFlow)
+            handleEndCall()
             val deleteCallSessionResult = calleeUseCases.endCallUseCase.invoke(sessionId)
-            handleEndCall(null)
+            stopService()
         }
     }
 
-    private suspend fun handleEndCall(callEvent : CallEvent?) {
+    private suspend fun handleEndCall() {
         //Stop count-up timer.
-        logMessage("handleEndCall", { "stopTimerNotificationUpdates" })
+        logMessage("handleEndCall", { "stopIncomingCallNotification and stopTimerNotificationUpdates" })
+        callNotificationManager.stopIncomingCallNotification()
         callNotificationManager.stopTimerNotificationUpdates()
         //Emit event to update UI.
         logMessage("handleEndCall", { "stopCallFlow" })
-        releaseCallAndStopService(callEvent)
+        releaseCall()
     }
 
-    private suspend fun releaseCallAndStopService(callEvent : CallEvent?) {
-        handleRejectCall(callEvent)
+    private suspend fun releaseCall() {
+        handleRejectCall()
+    }
+
+    private suspend fun stopService() {
         logMessage("handleEndCall", { "Calling stopForeground + stopSelf" })
         withContext(Dispatchers.Main) {
             //Stop foreground service.
@@ -392,6 +457,8 @@ class CallForegroundService : Service() {
             if(calleeIdFromFCM != null) {
                 logMessage("onStartCommand", { "callee side" })
                 logMessage("onStartCommand", { "sessionId: $sessionId" })
+                // Session we are accepting (from Accept button / notification). Only handle this session.
+                val acceptedSessionId = sessionId
                 //Start service from callee side
                 backgroundScope.launch {
                     try{
@@ -399,15 +466,26 @@ class CallForegroundService : Service() {
                             sessionId,
                             calleeIdFromFCM,
                             onReceivePhoneCallRequest = { callingRequestData ->
-                                sessionId = callingRequestData.sessionId
-                                offer = callingRequestData.offer
-                                callerIdForCallee = callingRequestData.callerId
-                                calleeIdForCallee = callingRequestData.calleeId
-                                //Handle accept call.
-                                handleAcceptCall(callingRequestData)
+                                // Ignore if this is a different call (e.g. stale observer from previous call firing for new session).
+                                if (callingRequestData.sessionId != acceptedSessionId) {
+                                    logMessage("onReceivePhoneCallRequest", { "ignore session ${callingRequestData.sessionId}, accepted $acceptedSessionId" })
+                                } else {
+                                    sessionId = callingRequestData.sessionId
+                                    offer = callingRequestData.offer
+                                    callerIdForCalleeFlow = callingRequestData.callerId
+                                    calleeIdForCalleeFlow = callingRequestData.calleeId
+                                    //Handle accept call.
+                                    handleAcceptCall(callingRequestData)
+                                }
                             },
                             onEndCall = {
-                                handleEndCall(CallEvent.CallEnded)
+                                handleEndCall()
+                                val deleteCallSessionResult = calleeUseCases.endCallUseCase.invoke(sessionId)
+                                if(deleteCallSessionResult) {
+                                    logMessage("DeleteCallSession", { "DeleteCallSession success by callee" })
+                                    sendEventToUIAfterStopCall(CallEvent.CallEnded)
+                                }
+                                stopService()
                             },
                             whoEndCallCallBack = {
                             }
@@ -423,23 +501,41 @@ class CallForegroundService : Service() {
         }
     }
 
-    private suspend fun handleRejectCall(emitEvent: CallEvent?) {
-        val rejectCallResult = manageCallStateUseCase.rejectCall(sessionId)
-        //Stop call flow.
-        stopCallFlow(emitEvent)
+    private suspend fun handleRejectCall() {
+        // Write to Firebase so the other side is notified.
+        val sendCallStatusResult = manageCallStateUseCase.rejectCall(sessionId)
+        logMessage("handleRejectCall", { "sendCallStatusResult : $sendCallStatusResult" })
+        // Stop flow (remove Firebase listener, stop call, cancel notification) so the service is not held by the listener.
+        stopCallFlow()
     }
 
-    private suspend fun stopCallFlow(emitEvent : CallEvent?) {
+    private suspend fun stopCallFlow() {
+        // Remove only the callee-accept observer (observePhoneCallWithoutCheckingInCall) so it doesn't fire for the next call.
+        // Do not call stopObservePhoneCall() here — that would also remove the app's incoming-call listener.
+        databaseService.stopObservePhoneCallWithoutCheckingInCall()
         //Stop call in call manager
         callManager.stopCall()
-        //Emit event to UI
-        if(emitEvent != null && CallEventFlow.events.value != CallEvent.StopCalling &&
-            CallEventFlow.events.value != CallEvent.CallEnded) {
-            CallEventFlow.events.value = emitEvent
-        }
+        // Clear video/track state so next call starts clean (keep events so UI can show toast)
+        CallEventFlow.localVideoTrack.value = null
+        CallEventFlow.remoteVideoTrack.value = null
+        CallEventFlow.videoCallState.value = null
+        CallEventFlow.answerVideoCallState.value = true
+        CallEventFlow.videoCallDeclinedMessage.value = null
+        lastProcessedVideoOfferSdpHash = null
         //Dismiss notification
         val notificationManager = applicationContext.getSystemService(NOTIFICATION_SERVICE) as NotificationManager
         notificationManager.cancel(NOTIF_ID)
+    }
+
+    private fun sendEventToUIAfterStopCall(emitEvent: CallEvent?) {
+        //Emit event to UI
+        //Emit StopVideoCall event first for user who currently is in video call
+        CallEventFlow.events.value = CallEvent.StopVideoCall
+        if(emitEvent != null && CallEventFlow.events.value != CallEvent.StopCalling &&
+            CallEventFlow.events.value != CallEvent.CallEnded) {
+            logMessage("handleEndCall", { "send call event to update UI : $emitEvent" })
+            CallEventFlow.events.value = emitEvent
+        }
     }
 
     private suspend fun handleAcceptCall(callingRequestData : CallingRequestData) {
@@ -465,7 +561,7 @@ class CallForegroundService : Service() {
                     }
                 },
                 onReceiveVideoCallRequest = { videoOffer ->
-                    CallEventFlow.videoCallState.emit(videoOffer)
+                    handleIncomingVideoOffer(videoOffer)
                 }
             )
         } catch (ex : Exception) {
@@ -473,17 +569,73 @@ class CallForegroundService : Service() {
         }
     }
 
-    override fun onDestroy() {
-        // Create a temporary scope just for cleanup
-        runBlocking {
-            withContext(Dispatchers.IO) {
-                try { releaseServiceResource() }
-                catch (e: Exception) { logMessage("ReleaseServiceResource") { e.message.toString() } }
-                try { callManager.releaseResources() }
-                catch (e: Exception) { logMessage("ReleaseCallManager") { e.message.toString() } }
-            }
+    private suspend fun handleIncomingVideoOffer(videoOffer: OfferAnswer) {
+        val localUserId = when (videoOffer.initiator) {
+            callerFromApp?.uid -> calleeFromApp?.uid
+            calleeFromApp?.uid -> callerFromApp?.uid
+            callerIdForCalleeFlow -> calleeIdForCalleeFlow
+            calleeIdForCalleeFlow -> callerIdForCalleeFlow
+            else -> null
         }
-        backgroundScope.cancel()
+        logMessage(
+            "handleIncomingVideoOffer",
+            { "initiator=${videoOffer.initiator}, localUserId=$localUserId, auto=${CallEventFlow.hasAcceptedVideoInCurrentCall.value}" }
+        )
+
+        // Ignore self-authored offers; they can still be observed via Firebase updates.
+        if (!localUserId.isNullOrEmpty() && localUserId == videoOffer.initiator) {
+            logMessage("handleIncomingVideoOffer", { "ignore self-authored offer" })
+            return
+        }
+
+        // After the first successful video join in this call, subsequent upgrades skip the
+        // accept/decline dialog and auto-navigate the UI directly to the VideoCall screen.
+        if (CallEventFlow.hasAcceptedVideoInCurrentCall.value &&
+            !localUserId.isNullOrEmpty() &&
+            sessionId.isNotEmpty()
+        ) {
+            // Glare guard: if we're currently acting as the video initiator (caller) ourselves,
+            // ignore the incoming cross-offer. Processing both simultaneously corrupts PeerConnection state.
+            if (inFlightStartVideoCallSignature != null) {
+                logMessage("handleIncomingVideoOffer", { "ignore: glare detected — we're currently initiating a video call" })
+                return
+            }
+
+            val incomingOfferHash = videoOffer.sdp.hashCode()
+            // Stale-offer guard: ignore offers we've already processed (Firebase re-fires the current
+            // value when the listener re-subscribes, e.g. after Video→Audio navigation).
+            if (incomingOfferHash == lastProcessedVideoOfferSdpHash) {
+                logMessage("handleIncomingVideoOffer", { "ignore: duplicate stale offer (already processed sdpHash=$incomingOfferHash)" })
+                return
+            }
+
+            // Emit to videoCallState — the audio screen's LaunchedEffect auto-navigates to VideoCall
+            // (because hasAcceptedVideoInCurrentCall=true), and VideoCall's own LaunchedEffect processes
+            // the offer as callee. This avoids dual renegotiation (once here, once in the UI).
+            logMessage("handleIncomingVideoOffer", { "auto-navigate to video: emit offer to videoCallState" })
+            lastProcessedVideoOfferSdpHash = incomingOfferHash
+            CallEventFlow.videoCallState.emit(videoOffer)
+            return
+        }
+
+        // First-time video request still requires UI accept/decline.
+        logMessage("handleIncomingVideoOffer", { "emit video offer to UI for accept/decline" })
+        callManager.prepareForIncomingVideoNegotiation()
+        CallEventFlow.videoCallState.emit(videoOffer)
+    }
+
+    override fun onDestroy() {
+        callNotificationManager.stopIncomingCallNotification()
+        callNotificationManager.stopTimerNotificationUpdates()
+        databaseService.stopObservePhoneCallWithoutCheckingInCall()
+
+        backgroundScope.launch(Dispatchers.IO) {
+            try { releaseServiceResource() } catch (_: Exception) {}
+            try { callManager.releaseResources() } catch (_: Exception) {}
+
+            backgroundScope.cancel() // cancel AFTER cleanup
+        }
+
         super.onDestroy()
     }
 

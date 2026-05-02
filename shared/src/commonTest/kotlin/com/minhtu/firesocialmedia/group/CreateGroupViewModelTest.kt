@@ -110,6 +110,37 @@ class CreateGroupViewModelTest {
         // avatar resets to default value inside VM; we just verify it's not the custom one
         assertTrue(vm.avatar != "a")
     }
+
+    @Test
+    fun `resetCreateGroupState clears createGroupState`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val repo = CreateGroupRepo().apply { saveGroupResult = true }
+        val vm = CreateGroupViewModel(
+            createGroupUseCase = CreateGroupUseCase(repo),
+            ioDispatcher = dispatcher
+        )
+        vm.updateGroupName("Temp")
+        vm.createGroup(UserInstance(uid = "u1"))
+        advanceUntilIdle()
+        assertNotNull(vm.createGroupState.value)
+
+        vm.resetCreateGroupState()
+        assertEquals(null, vm.createGroupState.value)
+    }
+
+    @Test
+    fun `updateAccessPermission and resetAccessPermission work correctly`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val vm = CreateGroupViewModel(
+            createGroupUseCase = CreateGroupUseCase(CreateGroupRepo()),
+            ioDispatcher = dispatcher
+        )
+        vm.updateAccessPermission(DecentralizationType.Private)
+        assertEquals(DecentralizationType.Private, vm.accessPermission.value)
+
+        vm.resetAccessPermission()
+        assertEquals(DecentralizationType.Public, vm.accessPermission.value)
+    }
 }
 
 

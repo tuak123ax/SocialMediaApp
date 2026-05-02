@@ -1,12 +1,11 @@
 package com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -16,9 +15,14 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -40,6 +44,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -51,34 +56,41 @@ import com.minhtu.firesocialmedia.data.remote.service.imagepicker.ImagePicker
 import com.minhtu.firesocialmedia.domain.core.DecentralizationType
 import com.minhtu.firesocialmedia.domain.entity.group.GroupInstance
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
-import com.minhtu.firesocialmedia.platform.PasswordVisibilityIcon
+import com.minhtu.firesocialmedia.platform.CommonBackHandler
 import com.minhtu.firesocialmedia.platform.getImageBytesFromDrawable
 import com.minhtu.firesocialmedia.platform.showToast
+import com.minhtu.firesocialmedia.platform.toHex
 import com.minhtu.firesocialmedia.presentation.loading.Loading
 import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
 import com.minhtu.firesocialmedia.presentation.uploadnewsfeed.UploadNewsfeed.Companion.AccessPermissionBottomSheet
 import com.minhtu.firesocialmedia.presentation.uploadnewsfeed.UploadNewsfeed.Companion.AccessPermissionButtonContent
+import com.minhtu.firesocialmedia.utils.UiUtils
+import com.minhtu.firesocialmedia.utils.UiUtils.Companion.PasswordVisibilityIcon
+import com.minhtu.sharedmodule.ui.theme.avatarGrayBackground
 
 class CreateGroup {
     companion object {
         @Composable
         fun CreateGroupScreen(
+            paddingValues: PaddingValues,
             createGroupViewModel: CreateGroupViewModel,
             loadingViewModel : LoadingViewModel,
             imagePicker: ImagePicker,
             currentUser : UserInstance,
-            onCreateGroupSuccess : (GroupInstance) -> Unit
+            onCreateGroupSuccess : (GroupInstance) -> Unit,
+            onNavigateBack : () -> Unit
         ) {
+            CommonBackHandler {
+                createGroupViewModel.resetCreateGroupUiState()
+                onNavigateBack()
+            }
             val isLoading by loadingViewModel.isLoading.collectAsState()
             imagePicker.RegisterLauncher { loadingViewModel.hideLoading() }
             val avatarModifier = Modifier
                 .size(160.dp)
+                .background(avatarGrayBackground)
                 .clip(CircleShape)
-                .border(1.dp, Color.Gray, CircleShape)
-                .clickable {
-                    loadingViewModel.showLoading()
-                    imagePicker.pickImage()
-                }
+                .border(2.dp, MaterialTheme.colorScheme.primary, CircleShape)
                 .testTag(TestTag.TAG_SELECT_GROUP_AVATAR)
                 .semantics {
                     contentDescription = TestTag.TAG_SELECT_GROUP_AVATAR
@@ -101,66 +113,100 @@ class CreateGroup {
                     loadingViewModel.hideLoading()
                 }
             }
-            Box(Modifier.fillMaxSize()) {
+            Box(Modifier
+                .fillMaxSize()
+                .padding(paddingValues)) {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center,
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(30.dp)
                 ) {
-                    Text(
-                        text = "Please select group avatar",
-                        color = Color.Black,
-                        style = MaterialTheme.typography.titleLarge,
-                        textAlign = TextAlign.Center
+                    Spacer(Modifier.height(20.dp))
+                    UiUtils.BackAndTitleAndMoreOptionsRow(
+                        "Create New Group",
+                        titleColor = Color.Black,
+                        titleStyle = MaterialTheme.typography.headlineMedium,
+                        "Set up your community in seconds",
+                        showBackButton = false,
+                        showMoreOptionsMenu = false
                     )
                     Spacer(Modifier.height(20.dp))
                     val imageBytes =
                         produceState<ByteArray?>(initialValue = null, createGroupViewModel.avatar) {
-                            value = if (createGroupViewModel.avatar == Constants.DEFAULT_AVATAR_URL) {
-                                getImageBytesFromDrawable("unknownavatar")
+                            value = if (createGroupViewModel.avatar == Constants.DEFAULT_ARK_AVATAR_URL_FOR_GROUP) {
+                                getImageBytesFromDrawable("arkavatar")
                             } else {
                                 imagePicker.loadImageBytes(createGroupViewModel.avatar)
                             }
                         }
-                    if (imageBytes.value != null) {
-                        imagePicker.ByteArrayImage(
-                            imageBytes.value,
-                            modifier = avatarModifier
-                        )
+                    Box(
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (imageBytes.value != null) {
+                            imagePicker.ByteArrayImage(
+                                imageBytes.value,
+                                modifier = avatarModifier
+                            )
+                        } else {
+                            Box(modifier = avatarModifier)
+                        }
+                        IconButton(
+                            colors = IconButtonDefaults.iconButtonColors(
+                                containerColor = MaterialTheme.colorScheme.primary
+                            ),
+                            onClick = {
+                                imagePicker.pickImage()
+                            }
+                        ) {
+                            Icon(
+                                Icons.Default.CameraAlt,
+                                "Select avatar",
+                                tint = Color.White
+                            )
+                        }
                     }
                     Spacer(Modifier.height(20.dp))
                     Text(
-                        text = "And input group name below",
-                        color = Color.Black,
-                        style = MaterialTheme.typography.titleLarge,
-                        textAlign = TextAlign.Center,
+                        text = "GROUP DETAILS",
+                        color = Color.LightGray,
+                        style = MaterialTheme.typography.bodyMedium,
+                        textAlign = TextAlign.Start,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp)
                     )
                     OutlinedTextField(
                         value = createGroupViewModel.groupName.collectAsState().value,
+                        shape = RoundedCornerShape(10.dp),
+                        textStyle = TextStyle(color = Color.Black),
+                        leadingIcon = {
+                            Icon(
+                                Icons.Default.Person,
+                                "Name"
+                            )
+                        },
                         onValueChange = { text ->
                             createGroupViewModel.updateGroupName(text)
                         }, modifier = Modifier
                             .fillMaxWidth()
-                            .padding(20.dp)
-                            .focusable(true)
+                            .padding(horizontal = 20.dp)
                             .testTag(TestTag.TAG_GROUP_NAME)
                             .semantics {
                                 contentDescription = TestTag.TAG_GROUP_NAME
                             },
-                        shape = RoundedCornerShape(30.dp),
                         label = { Text(text = "Group Name") },
-                        singleLine = true,
-                        textStyle = TextStyle(Color.Black)
+                        singleLine = true
                     )
                     Text(
                         text = "Who can join this group?",
                         color = Color.Black,
-                        style = MaterialTheme.typography.titleLarge,
+                        style = MaterialTheme.typography.bodyMedium,
                         textAlign = TextAlign.Center,
+                        modifier = Modifier
+                            .padding(20.dp)
                     )
-                    Spacer(Modifier.height(20.dp))
                     Box(contentAlignment = Alignment.Center) {
                         OutlinedButton(
                             onClick = {
@@ -197,10 +243,13 @@ class CreateGroup {
                     Spacer(Modifier.height(20.dp))
                     if(currentAccessPermission.value == DecentralizationType.Private) {
                         Text(
-                            text = "If this is private group, please input password",
-                            color = Color.Black,
-                            style = MaterialTheme.typography.titleLarge,
+                            text = "Since this is a private group, please create a secure password for new members.",
+                            color = Color.Gray,
+                            style = MaterialTheme.typography.bodyMedium,
                             textAlign = TextAlign.Center,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 30.dp)
                         )
                         PasswordTextField(
                             "Group Password",
@@ -209,33 +258,36 @@ class CreateGroup {
                         )
                     }
                     Spacer(Modifier.weight(1f))
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.Center
-                    ) {
-                        Button(
-                            onClick = {
-                                if(createGroupViewModel.groupName.value.isEmpty()) {
-                                    showToast("Please input group name!")
+                    Button(
+                        onClick = {
+                            if(createGroupViewModel.groupName.value.isEmpty()) {
+                                showToast("Please input group name!")
+                            } else {
+                                if(createGroupViewModel.accessPermission.value == DecentralizationType.Private &&
+                                    createGroupViewModel.password.value.isEmpty()) {
+                                    showToast("Please input group password!")
                                 } else {
-                                    if(createGroupViewModel.accessPermission.value == DecentralizationType.Private &&
-                                        createGroupViewModel.password.value.isEmpty()) {
-                                        showToast("Please input group password!")
-                                    } else {
-                                        loadingViewModel.showLoading()
-                                        createGroupViewModel.createGroup(currentUser)
-                                    }
+                                    loadingViewModel.showLoading()
+                                    createGroupViewModel.createGroup(currentUser)
                                 }
-                            },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 30.dp)
-                                .testTag(TestTag.TAG_BUTTON_NEXT)
-                                .semantics {
-                                    contentDescription = TestTag.TAG_BUTTON_NEXT
-                                }) {
-                            Text(text = "Continue")
-                        }
+                            }
+                        },
+                        shape = RoundedCornerShape(10.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary
+                        ),
+                        elevation = ButtonDefaults.buttonElevation(4.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp)
+                            .testTag(TestTag.TAG_BUTTON_NEXT)
+                            .semantics {
+                                contentDescription = TestTag.TAG_BUTTON_NEXT
+                            }) {
+                        Text(
+                            text = "Continue",
+                            color = Color.White
+                        )
                     }
                 }
                 if (isLoading) {
@@ -264,15 +316,24 @@ class CreateGroup {
                     .semantics {
                         contentDescription = testTag
                     },
-                shape = androidx.compose.foundation.shape.RoundedCornerShape(30.dp),
+                shape = RoundedCornerShape(20.dp),
                 label = { Text(text = label) },
                 singleLine = true,
                 textStyle = TextStyle(Color.Black),
                 visualTransformation = if (passwordVisibility) VisualTransformation.None else PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                 trailingIcon = {
-                    IconButton(onClick = { passwordVisibility = !passwordVisibility }) {
-                        PasswordVisibilityIcon(passwordVisibility)
+                    IconButton(
+                        onClick = { passwordVisibility = !passwordVisibility },
+                        modifier = Modifier
+                            .testTag(TestTag.TAG_SHOW_PASSWORD)
+                            .semantics{
+                                contentDescription = TestTag.TAG_SHOW_PASSWORD
+                            }) {
+                        PasswordVisibilityIcon(
+                            passwordVisibility,
+                            tint = Color.Black,
+                            Color.Black.toHex())
                     }
                 }
             )

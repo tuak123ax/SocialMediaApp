@@ -4,8 +4,8 @@ import com.minhtu.firesocialmedia.constants.Constants
 import com.minhtu.firesocialmedia.domain.repository.AuthenticationRepository
 import com.minhtu.firesocialmedia.domain.usecases.signup.SignUpUseCase
 import com.minhtu.firesocialmedia.presentation.signup.SignUpViewModel
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
@@ -167,6 +167,6 @@ class SignUpViewModelTest {
         advanceUntilIdle()
         val signUpStatus = signUpViewModel.signUpStatus.value
         assertEquals(false, signUpStatus.signUpStatus)
-        assertEquals(Constants.SIGNUP_FAIL, signUpStatus.message)
+        assertEquals("Sign up failed", signUpStatus.message)
     }
 }

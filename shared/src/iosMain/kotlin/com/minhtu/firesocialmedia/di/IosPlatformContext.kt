@@ -14,11 +14,16 @@ import com.minhtu.firesocialmedia.domain.serviceimpl.call.IosAudioCallService
 import com.minhtu.firesocialmedia.domain.serviceimpl.clipboard.IosClipboardService
 import com.minhtu.firesocialmedia.domain.serviceimpl.crypto.IosCryptoService
 import com.minhtu.firesocialmedia.domain.serviceimpl.database.IosDatabaseService
+import com.minhtu.firesocialmedia.domain.serviceimpl.database.supabase.SupabaseStorageHelper
 import com.minhtu.firesocialmedia.domain.serviceimpl.permission.IosPermissionManager
 import com.minhtu.firesocialmedia.domain.serviceimpl.room.IosRoomService
 
-open class IosPlatformContext(
-) : PlatformContext {
+open class IosPlatformContext() : PlatformContext {
+
+    init {
+        SupabaseStorageHelper.initExtensionCache()
+    }
+
     override val auth: AuthService = IosAuthService()
     override val crypto: CryptoService = IosCryptoService()
     override val database: DatabaseService = IosDatabaseService()

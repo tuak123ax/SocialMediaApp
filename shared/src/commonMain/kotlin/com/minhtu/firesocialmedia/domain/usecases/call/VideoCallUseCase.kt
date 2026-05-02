@@ -7,16 +7,18 @@ import com.minhtu.firesocialmedia.platform.logMessage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 
 class VideoCallUseCase(
     val callRepository: CallRepository,
-    val coroutineScope: CoroutineScope = CoroutineScope(Dispatchers.IO)
+    val coroutineScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 ) {
     suspend fun startVideoCall(
+        isVideoInitiator: Boolean,
         onLocalVideoTrackCreated : suspend (localVideoTrack : WebRTCVideoTrack) -> Unit) {
-        //Start video call
         callRepository.startVideoCall(
+            isVideoInitiator = isVideoInitiator,
             onStartVideoCall = { localVideoTrack ->
                 onLocalVideoTrackCreated(localVideoTrack)
             }

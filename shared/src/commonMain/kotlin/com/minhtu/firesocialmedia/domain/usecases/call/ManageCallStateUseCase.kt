@@ -1,6 +1,7 @@
 package com.minhtu.firesocialmedia.domain.usecases.call
 
 import com.minhtu.firesocialmedia.domain.entity.call.CallStatus
+import com.minhtu.firesocialmedia.domain.entity.call.SpeakerType
 import com.minhtu.firesocialmedia.domain.repository.CallRepository
 import com.minhtu.firesocialmedia.platform.logMessage
 
@@ -65,5 +66,21 @@ class ManageCallStateUseCase(
 
     suspend fun rejectVideoCall() {
         callRepository.rejectVideoCall()
+    }
+
+    suspend fun resetVideoCallStartedState() {
+        callRepository.resetVideoCallStartedState()
+    }
+
+    suspend fun stopVideoCallResources() {
+        callRepository.stopVideoCallResources()
+    }
+
+    suspend fun updateMuteStatus(muted: Boolean) {
+        callRepository.updateMuteStatus(muted)
+    }
+
+    suspend fun updateSpeakerStatus(speakerType: SpeakerType) {
+        callRepository.updateSpeakerStatus(speakerType)
     }
 }

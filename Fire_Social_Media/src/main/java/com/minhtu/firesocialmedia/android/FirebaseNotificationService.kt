@@ -30,7 +30,6 @@ import com.minhtu.firesocialmedia.domain.serviceimpl.call.CallNotificationManage
 import com.minhtu.firesocialmedia.domain.serviceimpl.call.CallNotificationManager.Companion.channelId
 import com.minhtu.firesocialmedia.domain.serviceimpl.call.CallSoundManager
 import com.minhtu.firesocialmedia.platform.TokenStorage.updateTokenInStorage
-import com.minhtu.firesocialmedia.platform.logMessage
 import com.minhtu.firesocialmedia.platform.showToast
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

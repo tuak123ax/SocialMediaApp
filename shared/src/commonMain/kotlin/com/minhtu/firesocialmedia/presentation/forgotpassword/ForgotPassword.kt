@@ -1,33 +1,44 @@
 package com.minhtu.firesocialmedia.presentation.forgotpassword
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
-import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.minhtu.firesocialmedia.constants.Constants
 import com.minhtu.firesocialmedia.constants.TestTag
+import com.minhtu.firesocialmedia.constants.UiConstants
+import com.minhtu.firesocialmedia.platform.CrossPlatformIcon
 import com.minhtu.firesocialmedia.platform.showToast
+import com.minhtu.firesocialmedia.platform.toHex
 import com.minhtu.firesocialmedia.presentation.loading.Loading
 import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
+import com.minhtu.firesocialmedia.utils.UiUtils.Companion.IconAndTitle
+import com.minhtu.firesocialmedia.utils.UiUtils.Companion.SubTitle
+import com.minhtu.firesocialmedia.utils.UiUtils.Companion.TextFieldWithLeadingIcon
+import com.minhtu.sharedmodule.ui.theme.loginBackgroundColor
 
 class ForgotPassword{
     companion object{
@@ -35,88 +46,119 @@ class ForgotPassword{
         fun ForgotPasswordScreen(
             forgotPasswordViewModel: ForgotPasswordViewModel,
             loadingViewModel: LoadingViewModel,
-            modifier: Modifier,
+            modifier: Modifier = Modifier,
             onNavigateToSignInScreen:() -> Unit) {
             val isLoading by loadingViewModel.isLoading.collectAsState()
-            val emailExisted = forgotPasswordViewModel.emailExisted.collectAsState()
-            val emailSent = forgotPasswordViewModel.emailSent.collectAsState()
-            LaunchedEffect(emailExisted.value) {
-                if (emailExisted.value != null) {
-                    if (emailExisted.value!!.exist) {
+            val emailExisted by forgotPasswordViewModel.emailExisted.collectAsState()
+            val emailSent by forgotPasswordViewModel.emailSent.collectAsState()
+            LaunchedEffect(emailExisted) {
+                if (emailExisted != null) {
+                    if (emailExisted!!.exist) {
                         forgotPasswordViewModel.sendEmailResetPassword()
                     } else {
-                        when (emailExisted.value!!.message) {
+                        loadingViewModel.hideLoading()
+                        when (emailExisted!!.message) {
                             Constants.EMAIL_EMPTY -> {
-                                showToast("Please input your email!")
+                                showToast(UiConstants.ForgotPassword.Error.EMAIL_EMPTY)
                             }
 
                             Constants.EMAIL_SERVER_ERROR -> {
-                                showToast("Server error happened! Please try again.")
+                                showToast(UiConstants.ForgotPassword.Error.EMAIL_SERVER_ERROR)
                             }
 
                             Constants.EMAIL_NOT_EXISTED -> {
-                                showToast("This email doesn't exist!")
+                                showToast(UiConstants.ForgotPassword.Error.EMAIL_NOT_EXISTED)
                             }
                         }
                     }
+                    forgotPasswordViewModel.resetEmailExistStatus()
                 }
             }
-            LaunchedEffect(emailSent.value) {
-                if (emailSent.value != null) {
-                    if (emailSent.value!!) {
-                        showToast("Please check your email to reset password!")
+            LaunchedEffect(emailSent) {
+                if (emailSent != null) {
+                    loadingViewModel.hideLoading()
+                    if (emailSent!!) {
+                        showToast(UiConstants.ForgotPassword.RESET_PASSWORD_MESSAGE)
                         onNavigateToSignInScreen()
                     } else {
-                        showToast("Server error happened! Please try again.")
+                        showToast(UiConstants.ForgotPassword.Error.EMAIL_SERVER_ERROR)
                     }
+                    forgotPasswordViewModel.updateEmail("")
+                    forgotPasswordViewModel.resetEmailResetPassword()
                 }
             }
 
             Box(modifier = Modifier.fillMaxSize()) {
-                Column(modifier = modifier, verticalArrangement = Arrangement.Center) {
+                Column(modifier = modifier
+                    .fillMaxSize()
+                    .background(loginBackgroundColor),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally) {
+                    //Big icon
+                    CrossPlatformIcon(
+                        icon = "fire_chat_icon",
+                        backgroundColor = loginBackgroundColor.toHex(),
+                        modifier = Modifier
+                            .size(50.dp)
+                    )
                     //Title
-                    Text(
-                        text = "Forgot Password",
-                        color = Color.Blue,
-                        fontSize = 30.sp,
-                        textAlign = TextAlign.Center,
+                    IconAndTitle(
+                        hasIcon = false,
+                        hasTitle = true,
+                        title = UiConstants.ForgotPassword.SCREEN_TITLE,
+                        titleColor = Color.White,
                         modifier = Modifier.fillMaxWidth()
                     )
-                    Spacer(modifier = Modifier.padding(bottom = 50.dp))
-                    //Username textfield
-                    OutlinedTextField(
-                        value = forgotPasswordViewModel.email, onValueChange = {
-                            forgotPasswordViewModel.updateEmail(it)
-                        }, modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(20.dp)
-                            .testTag(TestTag.TAG_USERNAME)
-                            .semantics {
-                                contentDescription = TestTag.TAG_USERNAME
-                            },
-                        label = { Text(text = "Username") },
-                        singleLine = true
-                    )
-
-                    //Row contains buttons
-                    Row(
+                    //SubTitle
+                    SubTitle(
+                        subTitle = UiConstants.ForgotPassword.SCREEN_SUBTITLE,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(20.dp), horizontalArrangement = Arrangement.Center
-                    ) {
-                        //Back button
-                        Button(onClick = {
-                            forgotPasswordViewModel.resetEmailResetPassword()
-                            onNavigateToSignInScreen()
-                        }) {
-                            Text(text = "Back")
-                        }
-                        Spacer(modifier = Modifier.padding(horizontal = 20.dp))
-                        //Reset button
-                        Button(onClick = { forgotPasswordViewModel.checkIfEmailExists() }) {
-                            Text(text = "Reset Password")
-                        }
+                            .padding(30.dp)
+                    )
+                    Spacer(modifier = Modifier.padding(bottom = 20.dp))
+                    //Username
+                    TextFieldWithLeadingIcon(
+                        value = forgotPasswordViewModel.email,
+                        onValueChange = {
+                            forgotPasswordViewModel.updateEmail(it)
+                        },
+                        label = UiConstants.SignUp.USERNAME_LABEL,
+                        testTag = TestTag.TAG_USERNAME
+                    )
+                    //Reset button
+                    Button(
+                        onClick = {
+                        loadingViewModel.showLoading()
+                        forgotPasswordViewModel.checkIfEmailExists() },
+                        shape = RoundedCornerShape(10.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(20.dp)
+                        ) {
+                        Text(text = UiConstants.ForgotPassword.RESET_PASSWORD_BUTTON_TEXT)
                     }
+                    //Back to sign in
+                    Text(
+                        text = UiConstants.ForgotPassword.BACK_TO_SIGN_IN_TEXT,
+                        color = Color.Gray,
+                        textDecoration = TextDecoration.Underline,
+                        style = MaterialTheme.typography.bodyMedium,
+                        textAlign = TextAlign.Center,
+                        modifier = modifier
+                            .fillMaxWidth()
+                            .padding(20.dp)
+                            .clickable {
+                                forgotPasswordViewModel.resetEmailExistStatus()
+                                forgotPasswordViewModel.resetEmailResetPassword()
+                                forgotPasswordViewModel.updateEmail("")
+                                onNavigateToSignInScreen()
+                        }
+                            .testTag(TestTag.TAG_BUTTON_BACK)
+                            .semantics {
+                                contentDescription = TestTag.TAG_BUTTON_BACK
+                            }
+                    )
                 }
                 if (isLoading) {
                     Loading.LoadingScreen()
@@ -125,7 +167,7 @@ class ForgotPassword{
         }
 
         fun getScreenName(): String{
-            return "ForgotPasswordScreen"
+            return UiConstants.ForgotPassword.SCREEN_NAME
         }
     }
 }

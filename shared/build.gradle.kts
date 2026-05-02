@@ -1,4 +1,10 @@
 import org.jetbrains.kotlin.gradle.plugin.mpp.apple.XCFramework
+import java.util.Properties
+
+val localProperties = Properties().apply {
+    val localPropertiesFile = rootProject.file("local.properties")
+    if (localPropertiesFile.exists()) load(localPropertiesFile.inputStream())
+}
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -114,6 +120,9 @@ kotlin {
             //Room
             implementation(libs.androidx.room.runtime)
             implementation(libs.androidx.sqlite.bundled)
+
+            //QR
+            implementation("io.github.g0dkar:qrcode-kotlin:4.5.0")
         }
         commonTest {
             dependencies{
@@ -221,6 +230,19 @@ android {
     compileSdk = 35
     defaultConfig {
         minSdk = 24
+        buildConfigField(
+            "String",
+            "APP_SCRIPT_FOR_2FA_AUTHENTICATION_API_KEY",
+            "\"${localProperties.getProperty("APP_SCRIPT_FOR_2FA_AUTHENTICATION_API_KEY", "")}\""
+        )
+        buildConfigField(
+            "String",
+            "SUPABASE_API_KEY",
+            "\"${localProperties.getProperty("SUPABASE_API_KEY", "")}\""
+        )
+    }
+    buildFeatures {
+        buildConfig = true
     }
 
     compileOptions {

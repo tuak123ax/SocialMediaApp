@@ -1,10 +1,12 @@
 package com.minhtu.firesocialmedia.presentation.comment
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -17,13 +19,14 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -39,7 +42,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
@@ -48,8 +50,8 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.minhtu.firesocialmedia.constants.TestTag
@@ -62,8 +64,8 @@ import com.minhtu.firesocialmedia.platform.CrossPlatformIcon
 import com.minhtu.firesocialmedia.platform.convertTimeToDateString
 import com.minhtu.firesocialmedia.platform.logMessage
 import com.minhtu.firesocialmedia.platform.showToast
+import com.minhtu.firesocialmedia.storage.toStorageUrl
 import com.minhtu.firesocialmedia.utils.UiUtils
-import com.minhtu.firesocialmedia.utils.Utils
 import com.rickclephas.kmp.observableviewmodel.launch
 import com.seiko.imageloader.ui.AutoSizeImage
 import kotlinx.coroutines.Dispatchers
@@ -72,18 +74,21 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class Comment {
-    companion object{
+    companion object {
         @Composable
-        fun CommentScreen(modifier: Modifier,
-                          platform : PlatformContext,
-                          localImageLoaderValue : ProvidedValue<*>,
-                          showCloseIcon : Boolean,
-                          commentViewModel: CommentViewModel,
-                          currentUser : UserInstance,
-                          selectedNew : NewsInstance,
-                          onNavigateToShowImageScreen: (image: String) -> Unit,
-                          onNavigateToUserInformation: (user: UserInstance?) -> Unit,
-                          onNavigateToHomeScreen: (numberOfComments : Int) -> Unit) {
+        fun CommentScreen(
+            paddingValues: PaddingValues = PaddingValues(0.dp),
+            modifier: Modifier = Modifier,
+            platform: PlatformContext,
+            localImageLoaderValue: ProvidedValue<*>,
+            showCloseIcon: Boolean,
+            commentViewModel: CommentViewModel,
+            currentUser: UserInstance,
+            selectedNew: NewsInstance,
+            onNavigateToShowImageScreen: (image: String) -> Unit,
+            onNavigateToUserInformation: (user: UserInstance?) -> Unit,
+            onNavigateToHomeScreen: (numberOfComments: Int) -> Unit
+        ) {
             val commentStatus = commentViewModel.createCommentStatus.collectAsState()
             val focusRequester = remember { FocusRequester() }
             val keyboardController = LocalSoftwareKeyboardController.current
@@ -101,7 +106,7 @@ class Comment {
                 }
             }
 
-            val commentsList =  commentViewModel.allComments.collectAsState()
+            val commentsList = commentViewModel.allComments.collectAsState()
             val coroutineScope = rememberCoroutineScope()
             CommonBackHandler {
                 onNavigateToHomeScreen(commentsList.value.size)
@@ -116,7 +121,7 @@ class Comment {
             Box(
                 modifier = modifier
                     .fillMaxSize()
-                    .padding(16.dp)
+                    .padding(paddingValues)
             ) {
                 Column(
                     verticalArrangement = Arrangement.Top,
@@ -125,32 +130,22 @@ class Comment {
                 ) {
                     // Close Button Row
                     if (showCloseIcon) {
-                        Row(
-                            horizontalArrangement = Arrangement.End,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            CrossPlatformIcon(
-                                icon = "close",
-                                backgroundColor = "#FFFFFFFF",
-                                contentDescription = "Close Icon",
-                                contentScale = ContentScale.Fit,
-                                modifier = Modifier
-                                    .size(30.dp)
-                                    .clickable {
-                                        onNavigateToHomeScreen(commentsList.value.size)
-                                        coroutineScope.launch(Dispatchers.IO) {
-                                            //Delay to wait for animation finished before reset comment list
-                                            delay(700)
-                                            commentViewModel.resetCommentStatus()
-                                            commentViewModel.clearCommentList()
-                                        }
-                                    }
-                                    .testTag(TestTag.TAG_BUTTON_BACK)
-                                    .semantics {
-                                        contentDescription = TestTag.TAG_BUTTON_BACK
-                                    }
-                            )
-                        }
+                        UiUtils.BackAndTitleAndMoreOptionsRow(
+                            title = "Comment",
+                            titleStyle = MaterialTheme.typography.titleLarge,
+                            trailingIcon = "more_horiz",
+                            navigateBack = {
+                                onNavigateToHomeScreen(commentsList.value.size)
+                                coroutineScope.launch(Dispatchers.IO) {
+                                    //Delay to wait for animation finished before reset comment list
+                                    delay(700)
+                                    commentViewModel.resetCommentStatus()
+                                    commentViewModel.clearCommentList()
+                                }
+                            },
+                            onClickMoreOptions = {
+                            }
+                        )
                     }
 
                     Spacer(modifier = Modifier.height(8.dp))
@@ -169,7 +164,7 @@ class Comment {
                         //Sort comments by timePosted in descending order
                         items(
                             items = commentsList.value.sortedByDescending { it.timePosted },
-                            key = {it.id}) { comment ->
+                            key = { it.id }) { comment ->
                             CommentCard(
                                 comment,
                                 commentViewModel,
@@ -217,41 +212,34 @@ class Comment {
                     // Comment Input Row
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(10.dp)
                     ) {
-                        OutlinedTextField(
-                            value = commentViewModel.message,
-                            onValueChange = { commentViewModel.updateMessage(it) },
+                        UiUtils.CustomEditText(
+                            text = commentViewModel.message,
+                            onTextChange = {
+                                commentViewModel.updateMessage(it)
+                            },
                             modifier = Modifier
-                                .weight(1f) // Allow space for send button
-                                .padding(10.dp)
-                                .focusRequester(focusRequester)
+                                .weight(1f)
                                 .testTag(TestTag.TAG_INPUT_COMMENT)
                                 .semantics {
                                     contentDescription = TestTag.TAG_INPUT_COMMENT
                                 },
-                            label = { Text(text = "Input your comment here") },
-                            maxLines = 4,
-                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                            keyboardActions = KeyboardActions(
-                                onDone = { keyboardController?.hide() }
-                            )
+                            placeholder = "Share your thought...",
+                            keyboardController = keyboardController
                         )
 
-                        CrossPlatformIcon(
-                            icon = "send_message",
-                            backgroundColor = "#FFFFFFFF",
-                            contentDescription = "Send Icon",
-                            contentScale = ContentScale.Fit,
+                        Spacer(Modifier.width(8.dp))
+                        SendCommentButton(
+                            onClick = {
+                                commentViewModel.sendComment(
+                                    currentUser,
+                                    selectedNew
+                                )
+                            },
                             modifier = Modifier
-                                .size(50.dp)
-                                .padding(10.dp)
-                                .clickable {
-                                    commentViewModel.sendComment(
-                                        currentUser,
-                                        selectedNew
-                                    )
-                                }
                                 .testTag(TestTag.TAG_BUTTON_SEND)
                                 .semantics {
                                     contentDescription = TestTag.TAG_BUTTON_SEND
@@ -263,19 +251,44 @@ class Comment {
         }
 
         @Composable
-        fun CommentCard(comment: CommentInstance,
-                        commentViewModel: CommentViewModel,
-                        localImageLoaderValue : ProvidedValue<*>,
-                        currentUser : UserInstance,
-                        platform : PlatformContext,
-                        selectedNew : NewsInstance,
-                        isMainComment : Boolean,
-                        onNavigateToShowImageScreen: (image: String) -> Unit,
-                        onNavigateToUserInformation: (user: UserInstance?) -> Unit,
-                        onCopyComment: () -> Unit,
-                        onLikeComment: () -> Unit,
-                        onReplyComment: () -> Unit,
-                        onDeleteComment: () -> Unit) {
+        fun SendCommentButton(
+            modifier: Modifier = Modifier,
+            onClick: () -> Unit = {}
+        ) {
+            Box(
+                modifier = modifier
+                    .size(45.dp)
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(Color(0xFFE53935))
+                    .clickable { onClick() },
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.ChevronRight,
+                    contentDescription = "Send Comment",
+                    tint = Color.White,
+                    modifier = Modifier.size(32.dp)
+                )
+            }
+        }
+
+        @Composable
+        fun CommentCard(
+            comment: CommentInstance,
+            commentViewModel: CommentViewModel,
+            localImageLoaderValue: ProvidedValue<*>,
+            currentUser: UserInstance,
+            platform: PlatformContext,
+            selectedNew: NewsInstance,
+            isMainComment: Boolean,
+            onNavigateToShowImageScreen: (image: String) -> Unit,
+            onNavigateToUserInformation: (user: UserInstance?) -> Unit,
+            onCopyComment: () -> Unit,
+            onLikeComment: () -> Unit,
+            onReplyComment: () -> Unit,
+            onDeleteComment: () -> Unit
+        ) {
+            val isAuthor = comment.posterId == selectedNew.posterId
             val likeStatus by commentViewModel.likedComments.collectAsState()
             val isLiked = likeStatus.contains(comment.id)
             LaunchedEffect(Unit) {
@@ -318,7 +331,8 @@ class Comment {
                                 modifier = Modifier.padding(10.dp).fillMaxWidth()
                                     .clickable {
                                         commentViewModel.viewModelScope.launch {
-                                            val user = commentViewModel.findUserById(comment.posterId)
+                                            val user =
+                                                commentViewModel.findUserById(comment.posterId)
                                             onNavigateToUserInformation(user)
                                         }
                                     }) {
@@ -326,7 +340,7 @@ class Comment {
                                     localImageLoaderValue
                                 ) {
                                     AutoSizeImage(
-                                        comment.avatar,
+                                        comment.avatar.toStorageUrl(),
                                         contentDescription = "Poster Avatar",
                                         contentScale = ContentScale.Crop,
                                         modifier = Modifier
@@ -338,11 +352,36 @@ class Comment {
                                 Spacer(modifier = Modifier.width(5.dp))
 
                                 Column {
-                                    Text(
-                                        text = comment.posterName,
-                                        color = Color.Black,
-                                        modifier = Modifier.padding(horizontal = 2.dp)
-                                    )
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Text(
+                                            text = comment.posterName,
+                                            color = Color.Black,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis,
+                                            modifier = Modifier
+                                                .weight(1f)
+                                                .padding(horizontal = 2.dp)
+                                        )
+
+                                        if (isAuthor) {
+                                            Spacer(modifier = Modifier.width(6.dp))
+
+                                            Text(
+                                                text = "Author",
+                                                fontSize = 12.sp,
+                                                color = Color.White,
+                                                modifier = Modifier
+                                                    .background(
+                                                        color = MaterialTheme.colorScheme.primary,
+                                                        shape = RoundedCornerShape(50)
+                                                    )
+                                                    .padding(horizontal = 8.dp, vertical = 2.dp)
+                                            )
+                                        }
+                                    }
                                     if (isMainComment) {
                                         Text(
                                             text = convertTimeToDateString(comment.timePosted),
@@ -362,7 +401,7 @@ class Comment {
                                     localImageLoaderValue
                                 ) {
                                     AutoSizeImage(
-                                        comment.image,
+                                        comment.image.toStorageUrl(),
                                         contentDescription = "Image",
                                         contentScale = ContentScale.Fit,
                                         modifier = Modifier
@@ -386,6 +425,7 @@ class Comment {
                                 icon = "like",
                                 backgroundColor = if (isLiked) "#00FFFF" else "#FFFFFF",
                                 contentDescription = TestTag.TAG_BUTTON_LIKE,
+                                tint = if (isLiked) Color.Red else Color.Black,
                                 modifier = Modifier
                                     .size(20.dp)
                                     .testTag(TestTag.TAG_BUTTON_LIKE)
@@ -394,8 +434,7 @@ class Comment {
                                     }
                                     .clickable {
                                         onLikeComment()
-                                    },
-                                tint = if (isLiked) Utils.hexToColor("#00FFFF") else Color.Unspecified
+                                    }
                             )
                             Text(
                                 text = "${likeCountList.value[comment.id] ?: 0}",
@@ -506,19 +545,21 @@ class Comment {
 
         }
 
-        fun getScreenName(): String{
+        fun getScreenName(): String {
             return "CommentScreen"
         }
 
         @Composable
-        fun DropdownMenuForComment(expanded : Boolean,
-                                   isMainComment : Boolean,
-                                   isYourComment : Boolean,
-                                   onCopyComment : () -> Unit,
-                                   onLikeComment : () -> Unit,
-                                   onReplyComment : () -> Unit,
-                                   onDeleteComment : () -> Unit,
-                                   onDismissRequest: () -> Unit) {
+        fun DropdownMenuForComment(
+            expanded: Boolean,
+            isMainComment: Boolean,
+            isYourComment: Boolean,
+            onCopyComment: () -> Unit,
+            onLikeComment: () -> Unit,
+            onReplyComment: () -> Unit,
+            onDeleteComment: () -> Unit,
+            onDismissRequest: () -> Unit
+        ) {
             DropdownMenu(
                 expanded = expanded,
                 onDismissRequest = onDismissRequest

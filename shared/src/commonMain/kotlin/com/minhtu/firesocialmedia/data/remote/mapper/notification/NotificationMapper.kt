@@ -12,7 +12,8 @@ fun NotificationDTO.toDomain() : NotificationInstance {
         sender,
         timeSend,
         convertTypeStringToEnum(type),
-        relatedInfo
+        relatedInfo,
+        beRead
     )
 }
 
@@ -52,6 +53,7 @@ fun NotificationInstance.toDto() : NotificationDTO {
         sender,
         timeSend,
         type.name,
-        relatedInfo
+        relatedInfo,
+        beRead
     )
 }

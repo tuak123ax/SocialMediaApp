@@ -34,6 +34,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -70,23 +71,25 @@ class HomeViewModel(
 
     val _getCurrentUserStatus = mutableStateOf(false)
     val getCurrentUserStatus = _getCurrentUserStatus
-    suspend fun getCurrentUserAndFriends() {
-        try{
-            val currentUserId = userInteractor.getCurrentUserId()
-            if(currentUserId != null) {
-                val user = userInteractor.getUser(currentUserId, true)
-                if(user != null) {
-                    updateCurrentUser(user)
-                    _getCurrentUserStatus.value = true
-                    getAllUserFriends(user)
+    fun getCurrentUserAndFriends() {
+        viewModelScope.launch(ioDispatcher) {
+            try{
+                val currentUserId = userInteractor.getCurrentUserId()
+                if(currentUserId != null) {
+                    val user = userInteractor.getUser(currentUserId, true)
+                    if(user != null) {
+                        updateCurrentUser(user)
+                        _getCurrentUserStatus.value = true
+                        getAllUserFriends(user)
+                    } else {
+                        _getCurrentUserStatus.value = false
+                    }
                 } else {
                     _getCurrentUserStatus.value = false
                 }
-            } else {
+            } catch (ex : Exception) {
                 _getCurrentUserStatus.value = false
             }
-        } catch (ex : Exception) {
-            _getCurrentUserStatus.value = false
         }
     }
 
@@ -131,37 +134,39 @@ class HomeViewModel(
     var hasMoreData = mutableStateOf(true)
     private var lastTimePosted: Double? = null
     private var lastKey: String? = null
-    suspend fun getLatestNews() {
-        if (!isLoadingMore.value && hasMoreData.value) {
-            isLoadingMore.value = true
-            try{
-                val latestNewsResult = newsInteractor.pageLatest(
-                    10,
-                    lastTimePosted,
-                    lastKey
-                )
-                if(latestNewsResult != null) {
-                    if(latestNewsResult.news != null) {
-                        addNews(ArrayList(latestNewsResult.news))
-                        for (new in latestNewsResult.news) {
-                            listNews.add(new)
-                            addLikeCountData(new.id, new.likeCount)
-                            addCommentCountData(new.id, new.commentCount)
+    fun getLatestNews() {
+        viewModelScope.launch(ioDispatcher) {
+            if (!isLoadingMore.value && hasMoreData.value) {
+                isLoadingMore.value = true
+                try{
+                    val latestNewsResult = newsInteractor.pageLatest(
+                        10,
+                        lastTimePosted,
+                        lastKey
+                    )
+                    if(latestNewsResult != null) {
+                        if(latestNewsResult.news != null) {
+                            addNews(ArrayList(latestNewsResult.news))
+                            for (new in latestNewsResult.news) {
+                                listNews.add(new)
+                                addLikeCountData(new.id, new.likeCount)
+                                addCommentCountData(new.id, new.commentCount)
+                            }
+                            _getAllNewsStatus.value = true
+                            if(latestNewsResult.lastTimePostedValue == null) {
+                                hasMoreData.value = false
+                            }
+                            lastTimePosted = latestNewsResult.lastTimePostedValue
+                            lastKey = latestNewsResult.lastKeyValue
+                            checkUsersInCacheAndGetMore()
                         }
-                        _getAllNewsStatus.value = true
-                        if(latestNewsResult.lastTimePostedValue == null) {
-                            hasMoreData.value = false
-                        }
-                        lastTimePosted = latestNewsResult.lastTimePostedValue
-                        lastKey = latestNewsResult.lastKeyValue
-                        checkUsersInCacheAndGetMore()
+                    } else {
+                        _getAllNewsStatus.value = false
                     }
-                } else {
-                    _getAllNewsStatus.value = false
+                } finally {
+                    isLoadingMore.value = false
+                    isRefreshing.value = false
                 }
-            } finally {
-                isLoadingMore.value = false
-                isRefreshing.value = false
             }
         }
     }
@@ -210,20 +215,42 @@ class HomeViewModel(
         }
     }
 
+    // Ensure a single user is present in cache; fetch and cache if missing
+    fun ensureUserLoaded(userId: String) {
+        if (userId.isBlank()) return
+        viewModelScope.launch(ioDispatcher) {
+            val alreadyCached = cacheMutex.withLock { loadedUsersCache.containsKey(userId) }
+            if (alreadyCached) return@launch
+            val user = runCatching { userInteractor.getUser(userId, false) }.getOrNull()
+            cacheMutex.withLock {
+                if (!loadedUsersCache.containsKey(userId)) {
+                    loadedUsersCache[userId] = user
+                    _loadedUserState.value = loadedUsersCache.toMap()
+                }
+            }
+        }
+    }
+
     val _getAllNotificationsOfCurrentUser = mutableStateOf(false)
     val getAllNotificationsOfCurrentUser = _getAllNotificationsOfCurrentUser
-    suspend fun getAllNotificationsOfUser() {
-        val currentUserId = userInteractor.getCurrentUserId()
-        if(currentUserId != null) {
-            val notifications = notificationInteractor.allNotificationsOf(
-                currentUserId)
-            if(notifications != null) {
-                listNotificationOfCurrentUser.clear()
-                listNotificationOfCurrentUser.addAll(notifications)
-                updateNotifications(ArrayList(listNotificationOfCurrentUser.toList()))
-                _getAllNotificationsOfCurrentUser.value = true
-            } else {
-                _getAllNotificationsOfCurrentUser.value = false
+    fun getAllNotificationsOfUser() {
+        viewModelScope.launch(ioDispatcher) {
+            val currentUserId = userInteractor.getCurrentUserId()
+            if(currentUserId != null) {
+                val notifications = notificationInteractor.allNotificationsOf(
+                    currentUserId)
+                if (notifications != null) {
+                    for(notification in notifications) {
+                        logMessage("getAllNotifications",
+                            { notification.id + "isRead: "+ notification.beRead })
+                    }
+                    listNotificationOfCurrentUser.clear()
+                    listNotificationOfCurrentUser.addAll(notifications)
+                    updateNotifications(ArrayList(listNotificationOfCurrentUser.toList()))
+                    _getAllNotificationsOfCurrentUser.value = true
+                } else {
+                    _getAllNotificationsOfCurrentUser.value = false
+                }
             }
         }
     }
@@ -486,6 +513,11 @@ class HomeViewModel(
                         onEndCall = {
                             logMessage("observePhoneCall", { "onEndCall" })
                             _endCallStatus.value = true
+                            resetPhoneCallRequestStatus()
+                            //Send StopVideoCall first for user who is in video call screen.
+                            CallEventFlow.events.value = CallEvent.StopVideoCall
+                            //Delay to wait to back to audio call screen.
+                            delay(2000)
                             viewModelScope.launch(ioDispatcher) {
                                 if(CallEventFlow.events.value != CallEvent.StopCalling &&
                                     CallEventFlow.events.value != CallEvent.CallEnded) {
@@ -510,11 +542,12 @@ class HomeViewModel(
                                         }
                                     }
                                 }
-                                resetPhoneCallRequestStatus()
                                 isInCall.value = false
-                                CallEventFlow.localVideoTrack.value = null
-                                CallEventFlow.remoteVideoTrack.value = null
-                                CallEventFlow.videoCallState.value = null
+                                // Reset all call state after a delay so next call starts clean (if user wasn't on Calling screen to trigger reset there)
+                                viewModelScope.launch {
+                                    delay(2000L);
+                                    CallEventFlow.reset()
+                                }
                             }
                         }
                     )

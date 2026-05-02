@@ -70,4 +70,5 @@ interface CommonDbRepository {
     suspend fun deleteAllDraftPosts() : Boolean
     suspend fun deleteDraftPost(newId : String) : Boolean
     suspend fun clearLocalFriends()
+    suspend fun saveLoginActivityInfo(userId: String)
 }

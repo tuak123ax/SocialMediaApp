@@ -24,7 +24,7 @@ import kotlinx.coroutines.sync.withPermit
 
 class CommonDbRepositoryImpl(
     private val databaseService: DatabaseService,
-    private val localDatabaseService : RoomService,
+    private val localDatabaseService: RoomService,
     private val networkMonitor: NetworkMonitor
 ) : CommonDbRepository {
     override suspend fun saveLikedPost(
@@ -32,7 +32,7 @@ class CommonDbRepositoryImpl(
         value: HashMap<String, Int>
     ): Boolean {
         val isOnline = networkMonitor.isOnline.first()
-        if(isOnline) {
+        if (isOnline) {
             return databaseService.saveValueToDatabase(
                 id,
                 DataConstant.USER_PATH,
@@ -40,12 +40,12 @@ class CommonDbRepositoryImpl(
                 DataConstant.LIKED_POSTS_PATH
             )
         } else {
-            try{
+            try {
                 localDatabaseService.saveLikedPost(
                     value.toRoomEntity()
                 )
                 return true
-            } catch(ex : Exception) {
+            } catch (ex: Exception) {
                 logMessage("saveLikedPost", { "Exception when saveLikedPost: ${ex.message}" })
                 return false
             }
@@ -53,24 +53,27 @@ class CommonDbRepositoryImpl(
     }
 
     override suspend fun saveNewToDatabase(
-        instance: NewsInstance) : Boolean {
+        instance: NewsInstance
+    ): Boolean {
         val isOnline = networkMonitor.isOnline.first()
-        if(isOnline) {
+        if (isOnline) {
             return databaseService.saveNewToDatabase(
                 instance.id,
                 DataConstant.NEWS_PATH,
                 instance.toDto()
             )
         } else {
-            try{
+            try {
                 val newRoomEntity = instance.toRoomEntity()
                 newRoomEntity.isNewPost = true
                 localDatabaseService.saveNews(
                     newRoomEntity
                 )
                 return true
-            } catch (ex : Exception) {
-                logMessage("saveInstanceToDatabase", { "Exception when saveInstanceToDatabase: ${ex.message}" })
+            } catch (ex: Exception) {
+                logMessage(
+                    "saveInstanceToDatabase",
+                    { "Exception when saveInstanceToDatabase: ${ex.message}" })
                 return false
             }
         }
@@ -78,24 +81,26 @@ class CommonDbRepositoryImpl(
 
     override suspend fun saveCommentToDatabase(
         selectedNewId: String,
-        commentId : String,
-        instance : CommentInstance
+        commentId: String,
+        instance: CommentInstance
     ): Boolean {
         val isOnline = networkMonitor.isOnline.first()
-        if(isOnline) {
+        if (isOnline) {
             return databaseService.saveInstanceToDatabase(
                 commentId,
-                DataConstant.NEWS_PATH+"/"+selectedNewId+"/"+ DataConstant.COMMENT_PATH,
+                DataConstant.NEWS_PATH + "/" + selectedNewId + "/" + DataConstant.COMMENT_PATH,
                 instance
             )
         } else {
-            try{
+            try {
                 localDatabaseService.saveComment(
                     instance.toRoomEntity(selectedNewId)
                 )
                 return true
-            } catch (ex : Exception) {
-                logMessage("saveCommentToDatabase", { "Exception when saveCommentToDatabase: ${ex.message}" })
+            } catch (ex: Exception) {
+                logMessage(
+                    "saveCommentToDatabase",
+                    { "Exception when saveCommentToDatabase: ${ex.message}" })
                 return false
             }
         }
@@ -103,13 +108,13 @@ class CommonDbRepositoryImpl(
 
     override suspend fun saveSubCommentToDatabase(
         id: String,
-        selectedNewId : String,
-        parentCommentId : String,
+        selectedNewId: String,
+        parentCommentId: String,
         instance: BaseNewsInstance
     ): Boolean {
         return databaseService.saveInstanceToDatabase(
             id,
-            DataConstant.NEWS_PATH+"/"+selectedNewId+"/"+ DataConstant.COMMENT_PATH+"/"+parentCommentId+"/"+ DataConstant.LIST_REPLIES_PATH,
+            DataConstant.NEWS_PATH + "/" + selectedNewId + "/" + DataConstant.COMMENT_PATH + "/" + parentCommentId + "/" + DataConstant.LIST_REPLIES_PATH,
             instance
         )
     }
@@ -128,7 +133,7 @@ class CommonDbRepositoryImpl(
 
     override suspend fun deleteSubCommentFromDatabase(
         selectedNewId: String,
-        parentCommentId : String,
+        parentCommentId: String,
         instance: BaseNewsInstance
     ) {
         databaseService.deleteCommentFromDatabase(
@@ -155,14 +160,14 @@ class CommonDbRepositoryImpl(
 
     override suspend fun updateReplyCountForCommentInDatabase(
         id: String,
-        currentCommentId : String,
+        currentCommentId: String,
         value: Int
     ) {
         databaseService.updateCountValueInDatabase(
             id,
             DataConstant.NEWS_PATH,
-            DataConstant.COMMENT_PATH + "/" + currentCommentId +"/"
-                    +DataConstant.COMMENT_COUNT_PATH,
+            DataConstant.COMMENT_PATH + "/" + currentCommentId + "/"
+                    + DataConstant.COMMENT_COUNT_PATH,
             value
         )
     }
@@ -179,7 +184,11 @@ class CommonDbRepositoryImpl(
         )
     }
 
-    override suspend fun updateLikeCountForCommentInDatabase(selectedNewId: String, commentId : String, value: Int) {
+    override suspend fun updateLikeCountForCommentInDatabase(
+        selectedNewId: String,
+        commentId: String,
+        value: Int
+    ) {
         databaseService.updateCountValueInDatabase(
             selectedNewId,
             DataConstant.NEWS_PATH,
@@ -190,8 +199,8 @@ class CommonDbRepositoryImpl(
 
     override suspend fun updateLikeCountForSubCommentInDatabase(
         selectedNewId: String,
-        likedComment : String,
-        parentCommentId : String,
+        likedComment: String,
+        parentCommentId: String,
         value: Int
     ) {
         databaseService.updateCountValueInDatabase(
@@ -218,8 +227,10 @@ class CommonDbRepositoryImpl(
         )
     }
 
-    override suspend fun saveFriend(id : String,
-                                    value : ArrayList<String>) {
+    override suspend fun saveFriend(
+        id: String,
+        value: ArrayList<String>
+    ) {
         databaseService.saveListToDatabase(
             id,
             DataConstant.USER_PATH,
@@ -228,8 +239,10 @@ class CommonDbRepositoryImpl(
         )
     }
 
-    override suspend fun saveFriendRequest(id : String,
-                                           value : ArrayList<String>) {
+    override suspend fun saveFriendRequest(
+        id: String,
+        value: ArrayList<String>
+    ) {
         databaseService.saveListToDatabase(
             id,
             DataConstant.USER_PATH,
@@ -242,7 +255,7 @@ class CommonDbRepositoryImpl(
         currentUserId: String
     ): Boolean = supervisorScope {
         var allOk = true
-        try{
+        try {
             // 1) Liked posts: single batched write
             if (localDatabaseService.hasLikedPost()) {
                 //Has liked posts in local, sync with remote server
@@ -269,8 +282,13 @@ class CommonDbRepositoryImpl(
                     async(Dispatchers.IO) {
                         gate.withPermit {
                             runCatching {
-                                val path = "${DataConstant.NEWS_PATH}/${commentDTO.selectedNewId}/${DataConstant.COMMENT_PATH}"
-                                databaseService.saveInstanceToDatabase(commentDTO.id, path, commentDTO)
+                                val path =
+                                    "${DataConstant.NEWS_PATH}/${commentDTO.selectedNewId}/${DataConstant.COMMENT_PATH}"
+                                databaseService.saveInstanceToDatabase(
+                                    commentDTO.id,
+                                    path,
+                                    commentDTO
+                                )
                                 true
                             }.getOrElse { false }
                         }
@@ -283,7 +301,7 @@ class CommonDbRepositoryImpl(
             }
 
             allOk
-        } catch(ex : Exception) {
+        } catch (ex: Exception) {
             logMessage("syncData", { "Exception when sync data: ${ex.message}" })
             false
         }
@@ -301,25 +319,33 @@ class CommonDbRepositoryImpl(
         return localDatabaseService.loadNewsPostedWhenOffline().toDomain()
     }
 
-    override suspend fun deleteAllDraftPosts() : Boolean {
+    override suspend fun deleteAllDraftPosts(): Boolean {
         return try {
             localDatabaseService.deleteAllDraftPosts()
             true
-        } catch (ex : Exception) {
+        } catch (ex: Exception) {
             false
         }
     }
 
-    override suspend fun deleteDraftPost(newId : String) : Boolean{
-         return try{
-             localDatabaseService.deleteDraftPost(newId)
-             true
-         } catch (ex : Exception) {
-             false
-         }
+    override suspend fun deleteDraftPost(newId: String): Boolean {
+        return try {
+            localDatabaseService.deleteDraftPost(newId)
+            true
+        } catch (ex: Exception) {
+            false
+        }
     }
 
     override suspend fun clearLocalFriends() {
         localDatabaseService.clearLocalFriends()
+    }
+
+    override suspend fun saveLoginActivityInfo(userId: String) {
+        databaseService.saveLoginActivityInfo(
+            userId,
+            DataConstant.HISTORY_PATH,
+            DataConstant.LOGIN_PATH
+        )
     }
 }

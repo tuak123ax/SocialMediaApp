@@ -30,7 +30,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -60,11 +59,13 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.minhtu.firesocialmedia.constants.TestTag
 import com.minhtu.firesocialmedia.domain.core.DecentralizationType
@@ -72,13 +73,17 @@ import com.minhtu.firesocialmedia.domain.entity.call.CallingRequestData
 import com.minhtu.firesocialmedia.domain.entity.home.deeplinks.DeepLinksData
 import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
+import com.minhtu.firesocialmedia.platform.CommonBackHandler
 import com.minhtu.firesocialmedia.platform.CrossPlatformIcon
 import com.minhtu.firesocialmedia.platform.logMessage
 import com.minhtu.firesocialmedia.platform.showToast
 import com.minhtu.firesocialmedia.platform.toHex
 import com.minhtu.firesocialmedia.presentation.loading.Loading
 import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
+import com.minhtu.firesocialmedia.storage.toStorageUrl
 import com.minhtu.firesocialmedia.utils.UiUtils
+import com.minhtu.sharedmodule.ui.theme.homeEditTextBackgroundColor
+import com.minhtu.sharedmodule.ui.theme.iconButtonBackgroundColor
 import com.seiko.imageloader.ui.AutoSizeImage
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -109,7 +114,11 @@ class Home {
             var showBottomSheet by rememberSaveable { mutableStateOf(false) }
             var newToBeShared by remember { mutableStateOf<NewsInstance?>(null) }
             val showDialog = remember { mutableStateOf(false) }
-            UiUtils.ShowAlertDialogToLogout(
+
+            CommonBackHandler {
+                showDialog.value = true
+            }
+            UiUtils.LogoutBottomSheet(
                 onClickConfirm = {
                     homeViewModel.clearAccountInStorage()
                     homeViewModel.clearLocalData()
@@ -168,10 +177,6 @@ class Home {
                 if(getCurrentUserStatus) {
                     logMessage("observePhoneCall", { "start observe phone call" })
                     homeViewModel.observePhoneCall()
-                    if(navigateToCallingScreen) {
-                        logMessage("navigateToCallingScreen", { "onNavigateToCallingScreenWithUI" })
-                        onNavigateToCallingScreenWithUI()
-                    }
                 }
             }
             LaunchedEffect(Unit) {
@@ -221,7 +226,9 @@ class Home {
                 ) {
                     //App name and buttons
                     Row(
-                        horizontalArrangement = Arrangement.Start, modifier = Modifier
+                        horizontalArrangement = Arrangement.Start,
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 16.dp, vertical = 12.dp)
                     ) {
@@ -229,6 +236,7 @@ class Home {
                             text = "FireSocialMedia",
                             color = MaterialTheme.colorScheme.primary,
                             style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
                             textAlign = TextAlign.Center,
                         )
                         Spacer(modifier = Modifier.weight(1f))
@@ -236,24 +244,25 @@ class Home {
                             modifier = Modifier
                                 .size(40.dp)
                                 .clip(CircleShape)
-                                .background(MaterialTheme.colorScheme.primaryContainer)
+                                .background(iconButtonBackgroundColor)
                                 .clickable {
                                     onNavigateToSearch()
+                                }
+                                .testTag(TestTag.TAG_ICON_BUTTON_SEARCH)
+                                .semantics {
+                                    contentDescription =
+                                        TestTag.TAG_ICON_BUTTON_SEARCH
                                 },
                             contentAlignment = Alignment.Center
                         ) {
                             CrossPlatformIcon(
                                 icon = "search",
-                                backgroundColor = MaterialTheme.colorScheme.primaryContainer.toHex(),
+                                backgroundColor = iconButtonBackgroundColor.toHex(),
                                 contentDescription = "Search Icon",
                                 contentScale = ContentScale.Fit,
                                 modifier = Modifier
                                     .size(22.dp)
-                                    .testTag(TestTag.TAG_ICON_BUTTON_SEARCH)
-                                    .semantics {
-                                        contentDescription =
-                                            TestTag.TAG_ICON_BUTTON_SEARCH
-                                    }
+                                    .padding(4.dp)
                             )
                         }
 
@@ -264,23 +273,24 @@ class Home {
                             modifier = Modifier
                                 .size(40.dp)
                                 .clip(CircleShape)
-                                .background(MaterialTheme.colorScheme.errorContainer)
+                                .background(iconButtonBackgroundColor)
                                 .clickable {
                                     showDialog.value = true
+                                }
+                                .testTag(TestTag.TAG_ICON_BUTTON_LOGOUT)
+                                .semantics {
+                                    contentDescription =
+                                        TestTag.TAG_ICON_BUTTON_LOGOUT
                                 }
                         ) {
                             CrossPlatformIcon(
                                 icon = "logout",
-                                backgroundColor = MaterialTheme.colorScheme.errorContainer.toHex(),
+                                backgroundColor = iconButtonBackgroundColor.toHex(),
                                 contentDescription = "Logout Icon",
                                 contentScale = ContentScale.Fit,
                                 modifier = Modifier
                                     .size(22.dp)
-                                    .testTag(TestTag.TAG_ICON_BUTTON_LOGOUT)
-                                    .semantics {
-                                        contentDescription =
-                                            TestTag.TAG_ICON_BUTTON_LOGOUT
-                                    }
+                                    .padding(4.dp)
                             )
                         }
                     }
@@ -289,13 +299,12 @@ class Home {
                     AnimatedVisibility(visible = isAllUsersVisible) {
                         Column(verticalArrangement = Arrangement.Top) {
                             Row(
-                                horizontalArrangement = Arrangement.Center,
                                 verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.fillMaxWidth()
+                                modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 6.dp)
                             ) {
                                 //Current user avatar
                                 if (currentUserState != null) {
-                                    val userImage = currentUserState.image // Avoid force unwrapping
+                                    val userImage = currentUserState.image.toStorageUrl() // Avoid force unwrapping
 
                                     CompositionLocalProvider(
                                         localImageLoaderValue
@@ -305,7 +314,7 @@ class Home {
                                             contentDescription = "Poster Avatar",
                                             contentScale = ContentScale.Crop,
                                             modifier = Modifier
-                                                .size(60.dp)
+                                                .size(50.dp)
                                                 .padding(vertical = 5.dp)
                                                 .padding(start = 10.dp)
                                                 .clip(CircleShape)
@@ -320,23 +329,26 @@ class Home {
                                         )
                                     }
                                 }
-
+                                Spacer(modifier = Modifier.width(10.dp))
                                 //Create post
-                                OutlinedTextField(
-                                    value = "",
-                                    onValueChange = { },
+                                Box(
                                     modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(horizontal = 12.dp, vertical = 10.dp)
-                                        .clip(RoundedCornerShape(28.dp))
+                                        .weight(1f)
+                                        .height(40.dp)
+                                        .clip(RoundedCornerShape(20.dp))
+                                        .background(homeEditTextBackgroundColor)
                                         .clickable { onNavigateToUploadNews(null) }
+                                        .padding(horizontal = 16.dp)
                                         .testTag(TestTag.TAG_CREATE_POST)
                                         .semantics { contentDescription = TestTag.TAG_CREATE_POST },
-                                    placeholder = { Text(text = "What are you thinking?", color = MaterialTheme.colorScheme.onSurfaceVariant) },
-                                    enabled = false,    // Disables the TextField
-                                    singleLine = true,
-                                    shape = RoundedCornerShape(28.dp)
-                                )
+                                    contentAlignment = Alignment.CenterStart
+                                ) {
+                                    Text(
+                                        text = "What are you thinking?",
+                                        fontSize = 14.sp,
+                                        color = Color.LightGray
+                                    )
+                                }
                             }
                             LazyRow(
                                 horizontalArrangement = Arrangement.spacedBy(10.dp),
@@ -486,7 +498,7 @@ class Home {
                         localImageLoaderValue
                     ) {
                         AutoSizeImage(
-                            user.image,
+                            user.image.toStorageUrl(),
                             contentDescription = "User Avatar",
                             contentScale = ContentScale.Crop,
                             modifier = Modifier

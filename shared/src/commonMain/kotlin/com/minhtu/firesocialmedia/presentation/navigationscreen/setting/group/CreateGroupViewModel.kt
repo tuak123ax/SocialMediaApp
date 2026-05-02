@@ -35,7 +35,7 @@ class CreateGroupViewModel(
         password.value =  input
     }
 
-    var avatar by mutableStateOf(Constants.DEFAULT_AVATAR_URL)
+    var avatar by mutableStateOf(Constants.DEFAULT_ARK_AVATAR_URL_FOR_GROUP)
     fun updateAvatar(newAvatar : String) {
         avatar = newAvatar
     }
@@ -54,8 +54,9 @@ class CreateGroupViewModel(
         _createGroupState.value = null
     }
     fun resetCreateGroupUiState() {
-        avatar = Constants.DEFAULT_AVATAR_URL
+        avatar = Constants.DEFAULT_ARK_AVATAR_URL_FOR_GROUP
         _groupName.value = ""
+        _accessPermission.value = DecentralizationType.Public
         password.value = ""
     }
     fun createGroup(currentUser : UserInstance) {

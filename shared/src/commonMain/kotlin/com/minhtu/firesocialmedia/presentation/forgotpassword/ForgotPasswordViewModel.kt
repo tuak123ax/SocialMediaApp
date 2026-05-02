@@ -14,7 +14,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.withContext
 
 class ForgotPasswordViewModel(
     private val checkIfEmailExistsUseCase: CheckIfEmailExistsUseCase,
@@ -31,8 +30,7 @@ class ForgotPasswordViewModel(
     fun checkIfEmailExists() {
         viewModelScope.launch(ioDispatcher) {
             if(email.isNotEmpty()) {
-                val result = checkIfEmailExistsUseCase.invoke(email)
-                _emailExisted.value = result
+                _emailExisted.value = checkIfEmailExistsUseCase.invoke(email)
             } else {
                 _emailExisted.value = EmailExistResult(false, Constants.EMAIL_EMPTY)
             }
@@ -42,11 +40,12 @@ class ForgotPasswordViewModel(
     private var _emailSent = MutableStateFlow<Boolean?>(null)
     var emailSent = _emailSent.asStateFlow()
     suspend fun sendEmailResetPassword() {
-        val result = sendEmailResetPasswordUseCase.invoke(email)
-        _emailSent.value = result
+        _emailSent.value = sendEmailResetPasswordUseCase.invoke(email)
+    }
+    fun resetEmailExistStatus() {
+        _emailExisted.value = null
     }
     fun resetEmailResetPassword(){
-        _emailExisted.value = null
         _emailSent.value = null
     }
 }
