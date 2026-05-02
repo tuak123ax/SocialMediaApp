@@ -119,4 +119,5 @@ dependencies {
 
     //Monitor memory leak
     debugImplementation("com.squareup.leakcanary:leakcanary-android:2.13")
+    debugImplementation("com.jakewharton.timber:timber:5.0.1")
 }

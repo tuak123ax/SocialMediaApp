@@ -112,7 +112,7 @@ class UploadNewfeedViewModel(
         viewModelScope.launch {
             withContext(ioDispatcher) {
                 val newsRandomId = generateRandomId()
-                if(message.isNotEmpty() || image.isNotEmpty() || video.isNotEmpty()) {
+                if(message.isNotBlank() || image.isNotBlank() || video.isNotBlank()) {
                     //Save post to db
                     val newsInstance = NewsInstance(
                         newsRandomId,

@@ -36,11 +36,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -50,6 +52,8 @@ import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.platform.generateQrImage
 import com.minhtu.firesocialmedia.platform.showToast
 import com.minhtu.firesocialmedia.utils.UiUtils
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 class TwoFA {
     companion object {
@@ -72,15 +76,17 @@ class TwoFA {
             val formattedKey = remember(secretFor2FA) {
                 secretFor2FA?.chunked(4)?.joinToString(" ")
             }
-            val qrBitmap = remember(secretFor2FA) {
-                runCatching {
-                    val otpAuth = twoFAViewModel.buildOtpAuthUrl(
-                        appName = "FireSocialMedia",
-                        user = currentUser.email,
-                        secret = secretFor2FA
-                    )
-                    generateQrImage(otpAuth)
-                }.getOrNull()
+            val qrBitmap by produceState<ImageBitmap?>(initialValue = null, secretFor2FA) {
+                value = withContext(Dispatchers.Default) {
+                    runCatching {
+                        val otpAuth = twoFAViewModel.buildOtpAuthUrl(
+                            appName = "FireSocialMedia",
+                            user = currentUser.email,
+                            secret = secretFor2FA
+                        )
+                        generateQrImage(otpAuth)
+                    }.getOrNull()
+                }
             }
             Box(
                 modifier = Modifier
@@ -171,7 +177,7 @@ class TwoFA {
 
                                     if (qrBitmap != null) {
                                         Image(
-                                            bitmap = qrBitmap,
+                                            bitmap = qrBitmap!!,
                                             contentDescription = "QR Code",
                                             modifier = Modifier.fillMaxSize()
                                         )

@@ -1,21 +1,21 @@
 package com.minhtu.firesocialmedia
 
+import com.minhtu.firesocialmedia.domain.entity.base.BaseNewsInstance
+import com.minhtu.firesocialmedia.domain.entity.comment.CommentInstance
 import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
 import com.minhtu.firesocialmedia.domain.entity.notification.NotificationInstance
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.domain.repository.AuthenticationRepository
+import com.minhtu.firesocialmedia.domain.repository.CommonDbRepository
 import com.minhtu.firesocialmedia.domain.repository.LocalRepository
 import com.minhtu.firesocialmedia.domain.repository.UserRepository
-import com.minhtu.firesocialmedia.domain.entity.base.BaseNewsInstance
-import com.minhtu.firesocialmedia.domain.entity.comment.CommentInstance
-import com.minhtu.firesocialmedia.domain.repository.CommonDbRepository
 import com.minhtu.firesocialmedia.domain.usecases.common.GetCurrentUserUidUseCase
 import com.minhtu.firesocialmedia.domain.usecases.common.GetFCMTokenUseCase
 import com.minhtu.firesocialmedia.domain.usecases.information.SaveSignUpInformationUseCase
 import com.minhtu.firesocialmedia.domain.usecases.signin.SaveLoginActivityInfoUseCase
 import com.minhtu.firesocialmedia.presentation.information.InformationViewModel
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest

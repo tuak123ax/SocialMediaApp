@@ -50,12 +50,12 @@ import com.minhtu.firesocialmedia.platform.showToast
 import com.minhtu.firesocialmedia.presentation.comment.Comment
 import com.minhtu.firesocialmedia.presentation.comment.CommentViewModel
 import com.minhtu.firesocialmedia.presentation.home.HomeViewModel
+import com.minhtu.firesocialmedia.storage.toStorageUrl
 import com.minhtu.firesocialmedia.utils.UiUtils
 import com.minhtu.firesocialmedia.utils.UiUtils.Companion.NewsCardPlaceholder
 import com.minhtu.firesocialmedia.utils.UiUtils.Companion.NewsCardUnavailable
 import com.minhtu.firesocialmedia.utils.UiUtils.Companion.NewsCardWithSharedContent
 import com.minhtu.firesocialmedia.utils.Utils.Companion.hexToColor
-import com.minhtu.firesocialmedia.storage.toStorageUrl
 import com.seiko.imageloader.ui.AutoSizeImage
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -321,8 +321,8 @@ class PostInformation {
                             modifier = Modifier
                                 .fillMaxSize()
                                 .background(color = Color.White),
-                            platform,
-                            localImageLoaderValue,
+                            platform = platform,
+                            localImageLoaderValue = localImageLoaderValue,
                             showCloseIcon = false,
                             commentViewModel = commentViewModel,
                             currentUser = homeViewModel.currentUser!!,

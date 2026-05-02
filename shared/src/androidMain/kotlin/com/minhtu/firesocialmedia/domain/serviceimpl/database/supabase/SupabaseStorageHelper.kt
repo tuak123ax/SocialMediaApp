@@ -10,6 +10,8 @@ import com.minhtu.firesocialmedia.data.remote.dto.news.NewsDTO
 import com.minhtu.firesocialmedia.data.remote.dto.user.UserDTO
 import com.minhtu.firesocialmedia.domain.entity.base.BaseNewsInstance
 import com.minhtu.firesocialmedia.domain.serviceimpl.database.StorageHelperInterface
+import com.minhtu.firesocialmedia.domain.serviceimpl.database.supabase.SupabaseStorageHelper.Companion.CANDIDATE_EXTENSIONS
+import com.minhtu.firesocialmedia.domain.serviceimpl.database.supabase.SupabaseStorageHelper.Companion.initExtensionCache
 import com.minhtu.firesocialmedia.platform.logMessage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async

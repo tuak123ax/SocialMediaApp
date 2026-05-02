@@ -71,23 +71,25 @@ class HomeViewModel(
 
     val _getCurrentUserStatus = mutableStateOf(false)
     val getCurrentUserStatus = _getCurrentUserStatus
-    suspend fun getCurrentUserAndFriends() {
-        try{
-            val currentUserId = userInteractor.getCurrentUserId()
-            if(currentUserId != null) {
-                val user = userInteractor.getUser(currentUserId, true)
-                if(user != null) {
-                    updateCurrentUser(user)
-                    _getCurrentUserStatus.value = true
-                    getAllUserFriends(user)
+    fun getCurrentUserAndFriends() {
+        viewModelScope.launch(ioDispatcher) {
+            try{
+                val currentUserId = userInteractor.getCurrentUserId()
+                if(currentUserId != null) {
+                    val user = userInteractor.getUser(currentUserId, true)
+                    if(user != null) {
+                        updateCurrentUser(user)
+                        _getCurrentUserStatus.value = true
+                        getAllUserFriends(user)
+                    } else {
+                        _getCurrentUserStatus.value = false
+                    }
                 } else {
                     _getCurrentUserStatus.value = false
                 }
-            } else {
+            } catch (ex : Exception) {
                 _getCurrentUserStatus.value = false
             }
-        } catch (ex : Exception) {
-            _getCurrentUserStatus.value = false
         }
     }
 
@@ -132,37 +134,39 @@ class HomeViewModel(
     var hasMoreData = mutableStateOf(true)
     private var lastTimePosted: Double? = null
     private var lastKey: String? = null
-    suspend fun getLatestNews() {
-        if (!isLoadingMore.value && hasMoreData.value) {
-            isLoadingMore.value = true
-            try{
-                val latestNewsResult = newsInteractor.pageLatest(
-                    10,
-                    lastTimePosted,
-                    lastKey
-                )
-                if(latestNewsResult != null) {
-                    if(latestNewsResult.news != null) {
-                        addNews(ArrayList(latestNewsResult.news))
-                        for (new in latestNewsResult.news) {
-                            listNews.add(new)
-                            addLikeCountData(new.id, new.likeCount)
-                            addCommentCountData(new.id, new.commentCount)
+    fun getLatestNews() {
+        viewModelScope.launch(ioDispatcher) {
+            if (!isLoadingMore.value && hasMoreData.value) {
+                isLoadingMore.value = true
+                try{
+                    val latestNewsResult = newsInteractor.pageLatest(
+                        10,
+                        lastTimePosted,
+                        lastKey
+                    )
+                    if(latestNewsResult != null) {
+                        if(latestNewsResult.news != null) {
+                            addNews(ArrayList(latestNewsResult.news))
+                            for (new in latestNewsResult.news) {
+                                listNews.add(new)
+                                addLikeCountData(new.id, new.likeCount)
+                                addCommentCountData(new.id, new.commentCount)
+                            }
+                            _getAllNewsStatus.value = true
+                            if(latestNewsResult.lastTimePostedValue == null) {
+                                hasMoreData.value = false
+                            }
+                            lastTimePosted = latestNewsResult.lastTimePostedValue
+                            lastKey = latestNewsResult.lastKeyValue
+                            checkUsersInCacheAndGetMore()
                         }
-                        _getAllNewsStatus.value = true
-                        if(latestNewsResult.lastTimePostedValue == null) {
-                            hasMoreData.value = false
-                        }
-                        lastTimePosted = latestNewsResult.lastTimePostedValue
-                        lastKey = latestNewsResult.lastKeyValue
-                        checkUsersInCacheAndGetMore()
+                    } else {
+                        _getAllNewsStatus.value = false
                     }
-                } else {
-                    _getAllNewsStatus.value = false
+                } finally {
+                    isLoadingMore.value = false
+                    isRefreshing.value = false
                 }
-            } finally {
-                isLoadingMore.value = false
-                isRefreshing.value = false
             }
         }
     }
@@ -229,22 +233,24 @@ class HomeViewModel(
 
     val _getAllNotificationsOfCurrentUser = mutableStateOf(false)
     val getAllNotificationsOfCurrentUser = _getAllNotificationsOfCurrentUser
-    suspend fun getAllNotificationsOfUser() {
-        val currentUserId = userInteractor.getCurrentUserId()
-        if(currentUserId != null) {
-            val notifications = notificationInteractor.allNotificationsOf(
-                currentUserId)
-            if (notifications != null) {
-                for(notification in notifications) {
-                    logMessage("getAllNotifications",
-                        { notification.id + "isRead: "+ notification.beRead })
+    fun getAllNotificationsOfUser() {
+        viewModelScope.launch(ioDispatcher) {
+            val currentUserId = userInteractor.getCurrentUserId()
+            if(currentUserId != null) {
+                val notifications = notificationInteractor.allNotificationsOf(
+                    currentUserId)
+                if (notifications != null) {
+                    for(notification in notifications) {
+                        logMessage("getAllNotifications",
+                            { notification.id + "isRead: "+ notification.beRead })
+                    }
+                    listNotificationOfCurrentUser.clear()
+                    listNotificationOfCurrentUser.addAll(notifications)
+                    updateNotifications(ArrayList(listNotificationOfCurrentUser.toList()))
+                    _getAllNotificationsOfCurrentUser.value = true
+                } else {
+                    _getAllNotificationsOfCurrentUser.value = false
                 }
-                listNotificationOfCurrentUser.clear()
-                listNotificationOfCurrentUser.addAll(notifications)
-                updateNotifications(ArrayList(listNotificationOfCurrentUser.toList()))
-                _getAllNotificationsOfCurrentUser.value = true
-            } else {
-                _getAllNotificationsOfCurrentUser.value = false
             }
         }
     }

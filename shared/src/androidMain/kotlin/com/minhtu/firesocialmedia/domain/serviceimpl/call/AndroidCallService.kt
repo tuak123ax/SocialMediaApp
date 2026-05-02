@@ -471,12 +471,12 @@ class AndroidAudioCallService private constructor(
                     )
                 } else {
                     Log.d("WebRTC", "checkForRemoteVideoTrack[$reason]: emitting refreshed remote video track")
-                    emitRemoteVideoTrack(candidateTrack!!)
+                    emitRemoteVideoTrack(candidateTrack)
                 }
             }
             !hasUsableCurrentTrack -> {
                 Log.d("WebRTC", "checkForRemoteVideoTrack[$reason]: re-emitting current remote video track")
-                emitRemoteVideoTrack(candidateTrack!!)
+                emitRemoteVideoTrack(candidateTrack)
             }
             else -> {
                 if (CallEventFlow.remoteVideoTrack.value == null) {
@@ -484,7 +484,7 @@ class AndroidAudioCallService private constructor(
                         "WebRTC",
                         "checkForRemoteVideoTrack[$reason]: current remote track exists but flow is null, re-emitting"
                     )
-                    emitRemoteVideoTrack(currentTrack!!)
+                    emitRemoteVideoTrack(currentTrack)
                 } else {
                     Log.d("WebRTC", "checkForRemoteVideoTrack[$reason]: keeping existing remote video track")
                 }

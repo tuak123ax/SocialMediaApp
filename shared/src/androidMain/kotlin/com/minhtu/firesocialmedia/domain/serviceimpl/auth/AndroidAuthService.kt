@@ -19,10 +19,10 @@ import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.auth
 import com.google.firebase.database.FirebaseDatabase
 import com.minhtu.firesocialmedia.constants.Constants
-import com.minhtu.firesocialmedia.domain.entity.authentication.TwoFARequest
-import com.minhtu.firesocialmedia.domain.entity.authentication.TwoFAResponse
 import com.minhtu.firesocialmedia.data.remote.dto.user.UserDTO
 import com.minhtu.firesocialmedia.data.remote.service.auth.AuthService
+import com.minhtu.firesocialmedia.domain.entity.authentication.TwoFARequest
+import com.minhtu.firesocialmedia.domain.entity.authentication.TwoFAResponse
 import com.minhtu.firesocialmedia.domain.entity.forgotpassword.EmailExistResult
 import com.minhtu.firesocialmedia.domain.entity.settings.ChangePasswordState
 import com.minhtu.firesocialmedia.domain.error.changepassword.ChangePasswordError
@@ -36,7 +36,6 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.tasks.await
 import java.security.SecureRandom
 import kotlin.coroutines.cancellation.CancellationException
-import kotlin.math.log
 
 class AndroidAuthService(var context: Context) : AuthService{
     override suspend fun signInWithEmailAndPassword(

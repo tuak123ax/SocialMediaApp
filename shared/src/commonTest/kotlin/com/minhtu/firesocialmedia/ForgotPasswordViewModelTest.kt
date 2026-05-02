@@ -8,7 +8,6 @@ import com.minhtu.firesocialmedia.domain.usecases.forgotpassword.SendEmailResetP
 import com.minhtu.firesocialmedia.presentation.forgotpassword.ForgotPasswordViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import kotlin.test.BeforeTest

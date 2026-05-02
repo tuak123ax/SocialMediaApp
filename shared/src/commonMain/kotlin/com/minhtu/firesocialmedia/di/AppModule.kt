@@ -118,12 +118,12 @@ import com.minhtu.firesocialmedia.domain.usecases.settings.Enable2FAUseCase
 import com.minhtu.firesocialmedia.domain.usecases.settings.FetchLoginHistoryListUseCase
 import com.minhtu.firesocialmedia.domain.usecases.settings.GenerateSecretFor2FAUseCase
 import com.minhtu.firesocialmedia.domain.usecases.settings.Get2FAVerifiedStatusUseCase
+import com.minhtu.firesocialmedia.domain.usecases.settings.UpdateUserTimestampUseCase
 import com.minhtu.firesocialmedia.domain.usecases.settings.UpdateVerify2FASuccessUseCase
 import com.minhtu.firesocialmedia.domain.usecases.settings.ValidateNewPasswordUseCase
 import com.minhtu.firesocialmedia.domain.usecases.settings.Verify2FAUseCase
 import com.minhtu.firesocialmedia.domain.usecases.settings.VerifyBackupCodeUseCase
 import com.minhtu.firesocialmedia.domain.usecases.settings.VerifyCurrentPasswordUseCase
-import com.minhtu.firesocialmedia.domain.usecases.settings.UpdateUserTimestampUseCase
 import com.minhtu.firesocialmedia.domain.usecases.showimage.DownloadImageUseCase
 import com.minhtu.firesocialmedia.domain.usecases.signin.CheckLocalAccountUseCase
 import com.minhtu.firesocialmedia.domain.usecases.signin.CheckUserExistsUseCase
@@ -487,9 +487,8 @@ object AppModule {
     //---------------------------User Information----------------------------------------//
     fun provideCallRepository(platformContext: PlatformContext) : CallRepository {
         return CallRepositoryImpl(
-            platformContext.audioCall,
+            { platformContext.audioCall },
             platformContext.database,
-            platformContext.audioCall,
             platformContext.permissionManager)
     }
     fun provideCheckCalleeAvailableUseCase(callRepository: CallRepository) : CheckCalleeAvailableUseCase{

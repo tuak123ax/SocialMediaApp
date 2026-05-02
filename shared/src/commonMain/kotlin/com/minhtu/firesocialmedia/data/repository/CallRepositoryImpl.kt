@@ -22,11 +22,11 @@ import com.minhtu.firesocialmedia.utils.Utils
 import kotlinx.coroutines.flow.MutableStateFlow
 
 class CallRepositoryImpl(
-    private val audioCallService: AudioCallService,
+    private val audioCallServiceProvider: () -> AudioCallService,
     private val databaseService: DatabaseService,
-    private val callService: AudioCallService,
     private val permissionManager : PermissionManager
 ) : CallRepository {
+    private val audioCallService: AudioCallService by lazy { audioCallServiceProvider() }
     override suspend fun initialize(
         onInitializeFinished: () -> Unit,
         onIceCandidateCreated: (IceCandidateData) -> Unit,
@@ -54,7 +54,7 @@ class CallRepositoryImpl(
         caller: UserInstance,
         callee: UserInstance
     ) {
-        callService.startCallService(sessionId, caller.toDto(), callee.toDto())
+        audioCallService.startCallService(sessionId, caller.toDto(), callee.toDto())
     }
 
     override suspend fun startVideoCallService(
@@ -64,7 +64,7 @@ class CallRepositoryImpl(
         currentUserId: String?,
         remoteVideoOffer: OfferAnswer?
     ) {
-        callService.startVideoCallService(
+        audioCallService.startVideoCallService(
             sessionId,
             caller.toDto(),
             callee.toDto(),
@@ -437,6 +437,6 @@ class CallRepositoryImpl(
     }
 
     override suspend fun stopCallService() {
-        callService.stopCall()
+        audioCallService.stopCall()
     }
 }

@@ -18,7 +18,7 @@ class ShowImageViewModel(
             withContext(ioDispatcher) {
                 val result = downloadImageUseCase.invoke(image, fileName)
                 if(result) {
-                    showToast("Download Image Successfully!")
+                    showToast("Download image successfully!")
                 } else {
                     showToast("Cannot download image! Please try again.")
                 }

@@ -35,7 +35,7 @@ class AndroidPlatformContext(
     override val crypto: CryptoService = AndroidCryptoService(context)
     override val database: DatabaseService = AndroidDatabaseService(context, SupabaseStorageHelper())
     override val clipboard : ClipboardService = AndroidClipboardService(context)
-    override val audioCall: AudioCallService = AndroidAudioCallService.get(context)
+    override val audioCall: AudioCallService by lazy { AndroidAudioCallService.get(context) }
     override val room: RoomService = AndroidRoomService(
         context,
         localDatabase.userDao(),
