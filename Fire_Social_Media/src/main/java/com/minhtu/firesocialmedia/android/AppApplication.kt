@@ -10,7 +10,6 @@ import androidx.annotation.RequiresApi
 import com.minhtu.firesocialmedia.constants.Constants
 import com.minhtu.firesocialmedia.domain.serviceimpl.database.supabase.SupabaseStorageHelper
 import com.minhtu.firesocialmedia.platform.initPlatformContext
-import timber.log.Timber
 import java.util.concurrent.Executors
 
 private const val APP_PACKAGE = "com.minhtu.firesocialmedia"
@@ -101,6 +100,6 @@ class AppApplication : Application() {
     }
 
     private fun setupLogging() {
-        Timber.plant(Timber.DebugTree())
+        setupTimberLogging()
     }
 }
