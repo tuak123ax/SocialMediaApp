@@ -5,7 +5,6 @@ import androidx.lifecycle.viewModelScope
 import com.minhtu.firesocialmedia.domain.entity.authentication.TwoFAResponse
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.domain.usecases.home.ClearAccountUseCase
-import com.minhtu.firesocialmedia.domain.usecases.home.ClearLocalDataUseCase
 import com.minhtu.firesocialmedia.domain.usecases.settings.Enable2FAUseCase
 import com.minhtu.firesocialmedia.domain.usecases.settings.Verify2FAUseCase
 import kotlinx.coroutines.CoroutineDispatcher

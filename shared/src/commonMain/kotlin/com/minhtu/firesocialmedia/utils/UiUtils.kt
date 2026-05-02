@@ -124,7 +124,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.minhtu.firesocialmedia.constants.TestTag
-import com.minhtu.firesocialmedia.storage.toStorageUrl
 import com.minhtu.firesocialmedia.domain.entity.home.deeplinks.ShareApp
 import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
@@ -144,6 +143,7 @@ import com.minhtu.firesocialmedia.presentation.navigationscreen.notification.Not
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.Settings
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.GroupDetails.Companion.DropdownMenuForMoreOptionsInGroup
 import com.minhtu.firesocialmedia.presentation.search.SearchViewModel
+import com.minhtu.firesocialmedia.storage.toStorageUrl
 import com.minhtu.sharedmodule.ui.theme.loginBackgroundColor
 import com.minhtu.sharedmodule.ui.theme.memberCardColor
 import com.seiko.imageloader.asImageBitmap
@@ -1800,7 +1800,11 @@ class UiUtils {
             ) {
                 // Sheet Content
                 Column(Modifier.padding(16.dp)) {
-                    Text("Share on your personal page")
+                    Text(
+                        text = "Share on your personal page",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold
+                    )
                     Spacer(Modifier.height(10.dp))
                     OutlinedTextField(
                         value = message,

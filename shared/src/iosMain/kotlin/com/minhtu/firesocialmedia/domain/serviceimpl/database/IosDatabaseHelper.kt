@@ -4,22 +4,17 @@ import cocoapods.FirebaseDatabase.FIRDataEventType
 import cocoapods.FirebaseDatabase.FIRDataSnapshot
 import cocoapods.FirebaseDatabase.FIRDatabase
 import cocoapods.FirebaseDatabase.FIRDatabaseReference
-import cocoapods.FirebaseStorage.FIRStorage
 import cocoapods.FirebaseStorage.FIRStorageMetadata
 import cocoapods.FirebaseStorage.FIRStorageReference
 import cocoapods.FirebaseStorage.FIRStorageTaskStatusFailure
 import cocoapods.FirebaseStorage.FIRStorageTaskStatusSuccess
-import com.minhtu.firesocialmedia.data.remote.dto.news.NewsDTO
 import com.minhtu.firesocialmedia.data.remote.dto.notification.NotificationDTO
 import com.minhtu.firesocialmedia.data.remote.dto.notification.fromMap
 import com.minhtu.firesocialmedia.data.remote.dto.notification.toMap
 import com.minhtu.firesocialmedia.domain.entity.base.BaseNewsInstance
-import com.minhtu.firesocialmedia.platform.logMessage
-import com.minhtu.firesocialmedia.platform.toNSData
 import kotlinx.cinterop.BetaInteropApi
 import kotlinx.coroutines.suspendCancellableCoroutine
 import platform.Foundation.NSData
-import platform.Foundation.NSDictionary
 import platform.Foundation.NSDocumentDirectory
 import platform.Foundation.NSMutableArray
 import platform.Foundation.NSMutableDictionary
@@ -40,8 +35,6 @@ import platform.UIKit.UIImage
 import platform.UIKit.UIImageWriteToSavedPhotosAlbum
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
-import kotlin.io.encoding.Base64
-import kotlin.io.encoding.ExperimentalEncodingApi
 
 class IosDatabaseHelper {
     companion object {

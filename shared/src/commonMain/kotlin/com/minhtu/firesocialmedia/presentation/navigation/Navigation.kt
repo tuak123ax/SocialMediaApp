@@ -15,7 +15,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -77,10 +76,10 @@ import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.Se
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.notificationconfigs.NotificationConfigs
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.notificationconfigs.NotificationConfigsViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.privacy.Privacy
-import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security.changepassword.ChangePassword
-import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security.changepassword.ChangePasswordViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security.SecuritySettings
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security.SecuritySettingsViewModel
+import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security.changepassword.ChangePassword
+import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security.changepassword.ChangePasswordViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security.loginhistory.LoginHistory
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security.loginhistory.LoginHistoryViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security.twoFA.BackUpCode
@@ -604,6 +603,7 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                     popExitTransition = DefaultNavAnimations.popExit
                 ) {
                     Comment.CommentScreen(
+                        paddingValues,
                         modifier = Modifier
                             .fillMaxSize()
                             .background(color = Color.White),

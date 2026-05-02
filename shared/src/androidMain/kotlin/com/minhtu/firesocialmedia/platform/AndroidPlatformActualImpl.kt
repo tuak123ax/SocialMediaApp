@@ -54,13 +54,14 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.google.android.gms.auth.api.identity.BeginSignInRequest
 import com.google.android.gms.auth.api.identity.Identity
+import com.minhtu.firesocialmedia.BuildConfig
 import com.minhtu.firesocialmedia.R
 import com.minhtu.firesocialmedia.constants.Constants
-import com.minhtu.firesocialmedia.domain.entity.authentication.TwoFARequest
-import com.minhtu.firesocialmedia.domain.entity.authentication.TwoFAResponse
 import com.minhtu.firesocialmedia.data.remote.service.imagepicker.ImagePicker
 import com.minhtu.firesocialmedia.data.remote.service.signinlauncher.SignInLauncher
 import com.minhtu.firesocialmedia.di.PlatformContext
+import com.minhtu.firesocialmedia.domain.entity.authentication.TwoFARequest
+import com.minhtu.firesocialmedia.domain.entity.authentication.TwoFAResponse
 import com.minhtu.firesocialmedia.domain.entity.home.deeplinks.ShareApp
 import com.minhtu.firesocialmedia.domain.entity.signin.SignInState
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
@@ -73,7 +74,6 @@ import com.minhtu.firesocialmedia.domain.serviceimpl.notification.NotificationAp
 import com.minhtu.firesocialmedia.presentation.signin.SignInViewModel
 import com.minhtu.firesocialmedia.presentation.toast.ToastController
 import com.minhtu.firesocialmedia.utils.NavigationHandler
-import com.minhtu.firesocialmedia.BuildConfig
 import com.russhwolf.settings.Settings
 import com.seiko.imageloader.ImageLoader
 import com.seiko.imageloader.cache.memory.maxSizePercent
@@ -289,9 +289,6 @@ actual fun sendMessageToServer(request: String) {
     }
 }
 actual suspend fun send2FARequest(request: TwoFARequest): TwoFAResponse {
-    logMessage("sendVerifyOTPRequest") {
-        "UserId : " + request.userId + "\n" + "secret: " + request.secret + "\n" + "apiKey: " + request.apiKey+ "\n" + "otp: " + request.otp + "\n" + "action: " + request.action
-    }
     val response = Client.getClient(Constants.APP_SCRIPT_URL)
         ?.create(AuthenticationApiService::class.java)!!
         .sendVerifyRequestToAppScript(request)

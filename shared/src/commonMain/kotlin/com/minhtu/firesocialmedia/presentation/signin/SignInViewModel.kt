@@ -4,6 +4,7 @@ import androidx.compose.runtime.mutableStateOf
 import com.minhtu.firesocialmedia.data.remote.service.signinlauncher.SignInLauncher
 import com.minhtu.firesocialmedia.domain.entity.crypto.Credentials
 import com.minhtu.firesocialmedia.domain.entity.signin.SignInState
+import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.domain.error.signin.SignInError
 import com.minhtu.firesocialmedia.domain.usecases.common.GetCurrentUserUidUseCase
 import com.minhtu.firesocialmedia.domain.usecases.common.GetUserUseCase
@@ -11,7 +12,9 @@ import com.minhtu.firesocialmedia.domain.usecases.signin.CheckLocalAccountUseCas
 import com.minhtu.firesocialmedia.domain.usecases.signin.CheckUserExistsUseCase
 import com.minhtu.firesocialmedia.domain.usecases.signin.HandleSignInGoogleResultUseCase
 import com.minhtu.firesocialmedia.domain.usecases.signin.RememberPasswordUseCase
+import com.minhtu.firesocialmedia.domain.usecases.signin.SaveLoginActivityInfoUseCase
 import com.minhtu.firesocialmedia.domain.usecases.signin.SignInUseCase
+import com.minhtu.firesocialmedia.platform.logMessage
 import com.rickclephas.kmp.observableviewmodel.ViewModel
 import com.rickclephas.kmp.observableviewmodel.launch
 import kotlinx.coroutines.CoroutineDispatcher
@@ -19,9 +22,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
-import com.minhtu.firesocialmedia.domain.usecases.signin.SaveLoginActivityInfoUseCase
-import com.minhtu.firesocialmedia.platform.logMessage
 
 class SignInViewModel(
     private val signInUseCase: SignInUseCase,
@@ -95,11 +95,13 @@ class SignInViewModel(
     }
 
     val localCredentials = mutableStateOf<Credentials?>(null)
-    suspend fun checkLocalAccount() {
-        localCredentials.value = checkLocalAccountUseCase.invoke()
-        if (localCredentials.value != null) {
-            updateEmail(localCredentials.value!!.email)
-            updatePassword(localCredentials.value!!.password)
+    fun checkLocalAccount() {
+        viewModelScope.launch(ioDispatcher) {
+            localCredentials.value = checkLocalAccountUseCase.invoke()
+            if (localCredentials.value != null) {
+                updateEmail(localCredentials.value!!.email)
+                updatePassword(localCredentials.value!!.password)
+            }
         }
     }
 

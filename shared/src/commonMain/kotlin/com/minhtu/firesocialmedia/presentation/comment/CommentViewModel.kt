@@ -67,14 +67,14 @@ class CommentViewModel(
         image = input
     }
 
-    private var _createCommentStatus : MutableStateFlow<Boolean?> = MutableStateFlow<Boolean?>(null)
+    private var _createCommentStatus : MutableStateFlow<Boolean?> = MutableStateFlow(null)
     var createCommentStatus = _createCommentStatus.asStateFlow()
     fun sendComment(currentUser : UserInstance,
                     selectedNew : NewsInstance) {
         viewModelScope.launch {
             withContext(ioDispatcher) {
                 if(_commentBeReplied.value == null) {
-                    if(message.isNotEmpty()) {
+                    if (message.isNotBlank()) {
                         try{
                             val commentRandomId = generateRandomId()
                             val commentInstance = CommentInstance(commentRandomId,currentUser.uid, currentUser.name,currentUser.image,message,image)
@@ -325,23 +325,25 @@ class CommentViewModel(
         return getUserUseCase.invoke(userId, false)
     }
 
-    suspend fun getAllCommentsOfNew(newsId : String) {
-        val result = commentInteractor.getAllComments(
-            newsId
-        )
-        if(result == null) {
-            showToast("Cannot get all comments of this new. Try again!")
-        } else {
-            listComments.clear()
-            listComments.addAll(result)
-            updateComments(listComments)
+    fun getAllCommentsOfNew(newsId : String) {
+        viewModelScope.launch(ioDispatcher) {
+            val result = commentInteractor.getAllComments(
+                newsId
+            )
+            if(result == null) {
+                showToast("Cannot get all comments of this new. Try again!")
+            } else {
+                listComments.clear()
+                listComments.addAll(result)
+                updateComments(listComments)
 
-            listComments.forEach { comment ->
-                addLikeCountData(comment.id, comment.likeCount)
+                listComments.forEach { comment ->
+                    addLikeCountData(comment.id, comment.likeCount)
 
-                comment.listReplies.forEach { (replyId, reply) ->
-                    mapSubComments[replyId] = reply
-                    addLikeCountData(replyId, reply.likeCount)
+                    comment.listReplies.forEach { (replyId, reply) ->
+                        mapSubComments[replyId] = reply
+                        addLikeCountData(replyId, reply.likeCount)
+                    }
                 }
             }
         }

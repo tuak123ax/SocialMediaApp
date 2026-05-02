@@ -3,7 +3,6 @@ package com.minhtu.firesocialmedia.domain.serviceimpl.database
 import cocoapods.FirebaseDatabase.FIRDataEventType
 import cocoapods.FirebaseDatabase.FIRDataSnapshot
 import cocoapods.FirebaseDatabase.FIRDatabase
-import cocoapods.FirebaseDatabase.FIRDatabaseReference
 import com.minhtu.firesocialmedia.constants.Constants
 import com.minhtu.firesocialmedia.data.remote.constant.DataConstant
 import com.minhtu.firesocialmedia.data.remote.dto.call.AudioCallSessionDTO
@@ -19,14 +18,12 @@ import com.minhtu.firesocialmedia.data.remote.dto.notification.NotificationDTO
 import com.minhtu.firesocialmedia.data.remote.dto.notification.fromMap
 import com.minhtu.firesocialmedia.data.remote.dto.signin.SignInDTO
 import com.minhtu.firesocialmedia.data.remote.dto.user.UserDTO
-import com.minhtu.firesocialmedia.data.remote.dto.user.toMap
 import com.minhtu.firesocialmedia.data.remote.service.database.DatabaseService
 import com.minhtu.firesocialmedia.domain.entity.base.BaseNewsInstance
 import com.minhtu.firesocialmedia.domain.entity.call.CallStatus
 import com.minhtu.firesocialmedia.domain.serviceimpl.crypto.IosCryptoHelper
 import com.minhtu.firesocialmedia.domain.serviceimpl.database.supabase.SupabaseStorageHelper
 import com.minhtu.firesocialmedia.platform.logMessage
-import com.minhtu.firesocialmedia.platform.toNSData
 import com.minhtu.firesocialmedia.utils.IosUtils.Companion.toCommentDTO
 import com.minhtu.firesocialmedia.utils.IosUtils.Companion.toNewsDTO
 import com.minhtu.firesocialmedia.utils.IosUtils.Companion.toUserDTO
@@ -36,9 +33,6 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.suspendCancellableCoroutine
-import platform.Foundation.NSDictionary
-import kotlin.io.encoding.Base64
-import kotlin.io.encoding.ExperimentalEncodingApi
 
 class IosDatabaseService() : DatabaseService {
     override suspend fun updateFCMTokenForCurrentUser(currentUser: UserDTO) {

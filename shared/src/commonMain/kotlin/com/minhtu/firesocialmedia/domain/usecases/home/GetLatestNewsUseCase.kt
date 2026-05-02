@@ -9,6 +9,14 @@ class GetLatestNewsUseCase(
     suspend operator fun invoke(number : Int,
                                 lastTimePosted : Double?,
                                 lastKey: String?) : LatestNewsResult? {
-        return newsRepository.getLatestNews(number, lastTimePosted, lastKey)
+        val result = newsRepository.getLatestNews(number, lastTimePosted, lastKey)
+
+        return result?.copy(
+            news = result.news?.filter { news ->
+                news.message.isNotBlank() ||
+                        news.image.isNotBlank() ||
+                        news.video.isNotBlank()
+            }
+        )
     }
 }

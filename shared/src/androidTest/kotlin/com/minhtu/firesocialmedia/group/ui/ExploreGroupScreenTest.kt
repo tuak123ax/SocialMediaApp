@@ -6,13 +6,12 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import com.minhtu.firesocialmedia.constants.TestTag
 import com.minhtu.firesocialmedia.domain.entity.group.GroupInstance
-import com.minhtu.firesocialmedia.domain.repository.GroupRepository
+import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.domain.usecases.group.FetchFeatureGroupsUseCase
 import com.minhtu.firesocialmedia.domain.usecases.group.FetchRecommendGroupsUseCase
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.ExploreGroup
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.ExploreGroupViewModel
 import com.minhtu.firesocialmedia.presentation.search.SearchViewModel
-import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 import com.seiko.imageloader.LocalImageLoader
 import org.junit.Rule
 import org.junit.Test

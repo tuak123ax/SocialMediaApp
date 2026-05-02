@@ -68,7 +68,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.minhtu.firesocialmedia.constants.TestTag
-import com.minhtu.firesocialmedia.storage.toStorageUrl
 import com.minhtu.firesocialmedia.domain.core.DecentralizationType
 import com.minhtu.firesocialmedia.domain.entity.call.CallingRequestData
 import com.minhtu.firesocialmedia.domain.entity.home.deeplinks.DeepLinksData
@@ -81,6 +80,7 @@ import com.minhtu.firesocialmedia.platform.showToast
 import com.minhtu.firesocialmedia.platform.toHex
 import com.minhtu.firesocialmedia.presentation.loading.Loading
 import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
+import com.minhtu.firesocialmedia.storage.toStorageUrl
 import com.minhtu.firesocialmedia.utils.UiUtils
 import com.minhtu.sharedmodule.ui.theme.homeEditTextBackgroundColor
 import com.minhtu.sharedmodule.ui.theme.iconButtonBackgroundColor

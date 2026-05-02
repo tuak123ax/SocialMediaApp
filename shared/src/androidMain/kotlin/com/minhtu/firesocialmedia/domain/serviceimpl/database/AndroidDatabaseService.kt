@@ -350,7 +350,6 @@ class AndroidDatabaseService(
         return raw.copy(news = resolved)
     }
 
-
     override suspend fun getAllComments(
         path: String,
         newsId: String

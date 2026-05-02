@@ -6,7 +6,6 @@ import com.minhtu.firesocialmedia.data.local.mapper.room.toRoomEntity
 import com.minhtu.firesocialmedia.data.local.service.room.RoomService
 import com.minhtu.firesocialmedia.data.remote.constant.DataConstant
 import com.minhtu.firesocialmedia.data.remote.mapper.news.toDto
-import com.minhtu.firesocialmedia.data.remote.mapper.settings.toDto
 import com.minhtu.firesocialmedia.data.remote.service.database.DatabaseService
 import com.minhtu.firesocialmedia.domain.core.NetworkMonitor
 import com.minhtu.firesocialmedia.domain.entity.base.BaseNewsInstance

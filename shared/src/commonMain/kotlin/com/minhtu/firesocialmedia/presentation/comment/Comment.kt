@@ -6,6 +6,7 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -63,9 +64,9 @@ import com.minhtu.firesocialmedia.platform.CrossPlatformIcon
 import com.minhtu.firesocialmedia.platform.convertTimeToDateString
 import com.minhtu.firesocialmedia.platform.logMessage
 import com.minhtu.firesocialmedia.platform.showToast
+import com.minhtu.firesocialmedia.storage.toStorageUrl
 import com.minhtu.firesocialmedia.utils.UiUtils
 import com.rickclephas.kmp.observableviewmodel.launch
-import com.minhtu.firesocialmedia.storage.toStorageUrl
 import com.seiko.imageloader.ui.AutoSizeImage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -73,18 +74,21 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class Comment {
-    companion object{
+    companion object {
         @Composable
-        fun CommentScreen(modifier: Modifier,
-                          platform : PlatformContext,
-                          localImageLoaderValue : ProvidedValue<*>,
-                          showCloseIcon : Boolean,
-                          commentViewModel: CommentViewModel,
-                          currentUser : UserInstance,
-                          selectedNew : NewsInstance,
-                          onNavigateToShowImageScreen: (image: String) -> Unit,
-                          onNavigateToUserInformation: (user: UserInstance?) -> Unit,
-                          onNavigateToHomeScreen: (numberOfComments : Int) -> Unit) {
+        fun CommentScreen(
+            paddingValues: PaddingValues = PaddingValues(0.dp),
+            modifier: Modifier = Modifier,
+            platform: PlatformContext,
+            localImageLoaderValue: ProvidedValue<*>,
+            showCloseIcon: Boolean,
+            commentViewModel: CommentViewModel,
+            currentUser: UserInstance,
+            selectedNew: NewsInstance,
+            onNavigateToShowImageScreen: (image: String) -> Unit,
+            onNavigateToUserInformation: (user: UserInstance?) -> Unit,
+            onNavigateToHomeScreen: (numberOfComments: Int) -> Unit
+        ) {
             val commentStatus = commentViewModel.createCommentStatus.collectAsState()
             val focusRequester = remember { FocusRequester() }
             val keyboardController = LocalSoftwareKeyboardController.current
@@ -102,7 +106,7 @@ class Comment {
                 }
             }
 
-            val commentsList =  commentViewModel.allComments.collectAsState()
+            val commentsList = commentViewModel.allComments.collectAsState()
             val coroutineScope = rememberCoroutineScope()
             CommonBackHandler {
                 onNavigateToHomeScreen(commentsList.value.size)
@@ -117,6 +121,7 @@ class Comment {
             Box(
                 modifier = modifier
                     .fillMaxSize()
+                    .padding(paddingValues)
             ) {
                 Column(
                     verticalArrangement = Arrangement.Top,
@@ -159,7 +164,7 @@ class Comment {
                         //Sort comments by timePosted in descending order
                         items(
                             items = commentsList.value.sortedByDescending { it.timePosted },
-                            key = {it.id}) { comment ->
+                            key = { it.id }) { comment ->
                             CommentCard(
                                 comment,
                                 commentViewModel,
@@ -268,19 +273,21 @@ class Comment {
         }
 
         @Composable
-        fun CommentCard(comment: CommentInstance,
-                        commentViewModel: CommentViewModel,
-                        localImageLoaderValue : ProvidedValue<*>,
-                        currentUser : UserInstance,
-                        platform : PlatformContext,
-                        selectedNew : NewsInstance,
-                        isMainComment : Boolean,
-                        onNavigateToShowImageScreen: (image: String) -> Unit,
-                        onNavigateToUserInformation: (user: UserInstance?) -> Unit,
-                        onCopyComment: () -> Unit,
-                        onLikeComment: () -> Unit,
-                        onReplyComment: () -> Unit,
-                        onDeleteComment: () -> Unit) {
+        fun CommentCard(
+            comment: CommentInstance,
+            commentViewModel: CommentViewModel,
+            localImageLoaderValue: ProvidedValue<*>,
+            currentUser: UserInstance,
+            platform: PlatformContext,
+            selectedNew: NewsInstance,
+            isMainComment: Boolean,
+            onNavigateToShowImageScreen: (image: String) -> Unit,
+            onNavigateToUserInformation: (user: UserInstance?) -> Unit,
+            onCopyComment: () -> Unit,
+            onLikeComment: () -> Unit,
+            onReplyComment: () -> Unit,
+            onDeleteComment: () -> Unit
+        ) {
             val isAuthor = comment.posterId == selectedNew.posterId
             val likeStatus by commentViewModel.likedComments.collectAsState()
             val isLiked = likeStatus.contains(comment.id)
@@ -324,7 +331,8 @@ class Comment {
                                 modifier = Modifier.padding(10.dp).fillMaxWidth()
                                     .clickable {
                                         commentViewModel.viewModelScope.launch {
-                                            val user = commentViewModel.findUserById(comment.posterId)
+                                            val user =
+                                                commentViewModel.findUserById(comment.posterId)
                                             onNavigateToUserInformation(user)
                                         }
                                     }) {
@@ -417,7 +425,7 @@ class Comment {
                                 icon = "like",
                                 backgroundColor = if (isLiked) "#00FFFF" else "#FFFFFF",
                                 contentDescription = TestTag.TAG_BUTTON_LIKE,
-                                tint = if(isLiked) Color.Red else Color.Black,
+                                tint = if (isLiked) Color.Red else Color.Black,
                                 modifier = Modifier
                                     .size(20.dp)
                                     .testTag(TestTag.TAG_BUTTON_LIKE)
@@ -537,19 +545,21 @@ class Comment {
 
         }
 
-        fun getScreenName(): String{
+        fun getScreenName(): String {
             return "CommentScreen"
         }
 
         @Composable
-        fun DropdownMenuForComment(expanded : Boolean,
-                                   isMainComment : Boolean,
-                                   isYourComment : Boolean,
-                                   onCopyComment : () -> Unit,
-                                   onLikeComment : () -> Unit,
-                                   onReplyComment : () -> Unit,
-                                   onDeleteComment : () -> Unit,
-                                   onDismissRequest: () -> Unit) {
+        fun DropdownMenuForComment(
+            expanded: Boolean,
+            isMainComment: Boolean,
+            isYourComment: Boolean,
+            onCopyComment: () -> Unit,
+            onLikeComment: () -> Unit,
+            onReplyComment: () -> Unit,
+            onDeleteComment: () -> Unit,
+            onDismissRequest: () -> Unit
+        ) {
             DropdownMenu(
                 expanded = expanded,
                 onDismissRequest = onDismissRequest
