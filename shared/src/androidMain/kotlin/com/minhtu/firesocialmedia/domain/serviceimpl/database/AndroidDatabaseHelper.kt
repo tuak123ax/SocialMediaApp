@@ -12,7 +12,6 @@ import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
-import com.google.firebase.database.GenericTypeIndicator
 import com.google.firebase.database.ServerValue
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.storage.StorageMetadata
@@ -157,14 +156,17 @@ class AndroidDatabaseHelper {
             val databaseReference = FirebaseDatabase.getInstance().getReference()
                 .child(path).child(id).child(DataConstant.NOTIFICATION_PATH)
             databaseReference.get().addOnSuccessListener { snapshot ->
-                //Get notification list from db
-                val list =
-                    snapshot.getValue(object : GenericTypeIndicator<List<NotificationDTO>>() {})
-                        ?.toMutableList()
-                //Delete value in notification list and upload the list to db again
-                list?.let {
-                    it.remove(notification) // or any value
-                    databaseReference.setValue(it) // overwrite with updated list
+                //Get notification list from db - iterate children to avoid GenericTypeIndicator
+                //which breaks under R8/ProGuard obfuscation in release builds
+                val list = snapshot.children
+                    .mapNotNull { it.getValue(NotificationDTO::class.java) }
+                    .toMutableList()
+                //Delete value by id to avoid equality issues with resolved URLs or mutated fields
+                list.removeIf { it.id == notification.id }
+                if (list.isEmpty()) {
+                    databaseReference.removeValue() // clean up the node entirely
+                } else {
+                    databaseReference.setValue(list) // overwrite with updated list
                 }
             }
         }
