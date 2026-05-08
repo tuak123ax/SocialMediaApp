@@ -76,7 +76,7 @@ class TwoFactorEnabled {
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues)
-                    .background(Color.White)
+                    .background(MaterialTheme.colorScheme.surface)
             ) {
                 val isTablet = maxWidth > 600.dp
                 val horizontalPadding = if (isTablet) 64.dp else 24.dp
@@ -88,7 +88,7 @@ class TwoFactorEnabled {
                         title = if (isEnable2FAFlow) "Two Factor Enabled" else "Access Granted",
                         showBackButton = false
                     )
-                    Divider(color = Color(0xFFF0F0F0))
+                    Divider(color = MaterialTheme.colorScheme.outlineVariant)
                     Spacer(modifier = Modifier.height(20.dp))
                     // BODY (centered + scrollable)
                     Box(
@@ -144,7 +144,7 @@ class TwoFactorEnabled {
                                 else
                                     "You have successfully verified your identity using a backup code and are now logged in.",
                                 style = MaterialTheme.typography.bodyMedium.copy(
-                                    color = Color.Gray
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
                                 ),
                                 textAlign = TextAlign.Center
                             )
@@ -164,7 +164,7 @@ class TwoFactorEnabled {
                                 Text(
                                     text = if (isEnable2FAFlow) "Return to Settings" else "Continue to Home",
                                     style = MaterialTheme.typography.titleMedium.copy(
-                                        color = Color.White
+                                        color = MaterialTheme.colorScheme.onPrimary
                                     )
                                 )
                             }
@@ -187,7 +187,7 @@ class TwoFactorEnabled {
                                 modifier = Modifier.fillMaxWidth(),
                                 shape = RoundedCornerShape(16.dp),
                                 colors = CardDefaults.cardColors(
-                                    containerColor = Color(0xFFF5F5F5)
+                                    containerColor = MaterialTheme.colorScheme.surfaceVariant
                                 )
                             ) {
                                 Column(modifier = Modifier.padding(20.dp)) {
@@ -248,7 +248,7 @@ class TwoFactorEnabled {
                 Icon(
                     imageVector = Icons.Filled.Shield,
                     contentDescription = null,
-                    tint = Color.White,
+                    tint = MaterialTheme.colorScheme.onPrimary,
                     modifier = Modifier.size(size * 0.6f)
                 )
 

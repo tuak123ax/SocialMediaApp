@@ -274,7 +274,7 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
             .background(MaterialTheme.colorScheme.background)
     ) {
         Scaffold(
-            containerColor = Color.White,
+            containerColor = MaterialTheme.colorScheme.background,
             bottomBar = {
                 val currentDestination =
                     navController.currentBackStackEntryAsState().value?.destination?.route
@@ -289,7 +289,7 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(60.dp)
-                            .background(Color.White)
+                            .background(MaterialTheme.colorScheme.surface)
                     )
                 }
             },
@@ -334,7 +334,7 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                         loadingViewModel,
                         modifier = Modifier
                             .fillMaxSize()
-                            .background(Color(0xFF132026)),
+                            .background(MaterialTheme.colorScheme.background),
                         onNavigateToSignInScreen = {
                             navController.navigate(SignIn.getScreenName()) {
                                 popUpTo(0) {
@@ -373,7 +373,7 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                     Home.HomeScreen(
                         modifier = Modifier
                             .fillMaxSize()
-                            .background(Color.White),
+                            .background(MaterialTheme.colorScheme.background),
                         homeViewModel,
                         loadingViewModel,
                         SharedCallData.navigateToCallingScreenFromNotification,
@@ -502,7 +502,7 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                         showImageViewModel = showImageViewModel,
                         modifier = Modifier
                             .fillMaxSize()
-                            .background(color = Color.Black),
+                            .background(color = MaterialTheme.colorScheme.background),
                         onNavigateBack = {
                             navController.popBackStack()
                         }
@@ -523,7 +523,7 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                     Search.SearchScreen(
                         modifier = Modifier
                             .fillMaxSize()
-                            .background(color = Color.White),
+                            .background(color = MaterialTheme.colorScheme.background),
                         paddingValues,
                         searchViewModel,
                         homeViewModel,
@@ -606,7 +606,7 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                         paddingValues,
                         modifier = Modifier
                             .fillMaxSize()
-                            .background(color = Color.White),
+                            .background(color = MaterialTheme.colorScheme.background),
                         platform = platformContext,
                         localImageLoaderValue = localImageLoaderValue,
                         showCloseIcon = true,
@@ -657,7 +657,7 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                     Friend.FriendScreen(
                         modifier = Modifier
                             .fillMaxSize()
-                            .background(Color.White),
+                            .background(MaterialTheme.colorScheme.background),
                         paddingValues = paddingValues,
                         localImageLoaderValue = localImageLoaderValue,
                         searchViewModel,
@@ -683,7 +683,7 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                     Notification.NotificationScreen(
                         modifier = Modifier
                             .fillMaxSize()
-                            .background(Color.White),
+                            .background(MaterialTheme.colorScheme.background),
                         paddingValues = paddingValues,
                         localImageLoaderValue = localImageLoaderValue,
                         searchViewModel = searchViewModel,
@@ -714,7 +714,7 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                     Settings.SettingsScreen(
                         modifier = Modifier
                             .fillMaxSize()
-                            .background(Color.White),
+                            .background(MaterialTheme.colorScheme.background),
                         paddingValues = paddingValues,
                         homeViewModel = homeViewModel,
                         onNavigateToSignIn = {
@@ -750,7 +750,7 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                     PostInformation.PostInformationScreen(
                         modifier = Modifier
                             .fillMaxSize()
-                            .background(Color.White),
+                            .background(MaterialTheme.colorScheme.background),
                         platformContext,
                         localImageLoaderValue = localImageLoaderValue,
                         relatedNew,
@@ -817,7 +817,7 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                             },
                             modifier = Modifier
                                 .fillMaxSize()
-                                .background(Color.White)
+                                .background(MaterialTheme.colorScheme.background)
                         )
                     } else {
                         showToast("Cannot get caller and callee information. Cannot show calling screen!")
@@ -859,7 +859,7 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                         PostInformation.PostInformationScreen(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .background(Color.White),
+                                .background(MaterialTheme.colorScheme.background),
                             platformContext,
                             localImageLoaderValue = localImageLoaderValue,
                             newsState!!,
@@ -998,7 +998,7 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                             localImageLoaderValue,
                             modifier = Modifier
                                 .fillMaxSize()
-                                .background(color = Color.White),
+                                .background(color = MaterialTheme.colorScheme.background),
                             homeViewModel,
                             searchViewModel,
                             loadingViewModel,

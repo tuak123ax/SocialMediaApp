@@ -29,7 +29,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -42,9 +41,12 @@ import com.minhtu.firesocialmedia.presentation.home.HomeViewModel
 import com.minhtu.firesocialmedia.presentation.search.Search
 import com.minhtu.firesocialmedia.presentation.search.SearchViewModel
 import com.minhtu.firesocialmedia.utils.UiUtils
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.withContext
 
 class Friend {
     companion object{
@@ -123,30 +125,26 @@ class Friend {
 
             // Filter friends
             LaunchedEffect(friendStatus, searchViewModel.query) {
-                filteredFriends = coroutineScope {
-                    friendStatus.map { userId ->
-                        async {
-                            homeViewModel.findUserById(userId)
-                                ?.takeIf {
-                                    it.name.contains(searchViewModel.query, ignoreCase = true)
-                                }
-                        }
-                    }.awaitAll().filterNotNull()
-                }
+                filteredFriends = friendStatus.map { userId ->
+                    async {
+                        homeViewModel.findUserById(userId)
+                            ?.takeIf {
+                                it.name.contains(searchViewModel.query, ignoreCase = true)
+                            }
+                    }
+                }.awaitAll().filterNotNull().distinct()
             }
 
             // Filter requests
             LaunchedEffect(friendRequestsStatus, searchViewModel.query) {
-                filteredRequests = coroutineScope {
-                    friendRequestsStatus.map { userId ->
-                        async {
-                            homeViewModel.findUserById(userId)
-                                ?.takeIf {
-                                    it.name.contains(searchViewModel.query, ignoreCase = true)
-                                }
-                        }
-                    }.awaitAll().filterNotNull()
-                }
+                filteredRequests = friendRequestsStatus.map { userId ->
+                    async {
+                        homeViewModel.findUserById(userId)
+                            ?.takeIf {
+                                it.name.contains(searchViewModel.query, ignoreCase = true)
+                            }
+                    }
+                }.awaitAll().filterNotNull().distinct()
             }
 
             Column(modifier = Modifier.fillMaxSize()) {
@@ -154,12 +152,12 @@ class Friend {
                 // TAB ROW
                 TabRow(
                     selectedTabIndex = selectedTabIndex,
-                    containerColor = Color.White,
-                    contentColor = Color.Black,
+                    containerColor = MaterialTheme.colorScheme.background,
+                    contentColor = MaterialTheme.colorScheme.onSurface,
                     indicator = { tabPositions ->
                         TabRowDefaults.Indicator(
                             Modifier.tabIndicatorOffset(tabPositions[selectedTabIndex]),
-                            color = Color.Red
+                            color = MaterialTheme.colorScheme.primary
                         )
                     }
                 ) {
@@ -181,18 +179,18 @@ class Friend {
                                     Text(
                                         text = title,
                                         style = MaterialTheme.typography.titleMedium,
-                                        color = if (selectedTabIndex == index) Color.Red else Color.Gray
+                                        color = if (selectedTabIndex == index) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
                                     )
 
                                     if (count > 0) {
                                         Box(
                                             modifier = Modifier
-                                                .background(Color.Red, CircleShape)
+                                                .background(MaterialTheme.colorScheme.error, CircleShape)
                                                 .padding(horizontal = 6.dp, vertical = 2.dp)
                                         ) {
                                             Text(
                                                 text = if (count <= 999) count.toString() else "999+",
-                                                color = Color.White,
+                                                color = MaterialTheme.colorScheme.onPrimary,
                                                 style = MaterialTheme.typography.labelSmall
                                             )
                                         }

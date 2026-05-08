@@ -16,7 +16,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -40,10 +40,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.minhtu.firesocialmedia.constants.TestTag
-import com.minhtu.sharedmodule.ui.theme.PolicyBody
-import com.minhtu.sharedmodule.ui.theme.PolicyGrayTitle
-import com.minhtu.sharedmodule.ui.theme.PolicyRed
-import com.minhtu.sharedmodule.ui.theme.PolicySubText
 
 class Privacy {
     companion object {
@@ -54,13 +50,13 @@ class Privacy {
             onUnderstandClicked: () -> Unit = {}
         ) {
             Scaffold(
-                containerColor = Color.White,
+                containerColor = MaterialTheme.colorScheme.background,
                 topBar = {
                     TopAppBar(
                         title = {
                             Text(
                                 text = "Privacy Policy",
-                                color = PolicyRed,
+                                color = MaterialTheme.colorScheme.primary,
                                 style = MaterialTheme.typography.titleLarge,
                                 fontWeight = FontWeight.Bold
                             )
@@ -74,14 +70,14 @@ class Privacy {
                                         contentDescription = TestTag.TAG_BUTTON_BACK_TOP_BAR
                                     }) {
                                 Icon(
-                                    imageVector = Icons.Default.ArrowBack,
+                                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                                     contentDescription = "Back",
-                                    tint = PolicyRed
+                                    tint = MaterialTheme.colorScheme.onSurface
                                 )
                             }
                         },
                         colors = TopAppBarDefaults.topAppBarColors(
-                            containerColor = Color.White
+                            containerColor = MaterialTheme.colorScheme.surface
                         )
                     )
                 }
@@ -89,7 +85,7 @@ class Privacy {
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(Color.White)
+                        .background(MaterialTheme.colorScheme.background)
                         .padding(padding)
                         .padding(horizontal = 20.dp),
                     verticalArrangement = Arrangement.spacedBy(20.dp)
@@ -188,7 +184,7 @@ class Privacy {
             Text(
                 text = text,
                 style = MaterialTheme.typography.labelLarge,
-                color = PolicyGrayTitle,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 letterSpacing = 1.2.sp
             )
         }
@@ -198,7 +194,7 @@ class Privacy {
             Text(
                 text = text,
                 style = MaterialTheme.typography.headlineSmall,
-                color = PolicyRed,
+                color = MaterialTheme.colorScheme.primary,
                 fontWeight = FontWeight.Bold
             )
         }
@@ -208,7 +204,7 @@ class Privacy {
             Text(
                 text = text,
                 style = MaterialTheme.typography.bodyMedium,
-                color = PolicyBody,
+                color = MaterialTheme.colorScheme.onBackground,
                 lineHeight = 22.sp
             )
         }
@@ -225,7 +221,7 @@ class Privacy {
                 Icon(
                     imageVector = Icons.Default.CheckCircle,
                     contentDescription = null,
-                    tint = PolicyRed,
+                    tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier
                         .size(20.dp)
                         .padding(top = 2.dp)
@@ -237,13 +233,13 @@ class Privacy {
                     Text(
                         text = title,
                         style = MaterialTheme.typography.bodyMedium,
-                        color = Color.Black,
+                        color = MaterialTheme.colorScheme.onBackground,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
                         text = description,
                         style = MaterialTheme.typography.bodySmall,
-                        color = PolicySubText
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
@@ -262,7 +258,7 @@ class Privacy {
                         modifier = Modifier
                             .size(6.dp)
                             .clip(CircleShape)
-                            .background(PolicyRed)
+                            .background(MaterialTheme.colorScheme.primary)
                     )
 
                     Spacer(modifier = Modifier.width(12.dp))
@@ -271,7 +267,7 @@ class Privacy {
                         text = title,
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Bold,
-                        color = PolicyBody
+                        color = MaterialTheme.colorScheme.onBackground
                     )
                 }
 
@@ -280,7 +276,7 @@ class Privacy {
                 Text(
                     text = description,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = PolicyBody,
+                    color = MaterialTheme.colorScheme.onBackground,
                     lineHeight = 22.sp,
                     modifier = Modifier.padding(start = 18.dp)
                 )

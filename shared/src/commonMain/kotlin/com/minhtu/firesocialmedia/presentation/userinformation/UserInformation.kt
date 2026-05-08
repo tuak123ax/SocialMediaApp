@@ -190,7 +190,7 @@ class UserInformation {
             Box(modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .background(color = Color.White)) {
+                .background(color = MaterialTheme.colorScheme.background)) {
                 Column(
                     verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.Start
@@ -275,11 +275,11 @@ class UserInformation {
                                                 modifier = Modifier
                                                     .size(100.dp)
                                                     .clip(CircleShape)
-                                                    .border(
-                                                        2.dp,
-                                                        Color.White,
-                                                        CircleShape
-                                                    ) // Optional border for better appearance
+                                            .border(
+                                                2.dp,
+                                                MaterialTheme.colorScheme.surface,
+                                                CircleShape
+                                            ) // Optional border for better appearance
                                                     .testTag(TestTag.TAG_USER_AVATAR)
                                                     .semantics {
                                                         contentDescription = TestTag.TAG_USER_AVATAR
@@ -290,7 +290,7 @@ class UserInformation {
                                         // User name with max width & ellipsis
                                         Text(
                                             text = fetchedUser!!.name,
-                                            color = Color.Black,
+                                            color = MaterialTheme.colorScheme.onBackground,
                                             fontSize = 20.sp,
                                             fontWeight = FontWeight.Bold,
                                             textAlign = TextAlign.Center,
@@ -339,16 +339,16 @@ class UserInformation {
                                                         }
                                                     }
                                                 },
-                                                modifier = Modifier.border(
+                                            modifier = Modifier.border(
                                                     1.dp,
-                                                    Color.Black,
+                                                    MaterialTheme.colorScheme.outline,
                                                     CircleShape
                                                 )
                                             ) {
                                                 Icon(
                                                     imageVector = Icons.Default.Call,
                                                     contentDescription = "Call",
-                                                    tint = Color.Gray
+                                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
                                                 )
                                             }
 
@@ -405,7 +405,7 @@ class UserInformation {
                                                             Relationship.WAITING_RESPONSE -> "Response"
                                                             else -> "Unknown"
                                                         },
-                                                        color = Color.White,
+                                                        color = MaterialTheme.colorScheme.onPrimary,
                                                         maxLines = 1,
                                                         textAlign = TextAlign.Center
                                                     )

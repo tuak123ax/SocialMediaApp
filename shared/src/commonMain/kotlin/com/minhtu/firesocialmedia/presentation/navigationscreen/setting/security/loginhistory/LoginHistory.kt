@@ -46,7 +46,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -78,6 +77,7 @@ class LoginHistory {
             val deviceCount = when (loginHistoryStatus) {
                 is LoginHistoryUiState.Success ->
                     (loginHistoryStatus as LoginHistoryUiState.Success).data.size
+
                 else -> 0
             }
 
@@ -105,7 +105,7 @@ class LoginHistory {
                             title = "Login History",
                             navigateBack = onNavigateBack
                         )
-                        Divider(color = Color(0xFFF0F0F0))
+                        Divider(color = MaterialTheme.colorScheme.outlineVariant)
                     }
 
                     item {
@@ -127,7 +127,10 @@ class LoginHistory {
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Text("Active Sessions", style = MaterialTheme.typography.titleMedium)
-                            Text("$deviceCount Devices", style = MaterialTheme.typography.bodyMedium)
+                            Text(
+                                "$deviceCount Devices",
+                                style = MaterialTheme.typography.bodyMedium
+                            )
                         }
                     }
 
@@ -181,9 +184,9 @@ class LoginHistory {
 
                     item {
                         val buttonColor = when (acknowledgeStatus) {
-                            AcknowledgeStatus.SUCCESS -> Color(0xFF43A047)
-                            AcknowledgeStatus.ERROR   -> Color(0xFFEF5350)
-                            else                      -> Color(0xFFE53935)
+                            AcknowledgeStatus.SUCCESS -> MaterialTheme.colorScheme.tertiary
+                            AcknowledgeStatus.ERROR -> MaterialTheme.colorScheme.error
+                            else -> MaterialTheme.colorScheme.error
                         }
 
                         Button(
@@ -199,42 +202,55 @@ class LoginHistory {
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = buttonColor,
                                 disabledContainerColor = buttonColor,
-                                disabledContentColor = Color.White
+                                disabledContentColor = MaterialTheme.colorScheme.onPrimary
                             ),
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             when (acknowledgeStatus) {
                                 AcknowledgeStatus.LOADING -> {
                                     CircularProgressIndicator(
-                                        color = Color.White,
+                                        color = MaterialTheme.colorScheme.onPrimary,
                                         strokeWidth = 2.dp,
                                         modifier = Modifier.size(18.dp)
                                     )
                                     Spacer(Modifier.width(8.dp))
-                                    Text("Saving...", color = Color.White)
+                                    Text("Saving...", color = MaterialTheme.colorScheme.onPrimary)
                                 }
+
                                 AcknowledgeStatus.SUCCESS -> {
                                     Icon(
                                         Icons.Default.CheckCircle,
                                         contentDescription = null,
-                                        tint = Color.White,
+                                        tint = MaterialTheme.colorScheme.onPrimary,
                                         modifier = Modifier.size(18.dp)
                                     )
                                     Spacer(Modifier.width(8.dp))
-                                    Text("Acknowledged!", color = Color.White, fontWeight = FontWeight.Bold)
+                                    Text(
+                                        "Acknowledged!",
+                                        color = MaterialTheme.colorScheme.onPrimary,
+                                        fontWeight = FontWeight.Bold
+                                    )
                                 }
+
                                 AcknowledgeStatus.ERROR -> {
                                     Icon(
                                         Icons.Default.Warning,
                                         contentDescription = null,
-                                        tint = Color.White,
+                                        tint = MaterialTheme.colorScheme.onPrimary,
                                         modifier = Modifier.size(18.dp)
                                     )
                                     Spacer(Modifier.width(8.dp))
-                                    Text("Failed. Tap to retry", color = Color.White)
+                                    Text(
+                                        "Failed. Tap to retry",
+                                        color = MaterialTheme.colorScheme.onPrimary
+                                    )
                                 }
+
                                 else -> {
-                                    Text("I'm aware of all sessions", color = Color.White)
+                                    Text(
+                                        "I'm aware of all sessions",
+                                        color = MaterialTheme.colorScheme.onPrimary
+                                    )
                                 }
                             }
                         }
@@ -261,7 +277,7 @@ class LoginHistory {
                     Icon(
                         Icons.Default.Warning,
                         contentDescription = null,
-                        tint = Color.Red
+                        tint = MaterialTheme.colorScheme.error
                     )
 
                     Spacer(Modifier.width(12.dp))
@@ -282,7 +298,7 @@ class LoginHistory {
             Card(
                 shape = RoundedCornerShape(16.dp),
                 elevation = CardDefaults.cardElevation(defaultElevation = 5.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White)
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
             ) {
                 Row(
                     modifier = Modifier
@@ -296,17 +312,13 @@ class LoginHistory {
                         contentDescription = null,
                         modifier = Modifier.size(32.dp)
                     )
-
                     Spacer(Modifier.width(12.dp))
-
                     Column(modifier = Modifier.weight(1f)) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(session.deviceName, fontWeight = FontWeight.SemiBold)
+                        Text(session.deviceName, fontWeight = FontWeight.SemiBold)
 
-                            if (session.current) {
-                                Spacer(Modifier.width(8.dp))
-                                Badge(text = "CURRENT")
-                            }
+                        if (session.current) {
+                            Spacer(Modifier.width(8.dp))
+                            CurrentBadge(text = "CURRENT")
                         }
 
                         Text(session.location, style = MaterialTheme.typography.bodySmall)
@@ -314,35 +326,38 @@ class LoginHistory {
                         if (session.activeNow) {
                             Text(
                                 "Active now",
-                                color = Color.Red,
+                                color = MaterialTheme.colorScheme.error,
                                 style = MaterialTheme.typography.bodySmall
                             )
                         } else {
-                            Text(convertTimeToDateString(session.time), style = MaterialTheme.typography.bodySmall)
+                            Text(
+                                convertTimeToDateString(session.time),
+                                style = MaterialTheme.typography.bodySmall
+                            )
                         }
                     }
+                }
 
-                    // Comment out sign out feature, will support on next version
+                // Comment out sign out feature, will support on next version
 //                    if (!session.isCurrent) {
 //                        TextButton(onClick = { }) {
 //                            Text("Log out", color = Color.Red)
 //                        }
 //                    }
-                }
             }
         }
 
         @Composable
-        fun Badge(text: String) {
+        fun CurrentBadge(text: String) {
             Box(
                 modifier = Modifier
                     .clip(RoundedCornerShape(50))
-                    .background(Color.Red.copy(alpha = 0.1f))
+                    .background(MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.4f))
                     .padding(horizontal = 8.dp, vertical = 2.dp)
             ) {
                 Text(
                     text,
-                    color = Color.Red,
+                    color = MaterialTheme.colorScheme.error,
                     style = MaterialTheme.typography.labelSmall
                 )
             }
@@ -352,7 +367,7 @@ class LoginHistory {
         fun SecureAccountCard() {
             Card(
                 shape = RoundedCornerShape(24.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFFE53935)),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.error),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(
@@ -360,7 +375,7 @@ class LoginHistory {
                 ) {
                     Text(
                         "Secure account",
-                        color = Color.White,
+                        color = MaterialTheme.colorScheme.onError,
                         style = MaterialTheme.typography.titleMedium
                     )
 
@@ -368,7 +383,7 @@ class LoginHistory {
 
                     Text(
                         "Instantly terminate all sessions except this device.",
-                        color = Color.White.copy(alpha = 0.8f),
+                        color = MaterialTheme.colorScheme.onError.copy(alpha = 0.8f),
                         style = MaterialTheme.typography.bodySmall
                     )
 
@@ -377,8 +392,8 @@ class LoginHistory {
                     Button(
                         onClick = { },
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = Color.White,
-                            contentColor = Color.Red
+                            containerColor = MaterialTheme.colorScheme.onError,
+                            contentColor = MaterialTheme.colorScheme.error
                         ),
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(50)
@@ -395,7 +410,7 @@ class LoginHistory {
 
             Card(
                 shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White)
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
             ) {
                 Row(
                     modifier = Modifier
@@ -444,9 +459,9 @@ class LoginHistory {
 
             return Brush.linearGradient(
                 colors = listOf(
-                    Color.LightGray.copy(alpha = 0.6f),
-                    Color.LightGray.copy(alpha = 0.2f),
-                    Color.LightGray.copy(alpha = 0.6f)
+                    MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
+                    MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f),
+                    MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)
                 ),
                 start = Offset(translateAnim.value - 200f, 0f),
                 end = Offset(translateAnim.value, 0f)
@@ -454,11 +469,7 @@ class LoginHistory {
         }
 
         @Composable
-        fun SkeletonLine(
-            width: Dp,
-            height: Dp = 12.dp,
-            brush: Brush
-        ) {
+        fun SkeletonLine(width: Dp, height: Dp = 12.dp, brush: Brush) {
             Box(
                 modifier = Modifier
                     .height(height)

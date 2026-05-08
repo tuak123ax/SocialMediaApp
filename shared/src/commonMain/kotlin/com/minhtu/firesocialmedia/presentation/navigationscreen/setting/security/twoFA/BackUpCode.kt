@@ -94,21 +94,21 @@ class BackUpCode {
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues)
-                    .background(Color.White)
+                    .background(MaterialTheme.colorScheme.surface)
             ) {
                 val isTablet = maxWidth > 600.dp
                 val contentWidth = if (isTablet) 500.dp else maxWidth
 
                 Column(modifier = Modifier
                     .fillMaxSize()
-                    .background(Color.White)) {
+                    .background(MaterialTheme.colorScheme.surface)) {
 
                     // HEADER
                     UiUtils.BackAndTitleAndMoreOptionsRow(
                         title = "Enter Backup Code",
                         navigateBack = onNavigateBack
                     )
-                    Divider(color = Color(0xFFF0F0F0))
+                    Divider(color = MaterialTheme.colorScheme.outlineVariant)
                     Spacer(modifier = Modifier.height(20.dp))
                     // CONTENT
                     Column(
@@ -249,8 +249,8 @@ class BackUpCode {
                     onClick = {},
                     label = { Text("SINGLE ENTRY") },
                     colors = AssistChipDefaults.assistChipColors(
-                        containerColor = Color.LightGray,
-                        labelColor = Color.Black
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                        labelColor = MaterialTheme.colorScheme.onSurface
                     )
                 )
 
@@ -259,7 +259,7 @@ class BackUpCode {
                     label = { Text("SENSITIVE") },
                     colors = AssistChipDefaults.assistChipColors(
                         containerColor = MaterialTheme.colorScheme.errorContainer,
-                        labelColor = Color.Red
+                        labelColor = MaterialTheme.colorScheme.error
                     ),
                     border = null // remove border
                 )
@@ -379,7 +379,7 @@ class BackUpCode {
                 Text(
                     text = "Enter your backup code",
                     style = MaterialTheme.typography.bodySmall,
-                    color = Color.Gray
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
                 // Hidden input
@@ -417,7 +417,7 @@ class BackUpCode {
             val borderColor = when {
                 isActive -> MaterialTheme.colorScheme.primary
                 isFilled -> MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
-                else -> Color.LightGray
+                else -> MaterialTheme.colorScheme.outline
             }
 
             Box(

@@ -183,7 +183,7 @@ class UploadNewsfeed {
                     title = "Warning",
                     message = "Are you sure you want to exit? All data will be lost!",
                     icon = Icons.Default.Warning,
-                    iconBackground = Color(0xFFFFF3E0),
+                    iconBackground = MaterialTheme.colorScheme.tertiaryContainer,
                     onDiscard = {
                         uploadNewsfeedViewModel.resetPostError()
                         uploadNewsfeedViewModel.resetBackValue()
@@ -219,11 +219,11 @@ class UploadNewsfeed {
                         verticalArrangement = Arrangement.Center,
                         modifier = Modifier
                             .padding(vertical = 10.dp)
-                            .background(Color.White)) {
+                            .background(MaterialTheme.colorScheme.background)) {
                         //Title
                         Text(
                             text = if(isUpdated) "Update Post" else "Create Post",
-                            color = Color.Black,
+                            color = MaterialTheme.colorScheme.onSurface,
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
                             textAlign = TextAlign.Center,
@@ -242,8 +242,8 @@ class UploadNewsfeed {
                                         showAccessPermissionSheet = true
                                     },
                                     colors = ButtonDefaults.outlinedButtonColors(
-                                        containerColor = Color.White,
-                                        contentColor = Color.Black
+                                        containerColor = MaterialTheme.colorScheme.surface,
+                                        contentColor = MaterialTheme.colorScheme.onSurface
                                     ),
                                     modifier = Modifier
                                         .testTag(TestTag.TAG_BUTTON_ACCESS_MODIFIER)
@@ -276,9 +276,9 @@ class UploadNewsfeed {
                                 uploadNewsfeedViewModel.updateMessage(it)
                             },
                             colors = OutlinedTextFieldDefaults.colors(
-                                focusedTextColor = Color.Black,
-                                unfocusedTextColor = Color.Black,
-                                disabledTextColor = Color.Black
+                                focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                                unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+                                disabledTextColor = MaterialTheme.colorScheme.onSurfaceVariant
                             ),
                             shape = RoundedCornerShape(10.dp),
                             modifier = Modifier
@@ -312,7 +312,7 @@ class UploadNewsfeed {
                                             .height(250.dp)
                                             .fillMaxWidth()
                                             .padding(horizontal = 20.dp)
-                                            .border(1.dp, Color.Gray)
+                                            .border(1.dp, MaterialTheme.colorScheme.outline)
                                     )
                                 } else {
                                     if(uploadNewsfeedViewModel.image.isNotEmpty()){
@@ -392,10 +392,10 @@ class UploadNewsfeed {
                             ActionButton(
                                 icon = "image",
                                 text = "Upload",
-                                textColor = Color.Red,
-                                buttonColor = Color.White,
-                                backgroundColor = Color.White.toHex(),
-                                tint = Color.Red,
+                                textColor = MaterialTheme.colorScheme.primary,
+                                buttonColor = MaterialTheme.colorScheme.background,
+                                backgroundColor = MaterialTheme.colorScheme.background.toHex(),
+                                tint = MaterialTheme.colorScheme.primary,
                                 onClick = {
                                     showMenu = true
                                 },
@@ -448,7 +448,7 @@ class UploadNewsfeed {
                         shape = RoundedCornerShape(10.dp),
                         elevation = ButtonDefaults.buttonElevation(4.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = Color.White
+                            containerColor = MaterialTheme.colorScheme.surface
                         ),
                         modifier = Modifier
                             .fillMaxWidth()
@@ -461,7 +461,7 @@ class UploadNewsfeed {
                     ) {
                         Text(
                             text = "Back",
-                            color = Color.Gray
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
@@ -507,8 +507,9 @@ class UploadNewsfeed {
                     .padding(horizontal = 20.dp)) {
                 CrossPlatformIcon(
                     icon = "close",
-                    backgroundColor = Color.Black.toHex(),
+                    backgroundColor = MaterialTheme.colorScheme.surface.toHex(),
                     contentDescription = "Close Icon",
+                    tint = MaterialTheme.colorScheme.onSurface,
                     contentScale = ContentScale.Fit,
                     modifier = Modifier
                         .size(30.dp)
@@ -528,8 +529,8 @@ class UploadNewsfeed {
                         onClickDraftBoxButton()
                     },
                     colors = ButtonDefaults.outlinedButtonColors(
-                        containerColor = Color.White,
-                        contentColor = Color.Black
+                        containerColor = MaterialTheme.colorScheme.background,
+                        contentColor = MaterialTheme.colorScheme.onSurface
                     ),
                     modifier = Modifier
                         .testTag(TestTag.TAG_BUTTON_DRAFTPOST)
@@ -544,7 +545,7 @@ class UploadNewsfeed {
                     ) {
                         CrossPlatformIcon(
                             "draft",
-                            backgroundColor = "#FFFFFFFF",
+                            backgroundColor = MaterialTheme.colorScheme.surface.toHex(),
                             "Draft",
                             Modifier
                                 .size(25.dp)
@@ -552,7 +553,7 @@ class UploadNewsfeed {
                         )
                     }
                     Spacer(Modifier.padding(horizontal = 5.dp))
-                    Text(text = "Your draft posts", color = Color.Black)
+                    Text(text = "Your draft posts", color = MaterialTheme.colorScheme.onSurface)
                 }
             }
         }
@@ -565,9 +566,9 @@ class UploadNewsfeed {
                     DecentralizationType.Private -> {"private"}
                     DecentralizationType.OnlyFriends -> {"onlyFriends"}
                     },
-                    backgroundColor = "#FFFFFFFF",
+                    backgroundColor = MaterialTheme.colorScheme.surface.toHex(),
                     "accessPermission",
-                    tint = Color.Red,
+                    tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier
                         .size(25.dp)
                         .padding(end = 5.dp)
@@ -576,10 +577,10 @@ class UploadNewsfeed {
                 DecentralizationType.Public -> {"Public"}
                 DecentralizationType.Private -> {"Private"}
                 DecentralizationType.OnlyFriends -> {"Only Friends"}
-            }, color = Color.Black)
+            }, color = MaterialTheme.colorScheme.onSurface)
             CrossPlatformIcon(
                 "down_arrow",
-                backgroundColor = "#FFFFFFFF",
+                backgroundColor = MaterialTheme.colorScheme.surface.toHex(),
                 "down_arrow",
                 Modifier
                     .size(25.dp)
@@ -641,7 +642,7 @@ class UploadNewsfeed {
                 Surface(
                     shape = MaterialTheme.shapes.extraLarge,
                     tonalElevation = 8.dp,
-                    color = Color.White,
+                    color = MaterialTheme.colorScheme.surface,
                     modifier = Modifier
                         .widthIn(max = 560.dp)
                         .fillMaxWidth()
@@ -714,14 +715,14 @@ class UploadNewsfeed {
                                 .weight(1f, fill = true)) {
                                 Text(
                                     text = "No draft here!",
-                                    color = Color.Black,
+                                    color = MaterialTheme.colorScheme.onSurface,
                                     modifier = Modifier
                                         .fillMaxWidth(),
                                     textAlign = TextAlign.Center
                                 )
                                 CrossPlatformIcon(
                                     "nothing_here",
-                                    backgroundColor = "#FFFFFFFF",
+                                    backgroundColor = MaterialTheme.colorScheme.surface.toHex(),
                                     "nothing",
                                     Modifier
                                         .fillMaxSize()
@@ -755,7 +756,7 @@ class UploadNewsfeed {
                 Column(Modifier.padding(16.dp)) {
                     Text(
                         title,
-                        color = Color.Black,
+                        color = MaterialTheme.colorScheme.onSurface,
                         style = MaterialTheme.typography.bodyMedium
                     )
                     Spacer(Modifier.height(10.dp))
@@ -787,9 +788,9 @@ class UploadNewsfeed {
             ) {
                 CrossPlatformIcon(
                     icon = "public",
-                    backgroundColor = "#FFFFFFFF",
+                    backgroundColor = MaterialTheme.colorScheme.surface.toHex(),
                     contentDescription = "public",
-                    tint = if(localAccessState == DecentralizationType.Public) Color.Red else Color.Gray,
+                    tint = if(localAccessState == DecentralizationType.Public) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier
                         .size(25.dp)
                         .testTag(TestTag.TAG_SELECT_PUBLIC)
@@ -817,9 +818,9 @@ class UploadNewsfeed {
             ) {
                 CrossPlatformIcon(
                     icon = "private",
-                    backgroundColor = "#FFFFFFFF",
+                    backgroundColor = MaterialTheme.colorScheme.surface.toHex(),
                     contentDescription = "private",
-                    tint = if(localAccessState == DecentralizationType.Private) Color.Red else Color.Gray,
+                    tint = if(localAccessState == DecentralizationType.Private) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier
                         .size(25.dp)
                         .testTag(TestTag.TAG_SELECT_PRIVATE)

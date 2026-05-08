@@ -83,9 +83,9 @@ import com.minhtu.firesocialmedia.presentation.search.Search
 import com.minhtu.firesocialmedia.presentation.search.SearchViewModel
 import com.minhtu.firesocialmedia.storage.toStorageUrl
 import com.minhtu.firesocialmedia.utils.UiUtils
-import com.minhtu.sharedmodule.ui.theme.adminBorderColor
-import com.minhtu.sharedmodule.ui.theme.adminCardColor
-import com.minhtu.sharedmodule.ui.theme.memberCardColor
+
+
+
 import com.minhtu.sharedmodule.ui.theme.positiveBackgroundButtonColor
 import com.minhtu.sharedmodule.ui.theme.positiveTintColor
 import com.seiko.imageloader.ui.AutoSizeImage
@@ -182,7 +182,7 @@ class ManageMembers {
                 }
             }
             Box(modifier = Modifier
-                .background(Color.White)
+                .background(MaterialTheme.colorScheme.surface)
                 .padding(paddingValues)) {
                 Column(
                     verticalArrangement = Arrangement.Center,
@@ -192,7 +192,7 @@ class ManageMembers {
                     UiUtils.BackAndTitleAndMoreOptionsRow(
                         title = "Manage Members",
                         trailingIcon = "add_member",
-                        trailingIconTint = Color.Red,
+                        trailingIconTint = MaterialTheme.colorScheme.error,
                         navigateBack = {
                             onNavigateBack()
                             manageMembersViewModel.resetAdminAndMemberList()
@@ -213,19 +213,19 @@ class ManageMembers {
                     HorizontalDivider(
                         modifier = Modifier.fillMaxWidth().padding(vertical = 10.dp),
                         thickness = 1.dp,
-                        color = Color.LightGray
+                        color = MaterialTheme.colorScheme.outline
                     )
 
                     SharedTransitionLayout {
                         LazyColumn(
-                            modifier = Modifier.fillMaxWidth().background(Color.White),
+                            modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface),
                             contentPadding = PaddingValues(horizontal = 10.dp)
                         ) {
                             // ───── Admin section ─────
                             item { SectionHeader(
                                 header = "Admins",
                                 subHeader = if(adminList.size > 1) "${adminList.size} Admins" else "${adminList.size} Admin",
-                                headerTextColor = Color.Red
+                                headerTextColor = MaterialTheme.colorScheme.error
                             )}
                             val filterAdminList = adminList.filter {
                                 it.name.contains(searchViewModel.query, ignoreCase = true)
@@ -235,7 +235,7 @@ class ManageMembers {
                                 Box(
                                     modifier = Modifier
                                         .padding(vertical = 10.dp)
-                                        .background(Color.White)
+                                        .background(MaterialTheme.colorScheme.surface)
                                         .animateItemPlacement(
                                         animationSpec = tween(
                                             durationMillis = 400,
@@ -288,7 +288,7 @@ class ManageMembers {
                             item { SectionHeader(
                                 header = "Members",
                                 subHeader = if(memberList.size > 1) "${memberList.size} Members" else "${memberList.size} Member",
-                                headerTextColor = Color.Gray
+                                headerTextColor = MaterialTheme.colorScheme.onSurfaceVariant
                             )}
                             val filterMemberList = memberList.filter {
                                 it.name.contains(searchViewModel.query, ignoreCase = true)
@@ -313,7 +313,7 @@ class ManageMembers {
                                 Box(
                                     modifier = Modifier
                                         .padding(vertical = 10.dp)
-                                        .background(Color.White)
+                                        .background(MaterialTheme.colorScheme.surface)
                                         .animateItemPlacement(
                                         animationSpec = tween(
                                             durationMillis = 400,
@@ -378,7 +378,7 @@ class ManageMembers {
                             "Remove Admin?",
                             "Are you sure you want to remove this admin from the group? This action cannot be undone.",
                             icon = Icons.Default.PersonRemove,
-                            iconBackground = Color(0xFFD32F2F),
+                            iconBackground = MaterialTheme.colorScheme.errorContainer,
                             onDiscard = {
                                 //If you are the last admin and there are members in group. Cannot remove you
                                 if (adminList.size <= 1 && memberSet.isNotEmpty()) {
@@ -423,11 +423,11 @@ class ManageMembers {
             )
             Card(
                 colors = CardDefaults.cardColors(
-                    containerColor = if(isAdmin) adminCardColor else memberCardColor
+                    containerColor = if(isAdmin) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant
                 ),
                 border = BorderStroke(
                     width = 1.dp,
-                    color = if(isAdmin) adminBorderColor else Color.LightGray
+                    color = if(isAdmin) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
                 ),
                 modifier = modifier
                     .fillMaxWidth()
@@ -456,7 +456,7 @@ class ManageMembers {
                         Spacer(Modifier.width(10.dp))
                         Text(
                             text = user.name,
-                            color = Color.Black,
+                            color = MaterialTheme.colorScheme.onSurface,
                             fontWeight = FontWeight.Bold,
                             overflow = TextOverflow.Ellipsis,
                             maxLines = 2,
@@ -471,15 +471,15 @@ class ManageMembers {
                             shape = RoundedCornerShape(10.dp),
                             border = BorderStroke(
                                 width = 0.5.dp,
-                                color = if(isAdmin) MaterialTheme.colorScheme.primary else Color.LightGray
+                                color = if(isAdmin) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
                             ),
                             contentPadding = PaddingValues(
                                 horizontal = 18.dp,
                                 vertical = 6.dp
                             ),
                             colors = ButtonDefaults.outlinedButtonColors(
-                                containerColor = if(isAdmin) MaterialTheme.colorScheme.primary else Color.White,
-                                contentColor = if(isAdmin) Color.White else Color.Black
+                                containerColor = if(isAdmin) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface,
+                                contentColor = if(isAdmin) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.onSurface
                             ),
                             modifier = Modifier
                                 .defaultMinSize(minHeight = 0.dp, minWidth = 0.dp)
@@ -581,7 +581,7 @@ class ManageMembers {
                     modifier = Modifier
                         .size(44.dp)
                         .clip(CircleShape)
-                        .background(if(isPositiveButton) positiveBackgroundButtonColor else Color.LightGray)
+                        .background(if(isPositiveButton) positiveBackgroundButtonColor else MaterialTheme.colorScheme.outline)
                         .testTag(TestTag.TAG_ACTION_BUTTON_OF_USER_IN_GROUP)
                         .semantics {
                             contentDescription = TestTag.TAG_ACTION_BUTTON_OF_USER_IN_GROUP
@@ -594,7 +594,7 @@ class ManageMembers {
                     Icon(
                         imageVector = icon,
                         contentDescription = text,
-                        tint = if(isPositiveButton) positiveTintColor else Color.Gray,
+                        tint = if(isPositiveButton) positiveTintColor else MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(20.dp)
                     )
                 }
@@ -604,7 +604,7 @@ class ManageMembers {
                 Text(
                     text = text,
                     style = MaterialTheme.typography.labelSmall,
-                    color = Color.Gray
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
@@ -626,7 +626,7 @@ class ManageMembers {
                 Spacer(Modifier.weight(1f))
                 Text(
                     text = subHeader,
-                    color = Color.Gray,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     style = MaterialTheme.typography.bodyMedium
                 )
             }

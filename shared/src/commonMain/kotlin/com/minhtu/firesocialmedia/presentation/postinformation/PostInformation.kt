@@ -47,6 +47,7 @@ import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.platform.CrossPlatformIcon
 import com.minhtu.firesocialmedia.platform.convertTimeToDateString
 import com.minhtu.firesocialmedia.platform.showToast
+import com.minhtu.firesocialmedia.platform.toHex
 import com.minhtu.firesocialmedia.presentation.comment.Comment
 import com.minhtu.firesocialmedia.presentation.comment.CommentViewModel
 import com.minhtu.firesocialmedia.presentation.home.HomeViewModel
@@ -121,7 +122,7 @@ class PostInformation {
                             }
                             Row(
                                 horizontalArrangement = Arrangement.Start,
-                                modifier = Modifier.background(color = Color.White)
+                                modifier = Modifier.background(color = MaterialTheme.colorScheme.surface)
                                     .padding(10.dp).fillMaxWidth()
                                     .clickable {
                                         if (user == null) {
@@ -151,12 +152,12 @@ class PostInformation {
                                 Column {
                                     Text(
                                         text = news.posterName,
-                                        color = Color.Black,
+                                        color = MaterialTheme.colorScheme.onSurface,
                                         modifier = Modifier.padding(horizontal = 2.dp)
                                     )
                                     Text(
                                         text = convertTimeToDateString(news.timePosted),
-                                        color = Color.Gray,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                                         modifier = Modifier.padding(horizontal = 2.dp)
                                     )
                                 }
@@ -192,14 +193,14 @@ class PostInformation {
                                 Text(
                                     text = "Like: ${likeCountList.value[news.id] ?: 0}",
                                     fontSize = 12.sp,
-                                    color = Color.Black,
+                                    color = MaterialTheme.colorScheme.onSurface,
                                     modifier = Modifier.padding(2.dp)
                                 )
                                 Spacer(modifier = Modifier.weight(1f))
                                 Text(
                                     text = "Comment: ${commentCountList.value[news.id] ?: 0}",
                                     fontSize = 12.sp,
-                                    color = Color.Black,
+                                    color = MaterialTheme.colorScheme.onSurface,
                                     modifier = Modifier.padding(2.dp)
                                 )
                             }
@@ -212,8 +213,8 @@ class PostInformation {
                                         homeViewModel.clickLikeButton(news)
                                     },
                                     elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp),
-                                    colors = if (isLiked) ButtonDefaults.buttonColors(Color.Cyan)
-                                    else ButtonDefaults.buttonColors(Color.White),
+                                    colors = if (isLiked) ButtonDefaults.buttonColors(MaterialTheme.colorScheme.primaryContainer)
+                                    else ButtonDefaults.buttonColors(MaterialTheme.colorScheme.surface),
                                     modifier = Modifier.height(35.dp).weight(1f)
                                         .testTag(TestTag.TAG_BUTTON_LIKE)
                                         .semantics {
@@ -221,14 +222,14 @@ class PostInformation {
                                         }) {
                                     CrossPlatformIcon(
                                         icon = "like",
-                                        backgroundColor = if (isLiked) "#00FFFF" else "#FFFFFFFF",
+                                        backgroundColor = if (isLiked) MaterialTheme.colorScheme.primaryContainer.toHex() else MaterialTheme.colorScheme.surface.toHex(),
                                         contentDescription = "Like",
-                                        tint = if(isLiked) hexToColor("FF1565C0") else Color.Black,
+                                        tint = if(isLiked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
                                         modifier = Modifier
                                             .size(25.dp)
                                             .padding(end = 5.dp)
                                     )
-                                    Text(text = if (isLiked) "Liked" else "Like", color = Color.Black)
+                                    Text(text = if (isLiked) "Liked" else "Like", color = MaterialTheme.colorScheme.onSurface)
                                 }
                                 Spacer(modifier = Modifier.width(10.dp))
                                 Button(
@@ -236,7 +237,7 @@ class PostInformation {
                                         homeViewModel.clickCommentButton(news)
                                     },
                                     elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp),
-                                    colors = ButtonDefaults.buttonColors(Color.White),
+                                    colors = ButtonDefaults.buttonColors(MaterialTheme.colorScheme.surface),
                                     modifier = Modifier.height(35.dp).weight(1f)
                                         .testTag(TestTag.TAG_BUTTON_COMMENT)
                                         .semantics {
@@ -244,13 +245,13 @@ class PostInformation {
                                         }) {
                                     CrossPlatformIcon(
                                         icon = "comment",
-                                        backgroundColor = "#FFFFFFFF",
+                                        backgroundColor = MaterialTheme.colorScheme.surface.toHex(),
                                         contentDescription = "Comment",
                                         modifier = Modifier
                                             .size(25.dp)
                                             .padding(end = 5.dp)
                                     )
-                                    Text(text = "Comment", color = Color.Black)
+                                    Text(text = "Comment", color = MaterialTheme.colorScheme.onSurface)
                                 }
                             }
                             Row(modifier = Modifier.fillMaxWidth().padding(bottom = 5.dp, start = 10.dp, end = 10.dp)) {
@@ -260,7 +261,7 @@ class PostInformation {
                                     showBottomSheet = true
                                 },
                                     elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp),
-                                    colors = ButtonDefaults.buttonColors(Color.White),
+                                    colors = ButtonDefaults.buttonColors(MaterialTheme.colorScheme.surface),
                                     modifier = Modifier.height(35.dp).weight(1f)
                                         .testTag(TestTag.TAG_BUTTON_SHARE)
                                         .semantics{
@@ -268,13 +269,13 @@ class PostInformation {
                                         }){
                                     CrossPlatformIcon(
                                         icon = "share",
-                                        backgroundColor = "#FFFFFFFF",
+                                        backgroundColor = MaterialTheme.colorScheme.surface.toHex(),
                                         contentDescription = "Share",
                                         modifier = Modifier
                                             .size(25.dp)
                                             .padding(end = 5.dp)
                                     )
-                                    Text(text = "Share", color = Color.Black)
+                                    Text(text = "Share", color = MaterialTheme.colorScheme.onSurface)
                                 }
                             }
                         } else {
@@ -320,7 +321,7 @@ class PostInformation {
                         Comment.CommentScreen(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .background(color = Color.White),
+                                .background(color = MaterialTheme.colorScheme.surface),
                             platform = platform,
                             localImageLoaderValue = localImageLoaderValue,
                             showCloseIcon = false,

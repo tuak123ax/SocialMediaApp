@@ -32,7 +32,7 @@ class GifLoading {
                 contentAlignment = Alignment.Center,
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color.White.copy(alpha = 0.8f))
+                    .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.8f))
             ) {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
@@ -52,7 +52,7 @@ class GifLoading {
                     Text(
                         text = message,
                         style = MaterialTheme.typography.bodyLarge,
-                        color = Color.Gray
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }

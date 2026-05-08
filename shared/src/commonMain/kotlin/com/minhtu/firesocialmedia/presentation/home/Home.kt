@@ -346,7 +346,7 @@ class Home {
                                     Text(
                                         text = "What are you thinking?",
                                         fontSize = 14.sp,
-                                        color = Color.LightGray
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                 }
                             }
@@ -486,7 +486,7 @@ class Home {
                     .semantics {
                         contentDescription = TestTag.TAG_ITEM_IN_ROW
                     },
-                colors = CardDefaults.cardColors(containerColor = Color.White),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.background),
                 shape = RoundedCornerShape(16.dp)
             ) {
                 Column(
@@ -513,7 +513,7 @@ class Home {
                     Spacer(modifier = Modifier.height(1.dp)) // Optional spacing between image and text
                     Text(
                         text = user.name,
-                        color = Color.Black,
+                        color = MaterialTheme.colorScheme.onSurface,
                         maxLines = 1,
                         textAlign = TextAlign.Center,
                         overflow = TextOverflow.Ellipsis, // Adds "..." at the end if the text overflows
@@ -541,7 +541,7 @@ class Home {
                         .semantics{
                             contentDescription = TestTag.SCROLL_TO_TOP_BUTTON
                         },
-                    containerColor = Color.White
+                    containerColor = MaterialTheme.colorScheme.surface
                 ) {
                     Icon(Icons.Filled.KeyboardArrowUp,
                         contentDescription = "Scroll to top")

@@ -103,7 +103,7 @@ class Information {
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(Color.White),
+                        .background(MaterialTheme.colorScheme.surface),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Spacer(Modifier.height(20.dp))
@@ -141,7 +141,7 @@ class Information {
                                 Icon(
                                     Icons.Default.CameraAlt,
                                     "Select avatar",
-                                    tint = Color.White
+                                    tint = MaterialTheme.colorScheme.onPrimary
                                 )
                             }
                         }
@@ -158,7 +158,7 @@ class Information {
                     Spacer(modifier = Modifier.padding(30.dp))
                     Text(
                         text = "Your name",
-                        color = Color.Black,
+                        color = MaterialTheme.colorScheme.onBackground,
                         style = MaterialTheme.typography.bodyMedium,
                         textAlign = TextAlign.Start,
                         fontWeight = FontWeight.Bold,
@@ -169,7 +169,7 @@ class Information {
                     OutlinedTextField(
                         value = informationViewModel.username,
                         shape = RoundedCornerShape(10.dp),
-                        textStyle = TextStyle(color = Color.Black),
+                        textStyle = TextStyle(color = MaterialTheme.colorScheme.onSurface),
                         leadingIcon = {
                             Icon(
                                 Icons.Default.Person,
@@ -190,7 +190,7 @@ class Information {
                     )
                     Text(
                         text = "This name will be visible to your friends and in public interactions.",
-                        color = Color.Gray,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         style = MaterialTheme.typography.bodyMedium,
                         textAlign = TextAlign.Center,
                         modifier = Modifier
@@ -220,7 +220,7 @@ class Information {
                     }
                     Text(
                         text = "You can change these details later in settings",
-                        color = Color.LightGray,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         style = MaterialTheme.typography.bodyMedium,
                         textAlign = TextAlign.Center,
                         modifier = Modifier

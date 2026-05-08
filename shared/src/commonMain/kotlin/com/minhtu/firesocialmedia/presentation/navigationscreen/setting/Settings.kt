@@ -54,7 +54,7 @@ import com.minhtu.firesocialmedia.constants.TestTag
 import com.minhtu.firesocialmedia.platform.getAppVersion
 import com.minhtu.firesocialmedia.presentation.home.HomeViewModel
 import com.minhtu.firesocialmedia.utils.UiUtils
-import com.minhtu.sharedmodule.ui.theme.memberCardColor
+
 
 class Settings {
     companion object{
@@ -172,7 +172,7 @@ class Settings {
                 Text(
                     text = "FireSocialMedia v" + getAppVersion(),
                     style = MaterialTheme.typography.bodyMedium,
-                    color = Color.LightGray,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center,
                     modifier = Modifier
                         .fillMaxWidth()
@@ -182,30 +182,42 @@ class Settings {
             }
         }
 
+        @Composable
         fun prepareSettingsData() : ArrayList<Pair<String, List<SettingInstance>>> {
+            val primary = MaterialTheme.colorScheme.primary
+            val primaryContainer = MaterialTheme.colorScheme.primaryContainer
+            val error = MaterialTheme.colorScheme.error
+            val errorContainer = MaterialTheme.colorScheme.errorContainer
+            val tertiary = MaterialTheme.colorScheme.tertiary
+            val tertiaryContainer = MaterialTheme.colorScheme.tertiaryContainer
+            val secondary = MaterialTheme.colorScheme.secondary
+            val secondaryContainer = MaterialTheme.colorScheme.secondaryContainer
+            val onSurface = MaterialTheme.colorScheme.onSurface
+            val surfaceVariant = MaterialTheme.colorScheme.surfaceVariant
+            val outline = MaterialTheme.colorScheme.outline
             val settingsList = ArrayList<Pair<String, List<SettingInstance>>>(ArrayList())
             settingsList.add(
                 Pair("ACCOUNT",
                     listOf(
                         SettingInstance(
                             leadingIcon = Icons.Default.Person,
-                            leadingIconTint = Color.Blue,
-                            leadingIconBackground = Color(0xFFEAF2FF),
+                            leadingIconTint = primary,
+                            leadingIconBackground = primaryContainer,
                             name = "Profile Information",
                             description = "Name, email, phone",
                             trailingIcon = Icons.Default.ArrowRightAlt,
-                            trailingIconTint = Color.LightGray,
+                            trailingIconTint = outline,
                             trailingIconBackground = Color.Transparent,
                             trailingContentType = TrailingContentType.TrailingIcon
                         ),
                         SettingInstance(
                             leadingIcon = Icons.Default.Group,
-                            leadingIconTint = Color.Red,
-                            leadingIconBackground = Color(0xFFFFEBEE),
+                            leadingIconTint = error,
+                            leadingIconBackground = errorContainer,
                             name = "My Groups",
                             description = "Manage your active circles",
                             trailingIcon = Icons.Default.ArrowRightAlt,
-                            trailingIconTint = Color.LightGray,
+                            trailingIconTint = outline,
                             trailingIconBackground = Color.Transparent,
                             trailingContentType = TrailingContentType.TrailingIcon
                         )
@@ -216,21 +228,21 @@ class Settings {
                     listOf(
                         SettingInstance(
                             leadingIcon = Icons.Default.Lock,
-                            leadingIconTint = Color.Green,
-                            leadingIconBackground = Color(0xFFE8F5E9),
+                            leadingIconTint = tertiary,
+                            leadingIconBackground = tertiaryContainer,
                             name = "Privacy",
                             trailingIcon = Icons.Default.ArrowRightAlt,
-                            trailingIconTint = Color.LightGray,
+                            trailingIconTint = outline,
                             trailingIconBackground = Color.Transparent,
                             trailingContentType = TrailingContentType.TrailingIcon
                         ),
                         SettingInstance(
                             leadingIcon = Icons.Default.Shield,
-                            leadingIconTint = Color.Red,
-                            leadingIconBackground = Color(0xFFFFE5D0),
+                            leadingIconTint = error,
+                            leadingIconBackground = errorContainer,
                             name = "Security Settings",
                             trailingIcon = Icons.Default.ArrowRightAlt,
-                            trailingIconTint = Color.LightGray,
+                            trailingIconTint = outline,
                             trailingIconBackground = Color.Transparent,
                             trailingContentType = TrailingContentType.TrailingIcon
                         )
@@ -242,21 +254,21 @@ class Settings {
                     listOf(
                         SettingInstance(
                             leadingIcon = Icons.Default.Notifications,
-                            leadingIconTint = Color(0xFF6A5ACD),
-                            leadingIconBackground = Color(0xFFE6D9FF),
+                            leadingIconTint = secondary,
+                            leadingIconBackground = secondaryContainer,
                             name = "Notifications",
                             trailingIcon = Icons.Default.ArrowRightAlt,
-                            trailingIconTint = Color.LightGray,
+                            trailingIconTint = outline,
                             trailingIconBackground = Color.Transparent,
                             trailingContentType = TrailingContentType.TrailingIcon
                         ),
                         SettingInstance(
                             leadingIcon = Icons.Default.DarkMode,
-                            leadingIconTint = Color(0xFF1F1F1F),
-                            leadingIconBackground = Color(0xFFF2F2F2),
+                            leadingIconTint = onSurface,
+                            leadingIconBackground = surfaceVariant,
                             name = "Dark Mode",
                             trailingIcon = Icons.Default.ArrowRightAlt,
-                            trailingIconTint = Color.LightGray,
+                            trailingIconTint = outline,
                             trailingIconBackground = Color.Transparent,
                             trailingContentType = TrailingContentType.SwitchButton
                         )
@@ -273,10 +285,11 @@ class Settings {
         @Composable
         fun SettingsPart(
             title : String,
-            titleColor : Color = Color.Gray,
-            listItems : List<SettingInstance>?,
+            titleColor : Color? = null,
+            listItems : List<SettingInstance>? = null,
             onClickSettingItem : (String) -> Unit
         ) {
+            val resolvedTitleColor = titleColor ?: MaterialTheme.colorScheme.onSurfaceVariant
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center,
@@ -287,7 +300,7 @@ class Settings {
                 Text(
                     text = title,
                     style = MaterialTheme.typography.bodyLarge,
-                    color = titleColor,
+                    color = resolvedTitleColor,
                     textAlign = TextAlign.Start,
                     modifier = Modifier
                         .fillMaxWidth()
@@ -296,7 +309,7 @@ class Settings {
                 //Content
                 Card(
                     colors = CardDefaults.cardColors(
-                        containerColor = memberCardColor
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant
                     ),
                     modifier = Modifier
                         .fillMaxWidth()
@@ -334,11 +347,12 @@ class Settings {
         fun SettingsPartWithSwitch(
             title : String,
             status : Boolean,
-            titleColor : Color = Color.Gray,
+            titleColor : Color? = null,
             listItems : List<BaseSettingInstance>?,
             onCheckedChange : (Boolean) -> Unit,
             onClickSettingItem : (String) -> Unit
         ) {
+            val resolvedTitleColor = titleColor ?: MaterialTheme.colorScheme.onSurfaceVariant
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center,
@@ -349,7 +363,7 @@ class Settings {
                 Text(
                     text = title,
                     style = MaterialTheme.typography.bodyLarge,
-                    color = titleColor,
+                    color = resolvedTitleColor,
                     textAlign = TextAlign.Start,
                     modifier = Modifier
                         .fillMaxWidth()
@@ -358,7 +372,7 @@ class Settings {
                 //Content
                 Card(
                     colors = CardDefaults.cardColors(
-                        containerColor = memberCardColor
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant
                     ),
                     modifier = Modifier
                         .fillMaxWidth()
@@ -412,6 +426,8 @@ class Settings {
                         enableRipple : Boolean = true,
                         onClickSettingItem : (String) -> Unit,
                         trailingContent: @Composable (() -> Unit)? = null) {
+            val resolvedLeadingIconTint = if (item.leadingIconTint == Color.Unspecified) MaterialTheme.colorScheme.onSurfaceVariant else item.leadingIconTint
+            val resolvedLeadingIconBackground = if (item.leadingIconBackground == Color.Unspecified) MaterialTheme.colorScheme.surfaceVariant else item.leadingIconBackground
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
@@ -430,12 +446,12 @@ class Settings {
                     modifier = Modifier
                         .size(item.leadingIconSize)
                         .clip(CircleShape)
-                        .background(item.leadingIconBackground)
+                        .background(resolvedLeadingIconBackground)
                 ) {
                     item.leadingIcon?.let { icon ->
                         Icon(
                             imageVector = icon,
-                            tint = item.leadingIconTint,
+                            tint = resolvedLeadingIconTint,
                             contentDescription = "leadingIcon"
                         )
                     }
@@ -450,13 +466,13 @@ class Settings {
                         text = item.name,
                         style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.Bold,
-                        color = Color.Black
+                        color = MaterialTheme.colorScheme.onBackground
                     )
                     if(item.description.isNotEmpty()) {
                         Text(
                             text = item.description,
                             style = MaterialTheme.typography.bodySmall,
-                            color = Color.Gray
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
@@ -475,7 +491,7 @@ class Settings {
                     .height(28.dp)
                     .clip(RoundedCornerShape(14.dp))
                     .background(
-                        if (checked) Color.Red else Color(0xFFE5E7EB)
+                        if (checked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
                     )
                     .clickable { onCheckedChange(!checked) }
                     .padding(3.dp)
@@ -488,10 +504,14 @@ class Settings {
                             else Alignment.CenterStart
                         )
                         .clip(CircleShape)
-                        .background(Color.White)
+                        .background(MaterialTheme.colorScheme.surface)
                 )
             }
         }
 
     }
 }
+
+
+
+

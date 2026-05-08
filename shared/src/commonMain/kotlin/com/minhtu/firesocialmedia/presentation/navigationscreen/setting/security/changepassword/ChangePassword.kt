@@ -118,7 +118,7 @@ class ChangePassword {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color(0xFFF5F6FA))
+                    .background(MaterialTheme.colorScheme.background)
                     .padding(paddingValues)
             ) {
                 Column(modifier = Modifier.fillMaxSize()) {
@@ -208,7 +208,7 @@ class ChangePassword {
                             // ── Form card ──────────────────────────────────────
                             Card(
                                 shape = RoundedCornerShape(24.dp),
-                                colors = CardDefaults.cardColors(containerColor = Color.White),
+                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                                 elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
                                 modifier = Modifier.fillMaxWidth()
                             ) {
@@ -263,7 +263,7 @@ class ChangePassword {
                                         )
                                     }
 
-                                    Divider(color = Color(0xFFF0F0F0), thickness = 1.dp)
+                                    Divider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 1.dp)
                                     Spacer(Modifier.height(20.dp))
 
                                     // New password section
@@ -314,7 +314,7 @@ class ChangePassword {
                                     modifier = Modifier.fillMaxSize(),
                                     shape = RoundedCornerShape(16.dp),
                                     colors = ButtonDefaults.buttonColors(
-                                        contentColor = Color.White
+                                        contentColor = MaterialTheme.colorScheme.onPrimary
                                     ),
                                     elevation = ButtonDefaults.buttonElevation(0.dp)
                                 ) {
@@ -354,7 +354,7 @@ class ChangePassword {
             Text(
                 text = text,
                 style = MaterialTheme.typography.labelSmall,
-                color = Color(0xFF9E9E9E),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 letterSpacing = 1.2.sp,
                 fontWeight = FontWeight.SemiBold
             )

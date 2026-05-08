@@ -49,7 +49,7 @@ import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.BaseSett
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.SettingInstance
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.Settings.Companion.SettingItem
 import com.minhtu.firesocialmedia.utils.UiUtils
-import com.minhtu.sharedmodule.ui.theme.adminCardColor
+
 
 class Group {
     companion object{
@@ -71,7 +71,7 @@ class Group {
                     Spacer(Modifier.height(30.dp))
                     UiUtils.BackAndTitleAndMoreOptionsRow(
                         "Welcome to Group",
-                        titleColor = Color.Red,
+                        titleColor = MaterialTheme.colorScheme.error,
                         titleStyle = MaterialTheme.typography.headlineLarge,
                         "Connect and grow with your community",
                         showBackButton = false,
@@ -99,7 +99,7 @@ class Group {
                 } else {
                     UiUtils.BackAndTitleAndMoreOptionsRow(
                         "Welcome back",
-                        titleColor = Color.Red,
+                        titleColor = MaterialTheme.colorScheme.error,
                         titleStyle = MaterialTheme.typography.headlineLarge,
                         "It's good to see you again.",
                         showBackButton = false,
@@ -111,7 +111,7 @@ class Group {
                     ) {
                         Text(
                             text = "Click here to access your groups",
-                            color = Color.Red,
+                            color = MaterialTheme.colorScheme.error,
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             textAlign = TextAlign.Center,
@@ -120,8 +120,8 @@ class Group {
                         GroupButton(
                             SettingInstance(
                                 leadingIcon = Icons.Default.Group,
-                                leadingIconTint = Color.White,
-                                leadingIconBackground = Color.Red,
+                                leadingIconTint = MaterialTheme.colorScheme.surface,
+                                leadingIconBackground = MaterialTheme.colorScheme.error,
                                 leadingIconSize = 50.dp,
                                 name = "Select Your Group",
                                 description = "Continue where you left off"
@@ -140,11 +140,11 @@ class Group {
                                 modifier = Modifier
                                     .size(35.dp)
                                     .clip(CircleShape)
-                                    .background(adminCardColor)
+                                    .background(MaterialTheme.colorScheme.primaryContainer)
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.ChevronRight,
-                                    tint = Color.Red,
+                                    tint = MaterialTheme.colorScheme.error,
                                     contentDescription = "trailingIcon"
                                 )
                             }
@@ -160,12 +160,12 @@ class Group {
                         HorizontalDivider(
                             modifier = Modifier.weight(1f),
                             thickness = 1.dp,
-                            color = Color.LightGray
+                            color = MaterialTheme.colorScheme.outline
                         )
 
                         Text(
                             text = "Or explore other groups",
-                            color = Color.Red,
+                            color = MaterialTheme.colorScheme.error,
                             style = MaterialTheme.typography.bodyLarge,
                             fontWeight = FontWeight.Bold,
                             textAlign = TextAlign.Center,
@@ -175,7 +175,7 @@ class Group {
                         HorizontalDivider(
                             modifier = Modifier.weight(1f),
                             thickness = 1.dp,
-                            color = Color.LightGray
+                            color = MaterialTheme.colorScheme.outline
                         )
                     }
 
@@ -187,7 +187,7 @@ class Group {
                     GroupButton(
                         SettingInstance(
                             leadingIcon = Icons.Default.Add,
-                            leadingIconTint = Color.White,
+                            leadingIconTint = MaterialTheme.colorScheme.surface,
                             leadingIconBackground = MaterialTheme.colorScheme.primary,
                             leadingIconSize = 50.dp,
                             name = "Create Group",
@@ -211,11 +211,11 @@ class Group {
                             modifier = Modifier
                                 .size(35.dp)
                                 .clip(CircleShape)
-                                .background(adminCardColor)
+                                .background(MaterialTheme.colorScheme.primaryContainer)
                         ) {
                             Icon(
                                 imageVector = Icons.Default.ChevronRight,
-                                tint = Color.Red,
+                                tint = MaterialTheme.colorScheme.error,
                                 contentDescription = "trailingIcon"
                             )
                         }
@@ -225,8 +225,8 @@ class Group {
                     GroupButton(
                         SettingInstance(
                             leadingIcon = Icons.Default.Explore,
-                            leadingIconTint = Color.White,
-                            leadingIconBackground = Color(0xFF5C84F1),
+                            leadingIconTint = MaterialTheme.colorScheme.surface,
+                            leadingIconBackground = MaterialTheme.colorScheme.primary,
                             leadingIconSize = 50.dp,
                             name = "Explore Group",
                             description = "Discover new interests"
@@ -249,11 +249,11 @@ class Group {
                             modifier = Modifier
                                 .size(35.dp)
                                 .clip(CircleShape)
-                                .background(adminCardColor)
+                                .background(MaterialTheme.colorScheme.primaryContainer)
                         ) {
                             Icon(
                                 imageVector = Icons.Default.ChevronRight,
-                                tint = Color.Red,
+                                tint = MaterialTheme.colorScheme.error,
                                 contentDescription = "trailingIcon"
                             )
                         }
@@ -285,7 +285,7 @@ class Group {
                         onClick = onClickSettingItem
                     ),
                 colors = CardDefaults.cardColors(
-                    containerColor = Color.White
+                    containerColor = MaterialTheme.colorScheme.surface
                 ),
                 elevation = CardDefaults.cardElevation(8.dp),
                 shape = RoundedCornerShape(12.dp)

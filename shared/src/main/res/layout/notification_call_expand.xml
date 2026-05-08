@@ -1,74 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/call_notification_layout"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:minHeight="120dp"
     android:orientation="vertical"
     android:gravity="center_horizontal"
-    android:padding="12dp">
+    android:paddingStart="16dp"
+    android:paddingEnd="16dp"
+    android:paddingTop="12dp"
+    android:paddingBottom="12dp">
 
     <!-- Avatar -->
     <ImageView
         android:id="@+id/image_caller"
         android:layout_width="56dp"
         android:layout_height="56dp"
-        android:src="@drawable/unknownavatar"
+        android:layout_marginTop="4dp"
+        android:adjustViewBounds="true"
+        android:contentDescription="Caller image"
         android:scaleType="centerCrop"
-        android:layout_marginTop="4dp"/>
+        android:src="@drawable/unknownavatar" />
 
     <!-- Caller Name -->
     <TextView
         android:id="@+id/text_caller_name"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:ellipsize="end"
+        android:gravity="center"
+        android:maxLines="1"
         android:text="Unknown"
-        android:textSize="16sp"
-        android:textStyle="bold"
         android:textColor="#222222"
-        android:layout_marginTop="6dp"/>
+        android:textSize="16sp"
+        android:textStyle="bold" />
 
     <!-- Call Status -->
     <TextView
         android:id="@+id/text_call_status"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:ellipsize="end"
+        android:gravity="center"
+        android:maxLines="1"
         android:text="• INCOMING CALL"
-        android:textSize="12sp"
         android:textColor="#32C55F"
-        android:layout_marginTop="2dp"/>
+        android:textSize="12sp" />
 
-    <!-- Buttons -->
+    <!-- Action Buttons -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
+        android:layout_marginTop="16dp"
+        android:baselineAligned="false"
         android:gravity="center"
-        android:layout_marginTop="14dp">
+        android:orientation="horizontal"
+        android:weightSum="2">
 
         <!-- Decline -->
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
+            android:gravity="center"
             android:orientation="vertical"
-            android:gravity="center">
+            android:paddingHorizontal="4dp">
 
             <ImageButton
                 android:id="@+id/btn_reject"
                 android:layout_width="48dp"
                 android:layout_height="48dp"
+                android:adjustViewBounds="true"
                 android:background="@drawable/bg_call_reject"
-                android:src="@drawable/ic_reject_call"
-                android:scaleType="center"
+                android:contentDescription="Reject call"
+                android:minHeight="48dp"
+                android:minWidth="48dp"
                 android:padding="12dp"
-                android:contentDescription="Reject"/>
+                android:scaleType="center"
+                android:src="@drawable/ic_reject_call" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:ellipsize="end"
+                android:maxLines="1"
                 android:text="DECLINE"
-                android:textSize="10sp"
                 android:textColor="#777777"
-                android:layout_marginTop="4dp"/>
+                android:textSize="10sp" />
         </LinearLayout>
 
         <!-- Accept -->
@@ -76,26 +97,32 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
+            android:gravity="center"
             android:orientation="vertical"
-            android:gravity="center">
+            android:paddingHorizontal="4dp">
 
             <ImageButton
                 android:id="@+id/btn_accept"
                 android:layout_width="48dp"
                 android:layout_height="48dp"
+                android:adjustViewBounds="true"
                 android:background="@drawable/bg_call_accept"
-                android:src="@drawable/ic_accept_call"
-                android:scaleType="center"
+                android:contentDescription="Accept call"
+                android:minHeight="48dp"
+                android:minWidth="48dp"
                 android:padding="12dp"
-                android:contentDescription="Accept"/>
+                android:scaleType="center"
+                android:src="@drawable/ic_accept_call" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:ellipsize="end"
+                android:maxLines="1"
                 android:text="ACCEPT"
-                android:textSize="10sp"
                 android:textColor="#777777"
-                android:layout_marginTop="4dp"/>
+                android:textSize="10sp" />
         </LinearLayout>
 
     </LinearLayout>

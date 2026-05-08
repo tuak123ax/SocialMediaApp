@@ -24,21 +24,21 @@ class Loading{
                 contentAlignment = Alignment.Center,
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color.White.copy(alpha = 0.8f))
+                    .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.8f))
             ) {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(50.dp),
-                        color = Color.Blue,
+                        color = MaterialTheme.colorScheme.primary,
                         strokeWidth = 4.dp
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
                         text = "Loading...",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = Color.Gray
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }

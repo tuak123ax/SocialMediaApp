@@ -26,27 +26,27 @@ sealed class BaseSettingInstance {
 
 data class SettingInstance(
     override val leadingIcon : ImageVector? = null,
-    override val leadingIconTint : Color = Color.Black,
-    override val leadingIconBackground : Color = Color.White,
+    override val leadingIconTint : Color = Color.Unspecified,
+    override val leadingIconBackground : Color = Color.Unspecified,
     override val leadingIconSize: Dp = 35.dp,
     override val name : String = "",
     override val description : String = "",
     override val trailingIcon : ImageVector? = null,
-    override val trailingIconTint : Color = Color.Black,
-    override val trailingIconBackground : Color = Color.White,
+    override val trailingIconTint : Color = Color.Unspecified,
+    override val trailingIconBackground : Color = Color.Unspecified,
     override val trailingContentType : TrailingContentType = TrailingContentType.None,
 ) : BaseSettingInstance()
 
 data class NotificationConfig(
     override val leadingIcon : ImageVector? = null,
-    override val leadingIconTint : Color = Color.Black,
-    override val leadingIconBackground : Color = Color.White,
+    override val leadingIconTint : Color = Color.Unspecified,
+    override val leadingIconBackground : Color = Color.Unspecified,
     override val leadingIconSize: Dp = 35.dp,
     override val name : String = "",
     override val description : String = "",
     override val trailingIcon : ImageVector? = null,
-    override val trailingIconTint : Color = Color.Black,
-    override val trailingIconBackground : Color = Color.White,
+    override val trailingIconTint : Color = Color.Unspecified,
+    override val trailingIconBackground : Color = Color.Unspecified,
     override val trailingContentType : TrailingContentType = TrailingContentType.None,
     val notificationType: NotificationType = NotificationType.NONE
 ) : BaseSettingInstance()

@@ -91,7 +91,7 @@ class TwoFA {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color.White)
+                    .background(MaterialTheme.colorScheme.surface)
                     .padding(paddingValues)
             ) {
 
@@ -99,7 +99,7 @@ class TwoFA {
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(Color.White)
+                        .background(MaterialTheme.colorScheme.surface)
                         .verticalScroll(scrollState)
                         .padding(bottom = 140.dp) // space for bottom actions
                 ) {
@@ -108,7 +108,7 @@ class TwoFA {
                         title = "2FA",
                         navigateBack = onNavigateBack
                     )
-                    Divider(color = Color(0xFFF0F0F0))
+                    Divider(color = MaterialTheme.colorScheme.outlineVariant)
 
                     Column(
                         modifier = Modifier.padding(20.dp)
@@ -121,10 +121,10 @@ class TwoFA {
                                 letterSpacing = 2.sp,
                                 fontWeight = FontWeight.SemiBold
                             ),
-                            color = Color(0xFFB71C1C),
+                            color = MaterialTheme.colorScheme.error,
                             modifier = Modifier
                                 .background(
-                                    color = Color(0xFFFFEBEE),
+                                    color = MaterialTheme.colorScheme.errorContainer,
                                     shape = RoundedCornerShape(8.dp)
                                 )
                                 .padding(horizontal = 12.dp, vertical = 6.dp)
@@ -144,7 +144,7 @@ class TwoFA {
                         Text(
                             text = "Scan the QR code with your authenticator app or enter the key manually.",
                             style = MaterialTheme.typography.bodyMedium,
-                            color = Color.Gray
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
 
                         Spacer(modifier = Modifier.height(12.dp))
@@ -153,7 +153,7 @@ class TwoFA {
                         Card(
                             shape = RoundedCornerShape(20.dp),
                             colors = CardDefaults.cardColors(
-                                containerColor = Color(0xFFF1F3F5)
+                                containerColor = MaterialTheme.colorScheme.surfaceVariant
                             ),
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -171,7 +171,7 @@ class TwoFA {
                                     modifier = Modifier
                                         .size(180.dp)
                                         .clip(RoundedCornerShape(12.dp))
-                                        .background(Color(0xFFF2F2F2)),
+                                        .background(MaterialTheme.colorScheme.surfaceVariant),
                                     contentAlignment = Alignment.Center
                                 ) {
 
@@ -186,12 +186,12 @@ class TwoFA {
                                         Column(
                                             horizontalAlignment = Alignment.CenterHorizontally
                                         ) {
-                                            Text("QR", color = Color.Gray)
+                                            Text("QR", color = MaterialTheme.colorScheme.onSurfaceVariant)
                                             Spacer(modifier = Modifier.height(4.dp))
                                             Text(
                                                 text = "Generating...",
                                                 style = MaterialTheme.typography.bodySmall,
-                                                color = Color.LightGray
+                                                color = MaterialTheme.colorScheme.outline
                                             )
                                         }
                                     }
@@ -206,7 +206,7 @@ class TwoFA {
                                     Icon(
                                         imageVector = Icons.Outlined.CenterFocusStrong,
                                         contentDescription = null,
-                                        tint = Color(0xFFD32F2F),
+                                        tint = MaterialTheme.colorScheme.primary,
                                         modifier = Modifier.size(18.dp)
                                     )
 
@@ -215,7 +215,7 @@ class TwoFA {
                                     Text(
                                         text = "Align scanner with frame",
                                         style = MaterialTheme.typography.bodySmall,
-                                        color = Color(0xFFB71C1C)
+                                        color = MaterialTheme.colorScheme.error
                                     )
                                 }
                             }
@@ -227,7 +227,7 @@ class TwoFA {
                             shape = RoundedCornerShape(20.dp),
                             elevation = CardDefaults.cardElevation(4.dp),
                             colors = CardDefaults.cardColors(
-                                containerColor = Color.White
+                                containerColor = MaterialTheme.colorScheme.surface
                             ),
                             modifier = Modifier.fillMaxWidth()
                         ) {
@@ -241,7 +241,7 @@ class TwoFA {
                                 Text(
                                     text = "SECRET KEY",
                                     style = MaterialTheme.typography.labelMedium,
-                                    color = Color.Gray
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
 
                                 Spacer(modifier = Modifier.height(8.dp))
@@ -250,7 +250,7 @@ class TwoFA {
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .clip(RoundedCornerShape(12.dp))
-                                        .background(Color(0xFFF7F7F7)),
+                                        .background(MaterialTheme.colorScheme.surfaceVariant),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
 
@@ -258,7 +258,7 @@ class TwoFA {
                                         modifier = Modifier
                                             .width(4.dp)
                                             .height(48.dp)
-                                            .background(Color(0xFFD32F2F))
+                                            .background(MaterialTheme.colorScheme.primary)
                                     )
 
                                     Spacer(modifier = Modifier.width(12.dp))
@@ -282,7 +282,7 @@ class TwoFA {
                                             Icon(
                                                 imageVector = Icons.Default.ContentCopy,
                                                 contentDescription = "Copy",
-                                                tint = Color(0xFFD32F2F),
+                                                tint = MaterialTheme.colorScheme.primary,
                                                 modifier = Modifier
                                                     .size(20.dp)
                                                     .clickable {
@@ -305,14 +305,14 @@ class TwoFA {
                                 Text(
                                     text = "If you can't scan the QR code, use this 16-digit key to manually link your account.",
                                     style = MaterialTheme.typography.bodySmall,
-                                    color = Color.Gray
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
 
                                 Spacer(modifier = Modifier.height(16.dp))
 
                                 Card(
                                     colors = CardDefaults.cardColors(
-                                        containerColor = Color(0xFFE8F5E9)
+                                        containerColor = MaterialTheme.colorScheme.tertiaryContainer
                                     ),
                                     shape = RoundedCornerShape(12.dp)
                                 ) {
@@ -323,7 +323,7 @@ class TwoFA {
                                         Icon(
                                             imageVector = Icons.Default.CheckCircle,
                                             contentDescription = null,
-                                            tint = Color(0xFF2E7D32)
+                                            tint = MaterialTheme.colorScheme.tertiary
                                         )
 
                                         Spacer(modifier = Modifier.width(8.dp))
@@ -344,7 +344,7 @@ class TwoFA {
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
                         .fillMaxWidth()
-                        .background(Color.White)
+                        .background(MaterialTheme.colorScheme.surface)
                         .padding(horizontal = 20.dp, vertical = 12.dp)
                         .imePadding() // keyboard safe
                 ) {
@@ -362,12 +362,12 @@ class TwoFA {
                             .height(56.dp),
                         shape = RoundedCornerShape(16.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFFD32F2F)
+                            containerColor = MaterialTheme.colorScheme.primary
                         )
                     ) {
                         Text(
                             text = "Continue to Verify →",
-                            color = Color.White,
+                            color = MaterialTheme.colorScheme.onPrimary,
                             style = MaterialTheme.typography.titleMedium
                         )
                     }
@@ -382,7 +382,7 @@ class TwoFA {
                             .clickable {
                                 uriHandler.openUri(Constants.SUPPORT_FACEBOOK_LINK)
                             },
-                        color = Color.Gray
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
