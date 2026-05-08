@@ -215,7 +215,7 @@ class GroupDetails {
                     "Leave Group",
             "Are you sure you want to leave this group?",
                 icon = Icons.AutoMirrored.Filled.Logout,
-                iconBackground = Color(0xFFFDEAEA),
+                iconBackground = MaterialTheme.colorScheme.errorContainer,
                 onDiscard = {
                 if(fetchGroupInfoState != null) {
                     val adminSet = fetchGroupInfoState!!.members.filterValues {it == "admin"}.keys
@@ -320,7 +320,7 @@ class GroupDetails {
                                             modifier = Modifier
                                                 .size(80.dp)
                                                 .clip(CircleShape)
-                                                .border(2.dp, Color.White, CircleShape)
+                                                .border(2.dp, MaterialTheme.colorScheme.surface, CircleShape)
                                                 .testTag(TestTag.TAG_SELECT_GROUP_AVATAR)
                                                 .semantics {
                                                     contentDescription = TestTag.TAG_SELECT_GROUP_AVATAR
@@ -342,7 +342,7 @@ class GroupDetails {
                                                     modifier = Modifier
                                                         .matchParentSize()
                                                         .background(
-                                                            color = Color.LightGray.copy(alpha = 0.3f),
+                                                            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
                                                             shape = CircleShape
                                                         ),
                                                     contentAlignment = Alignment.Center
@@ -350,7 +350,7 @@ class GroupDetails {
                                                     Icon(
                                                         imageVector = Icons.Default.Group,
                                                         contentDescription = "Placeholder",
-                                                        tint = Color.Gray,
+                                                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                                         modifier = Modifier.size(36.dp)
                                                     )
                                                 }
@@ -363,7 +363,7 @@ class GroupDetails {
                                     if(fetchGroupInfoState != null) {
                                         Text(
                                             text = fetchGroupInfoState!!.name,
-                                            color = Color.Black,
+                                            color = MaterialTheme.colorScheme.onSurface,
                                             style = MaterialTheme.typography.titleLarge,
                                             fontWeight = FontWeight.Bold,
                                             textAlign = TextAlign.Center,
@@ -374,7 +374,7 @@ class GroupDetails {
                                     } else {
                                         Text(
                                             text = "Fetching...",
-                                            color = Color.Black,
+                                            color = MaterialTheme.colorScheme.onSurface,
                                             style = MaterialTheme.typography.titleLarge,
                                             fontWeight = FontWeight.Bold,
                                             textAlign = TextAlign.Center,
@@ -391,13 +391,13 @@ class GroupDetails {
                                         if(fetchGroupInfoState != null) {
                                             Text(
                                                 text = if(fetchGroupInfoState!!.password.isNotEmpty()) "Private Group" else "Public Group",
-                                                color = Color.Black,
+                                                color = MaterialTheme.colorScheme.onSurface,
                                                 style = MaterialTheme.typography.bodyLarge
                                             )
                                         } else {
                                             Text(
                                                 text = "Fetching...",
-                                                color = Color.Black,
+                                                color = MaterialTheme.colorScheme.onSurface,
                                                 style = MaterialTheme.typography.bodyLarge
                                             )
                                         }
@@ -405,7 +405,7 @@ class GroupDetails {
                                     if(fetchGroupInfoState!= null && fetchGroupInfoState!!.description.isNotEmpty()) {
                                         Text(
                                             text = fetchGroupInfoState!!.description,
-                                            color = Color.Black,
+                                            color = MaterialTheme.colorScheme.onSurface,
                                             style = MaterialTheme.typography.bodyLarge,
                                             maxLines = 3,
                                             overflow = TextOverflow.Ellipsis
@@ -425,12 +425,12 @@ class GroupDetails {
                                             },
                                             shape = CircleShape,
                                             colors = ButtonDefaults.outlinedButtonColors(
-                                                containerColor = Color.Red
+                                                containerColor = MaterialTheme.colorScheme.error
                                             )
                                         ){
                                             Text(
                                                 text = "Invite",
-                                                color = Color.White
+                                                color = MaterialTheme.colorScheme.surface
                                             )
                                         }
                                         Spacer(Modifier.width(8.dp))
@@ -442,10 +442,10 @@ class GroupDetails {
                                                         currentUser.uid)
                                                 },
                                                 shape = CircleShape,
-                                                border = BorderStroke(1.dp, Color.LightGray),
+                                                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
                                                 colors = ButtonDefaults.buttonColors(
-                                                    containerColor = Color.White,
-                                                    contentColor = Color.Black
+                                                    containerColor = MaterialTheme.colorScheme.surface,
+                                                    contentColor = MaterialTheme.colorScheme.onSurface
                                                 ),
                                                 modifier = Modifier.size(35.dp),
                                                 contentPadding = PaddingValues(0.dp)
@@ -470,7 +470,7 @@ class GroupDetails {
                             HorizontalDivider(
                                 modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
                                 thickness = 1.dp,
-                                color = Color.LightGray
+                                color = MaterialTheme.colorScheme.outline
                             )
                             //Additional info
                             Row(
@@ -491,7 +491,7 @@ class GroupDetails {
                             HorizontalDivider(
                                 modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
                                 thickness = 1.dp,
-                                color = Color.LightGray
+                                color = MaterialTheme.colorScheme.outline
                             )
                         }
                     }
@@ -530,10 +530,10 @@ class GroupDetails {
                                     }
                                 },
                                 shape = RoundedCornerShape(10.dp),
-                                border = BorderStroke(1.dp, Color.LightGray),
+                                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
                                 colors = ButtonDefaults.outlinedButtonColors(
-                                    containerColor = Color.Red,
-                                    contentColor = Color.White
+                                    containerColor = MaterialTheme.colorScheme.error,
+                                    contentColor = MaterialTheme.colorScheme.surface
                                 ),
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -541,7 +541,7 @@ class GroupDetails {
                             ) {
                                 Text(
                                     text = "Join group",
-                                    color = Color.White,
+                                    color = MaterialTheme.colorScheme.surface,
                                     style = MaterialTheme.typography.bodyMedium,
                                     fontWeight = FontWeight.Bold,
                                     textAlign = TextAlign.Center,
@@ -618,14 +618,14 @@ class GroupDetails {
             ) {
                 Text(
                     text = convertToNumberString(number),
-                    color = Color.Black,
+                    color = MaterialTheme.colorScheme.onSurface,
                     fontWeight = FontWeight.Bold,
                     style = MaterialTheme.typography.bodyMedium,
                     textAlign = TextAlign.Center
                 )
                 Text(
                     text = eventName,
-                    color = Color.Gray,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     style = MaterialTheme.typography.bodyMedium,
                     textAlign = TextAlign.Center,
                     fontWeight = FontWeight.Bold
@@ -653,13 +653,13 @@ class GroupDetails {
                 Column(modifier = Modifier.fillMaxSize()){
                     TabRow(
                         selectedTabIndex = selectedTabIndex,
-                        containerColor = Color.White,
-                        contentColor = Color.Black,
+                        containerColor = MaterialTheme.colorScheme.surface,
+                        contentColor = MaterialTheme.colorScheme.onSurface,
                         indicator = {
                                 tabPositions ->
                             TabRowDefaults.Indicator(
                                 Modifier.tabIndicatorOffset(tabPositions[selectedTabIndex]),
-                                color = Color.Red
+                                color = MaterialTheme.colorScheme.error
                             )
                         }
                     ) {
@@ -674,7 +674,7 @@ class GroupDetails {
                                     Text(
                                         text = title,
                                         fontSize = 18.sp,
-                                        color = Color.Gray,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                                         style = MaterialTheme.typography.bodyMedium,
                                         fontWeight = FontWeight.Bold)
                                 }

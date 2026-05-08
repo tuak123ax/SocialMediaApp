@@ -125,7 +125,7 @@ class CreateGroup {
                     Spacer(Modifier.height(20.dp))
                     UiUtils.BackAndTitleAndMoreOptionsRow(
                         "Create New Group",
-                        titleColor = Color.Black,
+                        titleColor = MaterialTheme.colorScheme.onSurface,
                         titleStyle = MaterialTheme.typography.headlineMedium,
                         "Set up your community in seconds",
                         showBackButton = false,
@@ -162,14 +162,14 @@ class CreateGroup {
                             Icon(
                                 Icons.Default.CameraAlt,
                                 "Select avatar",
-                                tint = Color.White
+                                tint = MaterialTheme.colorScheme.onPrimary
                             )
                         }
                     }
                     Spacer(Modifier.height(20.dp))
                     Text(
                         text = "GROUP DETAILS",
-                        color = Color.LightGray,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         style = MaterialTheme.typography.bodyMedium,
                         textAlign = TextAlign.Start,
                         fontWeight = FontWeight.Bold,
@@ -180,7 +180,7 @@ class CreateGroup {
                     OutlinedTextField(
                         value = createGroupViewModel.groupName.collectAsState().value,
                         shape = RoundedCornerShape(10.dp),
-                        textStyle = TextStyle(color = Color.Black),
+                        textStyle = TextStyle(color = MaterialTheme.colorScheme.onSurface),
                         leadingIcon = {
                             Icon(
                                 Icons.Default.Person,
@@ -201,7 +201,7 @@ class CreateGroup {
                     )
                     Text(
                         text = "Who can join this group?",
-                        color = Color.Black,
+                        color = MaterialTheme.colorScheme.onBackground,
                         style = MaterialTheme.typography.bodyMedium,
                         textAlign = TextAlign.Center,
                         modifier = Modifier
@@ -214,8 +214,8 @@ class CreateGroup {
                                 showAccessPermissionSheet = true
                             },
                             colors = ButtonDefaults.outlinedButtonColors(
-                                containerColor = Color.White,
-                                contentColor = Color.Black
+                                containerColor = MaterialTheme.colorScheme.surface,
+                                contentColor = MaterialTheme.colorScheme.onSurface
                             ),
                             modifier = Modifier
                                 .testTag(TestTag.TAG_BUTTON_ACCESS_MODIFIER)
@@ -244,7 +244,7 @@ class CreateGroup {
                     if(currentAccessPermission.value == DecentralizationType.Private) {
                         Text(
                             text = "Since this is a private group, please create a secure password for new members.",
-                            color = Color.Gray,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                             style = MaterialTheme.typography.bodyMedium,
                             textAlign = TextAlign.Center,
                             modifier = Modifier
@@ -286,7 +286,7 @@ class CreateGroup {
                             }) {
                         Text(
                             text = "Continue",
-                            color = Color.White
+                            color = MaterialTheme.colorScheme.onPrimary
                         )
                     }
                 }
@@ -319,7 +319,7 @@ class CreateGroup {
                 shape = RoundedCornerShape(20.dp),
                 label = { Text(text = label) },
                 singleLine = true,
-                textStyle = TextStyle(Color.Black),
+                textStyle = TextStyle(Color.Unspecified),
                 visualTransformation = if (passwordVisibility) VisualTransformation.None else PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                 trailingIcon = {
@@ -332,8 +332,8 @@ class CreateGroup {
                             }) {
                         PasswordVisibilityIcon(
                             passwordVisibility,
-                            tint = Color.Black,
-                            Color.Black.toHex())
+                            tint = MaterialTheme.colorScheme.onSurface,
+                            MaterialTheme.colorScheme.onSurface.toHex())
                     }
                 }
             )

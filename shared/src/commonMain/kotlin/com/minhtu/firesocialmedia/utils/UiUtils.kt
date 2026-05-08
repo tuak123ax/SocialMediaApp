@@ -144,8 +144,6 @@ import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.Settings
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.GroupDetails.Companion.DropdownMenuForMoreOptionsInGroup
 import com.minhtu.firesocialmedia.presentation.search.SearchViewModel
 import com.minhtu.firesocialmedia.storage.toStorageUrl
-import com.minhtu.sharedmodule.ui.theme.loginBackgroundColor
-import com.minhtu.sharedmodule.ui.theme.memberCardColor
 import com.seiko.imageloader.asImageBitmap
 import com.seiko.imageloader.ui.AutoSizeImage
 import kotlinx.coroutines.delay
@@ -183,11 +181,12 @@ class UiUtils {
                         contentDescription = TestTag.TAG_POST_IN_COLUMN
                     },
                 shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White)
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
             ) {
                 Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(1.dp)) {
                     Row(horizontalArrangement = Arrangement.Start,
-                        modifier = Modifier.background(color = Color.White).padding(10.dp).fillMaxWidth()
+                        modifier = Modifier.background(color = MaterialTheme.colorScheme.surface).padding(10.dp).fillMaxWidth()
                             .clickable {
                                 onNavigateToUserInformation(user)
                             }){
@@ -213,13 +212,13 @@ class UiUtils {
                         Column {
                             Text(
                                 text = news.posterName,
-                                color = Color.Black,
+                                color = MaterialTheme.colorScheme.onSurface,
                                 fontWeight = FontWeight.Bold,
                                 modifier = Modifier.padding(horizontal = 2.dp)
                             )
                             Text(
                                 text = convertTimeToDateString(news.timePosted),
-                                color = Color.Gray,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.padding(horizontal = 2.dp)
                             )
                         }
@@ -233,9 +232,9 @@ class UiUtils {
                                 }) {
                                     CrossPlatformIcon(
                                         icon = "more_horiz",
-                                        backgroundColor = "#FFFFFFFF",
+                                        backgroundColor = MaterialTheme.colorScheme.surface.toHex(),
                                         contentDescription = "More Options",
-                                        tint = Color.Gray,
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                         modifier = Modifier
                                             .testTag(TestTag.TAG_BUTTON_MOREOPTIONS)
                                             .semantics {
@@ -302,14 +301,14 @@ class UiUtils {
                             Text(
                                 text = if(likeCount > 1) "$likeCount Likes" else "$likeCount Like",
                                 fontSize = 12.sp,
-                                color = Color.Black,
+                                color = MaterialTheme.colorScheme.onSurface,
                                 modifier = Modifier.padding(2.dp)
                             )
                             Spacer(modifier = Modifier.weight(1f))
                             Text(
                                 text = if(commentCount > 1) "$commentCount Comments" else "$commentCount Comment",
                                 fontSize = 12.sp,
-                                color = Color.Black,
+                                color = MaterialTheme.colorScheme.onSurface,
                                 modifier = Modifier.padding(2.dp)
                             )
                         }
@@ -364,11 +363,12 @@ class UiUtils {
                         contentDescription = TestTag.TAG_POST_IN_COLUMN
                     },
                 shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White)
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
             ) {
                 Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(1.dp)) {
                     Row(horizontalArrangement = Arrangement.Start,
-                        modifier = Modifier.background(color = Color.White).padding(10.dp).fillMaxWidth()
+                        modifier = Modifier.background(color = MaterialTheme.colorScheme.surface).padding(10.dp).fillMaxWidth()
                             .clickable {
                                 onNavigateToUserInformation(user)
                             }){
@@ -394,13 +394,13 @@ class UiUtils {
                         Column {
                             Text(
                                 text = news.posterName,
-                                color = Color.Black,
+                                color = MaterialTheme.colorScheme.onSurface,
                                 fontWeight = FontWeight.Bold,
                                 modifier = Modifier.padding(horizontal = 2.dp)
                             )
                             Text(
                                 text = convertTimeToDateString(news.timePosted),
-                                color = Color.Gray,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.padding(horizontal = 2.dp)
                             )
                         }
@@ -413,9 +413,9 @@ class UiUtils {
                             }) {
                                 CrossPlatformIcon(
                                     icon = "more_horiz",
-                                    backgroundColor = "#FFFFFFFF",
+                                    backgroundColor = MaterialTheme.colorScheme.surface.toHex(),
                                     contentDescription = "More Options",
-                                    tint = Color.Gray,
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                     modifier = Modifier
                                         .testTag(TestTag.TAG_BUTTON_MOREOPTIONS)
                                         .semantics {
@@ -436,7 +436,7 @@ class UiUtils {
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(10.dp)
-                                .border(1.dp, Color.Black)
+                                .border(1.dp, MaterialTheme.colorScheme.outline)
                         ) {
                             NewsCard(
                                 sharedNew,
@@ -467,14 +467,14 @@ class UiUtils {
                         Text(
                             text = if(likeCount > 1) "$likeCount Likes" else "$likeCount Like",
                             fontSize = 12.sp,
-                            color = Color.Black,
+                            color = MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier.padding(2.dp)
                         )
                         Spacer(modifier = Modifier.weight(1f))
                         Text(
                             text = if(commentCount > 1) "$commentCount Comments" else "$commentCount Comment",
                             fontSize = 12.sp,
-                            color = Color.Black,
+                            color = MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier.padding(2.dp)
                         )
                     }
@@ -517,7 +517,7 @@ class UiUtils {
                         .fillMaxWidth()
                         .padding(horizontal = 24.dp),
                     colors = CardDefaults.cardColors(
-                        containerColor = Color.White
+                        containerColor = MaterialTheme.colorScheme.surface
                     )
                 ) {
                     Column(
@@ -537,7 +537,7 @@ class UiUtils {
                             Icon(
                                 imageVector = icon,
                                 contentDescription = null,
-                                tint = Color(0xFFFF9800),
+                                tint = MaterialTheme.colorScheme.error,
                                 modifier = Modifier.size(36.dp)
                             )
                         }
@@ -559,7 +559,7 @@ class UiUtils {
                         Text(
                             text = message,
                             style = MaterialTheme.typography.bodyMedium,
-                            color = Color.Gray,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                             textAlign = TextAlign.Center
                         )
 
@@ -577,12 +577,12 @@ class UiUtils {
                                 .shadow(8.dp, RoundedCornerShape(16.dp)),
                             shape = RoundedCornerShape(16.dp),
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = Color(0xFFE53935) // Modern red
+                                containerColor = MaterialTheme.colorScheme.error
                             )
                         ) {
                             Text(
                                 "Discard",
-                                color = Color.White,
+                                color = MaterialTheme.colorScheme.onError,
                                 fontWeight = FontWeight.Bold
                             )
                         }
@@ -599,7 +599,7 @@ class UiUtils {
                         ) {
                             Text(
                                 "Cancel",
-                                color = Color.Gray,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 fontWeight = FontWeight.Medium
                             )
                         }
@@ -626,7 +626,7 @@ class UiUtils {
                     onDismissRequest = { showSheet.value = false },
                     sheetState = sheetState,
                     shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
-                    containerColor = Color.White
+                    containerColor = MaterialTheme.colorScheme.surface
                 ) {
 
                     Column(
@@ -643,13 +643,13 @@ class UiUtils {
                             modifier = Modifier
                                 .size(80.dp)
                                 .clip(CircleShape)
-                                .background(Color(0xFFFFEBEE)),
+                                .background(MaterialTheme.colorScheme.errorContainer),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.ExitToApp,
                                 contentDescription = "Logout Icon",
-                                tint = Color(0xFFFF3B30),
+                                tint = MaterialTheme.colorScheme.error,
                                 modifier = Modifier.size(36.dp)
                             )
                         }
@@ -667,7 +667,7 @@ class UiUtils {
                         Text(
                             text = "Are you sure you want to log out? You can always log back in later.",
                             style = MaterialTheme.typography.bodyMedium,
-                            color = Color.Gray,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                             textAlign = TextAlign.Center
                         )
 
@@ -688,12 +688,12 @@ class UiUtils {
                                 .height(56.dp),
                             shape = RoundedCornerShape(16.dp),
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = Color(0xFFFF3B30)
+                                containerColor = MaterialTheme.colorScheme.error
                             )
                         ) {
                             Text(
                                 text = "Log Out",
-                                color = Color.White,
+                                color = MaterialTheme.colorScheme.onError,
                                 style = MaterialTheme.typography.titleMedium
                             )
                         }
@@ -772,7 +772,7 @@ class UiUtils {
             Box(modifier = modifier){
                 val barInsets = if (useDefaultInsets) NavigationBarDefaults.windowInsets else WindowInsets(0)
                 NavigationBar(
-                    containerColor = Color.White,
+                    containerColor = MaterialTheme.colorScheme.surface,
                     windowInsets = barInsets
                 ) {
                     val currentRoute = currentRoute
@@ -835,7 +835,7 @@ class UiUtils {
                     Icon(
                         Icons.Default.Add,
                         contentDescription = "Add",
-                        tint = Color.White
+                        tint = MaterialTheme.colorScheme.onPrimary
                     )
                 }
 
@@ -846,13 +846,13 @@ class UiUtils {
             Row(horizontalArrangement = Arrangement.Start,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(Color.White)
+                    .background(MaterialTheme.colorScheme.surface)
                     .padding(10.dp)){
                 CrossPlatformIcon(
                     icon = "arrow_back",
-                    backgroundColor = "#FFFFFFFF",
+                    backgroundColor = MaterialTheme.colorScheme.surface.toHex(),
                     contentDescription = "Back",
-                    tint = Color.Black,
+                    tint = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier
                         .size(30.dp)
                         .clip(CircleShape)
@@ -868,9 +868,9 @@ class UiUtils {
                 Spacer(modifier = Modifier.weight(1f))
                 CrossPlatformIcon(
                     icon = "more_horiz",
-                    backgroundColor = "#FFFFFFFF",
+                    backgroundColor = MaterialTheme.colorScheme.surface.toHex(),
                     contentDescription = "More Options",
-                    tint = Color.Black,
+                    tint = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier
                         .size(30.dp)
                         .clip(CircleShape)
@@ -887,105 +887,145 @@ class UiUtils {
 
         @Composable
         fun BackAndTitleAndMoreOptionsRow(
-            title : String,
-            titleColor : Color = Color.Black,
-            titleStyle : TextStyle = MaterialTheme.typography.titleMedium,
-            subTitle : String = "",
-            trailingIcon : String = "",
-            trailingIconTint : Color = Color.Black,
-            showMoreOptionsMenu : Boolean = false,
-            showBackButton : Boolean = true,
-            isMember : Boolean = true,
-            isAdmin : Boolean = false,
-            iconSize : Dp = 35.dp,
-            navigateBack : () -> Unit = {},
-            onClickMoreOptions : () -> Unit = {},
-            onDismissRequest : () -> Unit = {},
-            onLeaveGroup : () -> Unit = {},
-            onManageMembers : () -> Unit = {}) {
+            title: String,
+            titleColor: Color = Color.Unspecified,
+            titleStyle: TextStyle = MaterialTheme.typography.titleMedium,
+            subTitle: String = "",
+            trailingIcon: String = "",
+            trailingIconTint: Color = Color.Unspecified,
+            showMoreOptionsMenu: Boolean = false,
+            showBackButton: Boolean = true,
+            isMember: Boolean = true,
+            isAdmin: Boolean = false,
+            iconSize: Dp = 35.dp,
+            navigateBack: () -> Unit = {},
+            onClickMoreOptions: () -> Unit = {},
+            onDismissRequest: () -> Unit = {},
+            onLeaveGroup: () -> Unit = {},
+            onManageMembers: () -> Unit = {}
+        ) {
+
+            val sideSlotWidth = iconSize + 16.dp
+
+            val resolvedTitleColor =
+                if (titleColor == Color.Unspecified)
+                    MaterialTheme.colorScheme.onSurface
+                else titleColor
+
+            val resolvedTrailingIconTint =
+                if (trailingIconTint == Color.Unspecified)
+                    MaterialTheme.colorScheme.onSurface
+                else trailingIconTint
+
+            val hasTrailingIcon =
+                isMember && trailingIcon.isNotEmpty()
+
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(Color.White)
-                    .padding(10.dp)
+                    .background(MaterialTheme.colorScheme.background)
+                    .padding(horizontal = 10.dp, vertical = 10.dp)
             ) {
-                if(showBackButton) {
-                    CrossPlatformIcon(
-                        icon = "arrow_back",
-                        backgroundColor = "#FFFFFFFF",
-                        contentDescription = "Back",
-                        tint = Color.Black,
-                        modifier = Modifier
-                            .size(iconSize)
-                            .padding(4.dp)
-                            .clip(CircleShape)
-                            .testTag(TestTag.TAG_BUTTON_BACK)
-                            .semantics { contentDescription = TestTag.TAG_BUTTON_BACK }
-                            .clickable { navigateBack() }
-                    )
-                }
 
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f)
-                        .padding(horizontal = 8.dp)
+                // LEFT SLOT
+                Box(
+                    modifier = Modifier.width(sideSlotWidth),
+                    contentAlignment = Alignment.CenterStart
                 ) {
-                    Text(
-                        text = title,
-                        color = titleColor,
-                        fontWeight = FontWeight.Bold,
-                        style = titleStyle,
-                        textAlign = TextAlign.Center
-                    )
-                    if(subTitle.isNotEmpty()) {
-                        Text(
-                            text = subTitle,
-                            color = Color.Gray,
-                            style = MaterialTheme.typography.bodyMedium,
-                            textAlign = TextAlign.Center
+
+                    if (showBackButton) {
+
+                        CrossPlatformIcon(
+                            icon = "arrow_back",
+                            backgroundColor = MaterialTheme.colorScheme.surface.toHex(),
+                            contentDescription = "Back",
+                            tint = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier
+                                .size(iconSize)
+                                .clip(CircleShape)
+                                .clickable {
+                                    navigateBack()
+                                }
+                                .padding(4.dp)
+                                .testTag(TestTag.TAG_BUTTON_BACK)
+                                .semantics {
+                                    contentDescription =
+                                        TestTag.TAG_BUTTON_BACK
+                                }
                         )
                     }
                 }
 
-                if(isMember) {
-                    Box{
+                // CENTER TITLE
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(horizontal = 8.dp)
+                ) {
+
+                    Text(
+                        text = title,
+                        color = resolvedTitleColor,
+                        fontWeight = FontWeight.Bold,
+                        style = titleStyle,
+                        textAlign = TextAlign.Center,
+                        maxLines = 1
+                    )
+
+                    if (subTitle.isNotEmpty()) {
+
+                        Text(
+                            text = subTitle,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            style = MaterialTheme.typography.bodyMedium,
+                            textAlign = TextAlign.Center,
+                            maxLines = 1
+                        )
+                    }
+                }
+
+                // RIGHT SLOT
+                Box(
+                    modifier = Modifier.width(sideSlotWidth),
+                    contentAlignment = Alignment.CenterEnd
+                ) {
+
+                    if (hasTrailingIcon) {
+
                         CrossPlatformIcon(
                             icon = trailingIcon,
-                            backgroundColor = "#FFFFFFFF",
+                            backgroundColor = MaterialTheme.colorScheme.surface.toHex(),
                             contentDescription = "More Options",
-                            tint = trailingIconTint,
+                            tint = resolvedTrailingIconTint,
                             modifier = Modifier
                                 .size(iconSize)
                                 .clip(CircleShape)
-                                .testTag(TestTag.TAG_BUTTON_MOREOPTIONS)
-                                .semantics { contentDescription = TestTag.TAG_BUTTON_MOREOPTIONS }
                                 .clickable {
                                     onClickMoreOptions()
                                 }
                                 .padding(4.dp)
-                        )
-                        if(showMoreOptionsMenu) {
-                            DropdownMenuForMoreOptionsInGroup(
-                                showMoreOptionsMenu,
-                                isAdmin = isAdmin,
-                                onLeaveGroup = {
-                                    onLeaveGroup()
-                                },
-                                onDismissRequest = {
-                                    onDismissRequest()
-                                },
-                                onManageMembers = {
-                                    onManageMembers()
+                                .testTag(TestTag.TAG_BUTTON_MOREOPTIONS)
+                                .semantics {
+                                    contentDescription =
+                                        TestTag.TAG_BUTTON_MOREOPTIONS
                                 }
-                            )
-                        }
+                        )
+                    }
+
+                    if (isMember && showMoreOptionsMenu) {
+
+                        DropdownMenuForMoreOptionsInGroup(
+                            expanded = showMoreOptionsMenu,
+                            isAdmin = isAdmin,
+                            onLeaveGroup = onLeaveGroup,
+                            onDismissRequest = onDismissRequest,
+                            onManageMembers = onManageMembers
+                        )
                     }
                 }
             }
-
         }
 
         @Composable
@@ -1005,13 +1045,13 @@ class UiUtils {
                 Column(modifier = Modifier.fillMaxSize()){
                     TabRow(
                         selectedTabIndex = selectedTabIndex,
-                        containerColor = Color.White,
-                        contentColor = Color.Black,
+                        containerColor = MaterialTheme.colorScheme.background,
+                        contentColor = MaterialTheme.colorScheme.onSurface,
                         indicator = {
                                 tabPositions ->
                             TabRowDefaults.Indicator(
                                 Modifier.tabIndicatorOffset(tabPositions[selectedTabIndex]),
-                                color = Color.Red
+                                color = MaterialTheme.colorScheme.primary
                             )
                         }
                     ) {
@@ -1026,7 +1066,7 @@ class UiUtils {
                                     Text(
                                         text = title,
                                         style = MaterialTheme.typography.titleMedium,
-                                        color = if(selectedTabIndex == index) Color.Red else Color.Gray
+                                        color = if(selectedTabIndex == index) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                 }
                             )
@@ -1139,7 +1179,7 @@ class UiUtils {
                 }
                 Text(
                     text = user.name,
-                    color = Color.Black,
+                    color = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.padding(end = 5.dp), // Adds padding around text
                     maxLines = 2
                 )
@@ -1185,7 +1225,7 @@ class UiUtils {
                     Column(modifier = Modifier.padding(end = 5.dp)) {
                         Text(
                             text = requester.name,
-                            color = Color.Black,
+                            color = MaterialTheme.colorScheme.onSurface,
                             fontWeight = FontWeight.Bold,
                             modifier = Modifier
                                 .padding(5.dp)
@@ -1199,22 +1239,27 @@ class UiUtils {
                         friendViewModel.acceptFriendRequest(requester, currentUser)
                     },
                         elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp),
-                        colors = ButtonDefaults.buttonColors(Color.Red),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.onPrimary
+                        ),
                         modifier = Modifier
                             .weight(1f)
                     ){
-                        Text(text = "Accept",
-                            color = Color.White)
+                        Text(text = "Accept")
                     }
                     Spacer(modifier = Modifier.width(10.dp))
                     Button(onClick = {
                         friendViewModel.rejectFriendRequest(requester, currentUser)
                     },
                         elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp),
-                        colors = ButtonDefaults.buttonColors(memberCardColor),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                            contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                        ),
                         modifier = Modifier
                             .weight(1f)){
-                        Text(text = "Decline", color = Color.Black)
+                        Text(text = "Decline")
                     }
                 }
             }
@@ -1232,7 +1277,7 @@ class UiUtils {
                 Column {
                     Text(
                         text = text,
-                        color = Color.Black,
+                        color = MaterialTheme.colorScheme.onSurface,
                         maxLines = if (isExpanded) Int.MAX_VALUE else collapsedMaxLines,
                         overflow = TextOverflow.Ellipsis,
                         onTextLayout = { textLayoutResult ->
@@ -1314,7 +1359,7 @@ class UiUtils {
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color(0xFFE8E8E8))
+                    .background(MaterialTheme.colorScheme.background)
                     .testTag(TestTag.TAG_POSTS_COLUMN)
                     .semantics{
                         contentDescription = TestTag.TAG_POSTS_COLUMN
@@ -1410,7 +1455,6 @@ class UiUtils {
                             ThreeDotsLoading(
                                 modifier = Modifier.padding(bottom = 10.dp),
                                 dotSize = 10.dp,
-                                dotColor = Color.Blue,
                                 spaceBetween = 5.dp
                             )
                         }
@@ -1426,12 +1470,12 @@ class UiUtils {
                     .padding(start = 10.dp, end = 10.dp, top = 5.dp)
                     .fillMaxWidth(),
                 shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White)
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
             ) {
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(Color.White)
+                        .background(MaterialTheme.colorScheme.surface)
                         .padding(10.dp)
                 ) {
                     // Header skeleton (avatar + lines)
@@ -1445,7 +1489,7 @@ class UiUtils {
                             modifier = Modifier
                                 .size(40.dp)
                                 .clip(CircleShape)
-                                .background(Color(0xFFEAEAEA))
+                                .background(MaterialTheme.colorScheme.surfaceVariant)
                         )
                         Spacer(modifier = Modifier.width(10.dp))
                         Column(modifier = Modifier.weight(1f)) {
@@ -1453,14 +1497,14 @@ class UiUtils {
                                 modifier = Modifier
                                     .height(14.dp)
                                     .fillMaxWidth(0.4f)
-                                    .background(Color(0xFFEAEAEA), RoundedCornerShape(4.dp))
+                                    .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(4.dp))
                             )
                             Spacer(modifier = Modifier.height(6.dp))
                             Box(
                                 modifier = Modifier
                                     .height(12.dp)
                                     .fillMaxWidth(0.3f)
-                                    .background(Color(0xFFF0F0F0), RoundedCornerShape(4.dp))
+                                    .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(4.dp))
                             )
                         }
                     }
@@ -1470,7 +1514,7 @@ class UiUtils {
                         modifier = Modifier
                             .height(14.dp)
                             .fillMaxWidth(0.9f)
-                            .background(Color(0xFFEAEAEA), RoundedCornerShape(4.dp))
+                            .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(4.dp))
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     // Media placeholder
@@ -1479,7 +1523,7 @@ class UiUtils {
                             .fillMaxWidth()
                             .height(300.dp)
                             .clip(RoundedCornerShape(8.dp))
-                            .background(Color(0xFFEAEAEA))
+                            .background(MaterialTheme.colorScheme.surfaceVariant)
                     )
                     Spacer(modifier = Modifier.height(10.dp))
                     // Footer placeholders
@@ -1488,14 +1532,14 @@ class UiUtils {
                             modifier = Modifier
                                 .height(12.dp)
                                 .fillMaxWidth(0.2f)
-                                .background(Color(0xFFF0F0F0), RoundedCornerShape(4.dp))
+                                .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(4.dp))
                         )
                         Spacer(modifier = Modifier.weight(1f))
                         Box(
                             modifier = Modifier
                                 .height(12.dp)
                                 .fillMaxWidth(0.2f)
-                                .background(Color(0xFFF0F0F0), RoundedCornerShape(4.dp))
+                                .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(4.dp))
                         )
                     }
                     Spacer(modifier = Modifier.height(10.dp))
@@ -1512,7 +1556,7 @@ class UiUtils {
                     .padding(start = 10.dp, end = 10.dp, top = 5.dp)
                     .fillMaxWidth(),
                 shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White)
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
             ) {
                 Column(
                     modifier = Modifier
@@ -1526,7 +1570,7 @@ class UiUtils {
                     Icon(
                         imageVector = Icons.Outlined.Block,
                         contentDescription = null,
-                        tint = Color(0xFFBDBDBD),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(48.dp)
                     )
 
@@ -1536,7 +1580,7 @@ class UiUtils {
                     Text(
                         text = message,
                         style = MaterialTheme.typography.bodyMedium,
-                        color = Color(0xFF9E9E9E),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.Center
                     )
                 }
@@ -1589,15 +1633,15 @@ class UiUtils {
         fun MySnackBarHost(hostState: SnackbarHostState, positive: Boolean?) {
             SnackbarHost(hostState = hostState) { data ->
                 val contentColor = when (positive) {
-                    true -> Color.Green
-                    false -> Color.Red
+                    true -> MaterialTheme.colorScheme.tertiary
+                    false -> MaterialTheme.colorScheme.error
                     null -> MaterialTheme.colorScheme.onSurface
                 }
                 Snackbar(
                     snackbarData = data,
-                    containerColor = Color.White,
+                    containerColor = MaterialTheme.colorScheme.surface,
                     contentColor = contentColor,
-                    dismissActionContentColor = Color.Black
+                    dismissActionContentColor = MaterialTheme.colorScheme.onSurface
                 )
             }
         }
@@ -1616,7 +1660,7 @@ class UiUtils {
                     .semantics { contentDescription = TestTag.TAG_POST_IN_COLUMN }
                     .then(modifier),
                 shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                 border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
                 elevation = CardDefaults.cardElevation(
                     defaultElevation = 2.dp,
@@ -1626,7 +1670,7 @@ class UiUtils {
                 Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(1.dp)) {
                     Row(horizontalArrangement = Arrangement.Start,
                         modifier = Modifier
-                            .background(color = Color.White)
+                            .background(color = MaterialTheme.colorScheme.surface)
                             .padding(10.dp)
                             .fillMaxWidth()){
                         CompositionLocalProvider(
@@ -1650,12 +1694,12 @@ class UiUtils {
                         Column {
                             Text(
                                 text = news.posterName,
-                                color = Color.Black,
+                                color = MaterialTheme.colorScheme.onSurface,
                                 modifier = Modifier.padding(horizontal = 2.dp)
                             )
                             Text(
                                 text = convertTimeToDateString(news.timePosted),
-                                color = Color.Gray,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.padding(horizontal = 2.dp)
                             )
                         }
@@ -1730,7 +1774,7 @@ class UiUtils {
                 Row(
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(Color.White)
+                        .background(MaterialTheme.colorScheme.surface)
                         .testTag(TestTag.TAG_BUTTON_DELETE)
                         .semantics {
                             contentDescription = TestTag.TAG_BUTTON_DELETE
@@ -1743,14 +1787,14 @@ class UiUtils {
                             .padding(end = 16.dp)
                             .size(48.dp)
                             .clip(CircleShape)
-                            .background(Color.Red)
+                            .background(MaterialTheme.colorScheme.error)
                             .clickable { onDelete() },
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = Icons.Default.Delete,
                             contentDescription = "Delete",
-                            tint = Color.White,
+                            tint = MaterialTheme.colorScheme.onError,
                             modifier = Modifier.size(24.dp)
                         )
                     }
@@ -1812,9 +1856,9 @@ class UiUtils {
                             message = it
                         },
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedTextColor = Color.Black,
-                            unfocusedTextColor = Color.Black,
-                            disabledTextColor = Color.Black
+                            focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                            unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+                            disabledTextColor = MaterialTheme.colorScheme.onSurfaceVariant
                         ),
                         maxLines = 4,
                         modifier = Modifier
@@ -1910,7 +1954,7 @@ class UiUtils {
             ) {
                 Text(
                     text = title,
-                    color = Color.Black,
+                    color = MaterialTheme.colorScheme.onSurface,
                     fontWeight = FontWeight.Bold,
                     style = MaterialTheme.typography.titleMedium,
                     textAlign = textAlign,
@@ -1921,7 +1965,7 @@ class UiUtils {
                 if(subTitle.isNotEmpty()) {
                     Text(
                         text = subTitle,
-                        color = Color.LightGray,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         style = MaterialTheme.typography.bodyMedium,
                         textAlign = textAlign,
                         overflow = TextOverflow.Ellipsis,
@@ -1938,7 +1982,7 @@ class UiUtils {
                     .fillMaxWidth()
                     .padding(10.dp),
                 shape = RoundedCornerShape(12.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White)
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
             ) {
                 Column(modifier = Modifier.padding(12.dp)) {
 
@@ -2025,9 +2069,9 @@ class UiUtils {
                     repeatMode = RepeatMode.Reverse
                 )
             )
-
+            val surfaceVariantColor = MaterialTheme.colorScheme.surfaceVariant
             background(
-                color = Color.LightGray.copy(alpha = alpha),
+                color = surfaceVariantColor.copy(alpha = alpha),
                 shape = RoundedCornerShape(6.dp)
             )
         }
@@ -2054,9 +2098,10 @@ class UiUtils {
                          hasTitle : Boolean = true,
                          icon : String = "",
                          title : String = "",
-                         titleColor : Color = Color.Red,
+                         titleColor : Color = Color.Unspecified,
                          modifier: Modifier = Modifier
         ) {
+            val resolvedTitleColor = if (titleColor == Color.Unspecified) MaterialTheme.colorScheme.primary else titleColor
             Row(
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically,
@@ -2065,7 +2110,7 @@ class UiUtils {
                 if(hasIcon) {
                     CrossPlatformIcon(
                         icon = "fire_chat_icon",
-                        backgroundColor = loginBackgroundColor.toHex(),
+                        backgroundColor = MaterialTheme.colorScheme.background.toHex(),
                         modifier = Modifier
                             .size(30.dp)
                     )
@@ -2073,7 +2118,7 @@ class UiUtils {
                 if(hasTitle) {
                     Text(
                         text = title,
-                        color = titleColor,
+                        color = resolvedTitleColor,
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold
                     )
@@ -2092,7 +2137,7 @@ class UiUtils {
             ) {
                 Text(
                     text = subTitle,
-                    color = Color.LightGray,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     style = MaterialTheme.typography.titleSmall,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth()
@@ -2129,10 +2174,10 @@ class UiUtils {
                 label = { Text(text = label) },
                 singleLine = true,
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedTextColor = Color.White,
-                    unfocusedTextColor = Color.White
+                    focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                    unfocusedTextColor = MaterialTheme.colorScheme.onSurface
                 ),
-                textStyle = TextStyle(Color.White)
+                textStyle = TextStyle(MaterialTheme.colorScheme.onSurface)
             )
         }
 
@@ -2144,9 +2189,11 @@ class UiUtils {
             onClick: () -> Unit,
             buttonColor : Color,
             backgroundColor: String,
-            textColor : Color = Color.Gray,
-            tint: Color = Color.Gray
+            textColor : Color = Color.Unspecified,
+            tint: Color = Color.Unspecified
         ) {
+            val resolvedTextColor = if (textColor == Color.Unspecified) MaterialTheme.colorScheme.onSurfaceVariant else textColor
+            val resolvedTint = if (tint == Color.Unspecified) MaterialTheme.colorScheme.onSurfaceVariant else tint
             Button(
                 onClick = onClick,
                 modifier = modifier.height(34.dp),
@@ -2164,7 +2211,7 @@ class UiUtils {
                     CrossPlatformIcon(
                         icon = icon,
                         contentDescription = text,
-                        tint = tint,
+                        tint = resolvedTint,
                         backgroundColor = backgroundColor,
                         modifier = Modifier.size(16.dp)
                     )
@@ -2176,7 +2223,7 @@ class UiUtils {
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                         fontSize = 12.sp,
-                        color = textColor
+                        color = resolvedTextColor
                     )
                 }
             }
@@ -2207,10 +2254,10 @@ class UiUtils {
                     onClick = {
                         clickLikeButton()
                     },
-                    buttonColor = Color.White,
-                    backgroundColor = Color.White.toHex(),
-                    textColor = if(isLiked) Color.Red else Color.Gray,
-                    tint = if(isLiked) Color.Red else Color.Black
+                    buttonColor = MaterialTheme.colorScheme.surface,
+                    backgroundColor = MaterialTheme.colorScheme.surface.toHex(),
+                    textColor = if(isLiked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                    tint = if(isLiked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
                 )
                 //Comment button
                 ActionButton(
@@ -2226,9 +2273,9 @@ class UiUtils {
                     onClick = {
                         clickCommentButton()
                     },
-                    buttonColor = Color.White,
-                    backgroundColor = Color.White.toHex(),
-                    tint = Color.Black
+                    buttonColor = MaterialTheme.colorScheme.surface,
+                    backgroundColor = MaterialTheme.colorScheme.surface.toHex(),
+                    tint = MaterialTheme.colorScheme.onSurface
                 )
                 //Share button
                 ActionButton(
@@ -2244,9 +2291,9 @@ class UiUtils {
                     onClick = {
                         clickShareButton()
                     },
-                    buttonColor = Color.White,
-                    backgroundColor = Color.White.toHex(),
-                    tint = Color.Black
+                    buttonColor = MaterialTheme.colorScheme.surface,
+                    backgroundColor = MaterialTheme.colorScheme.surface.toHex(),
+                    tint = MaterialTheme.colorScheme.onSurface
                 )
             }
         }
@@ -2260,7 +2307,7 @@ class UiUtils {
         ) {
             Card(
                 colors = CardDefaults.cardColors(
-                    containerColor = memberCardColor
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
                 ),
                 modifier = modifier
                     .fillMaxWidth()
@@ -2288,7 +2335,7 @@ class UiUtils {
 
                     Text(
                         text = user.name,
-                        color = Color.Black,
+                        color = MaterialTheme.colorScheme.onSurface,
                         fontWeight = FontWeight.Bold,
                         overflow = TextOverflow.Ellipsis,
                         maxLines = 2,
@@ -2312,7 +2359,7 @@ class UiUtils {
                         ),
                         colors = ButtonDefaults.outlinedButtonColors(
                             containerColor = MaterialTheme.colorScheme.primary,
-                            contentColor = Color.White
+                            contentColor = MaterialTheme.colorScheme.onPrimary
                         ),
                         modifier = Modifier.defaultMinSize(
                             minHeight = 0.dp,
@@ -2337,7 +2384,7 @@ class UiUtils {
                 modifier = modifier
                     .height(45.dp)
                     .background(
-                        color = Color.White,
+                        color = MaterialTheme.colorScheme.surface,
                         shape = RoundedCornerShape(10.dp)
                     )
                     .border(
@@ -2425,12 +2472,14 @@ class UiUtils {
         @Composable
         fun QuestionTextAndClickableText(
             questionText : String,
-            questionTextColor : Color = Color.Black,
+            questionTextColor : Color = Color.Unspecified,
             clickableText : String,
-            clickableTextColor : Color = Color.Black,
+            clickableTextColor : Color = Color.Unspecified,
             onClick: () -> Unit,
             modifier: Modifier = Modifier
         ) {
+            val resolvedQuestionColor = if (questionTextColor == Color.Unspecified) MaterialTheme.colorScheme.onSurface else questionTextColor
+            val resolvedClickableColor = if (clickableTextColor == Color.Unspecified) MaterialTheme.colorScheme.onSurface else clickableTextColor
             Row(
                 modifier = Modifier
                     .fillMaxWidth(),
@@ -2439,7 +2488,7 @@ class UiUtils {
             ) {
                 Text(
                     text = questionText,
-                    color = questionTextColor,
+                    color = resolvedQuestionColor,
                     style = MaterialTheme.typography.bodyMedium
                 )
 
@@ -2447,7 +2496,7 @@ class UiUtils {
 
                 Text(
                     text = clickableText,
-                    color = clickableTextColor,
+                    color = resolvedClickableColor,
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Bold,
                     modifier = modifier

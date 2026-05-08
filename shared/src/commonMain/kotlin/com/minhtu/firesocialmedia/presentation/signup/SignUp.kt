@@ -129,7 +129,7 @@ class SignUp {
                             }) {
                         Text(
                             text = UiConstants.SignUp.SIGNUP_BUTTON_TEXT,
-                            color = Color.White
+                            color = MaterialTheme.colorScheme.onPrimary
                         )
                     }
 
@@ -156,7 +156,7 @@ class SignUp {
                     )
                     else signUpViewModel.updateConfirmPassword(password)
                 },
-                textStyle = TextStyle(Color.White),
+                textStyle = TextStyle(MaterialTheme.colorScheme.onSurface),
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(20.dp)
@@ -185,7 +185,7 @@ class SignUp {
                             }) {
                         PasswordVisibilityIcon(
                             passwordVisibility,
-                            Color.Gray,
+                            MaterialTheme.colorScheme.onSurfaceVariant,
                             loginBackgroundColor.toHex())
                     }
                 }
@@ -209,7 +209,7 @@ class SignUp {
             ) {
                 Text(
                     text = UiConstants.SignUp.SIGN_UP_QUESTION,
-                    color = Color.LightGray,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     style = MaterialTheme.typography.bodyMedium
                 )
 
@@ -217,7 +217,7 @@ class SignUp {
 
                 Text(
                     text = UiConstants.SignUp.SIGN_UP_TEXT,
-                    color = Color.Red,
+                    color = MaterialTheme.colorScheme.primary,
                     style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier
                         .clickable {

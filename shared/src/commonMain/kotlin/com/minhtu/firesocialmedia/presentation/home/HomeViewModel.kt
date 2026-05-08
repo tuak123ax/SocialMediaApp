@@ -584,8 +584,8 @@ class HomeViewModel(
         loadMoreNews()
     }
 
-    suspend fun findUserById(userId: String) : UserInstance? {
-        return userInteractor.getUser(userId, false)
+    suspend fun findUserById(userId: String) : UserInstance? = withContext(ioDispatcher){
+        userInteractor.getUser(userId, false)
     }
 
     fun findUserByIdInCache(userId: String) : UserInstance? {

@@ -107,7 +107,7 @@ class Search {
                     .fillMaxWidth()
                     .height(40.dp)
                     .background(
-                        color = Color.White,
+                        color = MaterialTheme.colorScheme.background,
                         shape = RoundedCornerShape(10.dp)
                     )
                     .border(

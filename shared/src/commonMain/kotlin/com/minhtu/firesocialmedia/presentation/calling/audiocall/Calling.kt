@@ -68,6 +68,10 @@ import com.minhtu.firesocialmedia.presentation.home.HomeViewModel
 import com.minhtu.firesocialmedia.storage.toStorageUrl
 import com.minhtu.firesocialmedia.utils.NavigationHandler
 import com.minhtu.firesocialmedia.utils.Utils.Companion.sendNotification
+import com.minhtu.sharedmodule.ui.theme.callAcceptColor
+import com.minhtu.sharedmodule.ui.theme.callAcceptContainerColor
+import com.minhtu.sharedmodule.ui.theme.callAcceptOnColor
+import com.minhtu.sharedmodule.ui.theme.callStopPendingColor
 import com.minhtu.sharedmodule.ui.theme.iconButtonBackgroundColor
 import com.seiko.imageloader.ui.AutoSizeImage
 import kotlinx.coroutines.CoroutineScope
@@ -99,10 +103,11 @@ class Calling {
             var isRunning by rememberSaveable { mutableStateOf(false) }
             var acceptCall by rememberSaveable { mutableStateOf(false) }
             val showDialog = remember { mutableStateOf(false) }
-            var backgroundButton by remember { mutableStateOf(Color.Red) }
+            var backgroundButton by remember { mutableStateOf<Color?>(null) }
 
             val isMuted by callingViewModel.isMuted
             val currentSpeakerType by callingViewModel.currentSpeakerType
+            var isStopCallPending by remember { mutableStateOf(false) }
 
             // Apply mute/speaker state to the call service when call becomes active so remote audio is heard from the start
             LaunchedEffect(acceptCall, isCalling) {
@@ -114,7 +119,7 @@ class Calling {
             LaunchedEffect(Unit) {
                 countDownTimer(
                     onTimeOver = {
-                        backgroundButton = Color.Gray
+                        backgroundButton = null
                         isRunning = false
                         callingViewModel.stopCallAction(
                             currentUser!!.uid,
@@ -281,7 +286,7 @@ class Calling {
                         shape = CircleShape,
                         tonalElevation = 6.dp,
                         shadowElevation = 6.dp,
-                        border = BorderStroke(2.dp, Color.White),
+                        border = BorderStroke(2.dp, MaterialTheme.colorScheme.outline),
                         modifier = Modifier
                             .size(150.dp)
                             .padding(20.dp)
@@ -304,7 +309,7 @@ class Calling {
                 // User name with max width & ellipsis
                 Text(
                     text = if(isCalling) callee.name else caller.name,
-                    color = Color.Black,
+                    color = MaterialTheme.colorScheme.onSurface,
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Center,
@@ -317,7 +322,7 @@ class Calling {
 
                 Text(
                     text = if(isCalling) "You are calling..." else "is calling you",
-                    color = Color.Red,
+                    color = MaterialTheme.colorScheme.error,
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Center,
@@ -345,11 +350,9 @@ class Calling {
                                 contentDescription = TestTag.TAG_VIDEO_CALL_BUTTON
                             },
                         onClickButton = {
-                            onNavigateToVideoCall(callingViewModel.sessionId, null)
-//                                callingViewModel.observeAnswerFromCallee(
-//                                    platform,
-//                                    onGetAnswerFromCallee = {
-//                                    })
+                            if (!isStopCallPending) {
+                                onNavigateToVideoCall(callingViewModel.sessionId, null)
+                            }
                         }
                     )
                 }
@@ -371,7 +374,7 @@ class Calling {
                                     contentDescription = TestTag.TAG_BUTTON_MUTE
                                 },
                             onClickButton = {
-                                callingViewModel.updateMuteStatus(!isMuted)
+                                if (!isStopCallPending) callingViewModel.updateMuteStatus(!isMuted)
                             }
                         )
                         CallActionButton(
@@ -390,11 +393,13 @@ class Calling {
                                     contentDescription = TestTag.TAG_BUTTON_SPEAKER
                                 },
                             onClickButton = {
-                                val nextSpeakerType = when(currentSpeakerType) {
-                                    SpeakerType.Audio -> SpeakerType.Speaker
-                                    SpeakerType.Speaker -> SpeakerType.Audio
+                                if (!isStopCallPending) {
+                                    val nextSpeakerType = when(currentSpeakerType) {
+                                        SpeakerType.Audio -> SpeakerType.Speaker
+                                        SpeakerType.Speaker -> SpeakerType.Audio
+                                    }
+                                    callingViewModel.updateSpeakerStatus(nextSpeakerType)
                                 }
-                                callingViewModel.updateSpeakerStatus(nextSpeakerType)
                             }
                         )
                     }
@@ -409,18 +414,20 @@ class Calling {
                             if(!navigateToCallingScreenFromNotification) {
                                 FloatingActionButton(
                                     onClick = {
-                                        startCount = true
-                                        isRunning = true
-                                        acceptCall = true
-                                        if(currentUser == callee) {
-                                            if(remoteOffer != null) {
-                                                callingViewModel.acceptCall(
-                                                    sessionId,
-                                                    callee
-                                                )
+                                        if (!isStopCallPending) {
+                                            startCount = true
+                                            isRunning = true
+                                            acceptCall = true
+                                            if(currentUser == callee) {
+                                                if(remoteOffer != null) {
+                                                    callingViewModel.acceptCall(
+                                                        sessionId,
+                                                        callee
+                                                    )
+                                                }
                                             }
+                                            callingViewModel.resetCounter()
                                         }
-                                        callingViewModel.resetCounter()
                                     },
                                     modifier = Modifier
                                         .size(56.dp)
@@ -429,7 +436,7 @@ class Calling {
                                             contentDescription = TestTag.TAG_ACCEPT_CALL_BUTTON
                                         },
                                     shape = CircleShape,
-                                    containerColor = Color.Green,
+                                    containerColor = callAcceptColor,
                                     elevation = FloatingActionButtonDefaults.elevation(
                                         defaultElevation = 8.dp,
                                         pressedElevation = 12.dp
@@ -437,15 +444,14 @@ class Calling {
                                 ) {
                                     Icon(Icons.Default.Call,
                                         contentDescription = "Accept Call",
-                                        tint = Color.Black)
+                                        tint = callAcceptOnColor)
                                 }
                                 Spacer(modifier = Modifier.weight(1f))
                             }
                         }
                     }
-                    FloatingActionButton(
-                        onClick = {
-                            backgroundButton = Color.Gray
+                    LaunchedEffect(isStopCallPending) {
+                        if (isStopCallPending) {
                             isRunning = false
                             callingViewModel.stopCallAction(
                                 currentUser!!.uid,
@@ -457,6 +463,15 @@ class Calling {
                                 sendNotification("", sessionId, callee, caller, "STOP_CALL")
                             }
                             homeViewModel.setWhoStopCall(currentUser.uid)
+                            isStopCallPending = false
+                        }
+                    }
+                    FloatingActionButton(
+                        onClick = {
+                            if (!isStopCallPending) {
+                                backgroundButton = callStopPendingColor
+                                isStopCallPending = true
+                            }
                         },
                         modifier = Modifier
                             .size(56.dp)
@@ -465,7 +480,7 @@ class Calling {
                                 contentDescription = TestTag.TAG_REJECT_CALL_BUTTON
                             },
                         shape = CircleShape,
-                        containerColor = backgroundButton,
+                        containerColor = backgroundButton ?: MaterialTheme.colorScheme.error,
                         elevation = FloatingActionButtonDefaults.elevation(
                             defaultElevation = 8.dp,
                             pressedElevation = 12.dp
@@ -474,7 +489,7 @@ class Calling {
                         Icon(
                             Icons.Default.CallEnd,
                             contentDescription = "Reject Call",
-                            tint = Color.Black
+                            tint = MaterialTheme.colorScheme.onError
                         )
                     }
                 }
@@ -559,7 +574,7 @@ class Calling {
                 }
                 Text(
                     text = text,
-                    color = Color.Gray,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     style = MaterialTheme.typography.bodyMedium
                 )
             }
@@ -583,7 +598,7 @@ class Calling {
                         onDismiss()
                     },
                     shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
-                    containerColor = Color(0xFFF4F4F4),
+                    containerColor = MaterialTheme.colorScheme.surface,
                     dragHandle = {
                         Box(
                             modifier = Modifier
@@ -591,7 +606,7 @@ class Calling {
                                 .width(40.dp)
                                 .height(4.dp)
                                 .clip(RoundedCornerShape(50))
-                                .background(Color.LightGray)
+                                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
                         )
                     }
                 ) {
@@ -610,7 +625,7 @@ class Calling {
                                 modifier = Modifier
                                     .size(150.dp)
                                     .clip(CircleShape)
-                                    .background(Color(0xFFDFF5E1))
+                                    .background(callAcceptContainerColor)
                             )
 
                             CompositionLocalProvider(
@@ -620,7 +635,7 @@ class Calling {
                                     shape = CircleShape,
                                     tonalElevation = 6.dp,
                                     shadowElevation = 6.dp,
-                                    border = BorderStroke(2.dp, Color.White),
+                                    border = BorderStroke(2.dp, MaterialTheme.colorScheme.outline),
                                     modifier = Modifier
                                         .size(150.dp)
                                         .padding(20.dp)
@@ -662,12 +677,12 @@ class Calling {
                                 modifier = Modifier
                                     .size(8.dp)
                                     .clip(CircleShape)
-                                    .background(Color(0xFF00C853))
+                                    .background(callAcceptColor)
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
                                 text = "Incoming Video Call",
-                                color = Color.Black,
+                                color = MaterialTheme.colorScheme.onSurface,
                                 fontWeight = FontWeight.Medium
                             )
                         }
@@ -685,12 +700,12 @@ class Calling {
                                 .height(58.dp),
                             shape = RoundedCornerShape(50),
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = Color(0xFF00E600)
+                                containerColor = callAcceptColor
                             )
                         ) {
-                            Icon(Icons.Default.Videocam, contentDescription = null)
+                            Icon(Icons.Default.Videocam, contentDescription = null, tint = callAcceptOnColor)
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text("Accept Call", fontWeight = FontWeight.Bold)
+                            Text("Accept Call", fontWeight = FontWeight.Bold, color = callAcceptOnColor)
                         }
 
                         Spacer(modifier = Modifier.height(16.dp))
@@ -705,15 +720,15 @@ class Calling {
                                 .fillMaxWidth()
                                 .height(58.dp),
                             shape = RoundedCornerShape(50),
-                            border = BorderStroke(1.dp, Color(0xFFFFCDD2))
+                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.4f))
                         ) {
                             Icon(
                                 Icons.Default.CallEnd,
                                 contentDescription = null,
-                                tint = Color.Red
+                                tint = MaterialTheme.colorScheme.error
                             )
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text("Decline", color = Color.Red, fontWeight = FontWeight.Bold)
+                            Text("Decline", color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold)
                         }
                         Spacer(modifier = Modifier.height(16.dp))
                     }
@@ -722,3 +737,6 @@ class Calling {
         }
     }
 }
+
+
+

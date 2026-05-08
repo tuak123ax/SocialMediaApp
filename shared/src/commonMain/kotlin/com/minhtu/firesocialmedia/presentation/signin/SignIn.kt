@@ -190,7 +190,7 @@ class SignIn{
                         //Forgot password
                         Text(
                             text = UiConstants.SignIn.FORGOT_PASSWORD_TEXT,
-                            color = Color.Red,
+                            color = MaterialTheme.colorScheme.primary,
                             style = MaterialTheme.typography.bodyMedium,
                             textAlign = TextAlign.Start,
                             modifier = Modifier
@@ -252,8 +252,8 @@ class SignIn{
                 },
                 shape = RoundedCornerShape(10.dp),
                 colors = ButtonDefaults.outlinedButtonColors(
-                    containerColor = Color.White,
-                    contentColor = Color.Black
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    contentColor = MaterialTheme.colorScheme.onSurface
                 ),
                 modifier = Modifier
                     .fillMaxWidth()
@@ -265,13 +265,13 @@ class SignIn{
             ) {
                 CrossPlatformIcon(
                     "google",
-                    backgroundColor = Color.White.toHex(),
+                    backgroundColor = MaterialTheme.colorScheme.surface.toHex(),
                     "Google",
                     Modifier
                         .size(25.dp)
                         .padding(end = 5.dp)
                 )
-                Text(text = UiConstants.SignIn.SIGN_IN_WITH_GOOGLE, color = Color.Black)
+                Text(text = UiConstants.SignIn.SIGN_IN_WITH_GOOGLE, color = MaterialTheme.colorScheme.onSurface)
             }
         }
 
@@ -288,7 +288,7 @@ class SignIn{
             ) {
                 Text(
                     text = UiConstants.SignIn.SIGN_UP_QUESTION,
-                    color = Color.LightGray,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     style = MaterialTheme.typography.bodyMedium
                 )
 
@@ -296,7 +296,7 @@ class SignIn{
 
                 Text(
                     text = UiConstants.SignIn.SIGN_UP_TEXT,
-                    color = Color.Red,
+                    color = MaterialTheme.colorScheme.primary,
                     style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier
                         .clickable {
@@ -322,12 +322,12 @@ class SignIn{
                 HorizontalDivider(
                     modifier = Modifier.weight(1f),
                     thickness = 1.dp,
-                    color = Color.Gray
+                    color = MaterialTheme.colorScheme.outline
                 )
 
                 Text(
                     text = UiConstants.SignIn.SEPARATE_TEXT,
-                    color = Color.Gray,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.padding(horizontal = 12.dp)
                 )
@@ -335,7 +335,7 @@ class SignIn{
                 HorizontalDivider(
                     modifier = Modifier.weight(1f),
                     thickness = 1.dp,
-                    color = Color.Gray
+                    color = MaterialTheme.colorScheme.outline
                 )
             }
         }
@@ -381,7 +381,7 @@ class SignIn{
                         }
                 )
                 Text(
-                    color = Color.LightGray,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     text = UiConstants.SignIn.REMEMBER_PASSWORD_TEXT,
                     style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier.padding(start = 5.dp)
@@ -409,7 +409,7 @@ class SignIn{
                 shape = androidx.compose.foundation.shape.RoundedCornerShape(10.dp),
                 label = { Text(text = label) },
                 singleLine = true,
-                textStyle = TextStyle(Color.White),
+                textStyle = TextStyle(MaterialTheme.colorScheme.onSurface),
                 visualTransformation = if (passwordVisibility) VisualTransformation.None else PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                 leadingIcon = {
@@ -429,7 +429,7 @@ class SignIn{
                     ) {
                         PasswordVisibilityIcon(
                             passwordVisibility,
-                            Color.Gray,
+                            MaterialTheme.colorScheme.onSurfaceVariant,
                             loginBackgroundColor.toHex())
                     }
                 }

@@ -83,9 +83,9 @@ fun InfoToast(message: String) {
     Card(
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color.White
+            containerColor = MaterialTheme.colorScheme.inverseSurface
         ),
-        border = BorderStroke(1.dp, Color(0xFFE6E6E6)),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
         elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
         modifier = Modifier
             .padding(bottom = 32.dp)
@@ -116,7 +116,7 @@ fun InfoToast(message: String) {
             Text(
                 text = message,
                 style = MaterialTheme.typography.bodyMedium,
-                color = Color(0xFF1C1C1C),
+                color = MaterialTheme.colorScheme.inverseOnSurface,
                 modifier = Modifier.weight(1f)
             )
         }

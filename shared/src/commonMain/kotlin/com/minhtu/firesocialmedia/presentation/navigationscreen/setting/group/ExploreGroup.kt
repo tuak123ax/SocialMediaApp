@@ -55,7 +55,7 @@ import com.minhtu.firesocialmedia.storage.toStorageUrl
 import com.minhtu.firesocialmedia.utils.UiUtils
 import com.minhtu.firesocialmedia.utils.UiUtils.Companion.TitleAndSubTitleBelow
 import com.minhtu.firesocialmedia.utils.Utils
-import com.minhtu.sharedmodule.ui.theme.memberCardColor
+
 import com.seiko.imageloader.ui.AutoSizeImage
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
@@ -105,13 +105,13 @@ class ExploreGroup {
                 HorizontalDivider(
                     modifier = Modifier.fillMaxWidth().padding(vertical = 10.dp),
                     thickness = 1.dp,
-                    color = Color.LightGray
+                    color = MaterialTheme.colorScheme.outlineVariant
                 )
 
                 SectionHeaderAndClickableText(
                     header = "Featured Groups",
-                    headerTextColor = Color.Black,
-                    subHeaderTextColor = Color.Red,
+                    headerTextColor = MaterialTheme.colorScheme.onSurface,
+                    subHeaderTextColor = MaterialTheme.colorScheme.primary,
                     onClickTrailingText = {
 
                     }
@@ -132,7 +132,7 @@ class ExploreGroup {
 
                 SectionHeaderAndClickableText(
                     header = "Recommended for you",
-                    headerTextColor = Color.Black
+                    headerTextColor = MaterialTheme.colorScheme.onSurface
                 )
                 //Show list of recommended groups
             val recommendedState = rememberLazyListState()
@@ -183,9 +183,11 @@ class ExploreGroup {
         @Composable
         fun SectionHeaderAndClickableText(header : String,
                                           subHeader: String = "",
-                                          headerTextColor : Color = Color.Black,
-                                          subHeaderTextColor : Color = Color.Black,
+                                          headerTextColor : Color? = null,
+                                          subHeaderTextColor : Color? = null,
                                           onClickTrailingText : () -> Unit = {}) {
+            val resolvedHeader = headerTextColor ?: MaterialTheme.colorScheme.onSurface
+            val resolvedSubHeader = subHeaderTextColor ?: MaterialTheme.colorScheme.primary
             Row(
                 horizontalArrangement = Arrangement.Start,
                 verticalAlignment = Alignment.CenterVertically,
@@ -195,7 +197,7 @@ class ExploreGroup {
             ) {
                 Text(
                     text = header,
-                    color = headerTextColor,
+                    color = resolvedHeader,
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold
                 )
@@ -203,7 +205,7 @@ class ExploreGroup {
                 if(subHeader.isNotEmpty()) {
                     Text(
                         text = subHeader,
-                        color = subHeaderTextColor,
+                        color = resolvedSubHeader,
                         style = MaterialTheme.typography.bodyMedium,
                         modifier = Modifier
                             .clickable{
@@ -316,7 +318,7 @@ class ExploreGroup {
                     .semantics {
                         contentDescription = TestTag.TAG_RECOMMEND_GROUP
                     },
-                colors = CardDefaults.cardColors(containerColor = memberCardColor),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
                 shape = RoundedCornerShape(16.dp)
             ) {
                 Row(
@@ -356,7 +358,7 @@ class ExploreGroup {
                     ) {
                         Text(
                             text = "Join",
-                            color = Color.White
+                            color = MaterialTheme.colorScheme.onPrimary
                         )
                     }
                 }

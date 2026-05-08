@@ -106,7 +106,7 @@ class ForgotPassword{
                         hasIcon = false,
                         hasTitle = true,
                         title = UiConstants.ForgotPassword.SCREEN_TITLE,
-                        titleColor = Color.White,
+                        titleColor = MaterialTheme.colorScheme.onBackground,
                         modifier = Modifier.fillMaxWidth()
                     )
                     //SubTitle
@@ -141,7 +141,7 @@ class ForgotPassword{
                     //Back to sign in
                     Text(
                         text = UiConstants.ForgotPassword.BACK_TO_SIGN_IN_TEXT,
-                        color = Color.Gray,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textDecoration = TextDecoration.Underline,
                         style = MaterialTheme.typography.bodyMedium,
                         textAlign = TextAlign.Center,

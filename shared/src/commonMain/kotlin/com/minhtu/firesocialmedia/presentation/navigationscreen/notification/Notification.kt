@@ -75,6 +75,7 @@ import com.minhtu.firesocialmedia.domain.entity.notification.NotificationType
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.platform.CrossPlatformIcon
 import com.minhtu.firesocialmedia.platform.showToast
+import com.minhtu.firesocialmedia.platform.toHex
 import com.minhtu.firesocialmedia.presentation.home.HomeViewModel
 import com.minhtu.firesocialmedia.presentation.loading.Loading
 import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
@@ -144,59 +145,75 @@ class Notification {
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(Color.White)
+                        .background(MaterialTheme.colorScheme.background)
                         .padding(10.dp)
                 ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .weight(1f)
-                            .padding(horizontal = 8.dp)
+                    val iconSize = 35.dp
+                    val sideSlotWidth = iconSize + 16.dp
+                    // LEFT EMPTY SLOT
+                    Box(
+                        modifier = Modifier.width(sideSlotWidth)
+                    )
+                    // CENTER TITLE
+                    Box(
+                        modifier = Modifier.weight(1f),
+                        contentAlignment = Alignment.Center
                     ) {
+
                         Text(
                             text = "Notifications",
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
-                            textAlign = TextAlign.Center
+                            textAlign = TextAlign.Center,
+                            maxLines = 1
                         )
                     }
-
-                    Box{
+                    // RIGHT ICON SLOT
+                    Box(
+                        modifier = Modifier.width(sideSlotWidth),
+                        contentAlignment = Alignment.CenterEnd
+                    ) {
                         CrossPlatformIcon(
                             icon = "more_horiz",
-                            backgroundColor = "#FFFFFFFF",
+                            backgroundColor = MaterialTheme.colorScheme.surface.toHex(),
                             contentDescription = "More Options",
-                            tint = Color.Black,
+                            tint = MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier
-                                .size(35.dp)
+                                .size(iconSize)
                                 .clip(CircleShape)
                                 .testTag(TestTag.TAG_BUTTON_MOREOPTIONS)
-                                .semantics { contentDescription = TestTag.TAG_BUTTON_MOREOPTIONS }
+                                .semantics {
+                                    contentDescription =
+                                        TestTag.TAG_BUTTON_MOREOPTIONS
+                                }
                                 .clickable {
                                     showDropDownMenu = true
                                 }
                                 .padding(4.dp)
                         )
+
                         DropdownMenuForNotification(
                             showDropDownMenu,
                             onDismissRequest = {
                                 showDropDownMenu = false
                             },
                             onDeleteAll = {
-                                if(homeViewModel.currentUser != null) {
-                                    notificationViewModel.deleteAllNotifications(homeViewModel.currentUser!!)
+                                if (homeViewModel.currentUser != null) {
+                                    notificationViewModel.deleteAllNotifications(
+                                        homeViewModel.currentUser!!
+                                    )
                                 }
                             }
                         )
                     }
                 }
+
                 HorizontalDivider(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(bottom = 10.dp),
                     thickness = 1.dp,
-                    color = Color.LightGray
+                    color = MaterialTheme.colorScheme.outlineVariant
                 )
                 //Sort notification list by timeSend
                 val notificationList = remember(homeViewModel.listNotificationOfCurrentUser) {
@@ -303,7 +320,7 @@ class Notification {
                 Row(
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(if(notification.beRead) Color.White else adminCardColor)
+                        .background(if(notification.beRead) MaterialTheme.colorScheme.surface else adminCardColor)
                         .testTag(TestTag.TAG_BUTTON_DELETE)
                         .semantics {
                             contentDescription = TestTag.TAG_BUTTON_DELETE
@@ -316,14 +333,14 @@ class Notification {
                             .padding(end = 16.dp)
                             .size(48.dp)
                             .clip(CircleShape)
-                            .background(Color.Red)
+                            .background(MaterialTheme.colorScheme.error)
                             .clickable { onDelete() },
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = Icons.Default.Delete,
                             contentDescription = "Delete",
-                            tint = Color.White,
+                            tint = MaterialTheme.colorScheme.onError,
                             modifier = Modifier.size(24.dp)
                         )
                     }
@@ -334,7 +351,7 @@ class Notification {
                     modifier = Modifier
                         .offset { IntOffset(animatedOffsetX.roundToInt(), 0) }
                         .fillMaxWidth()
-                        .background(Color.White)
+                        .background(MaterialTheme.colorScheme.surface)
                         .pointerInput(notification.id) {
                             detectHorizontalDragGestures(
                                 onHorizontalDrag = { _, dragAmount ->
@@ -412,14 +429,14 @@ class Notification {
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(
-                        color = if(notification.beRead) Color.White else adminCardColor
+                        color = if(notification.beRead) MaterialTheme.colorScheme.surface else adminCardColor
                     )
             ) {
                 if(!notification.beRead) {
                     VerticalDivider(
                         modifier = Modifier,
                         thickness = 3.dp,
-                        color = Color.Red
+                        color = MaterialTheme.colorScheme.primary
                     )
                 }
                 CompositionLocalProvider(
@@ -452,7 +469,7 @@ class Notification {
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                         style = MaterialTheme.typography.bodyLarge,
-                        color = if(notification.beRead) blurLikeColor.copy(alpha = 0.75f) else Color.Black
+                        color = if(notification.beRead) blurLikeColor.copy(alpha = 0.75f) else MaterialTheme.colorScheme.onSurface
                     )
                     Text(
                         text = when (notification.type) {
@@ -466,7 +483,7 @@ class Notification {
                                 "Unknown notification type!"
                             }
                         },
-                        color = if(notification.beRead) blurLikeColor.copy(alpha = 0.75f) else Color.Gray,
+                        color = if(notification.beRead) blurLikeColor.copy(alpha = 0.75f) else MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                         style = MaterialTheme.typography.bodyMedium
@@ -491,7 +508,7 @@ class Notification {
                         Icon(
                             imageVector = Icons.Filled.Favorite,
                             contentDescription = "Like",
-                            tint = Color(0xFFFF4081), // Pink
+                            tint = MaterialTheme.colorScheme.primary, // Pink/Like
                             modifier = modifier
                         )
                     }
@@ -501,7 +518,7 @@ class Notification {
                         Icon(
                             imageVector = Icons.Filled.ModeComment,
                             contentDescription = "Comment",
-                            tint = Color.Black,
+                            tint = MaterialTheme.colorScheme.onSurface,
                             modifier = modifier
                         )
                     }
@@ -511,7 +528,7 @@ class Notification {
                         Icon(
                             imageVector = Icons.Filled.PersonAddAlt1,
                             contentDescription = "Add friend",
-                            tint = Color.Blue,
+                            tint = MaterialTheme.colorScheme.primary,
                             modifier = modifier
                         )
                     }
@@ -522,7 +539,7 @@ class Notification {
                         Icon(
                             imageVector = Icons.Filled.PostAdd,
                             contentDescription = "Upload new",
-                            tint = Color.Green,
+                            tint = MaterialTheme.colorScheme.tertiary,
                             modifier = modifier
                         )
                     }
@@ -533,7 +550,7 @@ class Notification {
                         Icon(
                             imageVector = Icons.Filled.IosShare,
                             contentDescription = "Shared Post",
-                            tint = Color.Green,
+                            tint = MaterialTheme.colorScheme.tertiary,
                             modifier = modifier
                         )
                     }
@@ -543,7 +560,7 @@ class Notification {
                         Icon(
                             imageVector = Icons.Default.Group,
                             contentDescription = "Invite to group",
-                            tint = Color.Cyan,
+                            tint = MaterialTheme.colorScheme.secondary,
                             modifier = modifier
                         )
                     }
@@ -553,11 +570,12 @@ class Notification {
                         Icon(
                             imageVector = Icons.Default.Error,
                             contentDescription = "Error",
-                            tint = Color.Red,
+                            tint = MaterialTheme.colorScheme.error,
                             modifier = modifier
                         )
                     }
                 }
+
             }
         }
 

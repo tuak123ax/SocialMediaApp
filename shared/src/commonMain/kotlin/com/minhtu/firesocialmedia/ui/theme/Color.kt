@@ -25,6 +25,13 @@ val inactiveColor = Color(0xFF2C2C2E)    // Dark surface (iOS-style)
 val iconActive = Color.White
 val iconInactive = Color.White
 
+// Call screen semantic colors — change here to update all accept/decline UI at once
+val callAcceptColor = Color(0xFF4CAF50)       // Green — universal "accept call" color
+val callAcceptOnColor = Color(0xFFFFFFFF)     // White — icon/text on accept button
+val callAcceptContainerColor = Color(0xFF4CAF50).copy(alpha = 0.15f) // Light green ring/bg
+val callStopPendingColor = Color(0xFF9E9E9E)  // Gray — stop/exit button while navigating away
+val videoCallButtonColor = Color(0xFF3A3A3C)  // Dark surface — default video call action button bg
+
 val PolicyRed = Color(0xFFE53935)
 val PolicyGrayTitle = Color(0xFF9E9E9E)
 val PolicyBody = Color(0xFF424242)
