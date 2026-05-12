@@ -38,7 +38,6 @@ import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
 import com.minhtu.firesocialmedia.utils.UiUtils.Companion.IconAndTitle
 import com.minhtu.firesocialmedia.utils.UiUtils.Companion.SubTitle
 import com.minhtu.firesocialmedia.utils.UiUtils.Companion.TextFieldWithLeadingIcon
-import com.minhtu.sharedmodule.ui.theme.loginBackgroundColor
 
 class ForgotPassword{
     companion object{
@@ -91,13 +90,13 @@ class ForgotPassword{
             Box(modifier = Modifier.fillMaxSize()) {
                 Column(modifier = modifier
                     .fillMaxSize()
-                    .background(loginBackgroundColor),
+                    .background(MaterialTheme.colorScheme.background),
                     verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally) {
                     //Big icon
                     CrossPlatformIcon(
                         icon = "fire_chat_icon",
-                        backgroundColor = loginBackgroundColor.toHex(),
+                        backgroundColor = MaterialTheme.colorScheme.background.toHex(),
                         modifier = Modifier
                             .size(50.dp)
                     )

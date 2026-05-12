@@ -219,10 +219,11 @@ class Home {
             val listState = rememberSaveable(saver = LazyListState.Saver) { LazyListState(0, 0) }
             Box(modifier = Modifier
                 .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background)) {
+                .background(MaterialTheme.colorScheme.background)
+                .padding(paddingValues)) {
                 Column(
                     verticalArrangement = Arrangement.Top,
-                    modifier = modifier.padding(paddingValues)
+                    modifier = modifier
                 ) {
                     //App name and buttons
                     Row(
