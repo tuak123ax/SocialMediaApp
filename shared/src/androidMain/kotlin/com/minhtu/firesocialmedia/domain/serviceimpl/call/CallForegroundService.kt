@@ -497,6 +497,10 @@ class CallForegroundService : Service() {
                 }
             }
         } else {
+            // RECORD_AUDIO permission is not yet granted.
+            // This path is a fallback — normally IncomingCallActivity handles the permission
+            // flow with proper in-UI dialogs before this service is ever started.
+            // Show a notification so the user knows to grant the permission and try again.
             callNotificationManager.showPermissionNotification()
         }
     }

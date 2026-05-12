@@ -63,7 +63,6 @@ import com.minhtu.firesocialmedia.utils.UiUtils.Companion.IconAndTitle
 import com.minhtu.firesocialmedia.utils.UiUtils.Companion.PasswordVisibilityIcon
 import com.minhtu.firesocialmedia.utils.UiUtils.Companion.SubTitle
 import com.minhtu.firesocialmedia.utils.UiUtils.Companion.TextFieldWithLeadingIcon
-import com.minhtu.sharedmodule.ui.theme.loginBackgroundColor
 
 class SignIn{
     companion object{
@@ -146,7 +145,7 @@ class SignIn{
 
             Box(modifier = Modifier.fillMaxSize()) {
                 Column(modifier = modifier
-                    .background(loginBackgroundColor),
+                    .background(MaterialTheme.colorScheme.background),
                     verticalArrangement = Arrangement.Center) {
                     //Title
                     IconAndTitle(
@@ -430,7 +429,7 @@ class SignIn{
                         PasswordVisibilityIcon(
                             passwordVisibility,
                             MaterialTheme.colorScheme.onSurfaceVariant,
-                            loginBackgroundColor.toHex())
+                            MaterialTheme.colorScheme.background.toHex())
                     }
                 }
             )

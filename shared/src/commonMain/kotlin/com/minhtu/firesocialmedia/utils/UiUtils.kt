@@ -28,6 +28,9 @@ import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -760,8 +763,7 @@ class UiUtils {
             onNavigate: (String) -> Unit,
             homeViewModel: HomeViewModel,
             onNavigateToUploadNews: () -> Unit,
-            modifier: Modifier,
-            useDefaultInsets: Boolean = true
+            modifier: Modifier
         ) {
             val items = listOf(
                 Screen.Home,
@@ -769,76 +771,85 @@ class UiUtils {
                 Screen.Notification,
                 Screen.Settings
             )
-            Box(modifier = modifier){
-                val barInsets = if (useDefaultInsets) NavigationBarDefaults.windowInsets else WindowInsets(0)
-                NavigationBar(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    windowInsets = barInsets
-                ) {
-                    val currentRoute = currentRoute
-                    items.forEach { screen ->
-                        val notificationCount = homeViewModel.listNotificationOfCurrentUser.filter {
-                            !it.beRead
-                        }.size
+            Column(modifier = modifier) {
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    NavigationBar(
+                        containerColor = MaterialTheme.colorScheme.surface,
+                        windowInsets = WindowInsets(0),
+                        modifier = Modifier.height(60.dp)
+                    ) {
+                        val currentRoute = currentRoute
+                        items.forEach { screen ->
+                            val notificationCount = homeViewModel.listNotificationOfCurrentUser.filter {
+                                !it.beRead
+                            }.size
 
-                        val showBadge = screen.route == Notification.getScreenName() && notificationCount > 0
-                        val testTag = when(screen.route) {
-                            Notification.getScreenName() -> TestTag.TAG_NOTIFICATION_BOTTOM
-                            Home.getScreenName() -> TestTag.TAG_HOME_BOTTOM
-                            Friend.getScreenName() -> TestTag.TAG_FRIEND_BOTTOM
-                            Settings.getScreenName() -> TestTag.TAG_SETTING_BOTTOM
-                            else -> ""
-                        }
-                        NavigationBarItem(
-                            icon = {
-                                if(showBadge) {
-                                    BadgedBox(
-                                        badge = {
-                                            Badge{
-                                                Text(notificationCount.toString())
+                            val showBadge = screen.route == Notification.getScreenName() && notificationCount > 0
+                            val testTag = when(screen.route) {
+                                Notification.getScreenName() -> TestTag.TAG_NOTIFICATION_BOTTOM
+                                Home.getScreenName() -> TestTag.TAG_HOME_BOTTOM
+                                Friend.getScreenName() -> TestTag.TAG_FRIEND_BOTTOM
+                                Settings.getScreenName() -> TestTag.TAG_SETTING_BOTTOM
+                                else -> ""
+                            }
+                            NavigationBarItem(
+                                icon = {
+                                    if(showBadge) {
+                                        BadgedBox(
+                                            badge = {
+                                                Badge{
+                                                    Text(notificationCount.toString())
+                                                }
                                             }
+                                        ) {
+                                            Icon(screen.icon, contentDescription = screen.title) }
                                         }
-                                    ) {
+                                    else {
                                         Icon(screen.icon, contentDescription = screen.title) }
+                                    },
+                                selected = currentRoute == screen.route,
+                                onClick = { onNavigate(screen.route) },
+                                modifier = Modifier
+                                    .testTag(testTag)
+                                    .semantics {
+                                        contentDescription = testTag
                                     }
-                                else {
-                                    Icon(screen.icon, contentDescription = screen.title) }
-                                },
-                            selected = currentRoute == screen.route,
-                            onClick = { onNavigate(screen.route) },
-                            modifier = Modifier
-                                .testTag(testTag)
-                                .semantics {
-                                    contentDescription = testTag
-                                }
+                            )
+                        }
+                    }
+
+                    //Floating action button
+                    FloatingActionButton(
+                        onClick = { onNavigateToUploadNews() },
+                        modifier = Modifier
+                            .size(56.dp)
+                            .align(Alignment.TopCenter)
+                            .offset(y = (-28).dp)
+                            .testTag(TestTag.TAG_BOTTOM_ACTION_BUTTON)
+                            .semantics{
+                                contentDescription = TestTag.TAG_BOTTOM_ACTION_BUTTON
+                            },
+                        shape = CircleShape,
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        elevation = FloatingActionButtonDefaults.elevation(
+                            defaultElevation = 8.dp
+                        )
+                    ) {
+                        Icon(
+                            Icons.Default.Add,
+                            contentDescription = "Add",
+                            tint = MaterialTheme.colorScheme.onPrimary
                         )
                     }
                 }
 
-                //Floating action button
-                FloatingActionButton(
-                    onClick = { onNavigateToUploadNews() },
+                // Fill system navigation bar area with surface color so it doesn't show through
+                Spacer(
                     modifier = Modifier
-                        .size(56.dp)
-                        .offset(y = (-30).dp)
-                        .align(Alignment.BottomCenter)
-                        .testTag(TestTag.TAG_BOTTOM_ACTION_BUTTON)
-                        .semantics{
-                            contentDescription = TestTag.TAG_BOTTOM_ACTION_BUTTON
-                        },
-                    shape = CircleShape,
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    elevation = FloatingActionButtonDefaults.elevation(
-                        defaultElevation = 8.dp
-                    )
-                ) {
-                    Icon(
-                        Icons.Default.Add,
-                        contentDescription = "Add",
-                        tint = MaterialTheme.colorScheme.onPrimary
-                    )
-                }
-
+                        .fillMaxWidth()
+                        .windowInsetsBottomHeight(WindowInsets.navigationBars)
+                        .background(MaterialTheme.colorScheme.surface)
+                )
             }
         }
         @Composable

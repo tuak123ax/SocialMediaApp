@@ -29,7 +29,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
@@ -49,7 +48,6 @@ import com.minhtu.firesocialmedia.utils.UiUtils.Companion.IconAndTitle
 import com.minhtu.firesocialmedia.utils.UiUtils.Companion.PasswordVisibilityIcon
 import com.minhtu.firesocialmedia.utils.UiUtils.Companion.SubTitle
 import com.minhtu.firesocialmedia.utils.UiUtils.Companion.TextFieldWithLeadingIcon
-import com.minhtu.sharedmodule.ui.theme.loginBackgroundColor
 
 class SignUp {
     companion object{
@@ -186,7 +184,7 @@ class SignUp {
                         PasswordVisibilityIcon(
                             passwordVisibility,
                             MaterialTheme.colorScheme.onSurfaceVariant,
-                            loginBackgroundColor.toHex())
+                            MaterialTheme.colorScheme.background.toHex())
                     }
                 }
             )

@@ -2,10 +2,15 @@ package com.minhtu.firesocialmedia.presentation.navigation
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
@@ -212,10 +217,12 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
     val backUpCodeViewModel: BackUpCodeViewModel =
         platformViewModel { ViewModelProvider.createBackUpCodeViewModel(platformContext) }
     var isEnable2FAFlow = false
-    val routerViewModel: RouterViewModel = platformViewModel { ViewModelProvider.createRouterViewModel(platformContext) }
+    val routerViewModel: RouterViewModel =
+        platformViewModel { ViewModelProvider.createRouterViewModel(platformContext) }
 
     //Login History
-    val loginHistoryViewModel : LoginHistoryViewModel = platformViewModel { ViewModelProvider.createLoginHistoryViewModel(platformContext) }
+    val loginHistoryViewModel: LoginHistoryViewModel =
+        platformViewModel { ViewModelProvider.createLoginHistoryViewModel(platformContext) }
 
     LaunchedEffect(networkStatus) {
         if (networkStatus != null) {
@@ -275,6 +282,7 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
     ) {
         Scaffold(
             containerColor = MaterialTheme.colorScheme.background,
+            contentWindowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Top),
             bottomBar = {
                 val currentDestination =
                     navController.currentBackStackEntryAsState().value?.destination?.route
@@ -288,7 +296,6 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                         },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(60.dp)
                             .background(MaterialTheme.colorScheme.surface)
                     )
                 }
@@ -318,7 +325,8 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                         loadingViewModel,
                         routerViewModel,
                         modifier = Modifier
-                            .fillMaxSize(),
+                            .fillMaxSize()
+                            .background(MaterialTheme.colorScheme.background),
                         onNavigateToSignUpScreen = { navController.navigate(route = SignUp.getScreenName()) },
                         onNavigateToHomeScreen = { navController.navigate(route = Home.getScreenName()) },
                         onNavigateToInformationScreen = { navController.navigate(route = Information.getScreenName()) },
@@ -1430,7 +1438,7 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                         isEnable2FAFlow,
                         twoFactorEnabledViewModel,
                         onReturnClick = {
-                            if(isEnable2FAFlow) {
+                            if (isEnable2FAFlow) {
                                 navController.popBackStack(SecuritySettings.getScreenName(), false)
                             } else {
                                 navController.navigate(Home.getScreenName()) {
