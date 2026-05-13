@@ -9,13 +9,16 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ChevronRight
@@ -33,7 +36,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
@@ -48,7 +50,6 @@ import com.minhtu.firesocialmedia.platform.showToast
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.BaseSettingInstance
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.SettingInstance
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.Settings.Companion.SettingItem
-import com.minhtu.firesocialmedia.utils.UiUtils
 
 
 class Group {
@@ -66,25 +67,44 @@ class Group {
                 verticalArrangement = Arrangement.Center,
                 modifier = Modifier
                     .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(bottom = 16.dp)
             ) {
                 if(firstTimeUseGroup) {
-                    Spacer(Modifier.height(30.dp))
-                    UiUtils.BackAndTitleAndMoreOptionsRow(
-                        "Welcome to Group",
-                        titleColor = MaterialTheme.colorScheme.error,
-                        titleStyle = MaterialTheme.typography.headlineLarge,
-                        "Connect and grow with your community",
-                        showBackButton = false,
-                        showMoreOptionsMenu = false
-                    )
-                    Spacer(Modifier.height(20.dp))
+                    Spacer(Modifier.height(24.dp))
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp)
+                    ) {
+                        Text(
+                            text = "Welcome to Group",
+                            color = MaterialTheme.colorScheme.primary,
+                            style = MaterialTheme.typography.headlineLarge,
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center
+                        )
+                        Spacer(Modifier.height(4.dp))
+                        Text(
+                            text = "Connect and grow with your community",
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            style = MaterialTheme.typography.bodyMedium,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                    Spacer(Modifier.height(16.dp))
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(290.dp)
-                            .padding(10.dp),
-                        shape = RoundedCornerShape(10.dp),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
+                            .padding(horizontal = 16.dp)
+                            .aspectRatio(16f / 9f),
+                        shape = RoundedCornerShape(12.dp),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                )
                     ) {
                         Box(modifier = Modifier.fillMaxSize()) {
                             Image(
@@ -95,23 +115,36 @@ class Group {
                             )
                         }
                     }
-                    Spacer(Modifier.height(20.dp))
+                    Spacer(Modifier.height(16.dp))
                 } else {
-                    UiUtils.BackAndTitleAndMoreOptionsRow(
-                        "Welcome back",
-                        titleColor = MaterialTheme.colorScheme.error,
-                        titleStyle = MaterialTheme.typography.headlineLarge,
-                        "It's good to see you again.",
-                        showBackButton = false,
-                        showMoreOptionsMenu = false
-                    )
-                    Spacer(Modifier.height(50.dp))
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 16.dp)
+                    ) {
+                        Text(
+                            text = "Welcome back",
+                            color = MaterialTheme.colorScheme.primary,
+                            style = MaterialTheme.typography.headlineLarge,
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center
+                        )
+                        Spacer(Modifier.height(4.dp))
+                        Text(
+                            text = "It's good to see you again.",
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            style = MaterialTheme.typography.bodyMedium,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                    Spacer(Modifier.height(32.dp))
                     Column(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text(
                             text = "Click here to access your groups",
-                            color = MaterialTheme.colorScheme.error,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             textAlign = TextAlign.Center,
@@ -120,7 +153,7 @@ class Group {
                         GroupButton(
                             SettingInstance(
                                 leadingIcon = Icons.Default.Group,
-                                leadingIconTint = MaterialTheme.colorScheme.surface,
+                                leadingIconTint = MaterialTheme.colorScheme.onError,
                                 leadingIconBackground = MaterialTheme.colorScheme.error,
                                 leadingIconSize = 50.dp,
                                 name = "Select Your Group",
@@ -144,18 +177,18 @@ class Group {
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.ChevronRight,
-                                    tint = MaterialTheme.colorScheme.error,
+                                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
                                     contentDescription = "trailingIcon"
                                 )
                             }
                         }
                     }
-                    Spacer(Modifier.height(50.dp))
+                    Spacer(Modifier.height(32.dp))
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(20.dp)
+                            .padding(horizontal = 20.dp, vertical = 8.dp)
                     ) {
                         HorizontalDivider(
                             modifier = Modifier.weight(1f),
@@ -165,7 +198,7 @@ class Group {
 
                         Text(
                             text = "Or explore other groups",
-                            color = MaterialTheme.colorScheme.error,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                             style = MaterialTheme.typography.bodyLarge,
                             fontWeight = FontWeight.Bold,
                             textAlign = TextAlign.Center,
@@ -187,7 +220,7 @@ class Group {
                     GroupButton(
                         SettingInstance(
                             leadingIcon = Icons.Default.Add,
-                            leadingIconTint = MaterialTheme.colorScheme.surface,
+                            leadingIconTint = MaterialTheme.colorScheme.onPrimary,
                             leadingIconBackground = MaterialTheme.colorScheme.primary,
                             leadingIconSize = 50.dp,
                             name = "Create Group",
@@ -215,17 +248,17 @@ class Group {
                         ) {
                             Icon(
                                 imageVector = Icons.Default.ChevronRight,
-                                tint = MaterialTheme.colorScheme.error,
+                                tint = MaterialTheme.colorScheme.onPrimaryContainer,
                                 contentDescription = "trailingIcon"
                             )
                         }
                     }
-                    Spacer(Modifier.height(10.dp))
-                    //Join group button
+                    Spacer(Modifier.height(8.dp))
+                    //Explore group button
                     GroupButton(
                         SettingInstance(
                             leadingIcon = Icons.Default.Explore,
-                            leadingIconTint = MaterialTheme.colorScheme.surface,
+                            leadingIconTint = MaterialTheme.colorScheme.onPrimary,
                             leadingIconBackground = MaterialTheme.colorScheme.primary,
                             leadingIconSize = 50.dp,
                             name = "Explore Group",
@@ -253,7 +286,7 @@ class Group {
                         ) {
                             Icon(
                                 imageVector = Icons.Default.ChevronRight,
-                                tint = MaterialTheme.colorScheme.error,
+                                tint = MaterialTheme.colorScheme.onPrimaryContainer,
                                 contentDescription = "trailingIcon"
                             )
                         }
@@ -278,16 +311,16 @@ class Group {
             Card(
                 modifier = modifier
                     .fillMaxWidth()
-                    .padding(20.dp)
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
                     .clickable(
                         interactionSource = interactionSource,
                         indication = ripple(bounded = true),
                         onClick = onClickSettingItem
                     ),
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surface
+                    containerColor = MaterialTheme.colorScheme.background
                 ),
-                elevation = CardDefaults.cardElevation(8.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
                 shape = RoundedCornerShape(12.dp)
             ) {
                 SettingItem(

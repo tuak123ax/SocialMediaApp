@@ -26,8 +26,8 @@ android {
         applicationId = "com.minhtu.firesocialmedia"
         minSdk = 24
         targetSdk = 35
-        versionCode = 500300
-        versionName = "5.3.0"
+        versionCode = 500400
+        versionName = "5.4.0"
 
         signingConfig = signingConfigs.getByName("debug")
     }

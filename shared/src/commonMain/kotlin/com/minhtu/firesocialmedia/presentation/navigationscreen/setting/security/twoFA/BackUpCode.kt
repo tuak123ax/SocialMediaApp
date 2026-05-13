@@ -52,6 +52,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
@@ -321,6 +322,7 @@ class BackUpCode {
             onCodeChange: (String) -> Unit
         ) {
             val focusRequester = remember { FocusRequester() }
+            val keyboardController = LocalSoftwareKeyboardController.current
             val cleanCode = code.replace("-", "")
 
             Column(
@@ -330,7 +332,10 @@ class BackUpCode {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable { focusRequester.requestFocus() }
+                        .clickable {
+                            focusRequester.requestFocus()
+                            keyboardController?.show()
+                        }
                         .focusable(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
