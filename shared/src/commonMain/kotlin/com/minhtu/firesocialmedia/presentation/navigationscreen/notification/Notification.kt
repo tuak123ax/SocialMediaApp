@@ -55,7 +55,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
@@ -81,8 +80,7 @@ import com.minhtu.firesocialmedia.presentation.loading.Loading
 import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
 import com.minhtu.firesocialmedia.presentation.search.SearchViewModel
 import com.minhtu.firesocialmedia.storage.toStorageUrl
-import com.minhtu.sharedmodule.ui.theme.adminCardColor
-import com.minhtu.sharedmodule.ui.theme.blurLikeColor
+
 import com.seiko.imageloader.ui.AutoSizeImage
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -320,7 +318,7 @@ class Notification {
                 Row(
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(if(notification.beRead) MaterialTheme.colorScheme.surface else adminCardColor)
+                        .background(if(notification.beRead) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.primaryContainer)
                         .testTag(TestTag.TAG_BUTTON_DELETE)
                         .semantics {
                             contentDescription = TestTag.TAG_BUTTON_DELETE
@@ -429,7 +427,7 @@ class Notification {
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(
-                        color = if(notification.beRead) MaterialTheme.colorScheme.surface else adminCardColor
+                        color = if(notification.beRead) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.primaryContainer
                     )
             ) {
                 if(!notification.beRead) {
@@ -469,7 +467,7 @@ class Notification {
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                         style = MaterialTheme.typography.bodyLarge,
-                        color = if(notification.beRead) blurLikeColor.copy(alpha = 0.75f) else MaterialTheme.colorScheme.onSurface
+                        color = if(notification.beRead) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface
                     )
                     Text(
                         text = when (notification.type) {
@@ -483,7 +481,7 @@ class Notification {
                                 "Unknown notification type!"
                             }
                         },
-                        color = if(notification.beRead) blurLikeColor.copy(alpha = 0.75f) else MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = if(notification.beRead) MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f) else MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                         style = MaterialTheme.typography.bodyMedium

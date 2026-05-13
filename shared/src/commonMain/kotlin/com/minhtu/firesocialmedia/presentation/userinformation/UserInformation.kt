@@ -541,15 +541,15 @@ class UserInformation {
                         onDismissRequest()
                     }
                 )
-//                if(isCurrentUser) {
-//                    DropdownMenuItem(
-//                        text = { Text("Change cover photo") },
-//                        onClick = {
-//                            onChangeCoverPhoto()
-//                            onDismissRequest()
-//                        }
-//                    )
-//                }
+                if(isCurrentUser) {
+                    DropdownMenuItem(
+                        text = { Text("Change cover photo") },
+                        onClick = {
+                            onChangeCoverPhoto()
+                            onDismissRequest()
+                        }
+                    )
+                }
             }
         }
     }

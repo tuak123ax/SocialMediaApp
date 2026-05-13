@@ -292,9 +292,13 @@ class GroupDetails {
                                         modifier = coverPhotoModifier
                                     )
                                 }
+                                val isAdmin = fetchGroupInfoState?.members
+                                    ?.filterValues { it == "admin" }
+                                    ?.keys
+                                    ?.contains(currentUser.uid) == true
                                 DropdownMenuForCoverPhoto(
                                     showMenu,
-                                    false,
+                                    isAdmin,
                                     { onNavigateToShowImageScreen(groupDetailsViewModel.coverPhoto) },
                                     { imagePicker.pickImage() },
                                     { showMenu = false })
