@@ -299,6 +299,7 @@ class GroupDetails {
                                 DropdownMenuForCoverPhoto(
                                     showMenu,
                                     isAdmin,
+                                    coverUrl = groupDetailsViewModel.coverPhoto.takeIf { it != Constants.DEFAULT_AVATAR_URL } ?: "",
                                     { onNavigateToShowImageScreen(groupDetailsViewModel.coverPhoto) },
                                     { imagePicker.pickImage() },
                                     { showMenu = false })

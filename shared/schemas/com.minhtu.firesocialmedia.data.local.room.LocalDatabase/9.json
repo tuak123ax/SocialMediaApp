@@ -1,12 +1,12 @@
 {
   "formatVersion": 1,
   "database": {
-    "version": 7,
-    "identityHash": "b4027f36837b0feba0fe6e0884679320",
+    "version": 9,
+    "identityHash": "f75ddda66a586d3b55a3c3d1d4a4007a",
     "entities": [
       {
         "tableName": "UserFriends",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`email` TEXT NOT NULL, `image` TEXT NOT NULL, `name` TEXT NOT NULL, `status` TEXT NOT NULL, `phone` TEXT NOT NULL, `token` TEXT NOT NULL, `uid` TEXT NOT NULL, PRIMARY KEY(`uid`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`email` TEXT NOT NULL, `image` TEXT NOT NULL, `name` TEXT NOT NULL, `status` TEXT NOT NULL, `phone` TEXT NOT NULL, `token` TEXT NOT NULL, `uid` TEXT NOT NULL, `background` TEXT NOT NULL, PRIMARY KEY(`uid`))",
         "fields": [
           {
             "fieldPath": "email",
@@ -47,6 +47,12 @@
           {
             "fieldPath": "uid",
             "columnName": "uid",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "background",
+            "columnName": "background",
             "affinity": "TEXT",
             "notNull": true
           }
@@ -381,7 +387,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'b4027f36837b0feba0fe6e0884679320')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'f75ddda66a586d3b55a3c3d1d4a4007a')"
     ]
   }
 }

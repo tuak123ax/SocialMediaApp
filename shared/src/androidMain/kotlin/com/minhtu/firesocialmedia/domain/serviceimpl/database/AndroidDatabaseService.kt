@@ -989,4 +989,21 @@ class AndroidDatabaseService(
     ): Boolean {
         return AndroidDatabaseHelper.updateUserLongField(userId, fieldPath, value, userPath)
     }
+
+    override suspend fun updateUserStringField(
+        userId: String,
+        fieldPath: String,
+        value: String,
+        userPath: String
+    ): Boolean {
+        return AndroidDatabaseHelper.updateUserStringField(userId, fieldPath, value, userPath)
+    }
+
+    override suspend fun updateUserAvatar(userId: String, imageUri: String, userPath: String): Boolean {
+        return AndroidDatabaseHelper.updateUserAvatar(userId, imageUri, userPath)
+    }
+
+    override suspend fun updateUserBackground(userId: String, imageUri: String, userPath: String): Boolean {
+        return AndroidDatabaseHelper.updateUserBackground(userId, imageUri, userPath)
+    }
 }

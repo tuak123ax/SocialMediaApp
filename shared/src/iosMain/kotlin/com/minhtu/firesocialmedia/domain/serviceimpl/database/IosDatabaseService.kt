@@ -825,4 +825,24 @@ class IosDatabaseService() : DatabaseService {
         // TODO: Implement iOS updateUserLongField
         return false
     }
+
+    override suspend fun updateUserStringField(
+        userId: String,
+        fieldPath: String,
+        value: String,
+        userPath: String
+    ): Boolean {
+        // TODO: Implement iOS updateUserStringField
+        return false
+    }
+
+    override suspend fun updateUserAvatar(userId: String, imageUri: String, userPath: String): Boolean {
+        // TODO: Implement iOS updateUserAvatar
+        return false
+    }
+
+    override suspend fun updateUserBackground(userId: String, imageUri: String, userPath: String): Boolean {
+        // TODO: Implement iOS updateUserBackground
+        return false
+    }
 }

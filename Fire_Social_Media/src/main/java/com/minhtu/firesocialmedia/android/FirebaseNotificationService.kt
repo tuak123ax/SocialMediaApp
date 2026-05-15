@@ -96,7 +96,7 @@ class AppFirebaseNotificationService: FirebaseMessagingService() {
                     val body = message.data[Constants.REMOTE_MSG_BODY]
                     Log.d("FCM", "🔹 title: $title")
                     Log.d("FCM", "🔹 body: $body")
-                    user = UserInstance(email!!, avatar!!,title!!,"",fcmToken!!,userId!!, HashMap())
+                    user = UserInstance(email = email!!, image = avatar!!, name = title!!, token = fcmToken!!, uid = userId!!)
                     sendNotification(user, body)
                 }
             }

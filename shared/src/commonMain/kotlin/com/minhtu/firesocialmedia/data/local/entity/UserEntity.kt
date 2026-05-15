@@ -15,8 +15,10 @@ data class UserEntity(
     var image: String = "",
     var name: String = "",
     var status: String = "",
+    var phone: String = "",
     var token: String = "",
-    @PrimaryKey var uid: String = ""
+    @PrimaryKey var uid: String = "",
+    var background: String = ""
 //    var likedPosts: HashMap<String,Int> = HashMap(),
 //    var friendRequests : ArrayList<String> = ArrayList(),
 //    var notifications : ArrayList<NotificationDTO> = ArrayList(),

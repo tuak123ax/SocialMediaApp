@@ -6,38 +6,45 @@ import com.minhtu.firesocialmedia.data.remote.dto.notification.toMap
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class UserDTO(var email: String = "", var image: String = "", var name: String = "",
-                   var status: String = "", var token: String = "", var uid: String = "",
-                   var likedPosts: HashMap<String,Int> = HashMap(),
-                   var friendRequests : ArrayList<String> = ArrayList(),
-                   var notifications : ArrayList<NotificationDTO> = ArrayList(),
-                   var friends : ArrayList<String> = ArrayList(),
-                   var likedComments : HashMap<String,Int> = HashMap(),
-                   var groups: HashMap<String, GroupSummaryDTO> = HashMap(),
-                   var lastTimeChangePassword : Long = 0,
-                   var twoFAEnabled : Boolean = false,
-                   var lastTimeReadPrivacy: Long = 0,
-                   var lastTimeAcknowledgedLoginHistory: Long = 0
-)
-{
-    fun addFriend(friend: String){
+data class UserDTO(
+    var email: String = "", var image: String = "", var name: String = "",
+    var status: String = "", var phone: String = "", var token: String = "", var uid: String = "",
+    var background: String = "",
+    var likedPosts: HashMap<String, Int> = HashMap(),
+    var friendRequests: ArrayList<String> = ArrayList(),
+    var notifications: ArrayList<NotificationDTO> = ArrayList(),
+    var friends: ArrayList<String> = ArrayList(),
+    var likedComments: HashMap<String, Int> = HashMap(),
+    var groups: HashMap<String, GroupSummaryDTO> = HashMap(),
+    var lastTimeChangePassword: Long = 0,
+    var twoFAEnabled: Boolean = false,
+    var lastTimeReadPrivacy: Long = 0,
+    var lastTimeAcknowledgedLoginHistory: Long = 0
+) {
+    fun addFriend(friend: String) {
         friends.add(friend)
     }
-    fun removeFriend(friend: String){
+
+    fun removeFriend(friend: String) {
         friends.remove(friend)
     }
-    fun addFriendRequest(friend: String){
+
+    fun addFriendRequest(friend: String) {
         friendRequests.add(friend)
     }
-    fun removeFriendRequest(friend: String){
+
+    fun removeFriendRequest(friend: String) {
         friendRequests.remove(friend)
     }
-    fun updateImage(image: String){
+
+    fun updateImage(image: String) {
         this.image = image
     }
+
     fun addNotification(notification: NotificationDTO) {
         notifications.add(notification)
     }
+
     fun removeNotification(notification: NotificationDTO) {
         notifications.remove(notification)
     }
@@ -49,7 +56,9 @@ fun UserDTO.toMap(): Map<String, Any?> = mapOf(
     "name" to name,
     "status" to status,
     "token" to token,
+    "phone" to phone,
     "uid" to uid,
+    "background" to background,
     "likedPosts" to likedPosts,
     "likedComments" to likedComments,
     "friendRequests" to friendRequests,

@@ -128,4 +128,21 @@ class SettingsRepositoryImpl(
             DataConstant.USER_PATH
         )
     }
+
+    override suspend fun updateUserStringField(userId: String, fieldPath: String, value: String): Boolean {
+        return databaseService.updateUserStringField(
+            userId,
+            fieldPath,
+            value,
+            DataConstant.USER_PATH
+        )
+    }
+
+    override suspend fun updateUserAvatar(userId: String, imageUri: String): Boolean {
+        return databaseService.updateUserAvatar(userId, imageUri, DataConstant.USER_PATH)
+    }
+
+    override suspend fun updateUserBackground(userId: String, imageUri: String): Boolean {
+        return databaseService.updateUserBackground(userId, imageUri, DataConstant.USER_PATH)
+    }
 }
