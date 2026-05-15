@@ -1723,6 +1723,42 @@ class AndroidDatabaseHelper {
             return "${locale.country}"
         }
 
+        suspend fun updateUserStringField(
+            userId: String,
+            fieldPath: String,
+            value: String,
+            userPath: String
+        ): Boolean {
+            val ref = FirebaseDatabase.getInstance()
+                .reference
+                .child(userPath)
+                .child(userId)
+                .child(fieldPath)
+
+            var delayTime = 200L
+
+            repeat(3) { attempt ->
+                try {
+                    withTimeout(3000) {
+                        ref.setValue(value).await()
+                    }
+                    return true
+                } catch (e: Exception) {
+                    val shouldRetry = e is IOException
+
+                    if (attempt < 2 && shouldRetry) {
+                        delay(delayTime)
+                        delayTime *= 2
+                    } else {
+                        Log.e("Firebase", "Failed to update user string field", e)
+                        return false
+                    }
+                }
+            }
+
+            return false
+        }
+
         suspend fun updateUserLongField(
             userId: String,
             fieldPath: String,
@@ -1758,5 +1794,46 @@ class AndroidDatabaseHelper {
 
             return false
         }
+
+        suspend fun updateUserAvatar(
+            userId: String,
+            imageUri: String,
+            userPath: String
+        ): Boolean {
+            return try {
+                val helper = com.minhtu.firesocialmedia.domain.serviceimpl.database.supabase.SupabaseStorageHelper()
+                val extension = helper.getFileExtension(imageUri, "jpg")
+                val remotePath = "avatar/${userId}_${System.currentTimeMillis()}.$extension"
+                com.minhtu.firesocialmedia.domain.serviceimpl.database.supabase.SupabaseStorage.upload(
+                    filePath = imageUri,
+                    remotePath = remotePath
+                )
+                updateUserStringField(userId, "image", remotePath, userPath)
+            } catch (e: Exception) {
+                Log.e("Firebase", "Failed to update user avatar", e)
+                false
+            }
+        }
+
+        suspend fun updateUserBackground(
+            userId: String,
+            imageUri: String,
+            userPath: String
+        ): Boolean {
+            return try {
+                val helper = com.minhtu.firesocialmedia.domain.serviceimpl.database.supabase.SupabaseStorageHelper()
+                val extension = helper.getFileExtension(imageUri, "jpg")
+                val remotePath = "background/${userId}_${System.currentTimeMillis()}.$extension"
+                com.minhtu.firesocialmedia.domain.serviceimpl.database.supabase.SupabaseStorage.upload(
+                    filePath = imageUri,
+                    remotePath = remotePath
+                )
+                updateUserStringField(userId, "background", remotePath, userPath)
+            } catch (e: Exception) {
+                Log.e("Firebase", "Failed to update user background", e)
+                false
+            }
+        }
     }
 }
+

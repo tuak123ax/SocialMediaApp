@@ -279,7 +279,7 @@ class CreateGroup {
                         elevation = ButtonDefaults.buttonElevation(4.dp),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 20.dp)
+                            .padding(20.dp)
                             .testTag(TestTag.TAG_BUTTON_NEXT)
                             .semantics {
                                 contentDescription = TestTag.TAG_BUTTON_NEXT

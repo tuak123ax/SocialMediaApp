@@ -346,4 +346,23 @@ interface DatabaseService {
         value: Long,
         userPath: String
     ): Boolean
+
+    suspend fun updateUserStringField(
+        userId: String,
+        fieldPath: String,
+        value: String,
+        userPath: String
+    ): Boolean
+
+    suspend fun updateUserAvatar(
+        userId: String,
+        imageUri: String,
+        userPath: String
+    ): Boolean
+
+    suspend fun updateUserBackground(
+        userId: String,
+        imageUri: String,
+        userPath: String
+    ): Boolean
 }

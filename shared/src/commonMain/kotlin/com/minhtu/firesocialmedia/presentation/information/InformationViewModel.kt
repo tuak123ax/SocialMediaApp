@@ -48,6 +48,11 @@ class InformationViewModel(
         username = input
     }
 
+    var phone by mutableStateOf("")
+    fun updatePhone(input: String) {
+        phone = input
+    }
+
     private val currentUserId = mutableStateOf<String?>(null)
     fun finishSignUpStage(){
         viewModelScope.launch(ioDispatcher) {
@@ -56,13 +61,13 @@ class InformationViewModel(
             } else {
                 currentUserId.value = getCurrentUserUidUseCase.invoke()
                 val userInstance = UserInstance(
-                    email,
-                    avatar,
-                    username,
-                    "",
-                    getFCMTokenUseCase.invoke(),
-                    currentUserId.value ?: "",
-                    HashMap()
+                    email = email,
+                    image = avatar,
+                    name = username,
+                    status = "",
+                    phone = phone,
+                    token = getFCMTokenUseCase.invoke(),
+                    uid = currentUserId.value ?: ""
                 )
                 val result = saveSignUpInformationUseCase.invoke(userInstance)
                 _addInformationStatus.value = result

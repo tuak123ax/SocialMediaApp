@@ -17,6 +17,7 @@ import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.In
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.ManageMembersViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.SelectGroupViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.notificationconfigs.NotificationConfigsViewModel
+import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.personal.PersonalInformationViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security.SecuritySettingsViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security.changepassword.ChangePasswordViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security.loginhistory.LoginHistoryViewModel
@@ -271,22 +272,22 @@ object ViewModelProvider {
         val commonDbRepository = AppModule.provideCommonDbRepository(platformContext)
         val callRepository = AppModule.provideCallRepository(platformContext)
         val networkRepository = AppModule.provideNetworkRepository(platformContext)
+        val settingsRepository = AppModule.provideSettingsRepository(platformContext)
         val saveFriendUseCase = AppModule.provideSaveFriendUseCase(commonDbRepository)
         val saveFriendRequestUseCase = AppModule.provideSaveFriendRequestUseCase(commonDbRepository)
-        val saveNotificationToDatabaseUseCase =
-            AppModule.provideSaveNotificationToDatabaseUseCase(notificationRepository)
-        val checkCalleeAvailableUseCase =
-            AppModule.provideCheckCalleeAvailableUseCase(callRepository)
+        val saveNotificationToDatabaseUseCase = AppModule.provideSaveNotificationToDatabaseUseCase(notificationRepository)
+        val checkCalleeAvailableUseCase = AppModule.provideCheckCalleeAvailableUseCase(callRepository)
         val getUserUseCase = AppModule.provideGetUserUseCase(userRepository)
-        val checkInternetConnectionUseCase =
-            AppModule.provideCheckInternetConnectionUseCase(networkRepository)
+        val checkInternetConnectionUseCase = AppModule.provideCheckInternetConnectionUseCase(networkRepository)
+        val updateUserBackgroundUseCase = AppModule.provideUpdateUserBackgroundUseCase(settingsRepository)
         return AppModule.provideUserInformationViewModel(
             saveFriendUseCase,
             saveFriendRequestUseCase,
             saveNotificationToDatabaseUseCase,
             checkCalleeAvailableUseCase,
             getUserUseCase,
-            checkInternetConnectionUseCase
+            checkInternetConnectionUseCase,
+            updateUserBackgroundUseCase
         )
     }
 
@@ -538,5 +539,15 @@ object ViewModelProvider {
         val fetchLoginHistoryListUseCase = AppModule.provideFetchLoginHistoryListUseCase(settingsRepository)
         val updateUserTimestampUseCase = AppModule.provideUpdateUserTimestampUseCase(settingsRepository)
         return LoginHistoryViewModel(fetchLoginHistoryListUseCase, updateUserTimestampUseCase)
+    }
+
+    fun createPersonalInformationViewModel(platformContext: PlatformContext): PersonalInformationViewModel {
+        val settingsRepository = AppModule.provideSettingsRepository(platformContext)
+        val userRepository = AppModule.provideUserRepository(platformContext)
+        val updateUserStringFieldUseCase = AppModule.provideUpdateUserStringFieldUseCase(settingsRepository)
+        val updateUserAvatarUseCase = AppModule.provideUpdateUserAvatarUseCase(settingsRepository)
+        val verifyCurrentPasswordUseCase = AppModule.provideVerifyCurrentPasswordUseCase(settingsRepository)
+        val getUserUseCase = AppModule.provideGetUserUseCase(userRepository)
+        return AppModule.providePersonalInformationViewModel(updateUserStringFieldUseCase, updateUserAvatarUseCase, verifyCurrentPasswordUseCase, getUserUseCase)
     }
 }

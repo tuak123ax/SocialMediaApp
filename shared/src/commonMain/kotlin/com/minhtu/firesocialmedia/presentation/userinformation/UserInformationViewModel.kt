@@ -13,6 +13,7 @@ import com.minhtu.firesocialmedia.domain.usecases.friend.SaveFriendUseCase
 import com.minhtu.firesocialmedia.domain.usecases.information.CheckCalleeAvailableUseCase
 import com.minhtu.firesocialmedia.domain.usecases.network.CheckInternetConnectionUseCase
 import com.minhtu.firesocialmedia.domain.usecases.notification.SaveNotificationToDatabaseUseCase
+import com.minhtu.firesocialmedia.domain.usecases.settings.UpdateUserBackgroundUseCase
 import com.minhtu.firesocialmedia.platform.createMessageForServer
 import com.minhtu.firesocialmedia.platform.getCurrentTime
 import com.minhtu.firesocialmedia.platform.getRandomIdForNotification
@@ -46,13 +47,33 @@ class UserInformationViewModel(
     private val checkCalleeAvailableUseCase: CheckCalleeAvailableUseCase,
     private val getUserUseCase: GetUserUseCase,
     private val checkInternetConnectionUseCase : CheckInternetConnectionUseCase,
+    private val updateUserBackgroundUseCase: UpdateUserBackgroundUseCase,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : ViewModel() {
-    // StateFlow to update UI in Compose
+    // Local URI of a newly picked cover photo (prior to upload)
     var coverPhoto by mutableStateOf(Constants.DEFAULT_AVATAR_URL)
-    fun updateCover(input:String){
-        coverPhoto = input
+    fun updateCover(input: String) { coverPhoto = input }
+
+    // Local URI of successfully uploaded background (show without refetch)
+    var uploadedBackgroundUri by mutableStateOf<String?>(null)
+        private set
+
+    private val _backgroundUploadStatus = MutableStateFlow<Boolean?>(null)
+    val backgroundUploadStatus = _backgroundUploadStatus.asStateFlow()
+
+    fun uploadBackground(userId: String) {
+        val uri = coverPhoto.takeIf { it != Constants.DEFAULT_AVATAR_URL } ?: return
+        viewModelScope.launch(ioDispatcher) {
+            val result = updateUserBackgroundUseCase(userId, uri)
+            _backgroundUploadStatus.value = result
+            if (result) {
+                uploadedBackgroundUri = uri
+                coverPhoto = Constants.DEFAULT_AVATAR_URL
+            }
+        }
     }
+
+    fun resetBackgroundUploadStatus() { _backgroundUploadStatus.value = null }
 
     private var _addFriendStatus = MutableStateFlow<Relationship?>(null)
     var addFriendStatus = _addFriendStatus.asStateFlow()
@@ -205,6 +226,7 @@ class UserInformationViewModel(
     fun resetOldData() {
         _fetchedUser.value = null
         coverPhoto = Constants.DEFAULT_AVATAR_URL
+        uploadedBackgroundUri = null
         _addFriendStatus.value = null
     }
 }

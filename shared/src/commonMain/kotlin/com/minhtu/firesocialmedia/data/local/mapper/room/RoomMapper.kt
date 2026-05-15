@@ -19,23 +19,20 @@ fun List<UserInstance?>.toUserEntity() : List<UserEntity> {
 
 fun UserInstance.toRoomEntity() : UserEntity {
     return UserEntity(
-        email,
-        image,
-        name,
-        status,
-        token,
-        uid
+        email, image, name, status, phone, token, uid, background
     )
 }
 
 fun UserEntity.toDomain() : UserInstance {
     return UserInstance(
-        email,
-        image,
-        name,
-        status,
-        token,
-        uid
+        email = email,
+        image = image,
+        name = name,
+        status = status,
+        phone = phone,
+        token = token,
+        uid = uid,
+        background = background
     )
 }
 

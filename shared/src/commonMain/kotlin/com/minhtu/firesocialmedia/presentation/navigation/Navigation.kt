@@ -4,10 +4,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
@@ -24,8 +22,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -80,6 +76,8 @@ import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.Se
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.SelectGroupViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.notificationconfigs.NotificationConfigs
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.notificationconfigs.NotificationConfigsViewModel
+import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.personal.PersonalInformation
+import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.personal.PersonalInformationViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.privacy.Privacy
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security.SecuritySettings
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security.SecuritySettingsViewModel
@@ -178,6 +176,7 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
 
     var updateNew: NewsInstance? = null
     lateinit var relatedNew: NewsInstance
+    // Calling related shared states
     var callee by remember { mutableStateOf<UserInstance?>(null) }
     var caller by remember { mutableStateOf<UserInstance?>(null) }
     var sessionId by remember { mutableStateOf("") }
@@ -188,8 +187,14 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
         platformViewModel { ViewModelProvider.createCallingViewModel(platformContext) }
     val videoCallViewModel: VideoCallViewModel =
         platformViewModel { ViewModelProvider.createVideoCallViewModel(platformContext) }
+
+    //Settings
     val securitySettingsViewModel: SecuritySettingsViewModel =
         platformViewModel { ViewModelProvider.createSecuritySettingsViewModel(platformContext) }
+
+    //Personal information
+    val personalInformationViewModel : PersonalInformationViewModel =
+        platformViewModel { ViewModelProvider.createPersonalInformationViewModel(platformContext) }
 
     val isSyncLoading by loadingViewModel.syncLoading.collectAsState()
 
@@ -732,7 +737,7 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                         },
                         onNavigateToProfileInformation = {
                             selectedUser = homeViewModel.currentUser
-                            navController.navigate(route = UserInformation.getScreenName())
+                            navController.navigate(route = PersonalInformation.getScreenName())
                         },
                         onNavigateToGroupScreen = {
                             navController.navigate(route = Group.getScreenName())
@@ -912,6 +917,7 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                     if (homeViewModel.currentUser != null) {
                         Group.GroupScreen(
                             homeViewModel.currentUser!!,
+                            paddingValues,
                             onNavigateToCreateGroupScreen = {
                                 navController.navigate(route = CreateGroup.getScreenName())
                             },
@@ -920,6 +926,9 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                             },
                             onNavigateToSelectGroupScreen = {
                                 navController.navigate(route = SelectGroup.getScreenName())
+                            },
+                            onNavigateBack = {
+                                navController.popBackStack()
                             }
                         )
                     } else {
@@ -1490,6 +1499,34 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                             navController.popBackStack()
                         }
                     )
+                }
+
+                composable(
+                    route = PersonalInformation.getScreenName(),
+                    enterTransition = DefaultNavAnimations.enter,
+                    popEnterTransition = DefaultNavAnimations.popEnter,
+                    exitTransition = DefaultNavAnimations.exit,
+                    popExitTransition = DefaultNavAnimations.popExit
+                ) {
+                    val picker = rememberPlatformImagePicker(
+                        context = context,
+                        onImagePicked = { uri -> personalInformationViewModel.onAvatarPicked(uri) },
+                        onVideoPicked = {}
+                    )
+                    if(selectedUser != null) {
+                        PersonalInformation.PersonalInformationScreen(
+                            selectedUser!!,
+                            imagePicker = picker,
+                            paddingValues,
+                            personalInformationViewModel,
+                            onNavigateBack = {
+                                navController.popBackStack()
+                            }
+                        )
+                    } else {
+                        showToast("Cannot get user information now. Please try again!!!")
+                        navController.popBackStack()
+                    }
                 }
             }
         }

@@ -14,9 +14,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -36,6 +38,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -196,6 +200,34 @@ class Information {
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(30.dp)
+                    )
+                    Text(
+                        text = "Phone number (optional)",
+                        color = MaterialTheme.colorScheme.onBackground,
+                        style = MaterialTheme.typography.bodyMedium,
+                        textAlign = TextAlign.Start,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp)
+                    )
+                    OutlinedTextField(
+                        value = informationViewModel.phone,
+                        shape = RoundedCornerShape(10.dp),
+                        textStyle = TextStyle(color = MaterialTheme.colorScheme.onSurface),
+                        leadingIcon = {
+                            Icon(Icons.Default.Phone, "Phone")
+                        },
+                        onValueChange = { informationViewModel.updatePhone(it) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp),
+                        label = { Text(text = "Input Your Phone Number") },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Phone,
+                            imeAction = ImeAction.Done
+                        )
                     )
                     Spacer(modifier = Modifier.weight(1f))
                     Row(
