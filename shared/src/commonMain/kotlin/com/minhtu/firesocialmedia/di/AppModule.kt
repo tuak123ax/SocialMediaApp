@@ -8,6 +8,7 @@ import com.minhtu.firesocialmedia.application.interactor.UserInteractorImpl
 import com.minhtu.firesocialmedia.data.repository.AuthenticationRepositoryImpl
 import com.minhtu.firesocialmedia.data.repository.CallRepositoryImpl
 import com.minhtu.firesocialmedia.data.repository.CommentRepositoryImpl
+import com.minhtu.firesocialmedia.data.remote.service.security.IpInfoRemoteDataSource
 import com.minhtu.firesocialmedia.data.repository.CommonDbRepositoryImpl
 import com.minhtu.firesocialmedia.data.repository.GroupRepositoryImpl
 import com.minhtu.firesocialmedia.data.repository.LocalRepositoryImpl
@@ -113,6 +114,7 @@ import com.minhtu.firesocialmedia.domain.usecases.notification.UpdateIsReadStatu
 import com.minhtu.firesocialmedia.domain.usecases.settings.BuildOtpAuthUrlUseCase
 import com.minhtu.firesocialmedia.domain.usecases.settings.ChangePasswordUseCase
 import com.minhtu.firesocialmedia.domain.usecases.settings.CopyUseCase
+import com.minhtu.firesocialmedia.domain.usecases.settings.DeleteLoginSessionUseCase
 import com.minhtu.firesocialmedia.domain.usecases.settings.Disable2FAUseCase
 import com.minhtu.firesocialmedia.domain.usecases.settings.Enable2FAUseCase
 import com.minhtu.firesocialmedia.domain.usecases.settings.FetchLoginHistoryListUseCase
@@ -127,6 +129,9 @@ import com.minhtu.firesocialmedia.domain.usecases.settings.ValidateNewPasswordUs
 import com.minhtu.firesocialmedia.domain.usecases.settings.Verify2FAUseCase
 import com.minhtu.firesocialmedia.domain.usecases.settings.VerifyBackupCodeUseCase
 import com.minhtu.firesocialmedia.domain.usecases.settings.VerifyCurrentPasswordUseCase
+import com.minhtu.firesocialmedia.domain.usecases.settings.LogoutSessionUseCase
+import com.minhtu.firesocialmedia.domain.usecases.settings.ObserveSessionStatusUseCase
+import com.minhtu.firesocialmedia.domain.usecases.settings.StopObserveSessionStatusUseCase
 import com.minhtu.firesocialmedia.domain.usecases.showimage.DownloadImageUseCase
 import com.minhtu.firesocialmedia.domain.usecases.signin.CheckLocalAccountUseCase
 import com.minhtu.firesocialmedia.domain.usecases.signin.CheckUserExistsUseCase
@@ -181,7 +186,8 @@ object AppModule {
         return CommonDbRepositoryImpl(
             platformContext.database,
             platformContext.room,
-            platformContext.networkMonitor
+            platformContext.networkMonitor,
+            platformContext.ipRemoteDataSource
         )
     }
 
@@ -901,6 +907,22 @@ object AppModule {
 
     fun provideFetchLoginHistoryListUseCase(settingsRepository: SettingsRepository): FetchLoginHistoryListUseCase {
         return FetchLoginHistoryListUseCase(settingsRepository)
+    }
+
+    fun provideDeleteLoginSessionUseCase(settingsRepository: SettingsRepository): DeleteLoginSessionUseCase {
+        return DeleteLoginSessionUseCase(settingsRepository)
+    }
+
+    fun provideLogoutSessionUseCase(settingsRepository: SettingsRepository): LogoutSessionUseCase {
+        return LogoutSessionUseCase(settingsRepository)
+    }
+
+    fun provideObserveSessionStatusUseCase(settingsRepository: SettingsRepository): ObserveSessionStatusUseCase {
+        return ObserveSessionStatusUseCase(settingsRepository)
+    }
+
+    fun provideStopObserveSessionStatusUseCase(settingsRepository: SettingsRepository): StopObserveSessionStatusUseCase {
+        return StopObserveSessionStatusUseCase(settingsRepository)
     }
 
     fun provideUpdateUserTimestampUseCase(settingsRepository: SettingsRepository): UpdateUserTimestampUseCase {

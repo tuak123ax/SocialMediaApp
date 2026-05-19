@@ -120,6 +120,41 @@ class SettingsRepositoryImpl(
         }
     }
 
+    override suspend fun deleteLoginSession(userId: String, sessionId: String): Boolean {
+        return databaseService.deleteLoginSession(
+            userId,
+            sessionId,
+            DataConstant.HISTORY_PATH,
+            DataConstant.LOGIN_PATH
+        )
+    }
+
+    override suspend fun logoutSession(
+        userId: String,
+        sessionId: String
+    ): Boolean {
+        return databaseService.logoutSession(
+            userId,
+            sessionId,
+            DataConstant.HISTORY_PATH,
+            DataConstant.LOGIN_PATH
+        )
+    }
+
+    override fun observeSessionStatus(userId: String, sessionId: String, onLoggedOut: () -> Unit) {
+        databaseService.observeSessionStatus(
+            userId,
+            sessionId,
+            DataConstant.HISTORY_PATH,
+            DataConstant.LOGIN_PATH,
+            onLoggedOut
+        )
+    }
+
+    override fun stopObserveSessionStatus() {
+        databaseService.stopObserveSessionStatus()
+    }
+
     override suspend fun updateUserTimestamp(userId: String, fieldPath: String, value: Long): Boolean {
         return databaseService.updateUserLongField(
             userId,

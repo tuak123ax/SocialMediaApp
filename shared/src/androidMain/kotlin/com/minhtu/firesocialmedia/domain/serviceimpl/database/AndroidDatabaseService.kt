@@ -19,6 +19,7 @@ import com.minhtu.firesocialmedia.data.remote.dto.home.LatestNewsDTO
 import com.minhtu.firesocialmedia.data.remote.dto.news.NewsDTO
 import com.minhtu.firesocialmedia.data.remote.dto.notification.NotificationDTO
 import com.minhtu.firesocialmedia.data.remote.dto.settings.SessionItemDTO
+import com.minhtu.firesocialmedia.data.remote.dto.settings.security.IpInfoResponseDTO
 import com.minhtu.firesocialmedia.data.remote.dto.signin.SignInDTO
 import com.minhtu.firesocialmedia.data.remote.dto.user.UserDTO
 import com.minhtu.firesocialmedia.data.remote.service.database.DatabaseService
@@ -973,12 +974,49 @@ class AndroidDatabaseService(
         return AndroidDatabaseHelper.getLocalSessionId(appContext)
     }
 
+    override fun clearLocalSessionId() {
+        AndroidDatabaseHelper.clearLocalSessionId(appContext)
+    }
+
+    override suspend fun deleteLoginSession(
+        userId: String,
+        sessionId: String,
+        historyPath: String,
+        loginHistoryPath: String
+    ): Boolean {
+        return AndroidDatabaseHelper.deleteLoginSession(userId, sessionId, historyPath, loginHistoryPath)
+    }
+
+    override suspend fun logoutSession(
+        userId: String,
+        sessionId: String,
+        historyPath: String,
+        loginHistoryPath: String
+    ): Boolean {
+        return AndroidDatabaseHelper.logoutSession(userId, sessionId, historyPath, loginHistoryPath)
+    }
+
+    override fun observeSessionStatus(
+        userId: String,
+        sessionId: String,
+        historyPath: String,
+        loginHistoryPath: String,
+        onLoggedOut: () -> Unit
+    ) {
+        AndroidDatabaseHelper.observeSessionStatus(userId, sessionId, historyPath, loginHistoryPath, onLoggedOut)
+    }
+
+    override fun stopObserveSessionStatus() {
+        AndroidDatabaseHelper.stopObserveSessionStatus()
+    }
+
     override suspend fun saveLoginActivityInfo(
         userId: String,
+        locationInfo : IpInfoResponseDTO,
         historyPath: String,
         loginHistoryPath: String
     ) {
-        AndroidDatabaseHelper.saveLoginActivityInfo(appContext, userId, historyPath, loginHistoryPath)
+        AndroidDatabaseHelper.saveLoginActivityInfo(appContext, userId,locationInfo, historyPath, loginHistoryPath)
     }
 
     override suspend fun updateUserLongField(

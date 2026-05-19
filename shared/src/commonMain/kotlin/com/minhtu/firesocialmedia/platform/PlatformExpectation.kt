@@ -197,4 +197,5 @@ expect fun generateQrImage(content: String): ImageBitmap
 expect object AppConfig {
     val twoFAApiKey: String
     val supabaseApiKey: String
+    val ipInfoApiKey: String
 }

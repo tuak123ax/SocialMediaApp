@@ -23,7 +23,7 @@ plugins {
 
 kotlin {
     androidTarget()
-    jvmToolchain(21)
+    jvmToolchain(17)
 
     val iosX64 = iosX64()
     val iosArm64 = iosArm64()
@@ -123,6 +123,13 @@ kotlin {
 
             //QR
             implementation("io.github.g0dkar:qrcode-kotlin:4.5.0")
+
+            //Networking
+            implementation("io.ktor:ktor-client-core:${ktorVersion}")
+            implementation("io.ktor:ktor-client-content-negotiation:${ktorVersion}")
+            implementation("io.ktor:ktor-serialization-kotlinx-json:${ktorVersion}")
+            implementation("io.ktor:ktor-client-logging:${ktorVersion}")
+// Optional for logs
         }
         commonTest {
             dependencies{
@@ -207,12 +214,7 @@ kotlin {
             implementation(compose.material3)
 
             implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1-native-mt")
-
-            implementation("io.ktor:ktor-client-core:$ktorVersion")
-            implementation("io.ktor:ktor-client-darwin:$ktorVersion")
-            implementation("io.ktor:ktor-client-content-negotiation:$ktorVersion")
-            implementation("io.ktor:ktor-serialization-kotlinx-json:$ktorVersion")
-            implementation("io.ktor:ktor-client-logging:$ktorVersion") // Optional for logs
+            implementation("io.ktor:ktor-client-darwin:${ktorVersion}")
         }
     }
 }
@@ -240,26 +242,31 @@ android {
             "SUPABASE_API_KEY",
             "\"${localProperties.getProperty("SUPABASE_API_KEY", "")}\""
         )
+        buildConfigField(
+            "String",
+            "IPINFO_API_KEY",
+            "\"${localProperties.getProperty("IPINFO_API_KEY", "")}\""
+        )
     }
     buildFeatures {
         buildConfig = true
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_21
-        targetCompatibility = JavaVersion.VERSION_21
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 }
 
 java {
     toolchain {
-        languageVersion.set(JavaLanguageVersion.of(21))
+        languageVersion.set(JavaLanguageVersion.of(17))
     }
 }
 
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
     kotlinOptions {
-        jvmTarget = "21"
+        jvmTarget = "17"
     }
 }
 

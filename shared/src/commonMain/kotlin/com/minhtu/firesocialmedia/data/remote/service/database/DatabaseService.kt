@@ -11,6 +11,7 @@ import com.minhtu.firesocialmedia.data.remote.dto.home.LatestNewsDTO
 import com.minhtu.firesocialmedia.data.remote.dto.news.NewsDTO
 import com.minhtu.firesocialmedia.data.remote.dto.notification.NotificationDTO
 import com.minhtu.firesocialmedia.data.remote.dto.settings.SessionItemDTO
+import com.minhtu.firesocialmedia.data.remote.dto.settings.security.IpInfoResponseDTO
 import com.minhtu.firesocialmedia.data.remote.dto.signin.SignInDTO
 import com.minhtu.firesocialmedia.data.remote.dto.user.UserDTO
 import com.minhtu.firesocialmedia.domain.entity.base.BaseNewsInstance
@@ -334,8 +335,35 @@ interface DatabaseService {
 
     fun getLocalSessionId(): String
 
+    fun clearLocalSessionId()
+
+    fun observeSessionStatus(
+        userId: String,
+        sessionId: String,
+        historyPath: String,
+        loginHistoryPath: String,
+        onLoggedOut: () -> Unit
+    )
+
+    fun stopObserveSessionStatus()
+
+    suspend fun deleteLoginSession(
+        userId: String,
+        sessionId: String,
+        historyPath: String,
+        loginHistoryPath: String
+    ): Boolean
+
+    suspend fun logoutSession(
+        userId: String,
+        sessionId: String,
+        historyPath: String,
+        loginHistoryPath: String
+    ): Boolean
+
     suspend fun saveLoginActivityInfo(
         userId: String,
+        locationInfo : IpInfoResponseDTO,
         historyPath: String,
         loginHistoryPath: String
     )

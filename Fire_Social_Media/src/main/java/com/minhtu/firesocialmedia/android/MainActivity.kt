@@ -11,12 +11,23 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
+import androidx.core.net.toUri
 import com.google.firebase.messaging.FirebaseMessaging
 import com.minhtu.firesocialmedia.constants.Constants
 import com.minhtu.firesocialmedia.di.AndroidPlatformContext
@@ -45,37 +56,45 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
                     RemoteConfigHelper.getRemoteConfig()
-                    fetchDataFromRemoteConfig(object : FetchResultCallback {
-                        override fun fetchSuccess() {
-                            Log.e("Fetch", "Fetch success")
-                        }
+                    var minAppVersion by remember { mutableStateOf<String?>(null) }
+                    LaunchedEffect(Unit) {
+                        fetchDataFromRemoteConfig(object : FetchResultCallback {
+                            override fun fetchSuccess(minVersion : String) {
+                                Log.e("Fetch", "Fetch success: min version = $minVersion")
+                                minAppVersion = minVersion
+                            }
 
-                        override fun fetchFail() {
-                            Log.e("Fetch", "Fetch fail")
-                        }
-                    })
-                    if(fromNotification) {
-                        val sessionId = intent.getStringExtra("sessionId")
-                        val callerId = intent.getStringExtra("callerId")
-                        val calleeId = intent.getStringExtra("calleeId")
-                        val platformContext = remember { AndroidPlatformContext(applicationContext, permissionManager) }
-                        MainApplication.MainAppFromNotification(
-                            this,
-                            platformContext,
-                            sessionId,
-                            callerId,
-                            calleeId
-                        )
-                    } else {
-                        val platformContext = remember { AndroidPlatformContext(applicationContext, permissionManager) }
-                        if(deepLink.isNotEmpty()) {
-                            MainApplication.MainAppWithDeepLink(this, deepLink,platformContext)
-                        } else {
-                            MainApplication.MainApp(this, platformContext)
-                        }
+                            override fun fetchFail() {
+                                Log.e("Fetch", "Fetch fail")
+                            }
+                        })
+                        checkFCMToken()
+                        askNotificationPermission()
                     }
-                    checkFCMToken()
-                    askNotificationPermission()
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        if(fromNotification) {
+                            val sessionId = intent.getStringExtra("sessionId")
+                            val callerId = intent.getStringExtra("callerId")
+                            val calleeId = intent.getStringExtra("calleeId")
+                            val platformContext = remember { AndroidPlatformContext(applicationContext, permissionManager) }
+                            MainApplication.MainAppFromNotification(
+                                this@MainActivity,
+                                platformContext,
+                                sessionId,
+                                callerId,
+                                calleeId
+                            )
+                        } else {
+                            val platformContext = remember { AndroidPlatformContext(applicationContext, permissionManager) }
+                            if(deepLink.isNotEmpty()) {
+                                MainApplication.MainAppWithDeepLink(this@MainActivity, deepLink, platformContext)
+                            } else {
+                                MainApplication.MainApp(this@MainActivity, platformContext)
+                            }
+                        }
+                        // Dialog is drawn last inside Box, so it appears on top
+                        minAppVersion?.let { CheckAppVersionAndShowDialog(it) }
+                    }
                     //Listen download event here to show toast on all screens
 //                    listenDownloadImageEvent()
                 }
@@ -171,7 +190,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun fetchDataFromRemoteConfig(fetchResultCallback: FetchResultCallback) {
-        RemoteConfigHelper.fetchAndActiveConfig(RemoteConfigHelper.getRemoteConfig(), fetchResultCallback)
+        RemoteConfigHelper.fetchMinAppSupportAndActiveConfig(RemoteConfigHelper.getRemoteConfig(), fetchResultCallback)
     }
 
     @Deprecated("Deprecated in Java")
@@ -184,5 +203,60 @@ class MainActivity : ComponentActivity() {
 
         // Forward to your permission manager
         permissionManager.onRequestPermissionsResult(requestCode, grantResults)
+    }
+
+    @Composable
+    fun CheckAppVersionAndShowDialog(minSupportVersion: String) {
+        val currentVersion = BuildConfig.VERSION_NAME
+        if (isVersionLower(currentVersion, minSupportVersion)) {
+            // Show update dialog
+            UpdateAppDialog()
+        }
+    }
+
+    fun isVersionLower(currentVersion: String, minSupportVersion: String): Boolean {
+        val currentParts = currentVersion.split(".")
+        val minParts = minSupportVersion.split(".")
+        val maxLength = maxOf(currentParts.size, minParts.size)
+
+        for (i in 0 until maxLength) {
+            val currentPart = if (i < currentParts.size) currentParts[i].toIntOrNull() ?: 0 else 0
+            val minPart = if (i < minParts.size) minParts[i].toIntOrNull() ?: 0 else 0
+
+            if (currentPart < minPart) {
+                return true
+            } else if (currentPart > minPart) {
+                return false
+            }
+        }
+        return false // Versions are equal
+    }
+
+    @Composable
+    fun UpdateAppDialog() {
+
+        val context = LocalContext.current
+
+        AlertDialog(
+            onDismissRequest = { },
+            title = {
+                Text(text = "Update Required")
+            },
+            text = {
+                Text(text = "Please update the app to continue using it.")
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        val intent = Intent(Intent.ACTION_VIEW).apply {
+                            data = "https://github.com/tuak123ax/SocialMediaApp".toUri()
+                        }
+                        context.startActivity(intent)
+                    }
+                ) {
+                    Text("Update Now")
+                }
+            }
+        )
     }
 }

@@ -26,6 +26,7 @@ import com.minhtu.firesocialmedia.data.remote.dto.group.GroupDTO
 import com.minhtu.firesocialmedia.data.remote.dto.group.GroupSummaryDTO
 import com.minhtu.firesocialmedia.data.remote.dto.notification.NotificationDTO
 import com.minhtu.firesocialmedia.data.remote.dto.settings.SessionItemDTO
+import com.minhtu.firesocialmedia.data.remote.dto.settings.security.IpInfoResponseDTO
 import com.minhtu.firesocialmedia.data.remote.dto.user.UserDTO
 import com.minhtu.firesocialmedia.domain.entity.base.BaseNewsInstance
 import com.minhtu.firesocialmedia.domain.entity.call.CallStatus
@@ -1635,7 +1636,9 @@ class AndroidDatabaseHelper {
                     Log.d("fetchLoginHistoryList", "Raw child key: ${child.key}")
                     Log.d("fetchLoginHistoryList", "Raw value: ${child.value}")
 
+                    // The node key IS the sessionId — populate it from the key
                     val item = child.getValue(SessionItemDTO::class.java)
+                        ?.copy(sessionId = child.key ?: "")
 
                     if (item == null) {
                         Log.e("fetchLoginHistoryList", "Failed to parse child: ${child.key}")
@@ -1656,14 +1659,103 @@ class AndroidDatabaseHelper {
             }
         }
 
+        suspend fun deleteLoginSession(
+            userId: String,
+            sessionId: String,
+            historyPath: String,
+            loginHistoryPath: String
+        ): Boolean {
+            return try {
+                // sessionId is the node key — direct O(1) delete, no scanning needed
+                FirebaseDatabase
+                    .getInstance()
+                    .reference
+                    .child(historyPath)
+                    .child(loginHistoryPath)
+                    .child(userId)
+                    .child(sessionId)
+                    .removeValue()
+                    .await()
+                true
+            } catch (e: Exception) {
+                logMessage("deleteLoginSession", { "Exception: ${e.message}" })
+                false
+            }
+        }
+
+        suspend fun logoutSession(
+            userId: String,
+            sessionId: String,
+            historyPath: String,
+            loginHistoryPath: String
+        ): Boolean {
+            return try {
+                FirebaseDatabase
+                    .getInstance()
+                    .reference
+                    .child(historyPath)
+                    .child(loginHistoryPath)
+                    .child(userId)
+                    .child(sessionId)
+                    .child("status")
+                    .setValue("LOGOUT")
+                    .await()
+                true
+            } catch (e: Exception) {
+                logMessage("logoutSession", { "Exception: ${e.message}" })
+                false
+            }
+        }
+
+        private var sessionStatusListener: ValueEventListener? = null
+        private var sessionStatusRef: DatabaseReference? = null
+
+        fun observeSessionStatus(
+            userId: String,
+            sessionId: String,
+            historyPath: String,
+            loginHistoryPath: String,
+            onLoggedOut: () -> Unit
+        ) {
+            stopObserveSessionStatus()
+            if (sessionId.isEmpty()) return
+            sessionStatusRef = FirebaseDatabase.getInstance().reference
+                .child(historyPath)
+                .child(loginHistoryPath)
+                .child(userId)
+                .child(sessionId)
+                .child("status")
+            sessionStatusListener = object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    val status = snapshot.getValue(String::class.java) ?: return
+                    if (status == "LOGOUT") {
+                        onLoggedOut()
+                    }
+                }
+                override fun onCancelled(error: DatabaseError) {
+                    logMessage("observeSessionStatus", { "Cancelled: ${error.message}" })
+                }
+            }
+            sessionStatusRef!!.addValueEventListener(sessionStatusListener!!)
+        }
+
+        fun stopObserveSessionStatus() {
+            sessionStatusRef?.let { ref ->
+                sessionStatusListener?.let { ref.removeEventListener(it) }
+            }
+            sessionStatusRef = null
+            sessionStatusListener = null
+        }
+
         suspend fun saveLoginActivityInfo(
             context: Context,
             userId: String,
+            locationInfo : IpInfoResponseDTO,
             historyPath: String,
             loginHistoryPath: String
         ) {
             try {
-                val sessionItemDTO = prepareSessionItemData(context)
+                val sessionItemDTO = prepareSessionItemData(context, locationInfo)
                 val dbRef = FirebaseDatabase
                     .getInstance()
                     .reference
@@ -1671,17 +1763,19 @@ class AndroidDatabaseHelper {
                     .child(loginHistoryPath)
                     .child(userId)
 
-                dbRef.push().setValue(sessionItemDTO).await()
+                // Use sessionId as the node key instead of a Firebase push key
+                dbRef.child(sessionItemDTO.sessionId).setValue(sessionItemDTO).await()
             } catch(e : Exception) {
                 logMessage("saveLoginActivityInfo", { "Exception happened: ${e.message}" })
             }
         }
 
-        private fun prepareSessionItemData(context: Context) : SessionItemDTO {
+        private fun prepareSessionItemData(context: Context,
+                                           locationInfo : IpInfoResponseDTO) : SessionItemDTO {
             val sessionId = java.util.UUID.randomUUID().toString()
             saveLocalSessionId(context, sessionId)
             val deviceName = getDeviceName()
-            val location = getLocation(context)
+            val location = locationInfo.locationInfo()
             val timeMillis = System.currentTimeMillis()
             return SessionItemDTO(
                 sessionId = sessionId,
@@ -1692,7 +1786,7 @@ class AndroidDatabaseHelper {
         }
 
         fun saveLocalSessionId(context: Context, sessionId: String) {
-            context.getSharedPreferences("session_prefs", android.content.Context.MODE_PRIVATE)
+            context.getSharedPreferences("session_prefs", Context.MODE_PRIVATE)
                 .edit()
                 .putString(Constants.KEY_SESSION_ID, sessionId)
                 .apply()
@@ -1701,6 +1795,13 @@ class AndroidDatabaseHelper {
         fun getLocalSessionId(context: Context): String {
             return context.getSharedPreferences("session_prefs", android.content.Context.MODE_PRIVATE)
                 .getString(Constants.KEY_SESSION_ID, "") ?: ""
+        }
+
+        fun clearLocalSessionId(context: Context) {
+            context.getSharedPreferences("session_prefs", Context.MODE_PRIVATE)
+                .edit()
+                .remove(Constants.KEY_SESSION_ID)
+                .apply()
         }
 
         fun getDeviceName(): String {

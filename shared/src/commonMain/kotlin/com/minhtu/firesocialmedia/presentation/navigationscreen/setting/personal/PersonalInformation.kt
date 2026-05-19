@@ -30,8 +30,6 @@ import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Phone
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -63,8 +61,6 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import com.minhtu.firesocialmedia.data.remote.service.imagepicker.ImagePicker
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
@@ -72,6 +68,7 @@ import com.minhtu.firesocialmedia.platform.CommonBackHandler
 import com.minhtu.firesocialmedia.platform.generateImageLoader
 import com.minhtu.firesocialmedia.platform.showToast
 import com.minhtu.firesocialmedia.storage.toStorageUrl
+import com.minhtu.firesocialmedia.utils.PasswordVerifyDialog
 import com.minhtu.firesocialmedia.utils.UiUtils
 import com.seiko.imageloader.LocalImageLoader
 import com.seiko.imageloader.ui.AutoSizeImage
@@ -133,8 +130,6 @@ class PersonalInformation {
 
             // Password re-auth dialog state
             var showPasswordVerifyDialog by remember { mutableStateOf(false) }
-            var passwordInput by remember { mutableStateOf("") }
-            var passwordVisible by remember { mutableStateOf(false) }
             var pendingPhone by remember { mutableStateOf("") }
 
             LaunchedEffect(updateStatus) {
@@ -393,71 +388,21 @@ class PersonalInformation {
             )
         }
 
-            // Password verification dialog (shown before saving phone number)
+            // Password verification dialog -- shown before saving phone number
             if (showPasswordVerifyDialog) {
-                val focusManager = LocalFocusManager.current
-                AlertDialog(
-                    onDismissRequest = {
+                PasswordVerifyDialog(
+                    title = "Verify Your Identity",
+                    message = "Enter your password to confirm changing your phone number.",
+                    onConfirm = { password ->
                         showPasswordVerifyDialog = false
-                        passwordInput = ""
-                        passwordVisible = false
+                        personalInformationViewModel.reAuthAndUpdatePhone(
+                            currentUser.email,
+                            password,
+                            currentUser.uid,
+                            pendingPhone
+                        )
                     },
-                    title = { Text("Verify Your Identity") },
-                    text = {
-                        Column {
-                            Text(
-                                text = "Enter your password to confirm changing your phone number.",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.padding(bottom = 12.dp)
-                            )
-                            OutlinedTextField(
-                                value = passwordInput,
-                                onValueChange = { passwordInput = it },
-                                label = { Text("Password") },
-                                singleLine = true,
-                                visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                                keyboardOptions = KeyboardOptions(
-                                    keyboardType = KeyboardType.Password,
-                                    imeAction = ImeAction.Done
-                                ),
-                                keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
-                                modifier = Modifier.fillMaxWidth(),
-                                trailingIcon = {
-                                    IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                                        Icon(
-                                            if (passwordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                                            contentDescription = if (passwordVisible) "Hide password" else "Show password"
-                                        )
-                                    }
-                                }
-                            )
-                        }
-                    },
-                    confirmButton = {
-                        Button(
-                            onClick = {
-                                showPasswordVerifyDialog = false
-                                personalInformationViewModel.reAuthAndUpdatePhone(
-                                    currentUser.email,
-                                    passwordInput,
-                                    currentUser.uid,
-                                    pendingPhone
-                                )
-                                passwordInput = ""
-                                passwordVisible = false
-                            },
-                            enabled = passwordInput.isNotEmpty()
-                        ) { Text("Confirm") }
-                    },
-                    dismissButton = {
-                        TextButton(onClick = {
-                            showPasswordVerifyDialog = false
-                            passwordInput = ""
-                            passwordVisible = false
-                        }) { Text("Cancel") }
-                    },
-                    shape = RoundedCornerShape(20.dp)
+                    onDismiss = { showPasswordVerifyDialog = false }
                 )
             }
 
@@ -517,8 +462,6 @@ class PersonalInformation {
                                         "phone" -> {
                                             // Don't save yet — open password verification first
                                             pendingPhone = trimmed
-                                            passwordInput = ""
-                                            passwordVisible = false
                                             editingField = null
                                             showPasswordVerifyDialog = true
                                         }

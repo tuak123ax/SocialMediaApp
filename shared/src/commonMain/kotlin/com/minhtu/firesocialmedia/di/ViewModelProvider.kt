@@ -538,7 +538,10 @@ object ViewModelProvider {
         val settingsRepository = AppModule.provideSettingsRepository(platformContext)
         val fetchLoginHistoryListUseCase = AppModule.provideFetchLoginHistoryListUseCase(settingsRepository)
         val updateUserTimestampUseCase = AppModule.provideUpdateUserTimestampUseCase(settingsRepository)
-        return LoginHistoryViewModel(fetchLoginHistoryListUseCase, updateUserTimestampUseCase)
+        val deleteLoginSessionUseCase = AppModule.provideDeleteLoginSessionUseCase(settingsRepository)
+        val logoutSessionUseCase = AppModule.provideLogoutSessionUseCase(settingsRepository)
+        val verifyCurrentPasswordUseCase = AppModule.provideVerifyCurrentPasswordUseCase(settingsRepository)
+        return LoginHistoryViewModel(fetchLoginHistoryListUseCase, updateUserTimestampUseCase, deleteLoginSessionUseCase, logoutSessionUseCase, verifyCurrentPasswordUseCase)
     }
 
     fun createPersonalInformationViewModel(platformContext: PlatformContext): PersonalInformationViewModel {

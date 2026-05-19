@@ -820,4 +820,8 @@ actual object AppConfig {
         NSBundle.mainBundle
             .objectForInfoDictionaryKey("SUPABASE_API_KEY")
             ?.toString() ?: ""
+    actual val ipInfoApiKey: String =
+        NSBundle.mainBundle
+            .objectForInfoDictionaryKey("IPINFO_API_KEY")
+            ?.toString() ?: ""
 }
