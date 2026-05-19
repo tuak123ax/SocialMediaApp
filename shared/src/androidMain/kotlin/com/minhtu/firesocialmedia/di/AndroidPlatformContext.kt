@@ -20,7 +20,9 @@ import com.minhtu.firesocialmedia.domain.serviceimpl.clipboard.AndroidClipboardS
 import com.minhtu.firesocialmedia.domain.serviceimpl.crypto.AndroidCryptoService
 import com.minhtu.firesocialmedia.domain.serviceimpl.database.AndroidDatabaseService
 import com.minhtu.firesocialmedia.domain.serviceimpl.database.supabase.SupabaseStorageHelper
+import com.minhtu.firesocialmedia.data.remote.service.security.IpInfoRemoteDataSource
 import com.minhtu.firesocialmedia.domain.serviceimpl.room.AndroidRoomService
+import com.minhtu.firesocialmedia.platform.AppConfig
 
 class AndroidPlatformContext(
     context : Context,
@@ -46,4 +48,8 @@ class AndroidPlatformContext(
         localDatabase.commentDao()
     )
     override val networkMonitor: NetworkMonitor = NetworkMonitorImpl(context)
+    override val ipRemoteDataSource: IpInfoRemoteDataSource = IpInfoRemoteDataSource(
+        createHttpClient(),
+        AppConfig.ipInfoApiKey
+    )
 }

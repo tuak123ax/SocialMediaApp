@@ -22,6 +22,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -228,6 +229,45 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
     //Login History
     val loginHistoryViewModel: LoginHistoryViewModel =
         platformViewModel { ViewModelProvider.createLoginHistoryViewModel(platformContext) }
+
+    // Force-logout from another device
+    val observeSessionStatusUseCase = remember {
+        AppModule.provideObserveSessionStatusUseCase(
+            AppModule.provideSettingsRepository(platformContext)
+        )
+    }
+    val stopObserveSessionStatusUseCase = remember {
+        AppModule.provideStopObserveSessionStatusUseCase(
+            AppModule.provideSettingsRepository(platformContext)
+        )
+    }
+    var forceLogoutDialogVisible by remember { mutableStateOf(false) }
+
+    // Check persisted forced-logout status on startup (in case app was killed while LOGOUT)
+    LaunchedEffect(homeViewModel.currentUserState) {
+        val user = homeViewModel.currentUserState ?: return@LaunchedEffect
+        val mySessionId = platformContext.database.getLocalSessionId()
+        if (mySessionId.isNotEmpty()) {
+            val sessions = kotlinx.coroutines.withContext(Dispatchers.IO) {
+                runCatching {
+                    platformContext.database.fetchLoginHistoryList(
+                        user.uid,
+                        com.minhtu.firesocialmedia.data.remote.constant.DataConstant.HISTORY_PATH,
+                        com.minhtu.firesocialmedia.data.remote.constant.DataConstant.LOGIN_PATH
+                    )
+                }.getOrElse { emptyList() }
+            }
+            val mySession = sessions.find { it.sessionId == mySessionId }
+            if (mySession?.status == "LOGOUT") {
+                forceLogoutDialogVisible = true
+                return@LaunchedEffect
+            }
+            // Start real-time listener for this session
+            observeSessionStatusUseCase(user.uid, mySessionId) {
+                forceLogoutDialogVisible = true
+            }
+        }
+    }
 
     LaunchedEffect(networkStatus) {
         if (networkStatus != null) {
@@ -573,10 +613,12 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                         onImagePicked = { uri -> userInformationViewModel.updateCover(uri) },
                         onVideoPicked = {}
                     )
+                    val isFriend = selectedUser?.friends?.contains(homeViewModel.currentUser?.uid) == true
                     UserInformation.UserInformationScreen(
                         imagePicker = picker,
                         user = selectedUser,
                         isCurrentUser = selectedUser == homeViewModel.currentUser,
+                        isFriend = isFriend,
                         paddingValues = paddingValues,
                         localImageLoaderValue = localImageLoaderValue,
                         homeViewModel = homeViewModel,
@@ -1535,6 +1577,37 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                 localImageLoaderValue,
                 "loading_gif",
                 "Syncing your data..."
+            )
+        }
+
+        // Forced-logout dialog: shown when another device logged out this session
+        if (forceLogoutDialogVisible) {
+            androidx.compose.material3.AlertDialog(
+                onDismissRequest = { /* non-dismissible */ },
+                title = { androidx.compose.material3.Text("Session Ended") },
+                text = {
+                    androidx.compose.material3.Text(
+                        "Your account has been logged out from this device by another session. Please sign in again to continue."
+                    )
+                },
+                confirmButton = {
+                    androidx.compose.material3.Button(
+                        onClick = {
+                            forceLogoutDialogVisible = false
+                            stopObserveSessionStatusUseCase()
+                            platformContext.database.clearLocalSessionId()
+                            homeViewModel.clearAccountInStorage()
+                            homeViewModel.clearLocalData()
+                            signInViewModel.reset()
+                            navController.navigate(SignIn.getScreenName()) {
+                                popUpTo(0) { inclusive = true }
+                            }
+                        }
+                    ) {
+                        androidx.compose.material3.Text("Sign In")
+                    }
+                },
+                shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp)
             )
         }
     }

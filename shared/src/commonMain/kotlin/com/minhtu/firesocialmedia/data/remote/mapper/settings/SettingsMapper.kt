@@ -10,7 +10,8 @@ fun SessionItem.toDto() : SessionItemDTO {
         sessionId = "",
         deviceName = deviceName,
         location = location,
-        time = time
+        time = time,
+        status = status
     )
 }
 
@@ -26,10 +27,12 @@ fun SessionItem.toDto() : SessionItemDTO {
  */
 fun SessionItemDTO.toDomain(currentSessionId: String, currentTimeMillis: Long) : SessionItem {
     return SessionItem(
+        sessionId = sessionId,
         deviceName = deviceName,
         location = location,
         time = time,
         current = sessionId.isNotEmpty() && sessionId == currentSessionId,
-        activeNow = time > 0 && (currentTimeMillis - time) < ACTIVE_NOW_THRESHOLD_MS
+        activeNow = time > 0 && (currentTimeMillis - time) < ACTIVE_NOW_THRESHOLD_MS,
+        status = status
     )
 }

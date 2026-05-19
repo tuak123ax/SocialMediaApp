@@ -83,6 +83,7 @@ class UserInformation {
             imagePicker: ImagePicker,
             user : UserInstance?,
             isCurrentUser : Boolean,
+            isFriend : Boolean = false,
             paddingValues: PaddingValues,
             localImageLoaderValue : ProvidedValue<*>,
             homeViewModel : HomeViewModel,
@@ -371,15 +372,19 @@ class UserInformation {
                                             Surface(
                                                 onClick = {
                                                     if (callButtonEnabled) {
-                                                        callButtonEnabled = false
-                                                        coroutineScope.launch {
-                                                            val networkStatus = userInformationViewModel.checkInternetConnection()
-                                                            if (networkStatus) {
-                                                                userInformationViewModel.checkCalleeAvailable(fetchedUser!!)
-                                                            } else {
-                                                                showToast("No internet, please recheck your network!")
-                                                                callButtonEnabled = true
+                                                        if(isFriend) {
+                                                            callButtonEnabled = false
+                                                            coroutineScope.launch {
+                                                                val networkStatus = userInformationViewModel.checkInternetConnection()
+                                                                if (networkStatus) {
+                                                                    userInformationViewModel.checkCalleeAvailable(fetchedUser!!)
+                                                                } else {
+                                                                    showToast("No internet, please recheck your network!")
+                                                                    callButtonEnabled = true
+                                                                }
                                                             }
+                                                        } else {
+                                                            showToast("You can only call your friends!")
                                                         }
                                                     }
                                                 },

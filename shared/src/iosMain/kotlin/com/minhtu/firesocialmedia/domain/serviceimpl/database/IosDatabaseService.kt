@@ -816,6 +816,44 @@ class IosDatabaseService() : DatabaseService {
         return ""
     }
 
+    override fun clearLocalSessionId() {
+        // TODO: Implement iOS clearLocalSessionId
+    }
+
+    override suspend fun deleteLoginSession(
+        userId: String,
+        sessionId: String,
+        historyPath: String,
+        loginHistoryPath: String
+    ): Boolean {
+        // TODO: Implement iOS deleteLoginSession
+        return false
+    }
+
+    override suspend fun logoutSession(
+        userId: String,
+        sessionId: String,
+        historyPath: String,
+        loginHistoryPath: String
+    ): Boolean {
+        // TODO: Implement iOS logoutSession
+        return false
+    }
+
+    override fun observeSessionStatus(
+        userId: String,
+        sessionId: String,
+        historyPath: String,
+        loginHistoryPath: String,
+        onLoggedOut: () -> Unit
+    ) {
+        // TODO: Implement iOS observeSessionStatus
+    }
+
+    override fun stopObserveSessionStatus() {
+        // TODO: Implement iOS stopObserveSessionStatus
+    }
+
     override suspend fun updateUserLongField(
         userId: String,
         fieldPath: String,

@@ -17,6 +17,8 @@ import com.minhtu.firesocialmedia.domain.serviceimpl.database.IosDatabaseService
 import com.minhtu.firesocialmedia.domain.serviceimpl.database.supabase.SupabaseStorageHelper
 import com.minhtu.firesocialmedia.domain.serviceimpl.permission.IosPermissionManager
 import com.minhtu.firesocialmedia.domain.serviceimpl.room.IosRoomService
+import com.minhtu.firesocialmedia.data.remote.service.security.IpInfoRemoteDataSource
+import com.minhtu.firesocialmedia.platform.AppConfig
 
 open class IosPlatformContext() : PlatformContext {
 
@@ -32,5 +34,8 @@ open class IosPlatformContext() : PlatformContext {
     override val room: RoomService = IosRoomService()
     override val permissionManager: PermissionManager = IosPermissionManager()
     override val networkMonitor: NetworkMonitor = IosNetworkMonitor()
+    override val ipRemoteDataSource: IpInfoRemoteDataSource = IpInfoRemoteDataSource(
+        createHttpClient(),
+        AppConfig.ipInfoApiKey
+    )
 }
-

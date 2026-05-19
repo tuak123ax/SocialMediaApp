@@ -7,5 +7,6 @@ data class SessionItemDTO(
     val sessionId: String = "",
     val deviceName: String = "",
     val location: String = "",
-    val time: Long = 0L
+    val time: Long = 0L,
+    val status : String = ""
 )
