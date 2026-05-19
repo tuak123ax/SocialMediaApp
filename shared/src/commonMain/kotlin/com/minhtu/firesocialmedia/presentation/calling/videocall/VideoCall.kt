@@ -85,6 +85,10 @@ class VideoCall {
             var isExitPending by remember { mutableStateOf(false) }
             var exitButtonColor by remember { mutableStateOf(videoCallButtonColor) }
             val coroutineScope = rememberCoroutineScope()
+            // Video call background is always black; use a white-tinted shadow so buttons
+            // stand out from the dark background regardless of the system theme.
+            val buttonShadowAmbient = Color.White.copy(alpha = 0.15f)
+            val buttonShadowSpot = Color.White.copy(alpha = 0.30f)
 
             LaunchedEffect(Unit) {
                 // Callee path: ensure we don't navigate back due to stale answerVideoCallState from any other flow
@@ -221,7 +225,7 @@ class VideoCall {
                         contentAlignment = Alignment.Center,
                         modifier = Modifier
                             .size(56.dp)
-                            .shadow(8.dp, CircleShape)
+                            .shadow(8.dp, CircleShape, ambientColor = buttonShadowAmbient, spotColor = buttonShadowSpot)
                             .clip(CircleShape)
                             .background(if (isMicMuted) inactiveColor else activeColor)
                     ) {
@@ -251,7 +255,7 @@ class VideoCall {
                         contentAlignment = Alignment.Center,
                         modifier = Modifier
                             .size(56.dp)
-                            .shadow(8.dp, CircleShape)
+                            .shadow(8.dp, CircleShape, ambientColor = buttonShadowAmbient, spotColor = buttonShadowSpot)
                             .clip(CircleShape)
                             .background(
                                 if (speakerType == SpeakerType.Speaker)
@@ -290,7 +294,7 @@ class VideoCall {
                         contentAlignment = Alignment.Center,
                         modifier = Modifier
                             .size(56.dp)
-                            .shadow(8.dp, CircleShape)
+                            .shadow(8.dp, CircleShape, ambientColor = buttonShadowAmbient, spotColor = buttonShadowSpot)
                             .clip(CircleShape)
                             .background(exitButtonColor)
                             .testTag(TestTag.TAG_BUTTON_EXIT_VIDEO_CALL)
@@ -330,7 +334,7 @@ class VideoCall {
                         contentAlignment = Alignment.Center,
                         modifier = Modifier
                             .size(56.dp)
-                            .shadow(8.dp, CircleShape)
+                            .shadow(8.dp, CircleShape, ambientColor = buttonShadowAmbient, spotColor = buttonShadowSpot)
                             .clip(CircleShape)
                             .background(
                                 if (!hasLocalVideoTrack) videoCallButtonColor
