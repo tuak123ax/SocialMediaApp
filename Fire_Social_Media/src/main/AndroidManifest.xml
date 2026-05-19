@@ -72,6 +72,7 @@
             android:launchMode="singleInstance"
             android:showWhenLocked="true"
             android:turnScreenOn="true"
+            android:screenOrientation="portrait"
             android:theme="@style/Theme.FireSocialMedia" />
         <!--
              Transparent activity that requests RECORD_AUDIO over the lock screen.
@@ -86,6 +87,7 @@
             android:excludeFromRecents="true"
             android:showWhenLocked="true"
             android:turnScreenOn="true"
+            android:screenOrientation="portrait"
             android:theme="@android:style/Theme.Translucent.NoTitleBar" />
         <activity
             android:name="com.minhtu.firesocialmedia.utils.PermissionRequestActivity"

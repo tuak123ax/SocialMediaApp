@@ -5,12 +5,14 @@ import android.app.Activity
 import android.app.ActivityManager
 import android.content.Context
 import android.content.Intent
+import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.drawable.BitmapDrawable
 import android.os.Build
 import android.util.Log
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -18,14 +20,19 @@ import androidx.annotation.OptIn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -37,9 +44,16 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.core.content.edit
+import android.view.ViewGroup
+import android.widget.FrameLayout
 import androidx.core.graphics.drawable.toBitmap
 import androidx.core.uri.Uri
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.media3.common.MediaItem
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.DefaultDataSource
@@ -49,6 +63,7 @@ import androidx.media3.datasource.cache.LeastRecentlyUsedCacheEvictor
 import androidx.media3.datasource.cache.SimpleCache
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.ProgressiveMediaSource
+import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -416,20 +431,20 @@ actual fun onPushNotificationReceived(data: Map<String, Any?>) {
 
 actual val settings: Settings? = null
 
-@OptIn(UnstableApi::class)
 @Composable
-actual fun VideoPlayer(uri: String, modifier: Modifier) {
+actual fun VideoPlayer(
+    uri: String,
+    modifier: Modifier
+) {
     val context = LocalContext.current
+    val activity = context as? Activity
+
+    var isFullscreen by rememberSaveable { mutableStateOf(false) }
+    // Toggle to force the inline PlayerView to re-bind the player after exiting fullscreen
+    var playerBindVersion by remember { mutableStateOf(0) }
+
     val player = remember {
         ExoPlayer.Builder(context).build()
-    }
-    val cacheFactory = remember {
-        val httpFactory = DefaultHttpDataSource.Factory()
-        val upstreamFactory = DefaultDataSource.Factory(context, httpFactory)
-        CacheDataSource.Factory()
-            .setCache(getVideoCache(context))
-            .setUpstreamDataSourceFactory(upstreamFactory)
-            .setFlags(CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR)
     }
 
     DisposableEffect(Unit) {
@@ -439,24 +454,128 @@ actual fun VideoPlayer(uri: String, modifier: Modifier) {
     }
 
     LaunchedEffect(uri) {
-        val mediaItem = MediaItem.fromUri(uri)
-        val mediaSource = ProgressiveMediaSource.Factory(cacheFactory)
-            .createMediaSource(mediaItem)
-        player.setMediaSource(mediaSource)
+        player.setMediaItem(MediaItem.fromUri(uri))
         player.prepare()
         player.playWhenReady = false
     }
 
+    PlayerViewContent(
+        player = player,
+        playerBindVersion = playerBindVersion,
+        modifier = modifier,
+        onFullscreenClick = {
+            isFullscreen = true
+        }
+    )
+
+    if (isFullscreen) {
+        FullscreenVideoDialog(
+            player = player,
+            activity = activity,
+            onDismiss = {
+                isFullscreen = false
+                // Increment version so PlayerViewContent's update block re-binds the player
+                playerBindVersion++
+            }
+        )
+    }
+}
+
+@OptIn(UnstableApi::class)
+@Composable
+private fun PlayerViewContent(
+    player: ExoPlayer,
+    playerBindVersion: Int,
+    modifier: Modifier,
+    onFullscreenClick: () -> Unit
+) {
     AndroidView(
         modifier = modifier,
-        factory = {
-            PlayerView(it).apply {
+        factory = { context ->
+            PlayerView(context).apply {
                 this.player = player
+                useController = true
+                resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
+                setFullscreenButtonClickListener {
+                    onFullscreenClick()
+                }
             }
+        },
+        update = { view ->
+            // playerBindVersion change forces this block to run, re-attaching player
+            // to the inline surface after exiting fullscreen
+            @Suppress("UNUSED_EXPRESSION") playerBindVersion
+            view.player = null
+            view.player = player
+            view.resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
         }
     )
 }
 
+@OptIn(UnstableApi::class)
+@Composable
+private fun FullscreenVideoDialog(
+    player: ExoPlayer,
+    activity: Activity?,
+    onDismiss: () -> Unit
+) {
+    BackHandler {
+        onDismiss()
+    }
+
+    DisposableEffect(Unit) {
+        val window = activity?.window ?: return@DisposableEffect onDispose {}
+
+        // Go edge-to-edge
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        val insetsController = WindowCompat.getInsetsController(window, window.decorView)
+        insetsController.hide(WindowInsetsCompat.Type.systemBars())
+        insetsController.systemBarsBehavior =
+            WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+
+        // Build a full-screen container that sits above everything
+        val container = FrameLayout(activity).apply {
+            setBackgroundColor(android.graphics.Color.BLACK)
+            layoutParams = ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+            )
+        }
+
+        val playerView = PlayerView(activity).apply {
+            this.player = player
+            useController = true
+            resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
+            layoutParams = FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                FrameLayout.LayoutParams.MATCH_PARENT
+            )
+            // PlayerView handles its own insets so the controls stay above nav bar
+            fitsSystemWindows = true
+            setFullscreenButtonClickListener { onDismiss() }
+        }
+
+        container.addView(playerView)
+
+        // Add directly to the decor view so it covers the whole screen
+        val decorView = window.decorView as ViewGroup
+        decorView.addView(container)
+
+        onDispose {
+            // Detach player from the fullscreen PlayerView BEFORE removing the view,
+            // so PlayerView's onDetach doesn't pause/stop the player.
+            val wasPlaying = player.isPlaying
+            val position = player.currentPosition
+            playerView.player = null
+            decorView.removeView(container)
+            WindowCompat.setDecorFitsSystemWindows(window, true)
+            insetsController.show(WindowInsetsCompat.Type.systemBars())
+            // Restore playback state
+            player.seekTo(position)
+            if (wasPlaying) player.play()
+        }
+    }
+}
 
 actual class WebRTCVideoTrack(val track: VideoTrack?)
 
