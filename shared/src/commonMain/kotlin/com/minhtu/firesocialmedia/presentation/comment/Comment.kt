@@ -30,6 +30,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.ProvidedValue
 import androidx.compose.runtime.collectAsState
@@ -96,6 +97,15 @@ class Comment {
             val commentBeReplied = commentViewModel.commentBeReplied.collectAsState()
             LaunchedEffect(Unit) {
                 commentViewModel.getAllCommentsOfNew(selectedNew.id)
+            }
+            // Reset comment status and clear list when this screen leaves composition
+            // (e.g. bottom sheet swiped away in fullscreen video) so the stale status
+            // doesn't trigger a toast the next time CommentScreen is opened.
+            DisposableEffect(Unit) {
+                onDispose {
+                    commentViewModel.resetCommentStatus()
+                    commentViewModel.clearCommentList()
+                }
             }
             LaunchedEffect(commentStatus.value) {
                 if (commentStatus.value != null) {
@@ -448,6 +458,7 @@ class Comment {
                                 CrossPlatformIcon(
                                     icon = "comment",
                                     backgroundColor = MaterialTheme.colorScheme.surface.toHex(),
+                                    tint = MaterialTheme.colorScheme.onSurface,
                                     contentDescription = TestTag.TAG_BUTTON_COMMENT,
                                     modifier = Modifier
                                         .size(20.dp)

@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -62,7 +63,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
@@ -70,6 +70,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.minhtu.firesocialmedia.constants.TestTag
 import com.minhtu.firesocialmedia.data.remote.service.imagepicker.ImagePicker
@@ -85,7 +86,6 @@ import com.minhtu.firesocialmedia.presentation.home.HomeViewModel
 import com.minhtu.firesocialmedia.presentation.loading.Loading
 import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
 import com.minhtu.firesocialmedia.utils.UiUtils
-import com.minhtu.firesocialmedia.utils.UiUtils.Companion.ActionButton
 import com.seiko.imageloader.ui.AutoSizeImage
 import kotlinx.coroutines.delay
 
@@ -351,11 +351,13 @@ class UploadNewsfeed {
                                         uploadNewsfeedViewModel.video
                                     }
                                     if(video.isNotEmpty()) {
-                                        VideoPlayer(videoUri,
+                                        VideoPlayer(
+                                            uri = videoUri,
                                             modifier = Modifier
                                                 .height(250.dp)
                                                 .fillMaxWidth()
-                                                .padding(20.dp))
+                                                .padding(20.dp)
+                                        )
                                     }
                                 }
                             }
@@ -389,32 +391,42 @@ class UploadNewsfeed {
                         }
                         Box(contentAlignment = Alignment.Center) {
                             var showMenu by remember { mutableStateOf(false) }
-                            ActionButton(
-                                icon = "image",
-                                text = "Upload",
-                                textColor = MaterialTheme.colorScheme.primary,
-                                buttonColor = MaterialTheme.colorScheme.background,
-                                backgroundColor = MaterialTheme.colorScheme.background.toHex(),
-                                tint = MaterialTheme.colorScheme.primary,
-                                onClick = {
-                                    showMenu = true
-                                },
+                            OutlinedButton(
+                                onClick = { showMenu = true },
+                                shape = RoundedCornerShape(10.dp),
+                                border = androidx.compose.foundation.BorderStroke(
+                                    1.dp, MaterialTheme.colorScheme.outline
+                                ),
+                                colors = ButtonDefaults.outlinedButtonColors(
+                                    containerColor = MaterialTheme.colorScheme.surface,
+                                    contentColor = MaterialTheme.colorScheme.primary
+                                ),
+                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
                                 modifier = Modifier
                                     .testTag(TestTag.TAG_BUTTON_UPLOAD)
-                                    .semantics{
+                                    .semantics {
                                         contentDescription = TestTag.TAG_BUTTON_UPLOAD
                                     }
-                            )
+                            ) {
+                                CrossPlatformIcon(
+                                    icon = "image",
+                                    contentDescription = "Upload",
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    backgroundColor = MaterialTheme.colorScheme.surface.toHex(),
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = "Upload",
+                                    color = MaterialTheme.colorScheme.primary,
+                                    fontSize = 12.sp
+                                )
+                            }
                             DropdownMenuForUpload(
                                 showMenu,
-                                onUploadImage = {
-                                    imagePicker.pickImage()
-//                            loadingViewModel.showLoading()
-                                },
-                                onUploadVideo = {
-                                    imagePicker.pickVideo()
-                                },
-                                onDismissRequest = {showMenu = false}
+                                onUploadImage = { imagePicker.pickImage() },
+                                onUploadVideo = { imagePicker.pickVideo() },
+                                onDismissRequest = { showMenu = false }
                             )
                         }
                     }
@@ -464,6 +476,7 @@ class UploadNewsfeed {
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
+                    Spacer(Modifier.height(10.dp))
                 }
                 DraftPostPickerDialog(
                     localImageLoaderValue = localImageLoaderValue,
@@ -561,17 +574,17 @@ class UploadNewsfeed {
         @Composable
         fun AccessPermissionButtonContent(currentAccessPermission: DecentralizationType) {
             CrossPlatformIcon(
-                when(currentAccessPermission) {
-                    DecentralizationType.Public -> {"public"}
-                    DecentralizationType.Private -> {"private"}
-                    DecentralizationType.OnlyFriends -> {"onlyFriends"}
-                    },
-                    backgroundColor = MaterialTheme.colorScheme.surface.toHex(),
-                    "accessPermission",
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier
-                        .size(25.dp)
-                        .padding(end = 5.dp)
+                icon = when(currentAccessPermission) {
+                    DecentralizationType.Public -> "public"
+                    DecentralizationType.Private -> "private"
+                    DecentralizationType.OnlyFriends -> "onlyFriends"
+                },
+                backgroundColor = MaterialTheme.colorScheme.surface.toHex(),
+                contentDescription = "accessPermission",
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier
+                    .size(25.dp)
+                    .padding(end = 5.dp)
             )
             Text(text = when(currentAccessPermission) {
                 DecentralizationType.Public -> {"Public"}
@@ -579,10 +592,11 @@ class UploadNewsfeed {
                 DecentralizationType.OnlyFriends -> {"Only Friends"}
             }, color = MaterialTheme.colorScheme.onSurface)
             CrossPlatformIcon(
-                "down_arrow",
+                icon = "down_arrow",
                 backgroundColor = MaterialTheme.colorScheme.surface.toHex(),
-                "down_arrow",
-                Modifier
+                tint = MaterialTheme.colorScheme.onSurface,
+                contentDescription = "down_arrow",
+                modifier = Modifier
                     .size(25.dp)
                     .padding(end = 5.dp)
             )

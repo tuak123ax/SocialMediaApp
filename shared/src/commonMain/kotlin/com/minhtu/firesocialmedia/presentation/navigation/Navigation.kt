@@ -514,7 +514,9 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                                 // Clear deep link after handling to prevent repeated navigation
                                 DeepLinksData.deepLink = ""
                             }
-                        }
+                        },
+                        commentViewModel = commentViewModel,
+                        platform = platformContext
                     )
                 }
                 composable(

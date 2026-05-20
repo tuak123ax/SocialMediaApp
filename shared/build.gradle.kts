@@ -91,6 +91,7 @@ kotlin {
         all {
             languageSettings.optIn("kotlinx.cinterop.ExperimentalForeignApi")
             languageSettings.optIn("kotlinx.serialization.ExperimentalSerializationApi")
+            languageSettings.optIn("androidx.compose.material3.ExperimentalMaterial3Api")
         }
         commonMain.dependencies {
             implementation(compose.runtime)

@@ -16,6 +16,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -28,13 +29,12 @@ import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.navigationBars
-import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
@@ -69,7 +69,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarDefaults
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -127,6 +126,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.minhtu.firesocialmedia.constants.TestTag
+import com.minhtu.firesocialmedia.di.PlatformContext
 import com.minhtu.firesocialmedia.domain.entity.home.deeplinks.ShareApp
 import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
@@ -139,6 +139,8 @@ import com.minhtu.firesocialmedia.platform.queryShareApps
 import com.minhtu.firesocialmedia.platform.toHex
 import com.minhtu.firesocialmedia.presentation.home.Home
 import com.minhtu.firesocialmedia.presentation.home.HomeViewModel
+import com.minhtu.firesocialmedia.presentation.comment.Comment
+import com.minhtu.firesocialmedia.presentation.comment.CommentViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.Screen
 import com.minhtu.firesocialmedia.presentation.navigationscreen.friend.Friend
 import com.minhtu.firesocialmedia.presentation.navigationscreen.friend.FriendViewModel
@@ -171,7 +173,10 @@ class UiUtils {
             listState : LazyListState,
             onDelete: (action : String, new : NewsInstance) -> Unit,
             onNavigateToCreatePost : (updateNew : NewsInstance) -> Unit,
-            showBottomSheet : (NewsInstance) -> Unit) {
+            showBottomSheet : (NewsInstance) -> Unit,
+            commentViewModel: CommentViewModel? = null,
+            platform: PlatformContext? = null,
+            currentUser: UserInstance? = null) {
             LaunchedEffect(Unit) {
                 homeViewModel.updateLikeStatus()
             }
@@ -290,7 +295,36 @@ class UiUtils {
                                         .testTag(TestTag.TAG_POST_VIDEO)
                                         .semantics{
                                             contentDescription = TestTag.TAG_POST_VIDEO
-                                        })
+                                        },
+                                    isLiked,
+                                    onLikeClick = {
+                                        homeViewModel.clickLikeButton(news)
+                                    },
+                                    onCommentClick = {
+                                        homeViewModel.clickCommentButton(news)
+                                    },
+                                    onShareClick = {
+                                        showBottomSheet(news)
+                                    },
+                                    commentSheetContent = if (commentViewModel != null && platform != null && currentUser != null) {
+                                        { onSheetDismiss ->
+                                            Comment.CommentScreen(
+                                                platform = platform,
+                                                localImageLoaderValue = localImageLoaderValue,
+                                                showCloseIcon = false,
+                                                commentViewModel = commentViewModel,
+                                                currentUser = currentUser,
+                                                selectedNew = news,
+                                                onNavigateToShowImageScreen = onNavigateToShowImageScreen,
+                                                onNavigateToUserInformation = { u -> onNavigateToUserInformation(u ?: user) },
+                                                onNavigateToHomeScreen = { count ->
+                                                    homeViewModel.addCommentCountData(news.id, count)
+                                                    onSheetDismiss()
+                                                }
+                                            )
+                                        }
+                                    } else null
+                                )
                             }
                         }
                     }
@@ -510,6 +544,9 @@ class UiUtils {
             showDialog: MutableState<Boolean>
         ) {
             if (!showDialog.value) return
+            val isDarkTheme = isSystemInDarkTheme()
+            val shadowAmbient = if (isDarkTheme) Color.White.copy(alpha = 0.08f) else Color.Black
+            val shadowSpot = if (isDarkTheme) Color.White.copy(alpha = 0.15f) else Color.Black
 
             Dialog(
                 onDismissRequest = { showDialog.value = false }
@@ -577,7 +614,7 @@ class UiUtils {
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(56.dp)
-                                .shadow(8.dp, RoundedCornerShape(16.dp)),
+                                .shadow(8.dp, RoundedCornerShape(16.dp), ambientColor = shadowAmbient, spotColor = shadowSpot),
                             shape = RoundedCornerShape(16.dp),
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = MaterialTheme.colorScheme.error
@@ -1361,7 +1398,10 @@ class UiUtils {
             onNavigateToUploadNews: (updateNew : NewsInstance?) -> Unit,
             onNavigateToShowImageScreen: (image : String) -> Unit,
             onNavigateToUserInformation: (user: UserInstance?) -> Unit,
-            showBottomSheet: (NewsInstance) -> Unit) {
+            showBottomSheet: (NewsInstance) -> Unit,
+            commentViewModel: CommentViewModel? = null,
+            platform: PlatformContext? = null,
+            currentUser: UserInstance? = null) {
             val coroutineScope = rememberCoroutineScope()
             val likeStatus by homeViewModel.likedPosts.collectAsState()
             val likeCountList = homeViewModel.likeCountList.collectAsState()
@@ -1417,7 +1457,10 @@ class UiUtils {
                                         }
                                     },
                                     onNavigateToUploadNews,
-                                    showBottomSheet
+                                    showBottomSheet,
+                                    commentViewModel = commentViewModel,
+                                    platform = platform,
+                                    currentUser = currentUser
                                 )
                             } else {
                                 val sharedNew = sharedNewMap[news.shareContentId]
@@ -1752,7 +1795,8 @@ class UiUtils {
                                         .testTag(TestTag.TAG_POST_VIDEO)
                                         .semantics{
                                             contentDescription = TestTag.TAG_POST_VIDEO
-                                        })
+                                        }
+                                )
                             }
                         }
                     }
@@ -2420,6 +2464,7 @@ class UiUtils {
                         textStyle = MaterialTheme.typography.bodyMedium.copy(
                             color = MaterialTheme.colorScheme.onSurface
                         ),
+                        cursorBrush = androidx.compose.ui.graphics.SolidColor(MaterialTheme.colorScheme.primary),
                         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                         keyboardActions = KeyboardActions(
                             onDone = { keyboardController?.hide() }
