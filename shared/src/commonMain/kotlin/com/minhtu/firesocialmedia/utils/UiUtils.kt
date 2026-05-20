@@ -126,6 +126,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.minhtu.firesocialmedia.constants.TestTag
+import com.minhtu.firesocialmedia.di.PlatformContext
 import com.minhtu.firesocialmedia.domain.entity.home.deeplinks.ShareApp
 import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
@@ -138,6 +139,8 @@ import com.minhtu.firesocialmedia.platform.queryShareApps
 import com.minhtu.firesocialmedia.platform.toHex
 import com.minhtu.firesocialmedia.presentation.home.Home
 import com.minhtu.firesocialmedia.presentation.home.HomeViewModel
+import com.minhtu.firesocialmedia.presentation.comment.Comment
+import com.minhtu.firesocialmedia.presentation.comment.CommentViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.Screen
 import com.minhtu.firesocialmedia.presentation.navigationscreen.friend.Friend
 import com.minhtu.firesocialmedia.presentation.navigationscreen.friend.FriendViewModel
@@ -170,7 +173,10 @@ class UiUtils {
             listState : LazyListState,
             onDelete: (action : String, new : NewsInstance) -> Unit,
             onNavigateToCreatePost : (updateNew : NewsInstance) -> Unit,
-            showBottomSheet : (NewsInstance) -> Unit) {
+            showBottomSheet : (NewsInstance) -> Unit,
+            commentViewModel: CommentViewModel? = null,
+            platform: PlatformContext? = null,
+            currentUser: UserInstance? = null) {
             LaunchedEffect(Unit) {
                 homeViewModel.updateLikeStatus()
             }
@@ -289,7 +295,36 @@ class UiUtils {
                                         .testTag(TestTag.TAG_POST_VIDEO)
                                         .semantics{
                                             contentDescription = TestTag.TAG_POST_VIDEO
-                                        })
+                                        },
+                                    isLiked,
+                                    onLikeClick = {
+                                        homeViewModel.clickLikeButton(news)
+                                    },
+                                    onCommentClick = {
+                                        homeViewModel.clickCommentButton(news)
+                                    },
+                                    onShareClick = {
+                                        showBottomSheet(news)
+                                    },
+                                    commentSheetContent = if (commentViewModel != null && platform != null && currentUser != null) {
+                                        { onSheetDismiss ->
+                                            Comment.CommentScreen(
+                                                platform = platform,
+                                                localImageLoaderValue = localImageLoaderValue,
+                                                showCloseIcon = false,
+                                                commentViewModel = commentViewModel,
+                                                currentUser = currentUser,
+                                                selectedNew = news,
+                                                onNavigateToShowImageScreen = onNavigateToShowImageScreen,
+                                                onNavigateToUserInformation = { u -> onNavigateToUserInformation(u ?: user) },
+                                                onNavigateToHomeScreen = { count ->
+                                                    homeViewModel.addCommentCountData(news.id, count)
+                                                    onSheetDismiss()
+                                                }
+                                            )
+                                        }
+                                    } else null
+                                )
                             }
                         }
                     }
@@ -1363,7 +1398,10 @@ class UiUtils {
             onNavigateToUploadNews: (updateNew : NewsInstance?) -> Unit,
             onNavigateToShowImageScreen: (image : String) -> Unit,
             onNavigateToUserInformation: (user: UserInstance?) -> Unit,
-            showBottomSheet: (NewsInstance) -> Unit) {
+            showBottomSheet: (NewsInstance) -> Unit,
+            commentViewModel: CommentViewModel? = null,
+            platform: PlatformContext? = null,
+            currentUser: UserInstance? = null) {
             val coroutineScope = rememberCoroutineScope()
             val likeStatus by homeViewModel.likedPosts.collectAsState()
             val likeCountList = homeViewModel.likeCountList.collectAsState()
@@ -1419,7 +1457,10 @@ class UiUtils {
                                         }
                                     },
                                     onNavigateToUploadNews,
-                                    showBottomSheet
+                                    showBottomSheet,
+                                    commentViewModel = commentViewModel,
+                                    platform = platform,
+                                    currentUser = currentUser
                                 )
                             } else {
                                 val sharedNew = sharedNewMap[news.shareContentId]
@@ -1754,7 +1795,8 @@ class UiUtils {
                                         .testTag(TestTag.TAG_POST_VIDEO)
                                         .semantics{
                                             contentDescription = TestTag.TAG_POST_VIDEO
-                                        })
+                                        }
+                                )
                             }
                         }
                     }
@@ -2422,6 +2464,7 @@ class UiUtils {
                         textStyle = MaterialTheme.typography.bodyMedium.copy(
                             color = MaterialTheme.colorScheme.onSurface
                         ),
+                        cursorBrush = androidx.compose.ui.graphics.SolidColor(MaterialTheme.colorScheme.primary),
                         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                         keyboardActions = KeyboardActions(
                             onDone = { keyboardController?.hide() }

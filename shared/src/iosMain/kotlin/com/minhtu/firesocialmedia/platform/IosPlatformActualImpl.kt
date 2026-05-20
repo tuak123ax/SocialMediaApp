@@ -625,8 +625,13 @@ private fun AVPlayer.pause() {
 
 @OptIn(BetaInteropApi::class)
 @Composable
-actual fun VideoPlayer(uri: String, modifier: Modifier) {
-    var player: AVPlayer? = remember { null }
+actual fun VideoPlayer(uri: String, modifier: Modifier,
+                       isLiked : Boolean,
+                       onLikeClick: () -> Unit,
+                       onCommentClick: () -> Unit,
+                       onShareClick: () -> Unit,
+                       commentSheetContent: (@Composable (onDismiss: () -> Unit) -> Unit)?) {
+    var player: AVPlayer?
 
     class VideoPlayerView(val uri: String) : UIView(CGRectZero.readValue()) {
         private val playerLayer = AVPlayerLayer()
