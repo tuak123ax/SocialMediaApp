@@ -18,7 +18,9 @@ data class NewsDTO(override var id: String = "",
                         override var timePosted: Long = 0,
                         var localPath : String = "",
                         var shareContentId : String = "",
-                        var decentralizationType : String = ""): BaseNewsInstance,
+                        var decentralizationType : String = "",
+                        var type: String? = null,
+                        var pollId: String? = null): BaseNewsInstance,
     CountInterface {
     fun updateNews(id: String, posterId: String, posterName: String, avatar: String,
                    message: String, image: String, video : String){

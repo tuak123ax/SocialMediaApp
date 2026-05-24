@@ -53,7 +53,13 @@ fun NewsInstance.toRoomEntity() : NewsEntity {
         isVisible,
         likeCount,
         commentCount,
-        timePosted
+        timePosted,
+        isNewPost = false,
+        localPath = localPath,
+        shareContentId = shareContentId,
+        decentralizationType = decentralizationType,
+        type = type,
+        pollId = pollId
     )
 }
 
@@ -76,7 +82,11 @@ fun NewsEntity.toDomain() : NewsInstance {
         likeCount,
         commentCount,
         timePosted,
-        localPath
+        localPath,
+        shareContentId = shareContentId,
+        decentralizationType = decentralizationType,
+        type = type,
+        pollId = pollId
     )
 }
 

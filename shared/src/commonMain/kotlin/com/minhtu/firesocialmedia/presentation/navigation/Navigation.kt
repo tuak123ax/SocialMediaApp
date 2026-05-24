@@ -64,6 +64,9 @@ import com.minhtu.firesocialmedia.presentation.navigationscreen.notification.Not
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.Settings
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.CreateGroup
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.CreateGroupViewModel
+import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.CreatePoll
+import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.CreatePollViewModel
+import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.PollViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.ExploreGroup
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.ExploreGroupViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.Group
@@ -210,6 +213,8 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
 
     //Group
     var selectedGroup: GroupInstance? = null
+    var createPollViewModel : CreatePollViewModel = platformViewModel { ViewModelProvider.createCreatePollViewModel(platformContext) }
+    val pollViewModel: PollViewModel = platformViewModel { ViewModelProvider.createPollViewModel(platformContext) }
 
     //2FA
     val twoFAViewModel: TwoFAViewModel =
@@ -1064,6 +1069,7 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                             searchViewModel,
                             loadingViewModel,
                             groupDetailsViewModel,
+                            pollViewModel = pollViewModel,
                             onNavigateToShowImageScreen = { image ->
                                 selectedImage = image
                                 navController.navigate(route = ShowImage.getScreenName())
@@ -1132,6 +1138,9 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                             onManageMembers = { group ->
                                 selectedGroup = group
                                 navController.navigate(route = ManageMembers.getScreenName())
+                            },
+                            onCreatePoll = {
+                                navController.navigate(route = CreatePoll.getScreenName())
                             }
                         )
                     } else {
@@ -1209,6 +1218,7 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                         searchViewModel = searchViewModel,
                         loadingViewModel = loadingViewModel,
                         groupDetailsViewModel = groupDetailsViewModel,
+                        pollViewModel = pollViewModel,
                         onNavigateToShowImageScreen = { image ->
                             selectedImage = image
                             navController.navigate(route = ShowImage.getScreenName())
@@ -1277,6 +1287,9 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                         onManageMembers = { group ->
                             selectedGroup = group
                             navController.navigate(route = ManageMembers.getScreenName())
+                        },
+                        onCreatePoll = {
+                            navController.navigate(route = CreatePoll.getScreenName())
                         }
                     )
                 }
@@ -1569,6 +1582,28 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                         )
                     } else {
                         showToast("Cannot get user information now. Please try again!!!")
+                        navController.popBackStack()
+                    }
+                }
+
+                composable(
+                    route = CreatePoll.getScreenName(),
+                    enterTransition = DefaultNavAnimations.enter,
+                    popEnterTransition = DefaultNavAnimations.popEnter,
+                    exitTransition = DefaultNavAnimations.exit,
+                    popExitTransition = DefaultNavAnimations.popExit
+                ) {
+                    if(selectedGroup != null) {
+                        CreatePoll.CreatePollScreen(
+                            groupId = selectedGroup.id,
+                            currentUser = homeViewModel.currentUser ?: UserInstance(),
+                            createPollViewModel,
+                            onClose = {
+                                navController.popBackStack()
+                            }
+                        )
+                    } else {
+                        showToast("Cannot get group information now. Please try again!!!")
                         navController.popBackStack()
                     }
                 }

@@ -19,7 +19,10 @@ fun NewsDTO.toDomain() : NewsInstance {
         timePosted,
         localPath,
         shareContentId,
-        convertDecentralizationTypeToDomain(decentralizationType)
+        convertDecentralizationTypeToDomain(decentralizationType),
+        groupId = "",
+        type = type,
+        pollId = pollId
     )
 }
 fun NewsInstance.toDto() : NewsDTO {
@@ -37,7 +40,9 @@ fun NewsInstance.toDto() : NewsDTO {
         timePosted,
         localPath,
         shareContentId,
-        decentralizationType?.toString() ?: ""
+        decentralizationType?.toString() ?: "",
+        type = type,
+        pollId = pollId
     )
 }
 

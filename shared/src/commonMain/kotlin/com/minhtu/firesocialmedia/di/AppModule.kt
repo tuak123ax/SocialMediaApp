@@ -8,7 +8,6 @@ import com.minhtu.firesocialmedia.application.interactor.UserInteractorImpl
 import com.minhtu.firesocialmedia.data.repository.AuthenticationRepositoryImpl
 import com.minhtu.firesocialmedia.data.repository.CallRepositoryImpl
 import com.minhtu.firesocialmedia.data.repository.CommentRepositoryImpl
-import com.minhtu.firesocialmedia.data.remote.service.security.IpInfoRemoteDataSource
 import com.minhtu.firesocialmedia.data.repository.CommonDbRepositoryImpl
 import com.minhtu.firesocialmedia.data.repository.GroupRepositoryImpl
 import com.minhtu.firesocialmedia.data.repository.LocalRepositoryImpl
@@ -103,7 +102,12 @@ import com.minhtu.firesocialmedia.domain.usecases.information.SaveSignUpInformat
 import com.minhtu.firesocialmedia.domain.usecases.network.CheckInternetConnectionUseCase
 import com.minhtu.firesocialmedia.domain.usecases.newsfeed.DeleteAllDraftPostsUseCase
 import com.minhtu.firesocialmedia.domain.usecases.newsfeed.DeleteDraftPostUseCase
+import com.minhtu.firesocialmedia.domain.usecases.newsfeed.DeletePollUseCase
+import com.minhtu.firesocialmedia.domain.usecases.newsfeed.FetchPollUseCase
+import com.minhtu.firesocialmedia.domain.usecases.newsfeed.LoadAllVotersUseCase
+import com.minhtu.firesocialmedia.domain.usecases.newsfeed.LoadMyVotesUseCase
 import com.minhtu.firesocialmedia.domain.usecases.newsfeed.SaveNewToDatabaseUseCase
+import com.minhtu.firesocialmedia.domain.usecases.newsfeed.SubmitVoteUseCase
 import com.minhtu.firesocialmedia.domain.usecases.newsfeed.UpdateNewsFromDatabaseUseCase
 import com.minhtu.firesocialmedia.domain.usecases.notification.DeleteAllNotificationsUseCase
 import com.minhtu.firesocialmedia.domain.usecases.notification.DeleteNotificationFromDatabaseUseCase
@@ -114,12 +118,16 @@ import com.minhtu.firesocialmedia.domain.usecases.notification.UpdateIsReadStatu
 import com.minhtu.firesocialmedia.domain.usecases.settings.BuildOtpAuthUrlUseCase
 import com.minhtu.firesocialmedia.domain.usecases.settings.ChangePasswordUseCase
 import com.minhtu.firesocialmedia.domain.usecases.settings.CopyUseCase
+import com.minhtu.firesocialmedia.domain.usecases.settings.CreatePollUseCase
 import com.minhtu.firesocialmedia.domain.usecases.settings.DeleteLoginSessionUseCase
 import com.minhtu.firesocialmedia.domain.usecases.settings.Disable2FAUseCase
 import com.minhtu.firesocialmedia.domain.usecases.settings.Enable2FAUseCase
 import com.minhtu.firesocialmedia.domain.usecases.settings.FetchLoginHistoryListUseCase
 import com.minhtu.firesocialmedia.domain.usecases.settings.GenerateSecretFor2FAUseCase
 import com.minhtu.firesocialmedia.domain.usecases.settings.Get2FAVerifiedStatusUseCase
+import com.minhtu.firesocialmedia.domain.usecases.settings.LogoutSessionUseCase
+import com.minhtu.firesocialmedia.domain.usecases.settings.ObserveSessionStatusUseCase
+import com.minhtu.firesocialmedia.domain.usecases.settings.StopObserveSessionStatusUseCase
 import com.minhtu.firesocialmedia.domain.usecases.settings.UpdateUserAvatarUseCase
 import com.minhtu.firesocialmedia.domain.usecases.settings.UpdateUserBackgroundUseCase
 import com.minhtu.firesocialmedia.domain.usecases.settings.UpdateUserStringFieldUseCase
@@ -129,9 +137,6 @@ import com.minhtu.firesocialmedia.domain.usecases.settings.ValidateNewPasswordUs
 import com.minhtu.firesocialmedia.domain.usecases.settings.Verify2FAUseCase
 import com.minhtu.firesocialmedia.domain.usecases.settings.VerifyBackupCodeUseCase
 import com.minhtu.firesocialmedia.domain.usecases.settings.VerifyCurrentPasswordUseCase
-import com.minhtu.firesocialmedia.domain.usecases.settings.LogoutSessionUseCase
-import com.minhtu.firesocialmedia.domain.usecases.settings.ObserveSessionStatusUseCase
-import com.minhtu.firesocialmedia.domain.usecases.settings.StopObserveSessionStatusUseCase
 import com.minhtu.firesocialmedia.domain.usecases.showimage.DownloadImageUseCase
 import com.minhtu.firesocialmedia.domain.usecases.signin.CheckLocalAccountUseCase
 import com.minhtu.firesocialmedia.domain.usecases.signin.CheckUserExistsUseCase
@@ -149,6 +154,8 @@ import com.minhtu.firesocialmedia.presentation.information.InformationViewModel
 import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.friend.FriendViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.notification.NotificationViewModel
+import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.CreatePollViewModel
+import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.PollViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.personal.PersonalInformationViewModel
 import com.minhtu.firesocialmedia.presentation.search.SearchViewModel
 import com.minhtu.firesocialmedia.presentation.showimage.ShowImageViewModel
@@ -355,6 +362,10 @@ object AppModule {
         return DeleteNewsFromDatabaseUseCase(newsRepository)
     }
 
+    fun provideDeletePollUseCase(newsRepository: NewsRepository): DeletePollUseCase {
+        return DeletePollUseCase(newsRepository)
+    }
+
     fun provideObservePhoneCallWithInCallUseCase(sendSignalingDataUseCase: SendSignalingDataUseCase): ObservePhoneCallWithInCallUseCase {
         return ObservePhoneCallWithInCallUseCase(sendSignalingDataUseCase)
     }
@@ -407,7 +418,8 @@ object AppModule {
         deleteNewsFromDatabaseUseCase: DeleteNewsFromDatabaseUseCase,
         storeNewsToRoomUseCase: StoreNewsToRoomUseCase,
         saveNewToDatabaseUseCase: SaveNewToDatabaseUseCase,
-        findNewByIdInDbUseCase: FindNewByIdInDbUseCase
+        findNewByIdInDbUseCase: FindNewByIdInDbUseCase,
+        deletePollUseCase: DeletePollUseCase
     ): NewsInteractor {
         return NewsInteractorImpl(
             getLatestNewsUseCase,
@@ -415,7 +427,8 @@ object AppModule {
             deleteNewsFromDatabaseUseCase,
             storeNewsToRoomUseCase,
             saveNewToDatabaseUseCase,
-            findNewByIdInDbUseCase
+            findNewByIdInDbUseCase,
+            deletePollUseCase
         )
     }
 
@@ -975,7 +988,48 @@ object AppModule {
         )
     }
 
-    fun provideUpdateUserStringFieldUseCase(settingsRepository: SettingsRepository) : UpdateUserStringFieldUseCase {
+    fun provideUpdateUserStringFieldUseCase(settingsRepository: SettingsRepository): UpdateUserStringFieldUseCase {
         return UpdateUserStringFieldUseCase(settingsRepository)
+    }
+
+    fun provideCreatePollViewModel(createPollUseCase: CreatePollUseCase): CreatePollViewModel {
+        return CreatePollViewModel(createPollUseCase)
+    }
+
+    fun provideCreatePollUseCase(settingsRepository: SettingsRepository): CreatePollUseCase {
+        return CreatePollUseCase(settingsRepository)
+    }
+
+    fun providePollViewModel(
+        fetchPollUseCase: FetchPollUseCase,
+        loadMyVotesUseCase: LoadMyVotesUseCase,
+        submitVoteUseCase: SubmitVoteUseCase,
+        loadAllVotersUseCase: LoadAllVotersUseCase,
+        getUserUseCase: GetUserUseCase
+    ): PollViewModel {
+        return PollViewModel(
+            fetchPollUseCase,
+            loadMyVotesUseCase,
+            submitVoteUseCase,
+            loadAllVotersUseCase,
+            getUserUseCase
+        )
+    }
+
+    fun provideFetchPollUseCase(newsRepository: NewsRepository): FetchPollUseCase {
+        return FetchPollUseCase(newsRepository)
+    }
+
+    fun provideLoadMyVotesUseCase(newsRepository: NewsRepository): LoadMyVotesUseCase {
+        return LoadMyVotesUseCase(newsRepository)
+    }
+
+    fun provideLoadAllVotersUseCase(newsRepository: NewsRepository): LoadAllVotersUseCase {
+        return LoadAllVotersUseCase(newsRepository)
+    }
+
+    fun provideSubmitVoteUseCase(newsRepository: NewsRepository): SubmitVoteUseCase {
+        return SubmitVoteUseCase(newsRepository)
+
     }
 }

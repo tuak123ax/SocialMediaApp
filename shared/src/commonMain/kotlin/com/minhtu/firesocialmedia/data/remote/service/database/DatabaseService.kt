@@ -10,6 +10,7 @@ import com.minhtu.firesocialmedia.data.remote.dto.group.GroupSummaryDTO
 import com.minhtu.firesocialmedia.data.remote.dto.home.LatestNewsDTO
 import com.minhtu.firesocialmedia.data.remote.dto.news.NewsDTO
 import com.minhtu.firesocialmedia.data.remote.dto.notification.NotificationDTO
+import com.minhtu.firesocialmedia.data.remote.dto.settings.PollDTO
 import com.minhtu.firesocialmedia.data.remote.dto.settings.SessionItemDTO
 import com.minhtu.firesocialmedia.data.remote.dto.settings.security.IpInfoResponseDTO
 import com.minhtu.firesocialmedia.data.remote.dto.signin.SignInDTO
@@ -392,5 +393,42 @@ interface DatabaseService {
         userId: String,
         imageUri: String,
         userPath: String
+    ): Boolean
+
+    suspend fun createPoll(poll: PollDTO, pollPath: String, groupPath: String, groupId: String, postsPath: String, newsEntry: NewsDTO): Boolean
+
+    suspend fun deletePollFromDatabase(newsId: String, pollId: String, groupPath: String, groupId: String, postsPath: String, pollPath: String, pollVotesPath: String): Boolean
+
+    /**
+     * Fetches the full [PollDTO] from /polls/{pollId}.
+     * Returns null if the poll does not exist.
+     */
+    suspend fun fetchPoll(pollId: String, pollPath: String): PollDTO?
+
+    /**
+     * Loads the current user's selected option indices from /pollVotes/{pollId}/{userId}.
+     * Returns an empty list if the user has not voted yet.
+     */
+    suspend fun loadMyVotes(pollId: String, userId: String, pollVotesPath: String): List<Int>
+
+    /**
+     * Loads all voters for a poll from /pollVotes/{pollId}.
+     * Returns a map of userId -> list of selected option indices.
+     */
+    suspend fun loadAllVoters(pollId: String, pollVotesPath: String): Map<String, List<Int>>
+
+    /**
+     * Atomically casts a vote:
+     *  - writes selected indices to /pollVotes/{pollId}/{userId}
+     *  - increments /polls/{pollId}/votes/{optionIndex} for each selected option
+     *  - removes previous vote increments if [previousVotes] is provided
+     */
+    suspend fun submitVote(
+        pollId: String,
+        userId: String,
+        selectedIndices: List<Int>,
+        previousIndices: List<Int>,
+        pollPath: String,
+        pollVotesPath: String
     ): Boolean
 }
