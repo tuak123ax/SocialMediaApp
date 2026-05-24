@@ -24,5 +24,7 @@ data class NewsEntity(
     var isNewPost : Boolean = false,
     var localPath : String = "",
     var shareContentId : String = "",
-    var decentralizationType : DecentralizationType? = null
+    var decentralizationType : DecentralizationType? = null,
+    var type: String? = null,
+    var pollId: String? = null
 )

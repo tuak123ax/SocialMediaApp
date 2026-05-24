@@ -40,6 +40,9 @@ data class UserInstance(var email: String = "", var image: String = "", var name
     fun removeNotification(notification: NotificationInstance) {
         notifications.remove(notification)
     }
+    fun isDefault(): Boolean {
+        return email.isEmpty() && image.isEmpty() && name.isEmpty() && status.isEmpty() && phone.isEmpty() && token.isEmpty() && uid.isEmpty()
+    }
 }
 
 fun UserInstance.toMap(): Map<String, Any?> = mapOf(

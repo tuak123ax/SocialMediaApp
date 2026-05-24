@@ -35,6 +35,7 @@ import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.NotificationsOff
+import androidx.compose.material.icons.filled.Poll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -121,6 +122,7 @@ class GroupDetails {
             searchViewModel : SearchViewModel,
             loadingViewModel : LoadingViewModel,
             groupDetailsViewModel: GroupDetailsViewModel,
+            pollViewModel: PollViewModel? = null,
             onNavigateToShowImageScreen : (image : String) -> Unit,
             onNavigateToUserInformation : (user : UserInstance?) -> Unit,
             onNavigateBack : () -> Unit,
@@ -128,7 +130,8 @@ class GroupDetails {
             onNavigateToCommentScreen: (selectedNew : NewsInstance) -> Unit,
             onClickInviteButton : () -> Unit,
             onLeaveGroup : () -> Unit,
-            onManageMembers : (GroupInstance) -> Unit
+            onManageMembers : (GroupInstance) -> Unit,
+            onCreatePoll : () -> Unit
         ){
             CommonBackHandler{
                 onNavigateBack()
@@ -519,7 +522,10 @@ class GroupDetails {
                                     loadingViewModel,
                                     onNavigateToShowImageScreen,
                                     onNavigateToUserInformation,
-                                    onNavigateToUploadNewsfeed
+                                    onNavigateToUploadNewsfeed,
+                                    onCreatePoll,
+                                    pollViewModel = pollViewModel,
+                                    currentUserId = currentUser.uid
                                 )
                             }
                         } else {
@@ -650,7 +656,10 @@ class GroupDetails {
             loadingViewModel: LoadingViewModel,
             onNavigateToShowImageScreen: (image: String) -> Unit,
             onNavigateToUserInformation: (user: UserInstance?) -> Unit,
-            onNavigateToUploadNewsfeed : (updateNew : NewsInstance?) -> Unit){
+            onNavigateToUploadNewsfeed : (updateNew : NewsInstance?) -> Unit,
+            onCreatePoll : () -> Unit,
+            pollViewModel: PollViewModel? = null,
+            currentUserId: String = ""){
             var selectedTabIndex by remember { mutableIntStateOf(0) }
             var showBottomSheet by rememberSaveable { mutableStateOf(false) }
             var newToBeShared by mutableStateOf<NewsInstance?>(null)
@@ -691,7 +700,8 @@ class GroupDetails {
                             AvatarAndEditTextRow(
                                 currentUser.image,
                                 localImageLoaderValue,
-                                onNavigateToUploadNewsfeed
+                                onNavigateToUploadNewsfeed,
+                                onCreatePoll
                             )
                             LazyColumnOfNewsWithSlideOutAnimationAndLoadMore(
                                 localImageLoaderValue,
@@ -704,6 +714,12 @@ class GroupDetails {
                                 showBottomSheet = { news ->
                                     newToBeShared = news
                                     showBottomSheet = true
+                                },
+                                groupId = group.id,
+                                pollViewModel = pollViewModel,
+                                currentUserId = currentUserId,
+                                onDeletePoll = { deletedNews ->
+                                    groupDetailsViewModel.deletePoll(deletedNews, group.id)
                                 }
                             )
                         }
@@ -792,6 +808,7 @@ class GroupDetails {
             avatar : String,
             localImageLoaderValue : ProvidedValue<*>,
             onNavigateToUploadNews: (updateNew : NewsInstance?) -> Unit,
+            onCreatePoll : () -> Unit
         ) {
             Row(
                 horizontalArrangement = Arrangement.Center,
@@ -822,6 +839,7 @@ class GroupDetails {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .weight(1f)
                         .height(40.dp)
                         .padding(horizontal = 10.dp)
                         .clip(RoundedCornerShape(20.dp))
@@ -832,6 +850,28 @@ class GroupDetails {
                     Text(
                         text = "Write something to the group...",
                         color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+
+                // Create poll
+                Box(
+                    modifier = Modifier
+                        .padding(end = 10.dp)
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .background(
+                            MaterialTheme.colorScheme.surfaceVariant
+                        )
+                        .clickable {
+                            onCreatePoll()
+                        },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Poll,
+                        contentDescription = "Create poll",
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(22.dp)
                     )
                 }
             }

@@ -1,11 +1,13 @@
 package com.minhtu.firesocialmedia.data.remote.mapper.settings
 
+import com.minhtu.firesocialmedia.data.remote.dto.settings.PollDTO
 import com.minhtu.firesocialmedia.data.remote.dto.settings.SessionItemDTO
+import com.minhtu.firesocialmedia.domain.entity.settings.PollObject
 import com.minhtu.firesocialmedia.domain.entity.settings.SessionItem
 
 private const val ACTIVE_NOW_THRESHOLD_MS = 5 * 60 * 1000L // 5 minutes
 
-fun SessionItem.toDto() : SessionItemDTO {
+fun SessionItem.toDto(): SessionItemDTO {
     return SessionItemDTO(
         sessionId = "",
         deviceName = deviceName,
@@ -25,7 +27,7 @@ fun SessionItem.toDto() : SessionItemDTO {
  * considered active when the login happened within the last [ACTIVE_NOW_THRESHOLD_MS] ms —
  * it is never stored in the database.
  */
-fun SessionItemDTO.toDomain(currentSessionId: String, currentTimeMillis: Long) : SessionItem {
+fun SessionItemDTO.toDomain(currentSessionId: String, currentTimeMillis: Long): SessionItem {
     return SessionItem(
         sessionId = sessionId,
         deviceName = deviceName,
@@ -34,5 +36,43 @@ fun SessionItemDTO.toDomain(currentSessionId: String, currentTimeMillis: Long) :
         current = sessionId.isNotEmpty() && sessionId == currentSessionId,
         activeNow = time > 0 && (currentTimeMillis - time) < ACTIVE_NOW_THRESHOLD_MS,
         status = status
+    )
+}
+
+fun PollObject.toDto(): PollDTO {
+    return PollDTO(
+        id = id,
+        posterId = posterId,
+        posterName = posterName,
+        posterAvatar = posterAvatar,
+        question = question,
+        options = options,
+        allowMultipleAnswers = allowMultipleAnswers,
+        duration = duration,
+        groupId = groupId,
+        likeCount = likeCount,
+        commentCount = commentCount,
+        timePosted = timePosted,
+        expiresAt = expiresAt,
+        votes = votes,
+    )
+}
+
+fun PollDTO.toDomain(): PollObject {
+    return PollObject(
+        id = id,
+        posterId = posterId,
+        posterName = posterName,
+        posterAvatar = posterAvatar,
+        question = question,
+        options = options,
+        allowMultipleAnswers = allowMultipleAnswers,
+        duration = duration,
+        groupId = groupId,
+        likeCount = likeCount,
+        commentCount = commentCount,
+        timePosted = timePosted,
+        expiresAt = expiresAt,
+        votes = votes,
     )
 }

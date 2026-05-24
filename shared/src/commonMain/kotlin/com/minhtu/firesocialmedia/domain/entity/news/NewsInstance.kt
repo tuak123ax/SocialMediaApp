@@ -18,10 +18,10 @@ data class NewsInstance(override var id: String = "",
                         var localPath : String = "",
                         var shareContentId : String = "",
                         var decentralizationType : DecentralizationType? = null,
-                        var groupId : String = ""): BaseNewsInstance,
+                        var groupId : String = "",
+                        var type: String? = null,
+                        var pollId: String? = null): BaseNewsInstance,
     CountInterface {
-
-
     fun updateNews(id: String, posterId: String, posterName: String, avatar: String,
                    message: String, image: String, video : String){
         this.id = id

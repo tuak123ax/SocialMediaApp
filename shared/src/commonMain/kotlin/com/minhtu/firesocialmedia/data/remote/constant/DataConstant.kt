@@ -33,5 +33,9 @@ class DataConstant {
         const val STATUS_PATH = "status"
         const val PHONE_PATH = "phone"
         const val BACKGROUND_PATH = "background"
+        const val POLL_PATH = "polls"
+        const val POLL_VOTES_PATH = "pollVotes"
+        const val POST_TYPE_NEWS = "news"
+        const val POST_TYPE_POLL = "poll"
     }
 }

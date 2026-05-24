@@ -2,6 +2,7 @@ package com.minhtu.firesocialmedia.domain.repository
 
 import com.minhtu.firesocialmedia.domain.entity.authentication.TwoFAResponse
 import com.minhtu.firesocialmedia.domain.entity.settings.ChangePasswordState
+import com.minhtu.firesocialmedia.domain.entity.settings.PollObject
 import com.minhtu.firesocialmedia.domain.entity.settings.SessionItem
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 
@@ -48,4 +49,5 @@ interface SettingsRepository {
     suspend fun updateUserStringField(userId: String, fieldPath: String, value: String): Boolean
     suspend fun updateUserAvatar(userId: String, imageUri: String): Boolean
     suspend fun updateUserBackground(userId: String, imageUri: String): Boolean
+    suspend fun createPoll(poll: PollObject, newsId: String, groupId: String): Boolean
 }

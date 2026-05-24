@@ -883,4 +883,9 @@ class IosDatabaseService() : DatabaseService {
         // TODO: Implement iOS updateUserBackground
         return false
     }
+
+    override suspend fun loadAllVoters(pollId: String, pollVotesPath: String): Map<String, List<Int>> {
+        // TODO: Implement iOS loadAllVoters
+        return emptyMap()
+    }
 }

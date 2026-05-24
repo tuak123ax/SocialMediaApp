@@ -25,9 +25,11 @@ import com.minhtu.firesocialmedia.data.remote.dto.call.OfferAnswerDTO
 import com.minhtu.firesocialmedia.data.remote.dto.group.GroupDTO
 import com.minhtu.firesocialmedia.data.remote.dto.group.GroupSummaryDTO
 import com.minhtu.firesocialmedia.data.remote.dto.notification.NotificationDTO
+import com.minhtu.firesocialmedia.data.remote.dto.settings.PollDTO
 import com.minhtu.firesocialmedia.data.remote.dto.settings.SessionItemDTO
 import com.minhtu.firesocialmedia.data.remote.dto.settings.security.IpInfoResponseDTO
 import com.minhtu.firesocialmedia.data.remote.dto.user.UserDTO
+import com.minhtu.firesocialmedia.data.remote.dto.news.NewsDTO
 import com.minhtu.firesocialmedia.domain.entity.base.BaseNewsInstance
 import com.minhtu.firesocialmedia.domain.entity.call.CallStatus
 import com.minhtu.firesocialmedia.domain.serviceimpl.database.supabase.SupabaseStorageHelper.Companion.resolveMediaUrlAsync
@@ -1935,6 +1937,200 @@ class AndroidDatabaseHelper {
                 false
             }
         }
+
+        suspend fun createPoll(
+            poll: PollDTO,
+            pollPath: String,
+            groupPath: String,
+            groupId: String,
+            postsPath: String,
+            newsEntry: NewsDTO
+        ): Boolean = suspendCancellableCoroutine { continuation ->
+            Log.d("Task", "createPoll: ${poll.id} in group $groupId")
+            val databaseRef = FirebaseDatabase.getInstance().reference
+            // Index entry lives under /groups/{groupId}/posts/{newsId}  (same path as regular group posts)
+            // Full poll data lives under /polls/{pollId}
+            val updates = hashMapOf<String, Any?>(
+                "$groupPath/$groupId/$postsPath/${newsEntry.id}" to newsEntry,
+                "$pollPath/${poll.id}" to poll
+            )
+            databaseRef.updateChildren(updates).addOnCompleteListener { task ->
+                if (!continuation.isActive) return@addOnCompleteListener
+                if (task.isSuccessful) {
+                    Log.d("Task", "createPoll success")
+                } else {
+                    Log.e("Task", "createPoll FAILED", task.exception)
+                }
+                continuation.resume(task.isSuccessful, onCancellation = {})
+            }
+        }
+
+        suspend fun deletePollFromDatabase(
+            newsId: String,
+            pollId: String,
+            groupPath: String,
+            groupId: String,
+            postsPath: String,
+            pollPath: String,
+            pollVotesPath: String
+        ): Boolean = suspendCancellableCoroutine { continuation ->
+            Log.d("Task", "deletePollFromDatabase: newsId=$newsId pollId=$pollId groupId=$groupId")
+            val databaseRef = FirebaseDatabase.getInstance().reference
+            val updates = hashMapOf<String, Any?>(
+                "$groupPath/$groupId/$postsPath/$newsId" to null,
+                "$pollPath/$pollId" to null,
+                "$pollVotesPath/$pollId" to null
+            )
+            databaseRef.updateChildren(updates).addOnCompleteListener { task ->
+                if (!continuation.isActive) return@addOnCompleteListener
+                if (task.isSuccessful) {
+                    Log.d("Task", "deletePollFromDatabase success")
+                } else {
+                    Log.e("Task", "deletePollFromDatabase FAILED", task.exception)
+                }
+                continuation.resume(task.isSuccessful, onCancellation = {})
+            }
+        }
+
+        suspend fun fetchPoll(pollId: String, pollPath: String): PollDTO? {
+            return try {
+                val snapshot = FirebaseDatabase.getInstance().reference
+                    .child(pollPath)
+                    .child(pollId)
+                    .get()
+                    .await()
+                if (!snapshot.exists()) return null
+                // Manually parse snapshot to avoid @Serializable interference with Firebase reflection
+                val id = snapshot.child("id").getValue(String::class.java) ?: ""
+                val posterId = snapshot.child("posterId").getValue(String::class.java) ?: ""
+                val posterName = snapshot.child("posterName").getValue(String::class.java) ?: ""
+                val posterAvatar = snapshot.child("posterAvatar").getValue(String::class.java) ?: ""
+                val question = snapshot.child("question").getValue(String::class.java) ?: ""
+                val allowMultipleAnswers = snapshot.child("allowMultipleAnswers").getValue(Boolean::class.java) ?: false
+                val duration = snapshot.child("duration").getValue(String::class.java) ?: ""
+                val groupId = snapshot.child("groupId").getValue(String::class.java) ?: ""
+                val likeCount = (snapshot.child("likeCount").getValue(Long::class.java) ?: 0L).toInt()
+                val commentCount = (snapshot.child("commentCount").getValue(Long::class.java) ?: 0L).toInt()
+                val timePosted = snapshot.child("timePosted").getValue(Long::class.java) ?: 0L
+                val expiresAt = snapshot.child("expiresAt").getValue(Long::class.java)
+                // Parse options: stored as Firebase array {"0":"opt1","1":"opt2"} or list
+                val optionsSnapshot = snapshot.child("options")
+                val options: List<String> = if (optionsSnapshot.exists()) {
+                    optionsSnapshot.children.mapNotNull { it.getValue(String::class.java) }
+                } else emptyList()
+                // Parse votes: stored as {"0": count0, "1": count1, ...}
+                val votesSnapshot = snapshot.child("votes")
+                val votes: Map<String, Int>? = if (votesSnapshot.exists()) {
+                    votesSnapshot.children.associate { child ->
+                        val key = child.key ?: ""
+                        val value = (child.getValue(Long::class.java) ?: 0L).toInt()
+                        key to value
+                    }
+                } else null
+                Log.d("Task", "fetchPoll $pollId: options=$options, votes=$votes")
+                PollDTO(
+                    id = id,
+                    posterId = posterId,
+                    posterName = posterName,
+                    posterAvatar = posterAvatar,
+                    question = question,
+                    options = options,
+                    allowMultipleAnswers = allowMultipleAnswers,
+                    duration = duration,
+                    groupId = groupId,
+                    likeCount = likeCount,
+                    commentCount = commentCount,
+                    timePosted = timePosted,
+                    expiresAt = expiresAt,
+                    votes = votes
+                )
+            } catch (e: Exception) {
+                Log.e("Task", "fetchPoll failed", e)
+                null
+            }
+        }
+
+        suspend fun loadMyVotes(
+            pollId: String,
+            userId: String,
+            pollVotesPath: String
+        ): List<Int> {
+            return try {
+                val snapshot = FirebaseDatabase.getInstance().reference
+                    .child(pollVotesPath)
+                    .child(pollId)
+                    .child(userId)
+                    .get()
+                    .await()
+                if (!snapshot.exists()) return emptyList()
+                // Stored as a list of Longs (Firebase JSON array) or map {0:true}
+                snapshot.children.mapNotNull { child ->
+                    (child.getValue(Long::class.java))?.toInt()
+                }
+            } catch (e: Exception) {
+                Log.e("Task", "loadMyVotes failed", e)
+                emptyList()
+            }
+        }
+
+        suspend fun loadAllVoters(
+            pollId: String,
+            pollVotesPath: String
+        ): Map<String, List<Int>> {
+            return try {
+                val snapshot = FirebaseDatabase.getInstance().reference
+                    .child(pollVotesPath)
+                    .child(pollId)
+                    .get()
+                    .await()
+                if (!snapshot.exists()) return emptyMap()
+                val result = mutableMapOf<String, List<Int>>()
+                for (userSnapshot in snapshot.children) {
+                    val uid = userSnapshot.key ?: continue
+                    val indices = userSnapshot.children.mapNotNull { child ->
+                        (child.getValue(Long::class.java))?.toInt()
+                    }
+                    result[uid] = indices
+                }
+                result
+            } catch (e: Exception) {
+                Log.e("Task", "loadAllVoters failed", e)
+                emptyMap()
+            }
+        }
+
+        suspend fun submitVote(
+            pollId: String,
+            userId: String,
+            selectedIndices: List<Int>,
+            previousIndices: List<Int>,
+            pollPath: String,
+            pollVotesPath: String
+        ): Boolean = suspendCancellableCoroutine { continuation ->
+            val databaseRef = FirebaseDatabase.getInstance().reference
+            val updates = hashMapOf<String, Any?>(
+                // Overwrite this user's vote record
+                "$pollVotesPath/$pollId/$userId" to selectedIndices
+            )
+            // Decrement counts for options the user is unselecting
+            previousIndices.forEach { idx ->
+                if (!selectedIndices.contains(idx)) {
+                    updates["$pollPath/$pollId/votes/$idx"] = ServerValue.increment(-1)
+                }
+            }
+            // Increment counts for newly selected options
+            selectedIndices.forEach { idx ->
+                if (!previousIndices.contains(idx)) {
+                    updates["$pollPath/$pollId/votes/$idx"] = ServerValue.increment(1)
+                }
+            }
+            databaseRef.updateChildren(updates).addOnCompleteListener { task ->
+                if (!continuation.isActive) return@addOnCompleteListener
+                if (!task.isSuccessful) {
+                    Log.e("Task", "submitVote FAILED", task.exception)
+                }
+                continuation.resume(task.isSuccessful, onCancellation = {})
+            }
+        }
     }
 }
-

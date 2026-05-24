@@ -17,6 +17,7 @@ import com.minhtu.firesocialmedia.domain.usecases.group.JoinGroupUseCase
 import com.minhtu.firesocialmedia.domain.usecases.group.LeaveAndDeleteGroupUseCase
 import com.minhtu.firesocialmedia.domain.usecases.group.LeaveGroupUseCase
 import com.minhtu.firesocialmedia.domain.usecases.group.UpdateNotificationStatusUseCase
+import com.minhtu.firesocialmedia.domain.usecases.newsfeed.DeletePollUseCase
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -33,6 +34,7 @@ class GroupDetailsViewModel(
     private val joinGroupUseCase : JoinGroupUseCase,
     private val leaveGroupUseCase : LeaveGroupUseCase,
     private val leaveAndDeleteGroupUseCase : LeaveAndDeleteGroupUseCase,
+    private val deletePollUseCase : DeletePollUseCase,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : ViewModel() {
     var coverPhoto by mutableStateOf(Constants.DEFAULT_AVATAR_URL)
@@ -131,6 +133,18 @@ class GroupDetailsViewModel(
     }
     fun resetLeaveGroupStatus() {
         _leaveGroupStatus.value = null
+    }
+
+    private val _deletePollState = MutableStateFlow<Boolean?>(null)
+    val deletePollState = _deletePollState.asStateFlow()
+    fun deletePoll(news: NewsInstance, groupId: String) {
+        val pollId = news.pollId ?: return
+        viewModelScope.launch(ioDispatcher) {
+            _deletePollState.value = deletePollUseCase.invoke(news.id, pollId, groupId)
+        }
+    }
+    fun resetDeletePollState() {
+        _deletePollState.value = null
     }
 
     //--------------Limit photos before pass to Compose----------------//
