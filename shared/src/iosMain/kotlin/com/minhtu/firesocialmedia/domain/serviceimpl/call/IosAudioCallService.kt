@@ -92,6 +92,10 @@ class IosAudioCallService : AudioCallService {
         // iOS implementation will be added later
     }
 
+    override suspend fun prepareForIncomingVideoNegotiation() {
+        // iOS implementation will be added later
+    }
+
     override suspend fun setupAudioTrack() {
         // iOS implementation will be added later
     }
