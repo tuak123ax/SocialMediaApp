@@ -72,6 +72,12 @@ import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import com.minhtu.firesocialmedia.domain.entity.authentication.TwoFARequest
+import com.minhtu.firesocialmedia.domain.entity.authentication.TwoFAResponse
+import io.ktor.client.call.body
+import io.ktor.client.request.url
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.putJsonArray
@@ -1073,6 +1079,24 @@ actual suspend fun queryShareApps(text: String): MutableList<ShareApp> {
     return NSBundle.mainBundle
         .objectForInfoDictionaryKey("CFBundleShortVersionString")
         ?.toString() ?: ""
+}
+
+actual suspend fun send2FARequest(request: TwoFARequest): TwoFAResponse {
+    return try {
+        val requestBody = Json.encodeToString(request)
+        val response = KtorProvider.client.post(Constants.APP_SCRIPT_URL + Constants.APP_SCRIPT_2FA_ENDPOINT) {
+            contentType(ContentType.Application.Json)
+            setBody(requestBody)
+        }
+        if (response.status.isSuccess()) {
+            response.body<TwoFAResponse>()
+        } else {
+            TwoFAResponse(false, "Request failed: ${response.status}")
+        }
+    } catch (e: Exception) {
+        logMessage("send2FARequest") { "Exception: ${e.message}" }
+        TwoFAResponse(false, "Exception happened!")
+    }
 }
 
 actual object AppConfig {

@@ -5,6 +5,8 @@ import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.domain.repository.GroupRepository
 import com.minhtu.firesocialmedia.domain.usecases.group.FetchGroupInfoUseCase
+import com.minhtu.firesocialmedia.domain.usecases.newsfeed.DeletePollUseCase
+import com.minhtu.firesocialmedia.domain.repository.NewsRepository
 import com.minhtu.firesocialmedia.domain.usecases.group.FetchNotificationStateUseCase
 import com.minhtu.firesocialmedia.domain.usecases.group.FindGroupByIdUseCase
 import com.minhtu.firesocialmedia.domain.usecases.group.JoinGroupUseCase
@@ -58,6 +60,18 @@ private class DetailsRepo : GroupRepository {
 @OptIn(ExperimentalCoroutinesApi::class)
 class GroupDetailsViewModelTest {
 
+    private val fakeNewsRepo = object : NewsRepository {
+        override suspend fun getNew(newId: String): com.minhtu.firesocialmedia.domain.entity.news.NewsInstance? = null
+        override suspend fun getLatestNews(number: Int, lastTimePosted: Double?, lastKey: String?) = null
+        override suspend fun deleteNewsFromDatabase(new: com.minhtu.firesocialmedia.domain.entity.news.NewsInstance) {}
+        override suspend fun deletePollFromDatabase(newsId: String, pollId: String, groupId: String): Boolean = true
+        override suspend fun updateNewsFromDatabase(newContent: String, newImage: String, newVideo: String, new: com.minhtu.firesocialmedia.domain.entity.news.NewsInstance): Boolean = true
+        override suspend fun fetchPoll(pollId: String): com.minhtu.firesocialmedia.domain.entity.settings.PollObject? = null
+        override suspend fun loadMyVotes(pollId: String, userId: String): List<Int> = emptyList()
+        override suspend fun loadAllVoters(pollId: String): Map<String, List<Int>> = emptyMap()
+        override suspend fun submitVote(pollId: String, userId: String, selectedIndices: List<Int>, previousIndices: List<Int>): Boolean = true
+    }
+
     private fun vm(repo: DetailsRepo, dispatcher: CoroutineDispatcher): GroupDetailsViewModel {
         return GroupDetailsViewModel(
             fetchGroupInfoUseCase = FetchGroupInfoUseCase(repo),
@@ -67,6 +81,7 @@ class GroupDetailsViewModelTest {
             joinGroupUseCase = JoinGroupUseCase(repo),
             leaveGroupUseCase = LeaveGroupUseCase(repo),
             leaveAndDeleteGroupUseCase = LeaveAndDeleteGroupUseCase(repo),
+            deletePollUseCase = DeletePollUseCase(fakeNewsRepo),
             ioDispatcher = dispatcher
         )
     }
