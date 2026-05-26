@@ -1,6 +1,9 @@
-package com.minhtu.firesocialmedia.domain.entity.authentication
+package com.minhtu.firesocialmedia.data.remote.dto.authentication
 
-data class TwoFARequest(
+import kotlinx.serialization.Serializable
+
+@Serializable
+data class TwoFARequestDTO(
     val apiKey: String,
     val action: String,
     val userId: String,
@@ -8,3 +11,4 @@ data class TwoFARequest(
     val otp: String? = "",
     val backupCode: String? = ""
 )
+

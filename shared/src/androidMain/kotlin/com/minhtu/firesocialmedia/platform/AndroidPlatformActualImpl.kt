@@ -74,6 +74,9 @@ import com.minhtu.firesocialmedia.constants.Constants
 import com.minhtu.firesocialmedia.data.remote.service.imagepicker.ImagePicker
 import com.minhtu.firesocialmedia.data.remote.service.signinlauncher.SignInLauncher
 import com.minhtu.firesocialmedia.di.PlatformContext
+import com.minhtu.firesocialmedia.data.remote.dto.authentication.TwoFAResponseDTO
+import com.minhtu.firesocialmedia.data.remote.mapper.authentication.toDomain
+import com.minhtu.firesocialmedia.data.remote.mapper.authentication.toDTO
 import com.minhtu.firesocialmedia.domain.entity.authentication.TwoFARequest
 import com.minhtu.firesocialmedia.domain.entity.authentication.TwoFAResponse
 import com.minhtu.firesocialmedia.domain.entity.home.deeplinks.ShareApp
@@ -305,15 +308,15 @@ actual fun sendMessageToServer(request: String) {
 actual suspend fun send2FARequest(request: TwoFARequest): TwoFAResponse {
     val response = Client.getClient(Constants.APP_SCRIPT_URL)
         ?.create(AuthenticationApiService::class.java)!!
-        .sendVerifyRequestToAppScript(request)
+        .sendVerifyRequestToAppScript(request.toDTO())
         .execute()
 
     return if (response.isSuccessful) {
-        val twoFAResponse = response.body()
+        val twoFAResponseDTO = response.body()
         logMessage("sendVerifyOTPRequest") {
-            "Success: ${response.code()} | success=${twoFAResponse?.success} | message=${twoFAResponse?.message}"
+            "Success: ${response.code()} | success=${twoFAResponseDTO?.success} | message=${twoFAResponseDTO?.message}"
         }
-        twoFAResponse ?: TwoFAResponse(false, "Error happened. Please try again!")
+        twoFAResponseDTO?.toDomain() ?: TwoFAResponse(false, "Error happened. Please try again!")
     } else {
         val errorBody = response.errorBody()?.string()
         logMessage("sendVerifyOTPRequest") {
