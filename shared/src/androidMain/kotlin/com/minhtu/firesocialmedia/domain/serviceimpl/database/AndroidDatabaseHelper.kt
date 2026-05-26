@@ -12,7 +12,6 @@ import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
-import com.google.firebase.database.GenericTypeIndicator
 import com.google.firebase.database.ServerValue
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.storage.StorageMetadata
@@ -26,8 +25,11 @@ import com.minhtu.firesocialmedia.data.remote.dto.call.OfferAnswerDTO
 import com.minhtu.firesocialmedia.data.remote.dto.group.GroupDTO
 import com.minhtu.firesocialmedia.data.remote.dto.group.GroupSummaryDTO
 import com.minhtu.firesocialmedia.data.remote.dto.notification.NotificationDTO
+import com.minhtu.firesocialmedia.data.remote.dto.settings.PollDTO
 import com.minhtu.firesocialmedia.data.remote.dto.settings.SessionItemDTO
+import com.minhtu.firesocialmedia.data.remote.dto.settings.security.IpInfoResponseDTO
 import com.minhtu.firesocialmedia.data.remote.dto.user.UserDTO
+import com.minhtu.firesocialmedia.data.remote.dto.news.NewsDTO
 import com.minhtu.firesocialmedia.domain.entity.base.BaseNewsInstance
 import com.minhtu.firesocialmedia.domain.entity.call.CallStatus
 import com.minhtu.firesocialmedia.domain.serviceimpl.database.supabase.SupabaseStorageHelper.Companion.resolveMediaUrlAsync
@@ -157,14 +159,17 @@ class AndroidDatabaseHelper {
             val databaseReference = FirebaseDatabase.getInstance().getReference()
                 .child(path).child(id).child(DataConstant.NOTIFICATION_PATH)
             databaseReference.get().addOnSuccessListener { snapshot ->
-                //Get notification list from db
-                val list =
-                    snapshot.getValue(object : GenericTypeIndicator<List<NotificationDTO>>() {})
-                        ?.toMutableList()
-                //Delete value in notification list and upload the list to db again
-                list?.let {
-                    it.remove(notification) // or any value
-                    databaseReference.setValue(it) // overwrite with updated list
+                //Get notification list from db - iterate children to avoid GenericTypeIndicator
+                //which breaks under R8/ProGuard obfuscation in release builds
+                val list = snapshot.children
+                    .mapNotNull { it.getValue(NotificationDTO::class.java) }
+                    .toMutableList()
+                //Delete value by id to avoid equality issues with resolved URLs or mutated fields
+                list.removeIf { it.id == notification.id }
+                if (list.isEmpty()) {
+                    databaseReference.removeValue() // clean up the node entirely
+                } else {
+                    databaseReference.setValue(list) // overwrite with updated list
                 }
             }
         }
@@ -1633,7 +1638,9 @@ class AndroidDatabaseHelper {
                     Log.d("fetchLoginHistoryList", "Raw child key: ${child.key}")
                     Log.d("fetchLoginHistoryList", "Raw value: ${child.value}")
 
+                    // The node key IS the sessionId — populate it from the key
                     val item = child.getValue(SessionItemDTO::class.java)
+                        ?.copy(sessionId = child.key ?: "")
 
                     if (item == null) {
                         Log.e("fetchLoginHistoryList", "Failed to parse child: ${child.key}")
@@ -1654,14 +1661,103 @@ class AndroidDatabaseHelper {
             }
         }
 
+        suspend fun deleteLoginSession(
+            userId: String,
+            sessionId: String,
+            historyPath: String,
+            loginHistoryPath: String
+        ): Boolean {
+            return try {
+                // sessionId is the node key — direct O(1) delete, no scanning needed
+                FirebaseDatabase
+                    .getInstance()
+                    .reference
+                    .child(historyPath)
+                    .child(loginHistoryPath)
+                    .child(userId)
+                    .child(sessionId)
+                    .removeValue()
+                    .await()
+                true
+            } catch (e: Exception) {
+                logMessage("deleteLoginSession", { "Exception: ${e.message}" })
+                false
+            }
+        }
+
+        suspend fun logoutSession(
+            userId: String,
+            sessionId: String,
+            historyPath: String,
+            loginHistoryPath: String
+        ): Boolean {
+            return try {
+                FirebaseDatabase
+                    .getInstance()
+                    .reference
+                    .child(historyPath)
+                    .child(loginHistoryPath)
+                    .child(userId)
+                    .child(sessionId)
+                    .child("status")
+                    .setValue("LOGOUT")
+                    .await()
+                true
+            } catch (e: Exception) {
+                logMessage("logoutSession", { "Exception: ${e.message}" })
+                false
+            }
+        }
+
+        private var sessionStatusListener: ValueEventListener? = null
+        private var sessionStatusRef: DatabaseReference? = null
+
+        fun observeSessionStatus(
+            userId: String,
+            sessionId: String,
+            historyPath: String,
+            loginHistoryPath: String,
+            onLoggedOut: () -> Unit
+        ) {
+            stopObserveSessionStatus()
+            if (sessionId.isEmpty()) return
+            sessionStatusRef = FirebaseDatabase.getInstance().reference
+                .child(historyPath)
+                .child(loginHistoryPath)
+                .child(userId)
+                .child(sessionId)
+                .child("status")
+            sessionStatusListener = object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    val status = snapshot.getValue(String::class.java) ?: return
+                    if (status == "LOGOUT") {
+                        onLoggedOut()
+                    }
+                }
+                override fun onCancelled(error: DatabaseError) {
+                    logMessage("observeSessionStatus", { "Cancelled: ${error.message}" })
+                }
+            }
+            sessionStatusRef!!.addValueEventListener(sessionStatusListener!!)
+        }
+
+        fun stopObserveSessionStatus() {
+            sessionStatusRef?.let { ref ->
+                sessionStatusListener?.let { ref.removeEventListener(it) }
+            }
+            sessionStatusRef = null
+            sessionStatusListener = null
+        }
+
         suspend fun saveLoginActivityInfo(
             context: Context,
             userId: String,
+            locationInfo : IpInfoResponseDTO,
             historyPath: String,
             loginHistoryPath: String
         ) {
             try {
-                val sessionItemDTO = prepareSessionItemData(context)
+                val sessionItemDTO = prepareSessionItemData(context, locationInfo)
                 val dbRef = FirebaseDatabase
                     .getInstance()
                     .reference
@@ -1669,17 +1765,19 @@ class AndroidDatabaseHelper {
                     .child(loginHistoryPath)
                     .child(userId)
 
-                dbRef.push().setValue(sessionItemDTO).await()
+                // Use sessionId as the node key instead of a Firebase push key
+                dbRef.child(sessionItemDTO.sessionId).setValue(sessionItemDTO).await()
             } catch(e : Exception) {
                 logMessage("saveLoginActivityInfo", { "Exception happened: ${e.message}" })
             }
         }
 
-        private fun prepareSessionItemData(context: Context) : SessionItemDTO {
+        private fun prepareSessionItemData(context: Context,
+                                           locationInfo : IpInfoResponseDTO) : SessionItemDTO {
             val sessionId = java.util.UUID.randomUUID().toString()
             saveLocalSessionId(context, sessionId)
             val deviceName = getDeviceName()
-            val location = getLocation(context)
+            val location = locationInfo.locationInfo()
             val timeMillis = System.currentTimeMillis()
             return SessionItemDTO(
                 sessionId = sessionId,
@@ -1690,7 +1788,7 @@ class AndroidDatabaseHelper {
         }
 
         fun saveLocalSessionId(context: Context, sessionId: String) {
-            context.getSharedPreferences("session_prefs", android.content.Context.MODE_PRIVATE)
+            context.getSharedPreferences("session_prefs", Context.MODE_PRIVATE)
                 .edit()
                 .putString(Constants.KEY_SESSION_ID, sessionId)
                 .apply()
@@ -1699,6 +1797,13 @@ class AndroidDatabaseHelper {
         fun getLocalSessionId(context: Context): String {
             return context.getSharedPreferences("session_prefs", android.content.Context.MODE_PRIVATE)
                 .getString(Constants.KEY_SESSION_ID, "") ?: ""
+        }
+
+        fun clearLocalSessionId(context: Context) {
+            context.getSharedPreferences("session_prefs", Context.MODE_PRIVATE)
+                .edit()
+                .remove(Constants.KEY_SESSION_ID)
+                .apply()
         }
 
         fun getDeviceName(): String {
@@ -1719,6 +1824,42 @@ class AndroidDatabaseHelper {
         fun getLocation(context: Context): String {
             val locale = context.resources.configuration.locales[0]
             return "${locale.country}"
+        }
+
+        suspend fun updateUserStringField(
+            userId: String,
+            fieldPath: String,
+            value: String,
+            userPath: String
+        ): Boolean {
+            val ref = FirebaseDatabase.getInstance()
+                .reference
+                .child(userPath)
+                .child(userId)
+                .child(fieldPath)
+
+            var delayTime = 200L
+
+            repeat(3) { attempt ->
+                try {
+                    withTimeout(3000) {
+                        ref.setValue(value).await()
+                    }
+                    return true
+                } catch (e: Exception) {
+                    val shouldRetry = e is IOException
+
+                    if (attempt < 2 && shouldRetry) {
+                        delay(delayTime)
+                        delayTime *= 2
+                    } else {
+                        Log.e("Firebase", "Failed to update user string field", e)
+                        return false
+                    }
+                }
+            }
+
+            return false
         }
 
         suspend fun updateUserLongField(
@@ -1755,6 +1896,241 @@ class AndroidDatabaseHelper {
             }
 
             return false
+        }
+
+        suspend fun updateUserAvatar(
+            userId: String,
+            imageUri: String,
+            userPath: String
+        ): Boolean {
+            return try {
+                val helper = com.minhtu.firesocialmedia.domain.serviceimpl.database.supabase.SupabaseStorageHelper()
+                val extension = helper.getFileExtension(imageUri, "jpg")
+                val remotePath = "avatar/${userId}_${System.currentTimeMillis()}.$extension"
+                com.minhtu.firesocialmedia.domain.serviceimpl.database.supabase.SupabaseStorage.upload(
+                    filePath = imageUri,
+                    remotePath = remotePath
+                )
+                updateUserStringField(userId, "image", remotePath, userPath)
+            } catch (e: Exception) {
+                Log.e("Firebase", "Failed to update user avatar", e)
+                false
+            }
+        }
+
+        suspend fun updateUserBackground(
+            userId: String,
+            imageUri: String,
+            userPath: String
+        ): Boolean {
+            return try {
+                val helper = com.minhtu.firesocialmedia.domain.serviceimpl.database.supabase.SupabaseStorageHelper()
+                val extension = helper.getFileExtension(imageUri, "jpg")
+                val remotePath = "background/${userId}_${System.currentTimeMillis()}.$extension"
+                com.minhtu.firesocialmedia.domain.serviceimpl.database.supabase.SupabaseStorage.upload(
+                    filePath = imageUri,
+                    remotePath = remotePath
+                )
+                updateUserStringField(userId, "background", remotePath, userPath)
+            } catch (e: Exception) {
+                Log.e("Firebase", "Failed to update user background", e)
+                false
+            }
+        }
+
+        suspend fun createPoll(
+            poll: PollDTO,
+            pollPath: String,
+            groupPath: String,
+            groupId: String,
+            postsPath: String,
+            newsEntry: NewsDTO
+        ): Boolean = suspendCancellableCoroutine { continuation ->
+            Log.d("Task", "createPoll: ${poll.id} in group $groupId")
+            val databaseRef = FirebaseDatabase.getInstance().reference
+            // Index entry lives under /groups/{groupId}/posts/{newsId}  (same path as regular group posts)
+            // Full poll data lives under /polls/{pollId}
+            val updates = hashMapOf<String, Any?>(
+                "$groupPath/$groupId/$postsPath/${newsEntry.id}" to newsEntry,
+                "$pollPath/${poll.id}" to poll
+            )
+            databaseRef.updateChildren(updates).addOnCompleteListener { task ->
+                if (!continuation.isActive) return@addOnCompleteListener
+                if (task.isSuccessful) {
+                    Log.d("Task", "createPoll success")
+                } else {
+                    Log.e("Task", "createPoll FAILED", task.exception)
+                }
+                continuation.resume(task.isSuccessful, onCancellation = {})
+            }
+        }
+
+        suspend fun deletePollFromDatabase(
+            newsId: String,
+            pollId: String,
+            groupPath: String,
+            groupId: String,
+            postsPath: String,
+            pollPath: String,
+            pollVotesPath: String
+        ): Boolean = suspendCancellableCoroutine { continuation ->
+            Log.d("Task", "deletePollFromDatabase: newsId=$newsId pollId=$pollId groupId=$groupId")
+            val databaseRef = FirebaseDatabase.getInstance().reference
+            val updates = hashMapOf<String, Any?>(
+                "$groupPath/$groupId/$postsPath/$newsId" to null,
+                "$pollPath/$pollId" to null,
+                "$pollVotesPath/$pollId" to null
+            )
+            databaseRef.updateChildren(updates).addOnCompleteListener { task ->
+                if (!continuation.isActive) return@addOnCompleteListener
+                if (task.isSuccessful) {
+                    Log.d("Task", "deletePollFromDatabase success")
+                } else {
+                    Log.e("Task", "deletePollFromDatabase FAILED", task.exception)
+                }
+                continuation.resume(task.isSuccessful, onCancellation = {})
+            }
+        }
+
+        suspend fun fetchPoll(pollId: String, pollPath: String): PollDTO? {
+            return try {
+                val snapshot = FirebaseDatabase.getInstance().reference
+                    .child(pollPath)
+                    .child(pollId)
+                    .get()
+                    .await()
+                if (!snapshot.exists()) return null
+                // Manually parse snapshot to avoid @Serializable interference with Firebase reflection
+                val id = snapshot.child("id").getValue(String::class.java) ?: ""
+                val posterId = snapshot.child("posterId").getValue(String::class.java) ?: ""
+                val posterName = snapshot.child("posterName").getValue(String::class.java) ?: ""
+                val posterAvatar = snapshot.child("posterAvatar").getValue(String::class.java) ?: ""
+                val question = snapshot.child("question").getValue(String::class.java) ?: ""
+                val allowMultipleAnswers = snapshot.child("allowMultipleAnswers").getValue(Boolean::class.java) ?: false
+                val duration = snapshot.child("duration").getValue(String::class.java) ?: ""
+                val groupId = snapshot.child("groupId").getValue(String::class.java) ?: ""
+                val likeCount = (snapshot.child("likeCount").getValue(Long::class.java) ?: 0L).toInt()
+                val commentCount = (snapshot.child("commentCount").getValue(Long::class.java) ?: 0L).toInt()
+                val timePosted = snapshot.child("timePosted").getValue(Long::class.java) ?: 0L
+                val expiresAt = snapshot.child("expiresAt").getValue(Long::class.java)
+                // Parse options: stored as Firebase array {"0":"opt1","1":"opt2"} or list
+                val optionsSnapshot = snapshot.child("options")
+                val options: List<String> = if (optionsSnapshot.exists()) {
+                    optionsSnapshot.children.mapNotNull { it.getValue(String::class.java) }
+                } else emptyList()
+                // Parse votes: stored as {"0": count0, "1": count1, ...}
+                val votesSnapshot = snapshot.child("votes")
+                val votes: Map<String, Int>? = if (votesSnapshot.exists()) {
+                    votesSnapshot.children.associate { child ->
+                        val key = child.key ?: ""
+                        val value = (child.getValue(Long::class.java) ?: 0L).toInt()
+                        key to value
+                    }
+                } else null
+                Log.d("Task", "fetchPoll $pollId: options=$options, votes=$votes")
+                PollDTO(
+                    id = id,
+                    posterId = posterId,
+                    posterName = posterName,
+                    posterAvatar = posterAvatar,
+                    question = question,
+                    options = options,
+                    allowMultipleAnswers = allowMultipleAnswers,
+                    duration = duration,
+                    groupId = groupId,
+                    likeCount = likeCount,
+                    commentCount = commentCount,
+                    timePosted = timePosted,
+                    expiresAt = expiresAt,
+                    votes = votes
+                )
+            } catch (e: Exception) {
+                Log.e("Task", "fetchPoll failed", e)
+                null
+            }
+        }
+
+        suspend fun loadMyVotes(
+            pollId: String,
+            userId: String,
+            pollVotesPath: String
+        ): List<Int> {
+            return try {
+                val snapshot = FirebaseDatabase.getInstance().reference
+                    .child(pollVotesPath)
+                    .child(pollId)
+                    .child(userId)
+                    .get()
+                    .await()
+                if (!snapshot.exists()) return emptyList()
+                // Stored as a list of Longs (Firebase JSON array) or map {0:true}
+                snapshot.children.mapNotNull { child ->
+                    (child.getValue(Long::class.java))?.toInt()
+                }
+            } catch (e: Exception) {
+                Log.e("Task", "loadMyVotes failed", e)
+                emptyList()
+            }
+        }
+
+        suspend fun loadAllVoters(
+            pollId: String,
+            pollVotesPath: String
+        ): Map<String, List<Int>> {
+            return try {
+                val snapshot = FirebaseDatabase.getInstance().reference
+                    .child(pollVotesPath)
+                    .child(pollId)
+                    .get()
+                    .await()
+                if (!snapshot.exists()) return emptyMap()
+                val result = mutableMapOf<String, List<Int>>()
+                for (userSnapshot in snapshot.children) {
+                    val uid = userSnapshot.key ?: continue
+                    val indices = userSnapshot.children.mapNotNull { child ->
+                        (child.getValue(Long::class.java))?.toInt()
+                    }
+                    result[uid] = indices
+                }
+                result
+            } catch (e: Exception) {
+                Log.e("Task", "loadAllVoters failed", e)
+                emptyMap()
+            }
+        }
+
+        suspend fun submitVote(
+            pollId: String,
+            userId: String,
+            selectedIndices: List<Int>,
+            previousIndices: List<Int>,
+            pollPath: String,
+            pollVotesPath: String
+        ): Boolean = suspendCancellableCoroutine { continuation ->
+            val databaseRef = FirebaseDatabase.getInstance().reference
+            val updates = hashMapOf<String, Any?>(
+                // Overwrite this user's vote record
+                "$pollVotesPath/$pollId/$userId" to selectedIndices
+            )
+            // Decrement counts for options the user is unselecting
+            previousIndices.forEach { idx ->
+                if (!selectedIndices.contains(idx)) {
+                    updates["$pollPath/$pollId/votes/$idx"] = ServerValue.increment(-1)
+                }
+            }
+            // Increment counts for newly selected options
+            selectedIndices.forEach { idx ->
+                if (!previousIndices.contains(idx)) {
+                    updates["$pollPath/$pollId/votes/$idx"] = ServerValue.increment(1)
+                }
+            }
+            databaseRef.updateChildren(updates).addOnCompleteListener { task ->
+                if (!continuation.isActive) return@addOnCompleteListener
+                if (!task.isSuccessful) {
+                    Log.e("Task", "submitVote FAILED", task.exception)
+                }
+                continuation.resume(task.isSuccessful, onCancellation = {})
+            }
         }
     }
 }

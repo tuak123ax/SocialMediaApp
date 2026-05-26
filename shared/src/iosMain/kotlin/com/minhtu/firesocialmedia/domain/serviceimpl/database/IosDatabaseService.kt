@@ -3,6 +3,7 @@ package com.minhtu.firesocialmedia.domain.serviceimpl.database
 import cocoapods.FirebaseDatabase.FIRDataEventType
 import cocoapods.FirebaseDatabase.FIRDataSnapshot
 import cocoapods.FirebaseDatabase.FIRDatabase
+import cocoapods.FirebaseDatabase.FIRDatabaseReference
 import com.minhtu.firesocialmedia.constants.Constants
 import com.minhtu.firesocialmedia.data.remote.constant.DataConstant
 import com.minhtu.firesocialmedia.data.remote.dto.call.AudioCallSessionDTO
@@ -16,13 +17,19 @@ import com.minhtu.firesocialmedia.data.remote.dto.home.LatestNewsDTO
 import com.minhtu.firesocialmedia.data.remote.dto.news.NewsDTO
 import com.minhtu.firesocialmedia.data.remote.dto.notification.NotificationDTO
 import com.minhtu.firesocialmedia.data.remote.dto.notification.fromMap
+import com.minhtu.firesocialmedia.data.remote.dto.notification.toMap
+import com.minhtu.firesocialmedia.data.remote.dto.settings.PollDTO
+import com.minhtu.firesocialmedia.data.remote.dto.settings.SessionItemDTO
+import com.minhtu.firesocialmedia.data.remote.dto.settings.security.IpInfoResponseDTO
 import com.minhtu.firesocialmedia.data.remote.dto.signin.SignInDTO
 import com.minhtu.firesocialmedia.data.remote.dto.user.UserDTO
 import com.minhtu.firesocialmedia.data.remote.service.database.DatabaseService
 import com.minhtu.firesocialmedia.domain.entity.base.BaseNewsInstance
 import com.minhtu.firesocialmedia.domain.entity.call.CallStatus
 import com.minhtu.firesocialmedia.domain.serviceimpl.crypto.IosCryptoHelper
+import com.minhtu.firesocialmedia.domain.serviceimpl.database.supabase.SupabaseStorage
 import com.minhtu.firesocialmedia.domain.serviceimpl.database.supabase.SupabaseStorageHelper
+import com.minhtu.firesocialmedia.platform.getCurrentTime
 import com.minhtu.firesocialmedia.platform.logMessage
 import com.minhtu.firesocialmedia.utils.IosUtils.Companion.toCommentDTO
 import com.minhtu.firesocialmedia.utils.IosUtils.Companion.toNewsDTO
@@ -33,6 +40,8 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.suspendCancellableCoroutine
+import platform.Foundation.NSUUID
+import platform.UIKit.UIDevice
 
 class IosDatabaseService() : DatabaseService {
     override suspend fun updateFCMTokenForCurrentUser(currentUser: UserDTO) {
@@ -112,7 +121,7 @@ class IosDatabaseService() : DatabaseService {
         path: String,
         new: NewsDTO
     ) {
-        IosDatabaseHelper.deleteNewsFromDatabase(path, new)
+        SupabaseStorageHelper().deleteNewsFromDatabase(path, new)
     }
 
     override suspend fun deleteCommentFromDatabase(
@@ -127,10 +136,7 @@ class IosDatabaseService() : DatabaseService {
         path: String,
         instance: BaseNewsInstance
     ): Boolean {
-        return IosDatabaseHelper.saveInstanceToDatabase(
-            id,
-            path,
-            instance)
+        return SupabaseStorageHelper().saveInstanceToDatabase(id, path, instance)
     }
 
     override suspend fun getAllUsers(path: String): ArrayList<UserDTO>? {
@@ -459,7 +465,42 @@ class IosDatabaseService() : DatabaseService {
         newVideo: String,
         new: NewsDTO
     ): Boolean {
-        return IosDatabaseHelper.updateNewsFromDatabase(path,newContent,newImage, newVideo,new)
+        return SupabaseStorageHelper().updateNewsFromDatabase(path, newContent, newImage, newVideo, new)
+    }
+
+    override suspend fun saveNewToDatabase(
+        commentId: String,
+        path: String,
+        instance: NewsDTO
+    ): Boolean {
+        return SupabaseStorageHelper().saveNewToDatabase(commentId, path, instance)
+    }
+
+    override suspend fun saveSignUpInformation(user: UserDTO): Boolean {
+        return SupabaseStorageHelper().saveSignUpInformation(user)
+    }
+
+    override suspend fun saveGroupAndUserGroups(
+        groupRootPath: String,
+        userRootPath: String,
+        userGroupsField: String,
+        groupAvatarsStoragePath: String,
+        group: GroupDTO,
+        userId: String
+    ): Boolean {
+        return SupabaseStorageHelper().saveGroupAndUserGroups(
+            groupRootPath, userRootPath, userGroupsField, groupAvatarsStoragePath, group, userId
+        )
+    }
+
+    override suspend fun saveNewToGroup(
+        newsDTO: NewsDTO,
+        groupId: String,
+        groupPath: String,
+        postsPath: String,
+        imagePath: String
+    ): Boolean {
+        return SupabaseStorageHelper().saveNewToGroup(newsDTO, groupId, groupPath, postsPath, imagePath)
     }
 
     override suspend fun saveNotificationToDatabase(
@@ -680,14 +721,52 @@ class IosDatabaseService() : DatabaseService {
         userPath: String,
         groupPath: String,
         userId: String
-    ): Set<GroupSummaryDTO> {
-        // TODO: Implement iOS get all groups
-        return emptySet()
+    ): Set<GroupSummaryDTO> = suspendCancellableCoroutine { cont ->
+        val ref = FIRDatabase.database().reference()
+            .child(userPath)
+            .child(userId)
+            .child(groupPath)
+        ref.observeSingleEventOfType(FIRDataEventType.FIRDataEventTypeValue, withBlock = { snapshot ->
+            val result = mutableSetOf<GroupSummaryDTO>()
+            if (snapshot != null && snapshot.exists()) {
+                val children = snapshot.children
+                while (true) {
+                    val child = children.nextObject() as? FIRDataSnapshot ?: break
+                    val map = child.value as? Map<*, *> ?: continue
+                    val id = map["id"] as? String ?: child.key ?: continue
+                    val name = map["name"] as? String ?: ""
+                    val avatar = map["avatar"] as? String ?: ""
+                    val notificationOn = map["notificationOn"] as? Boolean ?: false
+                    result.add(GroupSummaryDTO(id = id, name = name, avatar = avatar, notificationOn = notificationOn))
+                }
+            }
+            if (cont.isActive) cont.resume(result, onCancellation = {})
+        }) { _ -> if (cont.isActive) cont.resume(emptySet(), onCancellation = {}) }
     }
 
-    override suspend fun fetchGroupInfo(groupId: String, groupPath: String): GroupDTO? {
-        // TODO: Implement iOS fetch group info
-        return null
+    override suspend fun fetchGroupInfo(groupId: String, groupPath: String): GroupDTO? = suspendCancellableCoroutine { cont ->
+        val ref = FIRDatabase.database().reference().child(groupPath).child(groupId)
+        ref.observeSingleEventOfType(FIRDataEventType.FIRDataEventTypeValue, withBlock = { snapshot ->
+            if (snapshot != null && snapshot.exists()) {
+                val map = snapshot.value as? Map<*, *>
+                if (map != null) {
+                    val group = GroupDTO(
+                        id = map["id"] as? String ?: groupId,
+                        name = map["name"] as? String ?: "",
+                        avatar = map["avatar"] as? String ?: "",
+                        password = map["password"] as? String ?: "",
+                        description = map["description"] as? String ?: "",
+                        createdDate = (map["createdDate"] as? Long) ?: 0L,
+                        memberCount = (map["memberCount"] as? Long) ?: 0L
+                    )
+                    if (cont.isActive) cont.resume(group, onCancellation = {})
+                } else {
+                    if (cont.isActive) cont.resume(null, onCancellation = {})
+                }
+            } else {
+                if (cont.isActive) cont.resume(null, onCancellation = {})
+            }
+        }) { _ -> if (cont.isActive) cont.resume(null, onCancellation = {}) }
     }
 
     override suspend fun updateNotificationStatus(
@@ -697,18 +776,33 @@ class IosDatabaseService() : DatabaseService {
         userPath: String,
         groupPath: String,
         notificationStatusPath: String
-    ): Boolean {
-        // TODO: Implement iOS notification status update
-        return false
+    ): Boolean = suspendCancellableCoroutine { cont ->
+        val ref = FIRDatabase.database().reference()
+            .child(userPath).child(userId).child(groupPath).child(groupId).child(notificationStatusPath)
+        ref.setValue(newStatus) { error, _ ->
+            if (cont.isActive) cont.resume(error == null, onCancellation = {})
+        }
     }
 
     override suspend fun getAllMembersInGroup(
         groupId: String,
         groupPath: String,
         membersPath: String
-    ): HashMap<String, String> {
-        // TODO: Implement iOS fetch members
-        return HashMap()
+    ): HashMap<String, String> = suspendCancellableCoroutine { cont ->
+        val ref = FIRDatabase.database().reference().child(groupPath).child(groupId).child(membersPath)
+        ref.observeSingleEventOfType(FIRDataEventType.FIRDataEventTypeValue, withBlock = { snapshot ->
+            val result = HashMap<String, String>()
+            if (snapshot != null && snapshot.exists()) {
+                val children = snapshot.children
+                while (true) {
+                    val child = children.nextObject() as? FIRDataSnapshot ?: break
+                    val key = child.key ?: continue
+                    val value = child.value as? String ?: continue
+                    result[key] = value
+                }
+            }
+            if (cont.isActive) cont.resume(result, onCancellation = {})
+        }) { _ -> if (cont.isActive) cont.resume(HashMap(), onCancellation = {}) }
     }
 
     override suspend fun getGroupConfigs(
@@ -716,9 +810,23 @@ class IosDatabaseService() : DatabaseService {
         groupId: String,
         userPath: String,
         groupPath: String
-    ): GroupSummaryDTO {
-        // TODO: Implement iOS group configs
-        return GroupSummaryDTO()
+    ): GroupSummaryDTO = suspendCancellableCoroutine { cont ->
+        val ref = FIRDatabase.database().reference()
+            .child(userPath).child(userId).child(groupPath).child(groupId)
+        ref.observeSingleEventOfType(FIRDataEventType.FIRDataEventTypeValue, withBlock = { snapshot ->
+            if (snapshot != null && snapshot.exists()) {
+                val map = snapshot.value as? Map<*, *>
+                val summary = if (map != null) GroupSummaryDTO(
+                    id = map["id"] as? String ?: groupId,
+                    name = map["name"] as? String ?: "",
+                    avatar = map["avatar"] as? String ?: "",
+                    notificationOn = map["notificationOn"] as? Boolean ?: false
+                ) else GroupSummaryDTO()
+                if (cont.isActive) cont.resume(summary, onCancellation = {})
+            } else {
+                if (cont.isActive) cont.resume(GroupSummaryDTO(), onCancellation = {})
+            }
+        }) { _ -> if (cont.isActive) cont.resume(GroupSummaryDTO(), onCancellation = {}) }
     }
 
     override suspend fun fetchNotificationState(
@@ -727,9 +835,13 @@ class IosDatabaseService() : DatabaseService {
         userPath: String,
         groupPath: String,
         notificationStatusPath: String
-    ): Boolean {
-        // TODO: Implement iOS fetch notification state
-        return false
+    ): Boolean = suspendCancellableCoroutine { cont ->
+        val ref = FIRDatabase.database().reference()
+            .child(userPath).child(userId).child(groupPath).child(groupId).child(notificationStatusPath)
+        ref.observeSingleEventOfType(FIRDataEventType.FIRDataEventTypeValue, withBlock = { snapshot ->
+            val value = snapshot?.value as? Boolean ?: false
+            if (cont.isActive) cont.resume(value, onCancellation = {})
+        }) { _ -> if (cont.isActive) cont.resume(false, onCancellation = {}) }
     }
 
     override suspend fun inviteFriendToGroup(
@@ -737,7 +849,10 @@ class IosDatabaseService() : DatabaseService {
         userPath: String,
         notificationPath: String
     ) {
-        // TODO: Implement iOS invite friend to group
+        val ref = FIRDatabase.database().reference()
+            .child(userPath).child(friendDto.uid).child(notificationPath)
+        val notifList = friendDto.notifications.map { it.toMap() }
+        ref.setValue(notifList) { _, _ -> }
     }
 
     override suspend fun addUserToGroup(
@@ -747,9 +862,26 @@ class IosDatabaseService() : DatabaseService {
         groupPath: String,
         memberPath: String,
         memberCountPath: String
-    ): Boolean {
-        // TODO: Implement iOS add user to group
-        return false
+    ): Boolean = suspendCancellableCoroutine { cont ->
+        val dbRef = FIRDatabase.database().reference()
+        val groupSummaryMap = mapOf<Any?, Any?>(
+            "id" to group.id, "name" to group.name, "avatar" to group.avatar
+        )
+        val updates = hashMapOf<Any?, Any?>(
+            "$groupPath/${group.id}/$memberPath/${user.uid}" to "member",
+            "$userPath/${user.uid}/$groupPath/${group.id}" to groupSummaryMap
+        )
+        dbRef.updateChildValues(updates) { error, _ ->
+            if (error == null) {
+                // Increment memberCount
+                val countRef = dbRef.child(groupPath).child(group.id).child(memberCountPath)
+                countRef.observeSingleEventOfType(FIRDataEventType.FIRDataEventTypeValue, withBlock = { snapshot ->
+                    val current = (snapshot?.value as? Long) ?: 0L
+                    countRef.setValue(current + 1) { _, _ -> }
+                }) { _ -> }
+            }
+            if (cont.isActive) cont.resume(error == null, onCancellation = {})
+        }
     }
 
     override suspend fun removeUserFromGroup(
@@ -759,9 +891,23 @@ class IosDatabaseService() : DatabaseService {
         groupPath: String,
         memberPath: String,
         memberCountPath: String
-    ): Boolean {
-        // TODO: Implement iOS remove user from group
-        return false
+    ): Boolean = suspendCancellableCoroutine { cont ->
+        val dbRef = FIRDatabase.database().reference()
+        val updates = hashMapOf<Any?, Any?>(
+            "$groupPath/${group.id}/$memberPath/${user.uid}" to null,
+            "$userPath/${user.uid}/$groupPath/${group.id}" to null
+        )
+        dbRef.updateChildValues(updates) { error, _ ->
+            if (error == null) {
+                val countRef = dbRef.child(groupPath).child(group.id).child(memberCountPath)
+                countRef.observeSingleEventOfType(FIRDataEventType.FIRDataEventTypeValue, withBlock = { snapshot ->
+                    val current = (snapshot?.value as? Long) ?: 0L
+                    val newCount = if (current > 0) current - 1 else 0
+                    countRef.setValue(newCount) { _, _ -> }
+                }) { _ -> }
+            }
+            if (cont.isActive) cont.resume(error == null, onCancellation = {})
+        }
     }
 
     override suspend fun deleteGroup(
@@ -769,9 +915,15 @@ class IosDatabaseService() : DatabaseService {
         group: GroupDTO,
         userPath: String,
         groupPath: String
-    ): Boolean {
-        // TODO: Implement iOS delete group
-        return false
+    ): Boolean = suspendCancellableCoroutine { cont ->
+        val dbRef = FIRDatabase.database().reference()
+        val updates = hashMapOf<Any?, Any?>(
+            "$groupPath/${group.id}" to null,
+            "$userPath/${user.uid}/$groupPath/${group.id}" to null
+        )
+        dbRef.updateChildValues(updates) { error, _ ->
+            if (cont.isActive) cont.resume(error == null, onCancellation = {})
+        }
     }
 
     override suspend fun updateMemberRole(
@@ -780,18 +932,38 @@ class IosDatabaseService() : DatabaseService {
         group: GroupDTO,
         groupPath: String,
         memberPath: String
-    ): Boolean {
-        // TODO: Implement iOS update member role
-        return false
+    ): Boolean = suspendCancellableCoroutine { cont ->
+        val ref = FIRDatabase.database().reference()
+            .child(groupPath).child(group.id).child(memberPath).child(user.uid)
+        ref.setValue(role) { error, _ ->
+            if (cont.isActive) cont.resume(error == null, onCancellation = {})
+        }
     }
 
     override suspend fun fetchRecommendGroups(
         limit: Int,
         groupPath: String,
         memberCountPath: String
-    ): List<GroupDTO> {
-        // TODO: Implement iOS fetch recommend/feature groups
-        return emptyList()
+    ): List<GroupDTO> = suspendCancellableCoroutine { cont ->
+        val ref = FIRDatabase.database().reference().child(groupPath)
+        ref.queryOrderedByChild(memberCountPath).queryLimitedToLast(limit.toULong())
+            .observeSingleEventOfType(FIRDataEventType.FIRDataEventTypeValue, withBlock = { snapshot ->
+                val result = mutableListOf<GroupDTO>()
+                if (snapshot != null && snapshot.exists()) {
+                    val children = snapshot.children
+                    while (true) {
+                        val child = children.nextObject() as? FIRDataSnapshot ?: break
+                        val map = child.value as? Map<*, *> ?: continue
+                        result.add(GroupDTO(
+                            id = map["id"] as? String ?: child.key ?: "",
+                            name = map["name"] as? String ?: "",
+                            avatar = map["avatar"] as? String ?: "",
+                            memberCount = (map["memberCount"] as? Long) ?: 0L
+                        ))
+                    }
+                }
+                if (cont.isActive) cont.resume(result.sortedByDescending { it.memberCount }, onCancellation = {})
+            }) { _ -> if (cont.isActive) cont.resume(emptyList(), onCancellation = {}) }
     }
 
     override suspend fun updateIsReadStatusOfNotification(
@@ -800,20 +972,104 @@ class IosDatabaseService() : DatabaseService {
         userPath: String,
         notificationPath: String
     ) {
-        TODO("Not yet implemented")
+        val ref = FIRDatabase.database().reference()
+            .child(userPath).child(userId).child(notificationPath)
+        ref.observeSingleEventOfType(FIRDataEventType.FIRDataEventTypeValue, withBlock = { snapshot ->
+            if (snapshot != null && snapshot.exists()) {
+                val children = snapshot.children
+                while (true) {
+                    val child = children.nextObject() as? FIRDataSnapshot ?: break
+                    val id = (child.value as? Map<*, *>)?.get("id") as? String ?: continue
+                    if (id == notificationId) {
+                        child.ref.child("beRead").setValue(true) { _, _ -> }
+                        break
+                    }
+                }
+            }
+        }) { _ -> }
     }
 
     override suspend fun deleteAllNotifications(
         uid: String,
         userPath: String,
         notificationPath: String
-    ): Result<Unit> {
-        TODO("Not yet implemented")
+    ): Result<Unit> = suspendCancellableCoroutine { cont ->
+        val ref = FIRDatabase.database().reference()
+            .child(userPath).child(uid).child(notificationPath)
+        ref.removeValueWithCompletionBlock { error, _ ->
+            if (cont.isActive) {
+                if (error == null) cont.resume(Result.success(Unit), onCancellation = {})
+                else cont.resume(Result.failure(Exception(error.localizedDescription)), onCancellation = {})
+            }
+        }
     }
 
     override fun getLocalSessionId(): String {
-        // TODO: Implement iOS local session ID storage (e.g., NSUserDefaults/Keychain)
-        return ""
+        return IosCryptoHelper.getFromKeychain(Constants.KEY_SESSION_ID) ?: ""
+    }
+
+    override fun clearLocalSessionId() {
+        IosCryptoHelper.saveToKeychain(Constants.KEY_SESSION_ID, "")
+    }
+
+    override suspend fun deleteLoginSession(
+        userId: String,
+        sessionId: String,
+        historyPath: String,
+        loginHistoryPath: String
+    ): Boolean = suspendCancellableCoroutine { cont ->
+        val ref = FIRDatabase.database().reference()
+            .child(historyPath).child(loginHistoryPath).child(userId).child(sessionId)
+        ref.removeValueWithCompletionBlock { error, _ ->
+            if (cont.isActive) cont.resume(error == null, onCancellation = {})
+        }
+    }
+
+    override suspend fun logoutSession(
+        userId: String,
+        sessionId: String,
+        historyPath: String,
+        loginHistoryPath: String
+    ): Boolean = suspendCancellableCoroutine { cont ->
+        val ref = FIRDatabase.database().reference()
+            .child(historyPath).child(loginHistoryPath).child(userId).child(sessionId).child("status")
+        ref.setValue("LOGOUT") { error, _ ->
+            if (cont.isActive) cont.resume(error == null, onCancellation = {})
+        }
+    }
+
+    private var sessionStatusHandle: ULong? = null
+    private var sessionStatusRef: FIRDatabaseReference? = null
+
+    override fun observeSessionStatus(
+        userId: String,
+        sessionId: String,
+        historyPath: String,
+        loginHistoryPath: String,
+        onLoggedOut: () -> Unit
+    ) {
+        stopObserveSessionStatus()
+        if (sessionId.isEmpty()) return
+        val ref = FIRDatabase.database().reference()
+            .child(historyPath).child(loginHistoryPath).child(userId).child(sessionId).child("status")
+        sessionStatusRef = ref
+        sessionStatusHandle = ref.observeEventType(
+            FIRDataEventType.FIRDataEventTypeValue,
+            withBlock = { snapshot ->
+                val status = snapshot?.value as? String ?: return@observeEventType
+                if (status == "LOGOUT") onLoggedOut()
+            }
+        )
+    }
+
+    override fun stopObserveSessionStatus() {
+        val handle = sessionStatusHandle
+        val ref = sessionStatusRef
+        if (handle != null && ref != null) {
+            ref.removeObserverWithHandle(handle)
+        }
+        sessionStatusRef = null
+        sessionStatusHandle = null
     }
 
     override suspend fun updateUserLongField(
@@ -821,8 +1077,305 @@ class IosDatabaseService() : DatabaseService {
         fieldPath: String,
         value: Long,
         userPath: String
-    ): Boolean {
-        // TODO: Implement iOS updateUserLongField
-        return false
+    ): Boolean = suspendCancellableCoroutine { cont ->
+        val ref = FIRDatabase.database().reference()
+            .child(userPath).child(userId).child(fieldPath)
+        ref.setValue(value) { error, _ ->
+            if (cont.isActive) cont.resume(error == null, onCancellation = {})
+        }
+    }
+
+    override suspend fun updateUserStringField(
+        userId: String,
+        fieldPath: String,
+        value: String,
+        userPath: String
+    ): Boolean = suspendCancellableCoroutine { cont ->
+        val ref = FIRDatabase.database().reference()
+            .child(userPath).child(userId).child(fieldPath)
+        ref.setValue(value) { error, _ ->
+            if (cont.isActive) cont.resume(error == null, onCancellation = {})
+        }
+    }
+
+    override suspend fun updateUserAvatar(userId: String, imageUri: String, userPath: String): Boolean {
+        return try {
+            val remotePath = "avatar/${userId}_${getCurrentTime()}.jpg"
+            SupabaseStorage.uploadFile(imageUri, remotePath)
+            updateUserStringField(userId, "image", remotePath, userPath)
+        } catch (e: Exception) {
+            logMessage("updateUserAvatar", { "Failed: ${e.message}" })
+            false
+        }
+    }
+
+    override suspend fun updateUserBackground(userId: String, imageUri: String, userPath: String): Boolean {
+        return try {
+            val remotePath = "background/${userId}_${getCurrentTime()}.jpg"
+            SupabaseStorage.uploadFile(imageUri, remotePath)
+            updateUserStringField(userId, "background", remotePath, userPath)
+        } catch (e: Exception) {
+            logMessage("updateUserBackground", { "Failed: ${e.message}" })
+            false
+        }
+    }
+
+    override suspend fun updateTwoFAEnabledFlagForUser(
+        userId: String,
+        twoFAEnabled: Boolean,
+        userPath: String,
+        twoFaEnabledPath: String
+    ): Boolean = suspendCancellableCoroutine { cont ->
+        val ref = FIRDatabase.database().reference()
+            .child(userPath).child(userId).child(twoFaEnabledPath)
+        ref.setValue(twoFAEnabled) { error, _ ->
+            if (cont.isActive) cont.resume(error == null, onCancellation = {})
+        }
+    }
+
+    override suspend fun fetchLoginHistoryList(
+        userId: String,
+        historyPath: String,
+        loginHistoryPath: String
+    ): List<SessionItemDTO> = suspendCancellableCoroutine { cont ->
+        val ref = FIRDatabase.database().reference()
+            .child(historyPath).child(loginHistoryPath).child(userId)
+        ref.observeSingleEventOfType(FIRDataEventType.FIRDataEventTypeValue, withBlock = { snapshot ->
+            val result = mutableListOf<SessionItemDTO>()
+            if (snapshot != null && snapshot.exists()) {
+                val children = snapshot.children
+                while (true) {
+                    val child = children.nextObject() as? FIRDataSnapshot ?: break
+                    val map = child.value as? Map<*, *> ?: continue
+                    val sessionId = child.key ?: ""
+                    result.add(SessionItemDTO(
+                        sessionId = map["sessionId"] as? String ?: sessionId,
+                        deviceName = map["deviceName"] as? String ?: "",
+                        location = map["location"] as? String ?: "",
+                        time = (map["time"] as? Long) ?: 0L,
+                        status = map["status"] as? String ?: ""
+                    ))
+                }
+            }
+            if (cont.isActive) cont.resume(result, onCancellation = {})
+        }) { _ -> if (cont.isActive) cont.resume(emptyList(), onCancellation = {}) }
+    }
+
+    override suspend fun saveLoginActivityInfo(
+        userId: String,
+        locationInfo: IpInfoResponseDTO,
+        historyPath: String,
+        loginHistoryPath: String
+    ) {
+        try {
+            val sessionId = NSUUID.UUID().UUIDString()
+            IosCryptoHelper.saveToKeychain(Constants.KEY_SESSION_ID, sessionId)
+            val deviceName = UIDevice.currentDevice.name
+            val location = locationInfo.locationInfo()
+            val timeMillis = getCurrentTime()
+            val sessionMap = mapOf<Any?, Any?>(
+                "sessionId" to sessionId,
+                "deviceName" to deviceName,
+                "location" to location,
+                "time" to timeMillis,
+                "status" to "ACTIVE"
+            )
+            val ref = FIRDatabase.database().reference()
+                .child(historyPath).child(loginHistoryPath).child(userId).child(sessionId)
+            suspendCancellableCoroutine<Unit> { cont ->
+                ref.setValue(sessionMap) { _, _ -> if (cont.isActive) cont.resume(Unit, onCancellation = {}) }
+            }
+        } catch (e: Exception) {
+            logMessage("saveLoginActivityInfo", { "Exception: ${e.message}" })
+        }
+    }
+
+    override suspend fun createPoll(
+        poll: PollDTO,
+        pollPath: String,
+        groupPath: String,
+        groupId: String,
+        postsPath: String,
+        newsEntry: NewsDTO
+    ): Boolean = suspendCancellableCoroutine { cont ->
+        val dbRef = FIRDatabase.database().reference()
+        val pollMap = mapOf<Any?, Any?>(
+            "id" to poll.id,
+            "posterId" to poll.posterId,
+            "posterName" to poll.posterName,
+            "posterAvatar" to poll.posterAvatar,
+            "question" to poll.question,
+            "options" to poll.options,
+            "allowMultipleAnswers" to poll.allowMultipleAnswers,
+            "duration" to poll.duration,
+            "groupId" to poll.groupId,
+            "likeCount" to poll.likeCount,
+            "commentCount" to poll.commentCount,
+            "timePosted" to poll.timePosted,
+            "expiresAt" to poll.expiresAt,
+            "votes" to (poll.votes ?: emptyMap<String, Int>())
+        )
+        val newsMap = mapOf<Any?, Any?>(
+            "id" to newsEntry.id,
+            "posterId" to newsEntry.posterId,
+            "posterName" to newsEntry.posterName,
+            "avatar" to newsEntry.avatar,
+            "message" to newsEntry.message,
+            "timePosted" to newsEntry.timePosted
+        )
+        val updates = hashMapOf<Any?, Any?>(
+            "$groupPath/$groupId/$postsPath/${newsEntry.id}" to newsMap,
+            "$pollPath/${poll.id}" to pollMap
+        )
+        dbRef.updateChildValues(updates) { error, _ ->
+            if (cont.isActive) cont.resume(error == null, onCancellation = {})
+        }
+    }
+
+    override suspend fun deletePollFromDatabase(
+        newsId: String,
+        pollId: String,
+        groupPath: String,
+        groupId: String,
+        postsPath: String,
+        pollPath: String,
+        pollVotesPath: String
+    ): Boolean = suspendCancellableCoroutine { cont ->
+        val dbRef = FIRDatabase.database().reference()
+        val updates = hashMapOf<Any?, Any?>(
+            "$groupPath/$groupId/$postsPath/$newsId" to null,
+            "$pollPath/$pollId" to null,
+            "$pollVotesPath/$pollId" to null
+        )
+        dbRef.updateChildValues(updates) { error, _ ->
+            if (cont.isActive) cont.resume(error == null, onCancellation = {})
+        }
+    }
+
+    override suspend fun fetchPoll(pollId: String, pollPath: String): PollDTO? = suspendCancellableCoroutine { cont ->
+        val ref = FIRDatabase.database().reference().child(pollPath).child(pollId)
+        ref.observeSingleEventOfType(FIRDataEventType.FIRDataEventTypeValue, withBlock = { snapshot ->
+            if (snapshot != null && snapshot.exists()) {
+                val map = snapshot.value as? Map<*, *>
+                if (map != null) {
+                    val optionsRaw = map["options"]
+                    val options: List<String> = when (optionsRaw) {
+                        is List<*> -> optionsRaw.mapNotNull { it as? String }
+                        is Map<*, *> -> optionsRaw.values.mapNotNull { it as? String }
+                        else -> emptyList()
+                    }
+                    val votesRaw = map["votes"] as? Map<*, *>
+                    val votes: Map<String, Int>? = votesRaw?.mapNotNull { (k, v) ->
+                        val key = k as? String ?: return@mapNotNull null
+                        val value = (v as? Long)?.toInt() ?: (v as? Int) ?: return@mapNotNull null
+                        key to value
+                    }?.toMap()
+                    val poll = PollDTO(
+                        id = map["id"] as? String ?: pollId,
+                        posterId = map["posterId"] as? String ?: "",
+                        posterName = map["posterName"] as? String ?: "",
+                        posterAvatar = map["posterAvatar"] as? String ?: "",
+                        question = map["question"] as? String ?: "",
+                        options = options,
+                        allowMultipleAnswers = map["allowMultipleAnswers"] as? Boolean ?: false,
+                        duration = map["duration"] as? String ?: "",
+                        groupId = map["groupId"] as? String ?: "",
+                        likeCount = (map["likeCount"] as? Long)?.toInt() ?: 0,
+                        commentCount = (map["commentCount"] as? Long)?.toInt() ?: 0,
+                        timePosted = (map["timePosted"] as? Long) ?: 0L,
+                        expiresAt = map["expiresAt"] as? Long,
+                        votes = votes
+                    )
+                    if (cont.isActive) cont.resume(poll, onCancellation = {})
+                } else {
+                    if (cont.isActive) cont.resume(null, onCancellation = {})
+                }
+            } else {
+                if (cont.isActive) cont.resume(null, onCancellation = {})
+            }
+        }) { _ -> if (cont.isActive) cont.resume(null, onCancellation = {}) }
+    }
+
+    override suspend fun loadMyVotes(
+        pollId: String,
+        userId: String,
+        pollVotesPath: String
+    ): List<Int> = suspendCancellableCoroutine { cont ->
+        val ref = FIRDatabase.database().reference()
+            .child(pollVotesPath).child(pollId).child(userId)
+        ref.observeSingleEventOfType(FIRDataEventType.FIRDataEventTypeValue, withBlock = { snapshot ->
+            val result = if (snapshot != null && snapshot.exists()) {
+                val children = snapshot.children
+                val list = mutableListOf<Int>()
+                while (true) {
+                    val child = children.nextObject() as? FIRDataSnapshot ?: break
+                    (child.value as? Long)?.toInt()?.let { list.add(it) }
+                }
+                list
+            } else emptyList()
+            if (cont.isActive) cont.resume(result, onCancellation = {})
+        }) { _ -> if (cont.isActive) cont.resume(emptyList(), onCancellation = {}) }
+    }
+
+    override suspend fun loadAllVoters(pollId: String, pollVotesPath: String): Map<String, List<Int>> = suspendCancellableCoroutine { cont ->
+        val ref = FIRDatabase.database().reference().child(pollVotesPath).child(pollId)
+        ref.observeSingleEventOfType(FIRDataEventType.FIRDataEventTypeValue, withBlock = { snapshot ->
+            val result = mutableMapOf<String, List<Int>>()
+            if (snapshot != null && snapshot.exists()) {
+                val users = snapshot.children
+                while (true) {
+                    val userSnapshot = users.nextObject() as? FIRDataSnapshot ?: break
+                    val uid = userSnapshot.key ?: continue
+                    val indices = mutableListOf<Int>()
+                    val voteChildren = userSnapshot.children
+                    while (true) {
+                        val child = voteChildren.nextObject() as? FIRDataSnapshot ?: break
+                        (child.value as? Long)?.toInt()?.let { indices.add(it) }
+                    }
+                    result[uid] = indices
+                }
+            }
+            if (cont.isActive) cont.resume(result, onCancellation = {})
+        }) { _ -> if (cont.isActive) cont.resume(emptyMap(), onCancellation = {}) }
+    }
+
+    override suspend fun submitVote(
+        pollId: String,
+        userId: String,
+        selectedIndices: List<Int>,
+        previousIndices: List<Int>,
+        pollPath: String,
+        pollVotesPath: String
+    ): Boolean = suspendCancellableCoroutine { cont ->
+        val dbRef = FIRDatabase.database().reference()
+        val updates = hashMapOf<Any?, Any?>(
+            "$pollVotesPath/$pollId/$userId" to selectedIndices
+        )
+        // We need to update vote counts by reading current values first
+        val pollRef = dbRef.child(pollPath).child(pollId).child("votes")
+        pollRef.observeSingleEventOfType(FIRDataEventType.FIRDataEventTypeValue, withBlock = { snapshot ->
+            val currentVotes = (snapshot?.value as? Map<*, *>)?.mapNotNull { (k, v) ->
+                val key = k as? String ?: return@mapNotNull null
+                val value = (v as? Long)?.toInt() ?: return@mapNotNull null
+                key to value
+            }?.toMap()?.toMutableMap() ?: mutableMapOf()
+
+            previousIndices.forEach { idx ->
+                if (!selectedIndices.contains(idx)) {
+                    val current = currentVotes[idx.toString()] ?: 0
+                    currentVotes[idx.toString()] = maxOf(0, current - 1)
+                }
+            }
+            selectedIndices.forEach { idx ->
+                if (!previousIndices.contains(idx)) {
+                    val current = currentVotes[idx.toString()] ?: 0
+                    currentVotes[idx.toString()] = current + 1
+                }
+            }
+            currentVotes.forEach { (k, v) -> updates["$pollPath/$pollId/votes/$k"] = v }
+            dbRef.updateChildValues(updates) { error, _ ->
+                if (cont.isActive) cont.resume(error == null, onCancellation = {})
+            }
+        }) { _ -> if (cont.isActive) cont.resume(false, onCancellation = {}) }
     }
 }

@@ -7,10 +7,12 @@ import com.minhtu.firesocialmedia.data.remote.constant.DataConstant
 import com.minhtu.firesocialmedia.data.remote.mapper.home.toDomain
 import com.minhtu.firesocialmedia.data.remote.mapper.news.toDomain
 import com.minhtu.firesocialmedia.data.remote.mapper.news.toDto
+import com.minhtu.firesocialmedia.data.remote.mapper.settings.toDomain
 import com.minhtu.firesocialmedia.data.remote.service.database.DatabaseService
 import com.minhtu.firesocialmedia.domain.core.NetworkMonitor
 import com.minhtu.firesocialmedia.domain.entity.home.LatestNewsResult
 import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
+import com.minhtu.firesocialmedia.domain.entity.settings.PollObject
 import com.minhtu.firesocialmedia.domain.repository.NewsRepository
 import kotlinx.coroutines.flow.first
 
@@ -70,6 +72,22 @@ class NewsRepositoryImpl(
         databaseService.deleteNewsFromDatabase(DataConstant.NEWS_PATH, new.toDto())
     }
 
+    override suspend fun deletePollFromDatabase(
+        newsId: String,
+        pollId: String,
+        groupId: String
+    ): Boolean {
+        return databaseService.deletePollFromDatabase(
+            newsId,
+            pollId,
+            DataConstant.GROUP_PATH,
+            groupId,
+            DataConstant.POSTS_PATH,
+            DataConstant.POLL_PATH,
+            DataConstant.POLL_VOTES_PATH
+        )
+    }
+
     override suspend fun updateNewsFromDatabase(
         newContent: String,
         newImage: String,
@@ -82,5 +100,29 @@ class NewsRepositoryImpl(
             newImage,
             newVideo,
             new.toDto())
+    }
+
+    override suspend fun fetchPoll(pollId: String): PollObject? {
+        return databaseService.fetchPoll(pollId, DataConstant.POLL_PATH)?.toDomain()
+    }
+
+    override suspend fun loadMyVotes(pollId: String, userId: String): List<Int> {
+        return databaseService.loadMyVotes(pollId, userId, DataConstant.POLL_VOTES_PATH)
+    }
+
+    override suspend fun loadAllVoters(pollId: String): Map<String, List<Int>> {
+        return databaseService.loadAllVoters(pollId, DataConstant.POLL_VOTES_PATH)
+    }
+
+    override suspend fun submitVote(
+        pollId: String,
+        userId: String,
+        selectedIndices: List<Int>,
+        previousIndices: List<Int>
+    ): Boolean {
+        return databaseService.submitVote(
+            pollId, userId, selectedIndices, previousIndices,
+            DataConstant.POLL_PATH, DataConstant.POLL_VOTES_PATH
+        )
     }
 }

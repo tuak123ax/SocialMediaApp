@@ -58,6 +58,7 @@ class HomeViewModelTest {
             override suspend fun storeNewsToRoom(news: List<NewsInstance>) {}
             override suspend fun saveNews(news: NewsInstance): Boolean = true
             override suspend fun findNewById(newsId: String): NewsInstance? = null
+            override suspend fun deletePoll(newsId: String, pollId: String, groupId: String): Boolean = true
         }
         val fakeNotificationInteractor = object : NotificationInteractor {
             override suspend fun allNotificationsOf(userId: String): List<NotificationInstance>? = emptyList()
@@ -102,6 +103,7 @@ class HomeViewModelTest {
                 override suspend fun storeNewsToRoom(news: List<NewsInstance>) {}
                 override suspend fun saveNews(news: NewsInstance): Boolean = true
                 override suspend fun findNewById(newsId: String): NewsInstance? = null
+            override suspend fun deletePoll(newsId: String, pollId: String, groupId: String): Boolean = true
             },
             object : NotificationInteractor {
                 override suspend fun allNotificationsOf(userId: String): List<NotificationInstance>? = emptyList()
@@ -147,6 +149,7 @@ class HomeViewModelTest {
                 override suspend fun storeNewsToRoom(news: List<NewsInstance>) {}
                 override suspend fun saveNews(news: NewsInstance): Boolean = true
                 override suspend fun findNewById(newsId: String): NewsInstance? = null
+            override suspend fun deletePoll(newsId: String, pollId: String, groupId: String): Boolean = true
             },
             object : NotificationInteractor {
                 override suspend fun allNotificationsOf(userId: String): List<NotificationInstance>? = emptyList()
@@ -191,6 +194,7 @@ class HomeViewModelTest {
                 override suspend fun storeNewsToRoom(news: List<NewsInstance>) {}
                 override suspend fun saveNews(news: NewsInstance): Boolean = true
                 override suspend fun findNewById(newsId: String): NewsInstance? = null
+            override suspend fun deletePoll(newsId: String, pollId: String, groupId: String): Boolean = true
             },
             object : NotificationInteractor {
                 override suspend fun allNotificationsOf(userId: String): List<NotificationInstance>? = emptyList()
@@ -240,6 +244,7 @@ class HomeViewModelTest {
                 override suspend fun storeNewsToRoom(news: List<NewsInstance>) {}
                 override suspend fun saveNews(news: NewsInstance): Boolean = true
                 override suspend fun findNewById(newsId: String): NewsInstance? = null
+            override suspend fun deletePoll(newsId: String, pollId: String, groupId: String): Boolean = true
             },
             object : NotificationInteractor {
                 override suspend fun allNotificationsOf(userId: String): List<NotificationInstance>? = notifications
@@ -285,6 +290,7 @@ class HomeViewModelTest {
                 override suspend fun storeNewsToRoom(news: List<NewsInstance>) {}
                 override suspend fun saveNews(news: NewsInstance): Boolean = true
                 override suspend fun findNewById(newsId: String): NewsInstance? = null
+            override suspend fun deletePoll(newsId: String, pollId: String, groupId: String): Boolean = true
             },
             object : NotificationInteractor {
                 override suspend fun allNotificationsOf(userId: String): List<NotificationInstance>? = null
@@ -329,6 +335,7 @@ class HomeViewModelTest {
             override suspend fun storeNewsToRoom(news: List<NewsInstance>) {}
             override suspend fun saveNews(news: NewsInstance): Boolean = true
             override suspend fun findNewById(newsId: String): NewsInstance? = null
+            override suspend fun deletePoll(newsId: String, pollId: String, groupId: String): Boolean = true
         },
         notificationInteractor: NotificationInteractor = object : NotificationInteractor {
             override suspend fun allNotificationsOf(userId: String): List<NotificationInstance>? = emptyList()
@@ -427,6 +434,7 @@ class HomeViewModelTest {
                 override suspend fun storeNewsToRoom(news: List<NewsInstance>) {}
                 override suspend fun saveNews(news: NewsInstance): Boolean = true
                 override suspend fun findNewById(newsId: String): NewsInstance? = null
+            override suspend fun deletePoll(newsId: String, pollId: String, groupId: String): Boolean = true
             }
         )
         val user = UserInstance(uid = "u1", name = "Me", image = "img")

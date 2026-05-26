@@ -29,5 +29,13 @@ class DataConstant {
         const val LOGIN_PATH = "login"
         const val LAST_TIME_READ_PRIVACY_PATH = "lastTimeReadPrivacy"
         const val LAST_TIME_ACKNOWLEDGED_LOGIN_HISTORY_PATH = "lastTimeAcknowledgedLoginHistory"
+        const val NAME_PATH = "name"
+        const val STATUS_PATH = "status"
+        const val PHONE_PATH = "phone"
+        const val BACKGROUND_PATH = "background"
+        const val POLL_PATH = "polls"
+        const val POLL_VOTES_PATH = "pollVotes"
+        const val POST_TYPE_NEWS = "news"
+        const val POST_TYPE_POLL = "poll"
     }
 }

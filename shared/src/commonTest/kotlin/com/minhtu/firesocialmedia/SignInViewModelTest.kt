@@ -215,8 +215,22 @@ class SignInViewModelTest {
         override suspend fun updateTwoFAEnabledFlagForUser(userId: String, twoFAEnabled: Boolean, userPath: String, twoFaEnabledPath: String): Boolean = true
         override suspend fun fetchLoginHistoryList(userId: String, historyPath: String, loginHistoryPath: String): List<com.minhtu.firesocialmedia.data.remote.dto.settings.SessionItemDTO> = emptyList()
         override fun getLocalSessionId(): String = ""
-        override suspend fun saveLoginActivityInfo(userId: String, historyPath: String, loginHistoryPath: String) {}
+        override fun clearLocalSessionId() {}
+        override fun observeSessionStatus(userId: String, sessionId: String, historyPath: String, loginHistoryPath: String, onLoggedOut: () -> Unit) {}
+        override fun stopObserveSessionStatus() {}
+        override suspend fun deleteLoginSession(userId: String, sessionId: String, historyPath: String, loginHistoryPath: String): Boolean = true
+        override suspend fun logoutSession(userId: String, sessionId: String, historyPath: String, loginHistoryPath: String): Boolean = true
+        override suspend fun saveLoginActivityInfo(userId: String, locationInfo: com.minhtu.firesocialmedia.data.remote.dto.settings.security.IpInfoResponseDTO, historyPath: String, loginHistoryPath: String) {}
         override suspend fun updateUserLongField(userId: String, fieldPath: String, value: Long, userPath: String): Boolean = true
+        override suspend fun updateUserStringField(userId: String, fieldPath: String, value: String, userPath: String): Boolean = true
+        override suspend fun updateUserAvatar(userId: String, imageUri: String, userPath: String): Boolean = true
+        override suspend fun updateUserBackground(userId: String, imageUri: String, userPath: String): Boolean = true
+        override suspend fun createPoll(poll: com.minhtu.firesocialmedia.data.remote.dto.settings.PollDTO, pollPath: String, groupPath: String, groupId: String, postsPath: String, newsEntry: com.minhtu.firesocialmedia.data.remote.dto.news.NewsDTO): Boolean = true
+        override suspend fun deletePollFromDatabase(newsId: String, pollId: String, groupPath: String, groupId: String, postsPath: String, pollPath: String, pollVotesPath: String): Boolean = true
+        override suspend fun fetchPoll(pollId: String, pollPath: String): com.minhtu.firesocialmedia.data.remote.dto.settings.PollDTO? = null
+        override suspend fun loadMyVotes(pollId: String, userId: String, pollVotesPath: String): List<Int> = emptyList()
+        override suspend fun loadAllVoters(pollId: String, pollVotesPath: String): Map<String, List<Int>> = emptyMap()
+        override suspend fun submitVote(pollId: String, userId: String, selectedIndices: List<Int>, previousIndices: List<Int>, pollPath: String, pollVotesPath: String): Boolean = true
     }
 
     private class FakePlatformContext(
@@ -278,6 +292,11 @@ class SignInViewModelTest {
             override suspend fun requestAudioPermission() = true
         }
         override val networkMonitor: NetworkMonitor = object : NetworkMonitor { override val isOnline = flowOf(true) }
+        override val ipRemoteDataSource: com.minhtu.firesocialmedia.data.remote.service.security.IpInfoRemoteDataSource =
+            com.minhtu.firesocialmedia.data.remote.service.security.IpInfoRemoteDataSource(
+                io.ktor.client.HttpClient(),
+                ""
+            )
     }
 
     private lateinit var authService: FakeAuthService

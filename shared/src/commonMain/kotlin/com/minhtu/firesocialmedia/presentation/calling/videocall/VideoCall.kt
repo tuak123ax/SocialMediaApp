@@ -25,6 +25,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -47,7 +48,11 @@ import com.minhtu.firesocialmedia.platform.showToast
 import com.minhtu.firesocialmedia.presentation.loading.Loading
 import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
 import com.minhtu.sharedmodule.ui.theme.activeColor
+import com.minhtu.sharedmodule.ui.theme.callStopPendingColor
 import com.minhtu.sharedmodule.ui.theme.inactiveColor
+import com.minhtu.sharedmodule.ui.theme.videoCallButtonColor
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 class VideoCall {
     companion object{
@@ -77,6 +82,13 @@ class VideoCall {
             var isCameraOff by remember { mutableStateOf(false) }
             val isLoading by loadingViewModel.isLoading.collectAsState()
             var lastHandledOfferKey by remember { mutableStateOf(offerKey(effectiveOffer)) }
+            var isExitPending by remember { mutableStateOf(false) }
+            var exitButtonColor by remember { mutableStateOf(videoCallButtonColor) }
+            val coroutineScope = rememberCoroutineScope()
+            // Video call background is always black; use a white-tinted shadow so buttons
+            // stand out from the dark background regardless of the system theme.
+            val buttonShadowAmbient = Color.White.copy(alpha = 0.15f)
+            val buttonShadowSpot = Color.White.copy(alpha = 0.30f)
 
             LaunchedEffect(Unit) {
                 // Callee path: ensure we don't navigate back due to stale answerVideoCallState from any other flow
@@ -180,7 +192,7 @@ class VideoCall {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color.White)
+                    .background(Color.Black)
             ) {
 
                 if (localVideoTrackState.value != null && remoteVideoTrackState.value != null) {
@@ -213,14 +225,16 @@ class VideoCall {
                         contentAlignment = Alignment.Center,
                         modifier = Modifier
                             .size(56.dp)
-                            .shadow(8.dp, CircleShape)
+                            .shadow(8.dp, CircleShape, ambientColor = buttonShadowAmbient, spotColor = buttonShadowSpot)
                             .clip(CircleShape)
                             .background(if (isMicMuted) inactiveColor else activeColor)
                     ) {
                         FloatingActionButton(
                             onClick = {
-                                isMicMuted = !isMicMuted
-                                videoCallViewModel.updateMicStatus(isMicMuted)
+                                if (!isExitPending) {
+                                    isMicMuted = !isMicMuted
+                                    videoCallViewModel.updateMicStatus(isMicMuted)
+                                }
                             },
                             containerColor = Color.Transparent,
                             elevation = FloatingActionButtonDefaults.elevation(0.dp)
@@ -241,7 +255,7 @@ class VideoCall {
                         contentAlignment = Alignment.Center,
                         modifier = Modifier
                             .size(56.dp)
-                            .shadow(8.dp, CircleShape)
+                            .shadow(8.dp, CircleShape, ambientColor = buttonShadowAmbient, spotColor = buttonShadowSpot)
                             .clip(CircleShape)
                             .background(
                                 if (speakerType == SpeakerType.Speaker)
@@ -252,13 +266,14 @@ class VideoCall {
                     ) {
                         FloatingActionButton(
                             onClick = {
-                                speakerType =
-                                    if (speakerType == SpeakerType.Audio)
-                                        SpeakerType.Speaker
-                                    else
-                                        SpeakerType.Audio
-
-                                videoCallViewModel.updateSpeakerStatus(speakerType)
+                                if (!isExitPending) {
+                                    speakerType =
+                                        if (speakerType == SpeakerType.Audio)
+                                            SpeakerType.Speaker
+                                        else
+                                            SpeakerType.Audio
+                                    videoCallViewModel.updateSpeakerStatus(speakerType)
+                                }
                             },
                             containerColor = Color.Transparent,
                             elevation = FloatingActionButtonDefaults.elevation(0.dp)
@@ -279,9 +294,9 @@ class VideoCall {
                         contentAlignment = Alignment.Center,
                         modifier = Modifier
                             .size(56.dp)
-                            .shadow(8.dp, CircleShape)
+                            .shadow(8.dp, CircleShape, ambientColor = buttonShadowAmbient, spotColor = buttonShadowSpot)
                             .clip(CircleShape)
-                            .background(Color(0xFF3A3A3C))
+                            .background(exitButtonColor)
                             .testTag(TestTag.TAG_BUTTON_EXIT_VIDEO_CALL)
                             .semantics {
                                 contentDescription = TestTag.TAG_BUTTON_EXIT_VIDEO_CALL
@@ -289,11 +304,18 @@ class VideoCall {
                     ) {
                         FloatingActionButton(
                             onClick = {
-                                logMessage("ClickBack", { "Back to audio screen" })
-                                CallEventFlow.localVideoTrack.value = null
-                                videoCallViewModel.stopVideoCallResources()
-                                videoCallViewModel.clearPendingVideoCallParams()
-                                onNavigateBack()
+                                if (!isExitPending) {
+                                    isExitPending = true
+                                    exitButtonColor = callStopPendingColor
+                                    coroutineScope.launch {
+                                        delay(500L)
+                                        logMessage("ClickBack", { "Back to audio screen" })
+                                        CallEventFlow.localVideoTrack.value = null
+                                        videoCallViewModel.stopVideoCallResources()
+                                        videoCallViewModel.clearPendingVideoCallParams()
+                                        onNavigateBack()
+                                    }
+                                }
                             },
                             containerColor = Color.Transparent,
                             elevation = FloatingActionButtonDefaults.elevation(0.dp)
@@ -312,18 +334,20 @@ class VideoCall {
                         contentAlignment = Alignment.Center,
                         modifier = Modifier
                             .size(56.dp)
-                            .shadow(8.dp, CircleShape)
+                            .shadow(8.dp, CircleShape, ambientColor = buttonShadowAmbient, spotColor = buttonShadowSpot)
                             .clip(CircleShape)
                             .background(
-                                if (!hasLocalVideoTrack) Color.Gray
+                                if (!hasLocalVideoTrack) videoCallButtonColor
                                 else if (isCameraOff) inactiveColor
                                 else activeColor
                             )
                     ) {
                         FloatingActionButton(
                             onClick = {
-                                isCameraOff = !isCameraOff
-                                videoCallViewModel.updateCameraStatus(isCameraOff)
+                                if (!isExitPending) {
+                                    isCameraOff = !isCameraOff
+                                    videoCallViewModel.updateCameraStatus(isCameraOff)
+                                }
                             },
                             containerColor = Color.Transparent,
                             elevation = FloatingActionButtonDefaults.elevation(0.dp)

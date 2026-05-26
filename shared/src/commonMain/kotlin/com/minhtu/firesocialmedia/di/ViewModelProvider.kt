@@ -11,12 +11,15 @@ import com.minhtu.firesocialmedia.presentation.navigation.RouterViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.friend.FriendViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.notification.NotificationViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.CreateGroupViewModel
+import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.CreatePollViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.ExploreGroupViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.GroupDetailsViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.InviteMemberViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.ManageMembersViewModel
+import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.PollViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.SelectGroupViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.notificationconfigs.NotificationConfigsViewModel
+import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.personal.PersonalInformationViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security.SecuritySettingsViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security.changepassword.ChangePasswordViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security.loginhistory.LoginHistoryViewModel
@@ -48,7 +51,8 @@ object ViewModelProvider {
             AppModule.provideHandleSignInGoogleResultUseCase(authenticationRepository)
         val getCurrentUserUidUseCase = AppModule.provideGetCurrentUserUidUseCase(userRepository)
         val getUserUseCase = AppModule.provideGetUserUseCase(userRepository)
-        val saveLoginActivityInfoUseCase = AppModule.provideSaveLoginActivityInfoUseCase(commonDbRepository)
+        val saveLoginActivityInfoUseCase =
+            AppModule.provideSaveLoginActivityInfoUseCase(commonDbRepository)
         return AppModule.provideSignInViewModel(
             signInUseCase,
             rememberPasswordUseCase,
@@ -89,7 +93,8 @@ object ViewModelProvider {
             AppModule.provideSaveSignUpInformationUseCase(informationRepository)
         val getCurrentUserUidUseCase = AppModule.provideGetCurrentUserUidUseCase(userRepository)
         val getFCMTokenUseCase = AppModule.provideGetFCMTokenUseCase(localRepository)
-        val saveLoginActivityInfoUseCase = AppModule.provideSaveLoginActivityInfoUseCase(commonDbRepository)
+        val saveLoginActivityInfoUseCase =
+            AppModule.provideSaveLoginActivityInfoUseCase(commonDbRepository)
         return AppModule.provideInformationViewModel(
             saveSignUpInformationUseCase,
             getCurrentUserUidUseCase,
@@ -123,6 +128,7 @@ object ViewModelProvider {
             AppModule.provideUpdateCountValueInDatabase(commonDbRepository)
         val deleteNewsFromDatabaseUseCase =
             AppModule.provideDeleteNewsFromDatabaseUseCase(newsRepository)
+        val deletePollUseCase = AppModule.provideDeletePollUseCase(newsRepository)
         val sendSignalingDataUseCase = AppModule.provideSendSignalingDataUseCase(callRepository)
         val observePhoneCallWithInCallUseCase =
             AppModule.provideObservePhoneCallWithInCallUseCase(sendSignalingDataUseCase)
@@ -163,7 +169,8 @@ object ViewModelProvider {
             deleteNewsFromDatabaseUseCase,
             storeNewsToRoomUseCase,
             saveNewToDatabaseUseCase,
-            findNewByIdInDbUseCase
+            findNewByIdInDbUseCase,
+            deletePollUseCase
         )
         val notificationInteractor = AppModule.provideNotificationInteractor(
             getAllNotificationOfUserUseCase,
@@ -271,6 +278,7 @@ object ViewModelProvider {
         val commonDbRepository = AppModule.provideCommonDbRepository(platformContext)
         val callRepository = AppModule.provideCallRepository(platformContext)
         val networkRepository = AppModule.provideNetworkRepository(platformContext)
+        val settingsRepository = AppModule.provideSettingsRepository(platformContext)
         val saveFriendUseCase = AppModule.provideSaveFriendUseCase(commonDbRepository)
         val saveFriendRequestUseCase = AppModule.provideSaveFriendRequestUseCase(commonDbRepository)
         val saveNotificationToDatabaseUseCase =
@@ -280,13 +288,16 @@ object ViewModelProvider {
         val getUserUseCase = AppModule.provideGetUserUseCase(userRepository)
         val checkInternetConnectionUseCase =
             AppModule.provideCheckInternetConnectionUseCase(networkRepository)
+        val updateUserBackgroundUseCase =
+            AppModule.provideUpdateUserBackgroundUseCase(settingsRepository)
         return AppModule.provideUserInformationViewModel(
             saveFriendUseCase,
             saveFriendRequestUseCase,
             saveNotificationToDatabaseUseCase,
             checkCalleeAvailableUseCase,
             getUserUseCase,
-            checkInternetConnectionUseCase
+            checkInternetConnectionUseCase,
+            updateUserBackgroundUseCase
         )
     }
 
@@ -384,6 +395,8 @@ object ViewModelProvider {
         val leaveGroupUseCase = AppModule.provideLeaveGroupUseCase(groupRepository)
         val leaveAndDeleteGroupUseCase =
             AppModule.provideLeaveAndDeleteGroupUseCase(groupRepository)
+        val newsRepository = AppModule.provideNewsRepository(platformContext)
+        val deletePollUseCase = AppModule.provideDeletePollUseCase(newsRepository)
         return GroupDetailsViewModel(
             fetchGroupInfoUseCase,
             updateNotificationStatusUseCase,
@@ -391,7 +404,8 @@ object ViewModelProvider {
             findGroupByIdUseCase,
             joinGroupUseCase,
             leaveGroupUseCase,
-            leaveAndDeleteGroupUseCase
+            leaveAndDeleteGroupUseCase,
+            deletePollUseCase
         )
     }
 
@@ -535,8 +549,61 @@ object ViewModelProvider {
 
     fun createLoginHistoryViewModel(platformContext: PlatformContext): LoginHistoryViewModel {
         val settingsRepository = AppModule.provideSettingsRepository(platformContext)
-        val fetchLoginHistoryListUseCase = AppModule.provideFetchLoginHistoryListUseCase(settingsRepository)
-        val updateUserTimestampUseCase = AppModule.provideUpdateUserTimestampUseCase(settingsRepository)
-        return LoginHistoryViewModel(fetchLoginHistoryListUseCase, updateUserTimestampUseCase)
+        val fetchLoginHistoryListUseCase =
+            AppModule.provideFetchLoginHistoryListUseCase(settingsRepository)
+        val updateUserTimestampUseCase =
+            AppModule.provideUpdateUserTimestampUseCase(settingsRepository)
+        val deleteLoginSessionUseCase =
+            AppModule.provideDeleteLoginSessionUseCase(settingsRepository)
+        val logoutSessionUseCase = AppModule.provideLogoutSessionUseCase(settingsRepository)
+        val verifyCurrentPasswordUseCase =
+            AppModule.provideVerifyCurrentPasswordUseCase(settingsRepository)
+        return LoginHistoryViewModel(
+            fetchLoginHistoryListUseCase,
+            updateUserTimestampUseCase,
+            deleteLoginSessionUseCase,
+            logoutSessionUseCase,
+            verifyCurrentPasswordUseCase
+        )
+    }
+
+    fun createPersonalInformationViewModel(platformContext: PlatformContext): PersonalInformationViewModel {
+        val settingsRepository = AppModule.provideSettingsRepository(platformContext)
+        val userRepository = AppModule.provideUserRepository(platformContext)
+        val updateUserStringFieldUseCase =
+            AppModule.provideUpdateUserStringFieldUseCase(settingsRepository)
+        val updateUserAvatarUseCase = AppModule.provideUpdateUserAvatarUseCase(settingsRepository)
+        val verifyCurrentPasswordUseCase =
+            AppModule.provideVerifyCurrentPasswordUseCase(settingsRepository)
+        val getUserUseCase = AppModule.provideGetUserUseCase(userRepository)
+        return AppModule.providePersonalInformationViewModel(
+            updateUserStringFieldUseCase,
+            updateUserAvatarUseCase,
+            verifyCurrentPasswordUseCase,
+            getUserUseCase
+        )
+    }
+
+    fun createCreatePollViewModel(platformContext: PlatformContext): CreatePollViewModel {
+        val settingsRepository = AppModule.provideSettingsRepository(platformContext)
+        val createPollUseCase = AppModule.provideCreatePollUseCase(settingsRepository)
+        return AppModule.provideCreatePollViewModel(createPollUseCase)
+    }
+
+    fun createPollViewModel(platformContext: PlatformContext): PollViewModel {
+        val newsRepository = AppModule.provideNewsRepository(platformContext)
+        val userRepository = AppModule.provideUserRepository(platformContext)
+        val fetchPollUseCase = AppModule.provideFetchPollUseCase(newsRepository)
+        val loadMyVotesUseCase = AppModule.provideLoadMyVotesUseCase(newsRepository)
+        val submitVoteUseCase = AppModule.provideSubmitVoteUseCase(newsRepository)
+        val loadAllVotersUseCase = AppModule.provideLoadAllVotersUseCase(newsRepository)
+        val getUserUseCase = AppModule.provideGetUserUseCase(userRepository)
+        return AppModule.providePollViewModel(
+            fetchPollUseCase,
+            loadMyVotesUseCase,
+            submitVoteUseCase,
+            loadAllVotersUseCase,
+            getUserUseCase
+        )
     }
 }

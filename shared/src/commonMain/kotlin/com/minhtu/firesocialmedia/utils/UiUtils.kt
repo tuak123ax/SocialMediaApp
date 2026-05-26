@@ -16,6 +16,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -28,10 +29,12 @@ import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
@@ -46,6 +49,7 @@ import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Poll
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.outlined.Block
@@ -66,7 +70,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarDefaults
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -123,7 +126,9 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import com.minhtu.firesocialmedia.data.remote.constant.DataConstant
 import com.minhtu.firesocialmedia.constants.TestTag
+import com.minhtu.firesocialmedia.di.PlatformContext
 import com.minhtu.firesocialmedia.domain.entity.home.deeplinks.ShareApp
 import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
@@ -136,16 +141,17 @@ import com.minhtu.firesocialmedia.platform.queryShareApps
 import com.minhtu.firesocialmedia.platform.toHex
 import com.minhtu.firesocialmedia.presentation.home.Home
 import com.minhtu.firesocialmedia.presentation.home.HomeViewModel
+import com.minhtu.firesocialmedia.presentation.comment.Comment
+import com.minhtu.firesocialmedia.presentation.comment.CommentViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.Screen
 import com.minhtu.firesocialmedia.presentation.navigationscreen.friend.Friend
 import com.minhtu.firesocialmedia.presentation.navigationscreen.friend.FriendViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.notification.Notification
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.Settings
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.GroupDetails.Companion.DropdownMenuForMoreOptionsInGroup
+import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.PollViewModel
 import com.minhtu.firesocialmedia.presentation.search.SearchViewModel
 import com.minhtu.firesocialmedia.storage.toStorageUrl
-import com.minhtu.sharedmodule.ui.theme.loginBackgroundColor
-import com.minhtu.sharedmodule.ui.theme.memberCardColor
 import com.seiko.imageloader.asImageBitmap
 import com.seiko.imageloader.ui.AutoSizeImage
 import kotlinx.coroutines.delay
@@ -170,7 +176,10 @@ class UiUtils {
             listState : LazyListState,
             onDelete: (action : String, new : NewsInstance) -> Unit,
             onNavigateToCreatePost : (updateNew : NewsInstance) -> Unit,
-            showBottomSheet : (NewsInstance) -> Unit) {
+            showBottomSheet : (NewsInstance) -> Unit,
+            commentViewModel: CommentViewModel? = null,
+            platform: PlatformContext? = null,
+            currentUser: UserInstance? = null) {
             LaunchedEffect(Unit) {
                 homeViewModel.updateLikeStatus()
             }
@@ -183,11 +192,12 @@ class UiUtils {
                         contentDescription = TestTag.TAG_POST_IN_COLUMN
                     },
                 shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White)
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
             ) {
                 Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(1.dp)) {
                     Row(horizontalArrangement = Arrangement.Start,
-                        modifier = Modifier.background(color = Color.White).padding(10.dp).fillMaxWidth()
+                        modifier = Modifier.background(color = MaterialTheme.colorScheme.surface).padding(10.dp).fillMaxWidth()
                             .clickable {
                                 onNavigateToUserInformation(user)
                             }){
@@ -213,13 +223,13 @@ class UiUtils {
                         Column {
                             Text(
                                 text = news.posterName,
-                                color = Color.Black,
+                                color = MaterialTheme.colorScheme.onSurface,
                                 fontWeight = FontWeight.Bold,
                                 modifier = Modifier.padding(horizontal = 2.dp)
                             )
                             Text(
                                 text = convertTimeToDateString(news.timePosted),
-                                color = Color.Gray,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.padding(horizontal = 2.dp)
                             )
                         }
@@ -233,9 +243,9 @@ class UiUtils {
                                 }) {
                                     CrossPlatformIcon(
                                         icon = "more_horiz",
-                                        backgroundColor = "#FFFFFFFF",
+                                        backgroundColor = MaterialTheme.colorScheme.surface.toHex(),
                                         contentDescription = "More Options",
-                                        tint = Color.Gray,
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                         modifier = Modifier
                                             .testTag(TestTag.TAG_BUTTON_MOREOPTIONS)
                                             .semantics {
@@ -288,7 +298,36 @@ class UiUtils {
                                         .testTag(TestTag.TAG_POST_VIDEO)
                                         .semantics{
                                             contentDescription = TestTag.TAG_POST_VIDEO
-                                        })
+                                        },
+                                    isLiked,
+                                    onLikeClick = {
+                                        homeViewModel.clickLikeButton(news)
+                                    },
+                                    onCommentClick = {
+                                        homeViewModel.clickCommentButton(news)
+                                    },
+                                    onShareClick = {
+                                        showBottomSheet(news)
+                                    },
+                                    commentSheetContent = if (commentViewModel != null && platform != null && currentUser != null) {
+                                        { onSheetDismiss ->
+                                            Comment.CommentScreen(
+                                                platform = platform,
+                                                localImageLoaderValue = localImageLoaderValue,
+                                                showCloseIcon = false,
+                                                commentViewModel = commentViewModel,
+                                                currentUser = currentUser,
+                                                selectedNew = news,
+                                                onNavigateToShowImageScreen = onNavigateToShowImageScreen,
+                                                onNavigateToUserInformation = { u -> onNavigateToUserInformation(u ?: user) },
+                                                onNavigateToHomeScreen = { count ->
+                                                    homeViewModel.addCommentCountData(news.id, count)
+                                                    onSheetDismiss()
+                                                }
+                                            )
+                                        }
+                                    } else null
+                                )
                             }
                         }
                     }
@@ -302,14 +341,14 @@ class UiUtils {
                             Text(
                                 text = if(likeCount > 1) "$likeCount Likes" else "$likeCount Like",
                                 fontSize = 12.sp,
-                                color = Color.Black,
+                                color = MaterialTheme.colorScheme.onSurface,
                                 modifier = Modifier.padding(2.dp)
                             )
                             Spacer(modifier = Modifier.weight(1f))
                             Text(
                                 text = if(commentCount > 1) "$commentCount Comments" else "$commentCount Comment",
                                 fontSize = 12.sp,
-                                color = Color.Black,
+                                color = MaterialTheme.colorScheme.onSurface,
                                 modifier = Modifier.padding(2.dp)
                             )
                         }
@@ -364,11 +403,12 @@ class UiUtils {
                         contentDescription = TestTag.TAG_POST_IN_COLUMN
                     },
                 shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White)
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
             ) {
                 Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(1.dp)) {
                     Row(horizontalArrangement = Arrangement.Start,
-                        modifier = Modifier.background(color = Color.White).padding(10.dp).fillMaxWidth()
+                        modifier = Modifier.background(color = MaterialTheme.colorScheme.surface).padding(10.dp).fillMaxWidth()
                             .clickable {
                                 onNavigateToUserInformation(user)
                             }){
@@ -394,13 +434,13 @@ class UiUtils {
                         Column {
                             Text(
                                 text = news.posterName,
-                                color = Color.Black,
+                                color = MaterialTheme.colorScheme.onSurface,
                                 fontWeight = FontWeight.Bold,
                                 modifier = Modifier.padding(horizontal = 2.dp)
                             )
                             Text(
                                 text = convertTimeToDateString(news.timePosted),
-                                color = Color.Gray,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.padding(horizontal = 2.dp)
                             )
                         }
@@ -413,9 +453,9 @@ class UiUtils {
                             }) {
                                 CrossPlatformIcon(
                                     icon = "more_horiz",
-                                    backgroundColor = "#FFFFFFFF",
+                                    backgroundColor = MaterialTheme.colorScheme.surface.toHex(),
                                     contentDescription = "More Options",
-                                    tint = Color.Gray,
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                     modifier = Modifier
                                         .testTag(TestTag.TAG_BUTTON_MOREOPTIONS)
                                         .semantics {
@@ -436,7 +476,7 @@ class UiUtils {
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(10.dp)
-                                .border(1.dp, Color.Black)
+                                .border(1.dp, MaterialTheme.colorScheme.outline)
                         ) {
                             NewsCard(
                                 sharedNew,
@@ -467,14 +507,14 @@ class UiUtils {
                         Text(
                             text = if(likeCount > 1) "$likeCount Likes" else "$likeCount Like",
                             fontSize = 12.sp,
-                            color = Color.Black,
+                            color = MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier.padding(2.dp)
                         )
                         Spacer(modifier = Modifier.weight(1f))
                         Text(
                             text = if(commentCount > 1) "$commentCount Comments" else "$commentCount Comment",
                             fontSize = 12.sp,
-                            color = Color.Black,
+                            color = MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier.padding(2.dp)
                         )
                     }
@@ -507,6 +547,9 @@ class UiUtils {
             showDialog: MutableState<Boolean>
         ) {
             if (!showDialog.value) return
+            val isDarkTheme = isSystemInDarkTheme()
+            val shadowAmbient = if (isDarkTheme) Color.White.copy(alpha = 0.08f) else Color.Black
+            val shadowSpot = if (isDarkTheme) Color.White.copy(alpha = 0.15f) else Color.Black
 
             Dialog(
                 onDismissRequest = { showDialog.value = false }
@@ -517,7 +560,7 @@ class UiUtils {
                         .fillMaxWidth()
                         .padding(horizontal = 24.dp),
                     colors = CardDefaults.cardColors(
-                        containerColor = Color.White
+                        containerColor = MaterialTheme.colorScheme.surface
                     )
                 ) {
                     Column(
@@ -537,7 +580,7 @@ class UiUtils {
                             Icon(
                                 imageVector = icon,
                                 contentDescription = null,
-                                tint = Color(0xFFFF9800),
+                                tint = MaterialTheme.colorScheme.error,
                                 modifier = Modifier.size(36.dp)
                             )
                         }
@@ -559,7 +602,7 @@ class UiUtils {
                         Text(
                             text = message,
                             style = MaterialTheme.typography.bodyMedium,
-                            color = Color.Gray,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                             textAlign = TextAlign.Center
                         )
 
@@ -574,15 +617,15 @@ class UiUtils {
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(56.dp)
-                                .shadow(8.dp, RoundedCornerShape(16.dp)),
+                                .shadow(8.dp, RoundedCornerShape(16.dp), ambientColor = shadowAmbient, spotColor = shadowSpot),
                             shape = RoundedCornerShape(16.dp),
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = Color(0xFFE53935) // Modern red
+                                containerColor = MaterialTheme.colorScheme.error
                             )
                         ) {
                             Text(
                                 "Discard",
-                                color = Color.White,
+                                color = MaterialTheme.colorScheme.onError,
                                 fontWeight = FontWeight.Bold
                             )
                         }
@@ -599,7 +642,7 @@ class UiUtils {
                         ) {
                             Text(
                                 "Cancel",
-                                color = Color.Gray,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 fontWeight = FontWeight.Medium
                             )
                         }
@@ -626,7 +669,7 @@ class UiUtils {
                     onDismissRequest = { showSheet.value = false },
                     sheetState = sheetState,
                     shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
-                    containerColor = Color.White
+                    containerColor = MaterialTheme.colorScheme.surface
                 ) {
 
                     Column(
@@ -643,13 +686,13 @@ class UiUtils {
                             modifier = Modifier
                                 .size(80.dp)
                                 .clip(CircleShape)
-                                .background(Color(0xFFFFEBEE)),
+                                .background(MaterialTheme.colorScheme.errorContainer),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.ExitToApp,
                                 contentDescription = "Logout Icon",
-                                tint = Color(0xFFFF3B30),
+                                tint = MaterialTheme.colorScheme.error,
                                 modifier = Modifier.size(36.dp)
                             )
                         }
@@ -667,7 +710,7 @@ class UiUtils {
                         Text(
                             text = "Are you sure you want to log out? You can always log back in later.",
                             style = MaterialTheme.typography.bodyMedium,
-                            color = Color.Gray,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                             textAlign = TextAlign.Center
                         )
 
@@ -688,12 +731,12 @@ class UiUtils {
                                 .height(56.dp),
                             shape = RoundedCornerShape(16.dp),
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = Color(0xFFFF3B30)
+                                containerColor = MaterialTheme.colorScheme.error
                             )
                         ) {
                             Text(
                                 text = "Log Out",
-                                color = Color.White,
+                                color = MaterialTheme.colorScheme.onError,
                                 style = MaterialTheme.typography.titleMedium
                             )
                         }
@@ -760,8 +803,7 @@ class UiUtils {
             onNavigate: (String) -> Unit,
             homeViewModel: HomeViewModel,
             onNavigateToUploadNews: () -> Unit,
-            modifier: Modifier,
-            useDefaultInsets: Boolean = true
+            modifier: Modifier
         ) {
             val items = listOf(
                 Screen.Home,
@@ -769,76 +811,85 @@ class UiUtils {
                 Screen.Notification,
                 Screen.Settings
             )
-            Box(modifier = modifier){
-                val barInsets = if (useDefaultInsets) NavigationBarDefaults.windowInsets else WindowInsets(0)
-                NavigationBar(
-                    containerColor = Color.White,
-                    windowInsets = barInsets
-                ) {
-                    val currentRoute = currentRoute
-                    items.forEach { screen ->
-                        val notificationCount = homeViewModel.listNotificationOfCurrentUser.filter {
-                            !it.beRead
-                        }.size
+            Column(modifier = modifier) {
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    NavigationBar(
+                        containerColor = MaterialTheme.colorScheme.surface,
+                        windowInsets = WindowInsets(0),
+                        modifier = Modifier.height(60.dp)
+                    ) {
+                        val currentRoute = currentRoute
+                        items.forEach { screen ->
+                            val notificationCount = homeViewModel.listNotificationOfCurrentUser.filter {
+                                !it.beRead
+                            }.size
 
-                        val showBadge = screen.route == Notification.getScreenName() && notificationCount > 0
-                        val testTag = when(screen.route) {
-                            Notification.getScreenName() -> TestTag.TAG_NOTIFICATION_BOTTOM
-                            Home.getScreenName() -> TestTag.TAG_HOME_BOTTOM
-                            Friend.getScreenName() -> TestTag.TAG_FRIEND_BOTTOM
-                            Settings.getScreenName() -> TestTag.TAG_SETTING_BOTTOM
-                            else -> ""
-                        }
-                        NavigationBarItem(
-                            icon = {
-                                if(showBadge) {
-                                    BadgedBox(
-                                        badge = {
-                                            Badge{
-                                                Text(notificationCount.toString())
+                            val showBadge = screen.route == Notification.getScreenName() && notificationCount > 0
+                            val testTag = when(screen.route) {
+                                Notification.getScreenName() -> TestTag.TAG_NOTIFICATION_BOTTOM
+                                Home.getScreenName() -> TestTag.TAG_HOME_BOTTOM
+                                Friend.getScreenName() -> TestTag.TAG_FRIEND_BOTTOM
+                                Settings.getScreenName() -> TestTag.TAG_SETTING_BOTTOM
+                                else -> ""
+                            }
+                            NavigationBarItem(
+                                icon = {
+                                    if(showBadge) {
+                                        BadgedBox(
+                                            badge = {
+                                                Badge{
+                                                    Text(notificationCount.toString())
+                                                }
                                             }
+                                        ) {
+                                            Icon(screen.icon, contentDescription = screen.title) }
                                         }
-                                    ) {
+                                    else {
                                         Icon(screen.icon, contentDescription = screen.title) }
+                                    },
+                                selected = currentRoute == screen.route,
+                                onClick = { onNavigate(screen.route) },
+                                modifier = Modifier
+                                    .testTag(testTag)
+                                    .semantics {
+                                        contentDescription = testTag
                                     }
-                                else {
-                                    Icon(screen.icon, contentDescription = screen.title) }
-                                },
-                            selected = currentRoute == screen.route,
-                            onClick = { onNavigate(screen.route) },
-                            modifier = Modifier
-                                .testTag(testTag)
-                                .semantics {
-                                    contentDescription = testTag
-                                }
+                            )
+                        }
+                    }
+
+                    //Floating action button
+                    FloatingActionButton(
+                        onClick = { onNavigateToUploadNews() },
+                        modifier = Modifier
+                            .size(56.dp)
+                            .align(Alignment.TopCenter)
+                            .offset(y = (-28).dp)
+                            .testTag(TestTag.TAG_BOTTOM_ACTION_BUTTON)
+                            .semantics{
+                                contentDescription = TestTag.TAG_BOTTOM_ACTION_BUTTON
+                            },
+                        shape = CircleShape,
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        elevation = FloatingActionButtonDefaults.elevation(
+                            defaultElevation = 8.dp
+                        )
+                    ) {
+                        Icon(
+                            Icons.Default.Add,
+                            contentDescription = "Add",
+                            tint = MaterialTheme.colorScheme.onPrimary
                         )
                     }
                 }
 
-                //Floating action button
-                FloatingActionButton(
-                    onClick = { onNavigateToUploadNews() },
+                // Fill system navigation bar area with surface color so it doesn't show through
+                Spacer(
                     modifier = Modifier
-                        .size(56.dp)
-                        .offset(y = (-30).dp)
-                        .align(Alignment.BottomCenter)
-                        .testTag(TestTag.TAG_BOTTOM_ACTION_BUTTON)
-                        .semantics{
-                            contentDescription = TestTag.TAG_BOTTOM_ACTION_BUTTON
-                        },
-                    shape = CircleShape,
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    elevation = FloatingActionButtonDefaults.elevation(
-                        defaultElevation = 8.dp
-                    )
-                ) {
-                    Icon(
-                        Icons.Default.Add,
-                        contentDescription = "Add",
-                        tint = Color.White
-                    )
-                }
-
+                        .fillMaxWidth()
+                        .windowInsetsBottomHeight(WindowInsets.navigationBars)
+                        .background(MaterialTheme.colorScheme.surface)
+                )
             }
         }
         @Composable
@@ -846,13 +897,13 @@ class UiUtils {
             Row(horizontalArrangement = Arrangement.Start,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(Color.White)
+                    .background(MaterialTheme.colorScheme.surface)
                     .padding(10.dp)){
                 CrossPlatformIcon(
                     icon = "arrow_back",
-                    backgroundColor = "#FFFFFFFF",
+                    backgroundColor = MaterialTheme.colorScheme.surface.toHex(),
                     contentDescription = "Back",
-                    tint = Color.Black,
+                    tint = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier
                         .size(30.dp)
                         .clip(CircleShape)
@@ -868,9 +919,9 @@ class UiUtils {
                 Spacer(modifier = Modifier.weight(1f))
                 CrossPlatformIcon(
                     icon = "more_horiz",
-                    backgroundColor = "#FFFFFFFF",
+                    backgroundColor = MaterialTheme.colorScheme.surface.toHex(),
                     contentDescription = "More Options",
-                    tint = Color.Black,
+                    tint = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier
                         .size(30.dp)
                         .clip(CircleShape)
@@ -887,105 +938,145 @@ class UiUtils {
 
         @Composable
         fun BackAndTitleAndMoreOptionsRow(
-            title : String,
-            titleColor : Color = Color.Black,
-            titleStyle : TextStyle = MaterialTheme.typography.titleMedium,
-            subTitle : String = "",
-            trailingIcon : String = "",
-            trailingIconTint : Color = Color.Black,
-            showMoreOptionsMenu : Boolean = false,
-            showBackButton : Boolean = true,
-            isMember : Boolean = true,
-            isAdmin : Boolean = false,
-            iconSize : Dp = 35.dp,
-            navigateBack : () -> Unit = {},
-            onClickMoreOptions : () -> Unit = {},
-            onDismissRequest : () -> Unit = {},
-            onLeaveGroup : () -> Unit = {},
-            onManageMembers : () -> Unit = {}) {
+            title: String,
+            titleColor: Color = Color.Unspecified,
+            titleStyle: TextStyle = MaterialTheme.typography.titleMedium,
+            subTitle: String = "",
+            trailingIcon: String = "",
+            trailingIconTint: Color = Color.Unspecified,
+            showMoreOptionsMenu: Boolean = false,
+            showBackButton: Boolean = true,
+            isMember: Boolean = true,
+            isAdmin: Boolean = false,
+            iconSize: Dp = 35.dp,
+            navigateBack: () -> Unit = {},
+            onClickMoreOptions: () -> Unit = {},
+            onDismissRequest: () -> Unit = {},
+            onLeaveGroup: () -> Unit = {},
+            onManageMembers: () -> Unit = {}
+        ) {
+
+            val sideSlotWidth = iconSize + 16.dp
+
+            val resolvedTitleColor =
+                if (titleColor == Color.Unspecified)
+                    MaterialTheme.colorScheme.onSurface
+                else titleColor
+
+            val resolvedTrailingIconTint =
+                if (trailingIconTint == Color.Unspecified)
+                    MaterialTheme.colorScheme.onSurface
+                else trailingIconTint
+
+            val hasTrailingIcon =
+                isMember && trailingIcon.isNotEmpty()
+
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(Color.White)
-                    .padding(10.dp)
+                    .background(MaterialTheme.colorScheme.background)
+                    .padding(horizontal = 10.dp, vertical = 10.dp)
             ) {
-                if(showBackButton) {
-                    CrossPlatformIcon(
-                        icon = "arrow_back",
-                        backgroundColor = "#FFFFFFFF",
-                        contentDescription = "Back",
-                        tint = Color.Black,
-                        modifier = Modifier
-                            .size(iconSize)
-                            .padding(4.dp)
-                            .clip(CircleShape)
-                            .testTag(TestTag.TAG_BUTTON_BACK)
-                            .semantics { contentDescription = TestTag.TAG_BUTTON_BACK }
-                            .clickable { navigateBack() }
-                    )
-                }
 
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f)
-                        .padding(horizontal = 8.dp)
+                // LEFT SLOT
+                Box(
+                    modifier = Modifier.width(sideSlotWidth),
+                    contentAlignment = Alignment.CenterStart
                 ) {
-                    Text(
-                        text = title,
-                        color = titleColor,
-                        fontWeight = FontWeight.Bold,
-                        style = titleStyle,
-                        textAlign = TextAlign.Center
-                    )
-                    if(subTitle.isNotEmpty()) {
-                        Text(
-                            text = subTitle,
-                            color = Color.Gray,
-                            style = MaterialTheme.typography.bodyMedium,
-                            textAlign = TextAlign.Center
+
+                    if (showBackButton) {
+
+                        CrossPlatformIcon(
+                            icon = "arrow_back",
+                            backgroundColor = MaterialTheme.colorScheme.surface.toHex(),
+                            contentDescription = "Back",
+                            tint = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier
+                                .size(iconSize)
+                                .clip(CircleShape)
+                                .clickable {
+                                    navigateBack()
+                                }
+                                .padding(4.dp)
+                                .testTag(TestTag.TAG_BUTTON_BACK)
+                                .semantics {
+                                    contentDescription =
+                                        TestTag.TAG_BUTTON_BACK
+                                }
                         )
                     }
                 }
 
-                if(isMember) {
-                    Box{
+                // CENTER TITLE
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(horizontal = 8.dp)
+                ) {
+
+                    Text(
+                        text = title,
+                        color = resolvedTitleColor,
+                        fontWeight = FontWeight.Bold,
+                        style = titleStyle,
+                        textAlign = TextAlign.Center,
+                        maxLines = 1
+                    )
+
+                    if (subTitle.isNotEmpty()) {
+
+                        Text(
+                            text = subTitle,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            style = MaterialTheme.typography.bodyMedium,
+                            textAlign = TextAlign.Center,
+                            maxLines = 1
+                        )
+                    }
+                }
+
+                // RIGHT SLOT
+                Box(
+                    modifier = Modifier.width(sideSlotWidth),
+                    contentAlignment = Alignment.CenterEnd
+                ) {
+
+                    if (hasTrailingIcon) {
+
                         CrossPlatformIcon(
                             icon = trailingIcon,
-                            backgroundColor = "#FFFFFFFF",
+                            backgroundColor = MaterialTheme.colorScheme.surface.toHex(),
                             contentDescription = "More Options",
-                            tint = trailingIconTint,
+                            tint = resolvedTrailingIconTint,
                             modifier = Modifier
                                 .size(iconSize)
                                 .clip(CircleShape)
-                                .testTag(TestTag.TAG_BUTTON_MOREOPTIONS)
-                                .semantics { contentDescription = TestTag.TAG_BUTTON_MOREOPTIONS }
                                 .clickable {
                                     onClickMoreOptions()
                                 }
                                 .padding(4.dp)
-                        )
-                        if(showMoreOptionsMenu) {
-                            DropdownMenuForMoreOptionsInGroup(
-                                showMoreOptionsMenu,
-                                isAdmin = isAdmin,
-                                onLeaveGroup = {
-                                    onLeaveGroup()
-                                },
-                                onDismissRequest = {
-                                    onDismissRequest()
-                                },
-                                onManageMembers = {
-                                    onManageMembers()
+                                .testTag(TestTag.TAG_BUTTON_MOREOPTIONS)
+                                .semantics {
+                                    contentDescription =
+                                        TestTag.TAG_BUTTON_MOREOPTIONS
                                 }
-                            )
-                        }
+                        )
+                    }
+
+                    if (isMember && showMoreOptionsMenu) {
+
+                        DropdownMenuForMoreOptionsInGroup(
+                            expanded = showMoreOptionsMenu,
+                            isAdmin = isAdmin,
+                            onLeaveGroup = onLeaveGroup,
+                            onDismissRequest = onDismissRequest,
+                            onManageMembers = onManageMembers
+                        )
                     }
                 }
             }
-
         }
 
         @Composable
@@ -1005,13 +1096,13 @@ class UiUtils {
                 Column(modifier = Modifier.fillMaxSize()){
                     TabRow(
                         selectedTabIndex = selectedTabIndex,
-                        containerColor = Color.White,
-                        contentColor = Color.Black,
+                        containerColor = MaterialTheme.colorScheme.background,
+                        contentColor = MaterialTheme.colorScheme.onSurface,
                         indicator = {
                                 tabPositions ->
                             TabRowDefaults.Indicator(
                                 Modifier.tabIndicatorOffset(tabPositions[selectedTabIndex]),
-                                color = Color.Red
+                                color = MaterialTheme.colorScheme.primary
                             )
                         }
                     ) {
@@ -1026,7 +1117,7 @@ class UiUtils {
                                     Text(
                                         text = title,
                                         style = MaterialTheme.typography.titleMedium,
-                                        color = if(selectedTabIndex == index) Color.Red else Color.Gray
+                                        color = if(selectedTabIndex == index) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                 }
                             )
@@ -1139,7 +1230,7 @@ class UiUtils {
                 }
                 Text(
                     text = user.name,
-                    color = Color.Black,
+                    color = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.padding(end = 5.dp), // Adds padding around text
                     maxLines = 2
                 )
@@ -1185,7 +1276,7 @@ class UiUtils {
                     Column(modifier = Modifier.padding(end = 5.dp)) {
                         Text(
                             text = requester.name,
-                            color = Color.Black,
+                            color = MaterialTheme.colorScheme.onSurface,
                             fontWeight = FontWeight.Bold,
                             modifier = Modifier
                                 .padding(5.dp)
@@ -1199,22 +1290,27 @@ class UiUtils {
                         friendViewModel.acceptFriendRequest(requester, currentUser)
                     },
                         elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp),
-                        colors = ButtonDefaults.buttonColors(Color.Red),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.onPrimary
+                        ),
                         modifier = Modifier
                             .weight(1f)
                     ){
-                        Text(text = "Accept",
-                            color = Color.White)
+                        Text(text = "Accept")
                     }
                     Spacer(modifier = Modifier.width(10.dp))
                     Button(onClick = {
                         friendViewModel.rejectFriendRequest(requester, currentUser)
                     },
                         elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp),
-                        colors = ButtonDefaults.buttonColors(memberCardColor),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                            contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                        ),
                         modifier = Modifier
                             .weight(1f)){
-                        Text(text = "Decline", color = Color.Black)
+                        Text(text = "Decline")
                     }
                 }
             }
@@ -1232,7 +1328,7 @@ class UiUtils {
                 Column {
                     Text(
                         text = text,
-                        color = Color.Black,
+                        color = MaterialTheme.colorScheme.onSurface,
                         maxLines = if (isExpanded) Int.MAX_VALUE else collapsedMaxLines,
                         overflow = TextOverflow.Ellipsis,
                         onTextLayout = { textLayoutResult ->
@@ -1305,7 +1401,14 @@ class UiUtils {
             onNavigateToUploadNews: (updateNew : NewsInstance?) -> Unit,
             onNavigateToShowImageScreen: (image : String) -> Unit,
             onNavigateToUserInformation: (user: UserInstance?) -> Unit,
-            showBottomSheet: (NewsInstance) -> Unit) {
+            showBottomSheet: (NewsInstance) -> Unit,
+            commentViewModel: CommentViewModel? = null,
+            platform: PlatformContext? = null,
+            currentUser: UserInstance? = null,
+            groupId: String = "",
+            pollViewModel: Any? = null,   // PollViewModel — typed as Any? to keep commonMain clean; cast inside
+            currentUserId: String = "",
+            onDeletePoll: ((NewsInstance) -> Unit)? = null) {
             val coroutineScope = rememberCoroutineScope()
             val likeStatus by homeViewModel.likedPosts.collectAsState()
             val likeCountList = homeViewModel.likeCountList.collectAsState()
@@ -1314,7 +1417,7 @@ class UiUtils {
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color(0xFFE8E8E8))
+                    .background(MaterialTheme.colorScheme.background)
                     .testTag(TestTag.TAG_POSTS_COLUMN)
                     .semantics{
                         contentDescription = TestTag.TAG_POSTS_COLUMN
@@ -1338,8 +1441,33 @@ class UiUtils {
                         )
                     ) {
                         val user = loadedUsers[news.posterId]
-                        if(user != null) {
-                            if(news.shareContentId.isEmpty()) {
+                        // Poll entries are invisible to old-app context (no pollViewModel) or home feed (no groupId)
+                        val isPollWithoutSupport = news.type == DataConstant.POST_TYPE_POLL && (pollViewModel == null || groupId.isEmpty())
+                        if(user != null && !isPollWithoutSupport) {
+                            when {
+                                news.type == DataConstant.POST_TYPE_POLL && groupId.isNotEmpty() -> {
+                                    PollCard(
+                                        news = news,
+                                        user = user,
+                                        localImageLoaderValue = localImageLoaderValue,
+                                        homeViewModel = homeViewModel,
+                                        currentUserId = currentUserId,
+                                        pollViewModel = pollViewModel,
+                                        onNavigateToUserInformation = onNavigateToUserInformation,
+                                        onDelete = { deletedNews ->
+                                            isVisible = false
+                                            coroutineScope.launch {
+                                                delay(250)
+                                                if (onDeletePoll != null) {
+                                                    onDeletePoll(deletedNews)
+                                                } else {
+                                                    homeViewModel.deletePoll(deletedNews, groupId)
+                                                }
+                                            }
+                                        }
+                                    )
+                                }
+                                news.shareContentId.isEmpty() -> {
                                 NewsCard(
                                     news = news,
                                     user = user,
@@ -1361,9 +1489,13 @@ class UiUtils {
                                         }
                                     },
                                     onNavigateToUploadNews,
-                                    showBottomSheet
+                                    showBottomSheet,
+                                    commentViewModel = commentViewModel,
+                                    platform = platform,
+                                    currentUser = currentUser
                                 )
-                            } else {
+                                }
+                                else -> {
                                 val sharedNew = sharedNewMap[news.shareContentId]
                                 if(sharedNew != null) {
                                     NewsCardWithSharedContent(
@@ -1391,6 +1523,7 @@ class UiUtils {
                                 } else {
                                     NewsCardPlaceholder()
                                 }
+                                }
                             }
                         } else {
                             NewsCardPlaceholder()
@@ -1410,7 +1543,6 @@ class UiUtils {
                             ThreeDotsLoading(
                                 modifier = Modifier.padding(bottom = 10.dp),
                                 dotSize = 10.dp,
-                                dotColor = Color.Blue,
                                 spaceBetween = 5.dp
                             )
                         }
@@ -1426,12 +1558,12 @@ class UiUtils {
                     .padding(start = 10.dp, end = 10.dp, top = 5.dp)
                     .fillMaxWidth(),
                 shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White)
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
             ) {
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(Color.White)
+                        .background(MaterialTheme.colorScheme.surface)
                         .padding(10.dp)
                 ) {
                     // Header skeleton (avatar + lines)
@@ -1445,7 +1577,7 @@ class UiUtils {
                             modifier = Modifier
                                 .size(40.dp)
                                 .clip(CircleShape)
-                                .background(Color(0xFFEAEAEA))
+                                .background(MaterialTheme.colorScheme.surfaceVariant)
                         )
                         Spacer(modifier = Modifier.width(10.dp))
                         Column(modifier = Modifier.weight(1f)) {
@@ -1453,14 +1585,14 @@ class UiUtils {
                                 modifier = Modifier
                                     .height(14.dp)
                                     .fillMaxWidth(0.4f)
-                                    .background(Color(0xFFEAEAEA), RoundedCornerShape(4.dp))
+                                    .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(4.dp))
                             )
                             Spacer(modifier = Modifier.height(6.dp))
                             Box(
                                 modifier = Modifier
                                     .height(12.dp)
                                     .fillMaxWidth(0.3f)
-                                    .background(Color(0xFFF0F0F0), RoundedCornerShape(4.dp))
+                                    .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(4.dp))
                             )
                         }
                     }
@@ -1470,7 +1602,7 @@ class UiUtils {
                         modifier = Modifier
                             .height(14.dp)
                             .fillMaxWidth(0.9f)
-                            .background(Color(0xFFEAEAEA), RoundedCornerShape(4.dp))
+                            .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(4.dp))
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     // Media placeholder
@@ -1479,7 +1611,7 @@ class UiUtils {
                             .fillMaxWidth()
                             .height(300.dp)
                             .clip(RoundedCornerShape(8.dp))
-                            .background(Color(0xFFEAEAEA))
+                            .background(MaterialTheme.colorScheme.surfaceVariant)
                     )
                     Spacer(modifier = Modifier.height(10.dp))
                     // Footer placeholders
@@ -1488,17 +1620,484 @@ class UiUtils {
                             modifier = Modifier
                                 .height(12.dp)
                                 .fillMaxWidth(0.2f)
-                                .background(Color(0xFFF0F0F0), RoundedCornerShape(4.dp))
+                                .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(4.dp))
                         )
                         Spacer(modifier = Modifier.weight(1f))
                         Box(
                             modifier = Modifier
                                 .height(12.dp)
                                 .fillMaxWidth(0.2f)
-                                .background(Color(0xFFF0F0F0), RoundedCornerShape(4.dp))
+                                .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(4.dp))
                         )
                     }
                     Spacer(modifier = Modifier.height(10.dp))
+                }
+            }
+        }
+
+        /**
+         * Renders a poll post card in the feed.
+         * Shows the poster header, poll question, answer options with vote bars,
+         * and a delete button for the post owner.
+         *
+         * Full poll detail (options, vote counts) is loaded separately from /polls/{pollId}
+         * when needed. This card shows the question and a "View Poll" affordance.
+         */
+        @Composable
+        fun PollCard(
+            news: NewsInstance,
+            user: UserInstance,
+            localImageLoaderValue: ProvidedValue<*>,
+            homeViewModel: HomeViewModel,
+            currentUserId: String = "",
+            pollViewModel: Any? = null,   // PollViewModel cast at runtime
+            onNavigateToUserInformation: (UserInstance?) -> Unit,
+            onDelete: (NewsInstance) -> Unit
+        ) {
+            val currentUser = homeViewModel.currentUser
+            val vm = pollViewModel as? PollViewModel
+
+            // ── Load full poll data lazily ──
+            val pollId = news.pollId ?: ""
+            LaunchedEffect(pollId) {
+                if (pollId.isNotEmpty() && currentUserId.isNotEmpty()) {
+                    vm?.loadPoll(pollId, currentUserId)
+                }
+            }
+
+            val allPolls by (vm?.polls ?: remember { kotlinx.coroutines.flow.MutableStateFlow(emptyMap<String, com.minhtu.firesocialmedia.domain.entity.settings.PollObject>()) }).collectAsState()
+            val allMyVotes by (vm?.myVotes ?: remember { kotlinx.coroutines.flow.MutableStateFlow(emptyMap<String, List<Int>>()) }).collectAsState()
+            val allSubmitStates by (vm?.submitState ?: remember { kotlinx.coroutines.flow.MutableStateFlow(emptyMap<String, Boolean?>()) }).collectAsState()
+            val allVotersMap by (vm?.allVoters ?: remember { kotlinx.coroutines.flow.MutableStateFlow(emptyMap<String, List<Pair<com.minhtu.firesocialmedia.domain.entity.user.UserInstance?, List<Int>>>>()) }).collectAsState()
+
+            val poll = allPolls[pollId]
+            val myVotes = allMyVotes[pollId]          // null = not loaded yet; empty = loaded, no vote
+            val isExpired = poll?.expiresAt?.let { it > 0 && System.currentTimeMillis() > it } ?: false
+            val isOwner = currentUser != null && currentUser.uid == news.posterId
+
+            // Load voters when the owner has poll data
+            LaunchedEffect(pollId, isOwner, poll) {
+                if (isOwner && poll != null) {
+                    vm?.loadAllVoters(pollId)
+                }
+            }
+
+            val votersForPoll = allVotersMap[pollId]
+            var showVoterDetails by remember(pollId) { mutableStateOf(false) }
+            val hasVoted = myVotes != null && myVotes.isNotEmpty()
+            // Show results if: user already voted, or poll is expired, or no options (edge case)
+            val showResults = hasVoted || isExpired
+
+            var pendingSelection by remember(pollId) { mutableStateOf<Set<Int>>(emptySet()) }
+            val isSubmitting = false // submitState map uses null=idle, so we can't detect in-flight from it
+
+            Card(
+                modifier = Modifier
+                    .padding(start = 10.dp, end = 10.dp, top = 10.dp)
+                    .fillMaxWidth(),
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+            ) {
+                Column(
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
+                    verticalArrangement = Arrangement.spacedBy(0.dp)
+                ) {
+                    // ── Header row ──
+                    Row(
+                        horizontalArrangement = Arrangement.Start,
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .background(MaterialTheme.colorScheme.surface)
+                            .padding(10.dp)
+                            .fillMaxWidth()
+                            .clickable { onNavigateToUserInformation(user) }
+                    ) {
+                        CompositionLocalProvider(localImageLoaderValue) {
+                            AutoSizeImage(
+                                news.avatar.toStorageUrl(),
+                                contentDescription = "Poster Avatar",
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier.size(40.dp).clip(CircleShape)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Column {
+                            Text(
+                                text = news.posterName,
+                                color = MaterialTheme.colorScheme.onSurface,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text = convertTimeToDateString(news.timePosted),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                fontSize = 12.sp
+                            )
+                        }
+                        Spacer(modifier = Modifier.weight(1f))
+                        // Poll badge
+                        Box(
+                            modifier = Modifier
+                                .background(MaterialTheme.colorScheme.primaryContainer, RoundedCornerShape(12.dp))
+                                .padding(horizontal = 8.dp, vertical = 4.dp)
+                        ) {
+                            Text(
+                                text = if (isExpired) "Closed" else "Poll",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = if (isExpired) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                        }
+                        // Delete option — only for the post owner
+                        if (isOwner) {
+                            var showMenu by remember { mutableStateOf(false) }
+                            Box {
+                                IconButton(onClick = { showMenu = true }) {
+                                    CrossPlatformIcon(
+                                        icon = "more_horiz",
+                                        backgroundColor = MaterialTheme.colorScheme.surface.toHex(),
+                                        contentDescription = "More Options",
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                }
+                                DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
+                                    DropdownMenuItem(
+                                        text = { Text("Delete Poll") },
+                                        leadingIcon = {
+                                            Icon(Icons.Filled.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error)
+                                        },
+                                        onClick = { showMenu = false; onDelete(news) }
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    // ── Poll icon + question ──
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(horizontal = 16.dp)
+                    ) {
+                        Icon(
+                            Icons.Filled.Poll,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(Modifier.width(4.dp))
+                        Text("Poll", fontSize = 11.sp, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold)
+                    }
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        text = news.message.ifEmpty { poll?.question ?: "" },
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.padding(horizontal = 16.dp)
+                    )
+
+                    // ── Expiry info ──
+                    if (poll?.expiresAt != null && poll.expiresAt > 0) {
+                        val remaining = poll.expiresAt - System.currentTimeMillis()
+                        val expiryText = when {
+                            isExpired -> "Poll ended"
+                            remaining < 60 * 60 * 1000L -> "Ends in <1 hour"
+                            remaining < 24 * 60 * 60 * 1000L -> "Ends in ${remaining / (60 * 60 * 1000L)}h"
+                            else -> "Ends in ${remaining / (24 * 60 * 60 * 1000L)}d"
+                        }
+                        Text(
+                            text = expiryText,
+                            fontSize = 11.sp,
+                            color = if (isExpired) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp)
+                        )
+                    }
+
+                    Spacer(Modifier.height(8.dp))
+
+                    // ── Options (loading / voting / results) ──
+                    if (poll == null) {
+                        // Still loading
+                        Box(
+                            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text("Loading poll…", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    } else {
+                        val totalVotes = poll.votes?.values?.sum() ?: 0
+                        poll.options.forEachIndexed { idx, option ->
+                            val voteCount = poll.votes?.get(idx.toString()) ?: 0
+                            val fraction = if (totalVotes > 0) voteCount.toFloat() / totalVotes else 0f
+                            val isMyVote = myVotes?.contains(idx) == true
+                            val isPending = pendingSelection.contains(idx)
+
+                            if (showResults) {
+                                // ── Results bar ──
+                                Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 3.dp)) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Text(
+                                            text = option,
+                                            fontSize = 14.sp,
+                                            fontWeight = if (isMyVote) FontWeight.Bold else FontWeight.Normal,
+                                            color = MaterialTheme.colorScheme.onSurface,
+                                            modifier = Modifier.weight(1f)
+                                        )
+                                        Text(
+                                            text = "${(fraction * 100).roundToInt()}%",
+                                            fontSize = 12.sp,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                        if (isMyVote) {
+                                            Spacer(Modifier.width(4.dp))
+                                            Text("✓", fontSize = 12.sp, color = MaterialTheme.colorScheme.primary)
+                                        }
+                                    }
+                                    Spacer(Modifier.height(2.dp))
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(6.dp)
+                                            .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(3.dp))
+                                    ) {
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxWidth(fraction.coerceIn(0f, 1f))
+                                                .height(6.dp)
+                                                .background(
+                                                    if (isMyVote) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary,
+                                                    RoundedCornerShape(3.dp)
+                                                )
+                                        )
+                                    }
+                                }
+                            } else {
+                                // ── Selectable option ──
+                                val selected = isPending
+                                OutlinedButton(
+                                    onClick = {
+                                        if (!isExpired && vm != null) {
+                                            pendingSelection = if (poll.allowMultipleAnswers) {
+                                                if (selected) pendingSelection - idx else pendingSelection + idx
+                                            } else {
+                                                setOf(idx)
+                                            }
+                                        }
+                                    },
+                                    enabled = !isExpired && vm != null,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 16.dp, vertical = 3.dp),
+                                    border = BorderStroke(
+                                        if (selected) 2.dp else 1.dp,
+                                        if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
+                                    ),
+                                    colors = ButtonDefaults.outlinedButtonColors(
+                                        containerColor = if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface
+                                    ),
+                                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
+                                ) {
+                                    Text(
+                                        text = option,
+                                        fontSize = 14.sp,
+                                        color = if (selected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface,
+                                        modifier = Modifier.fillMaxWidth()
+                                    )
+                                }
+                            }
+                        }
+
+                        // ── Vote count + Submit button ──
+                        Spacer(Modifier.height(8.dp))
+                        Row(
+                            modifier = Modifier.padding(horizontal = 16.dp).fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "$totalVotes vote${if (totalVotes != 1) "s" else ""}",
+                                fontSize = 12.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            if (!showResults && pendingSelection.isNotEmpty() && vm != null) {
+                                Button(
+                                    onClick = {
+                                        vm.submitVote(pollId, currentUserId, pendingSelection.sorted())
+                                        pendingSelection = emptySet()
+                                    },
+                                    enabled = !isSubmitting,
+                                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp)
+                                ) {
+                                    Text("Vote", fontSize = 13.sp)
+                                }
+                            }
+                            // Allow changing vote if already voted and poll still active
+                            if (showResults && !isExpired && hasVoted && vm != null) {
+                                TextButton(onClick = {
+                                    // Clear local vote so the user sees selectable options again
+                                    vm.clearMyVote(pollId)
+                                    pendingSelection = emptySet()
+                                }) {
+                                    Text("Change vote", fontSize = 12.sp)
+                                }
+                            }
+                        }
+
+                        // ── Voter details button (poll owner only) ──
+                        if (isOwner && poll != null) {
+                            Spacer(Modifier.height(4.dp))
+                            androidx.compose.material3.HorizontalDivider(
+                                modifier = Modifier.padding(horizontal = 16.dp),
+                                color = MaterialTheme.colorScheme.outlineVariant
+                            )
+                            TextButton(
+                                onClick = {
+                                    // Compare cached voter count against poll vote totals.
+                                    // votersForPoll.size = unique voters; totalVotes = sum of per-option counts.
+                                    // For single-answer: they should be equal.
+                                    // For multi-answer: totalVotes >= votersForPoll.size.
+                                    // If the cached total (sum of indices across all voters) differs from
+                                    // totalVotes, the cache is stale — refetch.
+                                    val cachedVoteTotal = votersForPoll?.sumOf { (_, indices) -> indices.size } ?: -1
+                                    if (votersForPoll == null || cachedVoteTotal < totalVotes) {
+                                        vm?.refreshAllVoters(pollId)
+                                    }
+                                    showVoterDetails = true
+                                },
+                                modifier = Modifier.padding(horizontal = 8.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Filled.Person,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Spacer(Modifier.width(6.dp))
+                                Text("See who voted", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                            }
+
+                            // ── Voters BottomSheet ──
+                            if (showVoterDetails) {
+                                val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
+                                ModalBottomSheet(
+                                    onDismissRequest = { showVoterDetails = false },
+                                    sheetState = sheetState,
+                                    shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+                                    containerColor = MaterialTheme.colorScheme.surface
+                                ) {
+                                    Column(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(bottom = 32.dp)
+                                    ) {
+                                        // Sheet title
+                                        Text(
+                                            text = "Voters",
+                                            style = MaterialTheme.typography.titleMedium,
+                                            fontWeight = FontWeight.Bold,
+                                            modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp)
+                                        )
+                                        androidx.compose.material3.HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+
+                                        if (votersForPoll == null) {
+                                            Box(
+                                                modifier = Modifier.fillMaxWidth().padding(vertical = 32.dp),
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                androidx.compose.material3.CircularProgressIndicator(modifier = Modifier.size(32.dp))
+                                            }
+                                        } else if (votersForPoll.isEmpty()) {
+                                            Box(
+                                                modifier = Modifier.fillMaxWidth().padding(vertical = 32.dp),
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                Text("No votes yet.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                            }
+                                        } else {
+                                            androidx.compose.foundation.lazy.LazyColumn(
+                                                modifier = Modifier.fillMaxWidth()
+                                            ) {
+                                                poll.options.forEachIndexed { idx, option ->
+                                                    val votersForOption = votersForPoll.filter { (_, indices) -> indices.contains(idx) }
+                                                    if (votersForOption.isNotEmpty()) {
+                                                        item {
+                                                            // Option header
+                                                            Text(
+                                                                text = option,
+                                                                style = MaterialTheme.typography.labelMedium,
+                                                                fontWeight = FontWeight.SemiBold,
+                                                                color = MaterialTheme.colorScheme.primary,
+                                                                modifier = Modifier
+                                                                    .fillMaxWidth()
+                                                                    .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f))
+                                                                    .padding(horizontal = 20.dp, vertical = 8.dp)
+                                                            )
+                                                        }
+                                                        items(votersForOption) { (user, _) ->
+                                                            val displayName = user?.name?.ifEmpty { null } ?: "Unknown"
+                                                            val avatarUrl = user?.image?.toStorageUrl() ?: ""
+                                                            Row(
+                                                                verticalAlignment = Alignment.CenterVertically,
+                                                                modifier = Modifier
+                                                                    .fillMaxWidth()
+                                                                    .padding(horizontal = 20.dp, vertical = 10.dp)
+                                                            ) {
+                                                                CompositionLocalProvider(localImageLoaderValue) {
+                                                                    if (avatarUrl.isNotEmpty()) {
+                                                                        AutoSizeImage(
+                                                                            avatarUrl,
+                                                                            contentDescription = "Avatar",
+                                                                            contentScale = ContentScale.Crop,
+                                                                            modifier = Modifier
+                                                                                .size(40.dp)
+                                                                                .clip(CircleShape)
+                                                                        )
+                                                                    } else {
+                                                                        Box(
+                                                                            modifier = Modifier
+                                                                                .size(40.dp)
+                                                                                .clip(CircleShape)
+                                                                                .background(MaterialTheme.colorScheme.secondaryContainer),
+                                                                            contentAlignment = Alignment.Center
+                                                                        ) {
+                                                                            Icon(
+                                                                                Icons.Filled.Person,
+                                                                                contentDescription = null,
+                                                                                tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                                                                                modifier = Modifier.size(24.dp)
+                                                                            )
+                                                                        }
+                                                                    }
+                                                                }
+                                                                Spacer(Modifier.width(12.dp))
+                                                                Column {
+                                                                    Text(
+                                                                        text = displayName,
+                                                                        style = MaterialTheme.typography.bodyMedium,
+                                                                        fontWeight = FontWeight.SemiBold,
+                                                                        color = MaterialTheme.colorScheme.onSurface
+                                                                    )
+                                                                    Text(
+                                                                        text = "Voted for: $option",
+                                                                        style = MaterialTheme.typography.bodySmall,
+                                                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                                    )
+                                                                }
+                                                            }
+                                                            androidx.compose.material3.HorizontalDivider(
+                                                                modifier = Modifier.padding(start = 72.dp, end = 20.dp),
+                                                                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                                                            )
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -1512,7 +2111,7 @@ class UiUtils {
                     .padding(start = 10.dp, end = 10.dp, top = 5.dp)
                     .fillMaxWidth(),
                 shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White)
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
             ) {
                 Column(
                     modifier = Modifier
@@ -1526,7 +2125,7 @@ class UiUtils {
                     Icon(
                         imageVector = Icons.Outlined.Block,
                         contentDescription = null,
-                        tint = Color(0xFFBDBDBD),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(48.dp)
                     )
 
@@ -1536,7 +2135,7 @@ class UiUtils {
                     Text(
                         text = message,
                         style = MaterialTheme.typography.bodyMedium,
-                        color = Color(0xFF9E9E9E),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.Center
                     )
                 }
@@ -1589,15 +2188,15 @@ class UiUtils {
         fun MySnackBarHost(hostState: SnackbarHostState, positive: Boolean?) {
             SnackbarHost(hostState = hostState) { data ->
                 val contentColor = when (positive) {
-                    true -> Color.Green
-                    false -> Color.Red
+                    true -> MaterialTheme.colorScheme.tertiary
+                    false -> MaterialTheme.colorScheme.error
                     null -> MaterialTheme.colorScheme.onSurface
                 }
                 Snackbar(
                     snackbarData = data,
-                    containerColor = Color.White,
+                    containerColor = MaterialTheme.colorScheme.surface,
                     contentColor = contentColor,
-                    dismissActionContentColor = Color.Black
+                    dismissActionContentColor = MaterialTheme.colorScheme.onSurface
                 )
             }
         }
@@ -1616,7 +2215,7 @@ class UiUtils {
                     .semantics { contentDescription = TestTag.TAG_POST_IN_COLUMN }
                     .then(modifier),
                 shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                 border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
                 elevation = CardDefaults.cardElevation(
                     defaultElevation = 2.dp,
@@ -1626,7 +2225,7 @@ class UiUtils {
                 Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(1.dp)) {
                     Row(horizontalArrangement = Arrangement.Start,
                         modifier = Modifier
-                            .background(color = Color.White)
+                            .background(color = MaterialTheme.colorScheme.surface)
                             .padding(10.dp)
                             .fillMaxWidth()){
                         CompositionLocalProvider(
@@ -1650,12 +2249,12 @@ class UiUtils {
                         Column {
                             Text(
                                 text = news.posterName,
-                                color = Color.Black,
+                                color = MaterialTheme.colorScheme.onSurface,
                                 modifier = Modifier.padding(horizontal = 2.dp)
                             )
                             Text(
                                 text = convertTimeToDateString(news.timePosted),
-                                color = Color.Gray,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.padding(horizontal = 2.dp)
                             )
                         }
@@ -1697,7 +2296,8 @@ class UiUtils {
                                         .testTag(TestTag.TAG_POST_VIDEO)
                                         .semantics{
                                             contentDescription = TestTag.TAG_POST_VIDEO
-                                        })
+                                        }
+                                )
                             }
                         }
                     }
@@ -1730,7 +2330,7 @@ class UiUtils {
                 Row(
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(Color.White)
+                        .background(MaterialTheme.colorScheme.surface)
                         .testTag(TestTag.TAG_BUTTON_DELETE)
                         .semantics {
                             contentDescription = TestTag.TAG_BUTTON_DELETE
@@ -1743,14 +2343,14 @@ class UiUtils {
                             .padding(end = 16.dp)
                             .size(48.dp)
                             .clip(CircleShape)
-                            .background(Color.Red)
+                            .background(MaterialTheme.colorScheme.error)
                             .clickable { onDelete() },
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = Icons.Default.Delete,
                             contentDescription = "Delete",
-                            tint = Color.White,
+                            tint = MaterialTheme.colorScheme.onError,
                             modifier = Modifier.size(24.dp)
                         )
                     }
@@ -1812,9 +2412,9 @@ class UiUtils {
                             message = it
                         },
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedTextColor = Color.Black,
-                            unfocusedTextColor = Color.Black,
-                            disabledTextColor = Color.Black
+                            focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                            unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+                            disabledTextColor = MaterialTheme.colorScheme.onSurfaceVariant
                         ),
                         maxLines = 4,
                         modifier = Modifier
@@ -1910,7 +2510,7 @@ class UiUtils {
             ) {
                 Text(
                     text = title,
-                    color = Color.Black,
+                    color = MaterialTheme.colorScheme.onSurface,
                     fontWeight = FontWeight.Bold,
                     style = MaterialTheme.typography.titleMedium,
                     textAlign = textAlign,
@@ -1921,7 +2521,7 @@ class UiUtils {
                 if(subTitle.isNotEmpty()) {
                     Text(
                         text = subTitle,
-                        color = Color.LightGray,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         style = MaterialTheme.typography.bodyMedium,
                         textAlign = textAlign,
                         overflow = TextOverflow.Ellipsis,
@@ -1938,7 +2538,7 @@ class UiUtils {
                     .fillMaxWidth()
                     .padding(10.dp),
                 shape = RoundedCornerShape(12.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White)
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
             ) {
                 Column(modifier = Modifier.padding(12.dp)) {
 
@@ -2025,9 +2625,9 @@ class UiUtils {
                     repeatMode = RepeatMode.Reverse
                 )
             )
-
+            val surfaceVariantColor = MaterialTheme.colorScheme.surfaceVariant
             background(
-                color = Color.LightGray.copy(alpha = alpha),
+                color = surfaceVariantColor.copy(alpha = alpha),
                 shape = RoundedCornerShape(6.dp)
             )
         }
@@ -2054,9 +2654,10 @@ class UiUtils {
                          hasTitle : Boolean = true,
                          icon : String = "",
                          title : String = "",
-                         titleColor : Color = Color.Red,
+                         titleColor : Color = Color.Unspecified,
                          modifier: Modifier = Modifier
         ) {
+            val resolvedTitleColor = if (titleColor == Color.Unspecified) MaterialTheme.colorScheme.primary else titleColor
             Row(
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically,
@@ -2065,7 +2666,7 @@ class UiUtils {
                 if(hasIcon) {
                     CrossPlatformIcon(
                         icon = "fire_chat_icon",
-                        backgroundColor = loginBackgroundColor.toHex(),
+                        backgroundColor = MaterialTheme.colorScheme.background.toHex(),
                         modifier = Modifier
                             .size(30.dp)
                     )
@@ -2073,7 +2674,7 @@ class UiUtils {
                 if(hasTitle) {
                     Text(
                         text = title,
-                        color = titleColor,
+                        color = resolvedTitleColor,
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold
                     )
@@ -2092,7 +2693,7 @@ class UiUtils {
             ) {
                 Text(
                     text = subTitle,
-                    color = Color.LightGray,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     style = MaterialTheme.typography.titleSmall,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth()
@@ -2129,10 +2730,10 @@ class UiUtils {
                 label = { Text(text = label) },
                 singleLine = true,
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedTextColor = Color.White,
-                    unfocusedTextColor = Color.White
+                    focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                    unfocusedTextColor = MaterialTheme.colorScheme.onSurface
                 ),
-                textStyle = TextStyle(Color.White)
+                textStyle = TextStyle(MaterialTheme.colorScheme.onSurface)
             )
         }
 
@@ -2144,9 +2745,11 @@ class UiUtils {
             onClick: () -> Unit,
             buttonColor : Color,
             backgroundColor: String,
-            textColor : Color = Color.Gray,
-            tint: Color = Color.Gray
+            textColor : Color = Color.Unspecified,
+            tint: Color = Color.Unspecified
         ) {
+            val resolvedTextColor = if (textColor == Color.Unspecified) MaterialTheme.colorScheme.onSurfaceVariant else textColor
+            val resolvedTint = if (tint == Color.Unspecified) MaterialTheme.colorScheme.onSurfaceVariant else tint
             Button(
                 onClick = onClick,
                 modifier = modifier.height(34.dp),
@@ -2164,7 +2767,7 @@ class UiUtils {
                     CrossPlatformIcon(
                         icon = icon,
                         contentDescription = text,
-                        tint = tint,
+                        tint = resolvedTint,
                         backgroundColor = backgroundColor,
                         modifier = Modifier.size(16.dp)
                     )
@@ -2176,7 +2779,7 @@ class UiUtils {
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                         fontSize = 12.sp,
-                        color = textColor
+                        color = resolvedTextColor
                     )
                 }
             }
@@ -2207,10 +2810,10 @@ class UiUtils {
                     onClick = {
                         clickLikeButton()
                     },
-                    buttonColor = Color.White,
-                    backgroundColor = Color.White.toHex(),
-                    textColor = if(isLiked) Color.Red else Color.Gray,
-                    tint = if(isLiked) Color.Red else Color.Black
+                    buttonColor = MaterialTheme.colorScheme.surface,
+                    backgroundColor = MaterialTheme.colorScheme.surface.toHex(),
+                    textColor = if(isLiked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                    tint = if(isLiked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
                 )
                 //Comment button
                 ActionButton(
@@ -2226,9 +2829,9 @@ class UiUtils {
                     onClick = {
                         clickCommentButton()
                     },
-                    buttonColor = Color.White,
-                    backgroundColor = Color.White.toHex(),
-                    tint = Color.Black
+                    buttonColor = MaterialTheme.colorScheme.surface,
+                    backgroundColor = MaterialTheme.colorScheme.surface.toHex(),
+                    tint = MaterialTheme.colorScheme.onSurface
                 )
                 //Share button
                 ActionButton(
@@ -2244,9 +2847,9 @@ class UiUtils {
                     onClick = {
                         clickShareButton()
                     },
-                    buttonColor = Color.White,
-                    backgroundColor = Color.White.toHex(),
-                    tint = Color.Black
+                    buttonColor = MaterialTheme.colorScheme.surface,
+                    backgroundColor = MaterialTheme.colorScheme.surface.toHex(),
+                    tint = MaterialTheme.colorScheme.onSurface
                 )
             }
         }
@@ -2260,7 +2863,7 @@ class UiUtils {
         ) {
             Card(
                 colors = CardDefaults.cardColors(
-                    containerColor = memberCardColor
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
                 ),
                 modifier = modifier
                     .fillMaxWidth()
@@ -2288,7 +2891,7 @@ class UiUtils {
 
                     Text(
                         text = user.name,
-                        color = Color.Black,
+                        color = MaterialTheme.colorScheme.onSurface,
                         fontWeight = FontWeight.Bold,
                         overflow = TextOverflow.Ellipsis,
                         maxLines = 2,
@@ -2312,7 +2915,7 @@ class UiUtils {
                         ),
                         colors = ButtonDefaults.outlinedButtonColors(
                             containerColor = MaterialTheme.colorScheme.primary,
-                            contentColor = Color.White
+                            contentColor = MaterialTheme.colorScheme.onPrimary
                         ),
                         modifier = Modifier.defaultMinSize(
                             minHeight = 0.dp,
@@ -2337,7 +2940,7 @@ class UiUtils {
                 modifier = modifier
                     .height(45.dp)
                     .background(
-                        color = Color.White,
+                        color = MaterialTheme.colorScheme.surface,
                         shape = RoundedCornerShape(10.dp)
                     )
                     .border(
@@ -2362,6 +2965,7 @@ class UiUtils {
                         textStyle = MaterialTheme.typography.bodyMedium.copy(
                             color = MaterialTheme.colorScheme.onSurface
                         ),
+                        cursorBrush = androidx.compose.ui.graphics.SolidColor(MaterialTheme.colorScheme.primary),
                         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                         keyboardActions = KeyboardActions(
                             onDone = { keyboardController?.hide() }
@@ -2425,12 +3029,14 @@ class UiUtils {
         @Composable
         fun QuestionTextAndClickableText(
             questionText : String,
-            questionTextColor : Color = Color.Black,
+            questionTextColor : Color = Color.Unspecified,
             clickableText : String,
-            clickableTextColor : Color = Color.Black,
+            clickableTextColor : Color = Color.Unspecified,
             onClick: () -> Unit,
             modifier: Modifier = Modifier
         ) {
+            val resolvedQuestionColor = if (questionTextColor == Color.Unspecified) MaterialTheme.colorScheme.onSurface else questionTextColor
+            val resolvedClickableColor = if (clickableTextColor == Color.Unspecified) MaterialTheme.colorScheme.onSurface else clickableTextColor
             Row(
                 modifier = Modifier
                     .fillMaxWidth(),
@@ -2439,7 +3045,7 @@ class UiUtils {
             ) {
                 Text(
                     text = questionText,
-                    color = questionTextColor,
+                    color = resolvedQuestionColor,
                     style = MaterialTheme.typography.bodyMedium
                 )
 
@@ -2447,7 +3053,7 @@ class UiUtils {
 
                 Text(
                     text = clickableText,
-                    color = clickableTextColor,
+                    color = resolvedClickableColor,
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Bold,
                     modifier = modifier

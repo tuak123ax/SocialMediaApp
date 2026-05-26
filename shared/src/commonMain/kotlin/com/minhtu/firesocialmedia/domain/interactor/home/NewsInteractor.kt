@@ -12,6 +12,7 @@ interface NewsInteractor {
     suspend fun unlike(id: String,
                        value: Int)
     suspend fun delete(new: NewsInstance)
+    suspend fun deletePoll(newsId: String, pollId: String, groupId: String): Boolean
 
     suspend fun storeNewsToRoom(news : List<NewsInstance>)
     suspend fun saveNews(news : NewsInstance) : Boolean

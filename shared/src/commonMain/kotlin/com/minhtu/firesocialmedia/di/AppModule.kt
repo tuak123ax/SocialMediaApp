@@ -102,7 +102,12 @@ import com.minhtu.firesocialmedia.domain.usecases.information.SaveSignUpInformat
 import com.minhtu.firesocialmedia.domain.usecases.network.CheckInternetConnectionUseCase
 import com.minhtu.firesocialmedia.domain.usecases.newsfeed.DeleteAllDraftPostsUseCase
 import com.minhtu.firesocialmedia.domain.usecases.newsfeed.DeleteDraftPostUseCase
+import com.minhtu.firesocialmedia.domain.usecases.newsfeed.DeletePollUseCase
+import com.minhtu.firesocialmedia.domain.usecases.newsfeed.FetchPollUseCase
+import com.minhtu.firesocialmedia.domain.usecases.newsfeed.LoadAllVotersUseCase
+import com.minhtu.firesocialmedia.domain.usecases.newsfeed.LoadMyVotesUseCase
 import com.minhtu.firesocialmedia.domain.usecases.newsfeed.SaveNewToDatabaseUseCase
+import com.minhtu.firesocialmedia.domain.usecases.newsfeed.SubmitVoteUseCase
 import com.minhtu.firesocialmedia.domain.usecases.newsfeed.UpdateNewsFromDatabaseUseCase
 import com.minhtu.firesocialmedia.domain.usecases.notification.DeleteAllNotificationsUseCase
 import com.minhtu.firesocialmedia.domain.usecases.notification.DeleteNotificationFromDatabaseUseCase
@@ -113,11 +118,19 @@ import com.minhtu.firesocialmedia.domain.usecases.notification.UpdateIsReadStatu
 import com.minhtu.firesocialmedia.domain.usecases.settings.BuildOtpAuthUrlUseCase
 import com.minhtu.firesocialmedia.domain.usecases.settings.ChangePasswordUseCase
 import com.minhtu.firesocialmedia.domain.usecases.settings.CopyUseCase
+import com.minhtu.firesocialmedia.domain.usecases.settings.CreatePollUseCase
+import com.minhtu.firesocialmedia.domain.usecases.settings.DeleteLoginSessionUseCase
 import com.minhtu.firesocialmedia.domain.usecases.settings.Disable2FAUseCase
 import com.minhtu.firesocialmedia.domain.usecases.settings.Enable2FAUseCase
 import com.minhtu.firesocialmedia.domain.usecases.settings.FetchLoginHistoryListUseCase
 import com.minhtu.firesocialmedia.domain.usecases.settings.GenerateSecretFor2FAUseCase
 import com.minhtu.firesocialmedia.domain.usecases.settings.Get2FAVerifiedStatusUseCase
+import com.minhtu.firesocialmedia.domain.usecases.settings.LogoutSessionUseCase
+import com.minhtu.firesocialmedia.domain.usecases.settings.ObserveSessionStatusUseCase
+import com.minhtu.firesocialmedia.domain.usecases.settings.StopObserveSessionStatusUseCase
+import com.minhtu.firesocialmedia.domain.usecases.settings.UpdateUserAvatarUseCase
+import com.minhtu.firesocialmedia.domain.usecases.settings.UpdateUserBackgroundUseCase
+import com.minhtu.firesocialmedia.domain.usecases.settings.UpdateUserStringFieldUseCase
 import com.minhtu.firesocialmedia.domain.usecases.settings.UpdateUserTimestampUseCase
 import com.minhtu.firesocialmedia.domain.usecases.settings.UpdateVerify2FASuccessUseCase
 import com.minhtu.firesocialmedia.domain.usecases.settings.ValidateNewPasswordUseCase
@@ -141,6 +154,9 @@ import com.minhtu.firesocialmedia.presentation.information.InformationViewModel
 import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.friend.FriendViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.notification.NotificationViewModel
+import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.CreatePollViewModel
+import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.PollViewModel
+import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.personal.PersonalInformationViewModel
 import com.minhtu.firesocialmedia.presentation.search.SearchViewModel
 import com.minhtu.firesocialmedia.presentation.showimage.ShowImageViewModel
 import com.minhtu.firesocialmedia.presentation.signin.SignInViewModel
@@ -149,48 +165,70 @@ import com.minhtu.firesocialmedia.presentation.uploadnewsfeed.UploadNewfeedViewM
 import com.minhtu.firesocialmedia.presentation.userinformation.UserInformationViewModel
 
 object AppModule {
-    fun provideSaveNotificationToDatabaseUseCase(notificationRepository: NotificationRepository) : SaveNotificationToDatabaseUseCase{
+    fun provideSaveNotificationToDatabaseUseCase(notificationRepository: NotificationRepository): SaveNotificationToDatabaseUseCase {
         return SaveNotificationToDatabaseUseCase(notificationRepository)
     }
-    fun provideDeleteNotificationFromDatabaseUseCase(notificationRepository: NotificationRepository) : DeleteNotificationFromDatabaseUseCase{
+
+    fun provideDeleteNotificationFromDatabaseUseCase(notificationRepository: NotificationRepository): DeleteNotificationFromDatabaseUseCase {
         return DeleteNotificationFromDatabaseUseCase(notificationRepository)
     }
-    fun provideSaveValueToDatabaseUseCase(commonDbRepository: CommonDbRepository) : SaveLikedPostUseCase {
+
+    fun provideSaveValueToDatabaseUseCase(commonDbRepository: CommonDbRepository): SaveLikedPostUseCase {
         return SaveLikedPostUseCase(commonDbRepository)
     }
-    fun provideSaveLikedCommentsUseCase(commonDbRepository: CommonDbRepository) : SaveLikedCommentsUseCase {
+
+    fun provideSaveLikedCommentsUseCase(commonDbRepository: CommonDbRepository): SaveLikedCommentsUseCase {
         return SaveLikedCommentsUseCase(commonDbRepository)
     }
-    fun provideNotificationRepository(platformContext: PlatformContext) : NotificationRepository {
-        return NotificationRepositoryImpl(platformContext.database, platformContext.room, platformContext.networkMonitor)
+
+    fun provideNotificationRepository(platformContext: PlatformContext): NotificationRepository {
+        return NotificationRepositoryImpl(
+            platformContext.database,
+            platformContext.room,
+            platformContext.networkMonitor
+        )
     }
-    fun provideCommonDbRepository(platformContext: PlatformContext) : CommonDbRepository{
-        return CommonDbRepositoryImpl(platformContext.database, platformContext.room, platformContext.networkMonitor)
+
+    fun provideCommonDbRepository(platformContext: PlatformContext): CommonDbRepository {
+        return CommonDbRepositoryImpl(
+            platformContext.database,
+            platformContext.room,
+            platformContext.networkMonitor,
+            platformContext.ipRemoteDataSource
+        )
     }
+
     //---------------------------Sign in----------------------------------------//
-    fun provideSignInUseCase(authenticationRepository: AuthenticationRepository) : SignInUseCase {
+    fun provideSignInUseCase(authenticationRepository: AuthenticationRepository): SignInUseCase {
         return SignInUseCase(authenticationRepository)
     }
-    fun provideRememberPasswordUseCase(authenticationRepository: AuthenticationRepository) : RememberPasswordUseCase {
+
+    fun provideRememberPasswordUseCase(authenticationRepository: AuthenticationRepository): RememberPasswordUseCase {
         return RememberPasswordUseCase(authenticationRepository)
     }
-    fun provideCheckUserExistsUseCase(authenticationRepository: AuthenticationRepository) : CheckUserExistsUseCase {
+
+    fun provideCheckUserExistsUseCase(authenticationRepository: AuthenticationRepository): CheckUserExistsUseCase {
         return CheckUserExistsUseCase(authenticationRepository)
     }
-    fun provideCheckLocalAccountUseCase(authenticationRepository: AuthenticationRepository) : CheckLocalAccountUseCase {
+
+    fun provideCheckLocalAccountUseCase(authenticationRepository: AuthenticationRepository): CheckLocalAccountUseCase {
         return CheckLocalAccountUseCase(authenticationRepository)
     }
-    fun provideHandleSignInGoogleResultUseCase(authenticationRepository: AuthenticationRepository) : HandleSignInGoogleResultUseCase {
+
+    fun provideHandleSignInGoogleResultUseCase(authenticationRepository: AuthenticationRepository): HandleSignInGoogleResultUseCase {
         return HandleSignInGoogleResultUseCase(authenticationRepository)
     }
-    fun provideSignInViewModel(signInUseCase : SignInUseCase,
-                               rememberPasswordUseCase: RememberPasswordUseCase,
-                               checkUserExistsUseCase: CheckUserExistsUseCase,
-                               checkLocalAccountUseCase : CheckLocalAccountUseCase,
-                               handleSignInGoogleResult: HandleSignInGoogleResultUseCase,
-                               getCurrentUserUidUseCase: GetCurrentUserUidUseCase,
-                               getUserUseCase: GetUserUseCase,
-                               saveLoginActivityInfoUseCase: SaveLoginActivityInfoUseCase) : SignInViewModel{
+
+    fun provideSignInViewModel(
+        signInUseCase: SignInUseCase,
+        rememberPasswordUseCase: RememberPasswordUseCase,
+        checkUserExistsUseCase: CheckUserExistsUseCase,
+        checkLocalAccountUseCase: CheckLocalAccountUseCase,
+        handleSignInGoogleResult: HandleSignInGoogleResultUseCase,
+        getCurrentUserUidUseCase: GetCurrentUserUidUseCase,
+        getUserUseCase: GetUserUseCase,
+        saveLoginActivityInfoUseCase: SaveLoginActivityInfoUseCase
+    ): SignInViewModel {
         return SignInViewModel(
             signInUseCase,
             rememberPasswordUseCase,
@@ -203,107 +241,151 @@ object AppModule {
         )
     }
 
-    fun provideAuthenticationRepository(platformContext: PlatformContext) : AuthenticationRepository{
-        return AuthenticationRepositoryImpl(platformContext.auth, platformContext.database, platformContext.crypto)
+    fun provideAuthenticationRepository(platformContext: PlatformContext): AuthenticationRepository {
+        return AuthenticationRepositoryImpl(
+            platformContext.auth,
+            platformContext.database,
+            platformContext.crypto
+        )
     }
 
     //---------------------------Sign up----------------------------------------//
-    fun provideSignUpRepository(platformContext: PlatformContext) : AuthenticationRepository {
-        return AuthenticationRepositoryImpl(platformContext.auth, platformContext.database, platformContext.crypto)
+    fun provideSignUpRepository(platformContext: PlatformContext): AuthenticationRepository {
+        return AuthenticationRepositoryImpl(
+            platformContext.auth,
+            platformContext.database,
+            platformContext.crypto
+        )
     }
-    fun provideSignUpUseCase(authenticationRepository: AuthenticationRepository) : SignUpUseCase {
+
+    fun provideSignUpUseCase(authenticationRepository: AuthenticationRepository): SignUpUseCase {
         return SignUpUseCase(authenticationRepository)
     }
+
     fun provideSignUpViewModel(signUpUseCase: SignUpUseCase): SignUpViewModel {
         return SignUpViewModel(signUpUseCase)
     }
 
     //---------------------------Forgot password----------------------------------------//
-    fun provideForgotPasswordRepository(platformContext: PlatformContext) : AuthenticationRepository {
-        return AuthenticationRepositoryImpl(platformContext.auth, platformContext.database, platformContext.crypto)
+    fun provideForgotPasswordRepository(platformContext: PlatformContext): AuthenticationRepository {
+        return AuthenticationRepositoryImpl(
+            platformContext.auth,
+            platformContext.database,
+            platformContext.crypto
+        )
     }
-    fun provideCheckIfEmailExistsUseCase(authenticationRepository: AuthenticationRepository) : CheckIfEmailExistsUseCase{
+
+    fun provideCheckIfEmailExistsUseCase(authenticationRepository: AuthenticationRepository): CheckIfEmailExistsUseCase {
         return CheckIfEmailExistsUseCase(authenticationRepository)
     }
-    fun provideSendEmailResetPasswordUseCase(authenticationRepository: AuthenticationRepository) : SendEmailResetPasswordUseCase {
+
+    fun provideSendEmailResetPasswordUseCase(authenticationRepository: AuthenticationRepository): SendEmailResetPasswordUseCase {
         return SendEmailResetPasswordUseCase(authenticationRepository)
     }
+
     fun provideForgotPasswordViewModel(
         checkIfEmailExistsUseCase: CheckIfEmailExistsUseCase,
-        sendEmailResetPasswordUseCase : SendEmailResetPasswordUseCase
-        ): ForgotPasswordViewModel {
+        sendEmailResetPasswordUseCase: SendEmailResetPasswordUseCase
+    ): ForgotPasswordViewModel {
         return ForgotPasswordViewModel(
             checkIfEmailExistsUseCase,
-            sendEmailResetPasswordUseCase)
+            sendEmailResetPasswordUseCase
+        )
     }
 
     //---------------------------Information----------------------------------------//
-    fun provideInformationRepository(platformContext: PlatformContext) : AuthenticationRepository {
-        return AuthenticationRepositoryImpl(platformContext.auth, platformContext.database, platformContext.crypto)
+    fun provideInformationRepository(platformContext: PlatformContext): AuthenticationRepository {
+        return AuthenticationRepositoryImpl(
+            platformContext.auth,
+            platformContext.database,
+            platformContext.crypto
+        )
     }
-    fun provideLocalRepository(platformContext: PlatformContext) : LocalRepository {
+
+    fun provideLocalRepository(platformContext: PlatformContext): LocalRepository {
         return LocalRepositoryImpl(platformContext.crypto, platformContext.room)
     }
-    fun provideSaveSignUpInformationUseCase(authenticationRepository: AuthenticationRepository) : SaveSignUpInformationUseCase {
+
+    fun provideSaveSignUpInformationUseCase(authenticationRepository: AuthenticationRepository): SaveSignUpInformationUseCase {
         return SaveSignUpInformationUseCase(authenticationRepository)
     }
-    fun provideGetFCMTokenUseCase(localRepository: LocalRepository) : GetFCMTokenUseCase {
+
+    fun provideGetFCMTokenUseCase(localRepository: LocalRepository): GetFCMTokenUseCase {
         return GetFCMTokenUseCase(localRepository)
     }
+
     fun provideInformationViewModel(
         saveSignUpInformationUseCase: SaveSignUpInformationUseCase,
         getCurrentUserUidUseCase: GetCurrentUserUidUseCase,
         getFCMTokenUseCase: GetFCMTokenUseCase,
         saveLoginActivityInfoUseCase: SaveLoginActivityInfoUseCase
-    ) : InformationViewModel {
+    ): InformationViewModel {
         return InformationViewModel(
             saveSignUpInformationUseCase,
             getCurrentUserUidUseCase,
             getFCMTokenUseCase,
-            saveLoginActivityInfoUseCase)
+            saveLoginActivityInfoUseCase
+        )
     }
 
     //---------------------------Loading----------------------------------------//
-    fun provideLoadingViewModel() : LoadingViewModel {
+    fun provideLoadingViewModel(): LoadingViewModel {
         return LoadingViewModel()
     }
+
     //---------------------------Home----------------------------------------//
-    fun provideGetCurrentUserUidUseCase(userRepository: UserRepository) : GetCurrentUserUidUseCase {
+    fun provideGetCurrentUserUidUseCase(userRepository: UserRepository): GetCurrentUserUidUseCase {
         return GetCurrentUserUidUseCase(userRepository)
     }
-    fun provideGetLatestNewsUseCase(newsRepository: NewsRepository) : GetLatestNewsUseCase {
+
+    fun provideGetLatestNewsUseCase(newsRepository: NewsRepository): GetLatestNewsUseCase {
         return GetLatestNewsUseCase(newsRepository)
     }
-    fun provideGetAllNotificationOfUserUseCase(notificationRepository: NotificationRepository) : GetAllNotificationOfUserUseCase {
+
+    fun provideGetAllNotificationOfUserUseCase(notificationRepository: NotificationRepository): GetAllNotificationOfUserUseCase {
         return GetAllNotificationOfUserUseCase(notificationRepository)
     }
-    fun provideUpdateFCMTokenUseCase(userRepository: UserRepository) : UpdateFCMTokenUseCase {
+
+    fun provideUpdateFCMTokenUseCase(userRepository: UserRepository): UpdateFCMTokenUseCase {
         return UpdateFCMTokenUseCase(userRepository)
     }
-    fun provideClearAccountUseCase(authenticationRepository: AuthenticationRepository) : ClearAccountUseCase {
+
+    fun provideClearAccountUseCase(authenticationRepository: AuthenticationRepository): ClearAccountUseCase {
         return ClearAccountUseCase(authenticationRepository)
     }
-    fun provideUpdateCountValueInDatabase(commonDbRepository: CommonDbRepository) : UpdateLikeCountForNewUseCase {
+
+    fun provideUpdateCountValueInDatabase(commonDbRepository: CommonDbRepository): UpdateLikeCountForNewUseCase {
         return UpdateLikeCountForNewUseCase(commonDbRepository)
     }
-    fun provideDeleteNewsFromDatabaseUseCase(newsRepository: NewsRepository) : DeleteNewsFromDatabaseUseCase {
+
+    fun provideDeleteNewsFromDatabaseUseCase(newsRepository: NewsRepository): DeleteNewsFromDatabaseUseCase {
         return DeleteNewsFromDatabaseUseCase(newsRepository)
     }
-    fun provideObservePhoneCallWithInCallUseCase(sendSignalingDataUseCase: SendSignalingDataUseCase) : ObservePhoneCallWithInCallUseCase {
+
+    fun provideDeletePollUseCase(newsRepository: NewsRepository): DeletePollUseCase {
+        return DeletePollUseCase(newsRepository)
+    }
+
+    fun provideObservePhoneCallWithInCallUseCase(sendSignalingDataUseCase: SendSignalingDataUseCase): ObservePhoneCallWithInCallUseCase {
         return ObservePhoneCallWithInCallUseCase(sendSignalingDataUseCase)
     }
-    fun provideStopObservePhoneCallUseCase(sendSignalingDataUseCase: SendSignalingDataUseCase) : StopObservePhoneCallUseCase {
+
+    fun provideStopObservePhoneCallUseCase(sendSignalingDataUseCase: SendSignalingDataUseCase): StopObservePhoneCallUseCase {
         return StopObservePhoneCallUseCase(sendSignalingDataUseCase)
     }
-    fun provideStopCallServiceUseCase(callRepository: CallRepository) : StopCallServiceUseCase {
+
+    fun provideStopCallServiceUseCase(callRepository: CallRepository): StopCallServiceUseCase {
         return StopCallServiceUseCase(callRepository)
     }
-    fun provideSearchUserByNameUseCase(userRepository: UserRepository) : SearchUserByNameUseCase {
+
+    fun provideSearchUserByNameUseCase(userRepository: UserRepository): SearchUserByNameUseCase {
         return SearchUserByNameUseCase(userRepository)
     }
-    fun provideSendSignalingDataUseCase(callRepository: CallRepository) : SendSignalingDataUseCase {
+
+    fun provideSendSignalingDataUseCase(callRepository: CallRepository): SendSignalingDataUseCase {
         return SendSignalingDataUseCase(callRepository)
     }
+
     fun provideUserInteractor(
         getCurrentUserUidUseCase: GetCurrentUserUidUseCase,
         getUserUseCase: GetUserUseCase,
@@ -315,7 +397,7 @@ object AppModule {
         saveCurrentUserInfoUseCase: SaveCurrentUserInfoUseCase,
         clearLocalDataUseCase: ClearLocalDataUseCase,
         clearLocalFriendsUseCase: ClearLocalFriendsUseCase
-    ) : UserInteractor {
+    ): UserInteractor {
         return UserInteractorImpl(
             getCurrentUserUidUseCase,
             getUserUseCase,
@@ -329,29 +411,33 @@ object AppModule {
             clearLocalFriendsUseCase
         )
     }
+
     fun provideNewsInteractor(
         getLatestNewsUseCase: GetLatestNewsUseCase,
         updateCountValueInDatabase: UpdateLikeCountForNewUseCase,
         deleteNewsFromDatabaseUseCase: DeleteNewsFromDatabaseUseCase,
         storeNewsToRoomUseCase: StoreNewsToRoomUseCase,
         saveNewToDatabaseUseCase: SaveNewToDatabaseUseCase,
-        findNewByIdInDbUseCase: FindNewByIdInDbUseCase
-    ) : NewsInteractor {
+        findNewByIdInDbUseCase: FindNewByIdInDbUseCase,
+        deletePollUseCase: DeletePollUseCase
+    ): NewsInteractor {
         return NewsInteractorImpl(
             getLatestNewsUseCase,
             updateCountValueInDatabase,
             deleteNewsFromDatabaseUseCase,
             storeNewsToRoomUseCase,
             saveNewToDatabaseUseCase,
-            findNewByIdInDbUseCase
+            findNewByIdInDbUseCase,
+            deletePollUseCase
         )
     }
+
     fun provideNotificationInteractor(
         getAllNotificationOfUserUseCase: GetAllNotificationOfUserUseCase,
         saveNotificationToDatabaseUseCase: SaveNotificationToDatabaseUseCase,
         deleteNotificationFromDatabaseUseCase: DeleteNotificationFromDatabaseUseCase,
         storeNotificationsToRoomUseCase: StoreNotificationsToRoomUseCase
-    ) : NotificationInteractor {
+    ): NotificationInteractor {
         return NotificationInteractorImpl(
             getAllNotificationOfUserUseCase,
             saveNotificationToDatabaseUseCase,
@@ -359,63 +445,73 @@ object AppModule {
             storeNotificationsToRoomUseCase
         )
     }
+
     fun provideCallInteractor(
         observePhoneCallWithInCallUseCase: ObservePhoneCallWithInCallUseCase,
         stopObservePhoneCallUseCase: StopObservePhoneCallUseCase,
         stopCallServiceUseCase: StopCallServiceUseCase
-    ) : CallInteractor {
+    ): CallInteractor {
         return CallInteractorImpl(
             observePhoneCallWithInCallUseCase,
             stopObservePhoneCallUseCase,
             stopCallServiceUseCase
         )
     }
+
     fun provideHomeViewModel(
         userInteractor: UserInteractor,
         newsInteractor: NewsInteractor,
         notificationInteractor: NotificationInteractor,
         callInteractor: CallInteractor
-    ) : HomeViewModel {
+    ): HomeViewModel {
         return HomeViewModel(
             userInteractor,
             newsInteractor,
             notificationInteractor,
             callInteractor
-            )
+        )
     }
 
     //---------------------------Comment----------------------------------------//
-    fun provideCommentRepository(platformContext: PlatformContext) : CommentRepository {
+    fun provideCommentRepository(platformContext: PlatformContext): CommentRepository {
         return CommentRepositoryImpl(platformContext.database)
     }
-    fun provideSaveCommentToDatabaseUseCase(commonDbRepository: CommonDbRepository) : SaveCommentToDatabaseUseCase {
+
+    fun provideSaveCommentToDatabaseUseCase(commonDbRepository: CommonDbRepository): SaveCommentToDatabaseUseCase {
         return SaveCommentToDatabaseUseCase(commonDbRepository)
     }
-    fun provideSaveSubCommentToDatabaseUseCase(commonDbRepository: CommonDbRepository) : SaveSubCommentToDatabaseUseCase {
+
+    fun provideSaveSubCommentToDatabaseUseCase(commonDbRepository: CommonDbRepository): SaveSubCommentToDatabaseUseCase {
         return SaveSubCommentToDatabaseUseCase(commonDbRepository)
     }
-    fun provideDeleteCommentFromDatabaseUseCase(commonDbRepository: CommonDbRepository) : DeleteCommentFromDatabaseUseCase {
+
+    fun provideDeleteCommentFromDatabaseUseCase(commonDbRepository: CommonDbRepository): DeleteCommentFromDatabaseUseCase {
         return DeleteCommentFromDatabaseUseCase(commonDbRepository)
     }
-    fun provideDeleteSubCommentFromDatabaseUseCase(commonDbRepository: CommonDbRepository) : DeleteSubCommentFromDatabaseUseCase {
+
+    fun provideDeleteSubCommentFromDatabaseUseCase(commonDbRepository: CommonDbRepository): DeleteSubCommentFromDatabaseUseCase {
         return DeleteSubCommentFromDatabaseUseCase(commonDbRepository)
     }
-    fun provideGetAllCommentsUseCase(commentRepository: CommentRepository) : GetAllCommentsUseCase {
+
+    fun provideGetAllCommentsUseCase(commentRepository: CommentRepository): GetAllCommentsUseCase {
         return GetAllCommentsUseCase(commentRepository)
     }
-    fun provideUpdateCommentCountForNewUseCase(commonDbRepository: CommonDbRepository) : UpdateCommentCountForNewUseCase {
+
+    fun provideUpdateCommentCountForNewUseCase(commonDbRepository: CommonDbRepository): UpdateCommentCountForNewUseCase {
         return UpdateCommentCountForNewUseCase(commonDbRepository)
     }
-    fun provideUpdateReplyCountForCommentUseCase(commonDbRepository: CommonDbRepository) : UpdateReplyCountForCommentUseCase {
+
+    fun provideUpdateReplyCountForCommentUseCase(commonDbRepository: CommonDbRepository): UpdateReplyCountForCommentUseCase {
         return UpdateReplyCountForCommentUseCase(commonDbRepository)
     }
+
     fun provideCommentInteractor(
         saveCommentToDatabaseUseCase: SaveCommentToDatabaseUseCase,
         saveSubCommentToDatabaseUseCase: SaveSubCommentToDatabaseUseCase,
         deleteCommentFromDatabaseUseCase: DeleteCommentFromDatabaseUseCase,
         deleteSubCommentFromDatabaseUseCase: DeleteSubCommentFromDatabaseUseCase,
         getAllCommentsUseCase: GetAllCommentsUseCase
-    ) : CommentInteractor {
+    ): CommentInteractor {
         return CommentInteractorImpl(
             saveCommentToDatabaseUseCase,
             saveSubCommentToDatabaseUseCase,
@@ -424,22 +520,25 @@ object AppModule {
             getAllCommentsUseCase
         )
     }
-    fun provideUpdateLikeCountForCommentUseCase(commonDbRepository: CommonDbRepository) : UpdateLikeCountForCommentUseCase {
+
+    fun provideUpdateLikeCountForCommentUseCase(commonDbRepository: CommonDbRepository): UpdateLikeCountForCommentUseCase {
         return UpdateLikeCountForCommentUseCase(commonDbRepository)
     }
-    fun provideUpdateLikeCountForSubCommentUseCase(commonDbRepository: CommonDbRepository) : UpdateLikeCountForSubCommentUseCase {
+
+    fun provideUpdateLikeCountForSubCommentUseCase(commonDbRepository: CommonDbRepository): UpdateLikeCountForSubCommentUseCase {
         return UpdateLikeCountForSubCommentUseCase(commonDbRepository)
     }
+
     fun provideCommentViewModel(
         commentInteractor: CommentInteractor,
-        getUserUseCase : GetUserUseCase,
-        saveLikedCommentsUseCase : SaveLikedCommentsUseCase,
+        getUserUseCase: GetUserUseCase,
+        saveLikedCommentsUseCase: SaveLikedCommentsUseCase,
         saveNotificationToDatabaseUseCase: SaveNotificationToDatabaseUseCase,
         updateCommentCountForNewUseCase: UpdateCommentCountForNewUseCase,
         updateReplyCountForCommentUseCase: UpdateReplyCountForCommentUseCase,
         updateLikeCountForCommentUseCase: UpdateLikeCountForCommentUseCase,
         updateLikeCountForSubCommentUseCase: UpdateLikeCountForSubCommentUseCase
-    ) : CommentViewModel {
+    ): CommentViewModel {
         return CommentViewModel(
             commentInteractor,
             getUserUseCase,
@@ -453,12 +552,14 @@ object AppModule {
     }
 
     //---------------------------Upload newfeed----------------------------------------//
-    fun provideSaveNewToDatabaseUseCase(commonDbRepository: CommonDbRepository) : SaveNewToDatabaseUseCase {
+    fun provideSaveNewToDatabaseUseCase(commonDbRepository: CommonDbRepository): SaveNewToDatabaseUseCase {
         return SaveNewToDatabaseUseCase(commonDbRepository)
     }
-    fun provideUpdateNewsFromDatabaseUseCase(newsRepository: NewsRepository) : UpdateNewsFromDatabaseUseCase {
+
+    fun provideUpdateNewsFromDatabaseUseCase(newsRepository: NewsRepository): UpdateNewsFromDatabaseUseCase {
         return UpdateNewsFromDatabaseUseCase(newsRepository)
     }
+
     fun provideUploadNewfeedViewModel(
         getUserUseCase: GetUserUseCase,
         saveNotificationToDatabaseUseCase: SaveNotificationToDatabaseUseCase,
@@ -468,8 +569,9 @@ object AppModule {
         deleteAllDraftPostsUseCase: DeleteAllDraftPostsUseCase,
         deleteDraftPostUseCase: DeleteDraftPostUseCase,
         saveNewToGroupUseCase: SaveNewToGroupUseCase,
-        getAllMembersInGroupUseCase : GetAllMembersInGroupUseCase,
-        getGroupConfigsUseCase: GetGroupConfigsUseCase): UploadNewfeedViewModel {
+        getAllMembersInGroupUseCase: GetAllMembersInGroupUseCase,
+        getGroupConfigsUseCase: GetGroupConfigsUseCase
+    ): UploadNewfeedViewModel {
         return UploadNewfeedViewModel(
             getUserUseCase,
             saveNotificationToDatabaseUseCase,
@@ -485,45 +587,35 @@ object AppModule {
     }
 
     //---------------------------User Information----------------------------------------//
-    fun provideCallRepository(platformContext: PlatformContext) : CallRepository {
+    fun provideCallRepository(platformContext: PlatformContext): CallRepository {
         return CallRepositoryImpl(
             { platformContext.audioCall },
             platformContext.database,
-            platformContext.permissionManager)
-    }
-    fun provideCheckCalleeAvailableUseCase(callRepository: CallRepository) : CheckCalleeAvailableUseCase{
-        return CheckCalleeAvailableUseCase(callRepository)
-    }
-    fun provideUserInformationViewModel(
-        saveFriendUseCase: SaveFriendUseCase,
-        saveFriendRequestUseCase: SaveFriendRequestUseCase,
-        saveNotificationToDatabaseUseCase: SaveNotificationToDatabaseUseCase,
-        checkCalleeAvailableUseCase: CheckCalleeAvailableUseCase,
-        getUserUseCase: GetUserUseCase,
-        checkInternetConnectionUseCase: CheckInternetConnectionUseCase): UserInformationViewModel {
-        return UserInformationViewModel(
-            saveFriendUseCase,
-            saveFriendRequestUseCase,
-            saveNotificationToDatabaseUseCase,
-            checkCalleeAvailableUseCase,
-            getUserUseCase,
-            checkInternetConnectionUseCase
+            platformContext.permissionManager
         )
     }
 
+    fun provideCheckCalleeAvailableUseCase(callRepository: CallRepository): CheckCalleeAvailableUseCase {
+        return CheckCalleeAvailableUseCase(callRepository)
+    }
+
     //---------------------------Friend----------------------------------------//
-    fun provideSaveFriendUseCase(commonDbRepository: CommonDbRepository) : SaveFriendUseCase{
+    fun provideSaveFriendUseCase(commonDbRepository: CommonDbRepository): SaveFriendUseCase {
         return SaveFriendUseCase(commonDbRepository)
     }
-    fun provideSaveFriendRequestUseCase(commonDbRepository: CommonDbRepository) : SaveFriendRequestUseCase{
+
+    fun provideSaveFriendRequestUseCase(commonDbRepository: CommonDbRepository): SaveFriendRequestUseCase {
         return SaveFriendRequestUseCase(commonDbRepository)
     }
+
     fun provideFriendViewModel(
         saveFriendUseCase: SaveFriendUseCase,
-        saveFriendRequestUseCase: SaveFriendRequestUseCase) : FriendViewModel {
+        saveFriendRequestUseCase: SaveFriendRequestUseCase
+    ): FriendViewModel {
         return FriendViewModel(
             saveFriendUseCase,
-            saveFriendRequestUseCase)
+            saveFriendRequestUseCase
+        )
     }
 
     //---------------------------Search----------------------------------------//
@@ -532,43 +624,51 @@ object AppModule {
     }
 
     //---------------------------Show Image----------------------------------------//
-    fun provideShowImageRepository(platformContext: PlatformContext) : ShowImageRepository {
+    fun provideShowImageRepository(platformContext: PlatformContext): ShowImageRepository {
         return ShowImageRepositoryImpl(platformContext.database)
     }
-    fun provideDownloadImageUseCase(showImageRepository: ShowImageRepository) : DownloadImageUseCase {
+
+    fun provideDownloadImageUseCase(showImageRepository: ShowImageRepository): DownloadImageUseCase {
         return DownloadImageUseCase(showImageRepository)
     }
+
     fun provideShowImageViewModel(downloadImageUseCase: DownloadImageUseCase): ShowImageViewModel {
         return ShowImageViewModel(downloadImageUseCase)
     }
 
     //---------------------------Notification----------------------------------------//
-    fun provideUserRepository(platformContext: PlatformContext) : UserRepository {
+    fun provideUserRepository(platformContext: PlatformContext): UserRepository {
         return UserRepositoryImpl(
             platformContext.auth,
             platformContext.database,
             platformContext.crypto,
             platformContext.room,
-            platformContext.networkMonitor)
+            platformContext.networkMonitor
+        )
     }
-    fun provideNewsRepository(platformContext: PlatformContext) : NewsRepository {
+
+    fun provideNewsRepository(platformContext: PlatformContext): NewsRepository {
         return NewsRepositoryImpl(
             platformContext.database,
             platformContext.room,
-            platformContext.networkMonitor)
+            platformContext.networkMonitor
+        )
     }
-    fun provideGetUserUseCase(userRepository: UserRepository) : GetUserUseCase {
+
+    fun provideGetUserUseCase(userRepository: UserRepository): GetUserUseCase {
         return GetUserUseCase(userRepository)
     }
-    fun provideFindNewByIdInDbUseCase(newsRepository: NewsRepository) : FindNewByIdInDbUseCase {
+
+    fun provideFindNewByIdInDbUseCase(newsRepository: NewsRepository): FindNewByIdInDbUseCase {
         return FindNewByIdInDbUseCase(newsRepository)
     }
+
     fun provideNotificationViewModel(
         getUserUseCase: GetUserUseCase,
         findNewByIdInDbUseCase: FindNewByIdInDbUseCase,
-        updateIsReadStatusOfNotificationUseCase : UpdateIsReadStatusOfNotificationUseCase,
+        updateIsReadStatusOfNotificationUseCase: UpdateIsReadStatusOfNotificationUseCase,
         deleteAllNotificationsUseCase: DeleteAllNotificationsUseCase
-    ) : NotificationViewModel {
+    ): NotificationViewModel {
         return NotificationViewModel(
             getUserUseCase,
             findNewByIdInDbUseCase,
@@ -576,247 +676,360 @@ object AppModule {
             deleteAllNotificationsUseCase
         )
     }
+
     //---------------------------Call----------------------------------------//
-    fun provideStartCallServiceUseCase(callRepository: CallRepository) : StartCallServiceUseCase{
+    fun provideStartCallServiceUseCase(callRepository: CallRepository): StartCallServiceUseCase {
         return StartCallServiceUseCase(callRepository)
     }
 
-    fun provideManageCallStateUseCase(callRepository: CallRepository) : ManageCallStateUseCase{
+    fun provideManageCallStateUseCase(callRepository: CallRepository): ManageCallStateUseCase {
         return ManageCallStateUseCase(callRepository)
     }
 
-    fun provideRequestPermissionUseCase(callRepository: CallRepository) : RequestPermissionUseCase{
+    fun provideRequestPermissionUseCase(callRepository: CallRepository): RequestPermissionUseCase {
         return RequestPermissionUseCase(callRepository)
     }
 
-    fun provideStartVideoCallServiceUseCase(callRepository: CallRepository) : StartVideoCallServiceUseCase {
+    fun provideStartVideoCallServiceUseCase(callRepository: CallRepository): StartVideoCallServiceUseCase {
         return StartVideoCallServiceUseCase(callRepository)
     }
 
-    fun provideRequestCameraAndAudioPermissionsUseCase(callRepository: CallRepository) : RequestCameraAndAudioPermissionsUseCase {
+    fun provideRequestCameraAndAudioPermissionsUseCase(callRepository: CallRepository): RequestCameraAndAudioPermissionsUseCase {
         return RequestCameraAndAudioPermissionsUseCase(callRepository)
     }
 
-    fun provideInitializeCallUseCase(callRepository: CallRepository) : InitializeCallUseCase {
+    fun provideInitializeCallUseCase(callRepository: CallRepository): InitializeCallUseCase {
         return InitializeCallUseCase(callRepository)
     }
 
-    fun provideVideoCallUseCase(callRepository: CallRepository) : VideoCallUseCase {
+    fun provideVideoCallUseCase(callRepository: CallRepository): VideoCallUseCase {
         return VideoCallUseCase(callRepository)
     }
 
     //---------------------------Room----------------------------------------//
-    fun provideStoreNewsToRoomUseCase(localRepository: LocalRepository) : StoreNewsToRoomUseCase {
+    fun provideStoreNewsToRoomUseCase(localRepository: LocalRepository): StoreNewsToRoomUseCase {
         return StoreNewsToRoomUseCase(localRepository)
     }
-    fun provideStoreNotificationsToRoomUseCase(localRepository: LocalRepository) : StoreNotificationsToRoomUseCase {
+
+    fun provideStoreNotificationsToRoomUseCase(localRepository: LocalRepository): StoreNotificationsToRoomUseCase {
         return StoreNotificationsToRoomUseCase(localRepository)
     }
-    fun provideStoreUserFriendsToRoomUseCase(localRepository: LocalRepository) : StoreUserFriendsToRoomUseCase {
+
+    fun provideStoreUserFriendsToRoomUseCase(localRepository: LocalRepository): StoreUserFriendsToRoomUseCase {
         return StoreUserFriendsToRoomUseCase(localRepository)
     }
 
-    fun provideSaveCurrentUserInfoUseCase(localRepository: LocalRepository) : SaveCurrentUserInfoUseCase {
+    fun provideSaveCurrentUserInfoUseCase(localRepository: LocalRepository): SaveCurrentUserInfoUseCase {
         return SaveCurrentUserInfoUseCase(localRepository)
     }
 
-    fun provideSyncDataUseCase(commonDbRepository: CommonDbRepository) : SyncDataUseCase {
+    fun provideSyncDataUseCase(commonDbRepository: CommonDbRepository): SyncDataUseCase {
         return SyncDataUseCase(commonDbRepository)
     }
 
-    fun provideClearLocalDataUseCase(commonDbRepository: CommonDbRepository) : ClearLocalDataUseCase{
+    fun provideClearLocalDataUseCase(commonDbRepository: CommonDbRepository): ClearLocalDataUseCase {
         return ClearLocalDataUseCase(commonDbRepository)
     }
 
-    fun provideLoadNewsPostedWhenOfflineUseCase(commonDbRepository: CommonDbRepository) : LoadNewsPostedWhenOfflineUseCase {
+    fun provideLoadNewsPostedWhenOfflineUseCase(commonDbRepository: CommonDbRepository): LoadNewsPostedWhenOfflineUseCase {
         return LoadNewsPostedWhenOfflineUseCase(commonDbRepository)
     }
 
-    fun provideDeleteAllDraftPostsUseCase(commonDbRepository: CommonDbRepository) : DeleteAllDraftPostsUseCase{
+    fun provideDeleteAllDraftPostsUseCase(commonDbRepository: CommonDbRepository): DeleteAllDraftPostsUseCase {
         return DeleteAllDraftPostsUseCase(commonDbRepository)
     }
 
-    fun provideDeleteDraftPostUseCase(commonDbRepository: CommonDbRepository) : DeleteDraftPostUseCase {
+    fun provideDeleteDraftPostUseCase(commonDbRepository: CommonDbRepository): DeleteDraftPostUseCase {
         return DeleteDraftPostUseCase(commonDbRepository)
     }
 
     //---------------------------Group----------------------------------------//
-    fun provideCreateGroupUseCase(groupRepository: GroupRepository) : CreateGroupUseCase{
+    fun provideCreateGroupUseCase(groupRepository: GroupRepository): CreateGroupUseCase {
         return CreateGroupUseCase(groupRepository)
     }
-    fun provideGroupRepository(platformContext: PlatformContext) : GroupRepository {
+
+    fun provideGroupRepository(platformContext: PlatformContext): GroupRepository {
         return GroupRepositoryImpl(
             platformContext.database,
             platformContext.networkMonitor,
-            platformContext.clipboard)
+            platformContext.clipboard
+        )
     }
-    fun provideGetAllGroupsUseCase(groupRepository: GroupRepository) : GetAllGroupsUseCase {
+
+    fun provideGetAllGroupsUseCase(groupRepository: GroupRepository): GetAllGroupsUseCase {
         return GetAllGroupsUseCase(groupRepository)
     }
-    fun provideFetchGroupInfoUseCase(groupRepository: GroupRepository) : FetchGroupInfoUseCase {
+
+    fun provideFetchGroupInfoUseCase(groupRepository: GroupRepository): FetchGroupInfoUseCase {
         return FetchGroupInfoUseCase(groupRepository)
     }
 
-    fun provideSaveNewToGroupUseCase(groupRepository: GroupRepository) : SaveNewToGroupUseCase {
+    fun provideSaveNewToGroupUseCase(groupRepository: GroupRepository): SaveNewToGroupUseCase {
         return SaveNewToGroupUseCase(groupRepository)
     }
 
-    fun provideUpdateNotificationStatusUseCase(groupRepository: GroupRepository) : UpdateNotificationStatusUseCase {
+    fun provideUpdateNotificationStatusUseCase(groupRepository: GroupRepository): UpdateNotificationStatusUseCase {
         return UpdateNotificationStatusUseCase(groupRepository)
     }
 
-    fun provideGetAllMembersInGroupUseCase(groupRepository: GroupRepository) : GetAllMembersInGroupUseCase{
+    fun provideGetAllMembersInGroupUseCase(groupRepository: GroupRepository): GetAllMembersInGroupUseCase {
         return GetAllMembersInGroupUseCase(groupRepository)
     }
 
-    fun provideGetGroupConfigsUseCase(groupRepository: GroupRepository) : GetGroupConfigsUseCase{
+    fun provideGetGroupConfigsUseCase(groupRepository: GroupRepository): GetGroupConfigsUseCase {
         return GetGroupConfigsUseCase(groupRepository)
     }
 
-    fun provideFetchNotificationStateUseCase(groupRepository: GroupRepository) : FetchNotificationStateUseCase {
+    fun provideFetchNotificationStateUseCase(groupRepository: GroupRepository): FetchNotificationStateUseCase {
         return FetchNotificationStateUseCase(groupRepository)
     }
 
-    fun provideCopyLinkUseCase(groupRepository: GroupRepository) : CopyLinkUseCase{
+    fun provideCopyLinkUseCase(groupRepository: GroupRepository): CopyLinkUseCase {
         return CopyLinkUseCase(groupRepository)
     }
 
-    fun provideFindGroupByIdUseCase(groupRepository: GroupRepository) : FindGroupByIdUseCase {
+    fun provideFindGroupByIdUseCase(groupRepository: GroupRepository): FindGroupByIdUseCase {
         return FindGroupByIdUseCase(groupRepository)
     }
 
-    fun provideInviteFriendToGroupUseCase(groupRepository: GroupRepository) : InviteFriendToGroupUseCase {
+    fun provideInviteFriendToGroupUseCase(groupRepository: GroupRepository): InviteFriendToGroupUseCase {
         return InviteFriendToGroupUseCase(groupRepository)
     }
 
-    fun provideClearLocalFriendsUseCase(commonDbRepository: CommonDbRepository) : ClearLocalFriendsUseCase{
+    fun provideClearLocalFriendsUseCase(commonDbRepository: CommonDbRepository): ClearLocalFriendsUseCase {
         return ClearLocalFriendsUseCase(commonDbRepository)
     }
 
-    fun provideJoinGroupUseCase(groupRepository: GroupRepository) : JoinGroupUseCase {
+    fun provideJoinGroupUseCase(groupRepository: GroupRepository): JoinGroupUseCase {
         return JoinGroupUseCase(groupRepository)
     }
 
-    fun provideLeaveGroupUseCase(groupRepository: GroupRepository) : LeaveGroupUseCase {
+    fun provideLeaveGroupUseCase(groupRepository: GroupRepository): LeaveGroupUseCase {
         return LeaveGroupUseCase(groupRepository)
     }
 
-    fun provideLeaveAndDeleteGroupUseCase(groupRepository: GroupRepository) : LeaveAndDeleteGroupUseCase {
+    fun provideLeaveAndDeleteGroupUseCase(groupRepository: GroupRepository): LeaveAndDeleteGroupUseCase {
         return LeaveAndDeleteGroupUseCase(groupRepository)
     }
 
-    fun provideRemoveMemberUseCase(groupRepository: GroupRepository) : RemoveMemberUseCase {
+    fun provideRemoveMemberUseCase(groupRepository: GroupRepository): RemoveMemberUseCase {
         return RemoveMemberUseCase(groupRepository)
     }
 
-    fun providePromoteMemberUseCase(groupRepository: GroupRepository) : PromoteMemberUseCase {
+    fun providePromoteMemberUseCase(groupRepository: GroupRepository): PromoteMemberUseCase {
         return PromoteMemberUseCase(groupRepository)
     }
-    fun provideDemoteMemberUseCase(groupRepository: GroupRepository) : DemoteMemberUseCase {
+
+    fun provideDemoteMemberUseCase(groupRepository: GroupRepository): DemoteMemberUseCase {
         return DemoteMemberUseCase(groupRepository)
     }
 
-    fun provideFetchRecommendGroupsUseCase(groupRepository: GroupRepository) : FetchRecommendGroupsUseCase{
+    fun provideFetchRecommendGroupsUseCase(groupRepository: GroupRepository): FetchRecommendGroupsUseCase {
         return FetchRecommendGroupsUseCase(groupRepository)
     }
-    fun provideFetchFeatureGroupsUseCase(groupRepository: GroupRepository) : FetchFeatureGroupsUseCase {
+
+    fun provideFetchFeatureGroupsUseCase(groupRepository: GroupRepository): FetchFeatureGroupsUseCase {
         return FetchFeatureGroupsUseCase(groupRepository)
     }
 
-    fun provideCheckInternetConnectionUseCase(networkRepository: NetworkRepository) : CheckInternetConnectionUseCase{
+    fun provideCheckInternetConnectionUseCase(networkRepository: NetworkRepository): CheckInternetConnectionUseCase {
         return CheckInternetConnectionUseCase(networkRepository)
     }
 
-    fun provideNetworkRepository(platformContext: PlatformContext) : NetworkRepository {
+    fun provideNetworkRepository(platformContext: PlatformContext): NetworkRepository {
         return NetworkRepositoryImpl(platformContext.networkMonitor)
     }
 
-    fun provideUpdateIsReadStatusOfNotificationUseCase(notificationRepository: NotificationRepository) : UpdateIsReadStatusOfNotificationUseCase {
+    fun provideUpdateIsReadStatusOfNotificationUseCase(notificationRepository: NotificationRepository): UpdateIsReadStatusOfNotificationUseCase {
         return UpdateIsReadStatusOfNotificationUseCase(notificationRepository)
     }
 
-    fun provideDeleteAllNotificationsUseCase(notificationRepository: NotificationRepository) : DeleteAllNotificationsUseCase{
+    fun provideDeleteAllNotificationsUseCase(notificationRepository: NotificationRepository): DeleteAllNotificationsUseCase {
         return DeleteAllNotificationsUseCase(notificationRepository)
     }
 
-    fun provideUpdateMicStatusUseCase(callRepository: CallRepository) : UpdateMicStatusUseCase{
+    fun provideUpdateMicStatusUseCase(callRepository: CallRepository): UpdateMicStatusUseCase {
         return UpdateMicStatusUseCase(callRepository)
     }
 
-    fun provideUpdateCameraStatusUseCase(callRepository: CallRepository) : UpdateCameraStatusUseCase{
+    fun provideUpdateCameraStatusUseCase(callRepository: CallRepository): UpdateCameraStatusUseCase {
         return UpdateCameraStatusUseCase(callRepository)
     }
 
-    fun provideUpdateSpeakerStatusUseCase(callRepository: CallRepository) : UpdateSpeakerStatusUseCase{
+    fun provideUpdateSpeakerStatusUseCase(callRepository: CallRepository): UpdateSpeakerStatusUseCase {
         return UpdateSpeakerStatusUseCase(callRepository)
     }
 
-    fun provideSettingsRepository(platformContext: PlatformContext) : SettingsRepository {
+    fun provideSettingsRepository(platformContext: PlatformContext): SettingsRepository {
         return SettingsRepositoryImpl(
             platformContext.auth,
             platformContext.database,
             platformContext.clipboard,
-            platformContext.crypto)
+            platformContext.crypto
+        )
     }
 
-    fun provideVerifyCurrentPasswordUseCase(settingsRepository: SettingsRepository) : VerifyCurrentPasswordUseCase {
+    fun provideVerifyCurrentPasswordUseCase(settingsRepository: SettingsRepository): VerifyCurrentPasswordUseCase {
         return VerifyCurrentPasswordUseCase(settingsRepository)
     }
 
-    fun provideValidateNewPasswordUseCase() : ValidateNewPasswordUseCase {
+    fun provideValidateNewPasswordUseCase(): ValidateNewPasswordUseCase {
         return ValidateNewPasswordUseCase()
     }
 
-    fun provideChangePasswordUseCase(settingsRepository: SettingsRepository) : ChangePasswordUseCase {
+    fun provideChangePasswordUseCase(settingsRepository: SettingsRepository): ChangePasswordUseCase {
         return ChangePasswordUseCase(settingsRepository)
     }
 
-    fun provideGenerateSecretFor2FAUseCase(settingsRepository: SettingsRepository) : GenerateSecretFor2FAUseCase {
+    fun provideGenerateSecretFor2FAUseCase(settingsRepository: SettingsRepository): GenerateSecretFor2FAUseCase {
         return GenerateSecretFor2FAUseCase(settingsRepository)
     }
 
-    fun provideBuildOtpAuthUrlUseCase() : BuildOtpAuthUrlUseCase {
+    fun provideBuildOtpAuthUrlUseCase(): BuildOtpAuthUrlUseCase {
         return BuildOtpAuthUrlUseCase()
     }
 
-    fun provideCopyUseCase(settingsRepository: SettingsRepository) : CopyUseCase {
+    fun provideCopyUseCase(settingsRepository: SettingsRepository): CopyUseCase {
         return CopyUseCase(settingsRepository)
     }
 
-    fun provideEnable2FAUseCase(settingsRepository: SettingsRepository) : Enable2FAUseCase {
+    fun provideEnable2FAUseCase(settingsRepository: SettingsRepository): Enable2FAUseCase {
         return Enable2FAUseCase(settingsRepository)
     }
 
-    fun provideDisable2FAUseCase(settingsRepository: SettingsRepository) : Disable2FAUseCase {
+    fun provideDisable2FAUseCase(settingsRepository: SettingsRepository): Disable2FAUseCase {
         return Disable2FAUseCase(settingsRepository)
 
     }
 
-    fun provideVerify2FAUseCase(settingsRepository: SettingsRepository) : Verify2FAUseCase {
+    fun provideVerify2FAUseCase(settingsRepository: SettingsRepository): Verify2FAUseCase {
         return Verify2FAUseCase(settingsRepository)
     }
 
-    fun provideVerifyBackupCodeUseCase(settingsRepository: SettingsRepository) : VerifyBackupCodeUseCase {
+    fun provideVerifyBackupCodeUseCase(settingsRepository: SettingsRepository): VerifyBackupCodeUseCase {
         return VerifyBackupCodeUseCase(settingsRepository)
     }
 
-    fun provideUpdateVerify2FASuccessUseCase(settingsRepository: SettingsRepository) : UpdateVerify2FASuccessUseCase {
+    fun provideUpdateVerify2FASuccessUseCase(settingsRepository: SettingsRepository): UpdateVerify2FASuccessUseCase {
         return UpdateVerify2FASuccessUseCase(settingsRepository)
     }
 
-    fun provideGet2FAVerifiedStatusUseCase(settingsRepository: SettingsRepository) : Get2FAVerifiedStatusUseCase {
+    fun provideGet2FAVerifiedStatusUseCase(settingsRepository: SettingsRepository): Get2FAVerifiedStatusUseCase {
         return Get2FAVerifiedStatusUseCase(settingsRepository)
     }
 
-    fun provideFetchLoginHistoryListUseCase(settingsRepository: SettingsRepository) : FetchLoginHistoryListUseCase {
+    fun provideFetchLoginHistoryListUseCase(settingsRepository: SettingsRepository): FetchLoginHistoryListUseCase {
         return FetchLoginHistoryListUseCase(settingsRepository)
     }
 
-    fun provideUpdateUserTimestampUseCase(settingsRepository: SettingsRepository) : UpdateUserTimestampUseCase {
+    fun provideDeleteLoginSessionUseCase(settingsRepository: SettingsRepository): DeleteLoginSessionUseCase {
+        return DeleteLoginSessionUseCase(settingsRepository)
+    }
+
+    fun provideLogoutSessionUseCase(settingsRepository: SettingsRepository): LogoutSessionUseCase {
+        return LogoutSessionUseCase(settingsRepository)
+    }
+
+    fun provideObserveSessionStatusUseCase(settingsRepository: SettingsRepository): ObserveSessionStatusUseCase {
+        return ObserveSessionStatusUseCase(settingsRepository)
+    }
+
+    fun provideStopObserveSessionStatusUseCase(settingsRepository: SettingsRepository): StopObserveSessionStatusUseCase {
+        return StopObserveSessionStatusUseCase(settingsRepository)
+    }
+
+    fun provideUpdateUserTimestampUseCase(settingsRepository: SettingsRepository): UpdateUserTimestampUseCase {
         return UpdateUserTimestampUseCase(settingsRepository)
     }
 
-    fun provideSaveLoginActivityInfoUseCase(commonDbRepository: CommonDbRepository) : SaveLoginActivityInfoUseCase {
+    fun provideSaveLoginActivityInfoUseCase(commonDbRepository: CommonDbRepository): SaveLoginActivityInfoUseCase {
         return SaveLoginActivityInfoUseCase(commonDbRepository)
+    }
+
+    fun provideUpdateUserAvatarUseCase(settingsRepository: SettingsRepository): UpdateUserAvatarUseCase {
+        return UpdateUserAvatarUseCase(settingsRepository)
+    }
+
+    fun provideUpdateUserBackgroundUseCase(settingsRepository: SettingsRepository): UpdateUserBackgroundUseCase {
+        return UpdateUserBackgroundUseCase(settingsRepository)
+    }
+
+    fun providePersonalInformationViewModel(
+        updateUserStringFieldUseCase: UpdateUserStringFieldUseCase,
+        updateUserAvatarUseCase: UpdateUserAvatarUseCase,
+        verifyCurrentPasswordUseCase: VerifyCurrentPasswordUseCase,
+        getUserUseCase: GetUserUseCase
+    ): PersonalInformationViewModel {
+        return PersonalInformationViewModel(
+            updateUserStringFieldUseCase,
+            updateUserAvatarUseCase,
+            verifyCurrentPasswordUseCase,
+            getUserUseCase
+        )
+    }
+
+    fun provideUserInformationViewModel(
+        saveFriendUseCase: SaveFriendUseCase,
+        saveFriendRequestUseCase: SaveFriendRequestUseCase,
+        saveNotificationToDatabaseUseCase: SaveNotificationToDatabaseUseCase,
+        checkCalleeAvailableUseCase: CheckCalleeAvailableUseCase,
+        getUserUseCase: GetUserUseCase,
+        checkInternetConnectionUseCase: CheckInternetConnectionUseCase,
+        updateUserBackgroundUseCase: UpdateUserBackgroundUseCase
+    ): UserInformationViewModel {
+        return UserInformationViewModel(
+            saveFriendUseCase,
+            saveFriendRequestUseCase,
+            saveNotificationToDatabaseUseCase,
+            checkCalleeAvailableUseCase,
+            getUserUseCase,
+            checkInternetConnectionUseCase,
+            updateUserBackgroundUseCase
+        )
+    }
+
+    fun provideUpdateUserStringFieldUseCase(settingsRepository: SettingsRepository): UpdateUserStringFieldUseCase {
+        return UpdateUserStringFieldUseCase(settingsRepository)
+    }
+
+    fun provideCreatePollViewModel(createPollUseCase: CreatePollUseCase): CreatePollViewModel {
+        return CreatePollViewModel(createPollUseCase)
+    }
+
+    fun provideCreatePollUseCase(settingsRepository: SettingsRepository): CreatePollUseCase {
+        return CreatePollUseCase(settingsRepository)
+    }
+
+    fun providePollViewModel(
+        fetchPollUseCase: FetchPollUseCase,
+        loadMyVotesUseCase: LoadMyVotesUseCase,
+        submitVoteUseCase: SubmitVoteUseCase,
+        loadAllVotersUseCase: LoadAllVotersUseCase,
+        getUserUseCase: GetUserUseCase
+    ): PollViewModel {
+        return PollViewModel(
+            fetchPollUseCase,
+            loadMyVotesUseCase,
+            submitVoteUseCase,
+            loadAllVotersUseCase,
+            getUserUseCase
+        )
+    }
+
+    fun provideFetchPollUseCase(newsRepository: NewsRepository): FetchPollUseCase {
+        return FetchPollUseCase(newsRepository)
+    }
+
+    fun provideLoadMyVotesUseCase(newsRepository: NewsRepository): LoadMyVotesUseCase {
+        return LoadMyVotesUseCase(newsRepository)
+    }
+
+    fun provideLoadAllVotersUseCase(newsRepository: NewsRepository): LoadAllVotersUseCase {
+        return LoadAllVotersUseCase(newsRepository)
+    }
+
+    fun provideSubmitVoteUseCase(newsRepository: NewsRepository): SubmitVoteUseCase {
+        return SubmitVoteUseCase(newsRepository)
+
     }
 }

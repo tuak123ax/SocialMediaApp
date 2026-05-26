@@ -18,7 +18,9 @@ import com.minhtu.firesocialmedia.data.remote.dto.group.GroupSummaryDTO
 import com.minhtu.firesocialmedia.data.remote.dto.home.LatestNewsDTO
 import com.minhtu.firesocialmedia.data.remote.dto.news.NewsDTO
 import com.minhtu.firesocialmedia.data.remote.dto.notification.NotificationDTO
+import com.minhtu.firesocialmedia.data.remote.dto.settings.PollDTO
 import com.minhtu.firesocialmedia.data.remote.dto.settings.SessionItemDTO
+import com.minhtu.firesocialmedia.data.remote.dto.settings.security.IpInfoResponseDTO
 import com.minhtu.firesocialmedia.data.remote.dto.signin.SignInDTO
 import com.minhtu.firesocialmedia.data.remote.dto.user.UserDTO
 import com.minhtu.firesocialmedia.data.remote.service.database.DatabaseService
@@ -973,12 +975,49 @@ class AndroidDatabaseService(
         return AndroidDatabaseHelper.getLocalSessionId(appContext)
     }
 
+    override fun clearLocalSessionId() {
+        AndroidDatabaseHelper.clearLocalSessionId(appContext)
+    }
+
+    override suspend fun deleteLoginSession(
+        userId: String,
+        sessionId: String,
+        historyPath: String,
+        loginHistoryPath: String
+    ): Boolean {
+        return AndroidDatabaseHelper.deleteLoginSession(userId, sessionId, historyPath, loginHistoryPath)
+    }
+
+    override suspend fun logoutSession(
+        userId: String,
+        sessionId: String,
+        historyPath: String,
+        loginHistoryPath: String
+    ): Boolean {
+        return AndroidDatabaseHelper.logoutSession(userId, sessionId, historyPath, loginHistoryPath)
+    }
+
+    override fun observeSessionStatus(
+        userId: String,
+        sessionId: String,
+        historyPath: String,
+        loginHistoryPath: String,
+        onLoggedOut: () -> Unit
+    ) {
+        AndroidDatabaseHelper.observeSessionStatus(userId, sessionId, historyPath, loginHistoryPath, onLoggedOut)
+    }
+
+    override fun stopObserveSessionStatus() {
+        AndroidDatabaseHelper.stopObserveSessionStatus()
+    }
+
     override suspend fun saveLoginActivityInfo(
         userId: String,
+        locationInfo : IpInfoResponseDTO,
         historyPath: String,
         loginHistoryPath: String
     ) {
-        AndroidDatabaseHelper.saveLoginActivityInfo(appContext, userId, historyPath, loginHistoryPath)
+        AndroidDatabaseHelper.saveLoginActivityInfo(appContext, userId,locationInfo, historyPath, loginHistoryPath)
     }
 
     override suspend fun updateUserLongField(
@@ -988,5 +1027,68 @@ class AndroidDatabaseService(
         userPath: String
     ): Boolean {
         return AndroidDatabaseHelper.updateUserLongField(userId, fieldPath, value, userPath)
+    }
+
+    override suspend fun updateUserStringField(
+        userId: String,
+        fieldPath: String,
+        value: String,
+        userPath: String
+    ): Boolean {
+        return AndroidDatabaseHelper.updateUserStringField(userId, fieldPath, value, userPath)
+    }
+
+    override suspend fun updateUserAvatar(userId: String, imageUri: String, userPath: String): Boolean {
+        return AndroidDatabaseHelper.updateUserAvatar(userId, imageUri, userPath)
+    }
+
+    override suspend fun updateUserBackground(userId: String, imageUri: String, userPath: String): Boolean {
+        return AndroidDatabaseHelper.updateUserBackground(userId, imageUri, userPath)
+    }
+
+    override suspend fun createPoll(
+        poll: PollDTO,
+        pollPath: String,
+        groupPath: String,
+        groupId: String,
+        postsPath: String,
+        newsEntry: NewsDTO
+    ): Boolean {
+        return AndroidDatabaseHelper.createPoll(poll, pollPath, groupPath, groupId, postsPath, newsEntry)
+    }
+
+    override suspend fun deletePollFromDatabase(
+        newsId: String,
+        pollId: String,
+        groupPath: String,
+        groupId: String,
+        postsPath: String,
+        pollPath: String,
+        pollVotesPath: String
+    ): Boolean {
+        return AndroidDatabaseHelper.deletePollFromDatabase(newsId, pollId, groupPath, groupId, postsPath, pollPath, pollVotesPath)
+    }
+
+    override suspend fun fetchPoll(pollId: String, pollPath: String): PollDTO? {
+        return AndroidDatabaseHelper.fetchPoll(pollId, pollPath)
+    }
+
+    override suspend fun loadMyVotes(pollId: String, userId: String, pollVotesPath: String): List<Int> {
+        return AndroidDatabaseHelper.loadMyVotes(pollId, userId, pollVotesPath)
+    }
+
+    override suspend fun loadAllVoters(pollId: String, pollVotesPath: String): Map<String, List<Int>> {
+        return AndroidDatabaseHelper.loadAllVoters(pollId, pollVotesPath)
+    }
+
+    override suspend fun submitVote(
+        pollId: String,
+        userId: String,
+        selectedIndices: List<Int>,
+        previousIndices: List<Int>,
+        pollPath: String,
+        pollVotesPath: String
+    ): Boolean {
+        return AndroidDatabaseHelper.submitVote(pollId, userId, selectedIndices, previousIndices, pollPath, pollVotesPath)
     }
 }

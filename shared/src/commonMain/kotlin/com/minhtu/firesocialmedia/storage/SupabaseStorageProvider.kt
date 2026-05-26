@@ -19,14 +19,18 @@ object SupabaseStorageProvider : StorageProvider {
     internal const val BASE_URL =
         "https://pcklhkkafpomfvhboini.supabase.co/storage/v1/object/public/uploads/"
 
-    const val DEFAULT_AVATAR_URL        = "${BASE_URL}defaultavatars/arkavatar.png"
-    const val DEFAULT_DECADE_AVATAR_URL = "${BASE_URL}defaultavatars/decadeAvatar.png"
-    const val DEFAULT_GROUP_AVATAR_URL  = "${BASE_URL}defaultavatars/unknownavatar.png"
+    const val DEFAULT_AVATAR_URL        = "${BASE_URL}arkavatar.png"
+    const val DEFAULT_DECADE_AVATAR_URL = "${BASE_URL}decadeAvatar.png"
+    const val DEFAULT_GROUP_AVATAR_URL  = "${BASE_URL}unknownavatar.png"
 
     override fun resolveUrl(path: String): String {
         if (path.isEmpty()) return path
 
         return when {
+            // Supabase URL with the old defaultavatars/ sub-folder → rewrite to new flat path
+            path.contains("supabase.co") && path.contains("/defaultavatars/") ->
+                path.replace("/defaultavatars/", "/")
+
             // Already a Supabase URL → pass through unchanged
             path.contains("supabase.co") -> path
 

@@ -15,7 +15,6 @@ val adminBorderColor = Color(0xFFF3CFCB)
 val memberCardColor = Color(0xFFF5F7F9)
 val positiveBackgroundButtonColor = Color(0xFFFFE6E6)
 val positiveTintColor = Color(0xFFE53935)
-val loginBackgroundColor = Color(0xFF132026)
 val iconButtonBackgroundColor = Color(0xFFEEF2F7)
 val homeEditTextBackgroundColor = Color(0xFFF0F2F5)
 val blurLikeColor = Color(0xFF8E8E93)
@@ -24,6 +23,13 @@ val activeColor = Color(0xFFE53935)
 val inactiveColor = Color(0xFF2C2C2E)    // Dark surface (iOS-style)
 val iconActive = Color.White
 val iconInactive = Color.White
+
+// Call screen semantic colors — change here to update all accept/decline UI at once
+val callAcceptColor = Color(0xFF4CAF50)       // Green — universal "accept call" color
+val callAcceptOnColor = Color(0xFFFFFFFF)     // White — icon/text on accept button
+val callAcceptContainerColor = Color(0xFF4CAF50).copy(alpha = 0.15f) // Light green ring/bg
+val callStopPendingColor = Color(0xFF9E9E9E)  // Gray — stop/exit button while navigating away
+val videoCallButtonColor = Color(0xFF3A3A3C)  // Dark surface — default video call action button bg
 
 val PolicyRed = Color(0xFFE53935)
 val PolicyGrayTitle = Color(0xFF9E9E9E)

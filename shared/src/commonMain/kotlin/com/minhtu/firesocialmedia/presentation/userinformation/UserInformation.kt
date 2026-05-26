@@ -16,20 +16,21 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Call
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -47,7 +48,6 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
@@ -56,7 +56,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.minhtu.firesocialmedia.constants.Constants
 import com.minhtu.firesocialmedia.constants.TestTag
 import com.minhtu.firesocialmedia.data.remote.service.imagepicker.ImagePicker
@@ -84,6 +83,7 @@ class UserInformation {
             imagePicker: ImagePicker,
             user : UserInstance?,
             isCurrentUser : Boolean,
+            isFriend : Boolean = false,
             paddingValues: PaddingValues,
             localImageLoaderValue : ProvidedValue<*>,
             homeViewModel : HomeViewModel,
@@ -99,6 +99,10 @@ class UserInformation {
             CommonBackHandler {
                 onNavigateBack()
             }
+
+            // Register launcher so imagePicker.pickImage() works
+            imagePicker.RegisterLauncher { }
+
             val isLoading by loadingViewModel.isLoading.collectAsState()
             val coroutineScope = rememberCoroutineScope()
             val newsList = homeViewModel.allNews.collectAsState()
@@ -108,6 +112,20 @@ class UserInformation {
             val fetchedUser by userInformationViewModel.fetchedUser.collectAsState()
             var addFriendTimes by rememberSaveable { mutableStateOf(1) }
             var callButtonEnabled by remember { mutableStateOf(true) }
+            var showCoverPhotoConfirmDialog by remember { mutableStateOf(false) }
+            val backgroundUploadStatus by userInformationViewModel.backgroundUploadStatus.collectAsState()
+            // Show confirm dialog whenever a new cover photo is picked
+            LaunchedEffect(userInformationViewModel.coverPhoto) {
+                if (userInformationViewModel.coverPhoto != Constants.DEFAULT_AVATAR_URL && isCurrentUser) {
+                    showCoverPhotoConfirmDialog = true
+                }
+            }
+            LaunchedEffect(backgroundUploadStatus) {
+                backgroundUploadStatus?.let { success ->
+                    showToast(if (success) "Cover photo updated!" else "Failed to update cover photo.")
+                    userInformationViewModel.resetBackgroundUploadStatus()
+                }
+            }
             LaunchedEffect(Unit) {
                 if(user != null) {
                     loadingViewModel.showLoading()
@@ -190,7 +208,7 @@ class UserInformation {
             Box(modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .background(color = Color.White)) {
+                .background(color = MaterialTheme.colorScheme.background)) {
                 Column(
                     verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.Start
@@ -208,177 +226,198 @@ class UserInformation {
                     //Column contains user info and will be dismissed when scroll down
                     AnimatedVisibility(visible = isUserInfoVisible) {
                         Column {
-                            //Cover photo box
-                            Box(contentAlignment = Alignment.Center,
+                            //Cover photo + overlapping avatar in a single Box
+                            Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(10.dp)
-                                    .clip(RoundedCornerShape(10.dp))) {
+                                    .padding(bottom = 40.dp) // reserve space for avatar overhang
+                            ) {
                                 var showMenu by remember { mutableStateOf(false) }
                                 val coverPhotoModifier = Modifier
-                                    .height(200.dp)
+                                    .height(160.dp)
                                     .fillMaxWidth()
-                                    .clickable {
-                                        showMenu = true
-                                    }
+                                    .clickable { showMenu = true }
                                     .testTag(TestTag.TAG_COVER_PHOTO)
-                                    .semantics {
-                                        contentDescription = TestTag.TAG_COVER_PHOTO
+                                    .semantics { contentDescription = TestTag.TAG_COVER_PHOTO }
+
+                                // Cover photo
+                                val hasLocalPick = userInformationViewModel.coverPhoto != Constants.DEFAULT_AVATAR_URL
+                                if (hasLocalPick) {
+                                    val imageBytes = produceState<ByteArray?>(initialValue = null, userInformationViewModel.coverPhoto) {
+                                        value = imagePicker.loadImageBytes(userInformationViewModel.coverPhoto)
                                     }
-                                val imageBytes = produceState<ByteArray?>(
-                                    initialValue = null,
-                                    userInformationViewModel.coverPhoto
-                                ) {
-                                    value =
-                                        if (userInformationViewModel.coverPhoto == Constants.DEFAULT_AVATAR_URL) {
-                                            getImageBytesFromDrawable("unknownavatar")
-                                        } else {
-                                            imagePicker.loadImageBytes(userInformationViewModel.coverPhoto)
-                                        }
-                                }
-                                if (imageBytes.value != null) {
-                                    imagePicker.ByteArrayImage(
-                                        imageBytes.value,
-                                        modifier = coverPhotoModifier
-                                    )
-                                }
-                                DropdownMenuForCoverPhoto(
-                                    showMenu,
-                                    isCurrentUser,
-                                    { onNavigateToShowImageScreen(userInformationViewModel.coverPhoto) },
-                                    { imagePicker.pickImage() },
-                                    { showMenu = false })
-                            }
-                            //User avatar, name and button
-                            if(fetchedUser != null) {
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(horizontal = 10.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.SpaceBetween // Ensures spacing between name and buttons
-                                ) {
-                                    Column(
-                                        horizontalAlignment = Alignment.CenterHorizontally,
-                                        modifier = Modifier
-                                            .weight(1f)
-                                            .offset(y = (-50).dp) // Moves avatar & name up
-                                    ) {
-                                        // User avatar
-                                        CompositionLocalProvider(
-                                            localImageLoaderValue
-                                        ) {
+                                    if (imageBytes.value != null) {
+                                        imagePicker.ByteArrayImage(imageBytes.value, modifier = coverPhotoModifier)
+                                    }
+                                } else if (userInformationViewModel.uploadedBackgroundUri != null) {
+                                    // Show just-uploaded background from local URI
+                                    val imageBytes = produceState<ByteArray?>(initialValue = null, userInformationViewModel.uploadedBackgroundUri) {
+                                        value = imagePicker.loadImageBytes(userInformationViewModel.uploadedBackgroundUri!!)
+                                    }
+                                    if (imageBytes.value != null) {
+                                        imagePicker.ByteArrayImage(imageBytes.value, modifier = coverPhotoModifier)
+                                    }
+                                } else {
+                                    val remoteBackground = fetchedUser?.background?.takeIf { it.isNotBlank() }
+                                    if (remoteBackground != null) {
+                                        // Show remote background image
+                                        CompositionLocalProvider(localImageLoaderValue) {
                                             AutoSizeImage(
-                                                fetchedUser!!.image.toStorageUrl(),
-                                                contentDescription = "image",
+                                                remoteBackground.toStorageUrl(),
+                                                contentDescription = "Cover photo",
                                                 contentScale = ContentScale.Crop,
-                                                modifier = Modifier
-                                                    .size(100.dp)
-                                                    .clip(CircleShape)
-                                                    .border(
-                                                        2.dp,
-                                                        Color.White,
-                                                        CircleShape
-                                                    ) // Optional border for better appearance
-                                                    .testTag(TestTag.TAG_USER_AVATAR)
-                                                    .semantics {
-                                                        contentDescription = TestTag.TAG_USER_AVATAR
-                                                    }
+                                                modifier = coverPhotoModifier
                                             )
                                         }
-                                        Spacer(modifier = Modifier.height(10.dp)) // Space between avatar and name
-                                        // User name with max width & ellipsis
-                                        Text(
-                                            text = fetchedUser!!.name,
-                                            color = Color.Black,
-                                            fontSize = 20.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            textAlign = TextAlign.Center,
-                                            modifier = Modifier.widthIn(max = 150.dp), // Restrict width to avoid touching buttons
-                                            overflow = TextOverflow.Ellipsis, // Add "..." if too long
-                                            maxLines = 1
+                                    } else {
+                                        // No background set — show placeholder
+                                        val imageBytes = produceState<ByteArray?>(initialValue = null) {
+                                            value = getImageBytesFromDrawable("unknownavatar")
+                                        }
+                                        if (imageBytes.value != null) {
+                                            imagePicker.ByteArrayImage(imageBytes.value, modifier = coverPhotoModifier)
+                                        }
+                                    }
+                                }
+
+                                val coverUrlForView = when {
+                                    hasLocalPick -> userInformationViewModel.coverPhoto
+                                    userInformationViewModel.uploadedBackgroundUri != null -> userInformationViewModel.uploadedBackgroundUri!!
+                                    else -> fetchedUser?.background?.takeIf { it.isNotBlank() } ?: ""
+                                }
+                                DropdownMenuForCoverPhoto(
+                                    showMenu, isCurrentUser,
+                                    coverUrl = coverUrlForView,
+                                    { onNavigateToShowImageScreen(coverUrlForView) },
+                                    { imagePicker.pickImage() },
+                                    { showMenu = false }
+                                )
+
+                                // Avatar pinned to bottom-center, half overlapping cover photo
+                                if (fetchedUser != null) {
+                                    CompositionLocalProvider(localImageLoaderValue) {
+                                        AutoSizeImage(
+                                            fetchedUser!!.image.toStorageUrl(),
+                                            contentDescription = "image",
+                                            contentScale = ContentScale.Crop,
+                                            modifier = Modifier
+                                                .size(80.dp)
+                                                .align(Alignment.BottomCenter)
+                                                .offset(y = 40.dp)
+                                                .clip(CircleShape)
+                                                .border(3.dp, MaterialTheme.colorScheme.background, CircleShape)
+                                                .testTag(TestTag.TAG_USER_AVATAR)
+                                                .semantics { contentDescription = TestTag.TAG_USER_AVATAR }
                                         )
                                     }
+                                }
+                            }
 
-                                    // Move buttons up by adjusting offset(y = -20.dp)
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        modifier = Modifier.offset(y = (-20).dp) // Moves buttons up
-                                    ) {
-                                        // Chat button
-//                            IconButton(
-//                                onClick = { /* Handle click */ },
-//                                modifier = Modifier.Companion.border(
-//                                    1.dp,
-//                                    Color.Companion.Black,
-//                                    CircleShape
-//                                )
-//                            ) {
-//                                Icon(
-//                                    imageVector = Icons.Default.Message,
-//                                    contentDescription = "Chat",
-//                                    tint = Color.Companion.Gray
-//                                )
-//                            }
+                            // Name + status + buttons below cover photo
+                            if (fetchedUser != null) {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(top = 8.dp, bottom = 8.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    // Name
+                                    Text(
+                                        text = fetchedUser!!.name,
+                                        style = MaterialTheme.typography.titleLarge,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onBackground,
+                                        textAlign = TextAlign.Center,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                        modifier = Modifier.padding(horizontal = 48.dp)
+                                    )
 
-                                        //Call button
-                                        if(!isCurrentUser) {
-                                            IconButton(
-                                                enabled = callButtonEnabled,
+                                    // Status
+                                    if (fetchedUser!!.status.isNotBlank()) {
+                                        Spacer(modifier = Modifier.height(2.dp))
+                                        var statusExpanded by remember { mutableStateOf(false) }
+                                        val statusText = fetchedUser!!.status
+                                        val truncated = !statusExpanded && statusText.length > 80
+                                        Column(
+                                            horizontalAlignment = Alignment.CenterHorizontally,
+                                            modifier = Modifier.padding(horizontal = 32.dp)
+                                        ) {
+                                            Text(
+                                                text = if (truncated) "${statusText.take(80)}…" else statusText,
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                textAlign = TextAlign.Center,
+                                            )
+                                            if (statusText.length > 80) {
+                                                Text(
+                                                    text = if (statusExpanded) "See less" else "See more",
+                                                    style = MaterialTheme.typography.labelSmall,
+                                                    color = MaterialTheme.colorScheme.primary,
+                                                    modifier = Modifier
+                                                        .padding(top = 1.dp)
+                                                        .clickable { statusExpanded = !statusExpanded }
+                                                )
+                                            }
+                                        }
+                                    }
+
+                                    // Action buttons
+                                    if (!isCurrentUser) {
+                                        Spacer(modifier = Modifier.height(10.dp))
+                                        Row(
+                                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Surface(
                                                 onClick = {
-                                                    if(callButtonEnabled) {
-                                                        callButtonEnabled = false
-                                                        coroutineScope.launch {
-                                                            val networkStatus = userInformationViewModel.checkInternetConnection()
-                                                            if(networkStatus) {
-                                                                userInformationViewModel.checkCalleeAvailable(fetchedUser!!)
-                                                            } else {
-                                                                showToast("No internet, please recheck your network!")
-                                                                callButtonEnabled = true
+                                                    if (callButtonEnabled) {
+                                                        if(isFriend) {
+                                                            callButtonEnabled = false
+                                                            coroutineScope.launch {
+                                                                val networkStatus = userInformationViewModel.checkInternetConnection()
+                                                                if (networkStatus) {
+                                                                    userInformationViewModel.checkCalleeAvailable(fetchedUser!!)
+                                                                } else {
+                                                                    showToast("No internet, please recheck your network!")
+                                                                    callButtonEnabled = true
+                                                                }
                                                             }
+                                                        } else {
+                                                            showToast("You can only call your friends!")
                                                         }
                                                     }
                                                 },
-                                                modifier = Modifier.border(
-                                                    1.dp,
-                                                    Color.Black,
-                                                    CircleShape
-                                                )
+                                                enabled = callButtonEnabled,
+                                                shape = RoundedCornerShape(50),
+                                                color = MaterialTheme.colorScheme.secondaryContainer,
+                                                shadowElevation = 2.dp,
+                                                modifier = Modifier.size(40.dp)
                                             ) {
-                                                Icon(
-                                                    imageVector = Icons.Default.Call,
-                                                    contentDescription = "Call",
-                                                    tint = Color.Gray
-                                                )
+                                                Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+                                                    Icon(
+                                                        imageVector = Icons.Default.Call,
+                                                        contentDescription = "Call",
+                                                        tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                                                        modifier = Modifier.size(18.dp)
+                                                    )
+                                                }
                                             }
 
-                                            Spacer(modifier = Modifier.width(8.dp)) // Space between buttons
-
-                                            // Add friend button
                                             var showMenu by remember { mutableStateOf(false) }
                                             Surface(
                                                 onClick = {
                                                     coroutineScope.launch {
-                                                        val networkStatus =
-                                                            userInformationViewModel.checkInternetConnection()
-
+                                                        val networkStatus = userInformationViewModel.checkInternetConnection()
                                                         if (networkStatus) {
                                                             if (addFriendStatus != Relationship.WAITING_RESPONSE) {
-                                                                val relationship =
-                                                                    userInformationViewModel.checkRelationship(
-                                                                        fetchedUser!!,
-                                                                        homeViewModel.currentUser!!
-                                                                    )
+                                                                val relationship = userInformationViewModel.checkRelationship(fetchedUser!!, homeViewModel.currentUser!!)
                                                                 userInformationViewModel.updateRelationship(relationship)
-
                                                                 if (relationship == Relationship.NONE && addFriendTimes <= 0) {
                                                                     showToast("You only can add friend once when you go to this page!!!")
                                                                 } else {
                                                                     addFriendTimes -= 1
-                                                                    userInformationViewModel.clickAddFriendButton(
-                                                                        friend = fetchedUser,
-                                                                        currentUser = homeViewModel.currentUser
-                                                                    )
+                                                                    userInformationViewModel.clickAddFriendButton(friend = fetchedUser, currentUser = homeViewModel.currentUser)
                                                                 }
                                                             } else {
                                                                 showMenu = true
@@ -388,15 +427,12 @@ class UserInformation {
                                                         }
                                                     }
                                                 },
-                                                modifier = Modifier.width(140.dp),
-                                                shape = RoundedCornerShape(20.dp),
+                                                shape = RoundedCornerShape(50),
                                                 color = MaterialTheme.colorScheme.primary,
-                                                shadowElevation = 6.dp
+                                                shadowElevation = 4.dp,
+                                                modifier = Modifier.height(40.dp).widthIn(min = 130.dp)
                                             ) {
-                                                Box(
-                                                    contentAlignment = Alignment.Center,
-                                                    modifier = Modifier.padding(vertical = 10.dp)
-                                                ) {
+                                                Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(horizontal = 16.dp)) {
                                                     Text(
                                                         text = when (addFriendStatus) {
                                                             Relationship.FRIEND -> "Unfriend"
@@ -405,18 +441,11 @@ class UserInformation {
                                                             Relationship.WAITING_RESPONSE -> "Response"
                                                             else -> "Unknown"
                                                         },
-                                                        color = Color.White,
-                                                        maxLines = 1,
-                                                        textAlign = TextAlign.Center
+                                                        color = MaterialTheme.colorScheme.onPrimary,
+                                                        style = MaterialTheme.typography.labelLarge,
+                                                        maxLines = 1
                                                     )
-
-                                                    DropdownMenuForResponse(
-                                                        showMenu,
-                                                        friendViewModel,
-                                                        userInformationViewModel,
-                                                        fetchedUser!!,
-                                                        homeViewModel.currentUser!!
-                                                    ) { showMenu = false }
+                                                    DropdownMenuForResponse(showMenu, friendViewModel, userInformationViewModel, fetchedUser!!, homeViewModel.currentUser!!) { showMenu = false }
                                                 }
                                             }
                                         }
@@ -460,8 +489,37 @@ class UserInformation {
                         }
                     )
                 }
-                if(showBottomSheet) {
-                    UiUtils.ShareBottomSheet(
+                // Cover photo change confirmation dialog
+                if (showCoverPhotoConfirmDialog) {
+                    AlertDialog(
+                        onDismissRequest = {
+                            showCoverPhotoConfirmDialog = false
+                            userInformationViewModel.updateCover(Constants.DEFAULT_AVATAR_URL) // discard pick
+                        },
+                        title = { Text("Change Cover Photo") },
+                        text = { Text("Are you sure you want to set this as your new cover photo?") },
+                        confirmButton = {
+                            Button(onClick = {
+                                showCoverPhotoConfirmDialog = false
+                                if (fetchedUser != null) {
+                                    userInformationViewModel.uploadBackground(fetchedUser!!.uid)
+                                }
+                            }) {
+                                Text("Save")
+                            }
+                        },
+                        dismissButton = {
+                            TextButton(onClick = {
+                                showCoverPhotoConfirmDialog = false
+                                userInformationViewModel.updateCover(Constants.DEFAULT_AVATAR_URL) // discard pick
+                            }) {
+                                Text("Cancel")
+                            }
+                        },
+                        shape = RoundedCornerShape(20.dp)
+                    )
+                }
+                if(showBottomSheet) {                    UiUtils.ShareBottomSheet(
                         deepLink = "https://firechat-aa433.web.app/news/${newToBeShared?.id}",
                         onDismiss = {
                             showBottomSheet = false
@@ -527,6 +585,7 @@ class UserInformation {
         @Composable
         fun DropdownMenuForCoverPhoto(expanded : Boolean,
                                       isCurrentUser : Boolean,
+                                      coverUrl: String,
                                       onViewCoverPhoto : () -> Unit,
                                       onChangeCoverPhoto : () -> Unit,
                                       onDismissRequest: () -> Unit) {
@@ -534,22 +593,24 @@ class UserInformation {
                 expanded = expanded,
                 onDismissRequest = onDismissRequest
             ) {
-                DropdownMenuItem(
-                    text = { Text("View cover photo") },
-                    onClick = {
-                        onViewCoverPhoto()
-                        onDismissRequest()
-                    }
-                )
-//                if(isCurrentUser) {
-//                    DropdownMenuItem(
-//                        text = { Text("Change cover photo") },
-//                        onClick = {
-//                            onChangeCoverPhoto()
-//                            onDismissRequest()
-//                        }
-//                    )
-//                }
+                if (coverUrl.isNotBlank()) {
+                    DropdownMenuItem(
+                        text = { Text("View cover photo") },
+                        onClick = {
+                            onViewCoverPhoto()
+                            onDismissRequest()
+                        }
+                    )
+                }
+                if(isCurrentUser) {
+                    DropdownMenuItem(
+                        text = { Text("Change cover photo") },
+                        onClick = {
+                            onChangeCoverPhoto()
+                            onDismissRequest()
+                        }
+                    )
+                }
             }
         }
     }

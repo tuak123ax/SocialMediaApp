@@ -111,7 +111,7 @@ class SecuritySettings {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color.White)
+                    .background(MaterialTheme.colorScheme.background)
                     .padding(paddingValues)
             ) {
 
@@ -123,7 +123,7 @@ class SecuritySettings {
                     navigateBack = { onNavigateBack() }
                 )
 
-                Divider(color = Color(0xFFF0F0F0))
+                Divider(color = MaterialTheme.colorScheme.outlineVariant)
 
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
@@ -245,7 +245,7 @@ class SecuritySettings {
                         Text(
                             text = it,
                             style = MaterialTheme.typography.bodySmall,
-                            color = Color.Gray
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
@@ -253,7 +253,7 @@ class SecuritySettings {
                 Icon(
                     imageVector = Icons.Default.ChevronRight,
                     contentDescription = null,
-                    tint = Color.LightGray
+                    tint = MaterialTheme.colorScheme.outline
                 )
             }
         }
@@ -281,7 +281,7 @@ class SecuritySettings {
                     Text(
                         text = subtitle,
                         style = MaterialTheme.typography.bodySmall,
-                        color = Color.Gray
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
 
@@ -289,8 +289,8 @@ class SecuritySettings {
                     checked = checked,
                     onCheckedChange = onCheckedChange,
                     colors = SwitchDefaults.colors(
-                        checkedThumbColor = Color.White,
-                        checkedTrackColor = Color(0xFFFF3B30)
+                        checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
+                        checkedTrackColor = MaterialTheme.colorScheme.primary
                     )
                 )
             }
@@ -303,7 +303,7 @@ class SecuritySettings {
                 modifier = Modifier
                     .size(40.dp)
                     .clip(CircleShape)
-                    .background(Color(0xFFF3F3F3))
+                    .background(MaterialTheme.colorScheme.surfaceVariant)
             ) {
                 Icon(icon,
                     contentDescription = null)

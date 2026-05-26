@@ -4,6 +4,9 @@ import android.content.Context
 import androidx.room.Room.databaseBuilder
 import com.minhtu.firesocialmedia.core.connectivity.NetworkMonitorImpl
 import com.minhtu.firesocialmedia.data.local.room.LocalDatabase
+import com.minhtu.firesocialmedia.data.local.room.MIGRATION_7_8
+import com.minhtu.firesocialmedia.data.local.room.MIGRATION_8_9
+import com.minhtu.firesocialmedia.data.local.room.MIGRATION_9_10
 import com.minhtu.firesocialmedia.data.local.service.crypto.CryptoService
 import com.minhtu.firesocialmedia.data.local.service.room.RoomService
 import com.minhtu.firesocialmedia.data.remote.service.auth.AuthService
@@ -18,7 +21,9 @@ import com.minhtu.firesocialmedia.domain.serviceimpl.clipboard.AndroidClipboardS
 import com.minhtu.firesocialmedia.domain.serviceimpl.crypto.AndroidCryptoService
 import com.minhtu.firesocialmedia.domain.serviceimpl.database.AndroidDatabaseService
 import com.minhtu.firesocialmedia.domain.serviceimpl.database.supabase.SupabaseStorageHelper
+import com.minhtu.firesocialmedia.data.remote.service.security.IpInfoRemoteDataSource
 import com.minhtu.firesocialmedia.domain.serviceimpl.room.AndroidRoomService
+import com.minhtu.firesocialmedia.platform.AppConfig
 
 class AndroidPlatformContext(
     context : Context,
@@ -29,7 +34,7 @@ class AndroidPlatformContext(
             context.applicationContext,
             LocalDatabase::class.java,
             "RoomLocalDatabase"
-        ).fallbackToDestructiveMigration(true).build()
+        ).addMigrations(MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10).build()
     }
     override val auth: AuthService = AndroidAuthService(context)
     override val crypto: CryptoService = AndroidCryptoService(context)
@@ -44,4 +49,8 @@ class AndroidPlatformContext(
         localDatabase.commentDao()
     )
     override val networkMonitor: NetworkMonitor = NetworkMonitorImpl(context)
+    override val ipRemoteDataSource: IpInfoRemoteDataSource = IpInfoRemoteDataSource(
+        createHttpClient(),
+        AppConfig.ipInfoApiKey
+    )
 }

@@ -48,6 +48,7 @@ import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.platform.CommonBackHandler
 import com.minhtu.firesocialmedia.platform.CrossPlatformIcon
 import com.minhtu.firesocialmedia.platform.showToast
+import com.minhtu.firesocialmedia.platform.toHex
 import com.minhtu.firesocialmedia.presentation.search.Search
 import com.minhtu.firesocialmedia.presentation.search.SearchViewModel
 import com.minhtu.firesocialmedia.storage.toStorageUrl
@@ -84,7 +85,7 @@ class SelectGroup {
                 ) {
                     Text(
                         text = "My Groups",
-                        color = Color.Black,
+                        color = MaterialTheme.colorScheme.onBackground,
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                         textAlign = TextAlign.Start
@@ -103,13 +104,13 @@ class SelectGroup {
                         modifier = Modifier
                             .size(32.dp)
                     ) {
-                        Icon(Icons.Default.Add, contentDescription = "Add", tint = Color.Red)
+                        Icon(Icons.Default.Add, contentDescription = "Add", tint = MaterialTheme.colorScheme.onPrimaryContainer)
                     }
                 }
                 HorizontalDivider(
                     modifier = Modifier.fillMaxWidth().padding(vertical = 20.dp),
                     thickness = 1.dp,
-                    color = Color.LightGray
+                    color = MaterialTheme.colorScheme.outlineVariant
                 )
                 Search.SearchBar(
                     query = searchViewModel.query,
@@ -149,7 +150,7 @@ class SelectGroup {
 
                 Text(
                     text = "ALL GROUPS",
-                    color = Color.Gray,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier
                         .fillMaxWidth()
@@ -210,16 +211,16 @@ class SelectGroup {
                 }
                 Text(
                     text = group.name,
-                    color = Color.Black,
+                    color = MaterialTheme.colorScheme.onSurface,
                     fontWeight = FontWeight.Bold,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.padding(horizontal = 10.dp))
                 Spacer(Modifier.weight(1f))
                 CrossPlatformIcon(
                     icon = "right_arrow",
-                    backgroundColor = "#00FFFFFF",
+                    backgroundColor = MaterialTheme.colorScheme.surface.toHex(),
                     contentDescription = "right_arrow",
-                    tint = Color.LightGray,
+                    tint = MaterialTheme.colorScheme.outline,
                     modifier = Modifier
                         .size(20.dp)
                 )

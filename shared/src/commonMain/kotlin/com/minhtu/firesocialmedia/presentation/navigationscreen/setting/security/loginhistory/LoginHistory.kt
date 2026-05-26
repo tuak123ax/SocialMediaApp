@@ -6,11 +6,13 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -25,7 +27,11 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.DeleteOutline
+import androidx.compose.material.icons.filled.Logout
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PhoneAndroid
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Button
@@ -34,25 +40,35 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.minhtu.firesocialmedia.domain.entity.settings.SessionItem
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.platform.convertTimeToDateString
+import com.minhtu.firesocialmedia.platform.showToast
+import com.minhtu.firesocialmedia.utils.PasswordVerifyDialog
 import com.minhtu.firesocialmedia.utils.UiUtils
 
 class LoginHistory {
@@ -66,6 +82,29 @@ class LoginHistory {
         ) {
             val loginHistoryStatus by loginHistoryViewModel.loginHistoryUiState.collectAsState()
             val acknowledgeStatus by loginHistoryViewModel.acknowledgeStatus.collectAsState()
+            val logoutSessionStatus by loginHistoryViewModel.logoutSessionStatus.collectAsState()
+
+            // Password verification state for logout action
+            var showLogoutPasswordDialog by remember { mutableStateOf(false) }
+            var pendingLogoutSession by remember { mutableStateOf<SessionItem?>(null) }
+
+            // Password verification state for delete history action
+            var showDeletePasswordDialog by remember { mutableStateOf(false) }
+            var pendingDeleteSession by remember { mutableStateOf<SessionItem?>(null) }
+
+            LaunchedEffect(logoutSessionStatus) {
+                when (logoutSessionStatus) {
+                    LogoutSessionStatus.WRONG_PASSWORD -> {
+                        showToast("Incorrect password. Please try again.")
+                        loginHistoryViewModel.resetLogoutSessionStatus()
+                    }
+                    LogoutSessionStatus.ERROR -> {
+                        showToast("Failed to log out session. Please try again.")
+                        loginHistoryViewModel.resetLogoutSessionStatus()
+                    }
+                    else -> Unit
+                }
+            }
 
             LaunchedEffect(acknowledgeStatus) {
                 if (acknowledgeStatus == AcknowledgeStatus.SUCCESS) {
@@ -78,6 +117,7 @@ class LoginHistory {
             val deviceCount = when (loginHistoryStatus) {
                 is LoginHistoryUiState.Success ->
                     (loginHistoryStatus as LoginHistoryUiState.Success).data.size
+
                 else -> 0
             }
 
@@ -105,7 +145,7 @@ class LoginHistory {
                             title = "Login History",
                             navigateBack = onNavigateBack
                         )
-                        Divider(color = Color(0xFFF0F0F0))
+                        Divider(color = MaterialTheme.colorScheme.outlineVariant)
                     }
 
                     item {
@@ -127,7 +167,10 @@ class LoginHistory {
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Text("Active Sessions", style = MaterialTheme.typography.titleMedium)
-                            Text("$deviceCount Devices", style = MaterialTheme.typography.bodyMedium)
+                            Text(
+                                "$deviceCount Devices",
+                                style = MaterialTheme.typography.bodyMedium
+                            )
                         }
                     }
 
@@ -149,7 +192,16 @@ class LoginHistory {
                                     .sortedByDescending { it.time }
 
                             items(sessions) { session ->
-                                SessionCard(session)
+                                SessionCard(session,
+                                    onLogout = { s ->
+                                        pendingLogoutSession = s
+                                        showLogoutPasswordDialog = true
+                                    },
+                                    onDelete = { s ->
+                                        pendingDeleteSession = s
+                                        showDeletePasswordDialog = true
+                                    }
+                                )
                             }
                         }
 
@@ -181,9 +233,9 @@ class LoginHistory {
 
                     item {
                         val buttonColor = when (acknowledgeStatus) {
-                            AcknowledgeStatus.SUCCESS -> Color(0xFF43A047)
-                            AcknowledgeStatus.ERROR   -> Color(0xFFEF5350)
-                            else                      -> Color(0xFFE53935)
+                            AcknowledgeStatus.SUCCESS -> MaterialTheme.colorScheme.tertiary
+                            AcknowledgeStatus.ERROR -> MaterialTheme.colorScheme.error
+                            else -> MaterialTheme.colorScheme.error
                         }
 
                         Button(
@@ -199,48 +251,99 @@ class LoginHistory {
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = buttonColor,
                                 disabledContainerColor = buttonColor,
-                                disabledContentColor = Color.White
+                                disabledContentColor = MaterialTheme.colorScheme.onPrimary
                             ),
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             when (acknowledgeStatus) {
                                 AcknowledgeStatus.LOADING -> {
                                     CircularProgressIndicator(
-                                        color = Color.White,
+                                        color = MaterialTheme.colorScheme.onPrimary,
                                         strokeWidth = 2.dp,
                                         modifier = Modifier.size(18.dp)
                                     )
                                     Spacer(Modifier.width(8.dp))
-                                    Text("Saving...", color = Color.White)
+                                    Text("Saving...", color = MaterialTheme.colorScheme.onPrimary)
                                 }
+
                                 AcknowledgeStatus.SUCCESS -> {
                                     Icon(
                                         Icons.Default.CheckCircle,
                                         contentDescription = null,
-                                        tint = Color.White,
+                                        tint = MaterialTheme.colorScheme.onPrimary,
                                         modifier = Modifier.size(18.dp)
                                     )
                                     Spacer(Modifier.width(8.dp))
-                                    Text("Acknowledged!", color = Color.White, fontWeight = FontWeight.Bold)
+                                    Text(
+                                        "Acknowledged!",
+                                        color = MaterialTheme.colorScheme.onPrimary,
+                                        fontWeight = FontWeight.Bold
+                                    )
                                 }
+
                                 AcknowledgeStatus.ERROR -> {
                                     Icon(
                                         Icons.Default.Warning,
                                         contentDescription = null,
-                                        tint = Color.White,
+                                        tint = MaterialTheme.colorScheme.onPrimary,
                                         modifier = Modifier.size(18.dp)
                                     )
                                     Spacer(Modifier.width(8.dp))
-                                    Text("Failed. Tap to retry", color = Color.White)
+                                    Text(
+                                        "Failed. Tap to retry",
+                                        color = MaterialTheme.colorScheme.onPrimary
+                                    )
                                 }
+
                                 else -> {
-                                    Text("I'm aware of all sessions", color = Color.White)
+                                    Text(
+                                        "I'm aware of all sessions",
+                                        color = MaterialTheme.colorScheme.onPrimary
+                                    )
                                 }
                             }
                         }
                         Spacer(Modifier.height(16.dp))
                     }
                 }
+            }
+
+            // Password verify dialog — shown before logging out another session
+            if (showLogoutPasswordDialog) {
+                PasswordVerifyDialog(
+                    title = "Verify Your Identity",
+                    message = "Enter your password to log out this session.",
+                    onConfirm = { password ->
+                        showLogoutPasswordDialog = false
+                        pendingLogoutSession?.let { s ->
+                            loginHistoryViewModel.logoutSession(currentUser.uid, currentUser.email, password, s.sessionId)
+                        }
+                        pendingLogoutSession = null
+                    },
+                    onDismiss = {
+                        showLogoutPasswordDialog = false
+                        pendingLogoutSession = null
+                    }
+                )
+            }
+
+            // Password verify dialog — shown before deleting session history
+            if (showDeletePasswordDialog) {
+                PasswordVerifyDialog(
+                    title = "Verify Your Identity",
+                    message = "Enter your password to delete this session history.",
+                    onConfirm = { password ->
+                        showDeletePasswordDialog = false
+                        pendingDeleteSession?.let { s ->
+                            loginHistoryViewModel.deleteLoginSession(currentUser.uid, currentUser.email, password, s.sessionId)
+                        }
+                        pendingDeleteSession = null
+                    },
+                    onDismiss = {
+                        showDeletePasswordDialog = false
+                        pendingDeleteSession = null
+                    }
+                )
             }
         }
 
@@ -261,7 +364,7 @@ class LoginHistory {
                     Icon(
                         Icons.Default.Warning,
                         contentDescription = null,
-                        tint = Color.Red
+                        tint = MaterialTheme.colorScheme.error
                     )
 
                     Spacer(Modifier.width(12.dp))
@@ -278,11 +381,19 @@ class LoginHistory {
         }
 
         @Composable
-        fun SessionCard(session: SessionItem) {
+        fun SessionCard(
+            session: SessionItem,
+            onLogout: ((SessionItem) -> Unit)? = null,
+            onDelete: ((SessionItem) -> Unit)? = null
+        ) {
+            var menuExpanded by remember { mutableStateOf(false) }
+
             Card(
-                shape = RoundedCornerShape(16.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 5.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White)
+                shape = RoundedCornerShape(18.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                )
             ) {
                 Row(
                     modifier = Modifier
@@ -290,59 +401,132 @@ class LoginHistory {
                         .padding(16.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-
-                    Icon(
-                        imageVector = Icons.Default.PhoneAndroid,
-                        contentDescription = null,
-                        modifier = Modifier.size(32.dp)
-                    )
+                    Surface(
+                        shape = CircleShape,
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.PhoneAndroid,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier
+                                .padding(10.dp)
+                                .size(24.dp)
+                        )
+                    }
 
                     Spacer(Modifier.width(12.dp))
 
                     Column(modifier = Modifier.weight(1f)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(session.deviceName, fontWeight = FontWeight.SemiBold)
+                            Text(
+                                text = session.deviceName,
+                                fontWeight = FontWeight.SemiBold,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.weight(1f, fill = false)
+                            )
 
                             if (session.current) {
-                                Spacer(Modifier.width(8.dp))
-                                Badge(text = "CURRENT")
+                                Spacer(Modifier.width(6.dp))
+                                CurrentBadge(text = "CURRENT")
+                            } else if (session.status == "LOGOUT") {
+                                Spacer(Modifier.width(6.dp))
+                                CurrentBadge(text = "LOGGED OUT")
                             }
                         }
 
-                        Text(session.location, style = MaterialTheme.typography.bodySmall)
+                        Spacer(Modifier.height(6.dp))
 
-                        if (session.activeNow) {
-                            Text(
-                                "Active now",
-                                color = Color.Red,
-                                style = MaterialTheme.typography.bodySmall
-                            )
-                        } else {
-                            Text(convertTimeToDateString(session.time), style = MaterialTheme.typography.bodySmall)
-                        }
+                        Text(
+                            text = session.location,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+
+                        Spacer(Modifier.height(4.dp))
+
+                        Text(
+                            text = if (session.activeNow) {
+                                "Active now"
+                            } else {
+                                convertTimeToDateString(session.time)
+                            },
+                            color = if (session.activeNow) {
+                                MaterialTheme.colorScheme.error
+                            } else {
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                            },
+                            style = MaterialTheme.typography.bodySmall,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
                     }
 
-                    // Comment out sign out feature, will support on next version
-//                    if (!session.isCurrent) {
-//                        TextButton(onClick = { }) {
-//                            Text("Log out", color = Color.Red)
-//                        }
-//                    }
+                    Box {
+                        IconButton(onClick = { menuExpanded = true }) {
+                            Icon(
+                                imageVector = Icons.Default.MoreVert,
+                                contentDescription = "Session actions"
+                            )
+                        }
+
+                        DropdownMenu(
+                            expanded = menuExpanded,
+                            onDismissRequest = { menuExpanded = false }
+                        ) {
+                        if (!session.current && session.status != "LOGOUT" && onLogout != null) {
+                                DropdownMenuItem(
+                                    text = { Text("Log out", color = MaterialTheme.colorScheme.error) },
+                                    leadingIcon = {
+                                        Icon(
+                                            imageVector = Icons.Default.Logout,
+                                            contentDescription = null,
+                                            tint = MaterialTheme.colorScheme.error
+                                        )
+                                    },
+                                    onClick = {
+                                        menuExpanded = false
+                                        onLogout(session)
+                                    }
+                                )
+                            }
+
+                            if (onDelete != null) {
+                                DropdownMenuItem(
+                                    text = { Text("Delete history") },
+                                    leadingIcon = {
+                                        Icon(
+                                            imageVector = Icons.Default.DeleteOutline,
+                                            contentDescription = null,
+                                            tint = MaterialTheme.colorScheme.error
+                                        )
+                                    },
+                                    onClick = {
+                                        menuExpanded = false
+                                        onDelete(session)
+                                    }
+                                )
+                            }
+                        }
+                    }
                 }
             }
         }
 
         @Composable
-        fun Badge(text: String) {
+        fun CurrentBadge(text: String) {
             Box(
                 modifier = Modifier
                     .clip(RoundedCornerShape(50))
-                    .background(Color.Red.copy(alpha = 0.1f))
+                    .background(MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.4f))
                     .padding(horizontal = 8.dp, vertical = 2.dp)
             ) {
                 Text(
                     text,
-                    color = Color.Red,
+                    color = MaterialTheme.colorScheme.error,
                     style = MaterialTheme.typography.labelSmall
                 )
             }
@@ -352,7 +536,7 @@ class LoginHistory {
         fun SecureAccountCard() {
             Card(
                 shape = RoundedCornerShape(24.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFFE53935)),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.error),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(
@@ -360,7 +544,7 @@ class LoginHistory {
                 ) {
                     Text(
                         "Secure account",
-                        color = Color.White,
+                        color = MaterialTheme.colorScheme.onError,
                         style = MaterialTheme.typography.titleMedium
                     )
 
@@ -368,7 +552,7 @@ class LoginHistory {
 
                     Text(
                         "Instantly terminate all sessions except this device.",
-                        color = Color.White.copy(alpha = 0.8f),
+                        color = MaterialTheme.colorScheme.onError.copy(alpha = 0.8f),
                         style = MaterialTheme.typography.bodySmall
                     )
 
@@ -377,8 +561,8 @@ class LoginHistory {
                     Button(
                         onClick = { },
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = Color.White,
-                            contentColor = Color.Red
+                            containerColor = MaterialTheme.colorScheme.onError,
+                            contentColor = MaterialTheme.colorScheme.error
                         ),
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(50)
@@ -395,7 +579,7 @@ class LoginHistory {
 
             Card(
                 shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White)
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
             ) {
                 Row(
                     modifier = Modifier
@@ -444,9 +628,9 @@ class LoginHistory {
 
             return Brush.linearGradient(
                 colors = listOf(
-                    Color.LightGray.copy(alpha = 0.6f),
-                    Color.LightGray.copy(alpha = 0.2f),
-                    Color.LightGray.copy(alpha = 0.6f)
+                    MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
+                    MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f),
+                    MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)
                 ),
                 start = Offset(translateAnim.value - 200f, 0f),
                 end = Offset(translateAnim.value, 0f)
@@ -454,11 +638,7 @@ class LoginHistory {
         }
 
         @Composable
-        fun SkeletonLine(
-            width: Dp,
-            height: Dp = 12.dp,
-            brush: Brush
-        ) {
+        fun SkeletonLine(width: Dp, height: Dp = 12.dp, brush: Brush) {
             Box(
                 modifier = Modifier
                     .height(height)

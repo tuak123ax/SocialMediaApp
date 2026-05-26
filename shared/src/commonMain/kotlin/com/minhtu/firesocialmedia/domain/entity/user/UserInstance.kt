@@ -5,7 +5,8 @@ import com.minhtu.firesocialmedia.domain.entity.notification.NotificationInstanc
 import com.minhtu.firesocialmedia.domain.entity.notification.toMap
 
 data class UserInstance(var email: String = "", var image: String = "", var name: String = "",
-                        var status: String = "", var token: String = "", var uid: String = "",
+                        var status: String = "", var phone: String = "", var token: String = "", var uid: String = "",
+                        var background: String = "",
                         var likedPosts: HashMap<String,Int> = HashMap(),
                         var friendRequests : ArrayList<String> = ArrayList(),
                         var notifications : ArrayList<NotificationInstance> = ArrayList(),
@@ -39,6 +40,9 @@ data class UserInstance(var email: String = "", var image: String = "", var name
     fun removeNotification(notification: NotificationInstance) {
         notifications.remove(notification)
     }
+    fun isDefault(): Boolean {
+        return email.isEmpty() && image.isEmpty() && name.isEmpty() && status.isEmpty() && phone.isEmpty() && token.isEmpty() && uid.isEmpty()
+    }
 }
 
 fun UserInstance.toMap(): Map<String, Any?> = mapOf(
@@ -46,8 +50,10 @@ fun UserInstance.toMap(): Map<String, Any?> = mapOf(
     "image" to image,
     "name" to name,
     "status" to status,
+    "phone" to phone,
     "token" to token,
     "uid" to uid,
+    "background" to background,
     "likedPosts" to likedPosts,
     "likedComments" to likedComments,
     "friendRequests" to friendRequests,

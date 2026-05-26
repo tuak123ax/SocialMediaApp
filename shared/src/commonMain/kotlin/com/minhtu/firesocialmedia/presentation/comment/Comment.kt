@@ -30,6 +30,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.ProvidedValue
 import androidx.compose.runtime.collectAsState
@@ -64,6 +65,7 @@ import com.minhtu.firesocialmedia.platform.CrossPlatformIcon
 import com.minhtu.firesocialmedia.platform.convertTimeToDateString
 import com.minhtu.firesocialmedia.platform.logMessage
 import com.minhtu.firesocialmedia.platform.showToast
+import com.minhtu.firesocialmedia.platform.toHex
 import com.minhtu.firesocialmedia.storage.toStorageUrl
 import com.minhtu.firesocialmedia.utils.UiUtils
 import com.rickclephas.kmp.observableviewmodel.launch
@@ -95,6 +97,15 @@ class Comment {
             val commentBeReplied = commentViewModel.commentBeReplied.collectAsState()
             LaunchedEffect(Unit) {
                 commentViewModel.getAllCommentsOfNew(selectedNew.id)
+            }
+            // Reset comment status and clear list when this screen leaves composition
+            // (e.g. bottom sheet swiped away in fullscreen video) so the stale status
+            // doesn't trigger a toast the next time CommentScreen is opened.
+            DisposableEffect(Unit) {
+                onDispose {
+                    commentViewModel.resetCommentStatus()
+                    commentViewModel.clearCommentList()
+                }
             }
             LaunchedEffect(commentStatus.value) {
                 if (commentStatus.value != null) {
@@ -205,7 +216,7 @@ class Comment {
                         ) {
                             Text(
                                 text = "You are replying to ${commentBeReplied.value!!.posterName}",
-                                color = Color.Black
+                                color = MaterialTheme.colorScheme.onSurface
                             )
                         }
                     }
@@ -259,14 +270,14 @@ class Comment {
                 modifier = modifier
                     .size(45.dp)
                     .clip(RoundedCornerShape(16.dp))
-                    .background(Color(0xFFE53935))
+                    .background(MaterialTheme.colorScheme.primary)
                     .clickable { onClick() },
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = Icons.Default.ChevronRight,
                     contentDescription = "Send Comment",
-                    tint = Color.White,
+                    tint = MaterialTheme.colorScheme.onPrimary,
                     modifier = Modifier.size(32.dp)
                 )
             }
@@ -323,7 +334,7 @@ class Comment {
                             },
                         shape = RoundedCornerShape(30.dp),
                         elevation = CardDefaults.cardElevation(defaultElevation = 5.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color.White)
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
                     ) {
                         Column(modifier = Modifier.fillMaxSize().padding(10.dp)) {
                             Row(
@@ -358,7 +369,7 @@ class Comment {
                                     ) {
                                         Text(
                                             text = comment.posterName,
-                                            color = Color.Black,
+                                            color = MaterialTheme.colorScheme.onSurface,
                                             maxLines = 1,
                                             overflow = TextOverflow.Ellipsis,
                                             modifier = Modifier
@@ -372,7 +383,7 @@ class Comment {
                                             Text(
                                                 text = "Author",
                                                 fontSize = 12.sp,
-                                                color = Color.White,
+                                                color = MaterialTheme.colorScheme.onPrimary,
                                                 modifier = Modifier
                                                     .background(
                                                         color = MaterialTheme.colorScheme.primary,
@@ -385,7 +396,7 @@ class Comment {
                                     if (isMainComment) {
                                         Text(
                                             text = convertTimeToDateString(comment.timePosted),
-                                            color = Color.Gray,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                                             modifier = Modifier.padding(horizontal = 2.dp)
                                         )
                                     }
@@ -423,9 +434,9 @@ class Comment {
                         ) {
                             CrossPlatformIcon(
                                 icon = "like",
-                                backgroundColor = if (isLiked) "#00FFFF" else "#FFFFFF",
+                                backgroundColor = if (isLiked) MaterialTheme.colorScheme.primaryContainer.toHex() else MaterialTheme.colorScheme.surface.toHex(),
                                 contentDescription = TestTag.TAG_BUTTON_LIKE,
-                                tint = if (isLiked) Color.Red else Color.Black,
+                                tint = if (isLiked) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface,
                                 modifier = Modifier
                                     .size(20.dp)
                                     .testTag(TestTag.TAG_BUTTON_LIKE)
@@ -439,14 +450,15 @@ class Comment {
                             Text(
                                 text = "${likeCountList.value[comment.id] ?: 0}",
                                 fontSize = 12.sp,
-                                color = Color.Black,
+                                color = MaterialTheme.colorScheme.onSurface,
                                 modifier = Modifier.padding(2.dp)
                             )
                             Spacer(modifier = Modifier.weight(1f))
                             if (isMainComment) {
                                 CrossPlatformIcon(
                                     icon = "comment",
-                                    backgroundColor = "#FFFFFF",
+                                    backgroundColor = MaterialTheme.colorScheme.surface.toHex(),
+                                    tint = MaterialTheme.colorScheme.onSurface,
                                     contentDescription = TestTag.TAG_BUTTON_COMMENT,
                                     modifier = Modifier
                                         .size(20.dp)
@@ -462,7 +474,7 @@ class Comment {
                                 Text(
                                     text = "${comment.commentCount}",
                                     fontSize = 12.sp,
-                                    color = Color.Black,
+                                    color = MaterialTheme.colorScheme.onSurface,
                                     modifier = Modifier.padding(2.dp)
                                 )
                             }
@@ -491,7 +503,7 @@ class Comment {
                 if (comment.listReplies.isNotEmpty()) {
                     Text(
                         text = if (!showReplies) "Click here to see all replies" else "Click here to close all replies",
-                        color = Color.Black,
+                        color = MaterialTheme.colorScheme.onSurface,
                         fontWeight = FontWeight.Bold,
                         textAlign = TextAlign.Center,
                         modifier = Modifier

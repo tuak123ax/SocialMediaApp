@@ -1,14 +1,17 @@
 package com.minhtu.firesocialmedia.data.repository
 
 import com.minhtu.firesocialmedia.data.local.service.crypto.CryptoService
+import com.minhtu.firesocialmedia.data.remote.dto.news.NewsDTO
 import com.minhtu.firesocialmedia.data.remote.constant.DataConstant
 import com.minhtu.firesocialmedia.data.remote.mapper.settings.toDomain
+import com.minhtu.firesocialmedia.data.remote.mapper.settings.toDto
 import com.minhtu.firesocialmedia.data.remote.mapper.user.toDto
 import com.minhtu.firesocialmedia.data.remote.service.auth.AuthService
 import com.minhtu.firesocialmedia.data.remote.service.clipboard.ClipboardService
 import com.minhtu.firesocialmedia.data.remote.service.database.DatabaseService
 import com.minhtu.firesocialmedia.domain.entity.authentication.TwoFAResponse
 import com.minhtu.firesocialmedia.domain.entity.settings.ChangePasswordState
+import com.minhtu.firesocialmedia.domain.entity.settings.PollObject
 import com.minhtu.firesocialmedia.domain.entity.settings.SessionItem
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.domain.repository.SettingsRepository
@@ -120,12 +123,89 @@ class SettingsRepositoryImpl(
         }
     }
 
+    override suspend fun deleteLoginSession(userId: String, sessionId: String): Boolean {
+        return databaseService.deleteLoginSession(
+            userId,
+            sessionId,
+            DataConstant.HISTORY_PATH,
+            DataConstant.LOGIN_PATH
+        )
+    }
+
+    override suspend fun logoutSession(
+        userId: String,
+        sessionId: String
+    ): Boolean {
+        return databaseService.logoutSession(
+            userId,
+            sessionId,
+            DataConstant.HISTORY_PATH,
+            DataConstant.LOGIN_PATH
+        )
+    }
+
+    override fun observeSessionStatus(userId: String, sessionId: String, onLoggedOut: () -> Unit) {
+        databaseService.observeSessionStatus(
+            userId,
+            sessionId,
+            DataConstant.HISTORY_PATH,
+            DataConstant.LOGIN_PATH,
+            onLoggedOut
+        )
+    }
+
+    override fun stopObserveSessionStatus() {
+        databaseService.stopObserveSessionStatus()
+    }
+
     override suspend fun updateUserTimestamp(userId: String, fieldPath: String, value: Long): Boolean {
         return databaseService.updateUserLongField(
             userId,
             fieldPath,
             value,
             DataConstant.USER_PATH
+        )
+    }
+
+    override suspend fun updateUserStringField(userId: String, fieldPath: String, value: String): Boolean {
+        return databaseService.updateUserStringField(
+            userId,
+            fieldPath,
+            value,
+            DataConstant.USER_PATH
+        )
+    }
+
+    override suspend fun updateUserAvatar(userId: String, imageUri: String): Boolean {
+        return databaseService.updateUserAvatar(userId, imageUri, DataConstant.USER_PATH)
+    }
+
+    override suspend fun updateUserBackground(userId: String, imageUri: String): Boolean {
+        return databaseService.updateUserBackground(userId, imageUri, DataConstant.USER_PATH)
+    }
+
+    override suspend fun createPoll(poll: PollObject, newsId: String, groupId: String): Boolean {
+        val pollDto = poll.toDto()
+        // Build the lean index entry stored under /groups/{groupId}/posts/{newsId}
+        val newsEntry = NewsDTO(
+            id = newsId,
+            posterId = poll.posterId,
+            posterName = poll.posterName,
+            avatar = poll.posterAvatar,
+            message = poll.question,          // store the question as the card "message"
+            likeCount = poll.likeCount,
+            commentCount = poll.commentCount,
+            timePosted = poll.timePosted,
+            type = DataConstant.POST_TYPE_POLL,
+            pollId = poll.id
+        )
+        return databaseService.createPoll(
+            pollDto,
+            DataConstant.POLL_PATH,
+            DataConstant.GROUP_PATH,
+            groupId,
+            DataConstant.POSTS_PATH,
+            newsEntry
         )
     }
 }

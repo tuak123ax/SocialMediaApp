@@ -105,7 +105,7 @@ class InviteMember {
                     HorizontalDivider(
                         modifier = Modifier.fillMaxWidth().padding(vertical = 10.dp),
                         thickness = 1.dp,
-                        color = Color.LightGray
+                        color = MaterialTheme.colorScheme.outline
                     )
                     Search.SearchBar(
                         query = searchViewModel.query,
@@ -128,7 +128,7 @@ class InviteMember {
                         })
                     Text(
                         text = "ALL CONTACTS",
-                        color = Color.Gray,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier
                             .fillMaxWidth()
@@ -217,10 +217,10 @@ class InviteMember {
                             onClickCopyLink()
                         },
                         shape = CircleShape,
-                        border = BorderStroke(1.dp, Color.LightGray),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = Color.White,
-                            contentColor = Color.Black
+                            containerColor = MaterialTheme.colorScheme.surface,
+                            contentColor = MaterialTheme.colorScheme.onSurface
                         ),
                         modifier = Modifier.size(35.dp),
                         contentPadding = PaddingValues(0.dp)
@@ -228,7 +228,7 @@ class InviteMember {
                         Icon(
                             Icons.Default.Link,
                             contentDescription = "Link",
-                            tint = Color.Red
+                            tint = MaterialTheme.colorScheme.error
                         )
                     }
 
@@ -239,13 +239,13 @@ class InviteMember {
                     ) {
                         Text(
                             text = "Invite via link",
-                            color = Color.Black,
+                            color = MaterialTheme.colorScheme.onSurface,
                             style = MaterialTheme.typography.bodyMedium,
                             fontWeight = FontWeight.Bold
                         )
                         Text(
                             text = groupId,
-                            color = Color.Black,
+                            color = MaterialTheme.colorScheme.onSurface,
                             style = MaterialTheme.typography.bodyMedium,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
@@ -268,14 +268,14 @@ class InviteMember {
                         shape = RoundedCornerShape(10.dp),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = MaterialTheme.colorScheme.primary,
-                            contentColor = Color.White
+                            contentColor = MaterialTheme.colorScheme.surface
                         )){
                         Icon(Icons.Filled.Share,
                             contentDescription = "Share Link",
-                            tint = Color.White)
+                            tint = MaterialTheme.colorScheme.surface)
                         Text(
                             text = "Share Link",
-                            color = Color.White,
+                            color = MaterialTheme.colorScheme.surface,
                             style = MaterialTheme.typography.bodyMedium,
                             modifier = Modifier.padding(horizontal = 10.dp),
                             fontWeight = FontWeight.Bold
@@ -291,18 +291,18 @@ class InviteMember {
                             onClickCopyLink()
                         },
                         shape = RoundedCornerShape(10.dp),
-                        border = BorderStroke(1.dp, Color.LightGray),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
                         colors = ButtonDefaults.outlinedButtonColors(
-                            containerColor = Color.White,
-                            contentColor = Color.Black
+                            containerColor = MaterialTheme.colorScheme.surface,
+                            contentColor = MaterialTheme.colorScheme.onSurface
                         )
                     ) {
                         Icon(if(copyStatus.value) Icons.Default.Check else Icons.Default.CopyAll,
                             contentDescription = "Copy",
-                            tint = Color.Black)
+                            tint = MaterialTheme.colorScheme.onSurface)
                         Text(
                             text = if(copyStatus.value) "Copied" else "Copy",
-                            color = Color.Black,
+                            color = MaterialTheme.colorScheme.onSurface,
                             style = MaterialTheme.typography.bodyMedium,
                             fontWeight = FontWeight.Bold,
                             modifier = Modifier
@@ -329,7 +329,7 @@ class InviteMember {
                     Text(
                         "Share Group Link",
                         style = MaterialTheme.typography.titleLarge,
-                        color = Color.Black,
+                        color = MaterialTheme.colorScheme.onSurface,
                         fontWeight = FontWeight.Bold,
                         textAlign = TextAlign.Center,
                         modifier = Modifier.fillMaxWidth())
@@ -337,7 +337,7 @@ class InviteMember {
                     Text(
                         "Invite your friend to join the conversation",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = Color.Black,
+                        color = MaterialTheme.colorScheme.onSurface,
                         textAlign = TextAlign.Center,
                         modifier = Modifier.fillMaxWidth())
                     CopyGroupLinkCard(
@@ -352,7 +352,7 @@ class InviteMember {
                         HorizontalDivider(
                             modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
                             thickness = 1.dp,
-                            color = Color.LightGray
+                            color = MaterialTheme.colorScheme.outline
                         )
                     }
                     Spacer(Modifier.height(10.dp))
@@ -378,12 +378,12 @@ class InviteMember {
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween,
                     modifier = Modifier
-                        .background(Color.White)
+                        .background(MaterialTheme.colorScheme.surface)
                 ) {
                     Icon(
                         if(copyStatus.value) Icons.Default.Check else Icons.Default.Link,
                         "Share Link",
-                        tint = Color.Red,
+                        tint = MaterialTheme.colorScheme.error,
                         modifier = Modifier
                             .padding(horizontal = 10.dp)
                             .clickable {
@@ -395,7 +395,7 @@ class InviteMember {
 
                     Text(
                         groupLink,
-                        color = Color.Black,
+                        color = MaterialTheme.colorScheme.onSurface,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier
@@ -416,14 +416,14 @@ class InviteMember {
                         shape = RoundedCornerShape(10.dp),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = MaterialTheme.colorScheme.primary,
-                            contentColor = Color.White
+                            contentColor = MaterialTheme.colorScheme.surface
                         ),
                         modifier = Modifier
                             .padding(horizontal = 10.dp)
                     ){
                         Text(
                             text = if(copyStatus.value) "Copied" else "Copy",
-                            color = Color.White,
+                            color = MaterialTheme.colorScheme.surface,
                             modifier = Modifier.padding(horizontal = 10.dp)
                         )
                     }
@@ -460,7 +460,7 @@ class InviteMember {
                 }
                 Text(
                     text = user.name,
-                    color = if(!inviteStatus) Color.Black else Color.LightGray,
+                    color = if(!inviteStatus) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.outline,
                     fontWeight = FontWeight.Bold,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.padding(horizontal = 10.dp))
@@ -474,17 +474,17 @@ class InviteMember {
                     shape = RoundedCornerShape(10.dp),
                     border = BorderStroke(
                         width = 0.5.dp,
-                        color = if (!inviteStatus) MaterialTheme.colorScheme.primary else Color.LightGray
+                        color = if (!inviteStatus) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
                     ),
                     contentPadding = PaddingValues(
                         horizontal = 18.dp,
                         vertical = 6.dp
                     ),
                     colors = ButtonDefaults.outlinedButtonColors(
-                        containerColor = if (!inviteStatus) MaterialTheme.colorScheme.primary else Color.White,
-                        contentColor = if (!inviteStatus) Color.White else Color.LightGray,
-                        disabledContainerColor = Color.White,
-                        disabledContentColor = Color.LightGray
+                        containerColor = if (!inviteStatus) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface,
+                        contentColor = if (!inviteStatus) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.outline,
+                        disabledContainerColor = MaterialTheme.colorScheme.surface,
+                        disabledContentColor = MaterialTheme.colorScheme.outline
                     ),
                     modifier = Modifier
                         .defaultMinSize(minHeight = 0.dp, minWidth = 0.dp)

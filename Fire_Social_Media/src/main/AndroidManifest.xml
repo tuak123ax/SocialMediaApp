@@ -6,6 +6,7 @@
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
     <uses-feature android:name="android.hardware.camera"
         android:required="true" />
     <uses-permission android:name="android.permission.CAMERA"/>
@@ -15,6 +16,8 @@
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SHORT_SERVICE"/>
+    <uses-permission android:name="android.permission.WAKE_LOCK"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
     <!-- Query apps that can share messages-->
     <queries>
@@ -63,6 +66,30 @@
             </intent-filter>
         </activity>
         <activity
+            android:name="com.minhtu.firesocialmedia.android.incomingcall.IncomingCallActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:launchMode="singleInstance"
+            android:showWhenLocked="true"
+            android:turnScreenOn="true"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.FireSocialMedia" />
+        <!--
+             Transparent activity that requests RECORD_AUDIO over the lock screen.
+             showWhenLocked + turnScreenOn ensure the system permission dialog
+             (com.android.permissioncontroller) also appears above the keyguard,
+             because the dialog inherits the over-lock-screen window token from
+             this activity.
+        -->
+        <activity
+            android:name="com.minhtu.firesocialmedia.android.incomingcall.AudioPermissionOverLockScreenActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:showWhenLocked="true"
+            android:turnScreenOn="true"
+            android:screenOrientation="portrait"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+        <activity
             android:name="com.minhtu.firesocialmedia.utils.PermissionRequestActivity"
             android:exported="false"/>
         <service
@@ -75,6 +102,11 @@
         <meta-data
             android:name="com.google.android.gms.wallet.api.enabled"
             android:value="true" />
+
+        <service
+            android:name="com.minhtu.firesocialmedia.android.incomingcall.IncomingCallWakeService"
+            android:foregroundServiceType="shortService"
+            android:exported="false"/>
 
         <service
             android:name="com.minhtu.firesocialmedia.domain.serviceimpl.call.CallForegroundService"

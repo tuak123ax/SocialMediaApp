@@ -1,6 +1,7 @@
 package com.minhtu.firesocialmedia.android
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -22,6 +23,8 @@ import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import com.google.gson.Gson
 import com.minhtu.firesocialmedia.R
+import com.minhtu.firesocialmedia.android.incomingcall.IncomingCallActivity
+import com.minhtu.firesocialmedia.android.incomingcall.IncomingCallWakeService
 import com.minhtu.firesocialmedia.constants.Constants
 import com.minhtu.firesocialmedia.domain.entity.call.CallAction
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
@@ -61,8 +64,14 @@ class AppFirebaseNotificationService: FirebaseMessagingService() {
                     val calleeId = message.data[Constants.KEY_CALLEE_ID]
 
                     if(sessionId != null && calleeId != null && callerName != null && callerAvatar != null) {
-                        buildCallNotification(sessionId, calleeId, callerName, callerAvatar)
-                        CallSoundManager.playRingtone(applicationContext)
+                        // If the phone is already ringing for a previous caller, ignore this
+                        // new incoming call notification so the first caller is not replaced.
+                        if (CallSoundManager.isRinging) {
+                            Log.d("FCM", "Already ringing — ignoring new CALL from $callerName")
+                        } else {
+                            buildCallNotification(sessionId, calleeId, callerName, callerAvatar)
+                            CallSoundManager.playRingtone(applicationContext)
+                        }
                     }
                 }
                 "STOP_CALL" -> {
@@ -87,7 +96,7 @@ class AppFirebaseNotificationService: FirebaseMessagingService() {
                     val body = message.data[Constants.REMOTE_MSG_BODY]
                     Log.d("FCM", "🔹 title: $title")
                     Log.d("FCM", "🔹 body: $body")
-                    user = UserInstance(email!!, avatar!!,title!!,"",fcmToken!!,userId!!, HashMap())
+                    user = UserInstance(email = email!!, image = avatar!!, name = title!!, token = fcmToken!!, uid = userId!!)
                     sendNotification(user, body)
                 }
             }
@@ -131,6 +140,7 @@ class AppFirebaseNotificationService: FirebaseMessagingService() {
         super.onNewToken(token)
     }
 
+    @SuppressLint("FullScreenIntentPolicy")
     private fun buildCallNotification(sessionId : String,
                                       calleeId : String,
                                       callerName : String,
@@ -189,6 +199,24 @@ class AppFirebaseNotificationService: FirebaseMessagingService() {
         collapseRemoteViews.setOnClickPendingIntent(R.id.btn_accept_collapse, acceptPendingIntent)
         collapseRemoteViews.setOnClickPendingIntent(R.id.btn_reject_collapse, rejectPendingIntent)
 
+        //Fullscreen view to show when device is locked or in do not disturb mode, this will open IncomingCallActivity
+        val fullScreenIntent = Intent(this, IncomingCallActivity::class.java).apply {
+            putExtra(Constants.KEY_SESSION_ID, sessionId)
+            putExtra(Constants.KEY_CALLEE_ID, calleeId)
+            putExtra(Constants.KEY_CALLER_NAME, callerName)
+            putExtra(Constants.KEY_CALLER_AVATAR, callerAvatar)
+
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or
+                    Intent.FLAG_ACTIVITY_CLEAR_TOP
+        }
+
+        val fullScreenPendingIntent = PendingIntent.getActivity(
+            this,
+            100,
+            fullScreenIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
         notificationScope.launch {
             val result = runCatching {
                 applicationContext.imageLoader
@@ -215,6 +243,8 @@ class AppFirebaseNotificationService: FirebaseMessagingService() {
                 .setPriority(NotificationCompat.PRIORITY_HIGH) // triggers heads-up
                 .setStyle(NotificationCompat.DecoratedCustomViewStyle()) // required for custom view
                 .setOngoing(true)
+                .setCategory(NotificationCompat.CATEGORY_CALL)
+                .setFullScreenIntent(fullScreenPendingIntent, true)
                 .build()
 
             withContext(Dispatchers.Main) {
@@ -224,6 +254,16 @@ class AppFirebaseNotificationService: FirebaseMessagingService() {
                     ) == PackageManager.PERMISSION_GRANTED
                 ) {
                     NotificationManagerCompat.from(applicationContext).notify(NOTIF_ID, notification)
+
+                    // On Android 14+, USE_FULL_SCREEN_INTENT is restricted for non-dialer apps.
+                    // Starting a shortService foreground service is the reliable way to wake the
+                    // screen and show over the lock screen on Android 14+.
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                        val wakeIntent = IncomingCallWakeService.buildStartIntent(
+                            applicationContext, sessionId, calleeId, callerName, callerAvatar
+                        )
+                        applicationContext.startForegroundService(wakeIntent)
+                    }
                 } else {
                     showToast("Notification permission is not granted!")
                 }

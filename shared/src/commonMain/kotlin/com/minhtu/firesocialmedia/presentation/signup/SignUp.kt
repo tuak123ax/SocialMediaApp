@@ -29,7 +29,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
@@ -49,7 +48,6 @@ import com.minhtu.firesocialmedia.utils.UiUtils.Companion.IconAndTitle
 import com.minhtu.firesocialmedia.utils.UiUtils.Companion.PasswordVisibilityIcon
 import com.minhtu.firesocialmedia.utils.UiUtils.Companion.SubTitle
 import com.minhtu.firesocialmedia.utils.UiUtils.Companion.TextFieldWithLeadingIcon
-import com.minhtu.sharedmodule.ui.theme.loginBackgroundColor
 
 class SignUp {
     companion object{
@@ -129,7 +127,7 @@ class SignUp {
                             }) {
                         Text(
                             text = UiConstants.SignUp.SIGNUP_BUTTON_TEXT,
-                            color = Color.White
+                            color = MaterialTheme.colorScheme.onPrimary
                         )
                     }
 
@@ -156,7 +154,7 @@ class SignUp {
                     )
                     else signUpViewModel.updateConfirmPassword(password)
                 },
-                textStyle = TextStyle(Color.White),
+                textStyle = TextStyle(MaterialTheme.colorScheme.onSurface),
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(20.dp)
@@ -185,8 +183,8 @@ class SignUp {
                             }) {
                         PasswordVisibilityIcon(
                             passwordVisibility,
-                            Color.Gray,
-                            loginBackgroundColor.toHex())
+                            MaterialTheme.colorScheme.onSurfaceVariant,
+                            MaterialTheme.colorScheme.background.toHex())
                     }
                 }
             )
@@ -209,7 +207,7 @@ class SignUp {
             ) {
                 Text(
                     text = UiConstants.SignUp.SIGN_UP_QUESTION,
-                    color = Color.LightGray,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     style = MaterialTheme.typography.bodyMedium
                 )
 
@@ -217,7 +215,7 @@ class SignUp {
 
                 Text(
                     text = UiConstants.SignUp.SIGN_UP_TEXT,
-                    color = Color.Red,
+                    color = MaterialTheme.colorScheme.primary,
                     style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier
                         .clickable {

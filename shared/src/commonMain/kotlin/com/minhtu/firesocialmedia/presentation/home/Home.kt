@@ -50,7 +50,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -82,7 +81,6 @@ import com.minhtu.firesocialmedia.presentation.loading.Loading
 import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
 import com.minhtu.firesocialmedia.storage.toStorageUrl
 import com.minhtu.firesocialmedia.utils.UiUtils
-import com.minhtu.sharedmodule.ui.theme.homeEditTextBackgroundColor
 import com.minhtu.sharedmodule.ui.theme.iconButtonBackgroundColor
 import com.seiko.imageloader.ui.AutoSizeImage
 import kotlinx.coroutines.flow.collectLatest
@@ -92,7 +90,7 @@ import kotlinx.coroutines.launch
 class Home {
     companion object{
         @Composable
-        fun HomeScreen(modifier: Modifier,
+                        fun HomeScreen(modifier: Modifier,
                        homeViewModel: HomeViewModel,
                        loadingViewModel: LoadingViewModel,
                        navigateToCallingScreen : Boolean,
@@ -108,7 +106,9 @@ class Home {
                        onNavigateToCallingScreenWithUI : suspend () -> Unit,
                        onNavigateToPostInformation : () -> Unit,
                        onShareNews : (String, NewsInstance) -> Unit,
-                       onNavigateToJoinGroup : () -> Unit){
+                       onNavigateToJoinGroup : () -> Unit,
+                       commentViewModel: com.minhtu.firesocialmedia.presentation.comment.CommentViewModel? = null,
+                       platform: com.minhtu.firesocialmedia.di.PlatformContext? = null){
             val isLoading by loadingViewModel.isLoading.collectAsState()
             val commentStatus by homeViewModel.commentStatus.collectAsState()
             var showBottomSheet by rememberSaveable { mutableStateOf(false) }
@@ -219,10 +219,11 @@ class Home {
             val listState = rememberSaveable(saver = LazyListState.Saver) { LazyListState(0, 0) }
             Box(modifier = Modifier
                 .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background)) {
+                .background(MaterialTheme.colorScheme.background)
+                .padding(paddingValues)) {
                 Column(
                     verticalArrangement = Arrangement.Top,
-                    modifier = modifier.padding(paddingValues)
+                    modifier = modifier
                 ) {
                     //App name and buttons
                     Row(
@@ -331,12 +332,13 @@ class Home {
                                 }
                                 Spacer(modifier = Modifier.width(10.dp))
                                 //Create post
+                                val postBoxBg = MaterialTheme.colorScheme.surfaceVariant
                                 Box(
                                     modifier = Modifier
                                         .weight(1f)
                                         .height(40.dp)
                                         .clip(RoundedCornerShape(20.dp))
-                                        .background(homeEditTextBackgroundColor)
+                                        .background(postBoxBg)
                                         .clickable { onNavigateToUploadNews(null) }
                                         .padding(horizontal = 16.dp)
                                         .testTag(TestTag.TAG_CREATE_POST)
@@ -346,7 +348,7 @@ class Home {
                                     Text(
                                         text = "What are you thinking?",
                                         fontSize = 14.sp,
-                                        color = Color.LightGray
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                 }
                             }
@@ -448,7 +450,10 @@ class Home {
                             showBottomSheet = { news ->
                                 newToBeShared = news
                                 showBottomSheet = true
-                            }
+                            },
+                            commentViewModel = commentViewModel,
+                            platform = platform,
+                            currentUser = homeViewModel.currentUser
                         )
                     }
                 }
@@ -486,7 +491,7 @@ class Home {
                     .semantics {
                         contentDescription = TestTag.TAG_ITEM_IN_ROW
                     },
-                colors = CardDefaults.cardColors(containerColor = Color.White),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.background),
                 shape = RoundedCornerShape(16.dp)
             ) {
                 Column(
@@ -513,7 +518,7 @@ class Home {
                     Spacer(modifier = Modifier.height(1.dp)) // Optional spacing between image and text
                     Text(
                         text = user.name,
-                        color = Color.Black,
+                        color = MaterialTheme.colorScheme.onSurface,
                         maxLines = 1,
                         textAlign = TextAlign.Center,
                         overflow = TextOverflow.Ellipsis, // Adds "..." at the end if the text overflows
@@ -541,7 +546,7 @@ class Home {
                         .semantics{
                             contentDescription = TestTag.SCROLL_TO_TOP_BUTTON
                         },
-                    containerColor = Color.White
+                    containerColor = MaterialTheme.colorScheme.surface
                 ) {
                     Icon(Icons.Filled.KeyboardArrowUp,
                         contentDescription = "Scroll to top")
@@ -587,7 +592,7 @@ class Home {
                 object : NestedScrollConnection {
                     override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
                         // pull down while at top -> consume and move indicator
-                        if (source == NestedScrollSource.Drag && available.y > 0f && updCanRefresh()) {
+                        if (source == NestedScrollSource.UserInput && available.y > 0f && updCanRefresh()) {
                             val new = (offset + available.y * 0.5f).coerceAtLeast(0f)
                             offset = new
                             return Offset(0f, available.y) // consumed
@@ -597,7 +602,7 @@ class Home {
 
                     override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset {
                         // push up -> reduce offset
-                        if (source == NestedScrollSource.Drag && available.y < 0f && offset > 0f) {
+                        if (source == NestedScrollSource.UserInput && available.y < 0f && offset > 0f) {
                             offset = maxOf(0f, offset + available.y)
                         }
                         return Offset.Zero

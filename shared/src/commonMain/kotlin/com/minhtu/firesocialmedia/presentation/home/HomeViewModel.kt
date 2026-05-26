@@ -476,6 +476,18 @@ class HomeViewModel(
         }
     }
 
+    fun deletePoll(news: NewsInstance, groupId: String) {
+        val pollId = news.pollId ?: return
+        val backgroundScope = CoroutineScope(SupervisorJob() + ioDispatcher)
+        backgroundScope.launch {
+            newsInteractor.deletePoll(news.id, pollId, groupId)
+            listNews.remove(news)
+            withContext(Dispatchers.Main) {
+                updateNews(listNews)
+            }
+        }
+    }
+
     //----------------------------CALL FEATURE-----------------------------------//
 
     var isInCall = MutableStateFlow(false)
@@ -584,8 +596,8 @@ class HomeViewModel(
         loadMoreNews()
     }
 
-    suspend fun findUserById(userId: String) : UserInstance? {
-        return userInteractor.getUser(userId, false)
+    suspend fun findUserById(userId: String) : UserInstance? = withContext(ioDispatcher){
+        userInteractor.getUser(userId, false)
     }
 
     fun findUserByIdInCache(userId: String) : UserInstance? {

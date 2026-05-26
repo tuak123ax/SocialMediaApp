@@ -22,23 +22,28 @@ import kotlin.math.roundToInt
 expect fun showToast(message: String)
 
 @Composable
-expect fun getIconPainter(icon : String): Painter?
+expect fun getIconPainter(icon: String): Painter?
 
-expect fun getResId(icon : String): Int
+expect fun getResId(icon: String): Int
 
 @Composable
-expect fun getIconComposable(icon: String, bgColor : String, tint : String?, modifier: Modifier): (@Composable () -> Unit)?
+expect fun getIconComposable(
+    icon: String,
+    bgColor: String,
+    tint: String?,
+    modifier: Modifier
+): (@Composable () -> Unit)?
 
 @Composable
 fun CrossPlatformIcon(
     icon: String?,
-    backgroundColor : String,
+    backgroundColor: String,
     contentDescription: String? = null,
     modifier: Modifier,
     tint: Color = Color.Unspecified,
     contentScale: ContentScale = ContentScale.Fit
 ) {
-    if(icon != null) {
+    if (icon != null) {
         val iconPainter = getIconPainter(icon)
 
         if (iconPainter != null) {
@@ -55,8 +60,9 @@ fun CrossPlatformIcon(
             val iconComposable = getIconComposable(
                 icon,
                 backgroundColor,
-                if(tint != Color.Unspecified) tint.toHex() else null,
-                modifier)
+                if (tint != Color.Unspecified) tint.toHex() else null,
+                modifier
+            )
             if (iconComposable != null) {
                 iconComposable()
             }
@@ -85,12 +91,24 @@ expect fun CommonBackHandler(enabled: Boolean = true, onBack: () -> Unit)
 
 expect fun exitApp()
 
-expect fun createMessageForServer(message: String, tokenList : ArrayList<String>, sender : UserInstance, type : String): String
+expect fun createMessageForServer(
+    message: String,
+    tokenList: ArrayList<String>,
+    sender: UserInstance,
+    type: String
+): String
 
-expect fun createCallMessage(message: String, tokenList : ArrayList<String>, sessionId : String, sender : UserInstance, receiver : UserInstance, type : String) : String
+expect fun createCallMessage(
+    message: String,
+    tokenList: ArrayList<String>,
+    sessionId: String,
+    sender: UserInstance,
+    receiver: UserInstance,
+    type: String
+): String
 
 expect fun sendMessageToServer(request: String)
-expect suspend fun send2FARequest(request: TwoFARequest) : TwoFAResponse
+expect suspend fun send2FARequest(request: TwoFARequest): TwoFAResponse
 
 expect object TokenStorage {
     fun updateTokenInStorage(token: String?)
@@ -100,11 +118,11 @@ expect inline fun logMessage(tag: String, message: () -> String)
 
 expect fun generateRandomId(): String
 
-expect fun getCurrentTime() : Long
+expect fun getCurrentTime(): Long
 
-expect fun convertTimeToDateString(time : Long) : String
+expect fun convertTimeToDateString(time: Long): String
 
-expect fun getRandomIdForNotification() : String
+expect fun getRandomIdForNotification(): String
 
 expect suspend fun getImageBytesFromDrawable(name: String): ByteArray?
 
@@ -115,31 +133,39 @@ expect object MainApplication {
     fun MainApp(context: Any, platformContext: PlatformContext)
 
     @Composable
-    fun MainAppWithDeepLink(context: Any, deepLink : String, platformContext: PlatformContext)
+    fun MainAppWithDeepLink(context: Any, deepLink: String, platformContext: PlatformContext)
 
     @Composable
-    fun MainAppFromNotification(context: Any,
-                                platformContext: PlatformContext,
-                                sessionId : String?,
-                                callerId : String?,
-                                calleeId : String?)
+    fun MainAppFromNotification(
+        context: Any,
+        platformContext: PlatformContext,
+        sessionId: String?,
+        callerId: String?,
+        calleeId: String?
+    )
 }
 
 @Composable
-expect fun SetUpNavigation(context : Any,
-                           platformContext: PlatformContext)
+expect fun SetUpNavigation(
+    context: Any,
+    platformContext: PlatformContext
+)
 
 @Composable
-expect fun SetUpNavigation(context : Any,
-                           platformContext: PlatformContext,
-                           sessionId : String?,
-                           callerId : String?,
-                           calleeId : String?)
+expect fun SetUpNavigation(
+    context: Any,
+    platformContext: PlatformContext,
+    sessionId: String?,
+    callerId: String?,
+    calleeId: String?
+)
 
 @Composable
-expect fun SetUpNavigationWithDeepLink(context : Any,
-                                       deepLink: String,
-                                        platformContext: PlatformContext)
+expect fun SetUpNavigationWithDeepLink(
+    context: Any,
+    deepLink: String,
+    platformContext: PlatformContext
+)
 
 object SharedPushHandler {
     fun handlePushNotification(payload: Map<String, Any?>) {
@@ -152,7 +178,14 @@ expect fun onPushNotificationReceived(data: Map<String, Any?>)
 expect val settings: Settings?
 
 @Composable
-expect fun VideoPlayer(uri: String, modifier: Modifier = Modifier)
+expect fun VideoPlayer(
+    uri: String, modifier: Modifier = Modifier,
+    isLiked: Boolean = false,
+    onLikeClick: () -> Unit = {},
+    onCommentClick: () -> Unit = {},
+    onShareClick: () -> Unit = {},
+    commentSheetContent: (@Composable (onDismiss: () -> Unit) -> Unit)? = null
+)
 
 expect class WebRTCVideoTrack
 
@@ -160,7 +193,7 @@ expect class WebRTCVideoTrack
 expect fun WebRTCVideoView(
     localTrack: WebRTCVideoTrack?,
     remoteTrack: WebRTCVideoTrack?,
-    isLocalVideoOff : Boolean,
+    isLocalVideoOff: Boolean,
     modifier: Modifier
 )
 
@@ -185,16 +218,18 @@ expect fun rememberNavigationHandler(navController: Any): com.minhtu.firesocialm
 @Composable
 expect fun <T : Any> platformViewModel(key: String? = null, factory: () -> T): T
 
-expect fun getUriStringFromLocalPath(localPath : String) : String
+expect fun getUriStringFromLocalPath(localPath: String): String
 
 expect suspend fun queryShareApps(text: String): MutableList<ShareApp>
 
-expect fun launchShareAppWithDeepLink(app : ShareApp, deepLink : String)
+expect fun launchShareAppWithDeepLink(app: ShareApp, deepLink: String)
 
 expect fun getAppVersion(): String
 
 expect fun generateQrImage(content: String): ImageBitmap
+
 expect object AppConfig {
     val twoFAApiKey: String
     val supabaseApiKey: String
+    val ipInfoApiKey: String
 }

@@ -19,23 +19,20 @@ fun List<UserInstance?>.toUserEntity() : List<UserEntity> {
 
 fun UserInstance.toRoomEntity() : UserEntity {
     return UserEntity(
-        email,
-        image,
-        name,
-        status,
-        token,
-        uid
+        email, image, name, status, phone, token, uid, background
     )
 }
 
 fun UserEntity.toDomain() : UserInstance {
     return UserInstance(
-        email,
-        image,
-        name,
-        status,
-        token,
-        uid
+        email = email,
+        image = image,
+        name = name,
+        status = status,
+        phone = phone,
+        token = token,
+        uid = uid,
+        background = background
     )
 }
 
@@ -56,7 +53,13 @@ fun NewsInstance.toRoomEntity() : NewsEntity {
         isVisible,
         likeCount,
         commentCount,
-        timePosted
+        timePosted,
+        isNewPost = false,
+        localPath = localPath,
+        shareContentId = shareContentId,
+        decentralizationType = decentralizationType,
+        type = type,
+        pollId = pollId
     )
 }
 
@@ -79,7 +82,11 @@ fun NewsEntity.toDomain() : NewsInstance {
         likeCount,
         commentCount,
         timePosted,
-        localPath
+        localPath,
+        shareContentId = shareContentId,
+        decentralizationType = decentralizationType,
+        type = type,
+        pollId = pollId
     )
 }
 

@@ -47,7 +47,7 @@ import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.Settings
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.Settings.Companion.SoftSwitch
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.TrailingContentType
 import com.minhtu.firesocialmedia.utils.UiUtils
-import com.minhtu.sharedmodule.ui.theme.memberCardColor
+
 
 class NotificationConfigs {
     companion object {
@@ -101,79 +101,91 @@ class NotificationConfigs {
             return "NotificationConfigsScreen"
         }
 
+        @Composable
         fun prepareNotificationConfigs() : ArrayList<Pair<String, List<NotificationConfig>>> {
+            val primary = MaterialTheme.colorScheme.primary
+            val primaryContainer = MaterialTheme.colorScheme.primaryContainer
+            val error = MaterialTheme.colorScheme.error
+            val errorContainer = MaterialTheme.colorScheme.errorContainer
+            val tertiary = MaterialTheme.colorScheme.tertiary
+            val tertiaryContainer = MaterialTheme.colorScheme.tertiaryContainer
+            val secondary = MaterialTheme.colorScheme.secondary
+            val secondaryContainer = MaterialTheme.colorScheme.secondaryContainer
+            val onSurface = MaterialTheme.colorScheme.onSurface
+            val surfaceVariant = MaterialTheme.colorScheme.surfaceVariant
+            val outline = MaterialTheme.colorScheme.outline
             val settingsList = ArrayList<Pair<String, List<NotificationConfig>>>(ArrayList())
             settingsList.add(
                 Pair("PUSH NOTIFICATION",
                     listOf(
                         NotificationConfig(
                             leadingIcon = Icons.Filled.Favorite,
-                            leadingIconTint = Color(0xFFFF4081),
-                            leadingIconBackground = Color(0xFFFFE4E9),
+                            leadingIconTint = error,
+                            leadingIconBackground = errorContainer,
                             name = "Likes on Posts",
                             description = "Someone likes your posts",
                             trailingIcon = Icons.Default.ArrowRightAlt,
-                            trailingIconTint = Color.LightGray,
+                            trailingIconTint = outline,
                             trailingIconBackground = Color.Transparent,
                             trailingContentType = TrailingContentType.SwitchButton,
                             notificationType = NotificationType.LIKE
                         ),
                         NotificationConfig(
                             leadingIcon = Icons.Filled.ModeComment,
-                            leadingIconTint = Color(0xFF1F1F1F),
-                            leadingIconBackground = Color(0xFFF2F2F2),
+                            leadingIconTint = onSurface,
+                            leadingIconBackground = surfaceVariant,
                             name = "Comments",
                             description = "Someone comments in your posts",
                             trailingIcon = Icons.Default.ArrowRightAlt,
-                            trailingIconTint = Color.LightGray,
+                            trailingIconTint = outline,
                             trailingIconBackground = Color.Transparent,
                             trailingContentType = TrailingContentType.SwitchButton,
                             notificationType = NotificationType.COMMENT
                         ),
                         NotificationConfig(
                             leadingIcon = Icons.Filled.PersonAddAlt1,
-                            leadingIconTint = Color.Blue,
-                            leadingIconBackground = Color(0xFFEAF2FF),
+                            leadingIconTint = primary,
+                            leadingIconBackground = primaryContainer,
                             name = "Add Friend",
                             description = "Someone makes friend with you",
                             trailingIcon = Icons.Default.ArrowRightAlt,
-                            trailingIconTint = Color.LightGray,
+                            trailingIconTint = outline,
                             trailingIconBackground = Color.Transparent,
                             trailingContentType = TrailingContentType.SwitchButton,
                             notificationType = NotificationType.ADD_FRIEND
                         ),
                         NotificationConfig(
                             leadingIcon = Icons.Filled.PostAdd,
-                            leadingIconTint = Color.Green,
-                            leadingIconBackground = Color(0xFFE8F5E9),
+                            leadingIconTint = tertiary,
+                            leadingIconBackground = tertiaryContainer,
                             name = "Post",
                             description = "Your friends upload a post",
                             trailingIcon = Icons.Default.ArrowRightAlt,
-                            trailingIconTint = Color.LightGray,
+                            trailingIconTint = outline,
                             trailingIconBackground = Color.Transparent,
                             trailingContentType = TrailingContentType.SwitchButton,
                             notificationType = NotificationType.UPLOAD_NEW
                         ),
                         NotificationConfig(
                             leadingIcon = Icons.Filled.IosShare,
-                            leadingIconTint = Color.Yellow,
-                            leadingIconBackground = Color(0xFFFFF7D6),
+                            leadingIconTint = tertiary,
+                            leadingIconBackground = tertiaryContainer,
                             name = "Share",
                             description = "Your friends share a post",
                             trailingIcon = Icons.Default.ArrowRightAlt,
-                            trailingIconTint = Color.LightGray,
+                            trailingIconTint = outline,
                             trailingIconBackground = Color.Transparent,
                             trailingContentType = TrailingContentType.SwitchButton,
                             notificationType = NotificationType.SHARE_NEW
                         ),
                         NotificationConfig(
                             leadingIcon = Icons.Default.Group,
-                            leadingIconTint = Color.Cyan,
-                            leadingIconBackground = Color(0xFFE6F7F8),
+                            leadingIconTint = secondary,
+                            leadingIconBackground = secondaryContainer,
                             name = "Invite to Group",
                             description = "Someone invites you to a group",
                             trailingIcon = Icons.Default.ArrowRightAlt,
-                            trailingIconTint = Color.LightGray,
+                            trailingIconTint = outline,
                             trailingIconBackground = Color.Transparent,
                             trailingContentType = TrailingContentType.SwitchButton,
                             notificationType = NotificationType.INVITE_TO_GROUP
@@ -187,11 +199,12 @@ class NotificationConfigs {
         fun SettingsPartWithSwitchForNotification(
             title : String,
             mapStatus : Map<NotificationType, Boolean>,
-            titleColor : Color = Color.Gray,
+            titleColor : Color? = null,
             listItems : List<BaseSettingInstance>?,
             onCheckedChange : (NotificationType, Boolean) -> Unit,
             onClickSettingItem : (String) -> Unit
         ) {
+            val resolvedTitleColor = titleColor ?: MaterialTheme.colorScheme.onSurfaceVariant
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center,
@@ -202,7 +215,7 @@ class NotificationConfigs {
                 Text(
                     text = title,
                     style = MaterialTheme.typography.bodyLarge,
-                    color = titleColor,
+                    color = resolvedTitleColor,
                     textAlign = TextAlign.Start,
                     modifier = Modifier
                         .fillMaxWidth()
@@ -211,7 +224,7 @@ class NotificationConfigs {
                 //Content
                 Card(
                     colors = CardDefaults.cardColors(
-                        containerColor = memberCardColor
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant
                     ),
                     modifier = Modifier
                         .fillMaxWidth()
@@ -272,7 +285,7 @@ class NotificationConfigs {
                     .fillMaxWidth()
                     .padding(20.dp)
                     .background(
-                        color = Color(0xFFFFF4F4), // soft pink
+                        color = MaterialTheme.colorScheme.errorContainer,
                         shape = RoundedCornerShape(16.dp)
                     )
                     .padding(16.dp),
@@ -281,7 +294,7 @@ class NotificationConfigs {
                 Icon(
                     imageVector = Icons.Default.Info,
                     contentDescription = null,
-                    tint = Color(0xFFE53935), // soft red
+                    tint = MaterialTheme.colorScheme.error,
                     modifier = Modifier.size(20.dp)
                 )
 
@@ -290,7 +303,7 @@ class NotificationConfigs {
                 Text(
                     text = text,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = Color(0xFF6B7280), // soft gray
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     lineHeight = 20.sp
                 )
             }

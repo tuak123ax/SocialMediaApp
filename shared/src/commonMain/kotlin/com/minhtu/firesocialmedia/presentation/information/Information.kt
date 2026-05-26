@@ -14,9 +14,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -36,6 +38,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -103,7 +107,7 @@ class Information {
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(Color.White),
+                        .background(MaterialTheme.colorScheme.surface),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Spacer(Modifier.height(20.dp))
@@ -141,7 +145,7 @@ class Information {
                                 Icon(
                                     Icons.Default.CameraAlt,
                                     "Select avatar",
-                                    tint = Color.White
+                                    tint = MaterialTheme.colorScheme.onPrimary
                                 )
                             }
                         }
@@ -158,7 +162,7 @@ class Information {
                     Spacer(modifier = Modifier.padding(30.dp))
                     Text(
                         text = "Your name",
-                        color = Color.Black,
+                        color = MaterialTheme.colorScheme.onBackground,
                         style = MaterialTheme.typography.bodyMedium,
                         textAlign = TextAlign.Start,
                         fontWeight = FontWeight.Bold,
@@ -169,7 +173,7 @@ class Information {
                     OutlinedTextField(
                         value = informationViewModel.username,
                         shape = RoundedCornerShape(10.dp),
-                        textStyle = TextStyle(color = Color.Black),
+                        textStyle = TextStyle(color = MaterialTheme.colorScheme.onSurface),
                         leadingIcon = {
                             Icon(
                                 Icons.Default.Person,
@@ -190,12 +194,40 @@ class Information {
                     )
                     Text(
                         text = "This name will be visible to your friends and in public interactions.",
-                        color = Color.Gray,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         style = MaterialTheme.typography.bodyMedium,
                         textAlign = TextAlign.Center,
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(30.dp)
+                    )
+                    Text(
+                        text = "Phone number (optional)",
+                        color = MaterialTheme.colorScheme.onBackground,
+                        style = MaterialTheme.typography.bodyMedium,
+                        textAlign = TextAlign.Start,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp)
+                    )
+                    OutlinedTextField(
+                        value = informationViewModel.phone,
+                        shape = RoundedCornerShape(10.dp),
+                        textStyle = TextStyle(color = MaterialTheme.colorScheme.onSurface),
+                        leadingIcon = {
+                            Icon(Icons.Default.Phone, "Phone")
+                        },
+                        onValueChange = { informationViewModel.updatePhone(it) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp),
+                        label = { Text(text = "Input Your Phone Number") },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Phone,
+                            imeAction = ImeAction.Done
+                        )
                     )
                     Spacer(modifier = Modifier.weight(1f))
                     Row(
@@ -220,7 +252,7 @@ class Information {
                     }
                     Text(
                         text = "You can change these details later in settings",
-                        color = Color.LightGray,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         style = MaterialTheme.typography.bodyMedium,
                         textAlign = TextAlign.Center,
                         modifier = Modifier

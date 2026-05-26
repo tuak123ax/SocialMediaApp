@@ -7,6 +7,7 @@ import com.minhtu.firesocialmedia.data.remote.service.call.AudioCallService
 import com.minhtu.firesocialmedia.data.remote.service.clipboard.ClipboardService
 import com.minhtu.firesocialmedia.data.remote.service.database.DatabaseService
 import com.minhtu.firesocialmedia.data.remote.service.permission.PermissionManager
+import com.minhtu.firesocialmedia.data.remote.service.security.IpInfoRemoteDataSource
 import com.minhtu.firesocialmedia.domain.core.NetworkMonitor
 import io.mockative.Mockable
 
@@ -20,4 +21,5 @@ interface PlatformContext {
     val room : RoomService
     val permissionManager : PermissionManager
     val networkMonitor : NetworkMonitor
+    val ipRemoteDataSource : IpInfoRemoteDataSource
 }

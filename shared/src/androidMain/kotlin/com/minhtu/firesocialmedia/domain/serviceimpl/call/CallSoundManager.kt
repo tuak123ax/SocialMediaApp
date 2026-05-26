@@ -11,15 +11,25 @@ object CallSoundManager {
     private var mediaPlayer: MediaPlayer? = null
     private var isRingtonePlayed = false
 
+    /** True while the callee ringtone is actively playing (phone is ringing for an incoming call). */
+    val isRinging: Boolean get() = isRingtonePlayed
+
+    // ── Callee ringtone (incoming call) ────────────────────────────────────────
     fun playRingtone(context: Context) {
         if (isRingtonePlayed) return
-
-        stopRingtone()
+        releasePlayer()
         try {
             val afd = context.resources.openRawResourceFd(R.raw.call_ringtone)
             mediaPlayer = MediaPlayer().apply {
-                setAudioStreamType(AudioManager.STREAM_RING)
+                setAudioAttributes(
+                    AudioAttributes.Builder()
+                        .setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
+                        .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                        .setLegacyStreamType(AudioManager.STREAM_RING)
+                        .build()
+                )
                 setDataSource(afd.fileDescriptor, afd.startOffset, afd.length)
+                afd.close()
                 isLooping = true
                 prepare()
                 start()
@@ -27,59 +37,61 @@ object CallSoundManager {
             isRingtonePlayed = true
         } catch (e: Exception) {
             e.printStackTrace()
-            logMessage("Ringtone") { "Failed to play custom ringtone: ${e.message}" }
+            logMessage("Ringtone") { "Failed to play callee ringtone: ${e.message}" }
         }
     }
 
     fun stopRingtone() {
-        mediaPlayer?.apply {
-            stop()
-            release()
-        }
-        mediaPlayer = null
-        isRingtonePlayed = false
+        releasePlayer()
     }
 
+    // ── Caller ringtone (outgoing call waiting) ────────────────────────────────
+    // Do NOT set AudioManager.mode = MODE_RINGTONE here — it causes the OS to play
+    // the default system ringtone in parallel with our MediaPlayer.
+    //
+    // AndroidCallService.setupAudioManager() sets MODE_IN_COMMUNICATION before this
+    // is called, which silences STREAM_RING / USAGE_NOTIFICATION_RINGTONE entirely.
+    // We must use USAGE_VOICE_COMMUNICATION + STREAM_VOICE_CALL, which ARE audible
+    // in MODE_IN_COMMUNICATION (same stream WebRTC uses for audio playback).
     fun playRingtoneForCaller(context: Context) {
         if (isRingtonePlayed) return
-
-        stopRingtoneForCaller()
-
+        releasePlayer()
         try {
-            val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
-            
-            audioManager.mode = AudioManager.MODE_RINGTONE
-            audioManager.isSpeakerphoneOn = true
-
             val afd = context.resources.openRawResourceFd(R.raw.calling_ringtone)
-
             mediaPlayer = MediaPlayer().apply {
                 setAudioAttributes(
                     AudioAttributes.Builder()
-                        .setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
+                        .setUsage(AudioAttributes.USAGE_VOICE_COMMUNICATION)
+                        .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+                        .setLegacyStreamType(AudioManager.STREAM_VOICE_CALL)
                         .build()
                 )
-
                 setDataSource(afd.fileDescriptor, afd.startOffset, afd.length)
+                afd.close()
                 isLooping = true
-
                 setOnPreparedListener { start() }
-
                 prepareAsync()
             }
-
             isRingtonePlayed = true
-
         } catch (e: Exception) {
             e.printStackTrace()
+            logMessage("Ringtone") { "Failed to play caller ringtone: ${e.message}" }
         }
     }
 
     fun stopRingtoneForCaller() {
-        mediaPlayer?.apply {
-            stop()
-            release()
-        }
+        releasePlayer()
+    }
+
+    // ── Shared release helper ──────────────────────────────────────────────────
+    private fun releasePlayer() {
+        try {
+            mediaPlayer?.apply {
+                if (isPlaying) stop()
+                reset()
+                release()
+            }
+        } catch (_: Exception) { }
         mediaPlayer = null
         isRingtonePlayed = false
     }

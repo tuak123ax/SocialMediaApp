@@ -8,8 +8,6 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Context.NOTIFICATION_SERVICE
 import android.content.Intent
-import android.media.AudioAttributes
-import android.media.RingtoneManager
 import android.os.Build
 import androidx.core.app.NotificationCompat
 import com.minhtu.firesocialmedia.R
@@ -159,23 +157,23 @@ class CallNotificationManager(private val context: Context) {
     }
 
     fun buildCallNotification(calleeName: String, callerId: String): Notification {
-        val channelId = "call_channel_v2"
+        // Channel ID changed from "call_channel_v2" to "call_channel_v3" (silent).
+        // Reason: NotificationChannels cannot be mutated after creation — the old channel had
+        // setSound(defaultRingtone) which made the OS play the default ring simultaneously with
+        // our custom MediaPlayer ringtone (CallSoundManager.playRingtoneForCaller).
+        // The new channel has no sound; CallSoundManager is solely responsible for audio.
+        val callerChannelId = "call_channel_v3"
         val channelName = "Call Service"
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
-                channelId,
+                callerChannelId,
                 channelName,
                 NotificationManager.IMPORTANCE_HIGH
             ).apply {
-                // without this → no sound
-                setSound(
-                    RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE),
-                    AudioAttributes.Builder()
-                        .setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
-                        .build()
-                )
-                enableVibration(true)
+                setSound(null, null)
+                enableVibration(false)
+                vibrationPattern = longArrayOf(0L)
             }
 
             context.getSystemService(NotificationManager::class.java)
@@ -194,7 +192,7 @@ class CallNotificationManager(private val context: Context) {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        return NotificationCompat.Builder(context, channelId)
+        return NotificationCompat.Builder(context, callerChannelId)
             .setContentTitle("Calling")
             .setContentText("You are calling $calleeName")
             .setSmallIcon(R.drawable.notification)

@@ -7,6 +7,7 @@ import com.minhtu.firesocialmedia.data.local.service.room.RoomService
 import com.minhtu.firesocialmedia.data.remote.constant.DataConstant
 import com.minhtu.firesocialmedia.data.remote.mapper.news.toDto
 import com.minhtu.firesocialmedia.data.remote.service.database.DatabaseService
+import com.minhtu.firesocialmedia.data.remote.service.security.IpInfoRemoteDataSource
 import com.minhtu.firesocialmedia.domain.core.NetworkMonitor
 import com.minhtu.firesocialmedia.domain.entity.base.BaseNewsInstance
 import com.minhtu.firesocialmedia.domain.entity.comment.CommentInstance
@@ -25,7 +26,8 @@ import kotlinx.coroutines.sync.withPermit
 class CommonDbRepositoryImpl(
     private val databaseService: DatabaseService,
     private val localDatabaseService: RoomService,
-    private val networkMonitor: NetworkMonitor
+    private val networkMonitor: NetworkMonitor,
+    private val remoteDataSource: IpInfoRemoteDataSource
 ) : CommonDbRepository {
     override suspend fun saveLikedPost(
         id: String,
@@ -342,8 +344,10 @@ class CommonDbRepositoryImpl(
     }
 
     override suspend fun saveLoginActivityInfo(userId: String) {
+        val locationInfo = remoteDataSource.getApproximateLocation()
         databaseService.saveLoginActivityInfo(
             userId,
+            locationInfo,
             DataConstant.HISTORY_PATH,
             DataConstant.LOGIN_PATH
         )

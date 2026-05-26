@@ -20,11 +20,12 @@ class RemoteConfigHelper {
             }
             remoteConfig.setConfigSettingsAsync(configSettings)
         }
-        fun fetchAndActiveConfig(remoteConfig : FirebaseRemoteConfig, callback: FetchResultCallback) {
+        fun fetchMinAppSupportAndActiveConfig(remoteConfig : FirebaseRemoteConfig, callback: FetchResultCallback) {
             remoteConfig.fetchAndActivate().addOnCompleteListener { task ->
                 if(task.isSuccessful){
                     Log.d("RemoteConfigHelper", "fetch success")
-                    callback.fetchSuccess()
+                    val minAppVersion = remoteConfig.getString("MIN_SUPPORT_VERSION")
+                    callback.fetchSuccess(minAppVersion)
                 } else {
                     Log.d("RemoteConfigHelper", "fetch fail")
                     callback.fetchFail()

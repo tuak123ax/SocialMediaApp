@@ -2,10 +2,13 @@ package com.minhtu.firesocialmedia.presentation.navigation
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
@@ -19,7 +22,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -62,6 +64,9 @@ import com.minhtu.firesocialmedia.presentation.navigationscreen.notification.Not
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.Settings
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.CreateGroup
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.CreateGroupViewModel
+import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.CreatePoll
+import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.CreatePollViewModel
+import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.PollViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.ExploreGroup
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.ExploreGroupViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.Group
@@ -75,6 +80,8 @@ import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.Se
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.SelectGroupViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.notificationconfigs.NotificationConfigs
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.notificationconfigs.NotificationConfigsViewModel
+import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.personal.PersonalInformation
+import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.personal.PersonalInformationViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.privacy.Privacy
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security.SecuritySettings
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security.SecuritySettingsViewModel
@@ -173,6 +180,7 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
 
     var updateNew: NewsInstance? = null
     lateinit var relatedNew: NewsInstance
+    // Calling related shared states
     var callee by remember { mutableStateOf<UserInstance?>(null) }
     var caller by remember { mutableStateOf<UserInstance?>(null) }
     var sessionId by remember { mutableStateOf("") }
@@ -183,8 +191,14 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
         platformViewModel { ViewModelProvider.createCallingViewModel(platformContext) }
     val videoCallViewModel: VideoCallViewModel =
         platformViewModel { ViewModelProvider.createVideoCallViewModel(platformContext) }
+
+    //Settings
     val securitySettingsViewModel: SecuritySettingsViewModel =
         platformViewModel { ViewModelProvider.createSecuritySettingsViewModel(platformContext) }
+
+    //Personal information
+    val personalInformationViewModel : PersonalInformationViewModel =
+        platformViewModel { ViewModelProvider.createPersonalInformationViewModel(platformContext) }
 
     val isSyncLoading by loadingViewModel.syncLoading.collectAsState()
 
@@ -199,6 +213,8 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
 
     //Group
     var selectedGroup: GroupInstance? = null
+    var createPollViewModel : CreatePollViewModel = platformViewModel { ViewModelProvider.createCreatePollViewModel(platformContext) }
+    val pollViewModel: PollViewModel = platformViewModel { ViewModelProvider.createPollViewModel(platformContext) }
 
     //2FA
     val twoFAViewModel: TwoFAViewModel =
@@ -212,10 +228,51 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
     val backUpCodeViewModel: BackUpCodeViewModel =
         platformViewModel { ViewModelProvider.createBackUpCodeViewModel(platformContext) }
     var isEnable2FAFlow = false
-    val routerViewModel: RouterViewModel = platformViewModel { ViewModelProvider.createRouterViewModel(platformContext) }
+    val routerViewModel: RouterViewModel =
+        platformViewModel { ViewModelProvider.createRouterViewModel(platformContext) }
 
     //Login History
-    val loginHistoryViewModel : LoginHistoryViewModel = platformViewModel { ViewModelProvider.createLoginHistoryViewModel(platformContext) }
+    val loginHistoryViewModel: LoginHistoryViewModel =
+        platformViewModel { ViewModelProvider.createLoginHistoryViewModel(platformContext) }
+
+    // Force-logout from another device
+    val observeSessionStatusUseCase = remember {
+        AppModule.provideObserveSessionStatusUseCase(
+            AppModule.provideSettingsRepository(platformContext)
+        )
+    }
+    val stopObserveSessionStatusUseCase = remember {
+        AppModule.provideStopObserveSessionStatusUseCase(
+            AppModule.provideSettingsRepository(platformContext)
+        )
+    }
+    var forceLogoutDialogVisible by remember { mutableStateOf(false) }
+
+    // Check persisted forced-logout status on startup (in case app was killed while LOGOUT)
+    LaunchedEffect(homeViewModel.currentUserState) {
+        val user = homeViewModel.currentUserState ?: return@LaunchedEffect
+        val mySessionId = platformContext.database.getLocalSessionId()
+        if (mySessionId.isNotEmpty()) {
+            val sessions = kotlinx.coroutines.withContext(Dispatchers.IO) {
+                runCatching {
+                    platformContext.database.fetchLoginHistoryList(
+                        user.uid,
+                        com.minhtu.firesocialmedia.data.remote.constant.DataConstant.HISTORY_PATH,
+                        com.minhtu.firesocialmedia.data.remote.constant.DataConstant.LOGIN_PATH
+                    )
+                }.getOrElse { emptyList() }
+            }
+            val mySession = sessions.find { it.sessionId == mySessionId }
+            if (mySession?.status == "LOGOUT") {
+                forceLogoutDialogVisible = true
+                return@LaunchedEffect
+            }
+            // Start real-time listener for this session
+            observeSessionStatusUseCase(user.uid, mySessionId) {
+                forceLogoutDialogVisible = true
+            }
+        }
+    }
 
     LaunchedEffect(networkStatus) {
         if (networkStatus != null) {
@@ -274,7 +331,8 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
             .background(MaterialTheme.colorScheme.background)
     ) {
         Scaffold(
-            containerColor = Color.White,
+            containerColor = MaterialTheme.colorScheme.background,
+            contentWindowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Top),
             bottomBar = {
                 val currentDestination =
                     navController.currentBackStackEntryAsState().value?.destination?.route
@@ -288,8 +346,7 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                         },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(60.dp)
-                            .background(Color.White)
+                            .background(MaterialTheme.colorScheme.surface)
                     )
                 }
             },
@@ -318,7 +375,8 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                         loadingViewModel,
                         routerViewModel,
                         modifier = Modifier
-                            .fillMaxSize(),
+                            .fillMaxSize()
+                            .background(MaterialTheme.colorScheme.background),
                         onNavigateToSignUpScreen = { navController.navigate(route = SignUp.getScreenName()) },
                         onNavigateToHomeScreen = { navController.navigate(route = Home.getScreenName()) },
                         onNavigateToInformationScreen = { navController.navigate(route = Information.getScreenName()) },
@@ -334,7 +392,7 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                         loadingViewModel,
                         modifier = Modifier
                             .fillMaxSize()
-                            .background(Color(0xFF132026)),
+                            .background(MaterialTheme.colorScheme.background),
                         onNavigateToSignInScreen = {
                             navController.navigate(SignIn.getScreenName()) {
                                 popUpTo(0) {
@@ -373,7 +431,7 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                     Home.HomeScreen(
                         modifier = Modifier
                             .fillMaxSize()
-                            .background(Color.White),
+                            .background(MaterialTheme.colorScheme.background),
                         homeViewModel,
                         loadingViewModel,
                         SharedCallData.navigateToCallingScreenFromNotification,
@@ -461,7 +519,9 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                                 // Clear deep link after handling to prevent repeated navigation
                                 DeepLinksData.deepLink = ""
                             }
-                        }
+                        },
+                        commentViewModel = commentViewModel,
+                        platform = platformContext
                     )
                 }
                 composable(
@@ -502,7 +562,7 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                         showImageViewModel = showImageViewModel,
                         modifier = Modifier
                             .fillMaxSize()
-                            .background(color = Color.Black),
+                            .background(color = MaterialTheme.colorScheme.background),
                         onNavigateBack = {
                             navController.popBackStack()
                         }
@@ -523,7 +583,7 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                     Search.SearchScreen(
                         modifier = Modifier
                             .fillMaxSize()
-                            .background(color = Color.White),
+                            .background(color = MaterialTheme.colorScheme.background),
                         paddingValues,
                         searchViewModel,
                         homeViewModel,
@@ -560,10 +620,12 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                         onImagePicked = { uri -> userInformationViewModel.updateCover(uri) },
                         onVideoPicked = {}
                     )
+                    val isFriend = selectedUser?.friends?.contains(homeViewModel.currentUser?.uid) == true
                     UserInformation.UserInformationScreen(
                         imagePicker = picker,
                         user = selectedUser,
                         isCurrentUser = selectedUser == homeViewModel.currentUser,
+                        isFriend = isFriend,
                         paddingValues = paddingValues,
                         localImageLoaderValue = localImageLoaderValue,
                         homeViewModel = homeViewModel,
@@ -606,7 +668,7 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                         paddingValues,
                         modifier = Modifier
                             .fillMaxSize()
-                            .background(color = Color.White),
+                            .background(color = MaterialTheme.colorScheme.background),
                         platform = platformContext,
                         localImageLoaderValue = localImageLoaderValue,
                         showCloseIcon = true,
@@ -657,7 +719,7 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                     Friend.FriendScreen(
                         modifier = Modifier
                             .fillMaxSize()
-                            .background(Color.White),
+                            .background(MaterialTheme.colorScheme.background),
                         paddingValues = paddingValues,
                         localImageLoaderValue = localImageLoaderValue,
                         searchViewModel,
@@ -683,7 +745,7 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                     Notification.NotificationScreen(
                         modifier = Modifier
                             .fillMaxSize()
-                            .background(Color.White),
+                            .background(MaterialTheme.colorScheme.background),
                         paddingValues = paddingValues,
                         localImageLoaderValue = localImageLoaderValue,
                         searchViewModel = searchViewModel,
@@ -714,7 +776,7 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                     Settings.SettingsScreen(
                         modifier = Modifier
                             .fillMaxSize()
-                            .background(Color.White),
+                            .background(MaterialTheme.colorScheme.background),
                         paddingValues = paddingValues,
                         homeViewModel = homeViewModel,
                         onNavigateToSignIn = {
@@ -724,7 +786,7 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                         },
                         onNavigateToProfileInformation = {
                             selectedUser = homeViewModel.currentUser
-                            navController.navigate(route = UserInformation.getScreenName())
+                            navController.navigate(route = PersonalInformation.getScreenName())
                         },
                         onNavigateToGroupScreen = {
                             navController.navigate(route = Group.getScreenName())
@@ -750,7 +812,7 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                     PostInformation.PostInformationScreen(
                         modifier = Modifier
                             .fillMaxSize()
-                            .background(Color.White),
+                            .background(MaterialTheme.colorScheme.background),
                         platformContext,
                         localImageLoaderValue = localImageLoaderValue,
                         relatedNew,
@@ -817,7 +879,7 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                             },
                             modifier = Modifier
                                 .fillMaxSize()
-                                .background(Color.White)
+                                .background(MaterialTheme.colorScheme.background)
                         )
                     } else {
                         showToast("Cannot get caller and callee information. Cannot show calling screen!")
@@ -859,7 +921,7 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                         PostInformation.PostInformationScreen(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .background(Color.White),
+                                .background(MaterialTheme.colorScheme.background),
                             platformContext,
                             localImageLoaderValue = localImageLoaderValue,
                             newsState!!,
@@ -904,6 +966,7 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                     if (homeViewModel.currentUser != null) {
                         Group.GroupScreen(
                             homeViewModel.currentUser!!,
+                            paddingValues,
                             onNavigateToCreateGroupScreen = {
                                 navController.navigate(route = CreateGroup.getScreenName())
                             },
@@ -912,6 +975,9 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                             },
                             onNavigateToSelectGroupScreen = {
                                 navController.navigate(route = SelectGroup.getScreenName())
+                            },
+                            onNavigateBack = {
+                                navController.popBackStack()
                             }
                         )
                     } else {
@@ -998,11 +1064,12 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                             localImageLoaderValue,
                             modifier = Modifier
                                 .fillMaxSize()
-                                .background(color = Color.White),
+                                .background(color = MaterialTheme.colorScheme.background),
                             homeViewModel,
                             searchViewModel,
                             loadingViewModel,
                             groupDetailsViewModel,
+                            pollViewModel = pollViewModel,
                             onNavigateToShowImageScreen = { image ->
                                 selectedImage = image
                                 navController.navigate(route = ShowImage.getScreenName())
@@ -1071,6 +1138,9 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                             onManageMembers = { group ->
                                 selectedGroup = group
                                 navController.navigate(route = ManageMembers.getScreenName())
+                            },
+                            onCreatePoll = {
+                                navController.navigate(route = CreatePoll.getScreenName())
                             }
                         )
                     } else {
@@ -1148,6 +1218,7 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                         searchViewModel = searchViewModel,
                         loadingViewModel = loadingViewModel,
                         groupDetailsViewModel = groupDetailsViewModel,
+                        pollViewModel = pollViewModel,
                         onNavigateToShowImageScreen = { image ->
                             selectedImage = image
                             navController.navigate(route = ShowImage.getScreenName())
@@ -1216,6 +1287,9 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                         onManageMembers = { group ->
                             selectedGroup = group
                             navController.navigate(route = ManageMembers.getScreenName())
+                        },
+                        onCreatePoll = {
+                            navController.navigate(route = CreatePoll.getScreenName())
                         }
                     )
                 }
@@ -1430,7 +1504,7 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                         isEnable2FAFlow,
                         twoFactorEnabledViewModel,
                         onReturnClick = {
-                            if(isEnable2FAFlow) {
+                            if (isEnable2FAFlow) {
                                 navController.popBackStack(SecuritySettings.getScreenName(), false)
                             } else {
                                 navController.navigate(Home.getScreenName()) {
@@ -1483,6 +1557,56 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                         }
                     )
                 }
+
+                composable(
+                    route = PersonalInformation.getScreenName(),
+                    enterTransition = DefaultNavAnimations.enter,
+                    popEnterTransition = DefaultNavAnimations.popEnter,
+                    exitTransition = DefaultNavAnimations.exit,
+                    popExitTransition = DefaultNavAnimations.popExit
+                ) {
+                    val picker = rememberPlatformImagePicker(
+                        context = context,
+                        onImagePicked = { uri -> personalInformationViewModel.onAvatarPicked(uri) },
+                        onVideoPicked = {}
+                    )
+                    if(selectedUser != null) {
+                        PersonalInformation.PersonalInformationScreen(
+                            selectedUser!!,
+                            imagePicker = picker,
+                            paddingValues,
+                            personalInformationViewModel,
+                            onNavigateBack = {
+                                navController.popBackStack()
+                            }
+                        )
+                    } else {
+                        showToast("Cannot get user information now. Please try again!!!")
+                        navController.popBackStack()
+                    }
+                }
+
+                composable(
+                    route = CreatePoll.getScreenName(),
+                    enterTransition = DefaultNavAnimations.enter,
+                    popEnterTransition = DefaultNavAnimations.popEnter,
+                    exitTransition = DefaultNavAnimations.exit,
+                    popExitTransition = DefaultNavAnimations.popExit
+                ) {
+                    if(selectedGroup != null) {
+                        CreatePoll.CreatePollScreen(
+                            groupId = selectedGroup.id,
+                            currentUser = homeViewModel.currentUser ?: UserInstance(),
+                            createPollViewModel,
+                            onClose = {
+                                navController.popBackStack()
+                            }
+                        )
+                    } else {
+                        showToast("Cannot get group information now. Please try again!!!")
+                        navController.popBackStack()
+                    }
+                }
             }
         }
         if (isSyncLoading) {
@@ -1490,6 +1614,37 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                 localImageLoaderValue,
                 "loading_gif",
                 "Syncing your data..."
+            )
+        }
+
+        // Forced-logout dialog: shown when another device logged out this session
+        if (forceLogoutDialogVisible) {
+            androidx.compose.material3.AlertDialog(
+                onDismissRequest = { /* non-dismissible */ },
+                title = { androidx.compose.material3.Text("Session Ended") },
+                text = {
+                    androidx.compose.material3.Text(
+                        "Your account has been logged out from this device by another session. Please sign in again to continue."
+                    )
+                },
+                confirmButton = {
+                    androidx.compose.material3.Button(
+                        onClick = {
+                            forceLogoutDialogVisible = false
+                            stopObserveSessionStatusUseCase()
+                            platformContext.database.clearLocalSessionId()
+                            homeViewModel.clearAccountInStorage()
+                            homeViewModel.clearLocalData()
+                            signInViewModel.reset()
+                            navController.navigate(SignIn.getScreenName()) {
+                                popUpTo(0) { inclusive = true }
+                            }
+                        }
+                    ) {
+                        androidx.compose.material3.Text("Sign In")
+                    }
+                },
+                shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp)
             )
         }
     }
