@@ -49,6 +49,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.minhtu.firesocialmedia.platform.CommonBackHandler
 import com.minhtu.firesocialmedia.utils.UiUtils
+import org.koin.compose.viewmodel.koinViewModel
 
 class TwoFactorEnabled {
     companion object {
@@ -57,7 +58,7 @@ class TwoFactorEnabled {
             paddingValues: PaddingValues,
             backupCode: String,
             isEnable2FAFlow: Boolean,
-            twoFactorEnabledViewModel: TwoFactorEnabledViewModel,
+            twoFactorEnabledViewModel: TwoFactorEnabledViewModel = koinViewModel(),
             onReturnClick: () -> Unit
         ) {
             val showBackupCode = remember { mutableStateOf(false) }

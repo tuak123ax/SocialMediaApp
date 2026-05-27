@@ -47,6 +47,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
+import org.koin.compose.viewmodel.koinViewModel
 
 class Friend {
     companion object{
@@ -54,9 +55,9 @@ class Friend {
         fun FriendScreen(modifier: Modifier,
                          paddingValues: PaddingValues,
                          localImageLoaderValue : ProvidedValue<*>,
-                         searchViewModel: SearchViewModel,
+                         searchViewModel: SearchViewModel = koinViewModel(),
                          homeViewModel: HomeViewModel,
-                         friendViewModel: FriendViewModel,
+                         friendViewModel: FriendViewModel = koinViewModel(),
                          onNavigateToUserInformation: (user : UserInstance) -> Unit,
                          onNavigateToShowImageScreen: (image : String) -> Unit){
             Column(

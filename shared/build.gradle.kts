@@ -130,7 +130,11 @@ kotlin {
             implementation("io.ktor:ktor-client-content-negotiation:${ktorVersion}")
             implementation("io.ktor:ktor-serialization-kotlinx-json:${ktorVersion}")
             implementation("io.ktor:ktor-client-logging:${ktorVersion}")
-// Optional for logs
+
+            //Di
+            implementation(libs.koin.core)
+            implementation(libs.koin.compose)
+            implementation(libs.koin.compose.viewmodel)
         }
         commonTest {
             dependencies{
@@ -194,6 +198,10 @@ kotlin {
 
             //Room
             implementation(libs.androidx.room.sqlite.wrapper)
+
+            //Di
+            implementation(libs.koin.android)
+            implementation(libs.koin.androidx.compose)
         }
 
         androidUnitTest.dependencies {

@@ -60,6 +60,7 @@ import com.seiko.imageloader.ui.AutoSizeImage
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
+import org.koin.compose.viewmodel.koinViewModel
 
 class ExploreGroup {
     companion object {
@@ -68,8 +69,8 @@ class ExploreGroup {
             currentUser : UserInstance,
             paddingValues: PaddingValues,
             localImageLoaderValue : ProvidedValue<*>,
-            exploreGroupViewModel: ExploreGroupViewModel,
-            searchViewModel : SearchViewModel,
+            exploreGroupViewModel: ExploreGroupViewModel = koinViewModel(),
+            searchViewModel : SearchViewModel = koinViewModel(),
             onNavigateBack : () -> Unit,
             onNavigateToGroupDetails : (GroupInstance) -> Unit
         ) {

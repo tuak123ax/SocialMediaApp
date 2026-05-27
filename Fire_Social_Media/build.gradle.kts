@@ -21,13 +21,13 @@ plugins {
 
 android {
     namespace = "com.minhtu.firesocialmedia.android"
-    compileSdk = 35
+    compileSdk = 36
     defaultConfig {
         applicationId = "com.minhtu.firesocialmedia"
         minSdk = 24
-        targetSdk = 35
-        versionCode = 500400
-        versionName = "5.4.0"
+        targetSdk = 36
+        versionCode = 600000
+        versionName = "6.0.0"
 
         signingConfig = signingConfigs.getByName("debug")
     }
@@ -120,4 +120,7 @@ dependencies {
     //Monitor memory leak
     debugImplementation("com.squareup.leakcanary:leakcanary-android:2.13")
     debugImplementation("com.jakewharton.timber:timber:5.0.1")
+
+    //Di
+    implementation(libs.koin.android)
 }

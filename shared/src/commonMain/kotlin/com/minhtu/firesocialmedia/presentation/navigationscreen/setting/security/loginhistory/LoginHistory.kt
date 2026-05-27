@@ -70,13 +70,14 @@ import com.minhtu.firesocialmedia.platform.convertTimeToDateString
 import com.minhtu.firesocialmedia.platform.showToast
 import com.minhtu.firesocialmedia.utils.PasswordVerifyDialog
 import com.minhtu.firesocialmedia.utils.UiUtils
+import org.koin.compose.viewmodel.koinViewModel
 
 class LoginHistory {
     companion object {
         @Composable
         fun LoginHistoryScreen(
             currentUser: UserInstance,
-            loginHistoryViewModel: LoginHistoryViewModel,
+            loginHistoryViewModel: LoginHistoryViewModel = koinViewModel(),
             modifier: Modifier = Modifier,
             onNavigateBack: () -> Unit
         ) {

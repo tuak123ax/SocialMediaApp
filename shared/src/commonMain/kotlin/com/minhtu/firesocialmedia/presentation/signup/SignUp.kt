@@ -48,12 +48,13 @@ import com.minhtu.firesocialmedia.utils.UiUtils.Companion.IconAndTitle
 import com.minhtu.firesocialmedia.utils.UiUtils.Companion.PasswordVisibilityIcon
 import com.minhtu.firesocialmedia.utils.UiUtils.Companion.SubTitle
 import com.minhtu.firesocialmedia.utils.UiUtils.Companion.TextFieldWithLeadingIcon
+import org.koin.compose.viewmodel.koinViewModel
 
 class SignUp {
     companion object{
         @Composable
         fun SignUpScreen(
-            signUpViewModel: SignUpViewModel,
+            signUpViewModel: SignUpViewModel = koinViewModel(),
             loadingViewModel: LoadingViewModel,
             modifier: Modifier,
             onNavigateToSignInScreen : () -> Unit,

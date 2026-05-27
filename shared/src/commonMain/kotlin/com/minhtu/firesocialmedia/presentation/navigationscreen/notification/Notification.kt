@@ -84,6 +84,7 @@ import com.minhtu.firesocialmedia.storage.toStorageUrl
 import com.seiko.imageloader.ui.AutoSizeImage
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.koin.compose.viewmodel.koinViewModel
 import kotlin.math.roundToInt
 
 class Notification {
@@ -92,9 +93,9 @@ class Notification {
         fun NotificationScreen(modifier: Modifier,
                                paddingValues: PaddingValues,
                                localImageLoaderValue : ProvidedValue<*>,
-                               searchViewModel: SearchViewModel,
+                               searchViewModel: SearchViewModel = koinViewModel(),
                                homeViewModel: HomeViewModel,
-                               notificationViewModel : NotificationViewModel,
+                               notificationViewModel : NotificationViewModel = koinViewModel(),
                                loadingViewModel: LoadingViewModel,
                                onNavigateToPostInformation: (new : NewsInstance) -> Unit,
                                onNavigateToUserInformation: (user : UserInstance?) -> Unit,

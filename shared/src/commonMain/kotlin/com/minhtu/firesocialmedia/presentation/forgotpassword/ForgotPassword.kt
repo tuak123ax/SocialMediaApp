@@ -38,12 +38,13 @@ import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
 import com.minhtu.firesocialmedia.utils.UiUtils.Companion.IconAndTitle
 import com.minhtu.firesocialmedia.utils.UiUtils.Companion.SubTitle
 import com.minhtu.firesocialmedia.utils.UiUtils.Companion.TextFieldWithLeadingIcon
+import org.koin.compose.viewmodel.koinViewModel
 
 class ForgotPassword{
     companion object{
         @Composable
         fun ForgotPasswordScreen(
-            forgotPasswordViewModel: ForgotPasswordViewModel,
+            forgotPasswordViewModel: ForgotPasswordViewModel = koinViewModel(),
             loadingViewModel: LoadingViewModel,
             modifier: Modifier = Modifier,
             onNavigateToSignInScreen:() -> Unit) {

@@ -8,8 +8,13 @@ import android.os.StrictMode
 import android.util.Log
 import androidx.annotation.RequiresApi
 import com.minhtu.firesocialmedia.constants.Constants
+import com.minhtu.firesocialmedia.di.AndroidPlatformContext
+import com.minhtu.firesocialmedia.di.appModule
 import com.minhtu.firesocialmedia.domain.serviceimpl.database.supabase.SupabaseStorageHelper
+import com.minhtu.firesocialmedia.domain.serviceimpl.permission.AndroidPermissionManager
 import com.minhtu.firesocialmedia.platform.initPlatformContext
+import org.koin.android.ext.koin.androidContext
+import org.koin.core.context.GlobalContext.startKoin
 import java.util.concurrent.Executors
 
 private const val APP_PACKAGE = "com.minhtu.firesocialmedia"
@@ -20,6 +25,11 @@ class AppApplication : Application() {
         super.onCreate()
         initPlatformContext(this)
         SupabaseStorageHelper.initExtensionCache(this)
+
+        startKoin {
+            androidContext(this@AppApplication)
+            modules(appModule())
+        }
         createChannelNotification()
         setupStrictMode()
         setupLogging()

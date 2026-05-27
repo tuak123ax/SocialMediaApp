@@ -53,14 +53,15 @@ import com.minhtu.firesocialmedia.presentation.search.Search
 import com.minhtu.firesocialmedia.presentation.search.SearchViewModel
 import com.minhtu.firesocialmedia.storage.toStorageUrl
 import com.seiko.imageloader.ui.AutoSizeImage
+import org.koin.compose.viewmodel.koinViewModel
 
 class SelectGroup {
     companion object {
         @Composable
         fun SelectGroupScreen(
             currentUser : UserInstance,
-            selectGroupViewModel: SelectGroupViewModel,
-            searchViewModel : SearchViewModel,
+            selectGroupViewModel: SelectGroupViewModel = koinViewModel(),
+            searchViewModel : SearchViewModel = koinViewModel(),
             paddingValues : PaddingValues,
             localImageLoaderValue : ProvidedValue<*>,
             onNavigateBack : () -> Unit,

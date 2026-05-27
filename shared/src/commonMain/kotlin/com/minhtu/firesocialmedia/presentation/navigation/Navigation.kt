@@ -28,17 +28,17 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.eygraber.uri.Uri
-import com.minhtu.firesocialmedia.di.AppModule
 import com.minhtu.firesocialmedia.di.PlatformContext
-import com.minhtu.firesocialmedia.di.ViewModelProvider
 import com.minhtu.firesocialmedia.domain.entity.call.OfferAnswer
 import com.minhtu.firesocialmedia.domain.entity.call.SharedCallData
 import com.minhtu.firesocialmedia.domain.entity.group.GroupInstance
 import com.minhtu.firesocialmedia.domain.entity.home.deeplinks.DeepLinksData
 import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
+import com.minhtu.firesocialmedia.domain.usecases.settings.ObserveSessionStatusUseCase
+import com.minhtu.firesocialmedia.domain.usecases.settings.StopObserveSessionStatusUseCase
+import com.minhtu.firesocialmedia.domain.usecases.sync.SyncDataUseCase
 import com.minhtu.firesocialmedia.platform.generateImageLoader
-import com.minhtu.firesocialmedia.platform.platformViewModel
 import com.minhtu.firesocialmedia.platform.rememberPlatformImagePicker
 import com.minhtu.firesocialmedia.platform.setupSignInLauncher
 import com.minhtu.firesocialmedia.platform.showToast
@@ -47,9 +47,7 @@ import com.minhtu.firesocialmedia.presentation.calling.audiocall.CallingViewMode
 import com.minhtu.firesocialmedia.presentation.calling.videocall.VideoCall
 import com.minhtu.firesocialmedia.presentation.calling.videocall.VideoCallViewModel
 import com.minhtu.firesocialmedia.presentation.comment.Comment
-import com.minhtu.firesocialmedia.presentation.comment.CommentViewModel
 import com.minhtu.firesocialmedia.presentation.forgotpassword.ForgotPassword
-import com.minhtu.firesocialmedia.presentation.forgotpassword.ForgotPasswordViewModel
 import com.minhtu.firesocialmedia.presentation.home.Home
 import com.minhtu.firesocialmedia.presentation.home.HomeViewModel
 import com.minhtu.firesocialmedia.presentation.information.Information
@@ -58,55 +56,36 @@ import com.minhtu.firesocialmedia.presentation.loading.GifLoading
 import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.Screen
 import com.minhtu.firesocialmedia.presentation.navigationscreen.friend.Friend
-import com.minhtu.firesocialmedia.presentation.navigationscreen.friend.FriendViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.notification.Notification
-import com.minhtu.firesocialmedia.presentation.navigationscreen.notification.NotificationViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.Settings
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.CreateGroup
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.CreateGroupViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.CreatePoll
-import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.CreatePollViewModel
-import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.PollViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.ExploreGroup
-import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.ExploreGroupViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.Group
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.GroupDetails
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.GroupDetailsViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.InviteMember
-import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.InviteMemberViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.ManageMembers
-import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.ManageMembersViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.SelectGroup
-import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.SelectGroupViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.notificationconfigs.NotificationConfigs
-import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.notificationconfigs.NotificationConfigsViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.personal.PersonalInformation
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.personal.PersonalInformationViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.privacy.Privacy
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security.SecuritySettings
-import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security.SecuritySettingsViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security.changepassword.ChangePassword
-import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security.changepassword.ChangePasswordViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security.loginhistory.LoginHistory
-import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security.loginhistory.LoginHistoryViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security.twoFA.BackUpCode
-import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security.twoFA.BackUpCodeViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security.twoFA.TwoFA
-import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security.twoFA.TwoFAViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security.twoFA.TwoFactorEnabled
-import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security.twoFA.TwoFactorEnabledViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security.twoFA.VerifyOTP
-import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security.twoFA.VerifyOTPViewModel
 import com.minhtu.firesocialmedia.presentation.postinformation.PostInformation
 import com.minhtu.firesocialmedia.presentation.postinformation.PostInformationViewModel
 import com.minhtu.firesocialmedia.presentation.search.Search
-import com.minhtu.firesocialmedia.presentation.search.SearchViewModel
 import com.minhtu.firesocialmedia.presentation.showimage.ShowImage
-import com.minhtu.firesocialmedia.presentation.showimage.ShowImageViewModel
 import com.minhtu.firesocialmedia.presentation.signin.SignIn
 import com.minhtu.firesocialmedia.presentation.signin.SignInViewModel
 import com.minhtu.firesocialmedia.presentation.signup.SignUp
-import com.minhtu.firesocialmedia.presentation.signup.SignUpViewModel
 import com.minhtu.firesocialmedia.presentation.uploadnewsfeed.UploadNewfeedViewModel
 import com.minhtu.firesocialmedia.presentation.uploadnewsfeed.UploadNewsfeed
 import com.minhtu.firesocialmedia.presentation.userinformation.UserInformation
@@ -118,6 +97,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.koin.compose.koinInject
+import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
@@ -131,52 +112,21 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
     val localImageLoaderValue = LocalImageLoader provides remember { generateImageLoader() }
 
     // Shared viewModels
-    val signUpViewModel: SignUpViewModel =
-        platformViewModel { ViewModelProvider.createSignUpViewModel(platformContext) }
-    val signInViewModel: SignInViewModel =
-        platformViewModel { ViewModelProvider.createSignInViewModel(platformContext) }
-    val loadingViewModel: LoadingViewModel =
-        platformViewModel { ViewModelProvider.createLoadingViewModel() }
-    val forgotPasswordViewModel: ForgotPasswordViewModel =
-        platformViewModel { ViewModelProvider.createForgotPasswordViewModel(platformContext) }
-    val commentViewModel: CommentViewModel =
-        platformViewModel { ViewModelProvider.createCommentViewModel(platformContext) }
-    val searchViewModel: SearchViewModel =
-        platformViewModel { ViewModelProvider.createSearchViewModel() }
-    val uploadNewsfeedViewModel: UploadNewfeedViewModel =
-        platformViewModel { ViewModelProvider.createUploadNewfeedViewModel(platformContext) }
-    val informationViewModel: InformationViewModel =
-        platformViewModel { ViewModelProvider.createInformationViewModel(platformContext) }
-    val friendViewModel: FriendViewModel =
-        platformViewModel { ViewModelProvider.createFriendViewModel(platformContext) }
-    val userInformationViewModel: UserInformationViewModel =
-        platformViewModel { ViewModelProvider.createUserInformationViewModel(platformContext) }
-    val showImageViewModel: ShowImageViewModel =
-        platformViewModel { ViewModelProvider.createShowImageViewModel(platformContext) }
-    val notificationViewModel: NotificationViewModel =
-        platformViewModel { ViewModelProvider.createNotificationViewModel(platformContext) }
-    val homeViewModel: HomeViewModel =
-        platformViewModel { ViewModelProvider.createHomeViewModel(platformContext) }
-    val postInformationViewModel: PostInformationViewModel =
-        platformViewModel { ViewModelProvider.createPostInformationViewModel(platformContext) }
-    val createGroupViewModel: CreateGroupViewModel =
-        platformViewModel { ViewModelProvider.createCreateGroupViewModel(platformContext) }
-    val groupDetailsViewModel: GroupDetailsViewModel =
-        platformViewModel { ViewModelProvider.createGroupDetailsViewModel(platformContext) }
-    val syncDataUseCase =
-        AppModule.provideSyncDataUseCase(AppModule.provideCommonDbRepository(platformContext))
-    val selectGroupViewModel: SelectGroupViewModel =
-        platformViewModel { ViewModelProvider.createSelectGroupViewModel(platformContext) }
-    val inviteMemberViewModel: InviteMemberViewModel =
-        platformViewModel { ViewModelProvider.createInviteMemberViewModel(platformContext) }
-    val manageMembersViewModel: ManageMembersViewModel =
-        platformViewModel { ViewModelProvider.createManageMembersViewModel(platformContext) }
-    val exploreGroupViewModel: ExploreGroupViewModel =
-        platformViewModel { ViewModelProvider.createExploreGroupViewModel(platformContext) }
-    val notificationConfigsViewModel: NotificationConfigsViewModel =
-        platformViewModel { ViewModelProvider.createNotificationConfigsViewModel(platformContext) }
-    val changePasswordViewModel: ChangePasswordViewModel =
-        platformViewModel { ViewModelProvider.createChangePasswordViewModel(platformContext) }
+    val homeViewModel: HomeViewModel = koinViewModel()
+    val loadingViewModel: LoadingViewModel = koinViewModel()
+    val routerViewModel: RouterViewModel = koinViewModel()
+    val callingViewModel: CallingViewModel = koinViewModel()
+    val videoCallViewModel: VideoCallViewModel = koinViewModel()
+    val signInViewModel: SignInViewModel = koinViewModel()
+    val informationViewModel: InformationViewModel = koinViewModel()
+    val uploadNewsfeedViewModel: UploadNewfeedViewModel = koinViewModel()
+    val userInformationViewModel: UserInformationViewModel = koinViewModel()
+    val postInformationViewModel: PostInformationViewModel = koinViewModel()
+    val createGroupViewModel: CreateGroupViewModel = koinViewModel()
+    val groupDetailsViewModel: GroupDetailsViewModel = koinViewModel()
+    val personalInformationViewModel: PersonalInformationViewModel = koinViewModel()
+
+    val syncDataUseCase: SyncDataUseCase = koinInject()
 
     var updateNew: NewsInstance? = null
     lateinit var relatedNew: NewsInstance
@@ -187,18 +137,6 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
     var remoteOffer by remember { mutableStateOf<OfferAnswer?>(null) }
     var remoteVideoOffer by remember { mutableStateOf<OfferAnswer?>(null) }
     var navigateToVideoCallTrigger by remember { mutableStateOf(0) }
-    val callingViewModel: CallingViewModel =
-        platformViewModel { ViewModelProvider.createCallingViewModel(platformContext) }
-    val videoCallViewModel: VideoCallViewModel =
-        platformViewModel { ViewModelProvider.createVideoCallViewModel(platformContext) }
-
-    //Settings
-    val securitySettingsViewModel: SecuritySettingsViewModel =
-        platformViewModel { ViewModelProvider.createSecuritySettingsViewModel(platformContext) }
-
-    //Personal information
-    val personalInformationViewModel : PersonalInformationViewModel =
-        platformViewModel { ViewModelProvider.createPersonalInformationViewModel(platformContext) }
 
     val isSyncLoading by loadingViewModel.syncLoading.collectAsState()
 
@@ -213,39 +151,15 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
 
     //Group
     var selectedGroup: GroupInstance? = null
-    var createPollViewModel : CreatePollViewModel = platformViewModel { ViewModelProvider.createCreatePollViewModel(platformContext) }
-    val pollViewModel: PollViewModel = platformViewModel { ViewModelProvider.createPollViewModel(platformContext) }
 
     //2FA
-    val twoFAViewModel: TwoFAViewModel =
-        platformViewModel { ViewModelProvider.create2FAViewModel(platformContext) }
     var localSecret = ""
-    val verifyOTPViewModel: VerifyOTPViewModel =
-        platformViewModel { ViewModelProvider.createVerifyOTPViewModel(platformContext) }
     var backupCode = ""
-    val twoFactorEnabledViewModel: TwoFactorEnabledViewModel =
-        platformViewModel { ViewModelProvider.createTwoFactorEnabledViewModel(platformContext) }
-    val backUpCodeViewModel: BackUpCodeViewModel =
-        platformViewModel { ViewModelProvider.createBackUpCodeViewModel(platformContext) }
     var isEnable2FAFlow = false
-    val routerViewModel: RouterViewModel =
-        platformViewModel { ViewModelProvider.createRouterViewModel(platformContext) }
-
-    //Login History
-    val loginHistoryViewModel: LoginHistoryViewModel =
-        platformViewModel { ViewModelProvider.createLoginHistoryViewModel(platformContext) }
 
     // Force-logout from another device
-    val observeSessionStatusUseCase = remember {
-        AppModule.provideObserveSessionStatusUseCase(
-            AppModule.provideSettingsRepository(platformContext)
-        )
-    }
-    val stopObserveSessionStatusUseCase = remember {
-        AppModule.provideStopObserveSessionStatusUseCase(
-            AppModule.provideSettingsRepository(platformContext)
-        )
-    }
+    val observeSessionStatusUseCase: ObserveSessionStatusUseCase = koinInject()
+    val stopObserveSessionStatusUseCase: StopObserveSessionStatusUseCase = koinInject()
     var forceLogoutDialogVisible by remember { mutableStateOf(false) }
 
     // Check persisted forced-logout status on startup (in case app was killed while LOGOUT)
@@ -388,8 +302,7 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                     route = SignUp.getScreenName()
                 ) {
                     SignUp.SignUpScreen(
-                        signUpViewModel,
-                        loadingViewModel,
+                        loadingViewModel = loadingViewModel,
                         modifier = Modifier
                             .fillMaxSize()
                             .background(MaterialTheme.colorScheme.background),
@@ -415,7 +328,6 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                     Information.InformationScreen(
                         platform = platformContext,
                         imagePicker = picker,
-                        signUpViewModel = signUpViewModel,
                         informationViewModel = informationViewModel,
                         loadingViewModel = loadingViewModel,
                         onNavigateToHomeScreen = { navController.navigate(route = Home.getScreenName()) }
@@ -520,7 +432,6 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                                 DeepLinksData.deepLink = ""
                             }
                         },
-                        commentViewModel = commentViewModel,
                         platform = platformContext
                     )
                 }
@@ -559,7 +470,6 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                     ShowImage.ShowImageScreen(
                         selectedImage,
                         localImageLoaderValue = localImageLoaderValue,
-                        showImageViewModel = showImageViewModel,
                         modifier = Modifier
                             .fillMaxSize()
                             .background(color = MaterialTheme.colorScheme.background),
@@ -575,18 +485,12 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                     exitTransition = DefaultNavAnimations.exit,
                     popExitTransition = DefaultNavAnimations.popExit
                 ) {
-                    coroutineScope.launch(Dispatchers.IO) {
-                        delay(700)
-                        //Reset search text
-                        searchViewModel.updateQuery("")
-                    }
                     Search.SearchScreen(
                         modifier = Modifier
                             .fillMaxSize()
                             .background(color = MaterialTheme.colorScheme.background),
                         paddingValues,
-                        searchViewModel,
-                        homeViewModel,
+                        homeViewModel = homeViewModel,
                         localImageLoaderValue = localImageLoaderValue,
                         onNavigateBack = {
                             navController.popBackStack()
@@ -620,7 +524,8 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                         onImagePicked = { uri -> userInformationViewModel.updateCover(uri) },
                         onVideoPicked = {}
                     )
-                    val isFriend = selectedUser?.friends?.contains(homeViewModel.currentUser?.uid) == true
+                    val isFriend =
+                        selectedUser?.friends?.contains(homeViewModel.currentUser?.uid) == true
                     UserInformation.UserInformationScreen(
                         imagePicker = picker,
                         user = selectedUser,
@@ -629,7 +534,6 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                         paddingValues = paddingValues,
                         localImageLoaderValue = localImageLoaderValue,
                         homeViewModel = homeViewModel,
-                        friendViewModel = friendViewModel,
                         userInformationViewModel = userInformationViewModel,
                         loadingViewModel = loadingViewModel,
                         onNavigateToShowImageScreen = { image ->
@@ -672,7 +576,6 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                         platform = platformContext,
                         localImageLoaderValue = localImageLoaderValue,
                         showCloseIcon = true,
-                        commentViewModel = commentViewModel,
                         currentUser = homeViewModel.currentUser!!,
                         selectedNew = selectedNew,
                         onNavigateToShowImageScreen = { image ->
@@ -692,8 +595,7 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                     route = ForgotPassword.getScreenName()
                 ) {
                     ForgotPassword.ForgotPasswordScreen(
-                        forgotPasswordViewModel,
-                        loadingViewModel,
+                        loadingViewModel = loadingViewModel,
                         onNavigateToSignInScreen = {
                             navController.navigate(SignIn.getScreenName()) {
                                 popUpTo(0) {
@@ -711,20 +613,13 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                     exitTransition = DefaultNavAnimations.exit,
                     popExitTransition = DefaultNavAnimations.popExit
                 ) {
-                    coroutineScope.launch(Dispatchers.IO) {
-                        delay(700)
-                        //Reset search text
-                        searchViewModel.updateQuery("")
-                    }
                     Friend.FriendScreen(
                         modifier = Modifier
                             .fillMaxSize()
                             .background(MaterialTheme.colorScheme.background),
                         paddingValues = paddingValues,
                         localImageLoaderValue = localImageLoaderValue,
-                        searchViewModel,
                         homeViewModel = homeViewModel,
-                        friendViewModel,
                         onNavigateToUserInformation = { user ->
                             selectedUser = user
                             navController.navigate(route = UserInformation.getScreenName())
@@ -748,9 +643,7 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                             .background(MaterialTheme.colorScheme.background),
                         paddingValues = paddingValues,
                         localImageLoaderValue = localImageLoaderValue,
-                        searchViewModel = searchViewModel,
                         homeViewModel = homeViewModel,
-                        notificationViewModel = notificationViewModel,
                         loadingViewModel = loadingViewModel,
                         onNavigateToPostInformation = { new ->
                             relatedNew = new
@@ -828,8 +721,7 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                             navController.popBackStack()
                         },
                         homeViewModel,
-                        commentViewModel,
-                        postInformationViewModel,
+                        postInformationViewModel = postInformationViewModel,
                         onNavigateToUploadNews = { new ->
                             updateNew = new
                             navController.navigate(route = UploadNewsfeed.getScreenName())
@@ -937,8 +829,7 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                                 navController.popBackStack()
                             },
                             homeViewModel,
-                            commentViewModel,
-                            postInformationViewModel,
+                            postInformationViewModel = postInformationViewModel,
                             onNavigateToUploadNews = { new ->
                                 updateNew = new
                                 navController.navigate(route = UploadNewsfeed.getScreenName())
@@ -1031,8 +922,6 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                             homeViewModel.currentUser!!,
                             paddingValues,
                             localImageLoaderValue,
-                            exploreGroupViewModel,
-                            searchViewModel,
                             onNavigateBack = {
                                 navController.popBackStack()
                             },
@@ -1065,11 +954,9 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                             modifier = Modifier
                                 .fillMaxSize()
                                 .background(color = MaterialTheme.colorScheme.background),
-                            homeViewModel,
-                            searchViewModel,
-                            loadingViewModel,
-                            groupDetailsViewModel,
-                            pollViewModel = pollViewModel,
+                            homeViewModel = homeViewModel,
+                            loadingViewModel = loadingViewModel,
+                            groupDetailsViewModel = groupDetailsViewModel,
                             onNavigateToShowImageScreen = { image ->
                                 selectedImage = image
                                 navController.navigate(route = ShowImage.getScreenName())
@@ -1084,7 +971,7 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                                     val canPopToSelectGroup = try {
                                         navController.getBackStackEntry(selectGroupRoute)
                                         true
-                                    } catch (e: IllegalArgumentException) {
+                                    } catch (_: IllegalArgumentException) {
                                         false
                                     }
                                     if (canPopToSelectGroup) {
@@ -1156,12 +1043,9 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                 ) {
                     SelectGroup.SelectGroupScreen(
                         homeViewModel.currentUser!!,
-                        selectGroupViewModel,
-                        searchViewModel,
-                        paddingValues,
-                        localImageLoaderValue,
+                        paddingValues = paddingValues,
+                        localImageLoaderValue = localImageLoaderValue,
                         onNavigateBack = {
-                            searchViewModel.updateQuery("")
                             navController.popBackStack()
                         },
                         onNavigateToCreateGroup = {
@@ -1186,10 +1070,7 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                             homeViewModel.currentUser!!,
                             paddingValues,
                             localImageLoaderValue,
-                            inviteMemberViewModel,
-                            searchViewModel,
                             onNavigateBack = {
-                                searchViewModel.updateQuery("")
                                 navController.popBackStack()
                             }
                         )
@@ -1215,10 +1096,8 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                         paddingValues = paddingValues,
                         localImageLoaderValue = localImageLoaderValue,
                         homeViewModel = homeViewModel,
-                        searchViewModel = searchViewModel,
                         loadingViewModel = loadingViewModel,
                         groupDetailsViewModel = groupDetailsViewModel,
-                        pollViewModel = pollViewModel,
                         onNavigateToShowImageScreen = { image ->
                             selectedImage = image
                             navController.navigate(route = ShowImage.getScreenName())
@@ -1233,7 +1112,7 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                                 val canPopToSelectGroup = try {
                                     navController.getBackStackEntry(selectGroupRoute)
                                     true
-                                } catch (e: IllegalArgumentException) {
+                                } catch (_: IllegalArgumentException) {
                                     false
                                 }
                                 if (canPopToSelectGroup) {
@@ -1304,13 +1183,10 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                         ManageMembers.ManageMembersScreen(
                             homeViewModel.currentUser!!,
                             selectedGroup,
-                            manageMembersViewModel,
-                            searchViewModel,
-                            loadingViewModel,
-                            paddingValues,
-                            localImageLoaderValue,
+                            loadingViewModel = loadingViewModel,
+                            paddingValues = paddingValues,
+                            localImageLoaderValue = localImageLoaderValue,
                             onNavigateBack = {
-                                searchViewModel.updateQuery("")
                                 navController.popBackStack()
                             },
                             onInviteMembers = {
@@ -1344,16 +1220,16 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                     exitTransition = DefaultNavAnimations.exit,
                     popExitTransition = DefaultNavAnimations.popExit
                 ) {
-                    Privacy.PrivacyScreen(
-                        onClickBack = {
-                            navController.popBackStack()
-                        },
-                        onUnderstandClicked = {
-                            homeViewModel.currentUser?.let { user ->
-                                loginHistoryViewModel.acknowledgePrivacyRead(user)
+                    if (homeViewModel.currentUser != null) {
+                        Privacy.PrivacyScreen(
+                            homeViewModel.currentUser!!,
+                            onClickBack = {
+                                navController.popBackStack()
                             }
-                        }
-                    )
+                        )
+                    } else {
+                        showToast("Cannot get your information now. Please try again!")
+                    }
                 }
 
                 composable(
@@ -1367,7 +1243,6 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                         SecuritySettings.SecuritySettingsScreen(
                             homeViewModel.currentUser!!,
                             paddingValues,
-                            securitySettingsViewModel,
                             onNavigateBack = {
                                 navController.popBackStack()
                             },
@@ -1395,7 +1270,6 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                 ) {
                     NotificationConfigs.NotificationConfigsScreen(
                         paddingValues,
-                        notificationConfigsViewModel,
                         onNavigateBack = {
                             navController.popBackStack()
                         }
@@ -1412,7 +1286,6 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                     ChangePassword.ChangePasswordScreen(
                         paddingValues,
                         currentUser = if (homeViewModel.currentUser != null) homeViewModel.currentUser!! else UserInstance(),
-                        changePasswordViewModel = changePasswordViewModel,
                         loadingViewModel = loadingViewModel,
                         onNavigateToForgotPasswordScreen = {
                             navController.navigate(ForgotPassword.getScreenName())
@@ -1441,7 +1314,6 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                     TwoFA.TwoFAScreen(
                         paddingValues,
                         if (homeViewModel.currentUser != null) homeViewModel.currentUser!! else UserInstance(),
-                        twoFAViewModel,
                         onContinue = { secret ->
                             localSecret = secret
                             navController.navigate(VerifyOTP.getScreenName())
@@ -1466,7 +1338,6 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                         if (homeViewModel.currentUser != null) homeViewModel.currentUser!! else routerViewModel.currentUser.value,
                         secretKey = localSecret,
                         loadingViewModel,
-                        verifyOTPViewModel,
                         onNavigateToVerifyOTPSuccessScreen = { code ->
                             backupCode = code
                             isEnable2FAFlow = true
@@ -1502,10 +1373,12 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                         paddingValues,
                         backupCode,
                         isEnable2FAFlow,
-                        twoFactorEnabledViewModel,
                         onReturnClick = {
                             if (isEnable2FAFlow) {
-                                navController.popBackStack(SecuritySettings.getScreenName(), false)
+                                navController.popBackStack(
+                                    SecuritySettings.getScreenName(),
+                                    false
+                                )
                             } else {
                                 navController.navigate(Home.getScreenName()) {
                                     popUpTo(0) {
@@ -1528,7 +1401,6 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                     BackUpCode.BackupCodeScreen(
                         paddingValues,
                         loadingViewModel,
-                        backUpCodeViewModel,
                         onNavigateBack = {
                             navController.popBackStack()
                         },
@@ -1549,7 +1421,6 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                 ) {
                     LoginHistory.LoginHistoryScreen(
                         currentUser = homeViewModel.currentUser ?: UserInstance(),
-                        loginHistoryViewModel,
                         modifier = Modifier
                             .padding(paddingValues),
                         onNavigateBack = {
@@ -1570,7 +1441,7 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                         onImagePicked = { uri -> personalInformationViewModel.onAvatarPicked(uri) },
                         onVideoPicked = {}
                     )
-                    if(selectedUser != null) {
+                    if (selectedUser != null) {
                         PersonalInformation.PersonalInformationScreen(
                             selectedUser!!,
                             imagePicker = picker,
@@ -1593,11 +1464,10 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                     exitTransition = DefaultNavAnimations.exit,
                     popExitTransition = DefaultNavAnimations.popExit
                 ) {
-                    if(selectedGroup != null) {
+                    if (selectedGroup != null) {
                         CreatePoll.CreatePollScreen(
                             groupId = selectedGroup.id,
                             currentUser = homeViewModel.currentUser ?: UserInstance(),
-                            createPollViewModel,
                             onClose = {
                                 navController.popBackStack()
                             }
@@ -1608,44 +1478,45 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                     }
                 }
             }
-        }
-        if (isSyncLoading) {
-            GifLoading.GifLoadingScreen(
-                localImageLoaderValue,
-                "loading_gif",
-                "Syncing your data..."
-            )
-        }
+            if (isSyncLoading) {
+                GifLoading.GifLoadingScreen(
+                    localImageLoaderValue,
+                    "loading_gif",
+                    "Syncing your data..."
+                )
+            }
 
-        // Forced-logout dialog: shown when another device logged out this session
-        if (forceLogoutDialogVisible) {
-            androidx.compose.material3.AlertDialog(
-                onDismissRequest = { /* non-dismissible */ },
-                title = { androidx.compose.material3.Text("Session Ended") },
-                text = {
-                    androidx.compose.material3.Text(
-                        "Your account has been logged out from this device by another session. Please sign in again to continue."
-                    )
-                },
-                confirmButton = {
-                    androidx.compose.material3.Button(
-                        onClick = {
-                            forceLogoutDialogVisible = false
-                            stopObserveSessionStatusUseCase()
-                            platformContext.database.clearLocalSessionId()
-                            homeViewModel.clearAccountInStorage()
-                            homeViewModel.clearLocalData()
-                            signInViewModel.reset()
-                            navController.navigate(SignIn.getScreenName()) {
-                                popUpTo(0) { inclusive = true }
+            // Forced-logout dialog: shown when another device logged out this session
+            if (forceLogoutDialogVisible) {
+                androidx.compose.material3.AlertDialog(
+                    onDismissRequest = { /* non-dismissible */ },
+                    title = { androidx.compose.material3.Text("Session Ended") },
+                    text = {
+                        androidx.compose.material3.Text(
+                            "Your account has been logged out from this device by another session. Please sign in again to continue."
+                        )
+                    },
+                    confirmButton = {
+                        androidx.compose.material3.Button(
+                            onClick = {
+                                forceLogoutDialogVisible = false
+                                stopObserveSessionStatusUseCase()
+                                platformContext.database.clearLocalSessionId()
+                                homeViewModel.clearAccountInStorage()
+                                homeViewModel.clearLocalData()
+                                signInViewModel.reset()
+                                navController.navigate(SignIn.getScreenName()) {
+                                    popUpTo(0) { inclusive = true }
+                                }
                             }
+                        ) {
+                            androidx.compose.material3.Text("Sign In")
                         }
-                    ) {
-                        androidx.compose.material3.Text("Sign In")
-                    }
-                },
-                shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp)
-            )
+                    },
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp)
+                )
+            }
         }
     }
 }
+

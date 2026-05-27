@@ -312,19 +312,25 @@ class SignInViewModelTest {
         platform = FakePlatformContext(authService, cryptoService, databaseService)
     }
 
-    // Helper to create VM with test dispatcher, wiring use cases via AppModule
+    // Helper to create VM with test dispatcher, wiring use cases directly
     private fun vm(dispatcher: CoroutineDispatcher): SignInViewModel {
-        val repo = com.minhtu.firesocialmedia.di.AppModule.provideAuthenticationRepository(platform)
-        val signInUseCase = com.minhtu.firesocialmedia.di.AppModule.provideSignInUseCase(repo)
-        val rememberPasswordUseCase = com.minhtu.firesocialmedia.di.AppModule.provideRememberPasswordUseCase(repo)
-        val checkUserExistsUseCase = com.minhtu.firesocialmedia.di.AppModule.provideCheckUserExistsUseCase(repo)
-        val checkLocalAccountUseCase = com.minhtu.firesocialmedia.di.AppModule.provideCheckLocalAccountUseCase(repo)
-        val handleSignInGoogleResultUseCase = com.minhtu.firesocialmedia.di.AppModule.provideHandleSignInGoogleResultUseCase(repo)
-        val userRepo = com.minhtu.firesocialmedia.di.AppModule.provideUserRepository(platform)
-        val getCurrentUserUidUseCase = com.minhtu.firesocialmedia.di.AppModule.provideGetCurrentUserUidUseCase(userRepo)
-        val getUserUseCase = com.minhtu.firesocialmedia.di.AppModule.provideGetUserUseCase(userRepo)
-        val commonDbRepo = com.minhtu.firesocialmedia.di.AppModule.provideCommonDbRepository(platform)
-        val saveLoginActivityInfoUseCase = com.minhtu.firesocialmedia.di.AppModule.provideSaveLoginActivityInfoUseCase(commonDbRepo)
+        val repo = com.minhtu.firesocialmedia.data.repository.AuthenticationRepositoryImpl(
+            platform.auth, platform.database, platform.crypto
+        )
+        val signInUseCase = com.minhtu.firesocialmedia.domain.usecases.signin.SignInUseCase(repo)
+        val rememberPasswordUseCase = com.minhtu.firesocialmedia.domain.usecases.signin.RememberPasswordUseCase(repo)
+        val checkUserExistsUseCase = com.minhtu.firesocialmedia.domain.usecases.signin.CheckUserExistsUseCase(repo)
+        val checkLocalAccountUseCase = com.minhtu.firesocialmedia.domain.usecases.signin.CheckLocalAccountUseCase(repo)
+        val handleSignInGoogleResultUseCase = com.minhtu.firesocialmedia.domain.usecases.signin.HandleSignInGoogleResultUseCase(repo)
+        val userRepo = com.minhtu.firesocialmedia.data.repository.UserRepositoryImpl(
+            platform.auth, platform.database, platform.crypto, platform.room, platform.networkMonitor
+        )
+        val getCurrentUserUidUseCase = com.minhtu.firesocialmedia.domain.usecases.common.GetCurrentUserUidUseCase(userRepo)
+        val getUserUseCase = com.minhtu.firesocialmedia.domain.usecases.common.GetUserUseCase(userRepo)
+        val commonDbRepo = com.minhtu.firesocialmedia.data.repository.CommonDbRepositoryImpl(
+            platform.database, platform.room, platform.networkMonitor, platform.ipRemoteDataSource
+        )
+        val saveLoginActivityInfoUseCase = com.minhtu.firesocialmedia.domain.usecases.signin.SaveLoginActivityInfoUseCase(commonDbRepo)
         return SignInViewModel(
             signInUseCase,
             rememberPasswordUseCase,

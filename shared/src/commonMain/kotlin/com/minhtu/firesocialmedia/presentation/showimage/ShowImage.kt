@@ -46,6 +46,7 @@ import androidx.compose.ui.unit.dp
 import com.minhtu.firesocialmedia.constants.TestTag
 import com.minhtu.firesocialmedia.storage.toStorageUrl
 import com.seiko.imageloader.ui.AutoSizeImage
+import org.koin.compose.viewmodel.koinViewModel
 
 class ShowImage {
     companion object {
@@ -53,7 +54,7 @@ class ShowImage {
         fun ShowImageScreen(
             image: String,
             localImageLoaderValue: ProvidedValue<*>,
-            showImageViewModel: ShowImageViewModel,
+            showImageViewModel: ShowImageViewModel = koinViewModel(),
             modifier: Modifier,
             onNavigateBack: () -> Unit
         ) {

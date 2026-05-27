@@ -54,6 +54,7 @@ import com.minhtu.firesocialmedia.platform.showToast
 import com.minhtu.firesocialmedia.utils.UiUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.koin.compose.viewmodel.koinViewModel
 
 class TwoFA {
     companion object {
@@ -61,7 +62,7 @@ class TwoFA {
         fun TwoFAScreen(
             paddingValues: PaddingValues,
             currentUser : UserInstance,
-            twoFAViewModel: TwoFAViewModel,
+            twoFAViewModel: TwoFAViewModel = koinViewModel(),
             onContinue: (String) -> Unit,
             onNavigateBack: () -> Unit
         ) {

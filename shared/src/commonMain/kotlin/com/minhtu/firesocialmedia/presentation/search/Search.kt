@@ -35,13 +35,14 @@ import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.presentation.home.HomeViewModel
 import com.minhtu.firesocialmedia.utils.UiUtils
+import org.koin.compose.viewmodel.koinViewModel
 
 class Search {
     companion object{
         @Composable
         fun SearchScreen(modifier: Modifier,
                          paddingValues: PaddingValues,
-                         searchViewModel: SearchViewModel,
+                         searchViewModel: SearchViewModel = koinViewModel(),
                          homeViewModel: HomeViewModel,
                          localImageLoaderValue : ProvidedValue<*>,
                          onNavigateBack: () -> Unit,

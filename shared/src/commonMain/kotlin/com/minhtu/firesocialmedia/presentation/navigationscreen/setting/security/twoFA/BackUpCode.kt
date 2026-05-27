@@ -62,6 +62,7 @@ import androidx.compose.ui.unit.sp
 import com.minhtu.firesocialmedia.platform.showToast
 import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
 import com.minhtu.firesocialmedia.utils.UiUtils
+import org.koin.compose.viewmodel.koinViewModel
 
 class BackUpCode {
 
@@ -70,7 +71,7 @@ class BackUpCode {
         fun BackupCodeScreen(
             paddingValues: PaddingValues,
             loadingViewModel: LoadingViewModel,
-            backUpCodeViewModel: BackUpCodeViewModel,
+            backUpCodeViewModel: BackUpCodeViewModel = koinViewModel(),
             onNavigateBack: () -> Unit,
             onNavigateToVerifyBackupCodeSuccessScreen: (String) -> Unit
         ) {

@@ -74,6 +74,7 @@ import com.minhtu.firesocialmedia.utils.UiUtils
 import com.minhtu.firesocialmedia.utils.Utils.Companion.toTimeAgo
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.koin.compose.viewmodel.koinViewModel
 
 class SecuritySettings {
     companion object {
@@ -81,7 +82,7 @@ class SecuritySettings {
         fun SecuritySettingsScreen(
             currentUser: UserInstance,
             paddingValues: PaddingValues,
-            securitySettingsViewModel: SecuritySettingsViewModel,
+            securitySettingsViewModel: SecuritySettingsViewModel = koinViewModel(),
             onNavigateBack: () -> Unit,
             onChangePassword: () -> Unit = {},
             onNavigateTo2FAScreen: () -> Unit = {},

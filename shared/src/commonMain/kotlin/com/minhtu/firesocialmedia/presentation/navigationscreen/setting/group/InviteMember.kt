@@ -74,6 +74,7 @@ import com.seiko.imageloader.ui.AutoSizeImage
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import org.koin.compose.viewmodel.koinViewModel
 
 class InviteMember {
     companion object {
@@ -83,8 +84,8 @@ class InviteMember {
             currentUser : UserInstance,
             paddingValues: PaddingValues,
             localImageLoaderValue : ProvidedValue<*>,
-            inviteMemberViewModel: InviteMemberViewModel,
-            searchViewModel: SearchViewModel,
+            inviteMemberViewModel: InviteMemberViewModel = koinViewModel(),
+            searchViewModel: SearchViewModel = koinViewModel(),
             onNavigateBack : () -> Unit
         ) {
             CommonBackHandler {

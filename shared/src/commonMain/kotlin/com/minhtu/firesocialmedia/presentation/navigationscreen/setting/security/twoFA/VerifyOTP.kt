@@ -67,6 +67,7 @@ import com.minhtu.firesocialmedia.platform.showToast
 import com.minhtu.firesocialmedia.presentation.loading.GifLoading
 import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
 import com.minhtu.firesocialmedia.utils.UiUtils
+import org.koin.compose.viewmodel.koinViewModel
 
 class VerifyOTP {
     companion object {
@@ -77,7 +78,7 @@ class VerifyOTP {
             currentUser: UserInstance,
             secretKey: String,
             loadingViewModel: LoadingViewModel,
-            verifyOTPViewModel: VerifyOTPViewModel,
+            verifyOTPViewModel: VerifyOTPViewModel = koinViewModel(),
             onNavigateToVerifyOTPSuccessScreen: (String) -> Unit = {},
             onNavigateToHomeScreen: () -> Unit,
             onNavigateToBackupCodeScreen: () -> Unit,

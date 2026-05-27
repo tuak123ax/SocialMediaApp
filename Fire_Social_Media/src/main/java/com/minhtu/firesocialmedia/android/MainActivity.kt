@@ -31,6 +31,7 @@ import androidx.core.net.toUri
 import com.google.firebase.messaging.FirebaseMessaging
 import com.minhtu.firesocialmedia.constants.Constants
 import com.minhtu.firesocialmedia.di.AndroidPlatformContext
+import com.minhtu.firesocialmedia.di.PlatformContextHolder
 import com.minhtu.firesocialmedia.domain.serviceimpl.permission.AndroidPermissionManager
 import com.minhtu.firesocialmedia.domain.serviceimpl.remoteconfig.FetchResultCallback
 import com.minhtu.firesocialmedia.domain.serviceimpl.remoteconfig.RemoteConfigHelper
@@ -48,6 +49,7 @@ class MainActivity : ComponentActivity() {
         //Check if activity is started from notification
         val fromNotification = intent.getBooleanExtra(Constants.FROM_NOTIFICATION, false)
         permissionManager = AndroidPermissionManager(this)
+        PlatformContextHolder.instance = AndroidPlatformContext(applicationContext, permissionManager)
         setContent {
             FireSocialMediaCommonTheme{
                 // A surface container using the 'background' color from the theme
@@ -71,12 +73,12 @@ class MainActivity : ComponentActivity() {
                         checkFCMToken()
                         askNotificationPermission()
                     }
+                    val platformContext = remember { AndroidPlatformContext(applicationContext, permissionManager) }
                     Box(modifier = Modifier.fillMaxSize()) {
                         if(fromNotification) {
                             val sessionId = intent.getStringExtra("sessionId")
                             val callerId = intent.getStringExtra("callerId")
                             val calleeId = intent.getStringExtra("calleeId")
-                            val platformContext = remember { AndroidPlatformContext(applicationContext, permissionManager) }
                             MainApplication.MainAppFromNotification(
                                 this@MainActivity,
                                 platformContext,
@@ -85,7 +87,6 @@ class MainActivity : ComponentActivity() {
                                 calleeId
                             )
                         } else {
-                            val platformContext = remember { AndroidPlatformContext(applicationContext, permissionManager) }
                             if(deepLink.isNotEmpty()) {
                                 MainApplication.MainAppWithDeepLink(this@MainActivity, deepLink, platformContext)
                             } else {
@@ -102,7 +103,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    override fun onNewIntent(intent: Intent?) {
+    override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
     }
@@ -117,36 +118,6 @@ class MainActivity : ComponentActivity() {
         }
         runCatching { permissionManager.clear() }
     }
-
-//    @SuppressLint("UnspecifiedRegisterReceiverFlag")
-//    private fun listenDownloadImageEvent() {
-//        if(downloadReceiver == null) {
-//            downloadReceiver = object : BroadcastReceiver() {
-//                override fun onReceive(
-//                    context: Context?,
-//                    intent: Intent?
-//                ) {
-//                    if(intent != null && intent.action == DownloadManager.ACTION_DOWNLOAD_COMPLETE) {
-//                        val downloadId = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1)
-//                        if(downloadId > -1) {
-//                            Toast.makeText(this@MainActivity, "Download image successfully!", Toast.LENGTH_SHORT).show()
-//                        }
-//                    }
-//                }
-//
-//            }
-//
-//            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-//                registerReceiver(
-//                    downloadReceiver,
-//                    IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE),
-//                    RECEIVER_EXPORTED
-//                )
-//            } else {
-//                registerReceiver(downloadReceiver, IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE))
-//            }
-//        }
-//    }
 
     private fun checkFCMToken() {
         FirebaseMessaging.getInstance().token

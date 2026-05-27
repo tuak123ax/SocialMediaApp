@@ -90,6 +90,7 @@ import com.minhtu.sharedmodule.ui.theme.positiveBackgroundButtonColor
 import com.minhtu.sharedmodule.ui.theme.positiveTintColor
 import com.seiko.imageloader.ui.AutoSizeImage
 import kotlinx.coroutines.delay
+import org.koin.compose.viewmodel.koinViewModel
 
 class ManageMembers {
     companion object{
@@ -98,8 +99,8 @@ class ManageMembers {
         fun ManageMembersScreen(
             currentUser : UserInstance,
             group : GroupInstance,
-            manageMembersViewModel: ManageMembersViewModel,
-            searchViewModel : SearchViewModel,
+            manageMembersViewModel: ManageMembersViewModel = koinViewModel(),
+            searchViewModel : SearchViewModel = koinViewModel(),
             loadingViewModel: LoadingViewModel,
             paddingValues: PaddingValues,
             localImageLoaderValue : ProvidedValue<*>,
@@ -236,8 +237,10 @@ class ManageMembers {
                                     modifier = Modifier
                                         .padding(vertical = 10.dp)
                                         .background(MaterialTheme.colorScheme.surface)
-                                        .animateItemPlacement(
-                                        animationSpec = tween(
+                                        .animateItem(
+                                        fadeInSpec = null,
+                                        fadeOutSpec = null,
+                                        placementSpec = tween(
                                             durationMillis = 400,
                                             easing = FastOutSlowInEasing
                                         )
@@ -314,8 +317,10 @@ class ManageMembers {
                                     modifier = Modifier
                                         .padding(vertical = 10.dp)
                                         .background(MaterialTheme.colorScheme.surface)
-                                        .animateItemPlacement(
-                                        animationSpec = tween(
+                                        .animateItem(
+                                        fadeInSpec = null,
+                                        fadeOutSpec = null,
+                                        placementSpec = tween(
                                             durationMillis = 400,
                                             easing = FastOutSlowInEasing
                                         )

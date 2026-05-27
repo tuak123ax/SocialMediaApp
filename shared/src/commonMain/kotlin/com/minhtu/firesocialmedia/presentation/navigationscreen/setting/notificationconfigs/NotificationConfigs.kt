@@ -47,13 +47,14 @@ import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.Settings
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.Settings.Companion.SoftSwitch
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.TrailingContentType
 import com.minhtu.firesocialmedia.utils.UiUtils
+import org.koin.compose.viewmodel.koinViewModel
 
 
 class NotificationConfigs {
     companion object {
         @Composable
         fun NotificationConfigsScreen(paddingValues: PaddingValues,
-                                      notificationConfigsViewModel: NotificationConfigsViewModel,
+                                      notificationConfigsViewModel: NotificationConfigsViewModel = koinViewModel(),
                                       modifier: Modifier = Modifier,
                                       onNavigateBack : () -> Unit){
             Column(

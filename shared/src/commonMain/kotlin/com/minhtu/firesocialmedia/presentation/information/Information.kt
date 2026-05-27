@@ -56,13 +56,14 @@ import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
 import com.minhtu.firesocialmedia.presentation.signup.SignUpViewModel
 import com.minhtu.firesocialmedia.utils.UiUtils
 import com.minhtu.sharedmodule.ui.theme.avatarGrayBackground
+import org.koin.compose.viewmodel.koinViewModel
 
 class Information {
     companion object{
         @Composable
         fun InformationScreen(platform: PlatformContext,
                               imagePicker: ImagePicker,
-                              signUpViewModel: SignUpViewModel,
+                              signUpViewModel: SignUpViewModel = koinViewModel(),
                               informationViewModel: InformationViewModel,
                               loadingViewModel: LoadingViewModel,
                               onNavigateToHomeScreen: () -> Unit){

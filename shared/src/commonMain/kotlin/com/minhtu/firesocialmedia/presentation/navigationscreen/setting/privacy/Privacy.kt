@@ -40,14 +40,18 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.minhtu.firesocialmedia.constants.TestTag
+import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
+import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security.loginhistory.LoginHistoryViewModel
+import org.koin.compose.viewmodel.koinViewModel
 
 class Privacy {
     companion object {
         @OptIn(ExperimentalMaterial3Api::class)
         @Composable
         fun PrivacyScreen(
-            onClickBack: () -> Unit,
-            onUnderstandClicked: () -> Unit = {}
+            currentUser : UserInstance,
+            loginHistoryViewModel: LoginHistoryViewModel = koinViewModel(),
+            onClickBack: () -> Unit
         ) {
             Scaffold(
                 containerColor = MaterialTheme.colorScheme.background,
@@ -150,7 +154,7 @@ class Privacy {
                     item {
                         Button(
                             onClick = {
-                                onUnderstandClicked()
+                                loginHistoryViewModel.acknowledgePrivacyRead(currentUser)
                                 onClickBack()
                             },
                             shape = RoundedCornerShape(10.dp),

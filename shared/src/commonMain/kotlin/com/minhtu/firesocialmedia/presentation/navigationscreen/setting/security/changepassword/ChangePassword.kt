@@ -58,6 +58,7 @@ import com.minhtu.firesocialmedia.presentation.loading.Loading
 import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
 import com.minhtu.firesocialmedia.utils.UiUtils
 import com.minhtu.firesocialmedia.utils.UiUtils.Companion.PasswordField
+import org.koin.compose.viewmodel.koinViewModel
 
 class ChangePassword {
     companion object {
@@ -65,7 +66,7 @@ class ChangePassword {
         fun ChangePasswordScreen(
             paddingValues: PaddingValues,
             currentUser: UserInstance,
-            changePasswordViewModel: ChangePasswordViewModel,
+            changePasswordViewModel: ChangePasswordViewModel = koinViewModel(),
             loadingViewModel: LoadingViewModel,
             onNavigateToForgotPasswordScreen: () -> Unit,
             onNavigateToSignInScreen: () -> Unit,

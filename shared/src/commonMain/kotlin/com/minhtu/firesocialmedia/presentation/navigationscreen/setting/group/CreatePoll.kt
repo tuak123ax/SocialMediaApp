@@ -47,6 +47,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.platform.showToast
+import org.koin.compose.viewmodel.koinViewModel
 
 class CreatePoll {
     companion object {
@@ -55,7 +56,7 @@ class CreatePoll {
         fun CreatePollScreen(
             groupId : String,
             currentUser : UserInstance,
-            createPollViewModel: CreatePollViewModel,
+            createPollViewModel: CreatePollViewModel = koinViewModel(),
             onClose: () -> Unit
         ) {
             val question by createPollViewModel.question.collectAsState()

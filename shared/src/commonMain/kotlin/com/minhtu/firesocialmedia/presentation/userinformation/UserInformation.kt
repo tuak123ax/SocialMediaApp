@@ -75,6 +75,7 @@ import com.seiko.imageloader.ui.AutoSizeImage
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
+import org.koin.compose.viewmodel.koinViewModel
 
 class UserInformation {
     companion object{
@@ -87,7 +88,7 @@ class UserInformation {
             paddingValues: PaddingValues,
             localImageLoaderValue : ProvidedValue<*>,
             homeViewModel : HomeViewModel,
-            friendViewModel: FriendViewModel,
+            friendViewModel: FriendViewModel = koinViewModel(),
             userInformationViewModel: UserInformationViewModel,
             loadingViewModel: LoadingViewModel,
             onNavigateToShowImageScreen : (image : String) -> Unit,

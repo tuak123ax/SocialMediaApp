@@ -107,6 +107,7 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
+import org.koin.compose.viewmodel.koinViewModel
 
 class GroupDetails {
     companion object Companion {
@@ -119,10 +120,10 @@ class GroupDetails {
             localImageLoaderValue : ProvidedValue<*>,
             modifier: Modifier = Modifier,
             homeViewModel : HomeViewModel,
-            searchViewModel : SearchViewModel,
+            searchViewModel : SearchViewModel = koinViewModel(),
             loadingViewModel : LoadingViewModel,
             groupDetailsViewModel: GroupDetailsViewModel,
-            pollViewModel: PollViewModel? = null,
+            pollViewModel: PollViewModel = koinViewModel(),
             onNavigateToShowImageScreen : (image : String) -> Unit,
             onNavigateToUserInformation : (user : UserInstance?) -> Unit,
             onNavigateBack : () -> Unit,

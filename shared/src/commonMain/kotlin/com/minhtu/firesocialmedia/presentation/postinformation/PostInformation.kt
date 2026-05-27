@@ -60,6 +60,7 @@ import com.minhtu.firesocialmedia.utils.Utils.Companion.hexToColor
 import com.seiko.imageloader.ui.AutoSizeImage
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.koin.compose.viewmodel.koinViewModel
 
 class PostInformation {
     companion object{
@@ -72,7 +73,7 @@ class PostInformation {
                                   onNavigateToUserInformation: (user: UserInstance?) -> Unit,
                                   onNavigateBack : () -> Unit,
                                   homeViewModel: HomeViewModel,
-                                  commentViewModel : CommentViewModel,
+                                  commentViewModel : CommentViewModel = koinViewModel(),
                                   postInformationViewModel: PostInformationViewModel,
                                   onNavigateToUploadNews: (updateNew : NewsInstance?) -> Unit,
                                   onShareNews : (String, NewsInstance) -> Unit

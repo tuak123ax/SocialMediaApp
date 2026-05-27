@@ -74,6 +74,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.koin.compose.viewmodel.koinViewModel
 
 class Comment {
     companion object {
@@ -84,7 +85,7 @@ class Comment {
             platform: PlatformContext,
             localImageLoaderValue: ProvidedValue<*>,
             showCloseIcon: Boolean,
-            commentViewModel: CommentViewModel,
+            commentViewModel: CommentViewModel = koinViewModel(),
             currentUser: UserInstance,
             selectedNew: NewsInstance,
             onNavigateToShowImageScreen: (image: String) -> Unit,

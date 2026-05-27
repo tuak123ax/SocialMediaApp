@@ -17,8 +17,6 @@ import com.minhtu.firesocialmedia.data.remote.mapper.call.toDomain
 import com.minhtu.firesocialmedia.data.remote.mapper.user.toDomain
 import com.minhtu.firesocialmedia.data.remote.service.call.AudioCallService
 import com.minhtu.firesocialmedia.data.remote.service.database.DatabaseService
-import com.minhtu.firesocialmedia.di.AndroidPlatformContext
-import com.minhtu.firesocialmedia.di.AppModule
 import com.minhtu.firesocialmedia.domain.coordinator.call.CalleeCoordinator
 import com.minhtu.firesocialmedia.domain.coordinator.call.CallerCoordinator
 import com.minhtu.firesocialmedia.domain.entity.call.AudioCallSession
@@ -32,7 +30,6 @@ import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.domain.serviceimpl.call.CallNotificationManager.Companion.NOTIF_ID
 import com.minhtu.firesocialmedia.domain.serviceimpl.database.AndroidDatabaseService
 import com.minhtu.firesocialmedia.domain.serviceimpl.database.supabase.SupabaseStorageHelper
-import com.minhtu.firesocialmedia.domain.serviceimpl.permission.AndroidPermissionManager
 import com.minhtu.firesocialmedia.domain.usecases.call.AcceptCallUseCase
 import com.minhtu.firesocialmedia.domain.usecases.call.AddIceCandidatesUseCase
 import com.minhtu.firesocialmedia.domain.usecases.call.CalleeUseCases
@@ -64,6 +61,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
+import org.koin.android.ext.android.inject
 
 class CallForegroundService : Service() {
     private lateinit var callManager: AudioCallService
@@ -84,15 +82,17 @@ class CallForegroundService : Service() {
      */
     private var lastProcessedVideoOfferSdpHash: Int? = null
 
-    private lateinit var initializeCallUseCase: InitializeCallUseCase
-    private lateinit var sendSignalingDataUseCase : SendSignalingDataUseCase
-    private lateinit var manageCallStateUseCase: ManageCallStateUseCase
-    private lateinit var videoCallUseCase: VideoCallUseCase
+    private val initializeCallUseCase: InitializeCallUseCase by inject()
+    private val sendSignalingDataUseCase : SendSignalingDataUseCase by inject()
+    private val manageCallStateUseCase: ManageCallStateUseCase by inject()
+    private val videoCallUseCase: VideoCallUseCase by inject()
     private lateinit var callerUseCases : CallerUseCases
     private lateinit var calleeUseCases : CalleeUseCases
     private lateinit var callerCoordinator: CallerCoordinator
     private lateinit var calleeCoordinator : CalleeCoordinator
     private var isStopped : Boolean = false
+
+    private val platformContext : com.minhtu.firesocialmedia.di.PlatformContext by inject()
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -103,18 +103,11 @@ class CallForegroundService : Service() {
         //Initialize services
         backgroundScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
         callNotificationManager = CallNotificationManager(this)
-        val platformContext = AndroidPlatformContext(this, AndroidPermissionManager(null))
-        val callRepository = AppModule.provideCallRepository(platformContext)
         // Use the same AudioCallService instance across repository and service to avoid leaks
         callManager = platformContext.audioCall
         databaseService = AndroidDatabaseService(applicationContext, SupabaseStorageHelper())
-        //Initialize use cases
-        initializeCallUseCase = AppModule.provideInitializeCallUseCase(callRepository)
-        sendSignalingDataUseCase = AppModule.provideSendSignalingDataUseCase(callRepository)
-        manageCallStateUseCase = AppModule.provideManageCallStateUseCase(callRepository)
-        videoCallUseCase = AppModule.provideVideoCallUseCase(callRepository)
 
-        //Initialize caller use cases
+        // Build use case bundles manually because StartCallUseCase needs backgroundScope
         callerUseCases = CallerUseCases(
             StartCallUseCase(initializeCallUseCase, sendSignalingDataUseCase, backgroundScope),
             SendOfferUseCase(initializeCallUseCase),
@@ -127,8 +120,6 @@ class CallForegroundService : Service() {
             EndCallUseCase(manageCallStateUseCase),
             SendWhoEndCallUseCase(manageCallStateUseCase)
         )
-
-        //Initialize callee use cases
         calleeUseCases = CalleeUseCases(
             ListenForIncomingCallsUseCase(initializeCallUseCase),
             ObservePhoneCallUseCase(sendSignalingDataUseCase),

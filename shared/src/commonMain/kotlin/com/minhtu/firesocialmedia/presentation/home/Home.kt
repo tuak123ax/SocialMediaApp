@@ -67,6 +67,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.minhtu.firesocialmedia.constants.TestTag
+import com.minhtu.firesocialmedia.di.PlatformContext
 import com.minhtu.firesocialmedia.domain.core.DecentralizationType
 import com.minhtu.firesocialmedia.domain.entity.call.CallingRequestData
 import com.minhtu.firesocialmedia.domain.entity.home.deeplinks.DeepLinksData
@@ -77,6 +78,7 @@ import com.minhtu.firesocialmedia.platform.CrossPlatformIcon
 import com.minhtu.firesocialmedia.platform.logMessage
 import com.minhtu.firesocialmedia.platform.showToast
 import com.minhtu.firesocialmedia.platform.toHex
+import com.minhtu.firesocialmedia.presentation.comment.CommentViewModel
 import com.minhtu.firesocialmedia.presentation.loading.Loading
 import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
 import com.minhtu.firesocialmedia.storage.toStorageUrl
@@ -86,29 +88,30 @@ import com.seiko.imageloader.ui.AutoSizeImage
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
+import org.koin.compose.viewmodel.koinViewModel
 
 class Home {
     companion object{
         @Composable
                         fun HomeScreen(modifier: Modifier,
-                       homeViewModel: HomeViewModel,
-                       loadingViewModel: LoadingViewModel,
-                       navigateToCallingScreen : Boolean,
-                       paddingValues: PaddingValues,
-                       localImageLoaderValue : ProvidedValue<*>,
-                       onNavigateToUploadNews: (updateNew : NewsInstance?) -> Unit,
-                       onNavigateToShowImageScreen: (image : String) -> Unit,
-                       onNavigateToSearch: () -> Unit,
-                       onNavigateToSignIn: () -> Unit,
-                       onNavigateToUserInformation: (user: UserInstance?) -> Unit,
-                       onNavigateToCommentScreen: (selectedNew : NewsInstance) -> Unit,
-                       onNavigateToCallingScreen : suspend (CallingRequestData) -> Unit,
-                       onNavigateToCallingScreenWithUI : suspend () -> Unit,
-                       onNavigateToPostInformation : () -> Unit,
-                       onShareNews : (String, NewsInstance) -> Unit,
-                       onNavigateToJoinGroup : () -> Unit,
-                       commentViewModel: com.minhtu.firesocialmedia.presentation.comment.CommentViewModel? = null,
-                       platform: com.minhtu.firesocialmedia.di.PlatformContext? = null){
+                                       homeViewModel: HomeViewModel,
+                                       loadingViewModel: LoadingViewModel,
+                                       navigateToCallingScreen : Boolean,
+                                       paddingValues: PaddingValues,
+                                       localImageLoaderValue : ProvidedValue<*>,
+                                       onNavigateToUploadNews: (updateNew : NewsInstance?) -> Unit,
+                                       onNavigateToShowImageScreen: (image : String) -> Unit,
+                                       onNavigateToSearch: () -> Unit,
+                                       onNavigateToSignIn: () -> Unit,
+                                       onNavigateToUserInformation: (user: UserInstance?) -> Unit,
+                                       onNavigateToCommentScreen: (selectedNew : NewsInstance) -> Unit,
+                                       onNavigateToCallingScreen : suspend (CallingRequestData) -> Unit,
+                                       onNavigateToCallingScreenWithUI : suspend () -> Unit,
+                                       onNavigateToPostInformation : () -> Unit,
+                                       onShareNews : (String, NewsInstance) -> Unit,
+                                       onNavigateToJoinGroup : () -> Unit,
+                                       commentViewModel: CommentViewModel = koinViewModel(),
+                                       platform: PlatformContext? = null){
             val isLoading by loadingViewModel.isLoading.collectAsState()
             val commentStatus by homeViewModel.commentStatus.collectAsState()
             var showBottomSheet by rememberSaveable { mutableStateOf(false) }
