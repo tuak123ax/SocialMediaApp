@@ -1,8 +1,8 @@
 package com.minhtu.firesocialmedia.data.remote.mapper.authentication
 import com.minhtu.firesocialmedia.data.remote.dto.authentication.TwoFARequestDTO
 import com.minhtu.firesocialmedia.data.remote.dto.authentication.TwoFAResponseDTO
-import com.minhtu.firesocialmedia.domain.entity.authentication.TwoFARequest
-import com.minhtu.firesocialmedia.domain.entity.authentication.TwoFAResponse
+import com.minhtu.firesocialmedia.core.domain.entity.authentication.TwoFARequest
+import com.minhtu.firesocialmedia.core.domain.entity.authentication.TwoFAResponse
 fun TwoFARequest.toDTO(): TwoFARequestDTO = TwoFARequestDTO(
     apiKey = apiKey,
     action = action,

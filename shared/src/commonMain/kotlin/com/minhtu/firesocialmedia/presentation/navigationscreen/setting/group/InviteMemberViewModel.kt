@@ -2,13 +2,13 @@ package com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.minhtu.firesocialmedia.domain.entity.group.GroupInstance
-import com.minhtu.firesocialmedia.domain.entity.notification.NotificationInstance
-import com.minhtu.firesocialmedia.domain.entity.notification.NotificationType
-import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
-import com.minhtu.firesocialmedia.domain.usecases.common.GetUserUseCase
-import com.minhtu.firesocialmedia.domain.usecases.group.CopyLinkUseCase
-import com.minhtu.firesocialmedia.domain.usecases.group.InviteFriendToGroupUseCase
+import com.minhtu.firesocialmedia.core.domain.entity.group.GroupInstance
+import com.minhtu.firesocialmedia.core.domain.entity.notification.NotificationInstance
+import com.minhtu.firesocialmedia.core.domain.entity.notification.NotificationType
+import com.minhtu.firesocialmedia.core.domain.entity.user.UserInstance
+import com.minhtu.firesocialmedia.core.domain.usecases.common.GetUserUseCase
+import com.minhtu.firesocialmedia.core.domain.usecases.group.CopyLinkUseCase
+import com.minhtu.firesocialmedia.core.domain.usecases.group.InviteFriendToGroupUseCase
 import com.minhtu.firesocialmedia.platform.createMessageForServer
 import com.minhtu.firesocialmedia.platform.getCurrentTime
 import com.minhtu.firesocialmedia.platform.getRandomIdForNotification

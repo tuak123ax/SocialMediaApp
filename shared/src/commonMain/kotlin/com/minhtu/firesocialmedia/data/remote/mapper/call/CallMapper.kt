@@ -1,13 +1,13 @@
 package com.minhtu.firesocialmedia.data.remote.mapper.call
 
+import com.minhtu.firesocialmedia.core.domain.entity.call.AudioCallSession
+import com.minhtu.firesocialmedia.core.domain.entity.call.CallingRequestData
+import com.minhtu.firesocialmedia.core.domain.entity.call.IceCandidateData
+import com.minhtu.firesocialmedia.core.domain.entity.call.OfferAnswer
 import com.minhtu.firesocialmedia.data.remote.dto.call.AudioCallSessionDTO
 import com.minhtu.firesocialmedia.data.remote.dto.call.CallingRequestDTO
 import com.minhtu.firesocialmedia.data.remote.dto.call.IceCandidateDTO
 import com.minhtu.firesocialmedia.data.remote.dto.call.OfferAnswerDTO
-import com.minhtu.firesocialmedia.domain.entity.call.AudioCallSession
-import com.minhtu.firesocialmedia.domain.entity.call.CallingRequestData
-import com.minhtu.firesocialmedia.domain.entity.call.IceCandidateData
-import com.minhtu.firesocialmedia.domain.entity.call.OfferAnswer
 
 fun AudioCallSessionDTO.toDomain() : AudioCallSession {
     return AudioCallSession(

@@ -1,7 +1,7 @@
 package com.minhtu.firesocialmedia.presentation.postinformation
 
-import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
-import com.minhtu.firesocialmedia.domain.usecases.notification.FindNewByIdInDbUseCase
+import com.minhtu.firesocialmedia.core.domain.entity.news.NewsInstance
+import com.minhtu.firesocialmedia.core.domain.usecases.notification.FindNewByIdInDbUseCase
 import com.rickclephas.kmp.observableviewmodel.ViewModel
 import com.rickclephas.kmp.observableviewmodel.launch
 import kotlinx.coroutines.CoroutineDispatcher

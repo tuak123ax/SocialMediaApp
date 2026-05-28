@@ -3,10 +3,10 @@ package com.minhtu.firesocialmedia.presentation.forgotpassword
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import com.minhtu.firesocialmedia.constants.Constants
-import com.minhtu.firesocialmedia.domain.entity.forgotpassword.EmailExistResult
-import com.minhtu.firesocialmedia.domain.usecases.forgotpassword.CheckIfEmailExistsUseCase
-import com.minhtu.firesocialmedia.domain.usecases.forgotpassword.SendEmailResetPasswordUseCase
+import com.minhtu.firesocialmedia.core.constants.Constants
+import com.minhtu.firesocialmedia.core.domain.entity.forgotpassword.EmailExistResult
+import com.minhtu.firesocialmedia.core.domain.usecases.forgotpassword.CheckIfEmailExistsUseCase
+import com.minhtu.firesocialmedia.core.domain.usecases.forgotpassword.SendEmailResetPasswordUseCase
 import com.rickclephas.kmp.observableviewmodel.ViewModel
 import com.rickclephas.kmp.observableviewmodel.launch
 import kotlinx.coroutines.CoroutineDispatcher

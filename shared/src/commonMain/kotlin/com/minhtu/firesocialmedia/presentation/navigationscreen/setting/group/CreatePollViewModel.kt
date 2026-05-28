@@ -2,8 +2,8 @@ package com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.minhtu.firesocialmedia.domain.entity.settings.PollObject
-import com.minhtu.firesocialmedia.domain.usecases.settings.CreatePollUseCase
+import com.minhtu.firesocialmedia.core.domain.entity.settings.PollObject
+import com.minhtu.firesocialmedia.core.domain.usecases.settings.CreatePollUseCase
 import com.minhtu.firesocialmedia.platform.generateRandomId
 import com.minhtu.firesocialmedia.platform.getCurrentTime
 import kotlinx.coroutines.CoroutineDispatcher

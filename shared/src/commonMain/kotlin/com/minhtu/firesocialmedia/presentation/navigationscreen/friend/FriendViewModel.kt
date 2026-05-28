@@ -1,8 +1,8 @@
 package com.minhtu.firesocialmedia.presentation.navigationscreen.friend
 
-import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
-import com.minhtu.firesocialmedia.domain.usecases.friend.SaveFriendRequestUseCase
-import com.minhtu.firesocialmedia.domain.usecases.friend.SaveFriendUseCase
+import com.minhtu.firesocialmedia.core.domain.entity.user.UserInstance
+import com.minhtu.firesocialmedia.core.domain.usecases.friend.SaveFriendRequestUseCase
+import com.minhtu.firesocialmedia.core.domain.usecases.friend.SaveFriendUseCase
 import com.rickclephas.kmp.observableviewmodel.ViewModel
 import com.rickclephas.kmp.observableviewmodel.launch
 import kotlinx.coroutines.CoroutineDispatcher

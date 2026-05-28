@@ -67,11 +67,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import com.minhtu.firesocialmedia.constants.TestTag
-import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
-import com.minhtu.firesocialmedia.domain.entity.notification.NotificationInstance
-import com.minhtu.firesocialmedia.domain.entity.notification.NotificationType
-import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
+import com.minhtu.firesocialmedia.core.constants.TestTag
+import com.minhtu.firesocialmedia.core.domain.entity.news.NewsInstance
+import com.minhtu.firesocialmedia.core.domain.entity.notification.NotificationInstance
+import com.minhtu.firesocialmedia.core.domain.entity.notification.NotificationType
+import com.minhtu.firesocialmedia.core.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.platform.CrossPlatformIcon
 import com.minhtu.firesocialmedia.platform.showToast
 import com.minhtu.firesocialmedia.platform.toHex
@@ -79,7 +79,7 @@ import com.minhtu.firesocialmedia.presentation.home.HomeViewModel
 import com.minhtu.firesocialmedia.presentation.loading.Loading
 import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
 import com.minhtu.firesocialmedia.presentation.search.SearchViewModel
-import com.minhtu.firesocialmedia.storage.toStorageUrl
+import com.minhtu.firesocialmedia.core.storage.toStorageUrl
 
 import com.seiko.imageloader.ui.AutoSizeImage
 import kotlinx.coroutines.delay

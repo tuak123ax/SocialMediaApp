@@ -1,10 +1,10 @@
 package com.minhtu.firesocialmedia.data.remote.service.auth
 
+import com.minhtu.firesocialmedia.core.domain.entity.authentication.TwoFAResponse
+import com.minhtu.firesocialmedia.core.domain.entity.forgotpassword.EmailExistResult
+import com.minhtu.firesocialmedia.core.domain.error.signin.SignInError
 import com.minhtu.firesocialmedia.data.remote.dto.user.UserDTO
-import com.minhtu.firesocialmedia.domain.entity.authentication.TwoFAResponse
-import com.minhtu.firesocialmedia.domain.entity.forgotpassword.EmailExistResult
-import com.minhtu.firesocialmedia.domain.entity.settings.ChangePasswordState
-import com.minhtu.firesocialmedia.domain.error.signin.SignInError
+import com.minhtu.firesocialmedia.core.domain.entity.settings.ChangePasswordState
 import io.mockative.Mockable
 
 @Mockable

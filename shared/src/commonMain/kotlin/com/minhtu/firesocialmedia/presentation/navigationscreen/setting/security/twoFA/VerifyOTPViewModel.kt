@@ -2,11 +2,11 @@ package com.minhtu.firesocialmedia.presentation.navigationscreen.setting.securit
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.minhtu.firesocialmedia.domain.entity.authentication.TwoFAResponse
-import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
-import com.minhtu.firesocialmedia.domain.usecases.home.ClearAccountUseCase
-import com.minhtu.firesocialmedia.domain.usecases.settings.Enable2FAUseCase
-import com.minhtu.firesocialmedia.domain.usecases.settings.Verify2FAUseCase
+import com.minhtu.firesocialmedia.core.domain.entity.authentication.TwoFAResponse
+import com.minhtu.firesocialmedia.core.domain.entity.user.UserInstance
+import com.minhtu.firesocialmedia.core.domain.usecases.home.ClearAccountUseCase
+import com.minhtu.firesocialmedia.core.domain.usecases.settings.Enable2FAUseCase
+import com.minhtu.firesocialmedia.core.domain.usecases.settings.Verify2FAUseCase
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO

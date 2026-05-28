@@ -33,7 +33,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
@@ -42,16 +41,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.minhtu.firesocialmedia.constants.TestTag
-import com.minhtu.firesocialmedia.domain.entity.group.GroupInstance
-import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
+import com.minhtu.firesocialmedia.core.constants.TestTag
+import com.minhtu.firesocialmedia.core.domain.entity.group.GroupInstance
+import com.minhtu.firesocialmedia.core.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.platform.CommonBackHandler
 import com.minhtu.firesocialmedia.platform.CrossPlatformIcon
 import com.minhtu.firesocialmedia.platform.showToast
 import com.minhtu.firesocialmedia.platform.toHex
 import com.minhtu.firesocialmedia.presentation.search.Search
 import com.minhtu.firesocialmedia.presentation.search.SearchViewModel
-import com.minhtu.firesocialmedia.storage.toStorageUrl
+import com.minhtu.firesocialmedia.core.storage.toStorageUrl
 import com.seiko.imageloader.ui.AutoSizeImage
 import org.koin.compose.viewmodel.koinViewModel
 

@@ -8,17 +8,16 @@ import com.minhtu.firesocialmedia.data.remote.mapper.user.toDto
 import com.minhtu.firesocialmedia.data.remote.service.call.AudioCallService
 import com.minhtu.firesocialmedia.data.remote.service.database.DatabaseService
 import com.minhtu.firesocialmedia.data.remote.service.permission.PermissionManager
-import com.minhtu.firesocialmedia.domain.entity.call.AudioCallSession
-import com.minhtu.firesocialmedia.domain.entity.call.CallStatus
-import com.minhtu.firesocialmedia.domain.entity.call.CallingRequestData
-import com.minhtu.firesocialmedia.domain.entity.call.IceCandidateData
-import com.minhtu.firesocialmedia.domain.entity.call.OfferAnswer
-import com.minhtu.firesocialmedia.domain.entity.call.SpeakerType
-import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
-import com.minhtu.firesocialmedia.domain.repository.CallRepository
-import com.minhtu.firesocialmedia.platform.WebRTCVideoTrack
+import com.minhtu.firesocialmedia.core.domain.entity.call.AudioCallSession
+import com.minhtu.firesocialmedia.core.domain.entity.call.CallStatus
+import com.minhtu.firesocialmedia.core.domain.entity.call.CallingRequestData
+import com.minhtu.firesocialmedia.core.domain.entity.call.IceCandidateData
+import com.minhtu.firesocialmedia.core.domain.entity.call.OfferAnswer
+import com.minhtu.firesocialmedia.core.domain.entity.call.SpeakerType
+import com.minhtu.firesocialmedia.core.domain.entity.user.UserInstance
+import com.minhtu.firesocialmedia.core.domain.repository.CallRepository
+import com.minhtu.firesocialmedia.core.utils.Utils
 import com.minhtu.firesocialmedia.platform.logMessage
-import com.minhtu.firesocialmedia.utils.Utils
 import kotlinx.coroutines.flow.MutableStateFlow
 
 class CallRepositoryImpl(
@@ -30,7 +29,7 @@ class CallRepositoryImpl(
     override suspend fun initialize(
         onInitializeFinished: () -> Unit,
         onIceCandidateCreated: (IceCandidateData) -> Unit,
-        onRemoteVideoTrackReceived: (WebRTCVideoTrack) -> Unit
+        onRemoteVideoTrackReceived: (Any) -> Unit
     ) {
         audioCallService.initialize(
             onInitializeFinished = {
@@ -231,7 +230,7 @@ class CallRepositoryImpl(
 
     override suspend fun startVideoCall(
         isVideoInitiator: Boolean,
-        onStartVideoCall: suspend (WebRTCVideoTrack) -> Unit
+        onStartVideoCall: suspend (Any) -> Unit
     ) {
         audioCallService.startVideoCall(
             isVideoInitiator = isVideoInitiator,

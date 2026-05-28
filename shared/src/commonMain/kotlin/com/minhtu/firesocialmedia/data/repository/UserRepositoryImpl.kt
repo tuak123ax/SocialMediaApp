@@ -9,9 +9,9 @@ import com.minhtu.firesocialmedia.data.remote.mapper.user.toDomain
 import com.minhtu.firesocialmedia.data.remote.mapper.user.toDto
 import com.minhtu.firesocialmedia.data.remote.service.auth.AuthService
 import com.minhtu.firesocialmedia.data.remote.service.database.DatabaseService
-import com.minhtu.firesocialmedia.domain.core.NetworkMonitor
-import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
-import com.minhtu.firesocialmedia.domain.repository.UserRepository
+import com.minhtu.firesocialmedia.core.domain.core.NetworkMonitor
+import com.minhtu.firesocialmedia.core.domain.entity.user.UserInstance
+import com.minhtu.firesocialmedia.core.domain.repository.UserRepository
 import kotlinx.coroutines.flow.first
 
 class UserRepositoryImpl(

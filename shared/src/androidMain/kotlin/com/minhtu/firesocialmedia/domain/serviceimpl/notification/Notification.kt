@@ -4,7 +4,7 @@ import android.app.Application
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.os.Build
-import com.minhtu.firesocialmedia.constants.Constants
+import com.minhtu.firesocialmedia.core.constants.Constants
 
 class Notification : Application() {
 

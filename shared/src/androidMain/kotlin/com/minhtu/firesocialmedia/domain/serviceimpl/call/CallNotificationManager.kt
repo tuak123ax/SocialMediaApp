@@ -11,9 +11,9 @@ import android.content.Intent
 import android.os.Build
 import androidx.core.app.NotificationCompat
 import com.minhtu.firesocialmedia.R
-import com.minhtu.firesocialmedia.constants.Constants
-import com.minhtu.firesocialmedia.domain.entity.call.CallAction
-import com.minhtu.firesocialmedia.domain.entity.call.CallEventFlow
+import com.minhtu.firesocialmedia.core.constants.Constants
+import com.minhtu.firesocialmedia.core.domain.entity.call.CallAction
+import com.minhtu.firesocialmedia.core.domain.entity.call.CallEventFlow
 import com.minhtu.firesocialmedia.utils.PermissionRequestActivity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

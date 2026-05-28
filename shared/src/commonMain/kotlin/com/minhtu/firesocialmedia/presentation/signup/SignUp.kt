@@ -38,8 +38,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
-import com.minhtu.firesocialmedia.constants.TestTag
-import com.minhtu.firesocialmedia.constants.UiConstants
+import com.minhtu.firesocialmedia.core.constants.TestTag
+import com.minhtu.firesocialmedia.core.constants.UiConstants
 import com.minhtu.firesocialmedia.platform.showToast
 import com.minhtu.firesocialmedia.platform.toHex
 import com.minhtu.firesocialmedia.presentation.loading.Loading

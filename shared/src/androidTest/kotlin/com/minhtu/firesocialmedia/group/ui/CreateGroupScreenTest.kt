@@ -5,13 +5,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
-import com.minhtu.firesocialmedia.constants.TestTag
+import com.minhtu.firesocialmedia.core.constants.TestTag
 import com.minhtu.firesocialmedia.data.remote.service.imagepicker.ImagePicker
-import com.minhtu.firesocialmedia.domain.entity.group.GroupInstance
-import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
-import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
-import com.minhtu.firesocialmedia.domain.repository.GroupRepository
-import com.minhtu.firesocialmedia.domain.usecases.group.CreateGroupUseCase
+import com.minhtu.firesocialmedia.core.domain.entity.group.GroupInstance
+import com.minhtu.firesocialmedia.core.domain.entity.news.NewsInstance
+import com.minhtu.firesocialmedia.core.domain.entity.user.UserInstance
+import com.minhtu.firesocialmedia.core.domain.repository.GroupRepository
+import com.minhtu.firesocialmedia.core.domain.usecases.group.CreateGroupUseCase
 import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.CreateGroup
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.CreateGroupViewModel
@@ -35,7 +35,7 @@ private class FakeGroupRepository : GroupRepository {
     override suspend fun saveNewToGroup(instance: NewsInstance, groupId: String) = true
     override suspend fun updateNotificationStatus(newStatus: Boolean, groupId: String, userId: String) = true
     override suspend fun getAllMembersInGroup(groupId: String) = hashMapOf<String, String>()
-    override suspend fun getGroupConfigs(userId: String, groupId: String) = com.minhtu.firesocialmedia.domain.entity.group.GroupConfigs()
+    override suspend fun getGroupConfigs(userId: String, groupId: String) = com.minhtu.firesocialmedia.core.domain.entity.group.GroupConfigs()
     override suspend fun fetchNotificationState(userId: String, groupId: String) = false
     override suspend fun copyLink(copyData: String) {}
     override suspend fun inviteFriendToGroup(friend: UserInstance) {}

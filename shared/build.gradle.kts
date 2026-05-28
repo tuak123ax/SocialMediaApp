@@ -84,7 +84,6 @@ kotlin {
             isStatic = true
         }
     }
-    val ktorVersion = "3.0.3"
     val kotlinVersion = "1.7.3"
 
     sourceSets {
@@ -98,16 +97,9 @@ kotlin {
             implementation(compose.foundation)
             implementation(compose.material3)
             implementation(compose.animation)
-            implementation("org.jetbrains.androidx.navigation:navigation-compose:2.8.0-alpha12")
+            implementation("org.jetbrains.androidx.navigation:navigation-compose:2.9.0-beta01")
             implementation("org.jetbrains.compose.components:components-resources:$kotlinVersion")
             api("com.rickclephas.kmp:kmp-observableviewmodel-core:1.0.0-BETA-10")
-            implementation("io.ktor:ktor-client-core:$ktorVersion")
-
-            api("io.github.qdsfdhvh:image-loader:1.10.0")
-            // optional - Compose Multiplatform Resources Decoder
-            api("io.github.qdsfdhvh:image-loader-extension-compose-resources:1.10.0")
-            // optional - Moko Resources Decoder
-            api("io.github.qdsfdhvh:image-loader-extension-moko-resources:1.10.0")
 
             implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:1.5.1")
             implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.1")
@@ -126,15 +118,21 @@ kotlin {
             implementation("io.github.g0dkar:qrcode-kotlin:4.5.0")
 
             //Networking
-            implementation("io.ktor:ktor-client-core:${ktorVersion}")
-            implementation("io.ktor:ktor-client-content-negotiation:${ktorVersion}")
-            implementation("io.ktor:ktor-serialization-kotlinx-json:${ktorVersion}")
-            implementation("io.ktor:ktor-client-logging:${ktorVersion}")
+            implementation(libs.ktor.client.core)
+            implementation(libs.ktor.client.content.negotiation)
+            implementation(libs.ktor.serialization.kotlinx.json)
+            implementation(libs.ktor.client.logging)
 
             //Di
             implementation(libs.koin.core)
             implementation(libs.koin.compose)
             implementation(libs.koin.compose.viewmodel)
+
+            //Other modules
+            implementation(project(":core"))
+
+            //Image loader
+            api(libs.seiko.image.loader)
         }
         commonTest {
             dependencies{
@@ -188,7 +186,7 @@ kotlin {
             implementation("com.squareup.retrofit2:converter-gson:2.9.0")
             implementation("com.squareup.retrofit2:converter-scalars:2.9.0")
 
-            implementation("io.ktor:ktor-client-okhttp:$ktorVersion")
+            implementation(libs.ktor.client.okhttp)
 
             implementation("androidx.media3:media3-exoplayer:1.7.1")
             implementation("androidx.media3:media3-ui:1.7.1")
@@ -223,7 +221,9 @@ kotlin {
             implementation(compose.material3)
 
             implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1-native-mt")
-            implementation("io.ktor:ktor-client-darwin:${ktorVersion}")
+            implementation(libs.ktor.client.darwin)
+            implementation(libs.seiko.image.loader)
+            implementation("com.squareup.okio:okio:3.9.0")
         }
     }
 }

@@ -127,11 +127,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.minhtu.firesocialmedia.data.remote.constant.DataConstant
-import com.minhtu.firesocialmedia.constants.TestTag
+import com.minhtu.firesocialmedia.core.constants.TestTag
 import com.minhtu.firesocialmedia.di.PlatformContext
-import com.minhtu.firesocialmedia.domain.entity.home.deeplinks.ShareApp
-import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
-import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
+import com.minhtu.firesocialmedia.core.domain.entity.home.deeplinks.ShareApp
+import com.minhtu.firesocialmedia.core.domain.entity.news.NewsInstance
+import com.minhtu.firesocialmedia.core.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.platform.CrossPlatformIcon
 import com.minhtu.firesocialmedia.platform.VideoPlayer
 import com.minhtu.firesocialmedia.platform.convertTimeToDateString
@@ -151,7 +151,7 @@ import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.Settings
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.GroupDetails.Companion.DropdownMenuForMoreOptionsInGroup
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.PollViewModel
 import com.minhtu.firesocialmedia.presentation.search.SearchViewModel
-import com.minhtu.firesocialmedia.storage.toStorageUrl
+import com.minhtu.firesocialmedia.core.storage.toStorageUrl
 import com.seiko.imageloader.asImageBitmap
 import com.seiko.imageloader.ui.AutoSizeImage
 import kotlinx.coroutines.delay
@@ -1665,10 +1665,10 @@ class UiUtils {
                 }
             }
 
-            val allPolls by (vm?.polls ?: remember { kotlinx.coroutines.flow.MutableStateFlow(emptyMap<String, com.minhtu.firesocialmedia.domain.entity.settings.PollObject>()) }).collectAsState()
+            val allPolls by (vm?.polls ?: remember { kotlinx.coroutines.flow.MutableStateFlow(emptyMap<String, com.minhtu.firesocialmedia.core.domain.entity.settings.PollObject>()) }).collectAsState()
             val allMyVotes by (vm?.myVotes ?: remember { kotlinx.coroutines.flow.MutableStateFlow(emptyMap<String, List<Int>>()) }).collectAsState()
             val allSubmitStates by (vm?.submitState ?: remember { kotlinx.coroutines.flow.MutableStateFlow(emptyMap<String, Boolean?>()) }).collectAsState()
-            val allVotersMap by (vm?.allVoters ?: remember { kotlinx.coroutines.flow.MutableStateFlow(emptyMap<String, List<Pair<com.minhtu.firesocialmedia.domain.entity.user.UserInstance?, List<Int>>>>()) }).collectAsState()
+            val allVotersMap by (vm?.allVoters ?: remember { kotlinx.coroutines.flow.MutableStateFlow(emptyMap<String, List<Pair<com.minhtu.firesocialmedia.core.domain.entity.user.UserInstance?, List<Int>>>>()) }).collectAsState()
 
             val poll = allPolls[pollId]
             val myVotes = allMyVotes[pollId]          // null = not loaded yet; empty = loaded, no vote
@@ -1798,8 +1798,9 @@ class UiUtils {
                     )
 
                     // ── Expiry info ──
-                    if (poll?.expiresAt != null && poll.expiresAt > 0) {
-                        val remaining = poll.expiresAt - System.currentTimeMillis()
+                    val pollExpiresAt = poll?.expiresAt
+                    if (pollExpiresAt != null && pollExpiresAt > 0) {
+                        val remaining = pollExpiresAt - System.currentTimeMillis()
                         val expiryText = when {
                             isExpired -> "Poll ended"
                             remaining < 60 * 60 * 1000L -> "Ends in <1 hour"
@@ -2474,9 +2475,9 @@ class UiUtils {
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             // App Icon
-                            if(app.icon != null) {
+                            app.icon?.let { appIcon ->
                                 Image(
-                                    bitmap = app.icon.asImageBitmap(),
+                                    bitmap = appIcon.asImageBitmap(),
                                     contentDescription = null,
                                     modifier = Modifier.size(48.dp)
                                 )

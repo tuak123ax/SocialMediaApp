@@ -2,8 +2,8 @@ package com.minhtu.firesocialmedia.presentation.navigationscreen.setting.securit
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.minhtu.firesocialmedia.domain.usecases.settings.CopyUseCase
-import com.minhtu.firesocialmedia.domain.usecases.settings.UpdateVerify2FASuccessUseCase
+import com.minhtu.firesocialmedia.core.domain.usecases.settings.CopyUseCase
+import com.minhtu.firesocialmedia.core.domain.usecases.settings.UpdateVerify2FASuccessUseCase
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO

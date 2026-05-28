@@ -2,13 +2,13 @@ package com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.minhtu.firesocialmedia.domain.entity.settings.PollObject
-import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
-import com.minhtu.firesocialmedia.domain.usecases.common.GetUserUseCase
-import com.minhtu.firesocialmedia.domain.usecases.newsfeed.FetchPollUseCase
-import com.minhtu.firesocialmedia.domain.usecases.newsfeed.LoadAllVotersUseCase
-import com.minhtu.firesocialmedia.domain.usecases.newsfeed.LoadMyVotesUseCase
-import com.minhtu.firesocialmedia.domain.usecases.newsfeed.SubmitVoteUseCase
+import com.minhtu.firesocialmedia.core.domain.entity.settings.PollObject
+import com.minhtu.firesocialmedia.core.domain.entity.user.UserInstance
+import com.minhtu.firesocialmedia.core.domain.usecases.common.GetUserUseCase
+import com.minhtu.firesocialmedia.core.domain.usecases.newsfeed.FetchPollUseCase
+import com.minhtu.firesocialmedia.core.domain.usecases.newsfeed.LoadAllVotersUseCase
+import com.minhtu.firesocialmedia.core.domain.usecases.newsfeed.LoadMyVotesUseCase
+import com.minhtu.firesocialmedia.core.domain.usecases.newsfeed.SubmitVoteUseCase
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO

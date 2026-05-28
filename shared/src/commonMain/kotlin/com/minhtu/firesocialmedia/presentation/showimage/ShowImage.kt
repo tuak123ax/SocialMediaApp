@@ -43,8 +43,8 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
-import com.minhtu.firesocialmedia.constants.TestTag
-import com.minhtu.firesocialmedia.storage.toStorageUrl
+import com.minhtu.firesocialmedia.core.constants.TestTag
+import com.minhtu.firesocialmedia.core.storage.toStorageUrl
 import com.seiko.imageloader.ui.AutoSizeImage
 import org.koin.compose.viewmodel.koinViewModel
 

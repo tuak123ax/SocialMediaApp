@@ -1,11 +1,11 @@
 package com.minhtu.firesocialmedia.group
 
-import com.minhtu.firesocialmedia.domain.core.DecentralizationType
-import com.minhtu.firesocialmedia.domain.entity.group.GroupInstance
-import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
-import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
-import com.minhtu.firesocialmedia.domain.repository.GroupRepository
-import com.minhtu.firesocialmedia.domain.usecases.group.CreateGroupUseCase
+import com.minhtu.firesocialmedia.core.domain.core.DecentralizationType
+import com.minhtu.firesocialmedia.core.domain.entity.group.GroupInstance
+import com.minhtu.firesocialmedia.core.domain.entity.news.NewsInstance
+import com.minhtu.firesocialmedia.core.domain.entity.user.UserInstance
+import com.minhtu.firesocialmedia.core.domain.repository.GroupRepository
+import com.minhtu.firesocialmedia.core.domain.usecases.group.CreateGroupUseCase
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.CreateGroupViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -24,7 +24,7 @@ private class CreateGroupRepo : GroupRepository {
     override suspend fun saveNewToGroup(instance: NewsInstance, groupId: String): Boolean = true
     override suspend fun updateNotificationStatus(newStatus: Boolean, groupId: String, userId: String): Boolean = true
     override suspend fun getAllMembersInGroup(groupId: String): HashMap<String, String> = hashMapOf()
-    override suspend fun getGroupConfigs(userId: String, groupId: String) = com.minhtu.firesocialmedia.domain.entity.group.GroupConfigs()
+    override suspend fun getGroupConfigs(userId: String, groupId: String) = com.minhtu.firesocialmedia.core.domain.entity.group.GroupConfigs()
     override suspend fun fetchNotificationState(userId: String, groupId: String): Boolean = false
     override suspend fun copyLink(copyData: String) {}
     override suspend fun inviteFriendToGroup(friend: UserInstance) {}

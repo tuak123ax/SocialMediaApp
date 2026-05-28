@@ -63,11 +63,11 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.minhtu.firesocialmedia.data.remote.service.imagepicker.ImagePicker
-import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
+import com.minhtu.firesocialmedia.core.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.platform.CommonBackHandler
 import com.minhtu.firesocialmedia.platform.generateImageLoader
 import com.minhtu.firesocialmedia.platform.showToast
-import com.minhtu.firesocialmedia.storage.toStorageUrl
+import com.minhtu.firesocialmedia.core.storage.toStorageUrl
 import com.minhtu.firesocialmedia.utils.PasswordVerifyDialog
 import com.minhtu.firesocialmedia.utils.UiUtils
 import com.seiko.imageloader.LocalImageLoader

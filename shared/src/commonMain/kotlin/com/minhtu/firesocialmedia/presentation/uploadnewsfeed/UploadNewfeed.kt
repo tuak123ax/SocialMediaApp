@@ -72,10 +72,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
-import com.minhtu.firesocialmedia.constants.TestTag
+import com.minhtu.firesocialmedia.core.constants.TestTag
 import com.minhtu.firesocialmedia.data.remote.service.imagepicker.ImagePicker
-import com.minhtu.firesocialmedia.domain.core.DecentralizationType
-import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
+import com.minhtu.firesocialmedia.core.domain.core.DecentralizationType
+import com.minhtu.firesocialmedia.core.domain.entity.news.NewsInstance
 import com.minhtu.firesocialmedia.platform.CommonBackHandler
 import com.minhtu.firesocialmedia.platform.CrossPlatformIcon
 import com.minhtu.firesocialmedia.platform.VideoPlayer

@@ -1,6 +1,6 @@
 package com.minhtu.firesocialmedia.domain.serviceimpl.auth
 
-import com.minhtu.firesocialmedia.constants.Constants.Companion.APP_SCRIPT_2FA_ENDPOINT
+import com.minhtu.firesocialmedia.core.constants.Constants.Companion.APP_SCRIPT_2FA_ENDPOINT
 import com.minhtu.firesocialmedia.data.remote.dto.authentication.TwoFARequestDTO
 import com.minhtu.firesocialmedia.data.remote.dto.authentication.TwoFAResponseDTO
 import retrofit2.Call

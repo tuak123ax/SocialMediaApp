@@ -1,18 +1,18 @@
 package com.minhtu.firesocialmedia
 
-import com.minhtu.firesocialmedia.domain.entity.base.BaseNewsInstance
-import com.minhtu.firesocialmedia.domain.entity.comment.CommentInstance
-import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
-import com.minhtu.firesocialmedia.domain.entity.notification.NotificationInstance
-import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
-import com.minhtu.firesocialmedia.domain.repository.AuthenticationRepository
-import com.minhtu.firesocialmedia.domain.repository.CommonDbRepository
-import com.minhtu.firesocialmedia.domain.repository.LocalRepository
-import com.minhtu.firesocialmedia.domain.repository.UserRepository
-import com.minhtu.firesocialmedia.domain.usecases.common.GetCurrentUserUidUseCase
-import com.minhtu.firesocialmedia.domain.usecases.common.GetFCMTokenUseCase
-import com.minhtu.firesocialmedia.domain.usecases.information.SaveSignUpInformationUseCase
-import com.minhtu.firesocialmedia.domain.usecases.signin.SaveLoginActivityInfoUseCase
+import com.minhtu.firesocialmedia.core.domain.entity.base.BaseNewsInstance
+import com.minhtu.firesocialmedia.core.domain.entity.comment.CommentInstance
+import com.minhtu.firesocialmedia.core.domain.entity.news.NewsInstance
+import com.minhtu.firesocialmedia.core.domain.entity.notification.NotificationInstance
+import com.minhtu.firesocialmedia.core.domain.entity.user.UserInstance
+import com.minhtu.firesocialmedia.core.domain.repository.AuthenticationRepository
+import com.minhtu.firesocialmedia.core.domain.repository.CommonDbRepository
+import com.minhtu.firesocialmedia.core.domain.repository.LocalRepository
+import com.minhtu.firesocialmedia.core.domain.repository.UserRepository
+import com.minhtu.firesocialmedia.core.domain.usecases.common.GetCurrentUserUidUseCase
+import com.minhtu.firesocialmedia.core.domain.usecases.common.GetFCMTokenUseCase
+import com.minhtu.firesocialmedia.core.domain.usecases.information.SaveSignUpInformationUseCase
+import com.minhtu.firesocialmedia.core.domain.usecases.signin.SaveLoginActivityInfoUseCase
 import com.minhtu.firesocialmedia.presentation.information.InformationViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -27,11 +27,11 @@ class InfoFakeAuthRepository : AuthenticationRepository {
     var saveResult = true
     override suspend fun signInWithEmailAndPassword(email: String, password: String) = null
     override suspend fun saveAccountToLocalStorage(email: String, password: String) {}
-    override suspend fun checkUserExists(email: String) = com.minhtu.firesocialmedia.domain.entity.signin.SignInState(false, null)
+    override suspend fun checkUserExists(email: String) = com.minhtu.firesocialmedia.core.domain.entity.signin.SignInState(false, null)
     override suspend fun checkLocalAccount() = null
     override suspend fun handleSignInGoogleResult(credential: Any) = null
     override suspend fun signUpWithEmailAndPassword(email: String, password: String) = Result.success(Unit)
-    override suspend fun fetchSignInMethodsForEmail(email: String) = com.minhtu.firesocialmedia.domain.entity.forgotpassword.EmailExistResult(false, "")
+    override suspend fun fetchSignInMethodsForEmail(email: String) = com.minhtu.firesocialmedia.core.domain.entity.forgotpassword.EmailExistResult(false, "")
     override suspend fun sendPasswordResetEmail(email: String) = true
     override suspend fun clearAccount() {}
     override suspend fun saveSignUpInformation(userInstance: UserInstance) = saveResult
@@ -55,7 +55,7 @@ class InfoFakeLocalRepository(private val token: String) : LocalRepository {
 
 class InfoFakeCommonDbRepository : CommonDbRepository {
     override suspend fun saveLikedPost(id: String, value: HashMap<String, Int>) = true
-    override suspend fun saveNewToDatabase(instance: com.minhtu.firesocialmedia.domain.entity.news.NewsInstance) = true
+    override suspend fun saveNewToDatabase(instance: com.minhtu.firesocialmedia.core.domain.entity.news.NewsInstance) = true
     override suspend fun saveCommentToDatabase(selectedNewId: String, commentId: String, instance: CommentInstance) = true
     override suspend fun saveSubCommentToDatabase(id: String, selectedNewId: String, parentCommentId: String, instance: BaseNewsInstance) = true
     override suspend fun deleteCommentFromDatabase(selectedNewId: String, instance: BaseNewsInstance) {}
@@ -71,7 +71,7 @@ class InfoFakeCommonDbRepository : CommonDbRepository {
     override suspend fun syncData(currentUserId: String) = true
     override suspend fun clearLikedPosts() {}
     override suspend fun clearComments() {}
-    override suspend fun loadNewsPostedWhenOffline() = emptyList<com.minhtu.firesocialmedia.domain.entity.news.NewsInstance>()
+    override suspend fun loadNewsPostedWhenOffline() = emptyList<com.minhtu.firesocialmedia.core.domain.entity.news.NewsInstance>()
     override suspend fun deleteAllDraftPosts() = true
     override suspend fun deleteDraftPost(newId: String) = true
     override suspend fun clearLocalFriends() {}

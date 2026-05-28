@@ -4,7 +4,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.minhtu.firesocialmedia.domain.entity.notification.NotificationType
+import com.minhtu.firesocialmedia.core.domain.entity.notification.NotificationType
 
 sealed class TrailingContentType() {
     object None : TrailingContentType()

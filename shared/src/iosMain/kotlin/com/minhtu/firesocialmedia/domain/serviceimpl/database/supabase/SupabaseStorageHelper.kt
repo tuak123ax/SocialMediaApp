@@ -2,13 +2,13 @@ package com.minhtu.firesocialmedia.domain.serviceimpl.database.supabase
 
 import cocoapods.FirebaseDatabase.FIRDatabase
 import cocoapods.FirebaseDatabase.FIRDatabaseReference
-import com.minhtu.firesocialmedia.constants.Constants
+import com.minhtu.firesocialmedia.core.constants.Constants
 import com.minhtu.firesocialmedia.data.remote.dto.group.GroupDTO
 import com.minhtu.firesocialmedia.data.remote.dto.group.GroupSummaryDTO
 import com.minhtu.firesocialmedia.data.remote.dto.news.NewsDTO
 import com.minhtu.firesocialmedia.data.remote.dto.user.UserDTO
 import com.minhtu.firesocialmedia.data.remote.dto.user.toMap
-import com.minhtu.firesocialmedia.domain.entity.base.BaseNewsInstance
+import com.minhtu.firesocialmedia.core.domain.entity.base.BaseNewsInstance
 import com.minhtu.firesocialmedia.domain.serviceimpl.database.StorageHelperInterface
 import com.minhtu.firesocialmedia.platform.logMessage
 import kotlinx.cinterop.BetaInteropApi

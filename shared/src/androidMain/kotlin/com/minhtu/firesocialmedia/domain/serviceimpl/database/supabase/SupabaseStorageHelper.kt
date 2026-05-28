@@ -3,12 +3,12 @@ package com.minhtu.firesocialmedia.domain.serviceimpl.database.supabase
 import android.util.Log
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
-import com.minhtu.firesocialmedia.constants.Constants
+import com.minhtu.firesocialmedia.core.constants.Constants
 import com.minhtu.firesocialmedia.data.remote.dto.group.GroupDTO
 import com.minhtu.firesocialmedia.data.remote.dto.group.GroupSummaryDTO
 import com.minhtu.firesocialmedia.data.remote.dto.news.NewsDTO
 import com.minhtu.firesocialmedia.data.remote.dto.user.UserDTO
-import com.minhtu.firesocialmedia.domain.entity.base.BaseNewsInstance
+import com.minhtu.firesocialmedia.core.domain.entity.base.BaseNewsInstance
 import com.minhtu.firesocialmedia.domain.serviceimpl.database.StorageHelperInterface
 import com.minhtu.firesocialmedia.domain.serviceimpl.database.supabase.SupabaseStorageHelper.Companion.CANDIDATE_EXTENSIONS
 import com.minhtu.firesocialmedia.domain.serviceimpl.database.supabase.SupabaseStorageHelper.Companion.initExtensionCache

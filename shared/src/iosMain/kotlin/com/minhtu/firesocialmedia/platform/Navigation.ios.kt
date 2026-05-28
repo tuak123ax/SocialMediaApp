@@ -2,7 +2,7 @@ package com.minhtu.firesocialmedia.platform
 
 import androidx.compose.runtime.Composable
 import com.minhtu.firesocialmedia.di.PlatformContext
-import com.minhtu.firesocialmedia.domain.entity.home.deeplinks.DeepLinksData
+import com.minhtu.firesocialmedia.core.domain.entity.home.deeplinks.DeepLinksData
 import com.minhtu.firesocialmedia.presentation.navigation.SetUpNavigation as CommonSetUpNavigation
 
 @Composable

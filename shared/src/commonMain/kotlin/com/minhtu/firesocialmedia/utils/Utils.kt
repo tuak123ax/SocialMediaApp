@@ -1,173 +1,59 @@
 package com.minhtu.firesocialmedia.utils
 
-import androidx.compose.ui.graphics.Color
-import com.minhtu.firesocialmedia.domain.entity.call.CallStatus
-import com.minhtu.firesocialmedia.domain.entity.call.CallType
-import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
-import com.minhtu.firesocialmedia.domain.entity.notification.NotificationInstance
-import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
-import com.minhtu.firesocialmedia.domain.usecases.notification.DeleteNotificationFromDatabaseUseCase
-import com.minhtu.firesocialmedia.domain.usecases.notification.SaveNotificationToDatabaseUseCase
+import com.minhtu.firesocialmedia.core.domain.entity.user.UserInstance
+import com.minhtu.firesocialmedia.core.utils.Utils as CoreUtils
 import com.minhtu.firesocialmedia.platform.createCallMessage
-import com.minhtu.firesocialmedia.platform.logMessage
 import com.minhtu.firesocialmedia.platform.sendMessageToServer
-import kotlin.io.encoding.Base64
-import kotlin.io.encoding.ExperimentalEncodingApi
-import kotlin.time.Clock.System
-import kotlin.time.ExperimentalTime
 
 class Utils {
-    companion object{
-        fun hexToColor(hex: String): Color {
-            val cleanHex = hex.removePrefix("#")
-            val colorLong = when (cleanHex.length) {
-                6 -> "FF$cleanHex".toLong(16) // Add alpha if missing
-                8 -> cleanHex.toLong(16)
-                else -> throw IllegalArgumentException("Invalid hex color: $hex")
-            }
-            return Color(colorLong)
-        }
-
-        fun findNewById(newId : String, listNews : ArrayList<NewsInstance>) : NewsInstance?{
-            for(new in listNews){
-                if(new.id == newId) {
-                    return new
-                }
-            }
-            return null
-        }
+    companion object {
+        // Delegated to core
+        fun findNewById(newId: String, listNews: ArrayList<com.minhtu.firesocialmedia.core.domain.entity.news.NewsInstance>) =
+            CoreUtils.findNewById(newId, listNews)
 
         suspend fun saveNotification(
-            notification: NotificationInstance,
-            friend : UserInstance,
-            saveNotificationToDatabaseUseCase: SaveNotificationToDatabaseUseCase) {
-            //Save notification to friend's notification list
-            try{
-                friend.addNotification(notification)
-                saveNotificationToDatabaseUseCase.invoke(
-                    friend.uid,
-                    friend.notifications)
-            } catch(_: Exception) {
-            }
-        }
+            notification: com.minhtu.firesocialmedia.core.domain.entity.notification.NotificationInstance,
+            friend: UserInstance,
+            saveNotificationToDatabaseUseCase: com.minhtu.firesocialmedia.core.domain.usecases.notification.SaveNotificationToDatabaseUseCase
+        ) = CoreUtils.saveNotification(notification, friend, saveNotificationToDatabaseUseCase)
 
         suspend fun deleteNotification(
-            notification: NotificationInstance,
+            notification: com.minhtu.firesocialmedia.core.domain.entity.notification.NotificationInstance,
             currentUser: UserInstance,
-            deleteNotificationFromDatabaseUseCase: DeleteNotificationFromDatabaseUseCase) {
-            //Save notification to friend's notification list
-            try{
-                deleteNotificationFromDatabaseUseCase.invoke(
-                    currentUser.uid,
-                    notification)
-            } catch(_: Exception) {
-            }
+            deleteNotificationFromDatabaseUseCase: com.minhtu.firesocialmedia.core.domain.usecases.notification.DeleteNotificationFromDatabaseUseCase
+        ) = CoreUtils.deleteNotification(notification, currentUser, deleteNotificationFromDatabaseUseCase)
+
+        fun getCallTypeFromSdp(sdp: String?) = CoreUtils.getCallTypeFromSdp(sdp)
+
+        fun convertToNumberString(number: Int) = CoreUtils.convertToNumberString(number)
+
+        fun Long.toTimeAgo() = CoreUtils.run { this@toTimeAgo.toTimeAgo() }
+
+        fun decodeBase64ToBytes(b64: String) = CoreUtils.decodeBase64ToBytes(b64)
+
+        interface BasicCallBack : com.minhtu.firesocialmedia.core.utils.Utils.Companion.BasicCallBack {
+            override fun onSuccess()
+            override fun onFailure()
         }
 
-        fun getCallTypeFromSdp(sdp: String?): CallType {
-            return when {
-                sdp == null -> CallType.UNKNOWN
-                sdp.contains("m=video") -> CallType.VIDEO
-                sdp.contains("m=audio") -> CallType.AUDIO
-                else -> CallType.UNKNOWN
-            }
+        interface CallStatusCallBack : com.minhtu.firesocialmedia.core.utils.Utils.Companion.CallStatusCallBack {
+            override fun onSuccess(status: com.minhtu.firesocialmedia.core.domain.entity.call.CallStatus)
+            override fun onFailure()
         }
 
-        fun sendNotification(notiContent : String,
-                             sessionId : String,
-                             currentUser : UserInstance,
-                             receiver : UserInstance,
-                             action : String) {
+        // Platform-specific: stays here
+        fun sendNotification(
+            notiContent: String,
+            sessionId: String,
+            currentUser: UserInstance,
+            receiver: UserInstance,
+            action: String
+        ) {
             val tokenList = ArrayList<String>()
             tokenList.add(receiver.token)
-            sendMessageToServer(createCallMessage(
-                notiContent,
-                tokenList,
-                sessionId,
-                currentUser,
-                receiver,
-                action))
-        }
-
-        interface BasicCallBack{
-            fun onSuccess()
-            fun onFailure()
-        }
-
-        interface CallStatusCallBack{
-            fun onSuccess(status : CallStatus)
-            fun onFailure()
-        }
-
-        @OptIn(ExperimentalEncodingApi::class)
-        fun decodeBase64ToBytes(b64: String): ByteArray? {
-            try{
-                logMessage("decodeBase64ToBytes", { b64 })
-                // 1) strip possible data URI prefix
-                val cleaned = b64.substringAfter(",")
-                    // 2) remove any accidental whitespace/newlines
-                    .replace("\\s".toRegex(), "")
-                // 3) fix missing padding if transport trimmed trailing '='
-                val padded = when (cleaned.length % 4) {
-                    2 -> "$cleaned=="
-                    3 -> "$cleaned="
-                    else -> cleaned
-                }
-                return Base64.decode(padded) // standard (not URL-safe)
-            } catch (ex : Exception) {
-                logMessage("decodeBase64ToBytes", { ex.message.toString() })
-                return null
-            }
-        }
-
-        fun convertToNumberString(number : Int) : String{
-            return if(number < 1000) {
-                number.toString()
-            } else if(number < 1000000) {
-                (number/1000).toString() + "K"
-            } else if(number < 1000000000) {
-                (number/1000000).toString() + "M"
-            } else {
-                (number/1000000000).toString() + "M"
-            }
-        }
-
-        @OptIn(ExperimentalTime::class)
-        fun Long.toTimeAgo(): String {
-            val now = System.now().toEpochMilliseconds()
-            val diff = now - this
-
-            val seconds = diff / 1000
-            val minutes = seconds / 60
-            val hours = minutes / 60
-            val days = hours / 24
-            val weeks = days / 7
-            val months = days / 30
-            val years = days / 365
-
-            fun format(value: Long, unit: String): String {
-                return if (value == 1L) {
-                    "$value $unit ago"
-                } else {
-                    "$value ${unit}s ago"
-                }
-            }
-
-            return when {
-                seconds < 60 -> "just now"
-
-                minutes < 60 -> format(minutes, "minute")
-
-                hours < 24 -> format(hours, "hour")
-
-                days < 7 -> format(days, "day")
-
-                days < 30 -> format(weeks, "week")
-
-                months < 12 -> format(months, "month")
-
-                else -> format(years, "year")
-            }
+            sendMessageToServer(
+                createCallMessage(notiContent, tokenList, sessionId, currentUser, receiver, action)
+            )
         }
     }
 }

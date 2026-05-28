@@ -6,10 +6,10 @@ import com.minhtu.firesocialmedia.data.local.entity.NewsEntity
 import com.minhtu.firesocialmedia.data.local.entity.NotificationEntity
 import com.minhtu.firesocialmedia.data.local.entity.UserEntity
 import com.minhtu.firesocialmedia.data.remote.dto.comment.CommentDTO
-import com.minhtu.firesocialmedia.domain.entity.comment.CommentInstance
-import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
-import com.minhtu.firesocialmedia.domain.entity.notification.NotificationInstance
-import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
+import com.minhtu.firesocialmedia.core.domain.entity.comment.CommentInstance
+import com.minhtu.firesocialmedia.core.domain.entity.news.NewsInstance
+import com.minhtu.firesocialmedia.core.domain.entity.notification.NotificationInstance
+import com.minhtu.firesocialmedia.core.domain.entity.user.UserInstance
 
 fun List<UserInstance?>.toUserEntity() : List<UserEntity> {
     return this.mapNotNull {

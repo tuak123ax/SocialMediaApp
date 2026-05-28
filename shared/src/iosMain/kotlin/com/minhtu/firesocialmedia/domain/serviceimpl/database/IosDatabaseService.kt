@@ -4,7 +4,7 @@ import cocoapods.FirebaseDatabase.FIRDataEventType
 import cocoapods.FirebaseDatabase.FIRDataSnapshot
 import cocoapods.FirebaseDatabase.FIRDatabase
 import cocoapods.FirebaseDatabase.FIRDatabaseReference
-import com.minhtu.firesocialmedia.constants.Constants
+import com.minhtu.firesocialmedia.core.constants.Constants
 import com.minhtu.firesocialmedia.data.remote.constant.DataConstant
 import com.minhtu.firesocialmedia.data.remote.dto.call.AudioCallSessionDTO
 import com.minhtu.firesocialmedia.data.remote.dto.call.CallingRequestDTO
@@ -24,8 +24,8 @@ import com.minhtu.firesocialmedia.data.remote.dto.settings.security.IpInfoRespon
 import com.minhtu.firesocialmedia.data.remote.dto.signin.SignInDTO
 import com.minhtu.firesocialmedia.data.remote.dto.user.UserDTO
 import com.minhtu.firesocialmedia.data.remote.service.database.DatabaseService
-import com.minhtu.firesocialmedia.domain.entity.base.BaseNewsInstance
-import com.minhtu.firesocialmedia.domain.entity.call.CallStatus
+import com.minhtu.firesocialmedia.core.domain.entity.base.BaseNewsInstance
+import com.minhtu.firesocialmedia.core.domain.entity.call.CallStatus
 import com.minhtu.firesocialmedia.domain.serviceimpl.crypto.IosCryptoHelper
 import com.minhtu.firesocialmedia.domain.serviceimpl.database.supabase.SupabaseStorage
 import com.minhtu.firesocialmedia.domain.serviceimpl.database.supabase.SupabaseStorageHelper
@@ -34,7 +34,7 @@ import com.minhtu.firesocialmedia.platform.logMessage
 import com.minhtu.firesocialmedia.utils.IosUtils.Companion.toCommentDTO
 import com.minhtu.firesocialmedia.utils.IosUtils.Companion.toNewsDTO
 import com.minhtu.firesocialmedia.utils.IosUtils.Companion.toUserDTO
-import com.minhtu.firesocialmedia.utils.Utils
+import com.minhtu.firesocialmedia.core.utils.Utils
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope

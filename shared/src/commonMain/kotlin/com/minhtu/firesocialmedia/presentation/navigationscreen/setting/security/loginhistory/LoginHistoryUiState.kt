@@ -1,6 +1,6 @@
 package com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security.loginhistory
 
-import com.minhtu.firesocialmedia.domain.entity.settings.SessionItem
+import com.minhtu.firesocialmedia.core.domain.entity.settings.SessionItem
 
 sealed class LoginHistoryUiState {
     object Loading : LoginHistoryUiState()

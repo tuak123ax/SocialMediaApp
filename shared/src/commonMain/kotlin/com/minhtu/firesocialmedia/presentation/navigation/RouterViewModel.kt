@@ -3,11 +3,11 @@ package com.minhtu.firesocialmedia.presentation.navigation
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
-import com.minhtu.firesocialmedia.domain.usecases.common.GetCurrentUserUidUseCase
-import com.minhtu.firesocialmedia.domain.usecases.common.GetUserUseCase
-import com.minhtu.firesocialmedia.domain.usecases.settings.Get2FAVerifiedStatusUseCase
-import com.minhtu.firesocialmedia.domain.usecases.signin.CheckLocalAccountUseCase
+import com.minhtu.firesocialmedia.core.domain.entity.user.UserInstance
+import com.minhtu.firesocialmedia.core.domain.usecases.common.GetCurrentUserUidUseCase
+import com.minhtu.firesocialmedia.core.domain.usecases.common.GetUserUseCase
+import com.minhtu.firesocialmedia.core.domain.usecases.settings.Get2FAVerifiedStatusUseCase
+import com.minhtu.firesocialmedia.core.domain.usecases.signin.CheckLocalAccountUseCase
 import com.minhtu.firesocialmedia.presentation.home.Home
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security.twoFA.VerifyOTP
 import com.minhtu.firesocialmedia.presentation.signin.SignIn

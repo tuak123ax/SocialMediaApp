@@ -1,14 +1,14 @@
 package com.minhtu.firesocialmedia.presentation.navigationscreen.notification
 
 import androidx.compose.runtime.snapshots.SnapshotStateList
-import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
-import com.minhtu.firesocialmedia.domain.entity.news.isDefaultNewsInstance
-import com.minhtu.firesocialmedia.domain.entity.notification.NotificationInstance
-import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
-import com.minhtu.firesocialmedia.domain.usecases.common.GetUserUseCase
-import com.minhtu.firesocialmedia.domain.usecases.notification.DeleteAllNotificationsUseCase
-import com.minhtu.firesocialmedia.domain.usecases.notification.FindNewByIdInDbUseCase
-import com.minhtu.firesocialmedia.domain.usecases.notification.UpdateIsReadStatusOfNotificationUseCase
+import com.minhtu.firesocialmedia.core.domain.entity.news.NewsInstance
+import com.minhtu.firesocialmedia.core.domain.entity.news.isDefaultNewsInstance
+import com.minhtu.firesocialmedia.core.domain.entity.notification.NotificationInstance
+import com.minhtu.firesocialmedia.core.domain.entity.user.UserInstance
+import com.minhtu.firesocialmedia.core.domain.usecases.common.GetUserUseCase
+import com.minhtu.firesocialmedia.core.domain.usecases.notification.DeleteAllNotificationsUseCase
+import com.minhtu.firesocialmedia.core.domain.usecases.notification.FindNewByIdInDbUseCase
+import com.minhtu.firesocialmedia.core.domain.usecases.notification.UpdateIsReadStatusOfNotificationUseCase
 import com.minhtu.firesocialmedia.platform.logMessage
 import com.minhtu.firesocialmedia.presentation.navigationscreen.notification.instance.BasicResult
 import com.minhtu.firesocialmedia.utils.Utils

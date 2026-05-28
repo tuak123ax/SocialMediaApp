@@ -1,6 +1,6 @@
 package com.minhtu.firesocialmedia.data.remote.dto.call
 
-import com.minhtu.firesocialmedia.domain.entity.call.CallStatus
+import com.minhtu.firesocialmedia.core.domain.entity.call.CallStatus
 import kotlinx.serialization.Serializable
 
 @Serializable

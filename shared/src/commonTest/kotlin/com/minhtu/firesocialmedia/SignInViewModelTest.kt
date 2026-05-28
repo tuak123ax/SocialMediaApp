@@ -11,8 +11,10 @@ import com.minhtu.firesocialmedia.data.remote.service.database.DatabaseService
 import com.minhtu.firesocialmedia.data.remote.service.permission.PermissionManager
 import com.minhtu.firesocialmedia.data.remote.service.signinlauncher.SignInLauncher
 import com.minhtu.firesocialmedia.di.PlatformContext
-import com.minhtu.firesocialmedia.domain.core.NetworkMonitor
-import com.minhtu.firesocialmedia.domain.error.signin.SignInError
+import com.minhtu.firesocialmedia.core.domain.core.NetworkMonitor
+import com.minhtu.firesocialmedia.core.domain.entity.authentication.TwoFAResponse
+import com.minhtu.firesocialmedia.core.domain.entity.base.BaseNewsInstance
+import com.minhtu.firesocialmedia.core.domain.error.signin.SignInError
 import com.minhtu.firesocialmedia.presentation.signin.SignInViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -38,16 +40,19 @@ class SignInViewModelTest {
         override suspend fun signUpWithEmailAndPassword(email: String, password: String) = Result.success(Unit)
         override suspend fun getCurrentUserUid(): String? = currentUid
         override suspend fun getCurrentUserEmail(): String? = null
-        override suspend fun fetchSignInMethodsForEmail(email: String) = com.minhtu.firesocialmedia.domain.entity.forgotpassword.EmailExistResult(false, "")
+        override suspend fun fetchSignInMethodsForEmail(email: String) = com.minhtu.firesocialmedia.core.domain.entity.forgotpassword.EmailExistResult(false, "")
         override suspend fun sendPasswordResetEmail(email: String) = true
         override suspend fun handleSignInGoogleResult(credentialsDTO: Any): String? = googleResult
         override suspend fun reAuthenticate(currentUserEmail: String, currentPassword: String): Boolean = false
-        override suspend fun changePassword(userDTO: com.minhtu.firesocialmedia.data.remote.dto.user.UserDTO, newPassword: String, userPath: String, lastTimeChangePasswordPath: String): com.minhtu.firesocialmedia.domain.entity.settings.ChangePasswordState = com.minhtu.firesocialmedia.domain.entity.settings.ChangePasswordState()
+        override suspend fun changePassword(userDTO: com.minhtu.firesocialmedia.data.remote.dto.user.UserDTO, newPassword: String, userPath: String, lastTimeChangePasswordPath: String): com.minhtu.firesocialmedia.core.domain.entity.settings.ChangePasswordState = com.minhtu.firesocialmedia.core.domain.entity.settings.ChangePasswordState()
         override suspend fun generateSecretFor2FA(): String = ""
-        override suspend fun enableOTP(userId: String, secret: String, otpToVerify: String): com.minhtu.firesocialmedia.domain.entity.authentication.TwoFAResponse = com.minhtu.firesocialmedia.domain.entity.authentication.TwoFAResponse(false, "")
-        override suspend fun verifyOTP(userId: String, otpToVerify: String): com.minhtu.firesocialmedia.domain.entity.authentication.TwoFAResponse = com.minhtu.firesocialmedia.domain.entity.authentication.TwoFAResponse(false, "")
-        override suspend fun disable2FA(userId: String): com.minhtu.firesocialmedia.domain.entity.authentication.TwoFAResponse = com.minhtu.firesocialmedia.domain.entity.authentication.TwoFAResponse(false, "")
-        override suspend fun verifyBackupCode(userId: String, backupCode: String): com.minhtu.firesocialmedia.domain.entity.authentication.TwoFAResponse = com.minhtu.firesocialmedia.domain.entity.authentication.TwoFAResponse(false, "")
+        override suspend fun enableOTP(userId: String, secret: String, otpToVerify: String): TwoFAResponse =
+            TwoFAResponse(false, "")
+        override suspend fun verifyOTP(userId: String, otpToVerify: String): TwoFAResponse =
+            TwoFAResponse(false, "")
+        override suspend fun disable2FA(userId: String): TwoFAResponse = TwoFAResponse(false, "")
+        override suspend fun verifyBackupCode(userId: String, backupCode: String): TwoFAResponse =
+            TwoFAResponse(false, "")
     }
 
     private class FakeCryptoService : CryptoService {
@@ -72,8 +77,8 @@ class SignInViewModelTest {
         override suspend fun saveValueToDatabase(id: String, path: String, value: HashMap<String, Int>, externalPath: String) = true
         override suspend fun updateCountValueInDatabase(id: String, path: String, externalPath: String, value: Int) {}
         override suspend fun deleteNewsFromDatabase(path: String, new: com.minhtu.firesocialmedia.data.remote.dto.news.NewsDTO) {}
-        override suspend fun deleteCommentFromDatabase(path: String, comment: com.minhtu.firesocialmedia.domain.entity.base.BaseNewsInstance) {}
-        override suspend fun saveInstanceToDatabase(commentId: String, path: String, instance: com.minhtu.firesocialmedia.domain.entity.base.BaseNewsInstance) = true
+        override suspend fun deleteCommentFromDatabase(path: String, comment: BaseNewsInstance) {}
+        override suspend fun saveInstanceToDatabase(commentId: String, path: String, instance: BaseNewsInstance) = true
         override suspend fun saveNewToDatabase(commentId: String, path: String, instance: com.minhtu.firesocialmedia.data.remote.dto.news.NewsDTO) = true
         override suspend fun getAllUsers(path: String) = null
         override suspend fun getUser(userId: String) = userForGet
@@ -90,7 +95,7 @@ class SignInViewModelTest {
         override suspend fun sendOfferToFireBase(sessionId: String, offer: com.minhtu.firesocialmedia.data.remote.dto.call.OfferAnswerDTO, sendOfferCallBack: com.minhtu.firesocialmedia.utils.Utils.Companion.BasicCallBack) {}
         override suspend fun sendIceCandidateToFireBase(sessionId: String, iceCandidate: com.minhtu.firesocialmedia.data.remote.dto.call.IceCandidateDTO, whichCandidate: String, sendIceCandidateCallBack: com.minhtu.firesocialmedia.utils.Utils.Companion.BasicCallBack) {}
         override suspend fun sendCallSessionToFirebase(session: com.minhtu.firesocialmedia.data.remote.dto.call.AudioCallSessionDTO, sendCallSessionCallBack: com.minhtu.firesocialmedia.utils.Utils.Companion.BasicCallBack) {}
-        override suspend fun sendCallStatusToFirebase(sessionId: String, status: com.minhtu.firesocialmedia.domain.entity.call.CallStatus) = true
+        override suspend fun sendCallStatusToFirebase(sessionId: String, status: com.minhtu.firesocialmedia.core.domain.entity.call.CallStatus) = true
         override suspend fun deleteCallSession(sessionId: String) = true
         override suspend fun observePhoneCall(isInCall: MutableStateFlow<Boolean>, currentUserId: String, phoneCallCallBack: (com.minhtu.firesocialmedia.data.remote.dto.call.CallingRequestDTO) -> Unit, endCallSession: (Boolean) -> Unit, whoEndCallCallBack: (String) -> Unit, iceCandidateCallBack: (iceCandidates: Map<String, com.minhtu.firesocialmedia.data.remote.dto.call.IceCandidateDTO>?) -> Unit) {}
         override suspend fun observePhoneCallWithoutCheckingInCall(currentUserId: String, phoneCallCallBack: (com.minhtu.firesocialmedia.data.remote.dto.call.CallingRequestDTO) -> Unit, endCallSession: (Boolean) -> Unit, whoEndCallCallBack: (String) -> Unit, iceCandidateCallBack: (iceCandidates: Map<String, com.minhtu.firesocialmedia.data.remote.dto.call.IceCandidateDTO>?) -> Unit) {}
@@ -261,7 +266,7 @@ class SignInViewModelTest {
             override suspend fun releaseResources() {}
             override suspend fun updateMuteStatus(muted: Boolean) {}
             override suspend fun updateCameraStatus(cameraOff: Boolean) {}
-            override suspend fun updateSpeakerStatus(speakerType: com.minhtu.firesocialmedia.domain.entity.call.SpeakerType) {}
+            override suspend fun updateSpeakerStatus(speakerType: com.minhtu.firesocialmedia.core.domain.entity.call.SpeakerType) {}
         }
         override val room: RoomService = object : RoomService {
             override suspend fun storeUserFriendsToRoom(friends: List<com.minhtu.firesocialmedia.data.local.entity.UserEntity?>) {}
@@ -317,20 +322,20 @@ class SignInViewModelTest {
         val repo = com.minhtu.firesocialmedia.data.repository.AuthenticationRepositoryImpl(
             platform.auth, platform.database, platform.crypto
         )
-        val signInUseCase = com.minhtu.firesocialmedia.domain.usecases.signin.SignInUseCase(repo)
-        val rememberPasswordUseCase = com.minhtu.firesocialmedia.domain.usecases.signin.RememberPasswordUseCase(repo)
-        val checkUserExistsUseCase = com.minhtu.firesocialmedia.domain.usecases.signin.CheckUserExistsUseCase(repo)
-        val checkLocalAccountUseCase = com.minhtu.firesocialmedia.domain.usecases.signin.CheckLocalAccountUseCase(repo)
-        val handleSignInGoogleResultUseCase = com.minhtu.firesocialmedia.domain.usecases.signin.HandleSignInGoogleResultUseCase(repo)
+        val signInUseCase = com.minhtu.firesocialmedia.core.domain.usecases.signin.SignInUseCase(repo)
+        val rememberPasswordUseCase = com.minhtu.firesocialmedia.core.domain.usecases.signin.RememberPasswordUseCase(repo)
+        val checkUserExistsUseCase = com.minhtu.firesocialmedia.core.domain.usecases.signin.CheckUserExistsUseCase(repo)
+        val checkLocalAccountUseCase = com.minhtu.firesocialmedia.core.domain.usecases.signin.CheckLocalAccountUseCase(repo)
+        val handleSignInGoogleResultUseCase = com.minhtu.firesocialmedia.core.domain.usecases.signin.HandleSignInGoogleResultUseCase(repo)
         val userRepo = com.minhtu.firesocialmedia.data.repository.UserRepositoryImpl(
             platform.auth, platform.database, platform.crypto, platform.room, platform.networkMonitor
         )
-        val getCurrentUserUidUseCase = com.minhtu.firesocialmedia.domain.usecases.common.GetCurrentUserUidUseCase(userRepo)
-        val getUserUseCase = com.minhtu.firesocialmedia.domain.usecases.common.GetUserUseCase(userRepo)
+        val getCurrentUserUidUseCase = com.minhtu.firesocialmedia.core.domain.usecases.common.GetCurrentUserUidUseCase(userRepo)
+        val getUserUseCase = com.minhtu.firesocialmedia.core.domain.usecases.common.GetUserUseCase(userRepo)
         val commonDbRepo = com.minhtu.firesocialmedia.data.repository.CommonDbRepositoryImpl(
             platform.database, platform.room, platform.networkMonitor, platform.ipRemoteDataSource
         )
-        val saveLoginActivityInfoUseCase = com.minhtu.firesocialmedia.domain.usecases.signin.SaveLoginActivityInfoUseCase(commonDbRepo)
+        val saveLoginActivityInfoUseCase = com.minhtu.firesocialmedia.core.domain.usecases.signin.SaveLoginActivityInfoUseCase(commonDbRepo)
         return SignInViewModel(
             signInUseCase,
             rememberPasswordUseCase,
@@ -493,7 +498,7 @@ class SignInViewModelTest {
         viewModel.updateEmail("test@test.com")
         viewModel.updatePassword("password")
         viewModel.updateRememberPassword(true)
-        viewModel.updateSignInStatus(com.minhtu.firesocialmedia.domain.entity.signin.SignInState(true, null))
+        viewModel.updateSignInStatus(com.minhtu.firesocialmedia.core.domain.entity.signin.SignInState(true, null))
 
         viewModel.reset()
 

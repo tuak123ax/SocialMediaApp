@@ -36,12 +36,13 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
-import com.minhtu.firesocialmedia.constants.TestTag
-import com.minhtu.firesocialmedia.domain.entity.call.CallEvent
-import com.minhtu.firesocialmedia.domain.entity.call.CallEventFlow
-import com.minhtu.firesocialmedia.domain.entity.call.OfferAnswer
-import com.minhtu.firesocialmedia.domain.entity.call.SpeakerType
-import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
+import com.minhtu.firesocialmedia.core.constants.TestTag
+import com.minhtu.firesocialmedia.core.domain.entity.call.CallEvent
+import com.minhtu.firesocialmedia.core.domain.entity.call.CallEventFlow
+import com.minhtu.firesocialmedia.core.domain.entity.call.OfferAnswer
+import com.minhtu.firesocialmedia.core.domain.entity.call.SpeakerType
+import com.minhtu.firesocialmedia.core.domain.entity.user.UserInstance
+import com.minhtu.firesocialmedia.platform.WebRTCVideoTrack
 import com.minhtu.firesocialmedia.platform.WebRTCVideoView
 import com.minhtu.firesocialmedia.platform.logMessage
 import com.minhtu.firesocialmedia.platform.showToast
@@ -200,8 +201,8 @@ class VideoCall {
                 }
 
                 WebRTCVideoView(
-                    localVideoTrackState.value,
-                    remoteVideoTrackState.value,
+                    localVideoTrackState.value as? WebRTCVideoTrack,
+                    remoteVideoTrackState.value as? WebRTCVideoTrack,
                     isCameraOff,
                     modifier = Modifier.fillMaxSize()
                 )

@@ -29,7 +29,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 import com.google.firebase.messaging.FirebaseMessaging
-import com.minhtu.firesocialmedia.constants.Constants
+import com.minhtu.firesocialmedia.core.constants.Constants
 import com.minhtu.firesocialmedia.di.AndroidPlatformContext
 import com.minhtu.firesocialmedia.di.PlatformContextHolder
 import com.minhtu.firesocialmedia.domain.serviceimpl.permission.AndroidPermissionManager

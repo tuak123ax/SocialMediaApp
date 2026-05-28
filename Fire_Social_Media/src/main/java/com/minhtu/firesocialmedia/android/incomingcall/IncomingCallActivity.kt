@@ -10,8 +10,8 @@ import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.remember
-import com.minhtu.firesocialmedia.constants.Constants
-import com.minhtu.firesocialmedia.domain.entity.call.CallAction
+import com.minhtu.firesocialmedia.core.constants.Constants
+import com.minhtu.firesocialmedia.core.domain.entity.call.CallAction
 import com.minhtu.firesocialmedia.domain.serviceimpl.call.CallActionBroadcastReceiver
 import com.minhtu.firesocialmedia.domain.serviceimpl.call.CallNotificationManager.Companion.NOTIF_ID
 import com.minhtu.firesocialmedia.domain.serviceimpl.call.CallSoundManager

@@ -1,9 +1,9 @@
 package com.minhtu.firesocialmedia.group.ui
 
-import com.minhtu.firesocialmedia.domain.entity.group.GroupInstance
-import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
-import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
-import com.minhtu.firesocialmedia.domain.repository.GroupRepository
+import com.minhtu.firesocialmedia.core.domain.entity.group.GroupInstance
+import com.minhtu.firesocialmedia.core.domain.entity.news.NewsInstance
+import com.minhtu.firesocialmedia.core.domain.entity.user.UserInstance
+import com.minhtu.firesocialmedia.core.domain.repository.GroupRepository
 
 open class BaseFakeGroupRepository : GroupRepository {
 	override suspend fun saveGroupAndUserGroups(group: GroupInstance, userId: String) = true
@@ -12,7 +12,7 @@ open class BaseFakeGroupRepository : GroupRepository {
 	override suspend fun saveNewToGroup(instance: NewsInstance, groupId: String) = true
 	override suspend fun updateNotificationStatus(newStatus: Boolean, groupId: String, userId: String) = true
 	override suspend fun getAllMembersInGroup(groupId: String) = hashMapOf<String, String>()
-	override suspend fun getGroupConfigs(userId: String, groupId: String) = com.minhtu.firesocialmedia.domain.entity.group.GroupConfigs()
+	override suspend fun getGroupConfigs(userId: String, groupId: String) = com.minhtu.firesocialmedia.core.domain.entity.group.GroupConfigs()
 	override suspend fun fetchNotificationState(userId: String, groupId: String) = false
 	override suspend fun copyLink(copyData: String) {}
 	override suspend fun inviteFriendToGroup(friend: UserInstance) {}

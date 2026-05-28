@@ -3,8 +3,8 @@ package com.minhtu.firesocialmedia.data.local.entity
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
-import com.minhtu.firesocialmedia.domain.core.DecentralizationType
-import com.minhtu.firesocialmedia.domain.entity.notification.NotificationType
+import com.minhtu.firesocialmedia.core.domain.core.DecentralizationType
+import com.minhtu.firesocialmedia.core.domain.entity.notification.NotificationType
 
 @Entity(
     tableName = "Notifications",

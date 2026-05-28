@@ -6,11 +6,11 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.minhtu.firesocialmedia.data.remote.constant.DataConstant
-import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
-import com.minhtu.firesocialmedia.domain.usecases.common.GetUserUseCase
-import com.minhtu.firesocialmedia.domain.usecases.settings.UpdateUserAvatarUseCase
-import com.minhtu.firesocialmedia.domain.usecases.settings.UpdateUserStringFieldUseCase
-import com.minhtu.firesocialmedia.domain.usecases.settings.VerifyCurrentPasswordUseCase
+import com.minhtu.firesocialmedia.core.domain.entity.user.UserInstance
+import com.minhtu.firesocialmedia.core.domain.usecases.common.GetUserUseCase
+import com.minhtu.firesocialmedia.core.domain.usecases.settings.UpdateUserAvatarUseCase
+import com.minhtu.firesocialmedia.core.domain.usecases.settings.UpdateUserStringFieldUseCase
+import com.minhtu.firesocialmedia.core.domain.usecases.settings.VerifyCurrentPasswordUseCase
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO

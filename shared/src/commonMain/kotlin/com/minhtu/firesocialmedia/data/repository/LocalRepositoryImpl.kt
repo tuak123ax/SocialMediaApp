@@ -7,10 +7,10 @@ import com.minhtu.firesocialmedia.data.local.mapper.room.toUserEntity
 import com.minhtu.firesocialmedia.data.local.service.crypto.CryptoService
 import com.minhtu.firesocialmedia.data.local.service.room.RoomService
 import com.minhtu.firesocialmedia.data.remote.mapper.user.toDto
-import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
-import com.minhtu.firesocialmedia.domain.entity.notification.NotificationInstance
-import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
-import com.minhtu.firesocialmedia.domain.repository.LocalRepository
+import com.minhtu.firesocialmedia.core.domain.entity.news.NewsInstance
+import com.minhtu.firesocialmedia.core.domain.entity.notification.NotificationInstance
+import com.minhtu.firesocialmedia.core.domain.entity.user.UserInstance
+import com.minhtu.firesocialmedia.core.domain.repository.LocalRepository
 
 class LocalRepositoryImpl(
     private val cryptoService: CryptoService,

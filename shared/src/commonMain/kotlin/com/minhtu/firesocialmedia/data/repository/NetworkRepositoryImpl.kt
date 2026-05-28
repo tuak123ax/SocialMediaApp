@@ -1,7 +1,7 @@
 package com.minhtu.firesocialmedia.data.repository
 
-import com.minhtu.firesocialmedia.domain.core.NetworkMonitor
-import com.minhtu.firesocialmedia.domain.repository.NetworkRepository
+import com.minhtu.firesocialmedia.core.domain.core.NetworkMonitor
+import com.minhtu.firesocialmedia.core.domain.repository.NetworkRepository
 import kotlinx.coroutines.flow.Flow
 
 class NetworkRepositoryImpl(

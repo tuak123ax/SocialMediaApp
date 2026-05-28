@@ -1,8 +1,8 @@
 package com.minhtu.firesocialmedia.data.remote.mapper.news
 
+import com.minhtu.firesocialmedia.core.domain.core.DecentralizationType
+import com.minhtu.firesocialmedia.core.domain.entity.news.NewsInstance
 import com.minhtu.firesocialmedia.data.remote.dto.news.NewsDTO
-import com.minhtu.firesocialmedia.domain.core.DecentralizationType
-import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
 
 fun NewsDTO.toDomain() : NewsInstance {
     return NewsInstance(

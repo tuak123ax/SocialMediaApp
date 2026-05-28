@@ -1,9 +1,9 @@
 package com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group
 
-import com.minhtu.firesocialmedia.domain.entity.group.GroupInstance
-import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
-import com.minhtu.firesocialmedia.domain.usecases.group.FetchFeatureGroupsUseCase
-import com.minhtu.firesocialmedia.domain.usecases.group.FetchRecommendGroupsUseCase
+import com.minhtu.firesocialmedia.core.domain.entity.group.GroupInstance
+import com.minhtu.firesocialmedia.core.domain.entity.user.UserInstance
+import com.minhtu.firesocialmedia.core.domain.usecases.group.FetchFeatureGroupsUseCase
+import com.minhtu.firesocialmedia.core.domain.usecases.group.FetchRecommendGroupsUseCase
 import com.rickclephas.kmp.observableviewmodel.ViewModel
 import com.rickclephas.kmp.observableviewmodel.launch
 import kotlinx.coroutines.CoroutineDispatcher

@@ -1,5 +1,7 @@
 package com.minhtu.firesocialmedia.data.remote.service.database
 
+import com.minhtu.firesocialmedia.core.domain.entity.base.BaseNewsInstance
+import com.minhtu.firesocialmedia.core.domain.entity.call.CallStatus
 import com.minhtu.firesocialmedia.data.remote.dto.call.AudioCallSessionDTO
 import com.minhtu.firesocialmedia.data.remote.dto.call.CallingRequestDTO
 import com.minhtu.firesocialmedia.data.remote.dto.call.IceCandidateDTO
@@ -15,9 +17,7 @@ import com.minhtu.firesocialmedia.data.remote.dto.settings.SessionItemDTO
 import com.minhtu.firesocialmedia.data.remote.dto.settings.security.IpInfoResponseDTO
 import com.minhtu.firesocialmedia.data.remote.dto.signin.SignInDTO
 import com.minhtu.firesocialmedia.data.remote.dto.user.UserDTO
-import com.minhtu.firesocialmedia.domain.entity.base.BaseNewsInstance
-import com.minhtu.firesocialmedia.domain.entity.call.CallStatus
-import com.minhtu.firesocialmedia.utils.Utils
+import com.minhtu.firesocialmedia.core.utils.Utils
 import io.mockative.Mockable
 import kotlinx.coroutines.flow.MutableStateFlow
 

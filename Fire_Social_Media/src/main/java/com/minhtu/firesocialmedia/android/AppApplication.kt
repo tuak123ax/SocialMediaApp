@@ -7,11 +7,9 @@ import android.os.Build
 import android.os.StrictMode
 import android.util.Log
 import androidx.annotation.RequiresApi
-import com.minhtu.firesocialmedia.constants.Constants
-import com.minhtu.firesocialmedia.di.AndroidPlatformContext
+import com.minhtu.firesocialmedia.core.constants.Constants
 import com.minhtu.firesocialmedia.di.appModule
 import com.minhtu.firesocialmedia.domain.serviceimpl.database.supabase.SupabaseStorageHelper
-import com.minhtu.firesocialmedia.domain.serviceimpl.permission.AndroidPermissionManager
 import com.minhtu.firesocialmedia.platform.initPlatformContext
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.GlobalContext.startKoin

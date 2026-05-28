@@ -14,7 +14,7 @@ import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import com.minhtu.firesocialmedia.R
-import com.minhtu.firesocialmedia.constants.Constants
+import com.minhtu.firesocialmedia.core.constants.Constants
 
 /**
  * A short-lived foreground service (foregroundServiceType="shortService") that directly starts

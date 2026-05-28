@@ -2,12 +2,12 @@ package com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.minhtu.firesocialmedia.domain.entity.group.GroupInstance
-import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
-import com.minhtu.firesocialmedia.domain.usecases.common.GetUserUseCase
-import com.minhtu.firesocialmedia.domain.usecases.group.DemoteMemberUseCase
-import com.minhtu.firesocialmedia.domain.usecases.group.PromoteMemberUseCase
-import com.minhtu.firesocialmedia.domain.usecases.group.RemoveMemberUseCase
+import com.minhtu.firesocialmedia.core.domain.entity.group.GroupInstance
+import com.minhtu.firesocialmedia.core.domain.entity.user.UserInstance
+import com.minhtu.firesocialmedia.core.domain.usecases.common.GetUserUseCase
+import com.minhtu.firesocialmedia.core.domain.usecases.group.DemoteMemberUseCase
+import com.minhtu.firesocialmedia.core.domain.usecases.group.PromoteMemberUseCase
+import com.minhtu.firesocialmedia.core.domain.usecases.group.RemoveMemberUseCase
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO

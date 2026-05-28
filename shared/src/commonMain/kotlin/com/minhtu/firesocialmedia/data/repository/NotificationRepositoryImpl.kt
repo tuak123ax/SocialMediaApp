@@ -8,10 +8,10 @@ import com.minhtu.firesocialmedia.data.remote.mapper.notification.toDomain
 import com.minhtu.firesocialmedia.data.remote.mapper.notification.toDto
 import com.minhtu.firesocialmedia.data.remote.mapper.user.toDTONotifications
 import com.minhtu.firesocialmedia.data.remote.service.database.DatabaseService
-import com.minhtu.firesocialmedia.domain.core.NetworkMonitor
-import com.minhtu.firesocialmedia.domain.entity.notification.NotificationInstance
-import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
-import com.minhtu.firesocialmedia.domain.repository.NotificationRepository
+import com.minhtu.firesocialmedia.core.domain.core.NetworkMonitor
+import com.minhtu.firesocialmedia.core.domain.entity.notification.NotificationInstance
+import com.minhtu.firesocialmedia.core.domain.entity.user.UserInstance
+import com.minhtu.firesocialmedia.core.domain.repository.NotificationRepository
 import kotlinx.coroutines.flow.first
 
 class NotificationRepositoryImpl(

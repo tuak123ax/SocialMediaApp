@@ -8,7 +8,7 @@ import com.minhtu.firesocialmedia.data.remote.service.call.AudioCallService
 import com.minhtu.firesocialmedia.data.remote.service.clipboard.ClipboardService
 import com.minhtu.firesocialmedia.data.remote.service.database.DatabaseService
 import com.minhtu.firesocialmedia.data.remote.service.permission.PermissionManager
-import com.minhtu.firesocialmedia.domain.core.NetworkMonitor
+import com.minhtu.firesocialmedia.core.domain.core.NetworkMonitor
 import com.minhtu.firesocialmedia.domain.serviceimpl.auth.IosAuthService
 import com.minhtu.firesocialmedia.domain.serviceimpl.call.IosAudioCallService
 import com.minhtu.firesocialmedia.domain.serviceimpl.clipboard.IosClipboardService

@@ -1,15 +1,15 @@
 package com.minhtu.firesocialmedia
 
-import com.minhtu.firesocialmedia.constants.Constants
-import com.minhtu.firesocialmedia.domain.entity.home.LatestNewsResult
-import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
-import com.minhtu.firesocialmedia.domain.entity.notification.NotificationInstance
-import com.minhtu.firesocialmedia.domain.entity.notification.NotificationType
-import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
-import com.minhtu.firesocialmedia.domain.interactor.home.CallInteractor
-import com.minhtu.firesocialmedia.domain.interactor.home.NewsInteractor
-import com.minhtu.firesocialmedia.domain.interactor.home.NotificationInteractor
-import com.minhtu.firesocialmedia.domain.interactor.home.UserInteractor
+import com.minhtu.firesocialmedia.core.constants.Constants
+import com.minhtu.firesocialmedia.core.domain.entity.home.LatestNewsResult
+import com.minhtu.firesocialmedia.core.domain.entity.news.NewsInstance
+import com.minhtu.firesocialmedia.core.domain.entity.notification.NotificationInstance
+import com.minhtu.firesocialmedia.core.domain.entity.notification.NotificationType
+import com.minhtu.firesocialmedia.core.domain.entity.user.UserInstance
+import com.minhtu.firesocialmedia.core.domain.interactor.home.CallInteractor
+import com.minhtu.firesocialmedia.core.domain.interactor.home.NewsInteractor
+import com.minhtu.firesocialmedia.core.domain.interactor.home.NotificationInteractor
+import com.minhtu.firesocialmedia.core.domain.interactor.home.UserInteractor
 import com.minhtu.firesocialmedia.presentation.home.HomeViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -67,7 +67,7 @@ class HomeViewModelTest {
             override suspend fun storeNotificationsToRoom(notifications: List<NotificationInstance>) {}
         }
         val fakeCallInteractor = object : CallInteractor {
-            override suspend fun observe(isInCall: MutableStateFlow<Boolean>, userId: String, onReceivePhoneCallRequest: suspend (com.minhtu.firesocialmedia.domain.entity.call.CallingRequestData) -> Unit, onEndCall: suspend () -> Unit, whoEndCallCallBack: suspend (String) -> Unit) {}
+            override suspend fun observe(isInCall: MutableStateFlow<Boolean>, userId: String, onReceivePhoneCallRequest: suspend (com.minhtu.firesocialmedia.core.domain.entity.call.CallingRequestData) -> Unit, onEndCall: suspend () -> Unit, whoEndCallCallBack: suspend (String) -> Unit) {}
             override fun stopObservePhoneCall() {}
             override suspend fun stopCallService() {}
         }
@@ -112,7 +112,7 @@ class HomeViewModelTest {
                 override suspend fun storeNotificationsToRoom(notifications: List<NotificationInstance>) {}
             },
             object : CallInteractor {
-                override suspend fun observe(isInCall: MutableStateFlow<Boolean>, userId: String, onReceivePhoneCallRequest: suspend (com.minhtu.firesocialmedia.domain.entity.call.CallingRequestData) -> Unit, onEndCall: suspend () -> Unit, whoEndCallCallBack: suspend (String) -> Unit) {}
+                override suspend fun observe(isInCall: MutableStateFlow<Boolean>, userId: String, onReceivePhoneCallRequest: suspend (com.minhtu.firesocialmedia.core.domain.entity.call.CallingRequestData) -> Unit, onEndCall: suspend () -> Unit, whoEndCallCallBack: suspend (String) -> Unit) {}
                 override fun stopObservePhoneCall() {}
                 override suspend fun stopCallService() {}
             },
@@ -158,7 +158,7 @@ class HomeViewModelTest {
                 override suspend fun storeNotificationsToRoom(notifications: List<NotificationInstance>) {}
             },
             object : CallInteractor {
-                override suspend fun observe(isInCall: MutableStateFlow<Boolean>, userId: String, onReceivePhoneCallRequest: suspend (com.minhtu.firesocialmedia.domain.entity.call.CallingRequestData) -> Unit, onEndCall: suspend () -> Unit, whoEndCallCallBack: suspend (String) -> Unit) {}
+                override suspend fun observe(isInCall: MutableStateFlow<Boolean>, userId: String, onReceivePhoneCallRequest: suspend (com.minhtu.firesocialmedia.core.domain.entity.call.CallingRequestData) -> Unit, onEndCall: suspend () -> Unit, whoEndCallCallBack: suspend (String) -> Unit) {}
                 override fun stopObservePhoneCall() {}
                 override suspend fun stopCallService() {}
             },
@@ -203,7 +203,7 @@ class HomeViewModelTest {
                 override suspend fun storeNotificationsToRoom(notifications: List<NotificationInstance>) {}
             },
             object : CallInteractor {
-                override suspend fun observe(isInCall: MutableStateFlow<Boolean>, userId: String, onReceivePhoneCallRequest: suspend (com.minhtu.firesocialmedia.domain.entity.call.CallingRequestData) -> Unit, onEndCall: suspend () -> Unit, whoEndCallCallBack: suspend (String) -> Unit) {}
+                override suspend fun observe(isInCall: MutableStateFlow<Boolean>, userId: String, onReceivePhoneCallRequest: suspend (com.minhtu.firesocialmedia.core.domain.entity.call.CallingRequestData) -> Unit, onEndCall: suspend () -> Unit, whoEndCallCallBack: suspend (String) -> Unit) {}
                 override fun stopObservePhoneCall() {}
                 override suspend fun stopCallService() {}
             },
@@ -253,7 +253,7 @@ class HomeViewModelTest {
                 override suspend fun storeNotificationsToRoom(notifications: List<NotificationInstance>) {}
             },
             object : CallInteractor {
-                override suspend fun observe(isInCall: MutableStateFlow<Boolean>, userId: String, onReceivePhoneCallRequest: suspend (com.minhtu.firesocialmedia.domain.entity.call.CallingRequestData) -> Unit, onEndCall: suspend () -> Unit, whoEndCallCallBack: suspend (String) -> Unit) {}
+                override suspend fun observe(isInCall: MutableStateFlow<Boolean>, userId: String, onReceivePhoneCallRequest: suspend (com.minhtu.firesocialmedia.core.domain.entity.call.CallingRequestData) -> Unit, onEndCall: suspend () -> Unit, whoEndCallCallBack: suspend (String) -> Unit) {}
                 override fun stopObservePhoneCall() {}
                 override suspend fun stopCallService() {}
             },
@@ -299,7 +299,7 @@ class HomeViewModelTest {
                 override suspend fun storeNotificationsToRoom(notifications: List<NotificationInstance>) {}
             },
             object : CallInteractor {
-                override suspend fun observe(isInCall: MutableStateFlow<Boolean>, userId: String, onReceivePhoneCallRequest: suspend (com.minhtu.firesocialmedia.domain.entity.call.CallingRequestData) -> Unit, onEndCall: suspend () -> Unit, whoEndCallCallBack: suspend (String) -> Unit) {}
+                override suspend fun observe(isInCall: MutableStateFlow<Boolean>, userId: String, onReceivePhoneCallRequest: suspend (com.minhtu.firesocialmedia.core.domain.entity.call.CallingRequestData) -> Unit, onEndCall: suspend () -> Unit, whoEndCallCallBack: suspend (String) -> Unit) {}
                 override fun stopObservePhoneCall() {}
                 override suspend fun stopCallService() {}
             },
@@ -348,7 +348,7 @@ class HomeViewModelTest {
         newsInteractor,
         notificationInteractor,
         object : CallInteractor {
-            override suspend fun observe(isInCall: MutableStateFlow<Boolean>, userId: String, onReceivePhoneCallRequest: suspend (com.minhtu.firesocialmedia.domain.entity.call.CallingRequestData) -> Unit, onEndCall: suspend () -> Unit, whoEndCallCallBack: suspend (String) -> Unit) {}
+            override suspend fun observe(isInCall: MutableStateFlow<Boolean>, userId: String, onReceivePhoneCallRequest: suspend (com.minhtu.firesocialmedia.core.domain.entity.call.CallingRequestData) -> Unit, onEndCall: suspend () -> Unit, whoEndCallCallBack: suspend (String) -> Unit) {}
             override fun stopObservePhoneCall() {}
             override suspend fun stopCallService() {}
         },

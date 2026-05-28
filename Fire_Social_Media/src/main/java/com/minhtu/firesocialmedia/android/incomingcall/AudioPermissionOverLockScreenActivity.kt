@@ -18,8 +18,8 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.getValue
 import androidx.core.content.ContextCompat
-import com.minhtu.firesocialmedia.constants.Constants
-import com.minhtu.firesocialmedia.domain.entity.call.CallAction
+import com.minhtu.firesocialmedia.core.constants.Constants
+import com.minhtu.firesocialmedia.core.domain.entity.call.CallAction
 import com.minhtu.firesocialmedia.domain.serviceimpl.call.CallActionBroadcastReceiver
 import com.minhtu.firesocialmedia.domain.serviceimpl.call.CallNotificationManager.Companion.NOTIF_ID
 import com.minhtu.firesocialmedia.domain.serviceimpl.call.CallSoundManager

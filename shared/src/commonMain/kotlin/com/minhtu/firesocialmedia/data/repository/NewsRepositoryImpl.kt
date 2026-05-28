@@ -9,11 +9,11 @@ import com.minhtu.firesocialmedia.data.remote.mapper.news.toDomain
 import com.minhtu.firesocialmedia.data.remote.mapper.news.toDto
 import com.minhtu.firesocialmedia.data.remote.mapper.settings.toDomain
 import com.minhtu.firesocialmedia.data.remote.service.database.DatabaseService
-import com.minhtu.firesocialmedia.domain.core.NetworkMonitor
-import com.minhtu.firesocialmedia.domain.entity.home.LatestNewsResult
-import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
-import com.minhtu.firesocialmedia.domain.entity.settings.PollObject
-import com.minhtu.firesocialmedia.domain.repository.NewsRepository
+import com.minhtu.firesocialmedia.core.domain.core.NetworkMonitor
+import com.minhtu.firesocialmedia.core.domain.entity.home.LatestNewsResult
+import com.minhtu.firesocialmedia.core.domain.entity.news.NewsInstance
+import com.minhtu.firesocialmedia.core.domain.entity.settings.PollObject
+import com.minhtu.firesocialmedia.core.domain.repository.NewsRepository
 import kotlinx.coroutines.flow.first
 
 class NewsRepositoryImpl(
@@ -43,8 +43,8 @@ class NewsRepositoryImpl(
                 lastKey,
                 DataConstant.NEWS_PATH).toDomain()
             if(latestNewsResult != null) {
-                if(latestNewsResult.news != null) {
-                    localDatabaseService.storeNewsToRoom(latestNewsResult.news.toNewEntity())
+                latestNewsResult.news?.let { newsList ->
+                    localDatabaseService.storeNewsToRoom(newsList.toNewEntity())
                 }
             }
             return latestNewsResult

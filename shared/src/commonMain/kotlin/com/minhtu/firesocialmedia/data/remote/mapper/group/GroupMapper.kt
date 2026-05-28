@@ -4,8 +4,8 @@ import com.minhtu.firesocialmedia.data.remote.dto.group.GroupDTO
 import com.minhtu.firesocialmedia.data.remote.dto.group.GroupSummaryDTO
 import com.minhtu.firesocialmedia.data.remote.mapper.news.toDomain
 import com.minhtu.firesocialmedia.data.remote.mapper.news.toDto
-import com.minhtu.firesocialmedia.domain.entity.group.GroupConfigs
-import com.minhtu.firesocialmedia.domain.entity.group.GroupInstance
+import com.minhtu.firesocialmedia.core.domain.entity.group.GroupConfigs
+import com.minhtu.firesocialmedia.core.domain.entity.group.GroupInstance
 
 fun GroupInstance.toDto() : GroupDTO {
     return GroupDTO(

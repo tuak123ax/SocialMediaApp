@@ -3,8 +3,8 @@ package com.minhtu.firesocialmedia.platform
 import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
 import com.minhtu.firesocialmedia.di.PlatformContext
-import com.minhtu.firesocialmedia.domain.entity.call.SharedCallData
-import com.minhtu.firesocialmedia.domain.entity.home.deeplinks.DeepLinksData
+import com.minhtu.firesocialmedia.core.domain.entity.call.SharedCallData
+import com.minhtu.firesocialmedia.core.domain.entity.home.deeplinks.DeepLinksData
 import com.minhtu.firesocialmedia.presentation.toast.ToastController.ToastHost
 import com.minhtu.firesocialmedia.presentation.navigation.SetUpNavigation as CommonSetUpNavigation
 

@@ -1,7 +1,7 @@
 package com.minhtu.firesocialmedia.data.remote.dto.comment
 
-import com.minhtu.firesocialmedia.domain.entity.base.BaseNewsInstance
-import com.minhtu.firesocialmedia.domain.entity.base.CountInterface
+import com.minhtu.firesocialmedia.core.domain.entity.base.BaseNewsInstance
+import com.minhtu.firesocialmedia.core.domain.entity.base.CountInterface
 import kotlinx.serialization.Serializable
 
 @Serializable

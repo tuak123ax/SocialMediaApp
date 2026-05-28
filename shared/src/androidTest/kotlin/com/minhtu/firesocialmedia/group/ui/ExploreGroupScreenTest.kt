@@ -4,11 +4,11 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
-import com.minhtu.firesocialmedia.constants.TestTag
-import com.minhtu.firesocialmedia.domain.entity.group.GroupInstance
-import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
-import com.minhtu.firesocialmedia.domain.usecases.group.FetchFeatureGroupsUseCase
-import com.minhtu.firesocialmedia.domain.usecases.group.FetchRecommendGroupsUseCase
+import com.minhtu.firesocialmedia.core.constants.TestTag
+import com.minhtu.firesocialmedia.core.domain.entity.group.GroupInstance
+import com.minhtu.firesocialmedia.core.domain.entity.user.UserInstance
+import com.minhtu.firesocialmedia.core.domain.usecases.group.FetchFeatureGroupsUseCase
+import com.minhtu.firesocialmedia.core.domain.usecases.group.FetchRecommendGroupsUseCase
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.ExploreGroup
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.ExploreGroupViewModel
 import com.minhtu.firesocialmedia.presentation.search.SearchViewModel

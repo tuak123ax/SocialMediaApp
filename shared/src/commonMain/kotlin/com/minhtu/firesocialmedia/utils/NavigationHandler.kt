@@ -1,7 +1,4 @@
 package com.minhtu.firesocialmedia.utils
 
-interface NavigationHandler {
-    fun navigateTo(route: String)
-    fun navigateBack()
-    fun getCurrentRoute() : String?
-}
+// Migrated to :core — keep typealias so existing imports don't break
+typealias NavigationHandler = com.minhtu.firesocialmedia.core.utils.NavigationHandler

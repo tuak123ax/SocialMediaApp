@@ -1,0 +1,69 @@
+package com.minhtu.firesocialmedia.core.domain.entity.news
+
+import com.minhtu.firesocialmedia.core.domain.core.DecentralizationType
+import com.minhtu.firesocialmedia.core.domain.entity.base.BaseNewsInstance
+import com.minhtu.firesocialmedia.core.domain.entity.base.CountInterface
+
+data class NewsInstance(override var id: String = "",
+                        override var posterId : String = "",
+                        override var posterName: String = "",
+                        override var avatar: String = "",
+                        override var message: String = "",
+                        override var image: String = "",
+                        override var video: String = "",
+                        var isVisible: Boolean = true,
+                        override var likeCount: Int = 0,
+                        override var commentCount: Int = 0,
+                        override var timePosted: Long = 0,
+                        var localPath : String = "",
+                        var shareContentId : String = "",
+                        var decentralizationType : DecentralizationType? = null,
+                        var groupId : String = "",
+                        var type: String? = null,
+                        var pollId: String? = null): BaseNewsInstance,
+    CountInterface {
+    fun updateNews(id: String, posterId: String, posterName: String, avatar: String,
+                   message: String, image: String, video : String){
+        this.id = id
+        this.posterId = posterId
+        this.posterName = posterName
+        this.avatar = avatar
+        this.message = message
+        this.image = image
+        this.video = video
+    }
+    override fun updateImage(image: String) {
+        this.image = image
+    }
+
+    override fun updateVideo(video: String) {
+        this.video = video
+    }
+
+    override fun increaseLikeCount() {
+        likeCount++
+    }
+
+    override fun increaseCommentCount() {
+        commentCount++
+    }
+
+    override fun decreaseLikeCount() {
+        likeCount--
+    }
+
+    override fun decreaseCommentCount() {
+        commentCount--
+    }
+
+    override fun toMap(): Map<String, Any?> =
+        super.toMap() + mapOf(
+        "likeCount" to likeCount,
+        "commentCount" to commentCount,
+        "timePosted" to timePosted
+    )
+}
+
+fun NewsInstance.isDefaultNewsInstance() : Boolean {
+    return id.isEmpty() && posterId.isEmpty() && posterName.isEmpty() && avatar.isEmpty() && message.isEmpty()
+}

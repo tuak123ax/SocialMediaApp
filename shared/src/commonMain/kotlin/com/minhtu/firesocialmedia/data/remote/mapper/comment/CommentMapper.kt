@@ -1,11 +1,11 @@
 package com.minhtu.firesocialmedia.data.remote.mapper.comment
 
 import com.minhtu.firesocialmedia.data.remote.dto.comment.CommentDTO
-import com.minhtu.firesocialmedia.domain.entity.comment.CommentInstance
+import com.minhtu.firesocialmedia.core.domain.entity.comment.CommentInstance
 
 // Use idKey (the map key) as a fallback if dto.id is blank.
 fun CommentDTO.toDomain(idKey: String? = null): CommentInstance {
-    val realId = if (id.isNotBlank()) id else idKey.orEmpty()
+    val realId = id.ifBlank { idKey.orEmpty() }
     return CommentInstance(
         id = realId,
         posterId = posterId,

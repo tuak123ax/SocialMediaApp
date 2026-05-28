@@ -1,8 +1,8 @@
 package com.minhtu.firesocialmedia.data.remote.mapper.notification
 
 import com.minhtu.firesocialmedia.data.remote.dto.notification.NotificationDTO
-import com.minhtu.firesocialmedia.domain.entity.notification.NotificationInstance
-import com.minhtu.firesocialmedia.domain.entity.notification.NotificationType
+import com.minhtu.firesocialmedia.core.domain.entity.notification.NotificationInstance
+import com.minhtu.firesocialmedia.core.domain.entity.notification.NotificationType
 
 fun NotificationDTO.toDomain() : NotificationInstance {
     return NotificationInstance(

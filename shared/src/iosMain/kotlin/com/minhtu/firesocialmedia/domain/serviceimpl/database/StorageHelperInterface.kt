@@ -3,7 +3,7 @@ package com.minhtu.firesocialmedia.domain.serviceimpl.database
 import com.minhtu.firesocialmedia.data.remote.dto.group.GroupDTO
 import com.minhtu.firesocialmedia.data.remote.dto.news.NewsDTO
 import com.minhtu.firesocialmedia.data.remote.dto.user.UserDTO
-import com.minhtu.firesocialmedia.domain.entity.base.BaseNewsInstance
+import com.minhtu.firesocialmedia.core.domain.entity.base.BaseNewsInstance
 
 interface StorageHelperInterface {
     suspend fun saveInstanceToDatabase(

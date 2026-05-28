@@ -11,7 +11,7 @@ import cocoapods.FirebaseStorage.FIRStorageTaskStatusSuccess
 import com.minhtu.firesocialmedia.data.remote.dto.notification.NotificationDTO
 import com.minhtu.firesocialmedia.data.remote.dto.notification.fromMap
 import com.minhtu.firesocialmedia.data.remote.dto.notification.toMap
-import com.minhtu.firesocialmedia.domain.entity.base.BaseNewsInstance
+import com.minhtu.firesocialmedia.core.domain.entity.base.BaseNewsInstance
 import kotlinx.cinterop.BetaInteropApi
 import kotlinx.coroutines.suspendCancellableCoroutine
 import platform.Foundation.NSData

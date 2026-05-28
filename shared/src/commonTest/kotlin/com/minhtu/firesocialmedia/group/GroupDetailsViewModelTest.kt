@@ -1,18 +1,18 @@
 package com.minhtu.firesocialmedia.group
 
-import com.minhtu.firesocialmedia.domain.entity.group.GroupInstance
-import com.minhtu.firesocialmedia.domain.entity.news.NewsInstance
-import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
-import com.minhtu.firesocialmedia.domain.repository.GroupRepository
-import com.minhtu.firesocialmedia.domain.usecases.group.FetchGroupInfoUseCase
-import com.minhtu.firesocialmedia.domain.usecases.newsfeed.DeletePollUseCase
-import com.minhtu.firesocialmedia.domain.repository.NewsRepository
-import com.minhtu.firesocialmedia.domain.usecases.group.FetchNotificationStateUseCase
-import com.minhtu.firesocialmedia.domain.usecases.group.FindGroupByIdUseCase
-import com.minhtu.firesocialmedia.domain.usecases.group.JoinGroupUseCase
-import com.minhtu.firesocialmedia.domain.usecases.group.LeaveAndDeleteGroupUseCase
-import com.minhtu.firesocialmedia.domain.usecases.group.LeaveGroupUseCase
-import com.minhtu.firesocialmedia.domain.usecases.group.UpdateNotificationStatusUseCase
+import com.minhtu.firesocialmedia.core.domain.entity.group.GroupInstance
+import com.minhtu.firesocialmedia.core.domain.entity.news.NewsInstance
+import com.minhtu.firesocialmedia.core.domain.entity.user.UserInstance
+import com.minhtu.firesocialmedia.core.domain.repository.GroupRepository
+import com.minhtu.firesocialmedia.core.domain.usecases.group.FetchGroupInfoUseCase
+import com.minhtu.firesocialmedia.core.domain.usecases.newsfeed.DeletePollUseCase
+import com.minhtu.firesocialmedia.core.domain.repository.NewsRepository
+import com.minhtu.firesocialmedia.core.domain.usecases.group.FetchNotificationStateUseCase
+import com.minhtu.firesocialmedia.core.domain.usecases.group.FindGroupByIdUseCase
+import com.minhtu.firesocialmedia.core.domain.usecases.group.JoinGroupUseCase
+import com.minhtu.firesocialmedia.core.domain.usecases.group.LeaveAndDeleteGroupUseCase
+import com.minhtu.firesocialmedia.core.domain.usecases.group.LeaveGroupUseCase
+import com.minhtu.firesocialmedia.core.domain.usecases.group.UpdateNotificationStatusUseCase
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.GroupDetailsViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -43,7 +43,7 @@ private class DetailsRepo : GroupRepository {
         return updateNotificationResult
     }
     override suspend fun getAllMembersInGroup(groupId: String): HashMap<String, String> = hashMapOf()
-    override suspend fun getGroupConfigs(userId: String, groupId: String) = com.minhtu.firesocialmedia.domain.entity.group.GroupConfigs()
+    override suspend fun getGroupConfigs(userId: String, groupId: String) = com.minhtu.firesocialmedia.core.domain.entity.group.GroupConfigs()
     override suspend fun fetchNotificationState(userId: String, groupId: String): Boolean = notificationState
     override suspend fun copyLink(copyData: String) {}
     override suspend fun inviteFriendToGroup(friend: UserInstance) {}
@@ -61,12 +61,12 @@ private class DetailsRepo : GroupRepository {
 class GroupDetailsViewModelTest {
 
     private val fakeNewsRepo = object : NewsRepository {
-        override suspend fun getNew(newId: String): com.minhtu.firesocialmedia.domain.entity.news.NewsInstance? = null
+        override suspend fun getNew(newId: String): com.minhtu.firesocialmedia.core.domain.entity.news.NewsInstance? = null
         override suspend fun getLatestNews(number: Int, lastTimePosted: Double?, lastKey: String?) = null
-        override suspend fun deleteNewsFromDatabase(new: com.minhtu.firesocialmedia.domain.entity.news.NewsInstance) {}
+        override suspend fun deleteNewsFromDatabase(new: com.minhtu.firesocialmedia.core.domain.entity.news.NewsInstance) {}
         override suspend fun deletePollFromDatabase(newsId: String, pollId: String, groupId: String): Boolean = true
-        override suspend fun updateNewsFromDatabase(newContent: String, newImage: String, newVideo: String, new: com.minhtu.firesocialmedia.domain.entity.news.NewsInstance): Boolean = true
-        override suspend fun fetchPoll(pollId: String): com.minhtu.firesocialmedia.domain.entity.settings.PollObject? = null
+        override suspend fun updateNewsFromDatabase(newContent: String, newImage: String, newVideo: String, new: com.minhtu.firesocialmedia.core.domain.entity.news.NewsInstance): Boolean = true
+        override suspend fun fetchPoll(pollId: String): com.minhtu.firesocialmedia.core.domain.entity.settings.PollObject? = null
         override suspend fun loadMyVotes(pollId: String, userId: String): List<Int> = emptyList()
         override suspend fun loadAllVoters(pollId: String): Map<String, List<Int>> = emptyMap()
         override suspend fun submitVote(pollId: String, userId: String, selectedIndices: List<Int>, previousIndices: List<Int>): Boolean = true

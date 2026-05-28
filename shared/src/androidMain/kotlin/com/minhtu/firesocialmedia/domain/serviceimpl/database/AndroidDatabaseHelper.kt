@@ -6,7 +6,7 @@ import android.os.Build
 import android.os.Environment
 import android.util.Log
 import androidx.core.net.toUri
-import androidx.core.uri.Uri
+import android.net.Uri
 import com.google.firebase.database.ChildEventListener
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
@@ -16,7 +16,7 @@ import com.google.firebase.database.ServerValue
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.storage.StorageMetadata
 import com.google.firebase.storage.StorageReference
-import com.minhtu.firesocialmedia.constants.Constants
+import com.minhtu.firesocialmedia.core.constants.Constants
 import com.minhtu.firesocialmedia.data.remote.constant.DataConstant
 import com.minhtu.firesocialmedia.data.remote.dto.call.AudioCallSessionDTO
 import com.minhtu.firesocialmedia.data.remote.dto.call.CallingRequestDTO
@@ -30,11 +30,11 @@ import com.minhtu.firesocialmedia.data.remote.dto.settings.SessionItemDTO
 import com.minhtu.firesocialmedia.data.remote.dto.settings.security.IpInfoResponseDTO
 import com.minhtu.firesocialmedia.data.remote.dto.user.UserDTO
 import com.minhtu.firesocialmedia.data.remote.dto.news.NewsDTO
-import com.minhtu.firesocialmedia.domain.entity.base.BaseNewsInstance
-import com.minhtu.firesocialmedia.domain.entity.call.CallStatus
+import com.minhtu.firesocialmedia.core.domain.entity.base.BaseNewsInstance
+import com.minhtu.firesocialmedia.core.domain.entity.call.CallStatus
 import com.minhtu.firesocialmedia.domain.serviceimpl.database.supabase.SupabaseStorageHelper.Companion.resolveMediaUrlAsync
 import com.minhtu.firesocialmedia.platform.logMessage
-import com.minhtu.firesocialmedia.utils.Utils
+import com.minhtu.firesocialmedia.core.utils.Utils
 import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async

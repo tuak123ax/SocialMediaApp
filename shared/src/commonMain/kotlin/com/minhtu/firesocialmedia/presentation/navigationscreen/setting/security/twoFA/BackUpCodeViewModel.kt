@@ -2,9 +2,9 @@ package com.minhtu.firesocialmedia.presentation.navigationscreen.setting.securit
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.minhtu.firesocialmedia.domain.entity.authentication.TwoFAResponse
-import com.minhtu.firesocialmedia.domain.usecases.common.GetCurrentUserUidUseCase
-import com.minhtu.firesocialmedia.domain.usecases.settings.VerifyBackupCodeUseCase
+import com.minhtu.firesocialmedia.core.domain.entity.authentication.TwoFAResponse
+import com.minhtu.firesocialmedia.core.domain.usecases.common.GetCurrentUserUidUseCase
+import com.minhtu.firesocialmedia.core.domain.usecases.settings.VerifyBackupCodeUseCase
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO

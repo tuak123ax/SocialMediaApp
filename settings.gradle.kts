@@ -19,3 +19,5 @@ dependencyResolutionManagement {
 rootProject.name = "SocialMedia"
 include(":Fire_Social_Media")
 include(":shared")
+
+include(":core")

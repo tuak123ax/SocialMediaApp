@@ -33,11 +33,11 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.UIKitView
-import com.minhtu.firesocialmedia.constants.Constants
+import com.minhtu.firesocialmedia.core.constants.Constants
 import com.minhtu.firesocialmedia.data.remote.service.imagepicker.ImagePicker
 import com.minhtu.firesocialmedia.di.PlatformContext
-import com.minhtu.firesocialmedia.domain.entity.home.deeplinks.ShareApp
-import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
+import com.minhtu.firesocialmedia.core.domain.entity.home.deeplinks.ShareApp
+import com.minhtu.firesocialmedia.core.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.domain.serviceimpl.crypto.IosCryptoHelper
 import com.minhtu.firesocialmedia.domain.serviceimpl.notification.KtorProvider
 import com.minhtu.firesocialmedia.presentation.signin.SignInViewModel
@@ -72,10 +72,9 @@ import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import com.minhtu.firesocialmedia.domain.entity.authentication.TwoFARequest
-import com.minhtu.firesocialmedia.domain.entity.authentication.TwoFAResponse
+import com.minhtu.firesocialmedia.core.domain.entity.authentication.TwoFARequest
+import com.minhtu.firesocialmedia.core.domain.entity.authentication.TwoFAResponse
 import io.ktor.client.call.body
-import io.ktor.client.request.url
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonPrimitive
@@ -1069,16 +1068,25 @@ actual fun getUriStringFromLocalPath(localPath: String): String {
 actual suspend fun queryShareApps(text: String): MutableList<ShareApp> {
     // iOS doesn't expose a direct list of share targets; return empty placeholder
     return mutableListOf()
-}actual fun launchShareAppWithDeepLink(app: ShareApp, deepLink: String) {
+}
+
+actual fun launchShareAppWithDeepLink(app: ShareApp, deepLink: String) {
     // Minimal attempt to open the deep link; fallback is no-op
     val url = NSURL.URLWithString(deepLink)
     if (url != null) {
         UIApplication.sharedApplication.openURL(url)
     }
-}actual fun getAppVersion(): String {
+}
+
+actual fun getAppVersion(): String {
     return NSBundle.mainBundle
         .objectForInfoDictionaryKey("CFBundleShortVersionString")
         ?.toString() ?: ""
+}
+
+actual fun generateQrImage(content: String): ImageBitmap {
+    // Minimal stub – real QR generation requires a third-party library on iOS
+    return ImageBitmap(1, 1)
 }
 
 actual suspend fun send2FARequest(request: TwoFARequest): TwoFAResponse {

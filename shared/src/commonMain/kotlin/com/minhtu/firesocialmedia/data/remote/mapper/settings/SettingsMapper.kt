@@ -2,8 +2,8 @@ package com.minhtu.firesocialmedia.data.remote.mapper.settings
 
 import com.minhtu.firesocialmedia.data.remote.dto.settings.PollDTO
 import com.minhtu.firesocialmedia.data.remote.dto.settings.SessionItemDTO
-import com.minhtu.firesocialmedia.domain.entity.settings.PollObject
-import com.minhtu.firesocialmedia.domain.entity.settings.SessionItem
+import com.minhtu.firesocialmedia.core.domain.entity.settings.PollObject
+import com.minhtu.firesocialmedia.core.domain.entity.settings.SessionItem
 
 private const val ACTIVE_NOW_THRESHOLD_MS = 5 * 60 * 1000L // 5 minutes
 

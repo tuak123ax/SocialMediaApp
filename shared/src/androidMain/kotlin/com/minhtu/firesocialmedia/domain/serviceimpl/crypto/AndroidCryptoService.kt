@@ -1,7 +1,7 @@
 package com.minhtu.firesocialmedia.domain.serviceimpl.crypto
 
 import android.content.Context
-import com.minhtu.firesocialmedia.constants.Constants
+import com.minhtu.firesocialmedia.core.constants.Constants
 import com.minhtu.firesocialmedia.data.local.service.crypto.CryptoService
 import com.minhtu.firesocialmedia.data.remote.dto.crypto.CredentialsDTO
 import com.minhtu.firesocialmedia.data.remote.dto.user.UserDTO

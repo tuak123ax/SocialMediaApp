@@ -9,12 +9,12 @@ import com.minhtu.firesocialmedia.data.remote.mapper.user.toDto
 import com.minhtu.firesocialmedia.data.remote.service.auth.AuthService
 import com.minhtu.firesocialmedia.data.remote.service.clipboard.ClipboardService
 import com.minhtu.firesocialmedia.data.remote.service.database.DatabaseService
-import com.minhtu.firesocialmedia.domain.entity.authentication.TwoFAResponse
-import com.minhtu.firesocialmedia.domain.entity.settings.ChangePasswordState
-import com.minhtu.firesocialmedia.domain.entity.settings.PollObject
-import com.minhtu.firesocialmedia.domain.entity.settings.SessionItem
-import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
-import com.minhtu.firesocialmedia.domain.repository.SettingsRepository
+import com.minhtu.firesocialmedia.core.domain.entity.authentication.TwoFAResponse
+import com.minhtu.firesocialmedia.core.domain.entity.settings.ChangePasswordState
+import com.minhtu.firesocialmedia.core.domain.entity.settings.PollObject
+import com.minhtu.firesocialmedia.core.domain.entity.settings.SessionItem
+import com.minhtu.firesocialmedia.core.domain.entity.user.UserInstance
+import com.minhtu.firesocialmedia.core.domain.repository.SettingsRepository
 import com.minhtu.firesocialmedia.platform.getCurrentTime
 
 class SettingsRepositoryImpl(

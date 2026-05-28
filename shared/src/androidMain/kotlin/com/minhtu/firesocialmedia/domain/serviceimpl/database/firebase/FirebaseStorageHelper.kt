@@ -5,11 +5,11 @@ import androidx.core.net.toUri
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.StorageMetadata
-import com.minhtu.firesocialmedia.constants.Constants
+import com.minhtu.firesocialmedia.core.constants.Constants
 import com.minhtu.firesocialmedia.data.remote.dto.group.GroupDTO
 import com.minhtu.firesocialmedia.data.remote.dto.news.NewsDTO
 import com.minhtu.firesocialmedia.data.remote.dto.user.UserDTO
-import com.minhtu.firesocialmedia.domain.entity.base.BaseNewsInstance
+import com.minhtu.firesocialmedia.core.domain.entity.base.BaseNewsInstance
 import com.minhtu.firesocialmedia.domain.serviceimpl.database.AndroidDatabaseHelper.Companion.updateGroupDataOnServer
 import com.minhtu.firesocialmedia.domain.serviceimpl.database.AndroidDatabaseHelper.Companion.uploadMediaAndGetUrl
 import com.minhtu.firesocialmedia.domain.serviceimpl.database.StorageHelperInterface

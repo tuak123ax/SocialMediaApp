@@ -25,9 +25,9 @@ import com.google.gson.Gson
 import com.minhtu.firesocialmedia.R
 import com.minhtu.firesocialmedia.android.incomingcall.IncomingCallActivity
 import com.minhtu.firesocialmedia.android.incomingcall.IncomingCallWakeService
-import com.minhtu.firesocialmedia.constants.Constants
-import com.minhtu.firesocialmedia.domain.entity.call.CallAction
-import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
+import com.minhtu.firesocialmedia.core.constants.Constants
+import com.minhtu.firesocialmedia.core.domain.entity.call.CallAction
+import com.minhtu.firesocialmedia.core.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.domain.serviceimpl.call.CallActionBroadcastReceiver
 import com.minhtu.firesocialmedia.domain.serviceimpl.call.CallNotificationManager.Companion.NOTIF_ID
 import com.minhtu.firesocialmedia.domain.serviceimpl.call.CallNotificationManager.Companion.channelId

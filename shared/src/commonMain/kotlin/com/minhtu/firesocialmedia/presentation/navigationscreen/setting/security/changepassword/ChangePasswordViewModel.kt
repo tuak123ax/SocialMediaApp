@@ -1,11 +1,11 @@
 package com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security.changepassword
 
-import com.minhtu.firesocialmedia.domain.entity.settings.ChangePasswordState
-import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
-import com.minhtu.firesocialmedia.domain.error.changepassword.ChangePasswordError
-import com.minhtu.firesocialmedia.domain.usecases.settings.ChangePasswordUseCase
-import com.minhtu.firesocialmedia.domain.usecases.settings.ValidateNewPasswordUseCase
-import com.minhtu.firesocialmedia.domain.usecases.settings.VerifyCurrentPasswordUseCase
+import com.minhtu.firesocialmedia.core.domain.entity.settings.ChangePasswordState
+import com.minhtu.firesocialmedia.core.domain.entity.user.UserInstance
+import com.minhtu.firesocialmedia.core.domain.error.changepassword.ChangePasswordError
+import com.minhtu.firesocialmedia.core.domain.usecases.settings.ChangePasswordUseCase
+import com.minhtu.firesocialmedia.core.domain.usecases.settings.ValidateNewPasswordUseCase
+import com.minhtu.firesocialmedia.core.domain.usecases.settings.VerifyCurrentPasswordUseCase
 import com.rickclephas.kmp.observableviewmodel.ViewModel
 import com.rickclephas.kmp.observableviewmodel.launch
 import kotlinx.coroutines.CoroutineDispatcher
