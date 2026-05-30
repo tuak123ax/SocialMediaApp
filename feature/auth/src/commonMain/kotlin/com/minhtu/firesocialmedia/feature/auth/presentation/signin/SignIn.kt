@@ -1,4 +1,4 @@
-package com.minhtu.firesocialmedia.presentation.signin
+package com.minhtu.firesocialmedia.feature.auth.presentation.signin
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -58,41 +58,40 @@ import com.minhtu.firesocialmedia.platform.toHex
 import com.minhtu.firesocialmedia.presentation.loading.Loading
 import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
 import com.minhtu.firesocialmedia.presentation.navigation.RouterViewModel
+import com.minhtu.firesocialmedia.feature.auth.presentation.signin.SignInViewModel
+import org.koin.compose.viewmodel.koinViewModel
 import com.minhtu.firesocialmedia.utils.UiUtils.Companion.IconAndTitle
 import com.minhtu.firesocialmedia.utils.UiUtils.Companion.PasswordVisibilityIcon
 import com.minhtu.firesocialmedia.utils.UiUtils.Companion.SubTitle
 import com.minhtu.firesocialmedia.utils.UiUtils.Companion.TextFieldWithLeadingIcon
 
-class SignIn{
-    companion object{
+class SignIn {
+    companion object {
         @Composable
         fun SignInScreen(
-            signInViewModel: SignInViewModel,
+            signInViewModel: SignInViewModel = koinViewModel(),
             loadingViewModel: LoadingViewModel,
             routerViewModel: RouterViewModel,
             modifier: Modifier,
-            onNavigateToSignUpScreen:() -> Unit,
-            onNavigateToHomeScreen:()-> Unit,
-            onNavigateToInformationScreen:() -> Unit,
-            onNavigateToForgotPasswordScreen:() -> Unit,
-            onNavigateToVerifyOTP : () -> Unit) {
+            onNavigateToSignUpScreen: () -> Unit,
+            onNavigateToHomeScreen: () -> Unit,
+            onNavigateToInformationScreen: () -> Unit,
+            onNavigateToForgotPasswordScreen: () -> Unit,
+            onNavigateToVerifyOTP: () -> Unit
+        ) {
             val focusManager = LocalFocusManager.current
             val isLoading = loadingViewModel.isLoading.collectAsState()
-
             val localCredentials = signInViewModel.localCredentials
+
             LaunchedEffect(Unit) {
-                //Check login information in storage
                 signInViewModel.checkLocalAccount()
             }
             LaunchedEffect(localCredentials.value) {
-                if(localCredentials.value != null) {
-                    signInViewModel.signIn(
-                        showLoading = {
-                            loadingViewModel.showLoading()
-                        }
-                    )
+                if (localCredentials.value != null) {
+                    signInViewModel.signIn(showLoading = { loadingViewModel.showLoading() })
                 }
             }
+
             val signInStatus = signInViewModel.signInState.collectAsState()
             LaunchedEffect(signInStatus.value) {
                 loadingViewModel.hideLoading()
@@ -100,7 +99,6 @@ class SignIn{
                     if (signInStatus.value.error == SignInError.AccountNotExist) {
                         onNavigateToInformationScreen()
                     } else {
-                        // Fetch user info to check 2FA
                         signInViewModel.check2FAStatus()
                     }
                 } else {
@@ -116,9 +114,7 @@ class SignIn{
                         SignInError.UserNotFound -> showToast(UiConstants.SignIn.Error.USER_NOT_FOUND)
                         SignInError.WrongPassword -> showToast(UiConstants.SignIn.Error.WRONG_PASSWORD)
                         is SignInError.Unknown -> showToast(UiConstants.SignIn.Error.UNKNOWN)
-                        else -> {
-                            //Do nothing
-                        }
+                        else -> { /* Do nothing */ }
                     }
                 }
                 signInViewModel.resetSignInStatus()
@@ -126,113 +122,81 @@ class SignIn{
 
             val check2FAStatus by signInViewModel.check2FAStatus.collectAsState()
             LaunchedEffect(check2FAStatus) {
-                if(check2FAStatus != null) {
+                if (check2FAStatus != null) {
                     signInViewModel.currentUser.value?.let { routerViewModel.currentUser.value = it }
-                    if(check2FAStatus!!) {
-                        //2FA enabled
+                    if (check2FAStatus!!) {
                         onNavigateToVerifyOTP()
                     } else {
-                        //2FA disabled
                         onNavigateToHomeScreen()
                     }
                     signInViewModel.resetCheck2FAStatus()
                 }
             }
 
-            //Back button
             QuitAlertDialog()
 
             Box(modifier = Modifier.fillMaxSize()) {
-                Column(modifier = modifier
-                    .background(MaterialTheme.colorScheme.background),
-                    verticalArrangement = Arrangement.Center) {
-                    //Title
+                Column(
+                    modifier = modifier.background(MaterialTheme.colorScheme.background),
+                    verticalArrangement = Arrangement.Center
+                ) {
                     IconAndTitle(
                         icon = "fire_chat_icon",
                         title = UiConstants.SignIn.SCREEN_TITLE,
                         modifier = Modifier.fillMaxWidth()
                     )
-                    //SubTitle
                     SubTitle(
                         UiConstants.SignIn.SCREEN_SUBTITLE,
                         modifier = Modifier.fillMaxWidth()
                     )
                     Spacer(modifier = Modifier.padding(bottom = 20.dp))
-                    //Username
                     TextFieldWithLeadingIcon(
                         value = signInViewModel.email.collectAsState().value,
-                        onValueChange = { text ->
-                            signInViewModel.updateEmail(text)
-                        },
+                        onValueChange = { signInViewModel.updateEmail(it) },
                         label = UiConstants.SignIn.USERNAME_LABEL,
                         testTag = TestTag.TAG_USERNAME
                     )
-
-                    //Password
-                    PasswordTextField(
-                        UiConstants.SignIn.PASSWORD_LABEL,
-                        signInViewModel,
-                        TestTag.TAG_PASSWORD
-                    )
+                    PasswordTextField(UiConstants.SignIn.PASSWORD_LABEL, signInViewModel, TestTag.TAG_PASSWORD)
 
                     Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 20.dp),
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        //Remember password
                         MyCheckbox(signInViewModel)
                         Spacer(modifier = Modifier.weight(1f))
-                        //Forgot password
                         Text(
                             text = UiConstants.SignIn.FORGOT_PASSWORD_TEXT,
                             color = MaterialTheme.colorScheme.primary,
                             style = MaterialTheme.typography.bodyMedium,
                             textAlign = TextAlign.Start,
                             modifier = Modifier
-                                .clickable {
-                                    onNavigateToForgotPasswordScreen()
-                                }
+                                .clickable { onNavigateToForgotPasswordScreen() }
                                 .testTag(TestTag.TAG_FORGOTPASSWORD)
-                                .semantics {
-                                    contentDescription = TestTag.TAG_FORGOTPASSWORD
-                                }
+                                .semantics { contentDescription = TestTag.TAG_FORGOTPASSWORD }
                         )
                     }
 
-                    //SignIn button
                     Button(
                         onClick = {
                             focusManager.clearFocus(force = true)
-                            signInViewModel.signIn(
-                                showLoading = { loadingViewModel.showLoading() }
-                            )
+                            signInViewModel.signIn(showLoading = { loadingViewModel.showLoading() })
                         },
                         shape = RoundedCornerShape(10.dp),
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 20.dp)
                             .testTag(TestTag.TAG_BUTTON_SIGNIN)
-                            .semantics {
-                                contentDescription = TestTag.TAG_BUTTON_SIGNIN
-                            }) {
+                            .semantics { contentDescription = TestTag.TAG_BUTTON_SIGNIN }
+                    ) {
                         Text(text = UiConstants.SignIn.SIGN_IN_BUTTON_TEXT)
                     }
 
                     SeparateTextWithDivider()
 
-                    //Google button
-                    LoginWithGoogleButton(
-                        signInWithGoogle = {
-                            signInViewModel.signInWithGoogle()
-                        }
-                    )
+                    LoginWithGoogleButton(signInWithGoogle = { signInViewModel.signInWithGoogle() })
 
-                    TextWithSignUp(
-                        onNavigateToSignUpScreen
-                    )
+                    TextWithSignUp(onNavigateToSignUpScreen)
                 }
                 if (isLoading.value) {
                     Loading.LoadingScreen()
@@ -241,13 +205,9 @@ class SignIn{
         }
 
         @Composable
-        fun LoginWithGoogleButton(
-            signInWithGoogle : () -> Unit
-        ) {
+        fun LoginWithGoogleButton(signInWithGoogle: () -> Unit) {
             OutlinedButton(
-                onClick = {
-                    signInWithGoogle()
-                },
+                onClick = { signInWithGoogle() },
                 shape = RoundedCornerShape(10.dp),
                 colors = ButtonDefaults.outlinedButtonColors(
                     containerColor = MaterialTheme.colorScheme.surface,
@@ -257,30 +217,22 @@ class SignIn{
                     .fillMaxWidth()
                     .padding(20.dp)
                     .testTag(TestTag.TAG_BUTTON_SIGNINGOOGLE)
-                    .semantics {
-                        contentDescription = TestTag.TAG_BUTTON_SIGNINGOOGLE
-                    }
+                    .semantics { contentDescription = TestTag.TAG_BUTTON_SIGNINGOOGLE }
             ) {
                 CrossPlatformIcon(
                     "google",
                     backgroundColor = MaterialTheme.colorScheme.surface.toHex(),
                     "Google",
-                    Modifier
-                        .size(25.dp)
-                        .padding(end = 5.dp)
+                    Modifier.size(25.dp).padding(end = 5.dp)
                 )
                 Text(text = UiConstants.SignIn.SIGN_IN_WITH_GOOGLE, color = MaterialTheme.colorScheme.onSurface)
             }
         }
 
         @Composable
-        fun TextWithSignUp(
-            onNavigateToSignUpScreen: () -> Unit
-        ) {
+        fun TextWithSignUp(onNavigateToSignUpScreen: () -> Unit) {
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(20.dp),
+                modifier = Modifier.fillMaxWidth().padding(20.dp),
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -289,76 +241,50 @@ class SignIn{
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     style = MaterialTheme.typography.bodyMedium
                 )
-
                 Spacer(Modifier.width(10.dp))
-
                 Text(
                     text = UiConstants.SignIn.SIGN_UP_TEXT,
                     color = MaterialTheme.colorScheme.primary,
                     style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier
-                        .clickable {
-                        onNavigateToSignUpScreen()
-                    }
+                        .clickable { onNavigateToSignUpScreen() }
                         .testTag(TestTag.TAG_BUTTON_SIGNUP)
-                        .semantics {
-                            contentDescription = TestTag.TAG_BUTTON_SIGNUP
-                        }
+                        .semantics { contentDescription = TestTag.TAG_BUTTON_SIGNUP }
                 )
             }
         }
-
 
         @Composable
         fun SeparateTextWithDivider() {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(20.dp)
+                modifier = Modifier.fillMaxWidth().padding(20.dp)
             ) {
-                HorizontalDivider(
-                    modifier = Modifier.weight(1f),
-                    thickness = 1.dp,
-                    color = MaterialTheme.colorScheme.outline
-                )
-
+                HorizontalDivider(modifier = Modifier.weight(1f), thickness = 1.dp, color = MaterialTheme.colorScheme.outline)
                 Text(
                     text = UiConstants.SignIn.SEPARATE_TEXT,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.padding(horizontal = 12.dp)
                 )
-
-                HorizontalDivider(
-                    modifier = Modifier.weight(1f),
-                    thickness = 1.dp,
-                    color = MaterialTheme.colorScheme.outline
-                )
+                HorizontalDivider(modifier = Modifier.weight(1f), thickness = 1.dp, color = MaterialTheme.colorScheme.outline)
             }
         }
 
         @Composable
         fun QuitAlertDialog() {
             var showDialog by remember { mutableStateOf(false) }
-            CommonBackHandler {
-                showDialog = true
-            }
-
+            CommonBackHandler { showDialog = true }
             if (showDialog) {
                 AlertDialog(
                     onDismissRequest = { showDialog = false },
                     title = { Text(UiConstants.SignIn.ALERT_DIALOG_TITLE) },
                     text = { Text(UiConstants.SignIn.ALERT_DIALOG_MESSAGE) },
                     confirmButton = {
-                        Button(onClick = { exitApp() }) {
-                            Text(UiConstants.SignIn.POSITIVE_BUTTON_TEXT)
-                        }
+                        Button(onClick = { exitApp() }) { Text(UiConstants.SignIn.POSITIVE_BUTTON_TEXT) }
                     },
                     dismissButton = {
-                        Button(onClick = { showDialog = false }) {
-                            Text(UiConstants.SignIn.NEGATIVE_BUTTON_TEXT)
-                        }
+                        Button(onClick = { showDialog = false }) { Text(UiConstants.SignIn.NEGATIVE_BUTTON_TEXT) }
                     }
                 )
             }
@@ -366,17 +292,13 @@ class SignIn{
 
         @Composable
         fun MyCheckbox(signInViewModel: SignInViewModel) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
                 Checkbox(
                     checked = signInViewModel.rememberPassword.collectAsState().value,
                     onCheckedChange = { signInViewModel.updateRememberPassword(it) },
                     modifier = Modifier
                         .testTag(TestTag.TAG_REMEMBERPASSWORD)
-                        .semantics {
-                            contentDescription = TestTag.TAG_REMEMBERPASSWORD
-                        }
+                        .semantics { contentDescription = TestTag.TAG_REMEMBERPASSWORD }
                 )
                 Text(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -388,54 +310,42 @@ class SignIn{
         }
 
         @Composable
-        fun PasswordTextField(label : String, signInViewModel: SignInViewModel, testTag: String) {
-            var passwordVisibility by rememberSaveable {
-                mutableStateOf(false)
-            }
+        fun PasswordTextField(label: String, signInViewModel: SignInViewModel, testTag: String) {
+            var passwordVisibility by rememberSaveable { mutableStateOf(false) }
             OutlinedTextField(
                 value = signInViewModel.password.collectAsState().value,
-                onValueChange = { password ->
-                    signInViewModel.updatePassword(password)
-                },
+                onValueChange = { signInViewModel.updatePassword(it) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(20.dp)
                     .testTag(testTag)
-                    .semantics {
-                        contentDescription = testTag
-                    },
-                shape = androidx.compose.foundation.shape.RoundedCornerShape(10.dp),
+                    .semantics { contentDescription = testTag },
+                shape = RoundedCornerShape(10.dp),
                 label = { Text(text = label) },
                 singleLine = true,
                 textStyle = TextStyle(MaterialTheme.colorScheme.onSurface),
                 visualTransformation = if (passwordVisibility) VisualTransformation.None else PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                leadingIcon = {
-                    Icon(
-                        Icons.Default.Lock,
-                        UiConstants.SignIn.PASSWORD_LABEL
-                    )
-                },
+                leadingIcon = { Icon(Icons.Default.Lock, UiConstants.SignIn.PASSWORD_LABEL) },
                 trailingIcon = {
                     IconButton(
                         onClick = { passwordVisibility = !passwordVisibility },
                         modifier = Modifier
                             .testTag(TestTag.TAG_SHOW_PASSWORD)
-                            .semantics{
-                                contentDescription = TestTag.TAG_SHOW_PASSWORD
-                            }
+                            .semantics { contentDescription = TestTag.TAG_SHOW_PASSWORD }
                     ) {
                         PasswordVisibilityIcon(
                             passwordVisibility,
                             MaterialTheme.colorScheme.onSurfaceVariant,
-                            MaterialTheme.colorScheme.background.toHex())
+                            MaterialTheme.colorScheme.background.toHex()
+                        )
                     }
                 }
             )
         }
 
-        fun getScreenName(): String{
-            return UiConstants.SignIn.SCREEN_NAME
-        }
+        fun getScreenName(): String = UiConstants.SignIn.SCREEN_NAME
     }
 }
+
+

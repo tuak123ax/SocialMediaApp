@@ -3,6 +3,7 @@ package com.minhtu.firesocialmedia.presentation.navigation
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.minhtu.firesocialmedia.core.constants.UiConstants
 import com.minhtu.firesocialmedia.core.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.core.domain.usecases.common.GetCurrentUserUidUseCase
 import com.minhtu.firesocialmedia.core.domain.usecases.common.GetUserUseCase
@@ -10,7 +11,6 @@ import com.minhtu.firesocialmedia.core.domain.usecases.settings.Get2FAVerifiedSt
 import com.minhtu.firesocialmedia.core.domain.usecases.signin.CheckLocalAccountUseCase
 import com.minhtu.firesocialmedia.presentation.home.Home
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security.twoFA.VerifyOTP
-import com.minhtu.firesocialmedia.presentation.signin.SignIn
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -35,7 +35,7 @@ class RouterViewModel(
     private suspend fun resolveStartDestination(): String {
         // 1. Check local account
         val account = checkLocalAccountUseCase()
-            ?: return SignIn.getScreenName()
+            ?: return UiConstants.SignIn.SCREEN_NAME
 
         // 2. If already verified 2FA → go Home immediately
         if (get2FAVerifiedStatusUseCase()) {
@@ -44,10 +44,10 @@ class RouterViewModel(
 
         // 3. Get user
         val userId = getCurrentUserUidUseCase()
-            ?: return SignIn.getScreenName()
+            ?: return UiConstants.SignIn.SCREEN_NAME
 
         val user = getUserUseCase(userId, true)
-            ?: return SignIn.getScreenName()
+            ?: return UiConstants.SignIn.SCREEN_NAME
 
         currentUser.value = user
 

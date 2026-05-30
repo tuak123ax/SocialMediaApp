@@ -52,17 +52,16 @@ import com.minhtu.firesocialmedia.platform.getImageBytesFromDrawable
 import com.minhtu.firesocialmedia.platform.showToast
 import com.minhtu.firesocialmedia.presentation.loading.Loading
 import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
-import com.minhtu.firesocialmedia.presentation.signup.SignUpViewModel
 import com.minhtu.firesocialmedia.utils.UiUtils
 import com.minhtu.sharedmodule.ui.theme.avatarGrayBackground
-import org.koin.compose.viewmodel.koinViewModel
 
 class Information {
     companion object{
         @Composable
         fun InformationScreen(platform: PlatformContext,
                               imagePicker: ImagePicker,
-                              signUpViewModel: SignUpViewModel = koinViewModel(),
+                              signUpEmail: String = "",
+                              signUpPassword: String = "",
                               informationViewModel: InformationViewModel,
                               loadingViewModel: LoadingViewModel,
                               onNavigateToHomeScreen: () -> Unit){
@@ -71,16 +70,16 @@ class Information {
 
             val addInformationStatus = informationViewModel.addInformationStatus.collectAsState()
             LaunchedEffect(Unit) {
-                if (signUpViewModel.email.isNotEmpty()) {
-                    informationViewModel.updateEmail(signUpViewModel.email)
-                    informationViewModel.updatePassword(signUpViewModel.password)
+                if (signUpEmail.isNotEmpty()) {
+                    informationViewModel.updateEmail(signUpEmail)
+                    informationViewModel.updatePassword(signUpPassword)
                 } else {
                     informationViewModel.updateEmail(platform.auth.getCurrentUserEmail().toString())
                 }
             }
             LaunchedEffect(addInformationStatus.value) {
-                loadingViewModel.hideLoading()
                 if (addInformationStatus.value != null) {
+                    loadingViewModel.hideLoading()
                     if (addInformationStatus.value!!) {
                         showToast("Sign up successfully!!!")
                         // Signup successfully, track this activity
@@ -89,6 +88,7 @@ class Information {
                     } else {
                         showToast("Error happened!!!")
                     }
+                    informationViewModel.resetAddInformationStatus()
                 }
             }
             CommonBackHandler {

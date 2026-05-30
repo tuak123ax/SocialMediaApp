@@ -10,6 +10,7 @@ import androidx.annotation.RequiresApi
 import com.minhtu.firesocialmedia.core.constants.Constants
 import com.minhtu.firesocialmedia.di.appModule
 import com.minhtu.firesocialmedia.domain.serviceimpl.database.supabase.SupabaseStorageHelper
+import com.minhtu.firesocialmedia.feature.auth.di.authModule
 import com.minhtu.firesocialmedia.platform.initPlatformContext
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.GlobalContext.startKoin
@@ -26,12 +27,16 @@ class AppApplication : Application() {
 
         startKoin {
             androidContext(this@AppApplication)
-            modules(appModule())
+            modules(
+                appModule(),
+                authModule()
+            )
         }
         createChannelNotification()
         setupStrictMode()
         setupLogging()
     }
+
     private fun createChannelNotification() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(

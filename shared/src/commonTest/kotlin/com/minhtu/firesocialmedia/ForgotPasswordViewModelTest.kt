@@ -5,7 +5,7 @@ import com.minhtu.firesocialmedia.core.domain.entity.forgotpassword.EmailExistRe
 import com.minhtu.firesocialmedia.core.domain.repository.AuthenticationRepository
 import com.minhtu.firesocialmedia.core.domain.usecases.forgotpassword.CheckIfEmailExistsUseCase
 import com.minhtu.firesocialmedia.core.domain.usecases.forgotpassword.SendEmailResetPasswordUseCase
-import com.minhtu.firesocialmedia.presentation.forgotpassword.ForgotPasswordViewModel
+import com.minhtu.firesocialmedia.feature.auth.presentation.forgotpassword.ForgotPasswordViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle

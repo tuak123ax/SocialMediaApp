@@ -75,6 +75,7 @@ android {
 dependencies {
     implementation(projects.shared)
     implementation(projects.core)
+    implementation(projects.feature.auth)
     implementation(platform("androidx.compose:compose-bom:2025.02.00"))
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-tooling-preview")

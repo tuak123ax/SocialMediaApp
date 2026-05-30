@@ -15,7 +15,7 @@ import com.minhtu.firesocialmedia.core.domain.core.NetworkMonitor
 import com.minhtu.firesocialmedia.core.domain.entity.authentication.TwoFAResponse
 import com.minhtu.firesocialmedia.core.domain.entity.base.BaseNewsInstance
 import com.minhtu.firesocialmedia.core.domain.error.signin.SignInError
-import com.minhtu.firesocialmedia.presentation.signin.SignInViewModel
+import com.minhtu.firesocialmedia.feature.auth.presentation.signin.SignInViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow

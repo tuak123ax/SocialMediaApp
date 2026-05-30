@@ -86,7 +86,7 @@ import com.minhtu.firesocialmedia.domain.serviceimpl.crypto.AndroidCryptoHelper
 import com.minhtu.firesocialmedia.domain.serviceimpl.imagepicker.AndroidImagePicker
 import com.minhtu.firesocialmedia.domain.serviceimpl.notification.Client
 import com.minhtu.firesocialmedia.domain.serviceimpl.notification.NotificationApiService
-import com.minhtu.firesocialmedia.presentation.signin.SignInViewModel
+import com.minhtu.firesocialmedia.core.domain.signin.GoogleSignInHandler
 import com.minhtu.firesocialmedia.presentation.toast.ToastController
 import com.minhtu.firesocialmedia.utils.NavigationHandler
 import com.russhwolf.settings.Settings
@@ -913,7 +913,7 @@ actual fun rememberPlatformImagePicker(
 @Composable
 actual fun setupSignInLauncher(
     context: Any?,
-    signInViewModel: SignInViewModel,
+    signInViewModel: GoogleSignInHandler,
     platformContext: PlatformContext
 ) {
     val activity = when (context) {

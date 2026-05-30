@@ -1,17 +1,17 @@
-package com.minhtu.firesocialmedia.data.repository
+package com.minhtu.firesocialmedia.feature.auth.data.repository
 
-import com.minhtu.firesocialmedia.data.local.service.crypto.CryptoService
-import com.minhtu.firesocialmedia.data.remote.mapper.crypto.toDomain
-import com.minhtu.firesocialmedia.data.remote.mapper.signin.toDomain
-import com.minhtu.firesocialmedia.data.remote.mapper.user.toDto
-import com.minhtu.firesocialmedia.data.remote.service.auth.AuthService
-import com.minhtu.firesocialmedia.data.remote.service.database.DatabaseService
 import com.minhtu.firesocialmedia.core.domain.entity.crypto.Credentials
 import com.minhtu.firesocialmedia.core.domain.entity.forgotpassword.EmailExistResult
 import com.minhtu.firesocialmedia.core.domain.entity.signin.SignInState
 import com.minhtu.firesocialmedia.core.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.core.domain.error.signin.SignInError
 import com.minhtu.firesocialmedia.core.domain.repository.AuthenticationRepository
+import com.minhtu.firesocialmedia.data.local.service.crypto.CryptoService
+import com.minhtu.firesocialmedia.data.remote.mapper.crypto.toDomain
+import com.minhtu.firesocialmedia.data.remote.mapper.signin.toDomain
+import com.minhtu.firesocialmedia.data.remote.mapper.user.toDto
+import com.minhtu.firesocialmedia.data.remote.service.auth.AuthService
+import com.minhtu.firesocialmedia.data.remote.service.database.DatabaseService
 
 class AuthenticationRepositoryImpl(
     private val authService: AuthService,

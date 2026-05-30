@@ -5,7 +5,6 @@ import com.minhtu.firesocialmedia.core.application.interactor.CommentInteractorI
 import com.minhtu.firesocialmedia.core.application.interactor.NewsInteractorImpl
 import com.minhtu.firesocialmedia.core.application.interactor.NotificationInteractorImpl
 import com.minhtu.firesocialmedia.core.application.interactor.UserInteractorImpl
-import com.minhtu.firesocialmedia.data.repository.AuthenticationRepositoryImpl
 import com.minhtu.firesocialmedia.data.repository.CallRepositoryImpl
 import com.minhtu.firesocialmedia.data.repository.CommentRepositoryImpl
 import com.minhtu.firesocialmedia.data.repository.CommonDbRepositoryImpl
@@ -22,7 +21,6 @@ import com.minhtu.firesocialmedia.core.domain.interactor.home.CallInteractor
 import com.minhtu.firesocialmedia.core.domain.interactor.home.NewsInteractor
 import com.minhtu.firesocialmedia.core.domain.interactor.home.NotificationInteractor
 import com.minhtu.firesocialmedia.core.domain.interactor.home.UserInteractor
-import com.minhtu.firesocialmedia.core.domain.repository.AuthenticationRepository
 import com.minhtu.firesocialmedia.core.domain.repository.CallRepository
 import com.minhtu.firesocialmedia.core.domain.repository.CommentRepository
 import com.minhtu.firesocialmedia.core.domain.repository.CommonDbRepository
@@ -77,8 +75,6 @@ import com.minhtu.firesocialmedia.core.domain.usecases.comment.UpdateReplyCountF
 import com.minhtu.firesocialmedia.core.domain.usecases.common.GetCurrentUserUidUseCase
 import com.minhtu.firesocialmedia.core.domain.usecases.common.GetFCMTokenUseCase
 import com.minhtu.firesocialmedia.core.domain.usecases.common.GetUserUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.forgotpassword.CheckIfEmailExistsUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.forgotpassword.SendEmailResetPasswordUseCase
 import com.minhtu.firesocialmedia.core.domain.usecases.friend.SaveFriendRequestUseCase
 import com.minhtu.firesocialmedia.core.domain.usecases.friend.SaveFriendUseCase
 import com.minhtu.firesocialmedia.core.domain.usecases.group.CopyLinkUseCase
@@ -155,19 +151,11 @@ import com.minhtu.firesocialmedia.core.domain.usecases.settings.Verify2FAUseCase
 import com.minhtu.firesocialmedia.core.domain.usecases.settings.VerifyBackupCodeUseCase
 import com.minhtu.firesocialmedia.core.domain.usecases.settings.VerifyCurrentPasswordUseCase
 import com.minhtu.firesocialmedia.core.domain.usecases.showimage.DownloadImageUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.signin.CheckLocalAccountUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.signin.CheckUserExistsUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.signin.HandleSignInGoogleResultUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.signin.RememberPasswordUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.signin.SaveLoginActivityInfoUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.signin.SignInUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.signup.SignUpUseCase
 import com.minhtu.firesocialmedia.core.domain.usecases.sync.LoadNewsPostedWhenOfflineUseCase
 import com.minhtu.firesocialmedia.core.domain.usecases.sync.SyncDataUseCase
 import com.minhtu.firesocialmedia.presentation.calling.audiocall.CallingViewModel
 import com.minhtu.firesocialmedia.presentation.calling.videocall.VideoCallViewModel
 import com.minhtu.firesocialmedia.presentation.comment.CommentViewModel
-import com.minhtu.firesocialmedia.presentation.forgotpassword.ForgotPasswordViewModel
 import com.minhtu.firesocialmedia.presentation.home.HomeViewModel
 import com.minhtu.firesocialmedia.presentation.information.InformationViewModel
 import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
@@ -194,8 +182,6 @@ import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security
 import com.minhtu.firesocialmedia.presentation.postinformation.PostInformationViewModel
 import com.minhtu.firesocialmedia.presentation.search.SearchViewModel
 import com.minhtu.firesocialmedia.presentation.showimage.ShowImageViewModel
-import com.minhtu.firesocialmedia.presentation.signin.SignInViewModel
-import com.minhtu.firesocialmedia.presentation.signup.SignUpViewModel
 import com.minhtu.firesocialmedia.presentation.uploadnewsfeed.UploadNewfeedViewModel
 import com.minhtu.firesocialmedia.presentation.userinformation.UserInformationViewModel
 import org.koin.core.module.dsl.viewModel
@@ -206,14 +192,6 @@ fun appModule() = module {
     single<PlatformContext> { PlatformContextHolder.instance }
 
     // ── Repositories (singletons) ────────────────────//
-    single<AuthenticationRepository> {
-        AuthenticationRepositoryImpl(
-            get<PlatformContext>().auth,
-            get<PlatformContext>().database,
-            get<PlatformContext>().crypto
-        )
-    }
-
     single<CallRepository> {
         CallRepositoryImpl(
             { get<PlatformContext>().audioCall },
@@ -352,10 +330,6 @@ fun appModule() = module {
     factory { GetFCMTokenUseCase(get()) }
     factory { GetUserUseCase(get()) }
 
-    // Forgot password Use Cases
-    factory { CheckIfEmailExistsUseCase(get()) }
-    factory { SendEmailResetPasswordUseCase(get()) }
-
     // Friend Use Cases
     factory { SaveFriendRequestUseCase(get()) }
     factory { SaveFriendUseCase(get()) }
@@ -450,17 +424,6 @@ fun appModule() = module {
     // Show image Use Cases
     factory { DownloadImageUseCase(get()) }
 
-    // Sign in Use Cases
-    factory { CheckLocalAccountUseCase(get()) }
-    factory { CheckUserExistsUseCase(get()) }
-    factory { HandleSignInGoogleResultUseCase(get()) }
-    factory { RememberPasswordUseCase(get()) }
-    factory { SaveLoginActivityInfoUseCase(get()) }
-    factory { SignInUseCase(get()) }
-
-    // Sign up Use Cases
-    factory { SignUpUseCase(get()) }
-
     // Sync Use Cases
     factory { LoadNewsPostedWhenOfflineUseCase(get()) }
     factory { SyncDataUseCase(get()) }
@@ -524,7 +487,6 @@ fun appModule() = module {
     viewModel { CallingViewModel(get(), get(), get()) }
     viewModel { VideoCallViewModel(get(), get(), get(), get(), get(), get()) }
     viewModel { CommentViewModel(get(), get(), get(), get(), get(), get(), get(), get()) }
-    viewModel { ForgotPasswordViewModel(get(), get()) }
     viewModel { HomeViewModel(get(), get(), get(), get()) }
     viewModel { InformationViewModel(get(), get(), get(), get()) }
     viewModel { LoadingViewModel() }
@@ -551,8 +513,6 @@ fun appModule() = module {
     viewModel { PostInformationViewModel(get()) }
     viewModel { SearchViewModel() }
     viewModel { ShowImageViewModel(get()) }
-    viewModel { SignInViewModel(get(), get(), get(), get(), get(), get(), get(), get()) }
-    viewModel { SignUpViewModel(get()) }
     viewModel {
         UploadNewfeedViewModel(
             get(),

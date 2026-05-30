@@ -21,3 +21,5 @@ include(":Fire_Social_Media")
 include(":shared")
 
 include(":core")
+include(":feature:auth")
+project(":feature:auth").projectDir = file("feature/auth")

@@ -1,4 +1,4 @@
-package com.minhtu.firesocialmedia.presentation.signup
+package com.minhtu.firesocialmedia.feature.auth.presentation.signup
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -48,70 +48,68 @@ import com.minhtu.firesocialmedia.utils.UiUtils.Companion.IconAndTitle
 import com.minhtu.firesocialmedia.utils.UiUtils.Companion.PasswordVisibilityIcon
 import com.minhtu.firesocialmedia.utils.UiUtils.Companion.SubTitle
 import com.minhtu.firesocialmedia.utils.UiUtils.Companion.TextFieldWithLeadingIcon
+import com.minhtu.firesocialmedia.presentation.information.InformationViewModel
 import org.koin.compose.viewmodel.koinViewModel
 
 class SignUp {
-    companion object{
+    companion object {
         @Composable
         fun SignUpScreen(
             signUpViewModel: SignUpViewModel = koinViewModel(),
+            informationViewModel: InformationViewModel = koinViewModel(),
             loadingViewModel: LoadingViewModel,
             modifier: Modifier,
-            onNavigateToSignInScreen : () -> Unit,
-            onNavigateToInformationScreen: ()-> Unit
-        ){
+            onNavigateToSignInScreen: () -> Unit,
+            onNavigateToInformationScreen: () -> Unit
+        ) {
             val focusManager = LocalFocusManager.current
             val isLoading by loadingViewModel.isLoading.collectAsState()
-            //Use launched effect to observe state one time although recomposition happened
             val signUpStatus = signUpViewModel.signUpStatus.collectAsState()
+
             LaunchedEffect(signUpStatus.value) {
                 loadingViewModel.hideLoading()
                 if (signUpStatus.value.signUpStatus) {
+                    informationViewModel.setPendingSignUpCredentials(
+                        signUpViewModel.email,
+                        signUpViewModel.password
+                    )
                     onNavigateToInformationScreen()
                 } else {
-                    if(signUpStatus.value.message.isNotEmpty()) {
+                    if (signUpStatus.value.message.isNotEmpty()) {
                         showToast(signUpStatus.value.message)
                     }
                 }
                 signUpViewModel.resetSignUpStatus()
             }
+
             Box(modifier = Modifier.fillMaxSize()) {
                 Column(modifier = modifier, verticalArrangement = Arrangement.Center) {
-                    //Title
                     IconAndTitle(
                         icon = "fire_chat_icon",
                         title = UiConstants.SignUp.SCREEN_TITLE,
                         modifier = Modifier.fillMaxWidth()
                     )
-                    //SubTitle
                     SubTitle(
                         UiConstants.SignUp.SCREEN_SUBTITLE,
                         modifier = Modifier.fillMaxWidth()
                     )
                     Spacer(modifier = Modifier.padding(bottom = 20.dp))
-                    //Username
                     TextFieldWithLeadingIcon(
                         value = signUpViewModel.email,
-                        onValueChange = { email ->
-                            signUpViewModel.updateEmail(email)
-                        },
+                        onValueChange = { email -> signUpViewModel.updateEmail(email) },
                         label = UiConstants.SignUp.USERNAME_LABEL,
                         testTag = TestTag.TAG_USERNAME
                     )
-                    //Password
-                    PasswordTextField(
+                    PasswordField(
                         UiConstants.SignUp.PASSWORD_LABEL,
                         signUpViewModel,
                         TestTag.TAG_PASSWORD
                     )
-                    //Confirm password
-                    PasswordTextField(
+                    PasswordField(
                         UiConstants.SignUp.CONFIRM_PASSWORD_LABEL,
                         signUpViewModel,
                         TestTag.TAG_CONFIRMPASSWORD
                     )
-
-                    //SignUp button
                     Button(
                         onClick = {
                             focusManager.clearFocus(force = true)
@@ -123,18 +121,14 @@ class SignUp {
                             .fillMaxWidth()
                             .padding(20.dp)
                             .testTag(TestTag.TAG_BUTTON_SIGNUP)
-                            .semantics {
-                                contentDescription = TestTag.TAG_BUTTON_SIGNUP
-                            }) {
+                            .semantics { contentDescription = TestTag.TAG_BUTTON_SIGNUP }
+                    ) {
                         Text(
                             text = UiConstants.SignUp.SIGNUP_BUTTON_TEXT,
                             color = MaterialTheme.colorScheme.onPrimary
                         )
                     }
-
-                    TextWithBackAction(
-                        onNavigateToSignInScreen
-                    )
+                    BackToSignIn(onNavigateToSignInScreen)
                 }
                 if (isLoading) {
                     Loading.LoadingScreen()
@@ -143,16 +137,12 @@ class SignUp {
         }
 
         @Composable
-        fun PasswordTextField(label : String, signUpViewModel: SignUpViewModel, testTag: String) {
-            var passwordVisibility by rememberSaveable {
-                mutableStateOf(false)
-            }
+        fun PasswordField(label: String, signUpViewModel: SignUpViewModel, testTag: String) {
+            var passwordVisibility by rememberSaveable { mutableStateOf(false) }
             OutlinedTextField(
                 value = if (label == UiConstants.SignUp.PASSWORD_LABEL) signUpViewModel.password else signUpViewModel.confirmPassword,
                 onValueChange = { password ->
-                    if (label == UiConstants.SignUp.PASSWORD_LABEL) signUpViewModel.updatePassword(
-                        password
-                    )
+                    if (label == UiConstants.SignUp.PASSWORD_LABEL) signUpViewModel.updatePassword(password)
                     else signUpViewModel.updateConfirmPassword(password)
                 },
                 textStyle = TextStyle(MaterialTheme.colorScheme.onSurface),
@@ -160,17 +150,10 @@ class SignUp {
                     .fillMaxWidth()
                     .padding(20.dp)
                     .testTag(testTag)
-                    .semantics {
-                        contentDescription = testTag
-                    },
+                    .semantics { contentDescription = testTag },
                 label = { Text(text = label) },
                 singleLine = true,
-                leadingIcon = {
-                    Icon(
-                        Icons.Default.Lock,
-                        UiConstants.SignUp.PASSWORD_LABEL
-                    )
-                },
+                leadingIcon = { Icon(Icons.Default.Lock, UiConstants.SignUp.PASSWORD_LABEL) },
                 shape = RoundedCornerShape(10.dp),
                 visualTransformation = if (passwordVisibility) VisualTransformation.None else PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
@@ -179,26 +162,20 @@ class SignUp {
                         onClick = { passwordVisibility = !passwordVisibility },
                         modifier = Modifier
                             .testTag(TestTag.TAG_SHOW_PASSWORD)
-                            .semantics{
-                                contentDescription = TestTag.TAG_SHOW_PASSWORD
-                            }) {
+                            .semantics { contentDescription = TestTag.TAG_SHOW_PASSWORD }
+                    ) {
                         PasswordVisibilityIcon(
                             passwordVisibility,
                             MaterialTheme.colorScheme.onSurfaceVariant,
-                            MaterialTheme.colorScheme.background.toHex())
+                            MaterialTheme.colorScheme.background.toHex()
+                        )
                     }
                 }
             )
         }
 
-        fun getScreenName(): String{
-            return UiConstants.SignUp.SCREEN_NAME
-        }
-
         @Composable
-        fun TextWithBackAction(
-            onNavigateToSignInScreen: () -> Unit
-        ) {
+        fun BackToSignIn(onNavigateToSignInScreen: () -> Unit) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -211,23 +188,21 @@ class SignUp {
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     style = MaterialTheme.typography.bodyMedium
                 )
-
                 Spacer(Modifier.width(10.dp))
-
                 Text(
                     text = UiConstants.SignUp.SIGN_UP_TEXT,
                     color = MaterialTheme.colorScheme.primary,
                     style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier
-                        .clickable {
-                        onNavigateToSignInScreen()
-                    }
+                        .clickable { onNavigateToSignInScreen() }
                         .testTag(TestTag.TAG_BUTTON_BACK)
-                        .semantics {
-                            contentDescription = TestTag.TAG_BUTTON_BACK
-                        }
+                        .semantics { contentDescription = TestTag.TAG_BUTTON_BACK }
                 )
             }
         }
+
+        fun getScreenName(): String = UiConstants.SignUp.SCREEN_NAME
     }
 }
+
+

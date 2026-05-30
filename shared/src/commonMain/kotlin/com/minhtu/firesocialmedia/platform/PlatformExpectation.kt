@@ -14,7 +14,7 @@ import com.minhtu.firesocialmedia.core.domain.entity.authentication.TwoFARequest
 import com.minhtu.firesocialmedia.core.domain.entity.authentication.TwoFAResponse
 import com.minhtu.firesocialmedia.core.domain.entity.home.deeplinks.ShareApp
 import com.minhtu.firesocialmedia.core.domain.entity.user.UserInstance
-import com.minhtu.firesocialmedia.presentation.signin.SignInViewModel
+import com.minhtu.firesocialmedia.core.domain.signin.GoogleSignInHandler
 import com.russhwolf.settings.Settings
 import com.seiko.imageloader.ImageLoader
 import kotlin.math.roundToInt
@@ -208,7 +208,7 @@ expect fun rememberPlatformImagePicker(
 @Composable
 expect fun setupSignInLauncher(
     context: Any?,
-    signInViewModel: SignInViewModel,
+    signInViewModel: GoogleSignInHandler,
     platformContext: PlatformContext
 )
 

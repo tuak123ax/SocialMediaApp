@@ -40,7 +40,7 @@ import com.minhtu.firesocialmedia.core.domain.entity.home.deeplinks.ShareApp
 import com.minhtu.firesocialmedia.core.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.domain.serviceimpl.crypto.IosCryptoHelper
 import com.minhtu.firesocialmedia.domain.serviceimpl.notification.KtorProvider
-import com.minhtu.firesocialmedia.presentation.signin.SignInViewModel
+import com.minhtu.firesocialmedia.core.domain.signin.GoogleSignInHandler
 import com.minhtu.firesocialmedia.utils.NavigationHandler
 import com.russhwolf.settings.ExperimentalSettingsImplementation
 import com.russhwolf.settings.KeychainSettings
@@ -1054,7 +1054,7 @@ actual fun rememberPlatformImagePicker(
 @Composable
 actual fun setupSignInLauncher(
     context: Any?,
-    signInViewModel: SignInViewModel,
+    signInViewModel: GoogleSignInHandler,
     platformContext: PlatformContext
 ) {
     // No-op on iOS for Google Sign-In in this project setup

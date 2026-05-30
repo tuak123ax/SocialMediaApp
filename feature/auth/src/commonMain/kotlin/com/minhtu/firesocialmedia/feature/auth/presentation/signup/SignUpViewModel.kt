@@ -1,4 +1,4 @@
-package com.minhtu.firesocialmedia.presentation.signup
+package com.minhtu.firesocialmedia.feature.auth.presentation.signup
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -26,38 +26,31 @@ class SignUpViewModel(
     }
 
     var email by mutableStateOf("")
-    fun updateEmail(input : String){
-        email = input
-    }
+    fun updateEmail(input: String) { email = input }
 
     var password by mutableStateOf("")
-    fun updatePassword(input : String){
-        password =  input
-    }
+    fun updatePassword(input: String) { password = input }
 
     var confirmPassword by mutableStateOf("")
-    fun updateConfirmPassword(input : String){
-        confirmPassword =  input
-    }
+    fun updateConfirmPassword(input: String) { confirmPassword = input }
 
-    fun signUp(){
+    fun signUp() {
         viewModelScope.launch(ioDispatcher) {
-            if(email.isEmpty() || password.isEmpty() || confirmPassword.isEmpty())
-            {
+            if (email.isEmpty() || password.isEmpty() || confirmPassword.isEmpty()) {
                 _signUpStatus.value = SignUpState(false, SignUpError.DataEmptyError.message)
-            } else{
-                if(password != confirmPassword){
+            } else {
+                if (password != confirmPassword) {
                     _signUpStatus.value = SignUpState(false, SignUpError.PasswordMismatchError.message)
-                } else{
-                    if(password.length < 6){
+                } else {
+                    if (password.length < 6) {
                         _signUpStatus.value = SignUpState(false, SignUpError.PasswordShortError.message)
-                    } else{
+                    } else {
                         val result = signUpUseCase.invoke(email, password)
-                        if(result.isSuccess) {
+                        if (result.isSuccess) {
                             _signUpStatus.value = SignUpState(true, "")
                         } else {
                             val error = result.exceptionOrNull()
-                            if(error != null && error.message != null && error.message!!.isNotEmpty()) {
+                            if (error != null && error.message != null && error.message!!.isNotEmpty()) {
                                 _signUpStatus.value = SignUpState(false, error.message!!)
                             } else {
                                 _signUpStatus.value = SignUpState(false, SignUpError.Unknown("Sign up failed. Something went wrong!").message)

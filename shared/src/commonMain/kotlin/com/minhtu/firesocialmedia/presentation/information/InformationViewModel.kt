@@ -28,6 +28,14 @@ class InformationViewModel(
     private val _addInformationStatus = MutableStateFlow<Boolean?>(null)
     val addInformationStatus = _addInformationStatus.asStateFlow()
 
+    var pendingSignUpEmail by mutableStateOf("")
+    var pendingSignUpPassword by mutableStateOf("")
+
+    fun setPendingSignUpCredentials(email: String, password: String) {
+        pendingSignUpEmail = email
+        pendingSignUpPassword = password
+    }
+
     var email by mutableStateOf("")
     fun updateEmail(input : String){
         email = input
@@ -73,6 +81,10 @@ class InformationViewModel(
                 _addInformationStatus.value = result
             }
         }
+    }
+
+    fun resetAddInformationStatus() {
+        _addInformationStatus.value = null
     }
 
     fun saveLoginActivityInfo() {

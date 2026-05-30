@@ -47,7 +47,7 @@ import com.minhtu.firesocialmedia.presentation.calling.audiocall.CallingViewMode
 import com.minhtu.firesocialmedia.presentation.calling.videocall.VideoCall
 import com.minhtu.firesocialmedia.presentation.calling.videocall.VideoCallViewModel
 import com.minhtu.firesocialmedia.presentation.comment.Comment
-import com.minhtu.firesocialmedia.presentation.forgotpassword.ForgotPassword
+
 import com.minhtu.firesocialmedia.presentation.home.Home
 import com.minhtu.firesocialmedia.presentation.home.HomeViewModel
 import com.minhtu.firesocialmedia.presentation.information.Information
@@ -83,9 +83,8 @@ import com.minhtu.firesocialmedia.presentation.postinformation.PostInformation
 import com.minhtu.firesocialmedia.presentation.postinformation.PostInformationViewModel
 import com.minhtu.firesocialmedia.presentation.search.Search
 import com.minhtu.firesocialmedia.presentation.showimage.ShowImage
-import com.minhtu.firesocialmedia.presentation.signin.SignIn
-import com.minhtu.firesocialmedia.presentation.signin.SignInViewModel
-import com.minhtu.firesocialmedia.presentation.signup.SignUp
+import com.minhtu.firesocialmedia.core.constants.UiConstants
+import com.minhtu.firesocialmedia.core.domain.signin.GoogleSignInHandler
 import com.minhtu.firesocialmedia.presentation.uploadnewsfeed.UploadNewfeedViewModel
 import com.minhtu.firesocialmedia.presentation.uploadnewsfeed.UploadNewsfeed
 import com.minhtu.firesocialmedia.presentation.userinformation.UserInformation
@@ -117,7 +116,8 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
     val routerViewModel: RouterViewModel = koinViewModel()
     val callingViewModel: CallingViewModel = koinViewModel()
     val videoCallViewModel: VideoCallViewModel = koinViewModel()
-    val signInViewModel: SignInViewModel = koinViewModel()
+    val signInViewModel: GoogleSignInHandler = koinInject()
+    val authNavGraph: AuthNavGraph = koinInject()
     val informationViewModel: InformationViewModel = koinViewModel()
     val uploadNewsfeedViewModel: UploadNewfeedViewModel = koinViewModel()
     val userInformationViewModel: UserInformationViewModel = koinViewModel()
@@ -281,42 +281,15 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                         }
                     }
                 }
-                composable(
-                    route = SignIn.getScreenName()
-                ) {
-                    SignIn.SignInScreen(
-                        signInViewModel,
-                        loadingViewModel,
-                        routerViewModel,
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(MaterialTheme.colorScheme.background),
-                        onNavigateToSignUpScreen = { navController.navigate(route = SignUp.getScreenName()) },
-                        onNavigateToHomeScreen = { navController.navigate(route = Home.getScreenName()) },
-                        onNavigateToInformationScreen = { navController.navigate(route = Information.getScreenName()) },
-                        onNavigateToForgotPasswordScreen = { navController.navigate(route = ForgotPassword.getScreenName()) },
-                        onNavigateToVerifyOTP = { navController.navigate(route = VerifyOTP.getScreenName()) }
-                    )
-                }
-                composable(
-                    route = SignUp.getScreenName()
-                ) {
-                    SignUp.SignUpScreen(
-                        loadingViewModel = loadingViewModel,
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(MaterialTheme.colorScheme.background),
-                        onNavigateToSignInScreen = {
-                            navController.navigate(SignIn.getScreenName()) {
-                                popUpTo(0) {
-                                    inclusive = true
-                                }
-                                launchSingleTop = true
-                            }
-                        },
-                        onNavigateToInformationScreen = { navController.navigate(route = Information.getScreenName()) }
-                    )
-                }
+                authNavGraph.registerRoutes(
+                    navGraphBuilder = this,
+                    navController = navController,
+                    loadingViewModel = loadingViewModel,
+                    routerViewModel = routerViewModel,
+                    onNavigateToHome = { navController.navigate(route = Home.getScreenName()) },
+                    onNavigateToInformation = { navController.navigate(route = Information.getScreenName()) },
+                    onNavigateToVerifyOTP = { navController.navigate(route = VerifyOTP.getScreenName()) }
+                )
                 composable(
                     route = Information.getScreenName()
                 ) {
@@ -328,6 +301,8 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                     Information.InformationScreen(
                         platform = platformContext,
                         imagePicker = picker,
+                        signUpEmail = informationViewModel.pendingSignUpEmail,
+                        signUpPassword = informationViewModel.pendingSignUpPassword,
                         informationViewModel = informationViewModel,
                         loadingViewModel = loadingViewModel,
                         onNavigateToHomeScreen = { navController.navigate(route = Home.getScreenName()) }
@@ -361,7 +336,7 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                         onNavigateToSignIn = {
                             //Clear email/password before navigate
                             signInViewModel.reset()
-                            navController.navigate(route = SignIn.getScreenName())
+                            navController.navigate(route = UiConstants.SignIn.SCREEN_NAME)
                         },
                         onNavigateToUserInformation = { user ->
                             selectedUser = user
@@ -592,21 +567,6 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                     }
                 }
                 composable(
-                    route = ForgotPassword.getScreenName()
-                ) {
-                    ForgotPassword.ForgotPasswordScreen(
-                        loadingViewModel = loadingViewModel,
-                        onNavigateToSignInScreen = {
-                            navController.navigate(SignIn.getScreenName()) {
-                                popUpTo(0) {
-                                    inclusive = true
-                                }
-                                launchSingleTop = true
-                            }
-                        }
-                    )
-                }
-                composable(
                     route = Screen.Friend.route,
                     enterTransition = DefaultNavAnimations.enter,
                     popEnterTransition = DefaultNavAnimations.popEnter,
@@ -675,7 +635,7 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                         onNavigateToSignIn = {
                             //Clear email/password before navigate
                             signInViewModel.reset()
-                            navController.navigate(route = SignIn.getScreenName())
+                            navController.navigate(route = UiConstants.SignIn.SCREEN_NAME)
                         },
                         onNavigateToProfileInformation = {
                             selectedUser = homeViewModel.currentUser
@@ -801,7 +761,7 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                 composable(
                     route = "news/{newsId}"
                 ) { backStackEntry ->
-                    val newsId = backStackEntry.arguments?.getString("newsId")!!
+                    val newsId = backStackEntry.savedStateHandle.get<String>("newsId") ?: return@composable
 
                     val newsState by postInformationViewModel.newFromDeepLink.collectAsState()
 
@@ -1087,7 +1047,7 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                         onVideoPicked = {}
                     )
 
-                    val groupId = backStackEntry.arguments?.getString("groupId")!!
+                    val groupId = backStackEntry.savedStateHandle.get<String>("groupId") ?: return@composable
 
                     GroupDetails.GroupDetailsScreen(
                         currentUser = homeViewModel.currentUser!!,
@@ -1288,10 +1248,10 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                         currentUser = if (homeViewModel.currentUser != null) homeViewModel.currentUser!! else UserInstance(),
                         loadingViewModel = loadingViewModel,
                         onNavigateToForgotPasswordScreen = {
-                            navController.navigate(ForgotPassword.getScreenName())
+                            navController.navigate(UiConstants.ForgotPassword.SCREEN_NAME)
                         },
                         onNavigateToSignInScreen = {
-                            navController.navigate(SignIn.getScreenName()) {
+                            navController.navigate(UiConstants.SignIn.SCREEN_NAME) {
                                 popUpTo(0) {
                                     inclusive = true
                                 }
@@ -1353,7 +1313,7 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                             navController.popBackStack()
                         },
                         onNavigateToSignInScreen = {
-                            navController.navigate(SignIn.getScreenName()) {
+                            navController.navigate(UiConstants.SignIn.SCREEN_NAME) {
                                 popUpTo(0) {
                                     inclusive = true
                                 }
@@ -1505,7 +1465,7 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                                 homeViewModel.clearAccountInStorage()
                                 homeViewModel.clearLocalData()
                                 signInViewModel.reset()
-                                navController.navigate(SignIn.getScreenName()) {
+                                navController.navigate(UiConstants.SignIn.SCREEN_NAME) {
                                     popUpTo(0) { inclusive = true }
                                 }
                             }
