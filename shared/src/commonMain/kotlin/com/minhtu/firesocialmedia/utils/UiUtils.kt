@@ -139,8 +139,8 @@ import com.minhtu.firesocialmedia.platform.getUriStringFromLocalPath
 import com.minhtu.firesocialmedia.platform.launchShareAppWithDeepLink
 import com.minhtu.firesocialmedia.platform.queryShareApps
 import com.minhtu.firesocialmedia.platform.toHex
-import com.minhtu.firesocialmedia.presentation.home.Home
-import com.minhtu.firesocialmedia.presentation.home.HomeViewModel
+import com.minhtu.firesocialmedia.presentation.home.HomeViewModelContract
+import com.minhtu.firesocialmedia.presentation.navigation.HomeNavGraph
 import com.minhtu.firesocialmedia.presentation.comment.Comment
 import com.minhtu.firesocialmedia.presentation.comment.CommentViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.Screen
@@ -172,7 +172,7 @@ class UiUtils {
             hasDropdownMenu : Boolean,
             onNavigateToShowImageScreen: (image: String) -> Unit,
             onNavigateToUserInformation: (user: UserInstance) -> Unit,
-            homeViewModel: HomeViewModel,
+            homeViewModel: HomeViewModelContract,
             listState : LazyListState,
             onDelete: (action : String, new : NewsInstance) -> Unit,
             onNavigateToCreatePost : (updateNew : NewsInstance) -> Unit,
@@ -381,7 +381,7 @@ class UiUtils {
             localImageLoaderValue : ProvidedValue<*>,
             onNavigateToShowImageScreen: (image: String) -> Unit,
             onNavigateToUserInformation: (user: UserInstance) -> Unit,
-            homeViewModel: HomeViewModel,
+            homeViewModel: HomeViewModelContract,
             listState : LazyListState,
             onDelete: (action : String, new : NewsInstance) -> Unit,
             onNavigateToCreatePost : (updateNew : NewsInstance) -> Unit,
@@ -801,7 +801,7 @@ class UiUtils {
         fun BottomNavigationBar(
             currentRoute: String?,
             onNavigate: (String) -> Unit,
-            homeViewModel: HomeViewModel,
+            homeViewModel: HomeViewModelContract,
             onNavigateToUploadNews: () -> Unit,
             modifier: Modifier
         ) {
@@ -827,7 +827,7 @@ class UiUtils {
                             val showBadge = screen.route == Notification.getScreenName() && notificationCount > 0
                             val testTag = when(screen.route) {
                                 Notification.getScreenName() -> TestTag.TAG_NOTIFICATION_BOTTOM
-                                Home.getScreenName() -> TestTag.TAG_HOME_BOTTOM
+                                HomeNavGraph.HOME_SCREEN_NAME -> TestTag.TAG_HOME_BOTTOM
                                 Friend.getScreenName() -> TestTag.TAG_FRIEND_BOTTOM
                                 Settings.getScreenName() -> TestTag.TAG_SETTING_BOTTOM
                                 else -> ""
@@ -1084,7 +1084,7 @@ class UiUtils {
             listState: LazyListState,
             tabTitles : List<String>,
             localImageLoaderValue : ProvidedValue<*>,
-            homeViewModel: HomeViewModel,
+            homeViewModel: HomeViewModelContract,
             searchViewModel: SearchViewModel,
             onNavigateToShowImageScreen: (image: String) -> Unit,
             onNavigateToUserInformation: (user: UserInstance?) -> Unit,
@@ -1353,7 +1353,7 @@ class UiUtils {
 
         @Composable
         fun DropdownMenuForResponse(expanded : Boolean,
-                                    homeViewModel: HomeViewModel,
+                                    homeViewModel: HomeViewModelContract,
                                     selectedNew : NewsInstance,
                                     onDismissRequest: () -> Unit,
                                     listState : LazyListState,
@@ -1396,7 +1396,7 @@ class UiUtils {
         fun LazyColumnOfNewsWithSlideOutAnimationAndLoadMore(
             localImageLoaderValue : ProvidedValue<*>,
             listState: LazyListState,
-            homeViewModel: HomeViewModel,
+            homeViewModel: HomeViewModelContract,
             list : List<NewsInstance>,
             onNavigateToUploadNews: (updateNew : NewsInstance?) -> Unit,
             onNavigateToShowImageScreen: (image : String) -> Unit,
@@ -1648,7 +1648,7 @@ class UiUtils {
             news: NewsInstance,
             user: UserInstance,
             localImageLoaderValue: ProvidedValue<*>,
-            homeViewModel: HomeViewModel,
+            homeViewModel: HomeViewModelContract,
             currentUserId: String = "",
             pollViewModel: Any? = null,   // PollViewModel cast at runtime
             onNavigateToUserInformation: (UserInstance?) -> Unit,

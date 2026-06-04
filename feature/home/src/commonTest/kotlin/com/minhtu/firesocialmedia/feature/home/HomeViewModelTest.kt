@@ -1,4 +1,4 @@
-package com.minhtu.firesocialmedia
+package com.minhtu.firesocialmedia.feature.home
 
 import com.minhtu.firesocialmedia.core.constants.Constants
 import com.minhtu.firesocialmedia.core.domain.entity.home.LatestNewsResult
@@ -10,7 +10,7 @@ import com.minhtu.firesocialmedia.core.domain.interactor.home.CallInteractor
 import com.minhtu.firesocialmedia.core.domain.interactor.home.NewsInteractor
 import com.minhtu.firesocialmedia.core.domain.interactor.home.NotificationInteractor
 import com.minhtu.firesocialmedia.core.domain.interactor.home.UserInteractor
-import com.minhtu.firesocialmedia.presentation.home.HomeViewModel
+import com.minhtu.firesocialmedia.feature.home.presentation.home.HomeViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow

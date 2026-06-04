@@ -49,7 +49,7 @@ import com.minhtu.firesocialmedia.platform.showToast
 import com.minhtu.firesocialmedia.platform.toHex
 import com.minhtu.firesocialmedia.presentation.comment.Comment
 import com.minhtu.firesocialmedia.presentation.comment.CommentViewModel
-import com.minhtu.firesocialmedia.presentation.home.HomeViewModel
+import com.minhtu.firesocialmedia.presentation.home.HomeViewModelContract
 import com.minhtu.firesocialmedia.core.storage.toStorageUrl
 import com.minhtu.firesocialmedia.utils.UiUtils
 import com.minhtu.firesocialmedia.utils.UiUtils.Companion.NewsCardPlaceholder
@@ -70,7 +70,7 @@ class PostInformation {
                                   onNavigateToShowImageScreen: (image: String) -> Unit,
                                   onNavigateToUserInformation: (user: UserInstance?) -> Unit,
                                   onNavigateBack : () -> Unit,
-                                  homeViewModel: HomeViewModel,
+                                  homeViewModel: HomeViewModelContract,
                                   commentViewModel : CommentViewModel = koinViewModel(),
                                   postInformationViewModel: PostInformationViewModel,
                                   onNavigateToUploadNews: (updateNew : NewsInstance?) -> Unit,

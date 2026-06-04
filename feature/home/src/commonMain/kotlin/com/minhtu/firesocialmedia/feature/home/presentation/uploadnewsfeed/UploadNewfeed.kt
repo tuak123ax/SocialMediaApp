@@ -1,4 +1,4 @@
-package com.minhtu.firesocialmedia.presentation.uploadnewsfeed
+package com.minhtu.firesocialmedia.feature.home.presentation.uploadnewsfeed
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
@@ -82,9 +82,10 @@ import com.minhtu.firesocialmedia.platform.VideoPlayer
 import com.minhtu.firesocialmedia.platform.getUriStringFromLocalPath
 import com.minhtu.firesocialmedia.platform.showToast
 import com.minhtu.firesocialmedia.platform.toHex
-import com.minhtu.firesocialmedia.presentation.home.HomeViewModel
+import com.minhtu.firesocialmedia.presentation.home.HomeViewModelContract
 import com.minhtu.firesocialmedia.presentation.loading.Loading
 import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
+import com.minhtu.firesocialmedia.presentation.uploadnewsfeed.UploadNewfeedViewModelContract
 import com.minhtu.firesocialmedia.utils.UiUtils
 import com.seiko.imageloader.ui.AutoSizeImage
 import kotlinx.coroutines.delay
@@ -95,8 +96,8 @@ class UploadNewsfeed {
         fun UploadNewsfeedScreen(paddingValues : PaddingValues,
                                  imagePicker: ImagePicker,
                                  localImageLoaderValue : ProvidedValue<*>,
-                                 homeViewModel: HomeViewModel,
-                                 uploadNewsfeedViewModel: UploadNewfeedViewModel,
+                                 homeViewModel: HomeViewModelContract,
+                                 uploadNewsfeedViewModel: UploadNewfeedViewModelContract,
                                  loadingViewModel: LoadingViewModel,
                                  updateNew : NewsInstance?,
                                  onNavigateBack: () -> Unit){

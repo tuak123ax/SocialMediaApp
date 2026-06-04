@@ -64,7 +64,7 @@ import com.minhtu.firesocialmedia.platform.CrossPlatformIcon
 import com.minhtu.firesocialmedia.platform.logMessage
 import com.minhtu.firesocialmedia.platform.showToast
 import com.minhtu.firesocialmedia.platform.toHex
-import com.minhtu.firesocialmedia.presentation.home.HomeViewModel
+import com.minhtu.firesocialmedia.presentation.home.HomeViewModelContract
 import com.minhtu.firesocialmedia.core.storage.toStorageUrl
 import com.minhtu.firesocialmedia.utils.NavigationHandler
 import com.minhtu.firesocialmedia.utils.Utils.Companion.sendNotification
@@ -93,7 +93,7 @@ class Calling {
             remoteOffer : OfferAnswer?,
             navigateToCallingScreenFromNotification : Boolean,
             callingViewModel: CallingViewModel,
-            homeViewModel: HomeViewModel,
+            homeViewModel: HomeViewModelContract,
             navHandler : NavigationHandler,
             onStopCallAndNavigateBack : () -> Unit,
             onNavigateToVideoCall : (sessionId : String, videoOffer : OfferAnswer?) -> Unit,

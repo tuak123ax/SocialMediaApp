@@ -52,7 +52,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.minhtu.firesocialmedia.core.constants.TestTag
 import com.minhtu.firesocialmedia.platform.getAppVersion
-import com.minhtu.firesocialmedia.presentation.home.HomeViewModel
+import com.minhtu.firesocialmedia.presentation.home.HomeViewModelContract
 import com.minhtu.firesocialmedia.utils.UiUtils
 
 
@@ -61,7 +61,7 @@ class Settings {
         @Composable
         fun SettingsScreen(modifier: Modifier,
                            paddingValues: PaddingValues,
-                           homeViewModel: HomeViewModel,
+                           homeViewModel: HomeViewModelContract,
                            onNavigateToSignIn: () -> Unit,
                            onNavigateToProfileInformation : () -> Unit,
                            onNavigateToGroupScreen: () -> Unit,

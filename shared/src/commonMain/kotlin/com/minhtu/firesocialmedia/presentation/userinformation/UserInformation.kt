@@ -65,7 +65,7 @@ import com.minhtu.firesocialmedia.core.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.platform.CommonBackHandler
 import com.minhtu.firesocialmedia.platform.getImageBytesFromDrawable
 import com.minhtu.firesocialmedia.platform.showToast
-import com.minhtu.firesocialmedia.presentation.home.HomeViewModel
+import com.minhtu.firesocialmedia.presentation.home.HomeViewModelContract
 import com.minhtu.firesocialmedia.presentation.loading.Loading
 import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.friend.FriendViewModel
@@ -87,7 +87,7 @@ class UserInformation {
             isFriend : Boolean = false,
             paddingValues: PaddingValues,
             localImageLoaderValue : ProvidedValue<*>,
-            homeViewModel : HomeViewModel,
+            homeViewModel : HomeViewModelContract,
             friendViewModel: FriendViewModel = koinViewModel(),
             userInformationViewModel: UserInformationViewModel,
             loadingViewModel: LoadingViewModel,

@@ -75,7 +75,7 @@ import com.minhtu.firesocialmedia.core.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.platform.CrossPlatformIcon
 import com.minhtu.firesocialmedia.platform.showToast
 import com.minhtu.firesocialmedia.platform.toHex
-import com.minhtu.firesocialmedia.presentation.home.HomeViewModel
+import com.minhtu.firesocialmedia.presentation.home.HomeViewModelContract
 import com.minhtu.firesocialmedia.presentation.loading.Loading
 import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
 import com.minhtu.firesocialmedia.presentation.search.SearchViewModel
@@ -94,7 +94,7 @@ class Notification {
                                paddingValues: PaddingValues,
                                localImageLoaderValue : ProvidedValue<*>,
                                searchViewModel: SearchViewModel = koinViewModel(),
-                               homeViewModel: HomeViewModel,
+                               homeViewModel: HomeViewModelContract,
                                notificationViewModel : NotificationViewModel = koinViewModel(),
                                loadingViewModel: LoadingViewModel,
                                onNavigateToPostInformation: (new : NewsInstance) -> Unit,
@@ -294,7 +294,7 @@ class Notification {
         fun NotificationHasSwipeToDelete(notification: NotificationInstance,
                                          user: UserInstance,
                                          localImageLoaderValue : ProvidedValue<*>,
-                                         homeViewModel: HomeViewModel,
+                                         homeViewModel: HomeViewModelContract,
                                          notificationViewModel: NotificationViewModel,
                                          onDelete: () -> Unit,
                                          onNavigateToPostInformation: (new : NewsInstance) -> Unit,

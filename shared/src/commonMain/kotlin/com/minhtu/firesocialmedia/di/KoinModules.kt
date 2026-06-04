@@ -156,7 +156,6 @@ import com.minhtu.firesocialmedia.core.domain.usecases.sync.SyncDataUseCase
 import com.minhtu.firesocialmedia.presentation.calling.audiocall.CallingViewModel
 import com.minhtu.firesocialmedia.presentation.calling.videocall.VideoCallViewModel
 import com.minhtu.firesocialmedia.presentation.comment.CommentViewModel
-import com.minhtu.firesocialmedia.presentation.home.HomeViewModel
 import com.minhtu.firesocialmedia.presentation.information.InformationViewModel
 import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
 import com.minhtu.firesocialmedia.presentation.navigation.RouterViewModel
@@ -182,7 +181,6 @@ import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security
 import com.minhtu.firesocialmedia.presentation.postinformation.PostInformationViewModel
 import com.minhtu.firesocialmedia.presentation.search.SearchViewModel
 import com.minhtu.firesocialmedia.presentation.showimage.ShowImageViewModel
-import com.minhtu.firesocialmedia.presentation.uploadnewsfeed.UploadNewfeedViewModel
 import com.minhtu.firesocialmedia.presentation.userinformation.UserInformationViewModel
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
@@ -487,7 +485,7 @@ fun appModule() = module {
     viewModel { CallingViewModel(get(), get(), get()) }
     viewModel { VideoCallViewModel(get(), get(), get(), get(), get(), get()) }
     viewModel { CommentViewModel(get(), get(), get(), get(), get(), get(), get(), get()) }
-    viewModel { HomeViewModel(get(), get(), get(), get()) }
+    // HomeViewModel registration moved to feature:home homeModule()
     viewModel { InformationViewModel(get(), get(), get(), get()) }
     viewModel { LoadingViewModel() }
     viewModel { RouterViewModel(get(), get(), get(), get()) }
@@ -513,19 +511,6 @@ fun appModule() = module {
     viewModel { PostInformationViewModel(get()) }
     viewModel { SearchViewModel() }
     viewModel { ShowImageViewModel(get()) }
-    viewModel {
-        UploadNewfeedViewModel(
-            get(),
-            get(),
-            get(),
-            get(),
-            get(),
-            get(),
-            get(),
-            get(),
-            get(),
-            get()
-        )
-    }
+    // UploadNewfeedViewModel registration moved to feature:home homeModule()
     viewModel { UserInformationViewModel(get(), get(), get(), get(), get(), get(), get()) }
 }

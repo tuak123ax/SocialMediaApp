@@ -1,4 +1,4 @@
-package com.minhtu.firesocialmedia.presentation.home
+package com.minhtu.firesocialmedia.feature.home.presentation.home
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
@@ -65,23 +65,23 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.minhtu.firesocialmedia.core.constants.TestTag
-import com.minhtu.firesocialmedia.di.PlatformContext
 import com.minhtu.firesocialmedia.core.domain.core.DecentralizationType
 import com.minhtu.firesocialmedia.core.domain.entity.call.CallingRequestData
 import com.minhtu.firesocialmedia.core.domain.entity.home.deeplinks.DeepLinksData
 import com.minhtu.firesocialmedia.core.domain.entity.news.NewsInstance
 import com.minhtu.firesocialmedia.core.domain.entity.user.UserInstance
+import com.minhtu.firesocialmedia.core.storage.toStorageUrl
+import com.minhtu.firesocialmedia.di.PlatformContext
 import com.minhtu.firesocialmedia.platform.CommonBackHandler
 import com.minhtu.firesocialmedia.platform.CrossPlatformIcon
 import com.minhtu.firesocialmedia.platform.logMessage
 import com.minhtu.firesocialmedia.platform.showToast
 import com.minhtu.firesocialmedia.platform.toHex
 import com.minhtu.firesocialmedia.presentation.comment.CommentViewModel
+import com.minhtu.firesocialmedia.presentation.home.HomeViewModelContract
 import com.minhtu.firesocialmedia.presentation.loading.Loading
 import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
-import com.minhtu.firesocialmedia.core.storage.toStorageUrl
 import com.minhtu.firesocialmedia.utils.UiUtils
 import com.minhtu.sharedmodule.ui.theme.iconButtonBackgroundColor
 import com.seiko.imageloader.ui.AutoSizeImage
@@ -91,27 +91,29 @@ import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
 
 class Home {
-    companion object{
+    companion object {
         @Composable
-                        fun HomeScreen(modifier: Modifier,
-                                       homeViewModel: HomeViewModel,
-                                       loadingViewModel: LoadingViewModel,
-                                       navigateToCallingScreen : Boolean,
-                                       paddingValues: PaddingValues,
-                                       localImageLoaderValue : ProvidedValue<*>,
-                                       onNavigateToUploadNews: (updateNew : NewsInstance?) -> Unit,
-                                       onNavigateToShowImageScreen: (image : String) -> Unit,
-                                       onNavigateToSearch: () -> Unit,
-                                       onNavigateToSignIn: () -> Unit,
-                                       onNavigateToUserInformation: (user: UserInstance?) -> Unit,
-                                       onNavigateToCommentScreen: (selectedNew : NewsInstance) -> Unit,
-                                       onNavigateToCallingScreen : suspend (CallingRequestData) -> Unit,
-                                       onNavigateToCallingScreenWithUI : suspend () -> Unit,
-                                       onNavigateToPostInformation : () -> Unit,
-                                       onShareNews : (String, NewsInstance) -> Unit,
-                                       onNavigateToJoinGroup : () -> Unit,
-                                       commentViewModel: CommentViewModel = koinViewModel(),
-                                       platform: PlatformContext? = null){
+        fun HomeScreen(
+            modifier: Modifier,
+            homeViewModel: HomeViewModelContract,
+            loadingViewModel: LoadingViewModel,
+            navigateToCallingScreen: Boolean,
+            paddingValues: PaddingValues,
+            localImageLoaderValue: ProvidedValue<*>,
+            onNavigateToUploadNews: (updateNew: NewsInstance?) -> Unit,
+            onNavigateToShowImageScreen: (image: String) -> Unit,
+            onNavigateToSearch: () -> Unit,
+            onNavigateToSignIn: () -> Unit,
+            onNavigateToUserInformation: (user: UserInstance?) -> Unit,
+            onNavigateToCommentScreen: (selectedNew: NewsInstance) -> Unit,
+            onNavigateToCallingScreen: suspend (CallingRequestData) -> Unit,
+            onNavigateToCallingScreenWithUI: suspend () -> Unit,
+            onNavigateToPostInformation: () -> Unit,
+            onShareNews: (String, NewsInstance) -> Unit,
+            onNavigateToJoinGroup: () -> Unit,
+            commentViewModel: CommentViewModel = koinViewModel(),
+            platform: PlatformContext? = null
+        ) {
             val isLoading by loadingViewModel.isLoading.collectAsState()
             val commentStatus by homeViewModel.commentStatus.collectAsState()
             var showBottomSheet by rememberSaveable { mutableStateOf(false) }
@@ -131,11 +133,11 @@ class Home {
             )
 
             //Observe Live Data as State
-            val usersList by  homeViewModel.allUserFriends.collectAsState()
+            val usersList by homeViewModel.allUserFriends.collectAsState()
 
             val numberOfLists by remember { derivedStateOf { homeViewModel.numberOfListNeedToLoad } }
 
-            val newsList = homeViewModel.allNews.collectAsStateWithLifecycle()
+            val newsList = homeViewModel.allNews.collectAsState()
 
             val currentUserState = homeViewModel.currentUserState
 
@@ -153,8 +155,8 @@ class Home {
                     loadingViewModel.hideLoading()
                 }
                 //Check deeplink after loading necessary data
-                if(DeepLinksData.deepLink.isNotEmpty()) {
-                    if(DeepLinksData.deepLink.contains("news")) {
+                if (DeepLinksData.deepLink.isNotEmpty()) {
+                    if (DeepLinksData.deepLink.contains("news")) {
                         onNavigateToPostInformation()
                     } else if (DeepLinksData.deepLink.contains("groups")) {
                         onNavigateToJoinGroup()
@@ -177,13 +179,13 @@ class Home {
             val getCurrentUserStatus by homeViewModel.getCurrentUserStatus
 
             LaunchedEffect(getCurrentUserStatus) {
-                if(getCurrentUserStatus) {
+                if (getCurrentUserStatus) {
                     logMessage("observePhoneCall", { "start observe phone call" })
                     homeViewModel.observePhoneCall()
                 }
             }
             LaunchedEffect(Unit) {
-                if(navigateToCallingScreen) {
+                if (navigateToCallingScreen) {
                     logMessage("navigateToCallingScreen", { "onNavigateToCallingScreenWithUI" })
                     onNavigateToCallingScreenWithUI()
                 }
@@ -191,7 +193,7 @@ class Home {
 
             val phoneCallRequestStatus by homeViewModel.phoneCallRequestStatus.collectAsState()
             LaunchedEffect(phoneCallRequestStatus) {
-                if(phoneCallRequestStatus != null) {
+                if (phoneCallRequestStatus != null) {
                     onNavigateToCallingScreen(phoneCallRequestStatus!!)
                 }
             }
@@ -201,8 +203,8 @@ class Home {
             val sharePostError by homeViewModel.shareError.collectAsState()
             LaunchedEffect(sharePostStatus) {
                 //Share post result
-                if(sharePostStatus != null) {
-                    if(sharePostStatus!!) {
+                if (sharePostStatus != null) {
+                    if (sharePostStatus!!) {
                         showToast("Share successfully!!!")
                     } else {
                         showToast("Error happened. Please try again!!!")
@@ -212,7 +214,7 @@ class Home {
             }
             LaunchedEffect(sharePostError) {
                 //Error when share post
-                if(sharePostError != null) {
+                if (sharePostError != null) {
                     showToast("Cannot get content to share. Please try again!!!")
                 }
                 homeViewModel.resetShareContentAndStatus()
@@ -220,10 +222,12 @@ class Home {
 
             // Preserve scroll position across navigation/back stack using rememberSaveable
             val listState = rememberSaveable(saver = LazyListState.Saver) { LazyListState(0, 0) }
-            Box(modifier = Modifier
-                .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background)
-                .padding(paddingValues)) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.background)
+                    .padding(paddingValues)
+            ) {
                 Column(
                     verticalArrangement = Arrangement.Top,
                     modifier = modifier
@@ -304,11 +308,13 @@ class Home {
                         Column(verticalArrangement = Arrangement.Top) {
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 6.dp)
+                                modifier = Modifier.fillMaxWidth()
+                                    .padding(horizontal = 10.dp, vertical = 6.dp)
                             ) {
                                 //Current user avatar
                                 if (currentUserState != null) {
-                                    val userImage = currentUserState.image.toStorageUrl() // Avoid force unwrapping
+                                    val userImage =
+                                        currentUserState.image.toStorageUrl() // Avoid force unwrapping
 
                                     CompositionLocalProvider(
                                         localImageLoaderValue
@@ -366,7 +372,7 @@ class Home {
                                     }
                             ) {
                                 usersList.forEach { user ->
-                                    if(user != null) {
+                                    if (user != null) {
                                         item {
                                             UserCard(
                                                 user = user,
@@ -395,11 +401,11 @@ class Home {
                             .collectLatest { (triple, state) ->
                                 val (firstVisible, lastVisible, totalItems) = triple
                                 val inProgress = state
-                                if(inProgress && firstVisible > 0) {
+                                if (inProgress && firstVisible > 0) {
                                     userInteracted = true
                                 }
                                 // Show/hide top bar
-                                isAllUsersVisible = if(!userInteracted) {
+                                isAllUsersVisible = if (!userInteracted) {
                                     true
                                 } else {
                                     firstVisible == 0
@@ -423,7 +429,7 @@ class Home {
                         onRefresh = {
                             homeViewModel.refreshNews()
                         },
-                        canRefresh = {listState.isAtTop()}
+                        canRefresh = { listState.isAtTop() }
                     ) {
                         val sortedNews by remember(newsList.value) {
                             derivedStateOf {
@@ -432,7 +438,10 @@ class Home {
                                     .filter { item ->
                                         when (item.decentralizationType) {
                                             DecentralizationType.Public -> true
-                                            DecentralizationType.OnlyFriends -> homeViewModel.isFriendOf(item.posterId)
+                                            DecentralizationType.OnlyFriends -> homeViewModel.isFriendOf(
+                                                item.posterId
+                                            )
+
                                             DecentralizationType.Private -> false
                                             null -> true
                                         }
@@ -460,8 +469,11 @@ class Home {
                         )
                     }
                 }
-                ScrollToTopButton(listState, Modifier.align(Alignment.BottomEnd).padding(end = 16.dp, bottom = 80.dp))
-                if(showBottomSheet) {
+                ScrollToTopButton(
+                    listState,
+                    Modifier.align(Alignment.BottomEnd).padding(end = 16.dp, bottom = 80.dp)
+                )
+                if (showBottomSheet) {
                     UiUtils.ShareBottomSheet(
                         deepLink = "https://firechat-aa433.web.app/news/${newToBeShared?.id}",
                         onDismiss = {
@@ -470,7 +482,7 @@ class Home {
                         onClick = { message ->
                             showBottomSheet = false
                             //Continue with share process
-                            if(newToBeShared != null) {
+                            if (newToBeShared != null) {
                                 onShareNews(message, newToBeShared!!)
                             } else {
                                 showToast("Cannot share now. Please try again!!!")
@@ -485,9 +497,11 @@ class Home {
         }
 
         @Composable
-        private fun UserCard(user: UserInstance,
-                             localImageLoaderValue : ProvidedValue<*>,
-                             onNavigateToUserInformation: (user: UserInstance) -> Unit) {
+        private fun UserCard(
+            user: UserInstance,
+            localImageLoaderValue: ProvidedValue<*>,
+            onNavigateToUserInformation: (user: UserInstance) -> Unit
+        ) {
             Card(
                 modifier = Modifier.size(70.dp, 90.dp)
                     .testTag(TestTag.TAG_ITEM_IN_ROW)
@@ -532,11 +546,11 @@ class Home {
         }
 
         @Composable
-        private fun ScrollToTopButton(listState : LazyListState, modifier: Modifier) {
+        private fun ScrollToTopButton(listState: LazyListState, modifier: Modifier) {
             val scope = rememberCoroutineScope()
             val showTopButton by remember { derivedStateOf { listState.firstVisibleItemIndex > 5 } }
 
-            AnimatedVisibility(visible = showTopButton, modifier = modifier){
+            AnimatedVisibility(visible = showTopButton, modifier = modifier) {
                 FloatingActionButton(
                     onClick = {
                         scope.launch {
@@ -546,13 +560,15 @@ class Home {
                     modifier = Modifier
                         .size(30.dp)
                         .testTag(TestTag.SCROLL_TO_TOP_BUTTON)
-                        .semantics{
+                        .semantics {
                             contentDescription = TestTag.SCROLL_TO_TOP_BUTTON
                         },
                     containerColor = MaterialTheme.colorScheme.surface
                 ) {
-                    Icon(Icons.Filled.KeyboardArrowUp,
-                        contentDescription = "Scroll to top")
+                    Icon(
+                        Icons.Filled.KeyboardArrowUp,
+                        contentDescription = "Scroll to top"
+                    )
                 }
             }
         }
@@ -569,7 +585,10 @@ class Home {
             content: @Composable () -> Unit
         ) {
             val density = LocalDensity.current
-            val thresholdPx = remember(density, refreshThresholdDp) { with(density) { refreshThresholdDp.dp.toPx() } }
+            val thresholdPx = remember(
+                density,
+                refreshThresholdDp
+            ) { with(density) { refreshThresholdDp.dp.toPx() } }
 
             // offset in PX; mutate directly on drag (no coroutine per event)
             var offset by remember { mutableFloatStateOf(0f) }
@@ -593,7 +612,10 @@ class Home {
 
             val connection = remember {
                 object : NestedScrollConnection {
-                    override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+                    override fun onPreScroll(
+                        available: Offset,
+                        source: NestedScrollSource
+                    ): Offset {
                         // pull down while at top -> consume and move indicator
                         if (source == NestedScrollSource.UserInput && available.y > 0f && updCanRefresh()) {
                             val new = (offset + available.y * 0.5f).coerceAtLeast(0f)
@@ -603,7 +625,11 @@ class Home {
                         return Offset.Zero
                     }
 
-                    override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset {
+                    override fun onPostScroll(
+                        consumed: Offset,
+                        available: Offset,
+                        source: NestedScrollSource
+                    ): Offset {
                         // push up -> reduce offset
                         if (source == NestedScrollSource.UserInput && available.y < 0f && offset > 0f) {
                             offset = maxOf(0f, offset + available.y)
@@ -639,7 +665,14 @@ class Home {
                 content()
 
                 // Progress derived from offset
-                val progress by remember { derivedStateOf { (offset / thresholdPx).coerceIn(0f, 1f) } }
+                val progress by remember {
+                    derivedStateOf {
+                        (offset / thresholdPx).coerceIn(
+                            0f,
+                            1f
+                        )
+                    }
+                }
 
                 // Only show when pulling or actively refreshing
                 val showIndicator by remember { derivedStateOf { isRefreshing || offset > 0.5f } }
@@ -684,7 +717,7 @@ class Home {
         fun LazyListState.isAtTop(): Boolean =
             firstVisibleItemIndex == 0 && firstVisibleItemScrollOffset == 0
 
-        fun getScreenName(): String{
+        fun getScreenName(): String {
             return "HomeScreen"
         }
     }

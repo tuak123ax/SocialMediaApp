@@ -89,7 +89,7 @@ import com.minhtu.firesocialmedia.core.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.platform.CommonBackHandler
 import com.minhtu.firesocialmedia.platform.getImageBytesFromDrawable
 import com.minhtu.firesocialmedia.platform.showToast
-import com.minhtu.firesocialmedia.presentation.home.HomeViewModel
+import com.minhtu.firesocialmedia.presentation.home.HomeViewModelContract
 import com.minhtu.firesocialmedia.presentation.loading.Loading
 import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
 import com.minhtu.firesocialmedia.presentation.search.SearchViewModel
@@ -118,7 +118,7 @@ class GroupDetails {
             paddingValues: PaddingValues,
             localImageLoaderValue : ProvidedValue<*>,
             modifier: Modifier = Modifier,
-            homeViewModel : HomeViewModel,
+            homeViewModel : HomeViewModelContract,
             searchViewModel : SearchViewModel = koinViewModel(),
             loadingViewModel : LoadingViewModel,
             groupDetailsViewModel: GroupDetailsViewModel,
@@ -651,7 +651,7 @@ class GroupDetails {
             listState: LazyListState,
             tabTitles : List<String>,
             localImageLoaderValue : ProvidedValue<*>,
-            homeViewModel: HomeViewModel,
+            homeViewModel: HomeViewModelContract,
             groupDetailsViewModel : GroupDetailsViewModel,
             loadingViewModel: LoadingViewModel,
             onNavigateToShowImageScreen: (image: String) -> Unit,

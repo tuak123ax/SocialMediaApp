@@ -37,7 +37,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.minhtu.firesocialmedia.core.constants.TestTag
 import com.minhtu.firesocialmedia.core.domain.entity.user.UserInstance
-import com.minhtu.firesocialmedia.presentation.home.HomeViewModel
+import com.minhtu.firesocialmedia.presentation.home.HomeViewModelContract
 import com.minhtu.firesocialmedia.presentation.search.Search
 import com.minhtu.firesocialmedia.presentation.search.SearchViewModel
 import com.minhtu.firesocialmedia.utils.UiUtils
@@ -52,7 +52,7 @@ class Friend {
                          paddingValues: PaddingValues,
                          localImageLoaderValue : ProvidedValue<*>,
                          searchViewModel: SearchViewModel = koinViewModel(),
-                         homeViewModel: HomeViewModel,
+                         homeViewModel: HomeViewModelContract,
                          friendViewModel: FriendViewModel = koinViewModel(),
                          onNavigateToUserInformation: (user : UserInstance) -> Unit,
                          onNavigateToShowImageScreen: (image : String) -> Unit){
@@ -108,7 +108,7 @@ class Friend {
         fun TabLayoutForFriendScreen(
             tabTitles: List<String>,
             localImageLoaderValue: ProvidedValue<*>,
-            homeViewModel: HomeViewModel,
+            homeViewModel: HomeViewModelContract,
             searchViewModel: SearchViewModel,
             friendViewModel: FriendViewModel,
             friendRequestsStatus: List<String>,

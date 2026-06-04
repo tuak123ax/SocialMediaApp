@@ -62,8 +62,8 @@ import com.minhtu.firesocialmedia.platform.showToast
 import com.minhtu.firesocialmedia.platform.toHex
 import com.minhtu.firesocialmedia.presentation.loading.Loading
 import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
-import com.minhtu.firesocialmedia.presentation.uploadnewsfeed.UploadNewsfeed.Companion.AccessPermissionBottomSheet
-import com.minhtu.firesocialmedia.presentation.uploadnewsfeed.UploadNewsfeed.Companion.AccessPermissionButtonContent
+import com.minhtu.firesocialmedia.presentation.uploadnewsfeed.AccessPermissionBottomSheet
+import com.minhtu.firesocialmedia.presentation.uploadnewsfeed.AccessPermissionButtonContent
 import com.minhtu.firesocialmedia.utils.UiUtils
 import com.minhtu.firesocialmedia.utils.UiUtils.Companion.PasswordVisibilityIcon
 import com.minhtu.sharedmodule.ui.theme.avatarGrayBackground

@@ -48,8 +48,7 @@ import com.minhtu.firesocialmedia.presentation.calling.videocall.VideoCall
 import com.minhtu.firesocialmedia.presentation.calling.videocall.VideoCallViewModel
 import com.minhtu.firesocialmedia.presentation.comment.Comment
 
-import com.minhtu.firesocialmedia.presentation.home.Home
-import com.minhtu.firesocialmedia.presentation.home.HomeViewModel
+import com.minhtu.firesocialmedia.presentation.home.HomeViewModelContract
 import com.minhtu.firesocialmedia.presentation.information.Information
 import com.minhtu.firesocialmedia.presentation.information.InformationViewModel
 import com.minhtu.firesocialmedia.presentation.loading.GifLoading
@@ -85,8 +84,7 @@ import com.minhtu.firesocialmedia.presentation.search.Search
 import com.minhtu.firesocialmedia.presentation.showimage.ShowImage
 import com.minhtu.firesocialmedia.core.constants.UiConstants
 import com.minhtu.firesocialmedia.core.domain.signin.GoogleSignInHandler
-import com.minhtu.firesocialmedia.presentation.uploadnewsfeed.UploadNewfeedViewModel
-import com.minhtu.firesocialmedia.presentation.uploadnewsfeed.UploadNewsfeed
+import com.minhtu.firesocialmedia.presentation.uploadnewsfeed.UploadNewfeedViewModelContract
 import com.minhtu.firesocialmedia.presentation.userinformation.UserInformation
 import com.minhtu.firesocialmedia.presentation.userinformation.UserInformationViewModel
 import com.minhtu.firesocialmedia.utils.UiUtils
@@ -111,15 +109,16 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
     val localImageLoaderValue = LocalImageLoader provides remember { generateImageLoader() }
 
     // Shared viewModels
-    val homeViewModel: HomeViewModel = koinViewModel()
+    val homeViewModel: HomeViewModelContract = koinInject()
     val loadingViewModel: LoadingViewModel = koinViewModel()
     val routerViewModel: RouterViewModel = koinViewModel()
     val callingViewModel: CallingViewModel = koinViewModel()
     val videoCallViewModel: VideoCallViewModel = koinViewModel()
     val signInViewModel: GoogleSignInHandler = koinInject()
     val authNavGraph: AuthNavGraph = koinInject()
+    val homeNavGraph: HomeNavGraph = koinInject()
     val informationViewModel: InformationViewModel = koinViewModel()
-    val uploadNewsfeedViewModel: UploadNewfeedViewModel = koinViewModel()
+    val uploadNewsfeedViewModel: UploadNewfeedViewModelContract = koinInject()
     val userInformationViewModel: UserInformationViewModel = koinViewModel()
     val postInformationViewModel: PostInformationViewModel = koinViewModel()
     val createGroupViewModel: CreateGroupViewModel = koinViewModel()
@@ -256,7 +255,7 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                         onNavigate = { route -> navController.navigate(route) },
                         homeViewModel = homeViewModel,
                         onNavigateToUploadNews = {
-                            navController.navigate(route = UploadNewsfeed.getScreenName())
+                            navController.navigate(route = homeNavGraph.getUploadNewsfeedRoute())
                         },
                         modifier = Modifier
                             .fillMaxWidth()
@@ -286,7 +285,7 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                     navController = navController,
                     loadingViewModel = loadingViewModel,
                     routerViewModel = routerViewModel,
-                    onNavigateToHome = { navController.navigate(route = Home.getScreenName()) },
+                    onNavigateToHome = { navController.navigate(route = homeNavGraph.getHomeRoute()) },
                     onNavigateToInformation = { navController.navigate(route = Information.getScreenName()) },
                     onNavigateToVerifyOTP = { navController.navigate(route = VerifyOTP.getScreenName()) }
                 )
@@ -305,136 +304,112 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                         signUpPassword = informationViewModel.pendingSignUpPassword,
                         informationViewModel = informationViewModel,
                         loadingViewModel = loadingViewModel,
-                        onNavigateToHomeScreen = { navController.navigate(route = Home.getScreenName()) }
+                        onNavigateToHomeScreen = { navController.navigate(route = homeNavGraph.getHomeRoute()) }
                     )
                 }
-                composable(
-                    route = Home.getScreenName(),
-                    enterTransition = DefaultNavAnimations.enter,
-                    popEnterTransition = DefaultNavAnimations.popEnter,
-                    exitTransition = DefaultNavAnimations.exit,
-                    popExitTransition = DefaultNavAnimations.popExit
-                ) {
-                    Home.HomeScreen(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(MaterialTheme.colorScheme.background),
-                        homeViewModel,
-                        loadingViewModel,
-                        SharedCallData.navigateToCallingScreenFromNotification,
-                        paddingValues = paddingValues,
-                        localImageLoaderValue = localImageLoaderValue,
-                        onNavigateToUploadNews = { new ->
-                            updateNew = new
-                            navController.navigate(route = UploadNewsfeed.getScreenName())
-                        },
-                        onNavigateToShowImageScreen = { image ->
-                            selectedImage = image
-                            navController.navigate(route = ShowImage.getScreenName())
-                        },
-                        onNavigateToSearch = { navController.navigate(route = Search.getScreenName()) },
-                        onNavigateToSignIn = {
-                            //Clear email/password before navigate
-                            signInViewModel.reset()
-                            navController.navigate(route = UiConstants.SignIn.SCREEN_NAME)
-                        },
-                        onNavigateToUserInformation = { user ->
-                            selectedUser = user
-                            navController.navigate(route = UserInformation.getScreenName())
-                        },
-                        onNavigateToCommentScreen = { new ->
-                            selectedNew = new
-                            navController.navigate(route = Comment.getScreenName())
-                        },
-                        onNavigateToCallingScreen = { callingRequestData ->
-                            sessionId = callingRequestData.sessionId
-                            remoteOffer = callingRequestData.offer
-                            caller =
-                                if (callingRequestData.callerId == homeViewModel.currentUser?.uid) homeViewModel.currentUser else homeViewModel.findUserById(
-                                    callingRequestData.callerId
-                                )
-                            callee =
-                                if (callingRequestData.calleeId == homeViewModel.currentUser?.uid) homeViewModel.currentUser else homeViewModel.findUserById(
-                                    callingRequestData.calleeId
-                                )
-                            navController.navigate(route = Calling.getScreenName())
-                        },
-                        onNavigateToCallingScreenWithUI = {
-                            sessionId = SharedCallData.sessionId
-                            caller =
-                                if (SharedCallData.callerId == homeViewModel.currentUser?.uid) homeViewModel.currentUser else homeViewModel.findUserById(
-                                    SharedCallData.callerId
-                                )
-                            callee =
-                                if (SharedCallData.calleeId == homeViewModel.currentUser?.uid) homeViewModel.currentUser else homeViewModel.findUserById(
-                                    SharedCallData.calleeId
-                                )
-                            navController.navigate(route = Calling.getScreenName())
-                        },
-                        onNavigateToPostInformation = {
-                            val uri = Uri.parse(DeepLinksData.deepLink)
-                            val segments = uri.pathSegments
-                            if (segments.isNotEmpty() && segments[0] == "news" && segments.size >= 2) {
-                                val newsId = segments[1]
-                                navController.navigate("news/$newsId") {
-                                    popUpTo("router") { inclusive = true }
-                                    launchSingleTop = true
-                                }
-                                // Clear deep link after handling to prevent repeated navigation
-                                DeepLinksData.deepLink = ""
+                homeNavGraph.registerRoutes(
+                    navGraphBuilder = this,
+                    navController = navController,
+                    homeViewModel = homeViewModel,
+                    loadingViewModel = loadingViewModel,
+                    paddingValues = paddingValues,
+                    localImageLoaderValue = localImageLoaderValue,
+                    navigateToCallingScreen = SharedCallData.navigateToCallingScreenFromNotification,
+                    platformContext = platformContext,
+                    onNavigateToUploadNews = { new ->
+                        updateNew = new
+                        navController.navigate(route = homeNavGraph.getUploadNewsfeedRoute())
+                    },
+                    onNavigateToShowImageScreen = { image ->
+                        selectedImage = image
+                        navController.navigate(route = ShowImage.getScreenName())
+                    },
+                    onNavigateToSearch = { navController.navigate(route = Search.getScreenName()) },
+                    onNavigateToSignIn = {
+                        //Clear email/password before navigate
+                        signInViewModel.reset()
+                        navController.navigate(route = UiConstants.SignIn.SCREEN_NAME)
+                    },
+                    onNavigateToUserInformation = { user ->
+                        selectedUser = user
+                        navController.navigate(route = UserInformation.getScreenName())
+                    },
+                    onNavigateToCommentScreen = { new ->
+                        selectedNew = new
+                        navController.navigate(route = Comment.getScreenName())
+                    },
+                    onNavigateToCallingScreen = { callingRequestData ->
+                        sessionId = callingRequestData.sessionId
+                        remoteOffer = callingRequestData.offer
+                        caller =
+                            if (callingRequestData.callerId == homeViewModel.currentUser?.uid) homeViewModel.currentUser else homeViewModel.findUserById(
+                                callingRequestData.callerId
+                            )
+                        callee =
+                            if (callingRequestData.calleeId == homeViewModel.currentUser?.uid) homeViewModel.currentUser else homeViewModel.findUserById(
+                                callingRequestData.calleeId
+                            )
+                        navController.navigate(route = Calling.getScreenName())
+                    },
+                    onNavigateToCallingScreenWithUI = {
+                        sessionId = SharedCallData.sessionId
+                        caller =
+                            if (SharedCallData.callerId == homeViewModel.currentUser?.uid) homeViewModel.currentUser else homeViewModel.findUserById(
+                                SharedCallData.callerId
+                            )
+                        callee =
+                            if (SharedCallData.calleeId == homeViewModel.currentUser?.uid) homeViewModel.currentUser else homeViewModel.findUserById(
+                                SharedCallData.calleeId
+                            )
+                        navController.navigate(route = Calling.getScreenName())
+                    },
+                    onNavigateToPostInformation = {
+                        val uri = Uri.parse(DeepLinksData.deepLink)
+                        val segments = uri.pathSegments
+                        if (segments.isNotEmpty() && segments[0] == "news" && segments.size >= 2) {
+                            val newsId = segments[1]
+                            navController.navigate("news/$newsId") {
+                                popUpTo("router") { inclusive = true }
+                                launchSingleTop = true
                             }
-                        },
-                        onShareNews = { message, newToBeShared ->
-                            //Basically, share news is similar to post news to newsfeed
-                            if (homeViewModel.currentUser != null) {
-                                homeViewModel.updateShareMessage(message)
-                                homeViewModel.updateShareContent(newToBeShared)
-                                homeViewModel.sharePost(homeViewModel.currentUser!!)
-                            } else {
-                                showToast("Cannot get your information to share now. Please try again!!!")
-                            }
-                        },
-                        onNavigateToJoinGroup = {
-                            val uri = Uri.parse(DeepLinksData.deepLink)
-                            val segments = uri.pathSegments
-                            if (segments.isNotEmpty() && segments[0] == "groups" && segments.size >= 2) {
-                                val groupId = segments[1]
-                                navController.navigate("groups/$groupId") {
-                                    popUpTo("router") { inclusive = true }
-                                    launchSingleTop = true
-                                }
-                                // Clear deep link after handling to prevent repeated navigation
-                                DeepLinksData.deepLink = ""
-                            }
-                        },
-                        platform = platformContext
-                    )
-                }
-                composable(
-                    route = UploadNewsfeed.getScreenName(),
-                    enterTransition = DefaultNavAnimations.enter,
-                    popEnterTransition = DefaultNavAnimations.popEnter,
-                    exitTransition = DefaultNavAnimations.exit,
-                    popExitTransition = DefaultNavAnimations.popExit
-                ) {
-                    val picker = rememberPlatformImagePicker(
-                        context = context,
-                        onImagePicked = { uri -> uploadNewsfeedViewModel.updateImage(uri) },
-                        onVideoPicked = { uri -> uploadNewsfeedViewModel.updateVideo(uri) }
-                    )
-                    UploadNewsfeed.UploadNewsfeedScreen(
-                        paddingValues,
-                        imagePicker = picker,
-                        localImageLoaderValue,
-                        homeViewModel = homeViewModel,
-                        uploadNewsfeedViewModel = uploadNewsfeedViewModel,
-                        loadingViewModel = loadingViewModel,
-                        updateNew = updateNew,
-                        onNavigateBack = {
-                            navController.popBackStack()
+                            // Clear deep link after handling to prevent repeated navigation
+                            DeepLinksData.deepLink = ""
                         }
-                    )
-                }
+                    },
+                    onShareNews = { message, newToBeShared ->
+                        //Basically, share news is similar to post news to newsfeed
+                        if (homeViewModel.currentUser != null) {
+                            homeViewModel.updateShareMessage(message)
+                            homeViewModel.updateShareContent(newToBeShared)
+                            homeViewModel.sharePost(homeViewModel.currentUser!!)
+                        } else {
+                            showToast("Cannot get your information to share now. Please try again!!!")
+                        }
+                    },
+                    onNavigateToJoinGroup = {
+                        val uri = Uri.parse(DeepLinksData.deepLink)
+                        val segments = uri.pathSegments
+                        if (segments.isNotEmpty() && segments[0] == "groups" && segments.size >= 2) {
+                            val groupId = segments[1]
+                            navController.navigate("groups/$groupId") {
+                                popUpTo("router") { inclusive = true }
+                                launchSingleTop = true
+                            }
+                            // Clear deep link after handling to prevent repeated navigation
+                            DeepLinksData.deepLink = ""
+                        }
+                    }
+                )
+                homeNavGraph.registerUploadNewsfeedRoute(
+                    navGraphBuilder = this,
+                    navController = navController,
+                    homeViewModel = homeViewModel,
+                    loadingViewModel = loadingViewModel,
+                    paddingValues = paddingValues,
+                    localImageLoaderValue = localImageLoaderValue,
+                    context = context,
+                    getUpdateNew = { updateNew }
+                )
                 composable(
                     route = ShowImage.getScreenName(),
                     enterTransition = DefaultNavAnimations.enter,
@@ -483,7 +458,7 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                             navController.navigate(route = Comment.getScreenName())
                         },
                         onNavigateToUploadNewsFeed = { _ ->
-                            navController.navigate(route = UploadNewsfeed.getScreenName())
+                            navController.navigate(route = homeNavGraph.getUploadNewsfeedRoute())
                         }
                     )
                 }
@@ -521,7 +496,7 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                         },
                         onNavigateToUploadNewsfeed = { new ->
                             updateNew = new
-                            navController.navigate(route = UploadNewsfeed.getScreenName())
+                            navController.navigate(route = homeNavGraph.getUploadNewsfeedRoute())
                         },
                         onNavigateToCallingScreen = { user ->
                             if (user != null) {
@@ -684,7 +659,7 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                         postInformationViewModel = postInformationViewModel,
                         onNavigateToUploadNews = { new ->
                             updateNew = new
-                            navController.navigate(route = UploadNewsfeed.getScreenName())
+                            navController.navigate(route = homeNavGraph.getUploadNewsfeedRoute())
                         },
                         onShareNews = { message, newToBeShared ->
                             //Basically, share news is similar to post news to newsfeed
@@ -718,7 +693,7 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                             homeViewModel,
                             navigationHandler,
                             onStopCallAndNavigateBack = {
-                                if (navigationHandler.getCurrentRoute() != Home.getScreenName()) {
+                                if (navigationHandler.getCurrentRoute() != homeNavGraph.getHomeRoute()) {
                                     navigationHandler.navigateBack()
                                 }
                                 homeViewModel.resetCallEvent()
@@ -792,7 +767,7 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                             postInformationViewModel = postInformationViewModel,
                             onNavigateToUploadNews = { new ->
                                 updateNew = new
-                                navController.navigate(route = UploadNewsfeed.getScreenName())
+                                navController.navigate(route = homeNavGraph.getUploadNewsfeedRoute())
                             },
                             onShareNews = { message, newToBeShared ->
                                 //Basically, share news is similar to post news to newsfeed
@@ -960,7 +935,7 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                                         groupDetailsViewModel.fetchGroupInfoState.value!!.members
                                     )
                                 }
-                                navController.navigate(route = UploadNewsfeed.getScreenName())
+                                navController.navigate(route = homeNavGraph.getUploadNewsfeedRoute())
                             },
                             onNavigateToCommentScreen = { new ->
                                 selectedNew = new
@@ -1101,7 +1076,7 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                                     groupDetailsViewModel.fetchGroupInfoState.value!!.members
                                 )
                             }
-                            navController.navigate(route = UploadNewsfeed.getScreenName())
+                            navController.navigate(route = homeNavGraph.getUploadNewsfeedRoute())
                         },
                         onNavigateToCommentScreen = { new ->
                             selectedNew = new
@@ -1304,7 +1279,7 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                             navController.navigate(TwoFactorEnabled.getScreenName())
                         },
                         onNavigateToHomeScreen = {
-                            navController.navigate(route = Home.getScreenName())
+                            navController.navigate(route = homeNavGraph.getHomeRoute())
                         },
                         onNavigateToBackupCodeScreen = {
                             navController.navigate(route = BackUpCode.getScreenName())
@@ -1340,7 +1315,7 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                                     false
                                 )
                             } else {
-                                navController.navigate(Home.getScreenName()) {
+                                navController.navigate(homeNavGraph.getHomeRoute()) {
                                     popUpTo(0) {
                                         inclusive = true
                                     }

@@ -1,4 +1,4 @@
-package com.minhtu.firesocialmedia
+package com.minhtu.firesocialmedia.feature.auth
 
 import com.minhtu.firesocialmedia.core.constants.Constants
 import com.minhtu.firesocialmedia.core.domain.entity.forgotpassword.EmailExistResult

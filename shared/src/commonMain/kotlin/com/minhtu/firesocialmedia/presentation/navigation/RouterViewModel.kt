@@ -9,7 +9,7 @@ import com.minhtu.firesocialmedia.core.domain.usecases.common.GetCurrentUserUidU
 import com.minhtu.firesocialmedia.core.domain.usecases.common.GetUserUseCase
 import com.minhtu.firesocialmedia.core.domain.usecases.settings.Get2FAVerifiedStatusUseCase
 import com.minhtu.firesocialmedia.core.domain.usecases.signin.CheckLocalAccountUseCase
-import com.minhtu.firesocialmedia.presentation.home.Home
+import com.minhtu.firesocialmedia.presentation.navigation.HomeNavGraph
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security.twoFA.VerifyOTP
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -39,7 +39,7 @@ class RouterViewModel(
 
         // 2. If already verified 2FA → go Home immediately
         if (get2FAVerifiedStatusUseCase()) {
-            return Home.getScreenName()
+            return HomeNavGraph.HOME_SCREEN_NAME
         }
 
         // 3. Get user
@@ -55,7 +55,7 @@ class RouterViewModel(
         return if (user.twoFAEnabled) {
             VerifyOTP.getScreenName()
         } else {
-            Home.getScreenName()
+            HomeNavGraph.HOME_SCREEN_NAME
         }
     }
 }

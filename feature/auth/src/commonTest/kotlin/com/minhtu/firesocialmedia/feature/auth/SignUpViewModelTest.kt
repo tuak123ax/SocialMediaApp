@@ -1,9 +1,9 @@
-package com.minhtu.firesocialmedia
+package com.minhtu.firesocialmedia.feature.auth
 
 import com.minhtu.firesocialmedia.core.constants.Constants
 import com.minhtu.firesocialmedia.core.domain.repository.AuthenticationRepository
 import com.minhtu.firesocialmedia.core.domain.usecases.signup.SignUpUseCase
-import com.minhtu.firesocialmedia.presentation.signup.SignUpViewModel
+import com.minhtu.firesocialmedia.feature.auth.presentation.signup.SignUpViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher

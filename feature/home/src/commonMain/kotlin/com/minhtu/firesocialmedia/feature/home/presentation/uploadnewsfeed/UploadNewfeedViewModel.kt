@@ -1,4 +1,4 @@
-package com.minhtu.firesocialmedia.presentation.uploadnewsfeed
+package com.minhtu.firesocialmedia.feature.home.presentation.uploadnewsfeed
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -24,6 +24,7 @@ import com.minhtu.firesocialmedia.platform.generateRandomId
 import com.minhtu.firesocialmedia.platform.getCurrentTime
 import com.minhtu.firesocialmedia.platform.getRandomIdForNotification
 import com.minhtu.firesocialmedia.platform.sendMessageToServer
+import com.minhtu.firesocialmedia.presentation.uploadnewsfeed.UploadNewfeedViewModelContract
 import com.rickclephas.kmp.observableviewmodel.ViewModel
 import com.rickclephas.kmp.observableviewmodel.launch
 import kotlinx.coroutines.CoroutineDispatcher
@@ -51,64 +52,64 @@ class UploadNewfeedViewModel(
     private val getAllMembersInGroupUseCase : GetAllMembersInGroupUseCase,
     private val getGroupConfigsUseCase : GetGroupConfigsUseCase,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
-) : ViewModel() {
-    var currentUser : UserInstance? = null
-    fun updateCurrentUser(user: UserInstance) {
+) : ViewModel(), UploadNewfeedViewModelContract {
+    override var currentUser : UserInstance? = null
+    override fun updateCurrentUser(user: UserInstance) {
         currentUser = user
     }
-    var message by mutableStateOf("")
-    fun updateMessage(input : String){
+    override var message by mutableStateOf("")
+    override fun updateMessage(input : String){
         message = input
     }
 
-    var image by mutableStateOf("")
-    fun updateImage(input:String){
+    override var image by mutableStateOf("")
+    override fun updateImage(input:String){
         image = input
         video = ""
     }
 
-    var video by mutableStateOf("")
-    fun updateVideo(input : String) {
+    override var video by mutableStateOf("")
+    override fun updateVideo(input : String) {
         video = input
         image = ""
     }
 
-    var groupId by mutableStateOf("")
-    fun updateGroupId(input : String) {
+    override var groupId by mutableStateOf("")
+    override fun updateGroupId(input : String) {
         groupId = input
     }
-    fun resetGroupId() {
+    override fun resetGroupId() {
         groupId = ""
     }
 
     private var _createPostStatus = MutableStateFlow<Boolean?>(null)
-    var createPostStatus = _createPostStatus.asStateFlow()
+    override var createPostStatus = _createPostStatus.asStateFlow()
     private var _updatePostStatus = MutableStateFlow<Boolean?>(null)
-    var updatePostStatus = _updatePostStatus.asStateFlow()
+    override var updatePostStatus = _updatePostStatus.asStateFlow()
     private var _postError = MutableStateFlow<String?>(null)
-    var postError = _postError.asStateFlow()
+    override var postError = _postError.asStateFlow()
 
-    fun resetPostError(){
+    override fun resetPostError(){
         _postError.value = null
     }
 
     private var _clickBackButton = MutableStateFlow(false)
-    var clickBackButton = _clickBackButton.asStateFlow()
-    fun onClickBackButton() {
+    override var clickBackButton = _clickBackButton.asStateFlow()
+    override fun onClickBackButton() {
         _clickBackButton.value = true
     }
-    fun resetBackValue() {
+    override fun resetBackValue() {
         _clickBackButton.value = false
     }
     private val _accessPermission = MutableStateFlow<DecentralizationType>(DecentralizationType.Public)
-    var accessPermission = _accessPermission.asStateFlow()
-    fun updateAccessPermission(permission : DecentralizationType) {
+    override var accessPermission = _accessPermission.asStateFlow()
+    override fun updateAccessPermission(permission : DecentralizationType) {
         _accessPermission.value = permission
     }
-    fun resetAccessPermission() {
+    override fun resetAccessPermission() {
         _accessPermission.value = DecentralizationType.Public
     }
-    fun createPost(user : UserInstance){
+    override fun createPost(user : UserInstance){
         viewModelScope.launch {
             withContext(ioDispatcher) {
                 val newsRandomId = generateRandomId()
@@ -265,7 +266,7 @@ class UploadNewfeedViewModel(
             }
     }
 
-    fun resetPostStatus() {
+    override fun resetPostStatus() {
         _createPostStatus.value = null
         _updatePostStatus.value = null
         message = ""
@@ -294,7 +295,7 @@ class UploadNewfeedViewModel(
             .filterNotNull())
     }
 
-    fun updateNewInformation(new: NewsInstance) {
+    override fun updateNewInformation(new: NewsInstance) {
         val backgroundScope = CoroutineScope(SupervisorJob() + ioDispatcher)
         backgroundScope.launch {
             if(message.isNotEmpty() || image.isNotEmpty() || video.isNotEmpty()) {
@@ -317,9 +318,9 @@ class UploadNewfeedViewModel(
     }
 
     private val _newsPostedWhenOffline = MutableStateFlow<List<NewsInstance>>(emptyList())
-    var newsPostedWhenOffline = _newsPostedWhenOffline.asStateFlow()
-    val localPathOfSelectedDraft = mutableStateOf("")
-    suspend fun loadNewsPostedWhenOffline() {
+    override var newsPostedWhenOffline = _newsPostedWhenOffline.asStateFlow()
+    override val localPathOfSelectedDraft = mutableStateOf("")
+    override suspend fun loadNewsPostedWhenOffline() {
         _newsPostedWhenOffline.value = loadNewsPostedWhenOfflineUseCase.invoke()
     }
 
@@ -332,7 +333,7 @@ class UploadNewfeedViewModel(
         _newsPostedWhenOffline.value = emptyList()
     }
 
-    fun updatePostData(message: String, image: String, video: String) {
+    override fun updatePostData(message: String, image: String, video: String) {
         updateMessage(message)
         if(image.isNotEmpty()){
             updateImage(image)
@@ -342,16 +343,16 @@ class UploadNewfeedViewModel(
         }
     }
 
-    fun updateLocalPath(localPath: String) {
+    override fun updateLocalPath(localPath: String) {
         localPathOfSelectedDraft.value = localPath
     }
 
     private val _deleteDraftStatus = MutableStateFlow<Boolean?>(null)
-    val deleteDraftStatus = _deleteDraftStatus.asStateFlow()
-    fun resetDeleteDraftStatus() {
+    override val deleteDraftStatus = _deleteDraftStatus.asStateFlow()
+    override fun resetDeleteDraftStatus() {
         _deleteDraftStatus.value = null
     }
-    fun deleteAllDraftPosts() {
+    override fun deleteAllDraftPosts() {
         viewModelScope.launch(ioDispatcher) {
             //Reset delete state before execute new delete operation
             resetDeleteDraftStatus()
@@ -366,7 +367,7 @@ class UploadNewfeedViewModel(
         }
     }
 
-    fun deleteDraftPost(newId : String) {
+    override fun deleteDraftPost(newId : String) {
         viewModelScope.launch(ioDispatcher) {
             //Reset delete state before execute new delete operation
             resetDeleteDraftStatus()
@@ -382,7 +383,7 @@ class UploadNewfeedViewModel(
     }
 
     private val groupMembers = MutableStateFlow<HashMap<String, String>>(HashMap())
-    fun getGroupMembersFromGroupDetails(members: HashMap<String, String>) {
+    override fun getGroupMembersFromGroupDetails(members: HashMap<String, String>) {
         groupMembers.value = members
     }
 }

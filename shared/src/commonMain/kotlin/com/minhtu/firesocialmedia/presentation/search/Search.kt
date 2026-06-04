@@ -32,7 +32,7 @@ import androidx.compose.ui.unit.dp
 import com.minhtu.firesocialmedia.core.constants.TestTag
 import com.minhtu.firesocialmedia.core.domain.entity.news.NewsInstance
 import com.minhtu.firesocialmedia.core.domain.entity.user.UserInstance
-import com.minhtu.firesocialmedia.presentation.home.HomeViewModel
+import com.minhtu.firesocialmedia.presentation.home.HomeViewModelContract
 import com.minhtu.firesocialmedia.utils.UiUtils
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -42,7 +42,7 @@ class Search {
         fun SearchScreen(modifier: Modifier,
                          paddingValues: PaddingValues,
                          searchViewModel: SearchViewModel = koinViewModel(),
-                         homeViewModel: HomeViewModel,
+                         homeViewModel: HomeViewModelContract,
                          localImageLoaderValue : ProvidedValue<*>,
                          onNavigateBack: () -> Unit,
                          onNavigateToUserInformation: (user : UserInstance?) -> Unit,
