@@ -1,11 +1,16 @@
 package com.minhtu.firesocialmedia.domain.serviceimpl.database.supabase
 
 import android.net.Uri
+import com.minhtu.firesocialmedia.domain.serviceimpl.notification.KtorProvider
 import com.minhtu.firesocialmedia.platform.AppConfig
 import com.minhtu.firesocialmedia.platform.getAppContext
-import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.RequestBody.Companion.asRequestBody
-import okhttp3.RequestBody.Companion.toRequestBody
+import io.ktor.client.request.delete
+import io.ktor.client.request.header
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
+import io.ktor.http.ContentType
+import io.ktor.http.contentType
+import io.ktor.http.isSuccess
 import java.io.File
 
 object SupabaseStorage {
@@ -22,43 +27,38 @@ object SupabaseStorage {
             "mov"         -> "video/quicktime"
             else          -> "image/jpeg"
         }
-        val mediaType = mimeType.toMediaType()
 
-        // Support both content:// URIs (media picker) and plain file paths
-        val requestBody = if (filePath.startsWith("content://")) {
+        val bytes = if (filePath.startsWith("content://")) {
             val context = getAppContext()
-            val bytes = context.contentResolver.openInputStream(Uri.parse(filePath))
+            context.contentResolver.openInputStream(Uri.parse(filePath))
                 ?.use { it.readBytes() }
                 ?: throw Exception("Cannot open content URI: $filePath")
-            bytes.toRequestBody(mediaType)
         } else {
-            File(filePath).asRequestBody(mediaType)
+            File(filePath).readBytes()
         }
 
-        val response = SupabaseClient.api.uploadFile(
-            bucket = BUCKET,
-            path = remotePath,
-            auth = "Bearer ${AppConfig.supabaseApiKey}",
-            body = requestBody
-        )
+        val url = "${SupabaseClient.BASE_URL}storage/v1/object/$BUCKET/$remotePath"
+        val response = KtorProvider.client.post(url) {
+            header("Authorization", "Bearer ${AppConfig.supabaseApiKey}")
+            header("x-upsert", "true")
+            contentType(ContentType.parse(mimeType))
+            setBody(bytes)
+        }
 
-        if (!response.isSuccessful) {
-            val errorBody = response.errorBody()?.string() ?: "(no body)"
-            throw Exception("Upload failed: ${response.code()} ${response.message()} | body=$errorBody | path=$remotePath | mimeType=$mimeType")
+        if (!response.status.isSuccess()) {
+            throw Exception("Upload failed: ${response.status.value} ${response.status.description} | path=$remotePath | mimeType=$mimeType")
         }
 
         return "${SupabaseClient.BASE_URL}storage/v1/object/public/$BUCKET/$remotePath"
     }
 
     suspend fun delete(remotePath: String) {
-        val response = SupabaseClient.api.deleteFile(
-            bucket = BUCKET,
-            path = remotePath,
-            auth = "Bearer ${AppConfig.supabaseApiKey}"
-        )
-
-        if (!response.isSuccessful) {
-            throw Exception("Delete failed: ${response.code()} ${response.message()}")
+        val url = "${SupabaseClient.BASE_URL}storage/v1/object/$BUCKET/$remotePath"
+        val response = KtorProvider.client.delete(url) {
+            header("Authorization", "Bearer ${AppConfig.supabaseApiKey}")
+        }
+        if (!response.status.isSuccess()) {
+            throw Exception("Delete failed: ${response.status.value} ${response.status.description}")
         }
     }
 }

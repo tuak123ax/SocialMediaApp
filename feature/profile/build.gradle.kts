@@ -19,7 +19,8 @@ kotlin {
         }
         commonMain.dependencies {
             implementation(project(":core"))
-            implementation(project(":shared"))   // for AuthService, DatabaseService, CryptoService, PlatformContext
+            implementation(project(":shared"))
+            implementation(project(":feature:auth"))
 
             implementation(compose.runtime)
             implementation(compose.foundation)
@@ -32,6 +33,9 @@ kotlin {
             implementation(libs.koin.core)
             implementation(libs.koin.compose)
             implementation(libs.koin.compose.viewmodel)
+
+            // Image loader
+            api(libs.seiko.image.loader)
         }
         commonTest.dependencies {
             implementation(kotlin("test"))
@@ -41,7 +45,7 @@ kotlin {
 }
 
 android {
-    namespace = "com.minhtu.firesocialmedia.feature.auth"
+    namespace = "com.minhtu.firesocialmedia.feature.profile"
     compileSdk = 35
     defaultConfig { minSdk = 24 }
     compileOptions {
@@ -49,3 +53,4 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 }
+

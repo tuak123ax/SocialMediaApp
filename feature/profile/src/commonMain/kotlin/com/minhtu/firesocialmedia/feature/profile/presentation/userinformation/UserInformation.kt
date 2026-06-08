@@ -1,4 +1,4 @@
-package com.minhtu.firesocialmedia.presentation.userinformation
+package com.minhtu.firesocialmedia.feature.profile.presentation.userinformation
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
@@ -58,10 +58,11 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.minhtu.firesocialmedia.core.constants.Constants
 import com.minhtu.firesocialmedia.core.constants.TestTag
-import com.minhtu.firesocialmedia.data.remote.service.imagepicker.ImagePicker
 import com.minhtu.firesocialmedia.core.domain.core.DecentralizationType
 import com.minhtu.firesocialmedia.core.domain.entity.news.NewsInstance
 import com.minhtu.firesocialmedia.core.domain.entity.user.UserInstance
+import com.minhtu.firesocialmedia.core.storage.toStorageUrl
+import com.minhtu.firesocialmedia.data.remote.service.imagepicker.ImagePicker
 import com.minhtu.firesocialmedia.platform.CommonBackHandler
 import com.minhtu.firesocialmedia.platform.getImageBytesFromDrawable
 import com.minhtu.firesocialmedia.platform.showToast
@@ -69,7 +70,6 @@ import com.minhtu.firesocialmedia.presentation.home.HomeViewModelContract
 import com.minhtu.firesocialmedia.presentation.loading.Loading
 import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.friend.FriendViewModel
-import com.minhtu.firesocialmedia.core.storage.toStorageUrl
 import com.minhtu.firesocialmedia.utils.UiUtils
 import com.seiko.imageloader.ui.AutoSizeImage
 import kotlinx.coroutines.flow.collectLatest
@@ -286,7 +286,7 @@ class UserInformation {
                                     userInformationViewModel.uploadedBackgroundUri != null -> userInformationViewModel.uploadedBackgroundUri!!
                                     else -> fetchedUser?.background?.takeIf { it.isNotBlank() } ?: ""
                                 }
-                                DropdownMenuForCoverPhoto(
+                                UiUtils.DropdownMenuForCoverPhoto(
                                     showMenu, isCurrentUser,
                                     coverUrl = coverUrlForView,
                                     { onNavigateToShowImageScreen(coverUrlForView) },
@@ -581,38 +581,6 @@ class UserInformation {
 
         fun getScreenName() : String {
             return "UserInformationScreen"
-        }
-
-        @Composable
-        fun DropdownMenuForCoverPhoto(expanded : Boolean,
-                                      isCurrentUser : Boolean,
-                                      coverUrl: String,
-                                      onViewCoverPhoto : () -> Unit,
-                                      onChangeCoverPhoto : () -> Unit,
-                                      onDismissRequest: () -> Unit) {
-            DropdownMenu(
-                expanded = expanded,
-                onDismissRequest = onDismissRequest
-            ) {
-                if (coverUrl.isNotBlank()) {
-                    DropdownMenuItem(
-                        text = { Text("View cover photo") },
-                        onClick = {
-                            onViewCoverPhoto()
-                            onDismissRequest()
-                        }
-                    )
-                }
-                if(isCurrentUser) {
-                    DropdownMenuItem(
-                        text = { Text("Change cover photo") },
-                        onClick = {
-                            onChangeCoverPhoto()
-                            onDismissRequest()
-                        }
-                    )
-                }
-            }
         }
     }
 }

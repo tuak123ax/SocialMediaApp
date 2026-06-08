@@ -156,7 +156,6 @@ import com.minhtu.firesocialmedia.core.domain.usecases.sync.SyncDataUseCase
 import com.minhtu.firesocialmedia.presentation.calling.audiocall.CallingViewModel
 import com.minhtu.firesocialmedia.presentation.calling.videocall.VideoCallViewModel
 import com.minhtu.firesocialmedia.presentation.comment.CommentViewModel
-import com.minhtu.firesocialmedia.presentation.information.InformationViewModel
 import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
 import com.minhtu.firesocialmedia.presentation.navigation.RouterViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.friend.FriendViewModel
@@ -170,7 +169,6 @@ import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.Ma
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.PollViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.SelectGroupViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.notificationconfigs.NotificationConfigsViewModel
-import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.personal.PersonalInformationViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security.SecuritySettingsViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security.changepassword.ChangePasswordViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security.loginhistory.LoginHistoryViewModel
@@ -181,7 +179,6 @@ import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security
 import com.minhtu.firesocialmedia.presentation.postinformation.PostInformationViewModel
 import com.minhtu.firesocialmedia.presentation.search.SearchViewModel
 import com.minhtu.firesocialmedia.presentation.showimage.ShowImageViewModel
-import com.minhtu.firesocialmedia.presentation.userinformation.UserInformationViewModel
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
@@ -486,7 +483,6 @@ fun appModule() = module {
     viewModel { VideoCallViewModel(get(), get(), get(), get(), get(), get()) }
     viewModel { CommentViewModel(get(), get(), get(), get(), get(), get(), get(), get()) }
     // HomeViewModel registration moved to feature:home homeModule()
-    viewModel { InformationViewModel(get(), get(), get(), get()) }
     viewModel { LoadingViewModel() }
     viewModel { RouterViewModel(get(), get(), get(), get()) }
     viewModel { FriendViewModel(get(), get()) }
@@ -500,7 +496,6 @@ fun appModule() = module {
     viewModel { PollViewModel(get(), get(), get(), get()) }
     viewModel { SelectGroupViewModel(get()) }
     viewModel { NotificationConfigsViewModel() }
-    viewModel { PersonalInformationViewModel(get(), get(), get(), get()) }
     viewModel { ChangePasswordViewModel(get(), get(), get()) }
     viewModel { LoginHistoryViewModel(get(), get(), get(), get(), get()) }
     viewModel { BackUpCodeViewModel(get(), get()) }
@@ -512,5 +507,7 @@ fun appModule() = module {
     viewModel { SearchViewModel() }
     viewModel { ShowImageViewModel(get()) }
     // UploadNewfeedViewModel registration moved to feature:home homeModule()
-    viewModel { UserInformationViewModel(get(), get(), get(), get(), get(), get(), get()) }
+    // UserInformationViewModel registration moved to feature:profile profileModule()
+    // PersonalInformationViewModel registration moved to feature:profile profileModule()
+    // InformationViewModel registration moved to feature:auth authModule()
 }

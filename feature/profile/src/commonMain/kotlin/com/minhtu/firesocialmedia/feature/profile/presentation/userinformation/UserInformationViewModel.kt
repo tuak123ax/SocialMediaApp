@@ -1,4 +1,4 @@
-package com.minhtu.firesocialmedia.presentation.userinformation
+package com.minhtu.firesocialmedia.feature.profile.presentation.userinformation
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf

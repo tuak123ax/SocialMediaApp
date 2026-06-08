@@ -1,4 +1,4 @@
-package com.minhtu.firesocialmedia.presentation.information
+package com.minhtu.firesocialmedia.feature.auth.presentation.information
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -96,3 +96,4 @@ class InformationViewModel(
         }
     }
 }
+

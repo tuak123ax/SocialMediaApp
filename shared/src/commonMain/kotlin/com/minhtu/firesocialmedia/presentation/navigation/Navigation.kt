@@ -49,8 +49,6 @@ import com.minhtu.firesocialmedia.presentation.calling.videocall.VideoCallViewMo
 import com.minhtu.firesocialmedia.presentation.comment.Comment
 
 import com.minhtu.firesocialmedia.presentation.home.HomeViewModelContract
-import com.minhtu.firesocialmedia.presentation.information.Information
-import com.minhtu.firesocialmedia.presentation.information.InformationViewModel
 import com.minhtu.firesocialmedia.presentation.loading.GifLoading
 import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.Screen
@@ -68,8 +66,6 @@ import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.In
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.ManageMembers
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.SelectGroup
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.notificationconfigs.NotificationConfigs
-import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.personal.PersonalInformation
-import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.personal.PersonalInformationViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.privacy.Privacy
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security.SecuritySettings
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security.changepassword.ChangePassword
@@ -85,8 +81,6 @@ import com.minhtu.firesocialmedia.presentation.showimage.ShowImage
 import com.minhtu.firesocialmedia.core.constants.UiConstants
 import com.minhtu.firesocialmedia.core.domain.signin.GoogleSignInHandler
 import com.minhtu.firesocialmedia.presentation.uploadnewsfeed.UploadNewfeedViewModelContract
-import com.minhtu.firesocialmedia.presentation.userinformation.UserInformation
-import com.minhtu.firesocialmedia.presentation.userinformation.UserInformationViewModel
 import com.minhtu.firesocialmedia.utils.UiUtils
 import com.minhtu.firesocialmedia.utils.UiUtils.Companion.BottomNavigationBar
 import com.seiko.imageloader.LocalImageLoader
@@ -117,13 +111,11 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
     val signInViewModel: GoogleSignInHandler = koinInject()
     val authNavGraph: AuthNavGraph = koinInject()
     val homeNavGraph: HomeNavGraph = koinInject()
-    val informationViewModel: InformationViewModel = koinViewModel()
+    val profileNavGraph: ProfileNavGraph = koinInject()
     val uploadNewsfeedViewModel: UploadNewfeedViewModelContract = koinInject()
-    val userInformationViewModel: UserInformationViewModel = koinViewModel()
     val postInformationViewModel: PostInformationViewModel = koinViewModel()
     val createGroupViewModel: CreateGroupViewModel = koinViewModel()
     val groupDetailsViewModel: GroupDetailsViewModel = koinViewModel()
-    val personalInformationViewModel: PersonalInformationViewModel = koinViewModel()
 
     val syncDataUseCase: SyncDataUseCase = koinInject()
 
@@ -285,28 +277,12 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                     navController = navController,
                     loadingViewModel = loadingViewModel,
                     routerViewModel = routerViewModel,
+                    context = context,
+                    platformContext = platformContext,
                     onNavigateToHome = { navController.navigate(route = homeNavGraph.getHomeRoute()) },
-                    onNavigateToInformation = { navController.navigate(route = Information.getScreenName()) },
+                    onNavigateToInformation = { navController.navigate(route = authNavGraph.getInformationRoute()) },
                     onNavigateToVerifyOTP = { navController.navigate(route = VerifyOTP.getScreenName()) }
                 )
-                composable(
-                    route = Information.getScreenName()
-                ) {
-                    val picker = rememberPlatformImagePicker(
-                        context = context,
-                        onImagePicked = { uri -> informationViewModel.updateAvatar(uri) },
-                        onVideoPicked = {}
-                    )
-                    Information.InformationScreen(
-                        platform = platformContext,
-                        imagePicker = picker,
-                        signUpEmail = informationViewModel.pendingSignUpEmail,
-                        signUpPassword = informationViewModel.pendingSignUpPassword,
-                        informationViewModel = informationViewModel,
-                        loadingViewModel = loadingViewModel,
-                        onNavigateToHomeScreen = { navController.navigate(route = homeNavGraph.getHomeRoute()) }
-                    )
-                }
                 homeNavGraph.registerRoutes(
                     navGraphBuilder = this,
                     navController = navController,
@@ -332,7 +308,7 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                     },
                     onNavigateToUserInformation = { user ->
                         selectedUser = user
-                        navController.navigate(route = UserInformation.getScreenName())
+                        navController.navigate(route = profileNavGraph.getUserInformationRoute())
                     },
                     onNavigateToCommentScreen = { new ->
                         selectedNew = new
@@ -447,7 +423,7 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                         },
                         onNavigateToUserInformation = { user ->
                             selectedUser = user
-                            navController.navigate(route = UserInformation.getScreenName())
+                            navController.navigate(route = profileNavGraph.getUserInformationRoute())
                         },
                         onNavigateToShowImageScreen = { image ->
                             selectedImage = image
@@ -462,55 +438,35 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                         }
                     )
                 }
-                composable(
-                    route = UserInformation.getScreenName(),
-                    enterTransition = DefaultNavAnimations.enter,
-                    popEnterTransition = DefaultNavAnimations.popEnter,
-                    exitTransition = DefaultNavAnimations.exit,
-                    popExitTransition = DefaultNavAnimations.popExit
-                ) {
-                    val picker = rememberPlatformImagePicker(
-                        context = context,
-                        onImagePicked = { uri -> userInformationViewModel.updateCover(uri) },
-                        onVideoPicked = {}
-                    )
-                    val isFriend =
-                        selectedUser?.friends?.contains(homeViewModel.currentUser?.uid) == true
-                    UserInformation.UserInformationScreen(
-                        imagePicker = picker,
-                        user = selectedUser,
-                        isCurrentUser = selectedUser == homeViewModel.currentUser,
-                        isFriend = isFriend,
-                        paddingValues = paddingValues,
-                        localImageLoaderValue = localImageLoaderValue,
-                        homeViewModel = homeViewModel,
-                        userInformationViewModel = userInformationViewModel,
-                        loadingViewModel = loadingViewModel,
-                        onNavigateToShowImageScreen = { image ->
-                            selectedImage = image
-                            navController.navigate(route = ShowImage.getScreenName())
-                        },
-                        onNavigateBack = {
-                            userInformationViewModel.resetOldData()
-                            navController.popBackStack()
-                        },
-                        onNavigateToUploadNewsfeed = { new ->
-                            updateNew = new
-                            navController.navigate(route = homeNavGraph.getUploadNewsfeedRoute())
-                        },
-                        onNavigateToCallingScreen = { user ->
-                            if (user != null) {
-                                caller = homeViewModel.currentUser
-                                callee = user
-                                navController.navigate(route = Calling.getScreenName())
-                            }
-                        },
-                        onNavigateToCommentScreen = { new ->
-                            selectedNew = new
-                            navController.navigate(route = Comment.getScreenName())
+                profileNavGraph.registerUserInformationRoute(
+                    navGraphBuilder = this,
+                    navController = navController,
+                    homeViewModel = homeViewModel,
+                    loadingViewModel = loadingViewModel,
+                    paddingValues = paddingValues,
+                    localImageLoaderValue = localImageLoaderValue,
+                    context = context,
+                    getSelectedUser = { selectedUser },
+                    onNavigateToShowImageScreen = { image ->
+                        selectedImage = image
+                        navController.navigate(route = ShowImage.getScreenName())
+                    },
+                    onNavigateToCallingScreen = { user ->
+                        if (user != null) {
+                            caller = homeViewModel.currentUser
+                            callee = user
+                            navController.navigate(route = Calling.getScreenName())
                         }
-                    )
-                }
+                    },
+                    onNavigateToCommentScreen = { new ->
+                        selectedNew = new
+                        navController.navigate(route = Comment.getScreenName())
+                    },
+                    onNavigateToUploadNewsfeed = { new ->
+                        updateNew = new
+                        navController.navigate(route = homeNavGraph.getUploadNewsfeedRoute())
+                    }
+                )
                 composable(
                     route = Comment.getScreenName(),
                     enterTransition = DefaultNavAnimations.enter,
@@ -534,7 +490,7 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                         },
                         onNavigateToUserInformation = { user ->
                             selectedUser = user
-                            navController.navigate(route = UserInformation.getScreenName())
+                            navController.navigate(route = profileNavGraph.getUserInformationRoute())
                         }
                     ) { numberOfComments ->
                         homeViewModel.addCommentCountData(selectedNew.id, numberOfComments)
@@ -557,7 +513,7 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                         homeViewModel = homeViewModel,
                         onNavigateToUserInformation = { user ->
                             selectedUser = user
-                            navController.navigate(route = UserInformation.getScreenName())
+                            navController.navigate(route = profileNavGraph.getUserInformationRoute())
                         },
                         onNavigateToShowImageScreen = { image ->
                             selectedImage = image
@@ -586,7 +542,7 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                         },
                         onNavigateToUserInformation = { user ->
                             selectedUser = user
-                            navController.navigate(route = UserInformation.getScreenName())
+                            navController.navigate(route = profileNavGraph.getUserInformationRoute())
                         },
                         onNavigateToGroupDetails = { groupId ->
                             selectedGroup = GroupInstance(id = groupId)
@@ -614,7 +570,7 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                         },
                         onNavigateToProfileInformation = {
                             selectedUser = homeViewModel.currentUser
-                            navController.navigate(route = PersonalInformation.getScreenName())
+                            navController.navigate(route = profileNavGraph.getPersonalInformationRoute())
                         },
                         onNavigateToGroupScreen = {
                             navController.navigate(route = Group.getScreenName())
@@ -650,7 +606,7 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                         },
                         onNavigateToUserInformation = { user ->
                             selectedUser = user
-                            navController.navigate(route = UserInformation.getScreenName())
+                            navController.navigate(route = profileNavGraph.getUserInformationRoute())
                         },
                         onNavigateBack = {
                             navController.popBackStack()
@@ -758,7 +714,7 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                             },
                             onNavigateToUserInformation = { user ->
                                 selectedUser = user
-                                navController.navigate(route = UserInformation.getScreenName())
+                                navController.navigate(route = profileNavGraph.getUserInformationRoute())
                             },
                             onNavigateBack = {
                                 navController.popBackStack()
@@ -876,7 +832,7 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                 ) {
                     val picker = rememberPlatformImagePicker(
                         context = context,
-                        onImagePicked = { uri -> userInformationViewModel.updateCover(uri) },
+                        onImagePicked = { uri -> groupDetailsViewModel.updateCover(uri) },
                         onVideoPicked = {}
                     )
                     if (selectedGroup != null) {
@@ -898,7 +854,7 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                             },
                             onNavigateToUserInformation = { user ->
                                 selectedUser = user
-                                navController.navigate(route = UserInformation.getScreenName())
+                                navController.navigate(route = profileNavGraph.getUserInformationRoute())
                             },
                             onNavigateBack = {
                                 if (homeViewModel.currentUser != null && homeViewModel.currentUser!!.groups.isNotEmpty()) {
@@ -1039,7 +995,7 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                         },
                         onNavigateToUserInformation = { user ->
                             selectedUser = user
-                            navController.navigate(route = UserInformation.getScreenName())
+                            navController.navigate(route = profileNavGraph.getUserInformationRoute())
                         },
                         onNavigateBack = {
                             if (homeViewModel.currentUser != null && homeViewModel.currentUser!!.groups.isNotEmpty()) {
@@ -1129,7 +1085,7 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                             },
                             onNavigateToUserInformationScreen = { user ->
                                 selectedUser = user
-                                navController.navigate(route = UserInformation.getScreenName())
+                                navController.navigate(route = profileNavGraph.getUserInformationRoute())
                             },
                             onNavigateToSelectGroupScreen = {
                                 //Remove group from current user group list
@@ -1364,33 +1320,13 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                     )
                 }
 
-                composable(
-                    route = PersonalInformation.getScreenName(),
-                    enterTransition = DefaultNavAnimations.enter,
-                    popEnterTransition = DefaultNavAnimations.popEnter,
-                    exitTransition = DefaultNavAnimations.exit,
-                    popExitTransition = DefaultNavAnimations.popExit
-                ) {
-                    val picker = rememberPlatformImagePicker(
-                        context = context,
-                        onImagePicked = { uri -> personalInformationViewModel.onAvatarPicked(uri) },
-                        onVideoPicked = {}
-                    )
-                    if (selectedUser != null) {
-                        PersonalInformation.PersonalInformationScreen(
-                            selectedUser!!,
-                            imagePicker = picker,
-                            paddingValues,
-                            personalInformationViewModel,
-                            onNavigateBack = {
-                                navController.popBackStack()
-                            }
-                        )
-                    } else {
-                        showToast("Cannot get user information now. Please try again!!!")
-                        navController.popBackStack()
-                    }
-                }
+                profileNavGraph.registerPersonalInformationRoute(
+                    navGraphBuilder = this,
+                    navController = navController,
+                    paddingValues = paddingValues,
+                    context = context,
+                    getSelectedUser = { selectedUser }
+                )
 
                 composable(
                     route = CreatePoll.getScreenName(),

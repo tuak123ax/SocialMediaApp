@@ -1,4 +1,4 @@
-package com.minhtu.firesocialmedia.presentation.navigationscreen.setting.personal
+package com.minhtu.firesocialmedia.feature.profile.presentation.personalinformation
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -117,3 +117,4 @@ class PersonalInformationViewModel(
         _updateStatus.value = null
     }
 }
+

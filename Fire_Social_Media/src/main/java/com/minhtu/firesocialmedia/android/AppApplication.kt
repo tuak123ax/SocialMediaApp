@@ -12,6 +12,7 @@ import com.minhtu.firesocialmedia.di.appModule
 import com.minhtu.firesocialmedia.domain.serviceimpl.database.supabase.SupabaseStorageHelper
 import com.minhtu.firesocialmedia.feature.auth.di.authModule
 import com.minhtu.firesocialmedia.feature.home.di.homeModule
+import com.minhtu.firesocialmedia.feature.profile.di.profileModule
 import com.minhtu.firesocialmedia.platform.initPlatformContext
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.GlobalContext.startKoin
@@ -31,7 +32,8 @@ class AppApplication : Application() {
             modules(
                 appModule(),
                 authModule(),
-                homeModule()
+                homeModule(),
+                profileModule()
             )
         }
         createChannelNotification()

@@ -1352,6 +1352,31 @@ class UiUtils {
         }
 
         @Composable
+        fun DropdownMenuForCoverPhoto(
+            expanded: Boolean,
+            isCurrentUser: Boolean,
+            coverUrl: String,
+            onViewCoverPhoto: () -> Unit,
+            onChangeCoverPhoto: () -> Unit,
+            onDismissRequest: () -> Unit
+        ) {
+            DropdownMenu(expanded = expanded, onDismissRequest = onDismissRequest) {
+                if (coverUrl.isNotBlank()) {
+                    DropdownMenuItem(
+                        text = { Text("View cover photo") },
+                        onClick = { onViewCoverPhoto(); onDismissRequest() }
+                    )
+                }
+                if (isCurrentUser) {
+                    DropdownMenuItem(
+                        text = { Text("Change cover photo") },
+                        onClick = { onChangeCoverPhoto(); onDismissRequest() }
+                    )
+                }
+            }
+        }
+
+        @Composable
         fun DropdownMenuForResponse(expanded : Boolean,
                                     homeViewModel: HomeViewModelContract,
                                     selectedNew : NewsInstance,
@@ -1650,7 +1675,7 @@ class UiUtils {
             localImageLoaderValue: ProvidedValue<*>,
             homeViewModel: HomeViewModelContract,
             currentUserId: String = "",
-            pollViewModel: Any? = null,   // PollViewModel cast at runtime
+            pollViewModel: Any? = null,
             onNavigateToUserInformation: (UserInstance?) -> Unit,
             onDelete: (NewsInstance) -> Unit
         ) {

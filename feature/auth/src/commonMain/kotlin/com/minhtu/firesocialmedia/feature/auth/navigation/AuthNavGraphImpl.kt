@@ -9,21 +9,31 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
 import com.minhtu.firesocialmedia.core.constants.UiConstants
 import com.minhtu.firesocialmedia.core.domain.signin.GoogleSignInHandler
+import com.minhtu.firesocialmedia.di.PlatformContext
 import com.minhtu.firesocialmedia.feature.auth.presentation.forgotpassword.ForgotPassword
+import com.minhtu.firesocialmedia.feature.auth.presentation.information.Information
+import com.minhtu.firesocialmedia.feature.auth.presentation.information.InformationViewModel
 import com.minhtu.firesocialmedia.feature.auth.presentation.signin.SignIn
 import com.minhtu.firesocialmedia.feature.auth.presentation.signin.SignInViewModel
 import com.minhtu.firesocialmedia.feature.auth.presentation.signup.SignUp
+import com.minhtu.firesocialmedia.platform.rememberPlatformImagePicker
 import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
 import com.minhtu.firesocialmedia.presentation.navigation.AuthNavGraph
 import com.minhtu.firesocialmedia.presentation.navigation.RouterViewModel
 import org.koin.compose.koinInject
+import org.koin.compose.viewmodel.koinViewModel
 
 class AuthNavGraphImpl : AuthNavGraph {
+
+    override fun getInformationRoute(): String = Information.getScreenName()
+
     override fun registerRoutes(
         navGraphBuilder: NavGraphBuilder,
         navController: NavHostController,
         loadingViewModel: LoadingViewModel,
         routerViewModel: RouterViewModel,
+        context: Any,
+        platformContext: PlatformContext,
         onNavigateToHome: () -> Unit,
         onNavigateToInformation: () -> Unit,
         onNavigateToVerifyOTP: () -> Unit
@@ -74,6 +84,24 @@ class AuthNavGraphImpl : AuthNavGraph {
                         launchSingleTop = true
                     }
                 }
+            )
+        }
+
+        navGraphBuilder.composable(route = Information.getScreenName()) {
+            val informationViewModel: InformationViewModel = koinViewModel()
+            val picker = rememberPlatformImagePicker(
+                context = context,
+                onImagePicked = { uri -> informationViewModel.updateAvatar(uri) },
+                onVideoPicked = {}
+            )
+            Information.InformationScreen(
+                platform = platformContext,
+                imagePicker = picker,
+                signUpEmail = informationViewModel.pendingSignUpEmail,
+                signUpPassword = informationViewModel.pendingSignUpPassword,
+                informationViewModel = informationViewModel,
+                loadingViewModel = loadingViewModel,
+                onNavigateToHomeScreen = onNavigateToHome
             )
         }
     }

@@ -1,4 +1,4 @@
-package com.minhtu.firesocialmedia.presentation.information
+package com.minhtu.firesocialmedia.feature.auth.presentation.information
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -56,15 +56,17 @@ import com.minhtu.firesocialmedia.utils.UiUtils
 import com.minhtu.sharedmodule.ui.theme.avatarGrayBackground
 
 class Information {
-    companion object{
+    companion object {
         @Composable
-        fun InformationScreen(platform: PlatformContext,
-                              imagePicker: ImagePicker,
-                              signUpEmail: String = "",
-                              signUpPassword: String = "",
-                              informationViewModel: InformationViewModel,
-                              loadingViewModel: LoadingViewModel,
-                              onNavigateToHomeScreen: () -> Unit){
+        fun InformationScreen(
+            platform: PlatformContext,
+            imagePicker: ImagePicker,
+            signUpEmail: String = "",
+            signUpPassword: String = "",
+            informationViewModel: InformationViewModel,
+            loadingViewModel: LoadingViewModel,
+            onNavigateToHomeScreen: () -> Unit
+        ) {
             val isLoading by loadingViewModel.isLoading.collectAsState()
             imagePicker.RegisterLauncher { loadingViewModel.hideLoading() }
 
@@ -182,7 +184,8 @@ class Information {
                         },
                         onValueChange = {
                             informationViewModel.updateUsername(it)
-                        }, modifier = Modifier
+                        },
+                        modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 20.dp)
                             .testTag(TestTag.TAG_SELECT_NAME)
@@ -246,7 +249,8 @@ class Information {
                                 .testTag(TestTag.TAG_BUTTON_NEXT)
                                 .semantics {
                                     contentDescription = TestTag.TAG_BUTTON_NEXT
-                                }) {
+                                }
+                        ) {
                             Text(text = "Next Step →")
                         }
                     }
@@ -266,8 +270,9 @@ class Information {
             }
         }
 
-        fun getScreenName(): String{
+        fun getScreenName(): String {
             return "InformationScreen"
         }
     }
 }
+

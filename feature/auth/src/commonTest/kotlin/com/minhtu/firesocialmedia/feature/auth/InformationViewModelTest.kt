@@ -1,4 +1,4 @@
-package com.minhtu.firesocialmedia
+package com.minhtu.firesocialmedia.feature.auth
 
 import com.minhtu.firesocialmedia.core.domain.entity.base.BaseNewsInstance
 import com.minhtu.firesocialmedia.core.domain.entity.comment.CommentInstance
@@ -13,7 +13,7 @@ import com.minhtu.firesocialmedia.core.domain.usecases.common.GetCurrentUserUidU
 import com.minhtu.firesocialmedia.core.domain.usecases.common.GetFCMTokenUseCase
 import com.minhtu.firesocialmedia.core.domain.usecases.information.SaveSignUpInformationUseCase
 import com.minhtu.firesocialmedia.core.domain.usecases.signin.SaveLoginActivityInfoUseCase
-import com.minhtu.firesocialmedia.presentation.information.InformationViewModel
+import com.minhtu.firesocialmedia.feature.auth.presentation.information.InformationViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -181,3 +181,4 @@ class InformationViewModelTest {
         assertEquals(true, viewModel.addInformationStatus.value)
     }
 }
+

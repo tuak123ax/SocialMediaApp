@@ -241,6 +241,7 @@ android {
     compileSdk = 35
     defaultConfig {
         minSdk = 24
+        consumerProguardFiles("consumer-rules.pro")
         buildConfigField(
             "String",
             "APP_SCRIPT_FOR_2FA_AUTHENTICATION_API_KEY",

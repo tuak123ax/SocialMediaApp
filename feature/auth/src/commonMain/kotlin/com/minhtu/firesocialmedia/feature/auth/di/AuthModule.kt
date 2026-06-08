@@ -10,6 +10,8 @@ import com.minhtu.firesocialmedia.core.domain.usecases.signin.CheckLocalAccountU
 import com.minhtu.firesocialmedia.core.domain.usecases.signin.CheckUserExistsUseCase
 import com.minhtu.firesocialmedia.core.domain.usecases.signin.HandleSignInGoogleResultUseCase
 import com.minhtu.firesocialmedia.core.domain.usecases.signin.RememberPasswordUseCase
+import com.minhtu.firesocialmedia.core.domain.usecases.common.GetFCMTokenUseCase
+import com.minhtu.firesocialmedia.core.domain.usecases.information.SaveSignUpInformationUseCase
 import com.minhtu.firesocialmedia.core.domain.usecases.signin.SaveLoginActivityInfoUseCase
 import com.minhtu.firesocialmedia.core.domain.usecases.signin.SignInUseCase
 import com.minhtu.firesocialmedia.core.domain.usecases.signup.SignUpUseCase
@@ -17,6 +19,7 @@ import com.minhtu.firesocialmedia.di.PlatformContext
 import com.minhtu.firesocialmedia.feature.auth.data.repository.AuthenticationRepositoryImpl
 import com.minhtu.firesocialmedia.feature.auth.navigation.AuthNavGraphImpl
 import com.minhtu.firesocialmedia.feature.auth.presentation.forgotpassword.ForgotPasswordViewModel
+import com.minhtu.firesocialmedia.feature.auth.presentation.information.InformationViewModel
 import com.minhtu.firesocialmedia.feature.auth.presentation.signin.SignInViewModel
 import com.minhtu.firesocialmedia.feature.auth.presentation.signup.SignUpViewModel
 import com.minhtu.firesocialmedia.presentation.navigation.AuthNavGraph
@@ -44,6 +47,10 @@ fun authModule() = module {
     // Sign up Use Cases
     factory { SignUpUseCase(get()) }
 
+    // Information Use Cases (sign-up flow)
+    factory { SaveSignUpInformationUseCase(get()) }
+    factory { GetFCMTokenUseCase(get()) }
+
     // Forgot password use cases
     factory { CheckIfEmailExistsUseCase(get()) }
     factory { SendEmailResetPasswordUseCase(get()) }
@@ -56,6 +63,7 @@ fun authModule() = module {
     viewModel { SignInViewModel(get(), get(), get(), get(), get(), get(), get(), get()) }
     viewModel { SignUpViewModel(get()) }
     viewModel { ForgotPasswordViewModel(get(), get()) }
+    viewModel { InformationViewModel(get(), get(), get(), get()) }
 
     // SignInViewModel as singleton GoogleSignInHandler - shared between UI and platform launcher
     single<GoogleSignInHandler> {

@@ -1,4 +1,4 @@
-package com.minhtu.firesocialmedia.presentation.navigationscreen.setting.personal
+package com.minhtu.firesocialmedia.feature.profile.presentation.personalinformation
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border

@@ -48,7 +48,7 @@ import com.minhtu.firesocialmedia.utils.UiUtils.Companion.IconAndTitle
 import com.minhtu.firesocialmedia.utils.UiUtils.Companion.PasswordVisibilityIcon
 import com.minhtu.firesocialmedia.utils.UiUtils.Companion.SubTitle
 import com.minhtu.firesocialmedia.utils.UiUtils.Companion.TextFieldWithLeadingIcon
-import com.minhtu.firesocialmedia.presentation.information.InformationViewModel
+import com.minhtu.firesocialmedia.feature.auth.presentation.information.InformationViewModel
 import org.koin.compose.viewmodel.koinViewModel
 
 class SignUp {
