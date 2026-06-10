@@ -16,7 +16,7 @@ import com.minhtu.firesocialmedia.domain.serviceimpl.call.CallActionBroadcastRec
 import com.minhtu.firesocialmedia.domain.serviceimpl.call.CallNotificationManager.Companion.NOTIF_ID
 import com.minhtu.firesocialmedia.domain.serviceimpl.call.CallSoundManager
 import com.minhtu.firesocialmedia.platform.generateImageLoader
-import com.minhtu.firesocialmedia.presentation.calling.incomingcall.IncomingCallScreen
+import com.minhtu.firesocialmedia.feature.calling.presentation.incomingcall.IncomingCallScreen
 import com.minhtu.firesocialmedia.ui.theme.FireSocialMediaCommonTheme
 import com.seiko.imageloader.LocalImageLoader
 

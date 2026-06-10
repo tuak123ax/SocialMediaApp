@@ -154,3 +154,83 @@
 -keepclassmembers class * extends androidx.lifecycle.ViewModel {
     <init>(...);
 }
+
+############################################
+# Calling module – WebRTC (stream-webrtc-android / org.webrtc)
+#
+# AndroidAudioCallService, AndroidPlatformActualImpl and the
+# SurfaceViewRenderer-based video views all reference WebRTC classes
+# at runtime. R8 must not rename or remove any of them.
+############################################
+-keep class org.webrtc.** { *; }
+-keep interface org.webrtc.** { *; }
+-keepclassmembers class org.webrtc.** { *; }
+-dontwarn org.webrtc.**
+
+# EglBase context is accessed via reflection inside SurfaceViewRenderer
+-keep class org.webrtc.EglBase { *; }
+-keep class org.webrtc.EglBase$Context { *; }
+
+############################################
+# Calling module – kotlinx.serialization
+#
+# CallForegroundService encodes/decodes UserDTO, OfferAnswerDTO, and
+# IceCandidateDTO via Json.encodeToString / Json.decodeFromString.
+# The kotlinx.serialization plugin generates companion-object serializers
+# that R8 strips without these rules, causing SerializationException.
+############################################
+-keepattributes *Annotation*, InnerClasses
+-dontnote kotlinx.serialization.**
+-dontwarn kotlinx.serialization.**
+
+# Keep the serialization plugin's generated companion objects and descriptors
+-keepclassmembers class kotlinx.serialization.json.** {
+    *** Companion;
+}
+-keepclasseswithmembers class * {
+    @kotlinx.serialization.Serializable <methods>;
+}
+
+# Keep serializer() methods and companion objects on all @Serializable classes
+-keepclassmembers @kotlinx.serialization.Serializable class * {
+    static ** serializer(...);
+    static ** $serializer;
+    kotlinx.serialization.KSerializer serializer(...);
+    ** Companion;
+    ** INSTANCE;
+}
+
+# Keep all generated $serializer inner classes
+-keep class **$$serializer { *; }
+
+# Keep the kotlinx.serialization runtime itself
+-keep class kotlinx.serialization.** { *; }
+-keepclassmembers class kotlinx.serialization.** { *; }
+
+############################################
+# Calling module – Android Service / BroadcastReceiver components
+#
+# CallForegroundService and CallActionBroadcastReceiver are registered
+# in the manifest and started/received by the system. Their class names
+# must be preserved exactly.
+############################################
+-keep class com.minhtu.firesocialmedia.domain.serviceimpl.call.CallForegroundService { *; }
+-keep class com.minhtu.firesocialmedia.domain.serviceimpl.call.CallActionBroadcastReceiver { *; }
+
+# Keep all Service / BroadcastReceiver subclasses in general
+-keep class * extends android.app.Service { *; }
+-keep class * extends android.content.BroadcastReceiver { *; }
+
+############################################
+# Calling module – CallStatus enum
+#
+# CallStatus is used as a @Serializable field inside AudioCallSessionDTO.
+# Its enum constant names must be preserved so kotlinx.serialization can
+# deserialize the string value back to the correct enum entry.
+############################################
+-keepclassmembers enum com.minhtu.firesocialmedia.core.domain.entity.call.CallStatus {
+    public static **[] values();
+    public static ** valueOf(java.lang.String);
+    *;
+}
+

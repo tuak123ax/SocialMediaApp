@@ -78,6 +78,7 @@ dependencies {
     implementation(projects.feature.auth)
     implementation(projects.feature.home)
     implementation(projects.feature.profile)
+    implementation(projects.feature.calling)
     implementation(platform("androidx.compose:compose-bom:2025.02.00"))
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-tooling-preview")

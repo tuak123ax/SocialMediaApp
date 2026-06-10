@@ -1,4 +1,4 @@
-package com.minhtu.firesocialmedia.presentation.calling.videocall
+package com.minhtu.firesocialmedia.feature.calling.presentation.videocall
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -68,7 +68,6 @@ class VideoCall {
             loadingViewModel: LoadingViewModel,
             onNavigateBack: () -> Unit
         ) {
-            // Use ViewModel-stored params when composable params are stale (e.g. after multiple decline/accept)
             val pendingSessionId by videoCallViewModel.pendingVideoCallSessionId
             val pendingOffer by videoCallViewModel.pendingRemoteVideoOffer
             val effectiveSessionId = sessionId.ifEmpty { pendingSessionId }
@@ -78,7 +77,6 @@ class VideoCall {
                 return "${offer.initiator}|${offer.type}|${offer.sdp.hashCode()}"
             }
 
-            // Control button states
             var isMicMuted by remember { mutableStateOf(false) }
             var isCameraOff by remember { mutableStateOf(false) }
             val isLoading by loadingViewModel.isLoading.collectAsState()
@@ -86,13 +84,10 @@ class VideoCall {
             var isExitPending by remember { mutableStateOf(false) }
             var exitButtonColor by remember { mutableStateOf(videoCallButtonColor) }
             val coroutineScope = rememberCoroutineScope()
-            // Video call background is always black; use a white-tinted shadow so buttons
-            // stand out from the dark background regardless of the system theme.
             val buttonShadowAmbient = Color.White.copy(alpha = 0.15f)
             val buttonShadowSpot = Color.White.copy(alpha = 0.30f)
 
             LaunchedEffect(Unit) {
-                // Callee path: ensure we don't navigate back due to stale answerVideoCallState from any other flow
                 if (effectiveOffer != null) {
                     CallEventFlow.answerVideoCallState.value = true
                 }
@@ -100,14 +95,7 @@ class VideoCall {
                     onGranted = {
                         if (caller != null && callee != null) {
                             loadingViewModel.showLoading()
-                            videoCallViewModel.startVideoCall(
-                                effectiveOffer,
-                                caller,
-                                callee,
-                                currentUserId,
-                                effectiveSessionId
-                            )
-                            // Persist "video already accepted in this call" so next upgrades auto-join.
+                            videoCallViewModel.startVideoCall(effectiveOffer, caller, callee, currentUserId, effectiveSessionId)
                             CallEventFlow.hasAcceptedVideoInCurrentCall.value = true
                             videoCallViewModel.clearPendingVideoCallParams()
                         } else {
@@ -141,31 +129,16 @@ class VideoCall {
                 }
             }
 
-            // If this screen is still visible (e.g. showing black remote view after peer returned to audio),
-            // auto-handle the next incoming video offer so renegotiation resumes without requiring a new popup.
             LaunchedEffect(incomingVideoOfferState?.sdp, incomingVideoOfferState?.initiator) {
                 val incomingOffer = incomingVideoOfferState
                 val incomingKey = offerKey(incomingOffer)
-                if (incomingOffer != null &&
-                    incomingOffer.initiator != currentUserId &&
-                    incomingKey != null
-                ) {
-                    // Always consume the videoCallState immediately so the audio screen
-                    // (still in the back stack) doesn't re-navigate during the
-                    // clearVideoStateAfterNavigate 200ms delay window.
+                if (incomingOffer != null && incomingOffer.initiator != currentUserId && incomingKey != null) {
                     CallEventFlow.videoCallState.value = null
-
                     if (incomingKey != lastHandledOfferKey) {
                         if (caller != null && callee != null && effectiveSessionId.isNotEmpty()) {
                             loadingViewModel.showLoading()
                             lastHandledOfferKey = incomingKey
-                            videoCallViewModel.startVideoCall(
-                                incomingOffer,
-                                caller,
-                                callee,
-                                currentUserId,
-                                effectiveSessionId
-                            )
+                            videoCallViewModel.startVideoCall(incomingOffer, caller, callee, currentUserId, effectiveSessionId)
                             CallEventFlow.hasAcceptedVideoInCurrentCall.value = true
                         }
                     }
@@ -177,11 +150,7 @@ class VideoCall {
                 if(callEventState != null) {
                     logMessage("VideoCallScreen", { callEventState.toString() })
                     when(callEventState) {
-                        CallEvent.StopVideoCall -> {
-                            logMessage("VideoCallScreen", { "StopVideoCall" })
-                            onNavigateBack()
-                        }
-
+                        CallEvent.StopVideoCall -> { logMessage("VideoCallScreen", { "StopVideoCall" }); onNavigateBack() }
                         else -> {}
                     }
                 }
@@ -190,185 +159,94 @@ class VideoCall {
             val localVideoTrackState = CallEventFlow.localVideoTrack.collectAsState(initial = null)
             val remoteVideoTrackState = CallEventFlow.remoteVideoTrack.collectAsState(initial = null)
 
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color.Black)
-            ) {
-
+            Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
                 if (localVideoTrackState.value != null && remoteVideoTrackState.value != null) {
                     loadingViewModel.hideLoading()
                 }
-
                 WebRTCVideoView(
                     localVideoTrackState.value as? WebRTCVideoTrack,
                     remoteVideoTrackState.value as? WebRTCVideoTrack,
                     isCameraOff,
                     modifier = Modifier.fillMaxSize()
                 )
+                if (isLoading) { Loading.LoadingScreen() }
 
-                if (isLoading) {
-                    Loading.LoadingScreen()
-                }
-
-                // Bottom control buttons
                 Row(
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .padding(bottom = 40.dp),
+                    modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 40.dp),
                     horizontalArrangement = Arrangement.spacedBy(24.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     var speakerType by remember { mutableStateOf<SpeakerType>(SpeakerType.Audio) }
 
-                    // Mic Button
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier
-                            .size(56.dp)
+                    Box(contentAlignment = Alignment.Center,
+                        modifier = Modifier.size(56.dp)
                             .shadow(8.dp, CircleShape, ambientColor = buttonShadowAmbient, spotColor = buttonShadowSpot)
-                            .clip(CircleShape)
-                            .background(if (isMicMuted) inactiveColor else activeColor)
-                    ) {
-                        FloatingActionButton(
-                            onClick = {
-                                if (!isExitPending) {
-                                    isMicMuted = !isMicMuted
-                                    videoCallViewModel.updateMicStatus(isMicMuted)
-                                }
-                            },
-                            containerColor = Color.Transparent,
-                            elevation = FloatingActionButtonDefaults.elevation(0.dp)
-                        ) {
-                            Icon(
-                                imageVector = if (isMicMuted)
-                                    Icons.Default.MicOff
-                                else
-                                    Icons.Default.Mic,
-                                contentDescription = "Toggle Mic",
-                                tint = Color.White
-                            )
+                            .clip(CircleShape).background(if (isMicMuted) inactiveColor else activeColor)) {
+                        FloatingActionButton(onClick = {
+                            if (!isExitPending) { isMicMuted = !isMicMuted; videoCallViewModel.updateMicStatus(isMicMuted) }
+                        }, containerColor = Color.Transparent, elevation = FloatingActionButtonDefaults.elevation(0.dp)) {
+                            Icon(imageVector = if (isMicMuted) Icons.Default.MicOff else Icons.Default.Mic,
+                                contentDescription = "Toggle Mic", tint = Color.White)
                         }
                     }
 
-                    // Speaker Button
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier
-                            .size(56.dp)
+                    Box(contentAlignment = Alignment.Center,
+                        modifier = Modifier.size(56.dp)
                             .shadow(8.dp, CircleShape, ambientColor = buttonShadowAmbient, spotColor = buttonShadowSpot)
-                            .clip(CircleShape)
-                            .background(
-                                if (speakerType == SpeakerType.Speaker)
-                                    activeColor
-                                else
-                                    inactiveColor
-                            )
-                    ) {
-                        FloatingActionButton(
-                            onClick = {
-                                if (!isExitPending) {
-                                    speakerType =
-                                        if (speakerType == SpeakerType.Audio)
-                                            SpeakerType.Speaker
-                                        else
-                                            SpeakerType.Audio
-                                    videoCallViewModel.updateSpeakerStatus(speakerType)
-                                }
-                            },
-                            containerColor = Color.Transparent,
-                            elevation = FloatingActionButtonDefaults.elevation(0.dp)
-                        ) {
-                            Icon(
-                                imageVector = if (speakerType == SpeakerType.Speaker)
-                                    Icons.Default.VolumeUp
-                                else
-                                    Icons.Default.Headset,
-                                contentDescription = "Toggle Speaker",
-                                tint = Color.White
-                            )
-                        }
-                    }
-
-                    // Exit Button
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier
-                            .size(56.dp)
-                            .shadow(8.dp, CircleShape, ambientColor = buttonShadowAmbient, spotColor = buttonShadowSpot)
-                            .clip(CircleShape)
-                            .background(exitButtonColor)
-                            .testTag(TestTag.TAG_BUTTON_EXIT_VIDEO_CALL)
-                            .semantics {
-                                contentDescription = TestTag.TAG_BUTTON_EXIT_VIDEO_CALL
+                            .clip(CircleShape).background(if (speakerType == SpeakerType.Speaker) activeColor else inactiveColor)) {
+                        FloatingActionButton(onClick = {
+                            if (!isExitPending) {
+                                speakerType = if (speakerType == SpeakerType.Audio) SpeakerType.Speaker else SpeakerType.Audio
+                                videoCallViewModel.updateSpeakerStatus(speakerType)
                             }
-                    ) {
-                        FloatingActionButton(
-                            onClick = {
-                                if (!isExitPending) {
-                                    isExitPending = true
-                                    exitButtonColor = callStopPendingColor
-                                    coroutineScope.launch {
-                                        delay(500L)
-                                        logMessage("ClickBack", { "Back to audio screen" })
-                                        CallEventFlow.localVideoTrack.value = null
-                                        videoCallViewModel.stopVideoCallResources()
-                                        videoCallViewModel.clearPendingVideoCallParams()
-                                        onNavigateBack()
-                                    }
-                                }
-                            },
-                            containerColor = Color.Transparent,
-                            elevation = FloatingActionButtonDefaults.elevation(0.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.ExitToApp,
-                                contentDescription = "Back",
-                                tint = Color.White
-                            )
+                        }, containerColor = Color.Transparent, elevation = FloatingActionButtonDefaults.elevation(0.dp)) {
+                            Icon(imageVector = if (speakerType == SpeakerType.Speaker) Icons.Default.VolumeUp else Icons.Default.Headset,
+                                contentDescription = "Toggle Speaker", tint = Color.White)
                         }
                     }
 
-                    // Camera Button
-                    val hasLocalVideoTrack = localVideoTrackState.value != null
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier
-                            .size(56.dp)
+                    Box(contentAlignment = Alignment.Center,
+                        modifier = Modifier.size(56.dp)
                             .shadow(8.dp, CircleShape, ambientColor = buttonShadowAmbient, spotColor = buttonShadowSpot)
-                            .clip(CircleShape)
-                            .background(
-                                if (!hasLocalVideoTrack) videoCallButtonColor
-                                else if (isCameraOff) inactiveColor
-                                else activeColor
-                            )
-                    ) {
-                        FloatingActionButton(
-                            onClick = {
-                                if (!isExitPending) {
-                                    isCameraOff = !isCameraOff
-                                    videoCallViewModel.updateCameraStatus(isCameraOff)
+                            .clip(CircleShape).background(exitButtonColor)
+                            .testTag(TestTag.TAG_BUTTON_EXIT_VIDEO_CALL)
+                            .semantics { contentDescription = TestTag.TAG_BUTTON_EXIT_VIDEO_CALL }) {
+                        FloatingActionButton(onClick = {
+                            if (!isExitPending) {
+                                isExitPending = true; exitButtonColor = callStopPendingColor
+                                coroutineScope.launch {
+                                    delay(500L)
+                                    logMessage("ClickBack", { "Back to audio screen" })
+                                    CallEventFlow.localVideoTrack.value = null
+                                    videoCallViewModel.stopVideoCallResources()
+                                    videoCallViewModel.clearPendingVideoCallParams()
+                                    onNavigateBack()
                                 }
-                            },
-                            containerColor = Color.Transparent,
-                            elevation = FloatingActionButtonDefaults.elevation(0.dp)
-                        ) {
-                            Icon(
-                                imageVector = if (isCameraOff)
-                                    Icons.Default.VideocamOff
-                                else
-                                    Icons.Default.Videocam,
-                                contentDescription = "Toggle Camera",
-                                tint = Color.White
-                            )
+                            }
+                        }, containerColor = Color.Transparent, elevation = FloatingActionButtonDefaults.elevation(0.dp)) {
+                            Icon(imageVector = Icons.AutoMirrored.Filled.ExitToApp, contentDescription = "Back", tint = Color.White)
+                        }
+                    }
+
+                    val hasLocalVideoTrack = localVideoTrackState.value != null
+                    Box(contentAlignment = Alignment.Center,
+                        modifier = Modifier.size(56.dp)
+                            .shadow(8.dp, CircleShape, ambientColor = buttonShadowAmbient, spotColor = buttonShadowSpot)
+                            .clip(CircleShape).background(
+                                if (!hasLocalVideoTrack) videoCallButtonColor
+                                else if (isCameraOff) inactiveColor else activeColor)) {
+                        FloatingActionButton(onClick = {
+                            if (!isExitPending) { isCameraOff = !isCameraOff; videoCallViewModel.updateCameraStatus(isCameraOff) }
+                        }, containerColor = Color.Transparent, elevation = FloatingActionButtonDefaults.elevation(0.dp)) {
+                            Icon(imageVector = if (isCameraOff) Icons.Default.VideocamOff else Icons.Default.Videocam,
+                                contentDescription = "Toggle Camera", tint = Color.White)
                         }
                     }
                 }
             }
         }
 
-        fun getScreenName() : String {
-            return "VideoCallScreen"
-        }
+        fun getScreenName() : String = "VideoCallScreen"
     }
 }
+

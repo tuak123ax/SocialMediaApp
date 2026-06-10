@@ -1,4 +1,4 @@
-package com.minhtu.firesocialmedia.presentation.calling.videocall
+package com.minhtu.firesocialmedia.feature.calling.presentation.videocall
 
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
@@ -45,7 +45,6 @@ class VideoCallViewModel(
         lastStartVideoCallSignature = startSignature
         isStartingVideoCall = true
         logMessage("startVideoCall", { sessionId })
-        logMessage("startVideoCall", { "currentUserId: $currentUserId" })
         viewModelScope.launch {
             withContext(ioDispatcher) {
                 try {
@@ -59,53 +58,31 @@ class VideoCallViewModel(
         }
     }
 
-    fun requestPermissionsAndStartVideoCall(
-        onGranted: () -> Unit,
-        onDenied: () -> Unit) {
+    fun requestPermissionsAndStartVideoCall(onGranted: () -> Unit, onDenied: () -> Unit) {
         viewModelScope.launch {
-            val granted = withContext(Dispatchers.IO) {
-                requestCameraAndAudioPermissionsUseCase.invoke()
-            }
-            if (granted) {
-                onGranted()
-            } else {
-                onDenied()
-            }
+            val granted = withContext(Dispatchers.IO) { requestCameraAndAudioPermissionsUseCase.invoke() }
+            if (granted) onGranted() else onDenied()
         }
     }
 
     fun updateMicStatus(micMuted: Boolean) {
-        viewModelScope.launch {
-            updateMicStatusUseCase.invoke(micMuted)
-        }
+        viewModelScope.launch { updateMicStatusUseCase.invoke(micMuted) }
     }
 
     fun updateCameraStatus(cameraOff: Boolean) {
-        viewModelScope.launch(ioDispatcher) {
-            updateCameraStatusUseCase.invoke(cameraOff)
-        }
+        viewModelScope.launch(ioDispatcher) { updateCameraStatusUseCase.invoke(cameraOff) }
     }
 
     val currentSpeakerType = mutableStateOf<SpeakerType>(SpeakerType.Audio)
     fun updateSpeakerStatus(speakerType: SpeakerType) {
         currentSpeakerType.value = speakerType
-        viewModelScope.launch(ioDispatcher) {
-            updateSpeakerStatusUseCase.invoke(speakerType)
-        }
+        viewModelScope.launch(ioDispatcher) { updateSpeakerStatusUseCase.invoke(speakerType) }
     }
 
-    /**
-     * Properly release video-specific resources (capturer, source, track, sender) so
-     * the next startVideoCall creates everything fresh.  This avoids the stale-track
-     * issue where a reused VideoTrack no longer delivers frames to a new renderer.
-     */
     fun stopVideoCallResources() {
-        viewModelScope.launch(ioDispatcher) {
-            manageCallStateUseCase.stopVideoCallResources()
-        }
+        viewModelScope.launch(ioDispatcher) { manageCallStateUseCase.stopVideoCallResources() }
     }
 
-    /** Params for the current video call navigation — set by Navigation before navigating so VideoCall screen has them even if composable state is stale. */
     var pendingVideoCallSessionId = mutableStateOf("")
     var pendingRemoteVideoOffer = mutableStateOf<OfferAnswer?>(null)
 
@@ -119,3 +96,4 @@ class VideoCallViewModel(
         pendingRemoteVideoOffer.value = null
     }
 }
+

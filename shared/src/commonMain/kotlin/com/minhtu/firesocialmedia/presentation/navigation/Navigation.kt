@@ -42,10 +42,6 @@ import com.minhtu.firesocialmedia.platform.generateImageLoader
 import com.minhtu.firesocialmedia.platform.rememberPlatformImagePicker
 import com.minhtu.firesocialmedia.platform.setupSignInLauncher
 import com.minhtu.firesocialmedia.platform.showToast
-import com.minhtu.firesocialmedia.presentation.calling.audiocall.Calling
-import com.minhtu.firesocialmedia.presentation.calling.audiocall.CallingViewModel
-import com.minhtu.firesocialmedia.presentation.calling.videocall.VideoCall
-import com.minhtu.firesocialmedia.presentation.calling.videocall.VideoCallViewModel
 import com.minhtu.firesocialmedia.presentation.comment.Comment
 
 import com.minhtu.firesocialmedia.presentation.home.HomeViewModelContract
@@ -94,8 +90,6 @@ import org.koin.compose.viewmodel.koinViewModel
 @Composable
 fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
     val navController = rememberNavController()
-    val navigationHandler =
-        com.minhtu.firesocialmedia.platform.rememberNavigationHandler(navController)
     var selectedImage = ""
     var selectedUser: UserInstance? = null
     lateinit var selectedNew: NewsInstance
@@ -106,12 +100,11 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
     val homeViewModel: HomeViewModelContract = koinInject()
     val loadingViewModel: LoadingViewModel = koinViewModel()
     val routerViewModel: RouterViewModel = koinViewModel()
-    val callingViewModel: CallingViewModel = koinViewModel()
-    val videoCallViewModel: VideoCallViewModel = koinViewModel()
     val signInViewModel: GoogleSignInHandler = koinInject()
     val authNavGraph: AuthNavGraph = koinInject()
     val homeNavGraph: HomeNavGraph = koinInject()
     val profileNavGraph: ProfileNavGraph = koinInject()
+    val callingNavGraph: CallingNavGraph = koinInject()
     val uploadNewsfeedViewModel: UploadNewfeedViewModelContract = koinInject()
     val postInformationViewModel: PostInformationViewModel = koinViewModel()
     val createGroupViewModel: CreateGroupViewModel = koinViewModel()
@@ -219,7 +212,7 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
 
     LaunchedEffect(navigateToVideoCallTrigger) {
         if (navigateToVideoCallTrigger > 0) {
-            navController.navigate(route = VideoCall.getScreenName())
+            navController.navigate(route = callingNavGraph.getVideoCallRoute())
         }
     }
 
@@ -325,7 +318,7 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                             if (callingRequestData.calleeId == homeViewModel.currentUser?.uid) homeViewModel.currentUser else homeViewModel.findUserById(
                                 callingRequestData.calleeId
                             )
-                        navController.navigate(route = Calling.getScreenName())
+                        navController.navigate(route = callingNavGraph.getCallingRoute())
                     },
                     onNavigateToCallingScreenWithUI = {
                         sessionId = SharedCallData.sessionId
@@ -337,7 +330,7 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                             if (SharedCallData.calleeId == homeViewModel.currentUser?.uid) homeViewModel.currentUser else homeViewModel.findUserById(
                                 SharedCallData.calleeId
                             )
-                        navController.navigate(route = Calling.getScreenName())
+                        navController.navigate(route = callingNavGraph.getCallingRoute())
                     },
                     onNavigateToPostInformation = {
                         val uri = Uri.parse(DeepLinksData.deepLink)
@@ -455,7 +448,7 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                         if (user != null) {
                             caller = homeViewModel.currentUser
                             callee = user
-                            navController.navigate(route = Calling.getScreenName())
+                            navController.navigate(route = callingNavGraph.getCallingRoute())
                         }
                     },
                     onNavigateToCommentScreen = { new ->
@@ -629,66 +622,25 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                         }
                     )
                 }
-                composable(
-                    route = Calling.getScreenName(),
-                    enterTransition = DefaultNavAnimations.enter,
-                    popEnterTransition = DefaultNavAnimations.popEnter,
-                    exitTransition = DefaultNavAnimations.exit,
-                    popExitTransition = DefaultNavAnimations.popExit
-                ) {
-                    if (caller != null && callee != null) {
-                        Calling.CallingScreen(
-                            localImageLoaderValue = localImageLoaderValue,
-                            sessionId,
-                            callee!!,
-                            caller!!,
-                            homeViewModel.currentUser,
-                            remoteOffer,
-                            SharedCallData.navigateToCallingScreenFromNotification,
-                            callingViewModel,
-                            homeViewModel,
-                            navigationHandler,
-                            onStopCallAndNavigateBack = {
-                                if (navigationHandler.getCurrentRoute() != homeNavGraph.getHomeRoute()) {
-                                    navigationHandler.navigateBack()
-                                }
-                                homeViewModel.resetCallEvent()
-                            },
-                            onNavigateToVideoCall = { sessionID, videoOffer ->
-                                videoCallViewModel.setPendingVideoCallParams(sessionID, videoOffer)
-                                sessionId = sessionID
-                                remoteVideoOffer = videoOffer
-                                navigateToVideoCallTrigger++
-                            },
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .background(MaterialTheme.colorScheme.background)
-                        )
-                    } else {
-                        showToast("Cannot get caller and callee information. Cannot show calling screen!")
-                        navController.popBackStack()
-                    }
-                }
-                composable(
-                    route = VideoCall.getScreenName(),
-                    enterTransition = DefaultNavAnimations.enter,
-                    popEnterTransition = DefaultNavAnimations.popEnter,
-                    exitTransition = DefaultNavAnimations.exit,
-                    popExitTransition = DefaultNavAnimations.popExit
-                ) {
-                    VideoCall.VideoCallScreen(
-                        sessionId,
-                        caller,
-                        callee,
-                        homeViewModel.currentUser?.uid,
-                        remoteVideoOffer,
-                        videoCallViewModel,
-                        loadingViewModel,
-                        onNavigateBack = {
-                            navigationHandler.navigateBack()
-                        }
-                    )
-                }
+                callingNavGraph.registerRoutes(
+                    navGraphBuilder = this,
+                    navController = navController,
+                    homeViewModel = homeViewModel,
+                    loadingViewModel = loadingViewModel,
+                    localImageLoaderValue = localImageLoaderValue,
+                    getCallee = { callee },
+                    getCaller = { caller },
+                    getSessionId = { sessionId },
+                    getRemoteOffer = { remoteOffer },
+                    getRemoteVideoOffer = { remoteVideoOffer },
+                    onSetRemoteVideoOffer = { remoteVideoOffer = it },
+                    onSetSessionId = { sessionId = it },
+                    onNavigateToVideoCall = { navigateToVideoCallTrigger++ },
+                    onStopCallAndNavigateBack = {
+                        homeViewModel.resetCallEvent()
+                    },
+                    getHomeRoute = { homeNavGraph.getHomeRoute() }
+                )
                 composable(
                     route = "news/{newsId}"
                 ) { backStackEntry ->

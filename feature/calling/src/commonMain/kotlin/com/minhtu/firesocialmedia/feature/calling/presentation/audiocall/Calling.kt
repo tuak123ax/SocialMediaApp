@@ -1,4 +1,4 @@
-package com.minhtu.firesocialmedia.presentation.calling.audiocall
+package com.minhtu.firesocialmedia.feature.calling.presentation.audiocall
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -109,7 +109,6 @@ class Calling {
             val currentSpeakerType by callingViewModel.currentSpeakerType
             var isStopCallPending by remember { mutableStateOf(false) }
 
-            // Apply mute/speaker state to the call service when call becomes active so remote audio is heard from the start
             LaunchedEffect(acceptCall, isCalling) {
                 if (acceptCall || isCalling) {
                     callingViewModel.syncAudioStateToService()
@@ -121,10 +120,7 @@ class Calling {
                     onTimeOver = {
                         backgroundButton = null
                         isRunning = false
-                        callingViewModel.stopCallAction(
-                            currentUser!!.uid,
-                            isCalling
-                        )
+                        callingViewModel.stopCallAction(currentUser!!.uid, isCalling)
                         sendNotification("", sessionId, caller, callee, "STOP_CALL")
                     },
                     isCallAccepted = { acceptCall }
@@ -139,8 +135,7 @@ class Calling {
                                 if(!navigateToCallingScreenFromNotification){
                                     callingViewModel.startCall(caller, callee)
                                 } else {
-                                    logMessage("navigateToCallingScreenFromNotification",
-                                        { "caller start timer" })
+                                    logMessage("navigateToCallingScreenFromNotification", { "caller start timer" })
                                     startCount = true
                                     isRunning = true
                                     acceptCall = true
@@ -172,7 +167,6 @@ class Calling {
                             isRunning = true
                             acceptCall = true
                         }
-
                         CallEvent.CallEnded -> {
                             if(callee.name == currentUser?.name) {
                                 showToast(caller.name + " stopped the call!")
@@ -186,7 +180,6 @@ class Calling {
                             CallEventFlow.reset()
                             onStopCallAndNavigateBack()
                         }
-
                         CallEvent.StopCalling -> {
                             logMessage("CallEvent", { "StopCalling" })
                             showToast("You stopped the call!")
@@ -197,30 +190,23 @@ class Calling {
                             CallEventFlow.reset()
                             onStopCallAndNavigateBack()
                         }
-
                         else -> {}
                     }
-
-                    //Reset call event state
                     CallEventFlow.events.value = null
                 }
             }
 
-            //Observe video call request
             val videoCallState by CallEventFlow.videoCallState.collectAsState()
             val hasAcceptedVideoInCurrentCall by CallEventFlow.hasAcceptedVideoInCurrentCall.collectAsState()
-            // Capture offer when dialog is shown so Accept still works if videoCallState is cleared before user taps (e.g. after many declines)
             var pendingVideoOffer by remember { mutableStateOf<OfferAnswer?>(null) }
 
             LaunchedEffect(videoCallState) {
                 if (videoCallState != null) {
-                    //Received video call request, show dialog and store offer in ViewModel so Accept always has it
                     logMessage("videoCallState", { "videoOffer not null" })
                     logMessage("videoCallState", { videoCallState!!.initiator })
                     pendingVideoOffer = videoCallState
                     callingViewModel.setPendingVideoOfferForAccept(videoCallState, callingViewModel.getSessionId(sessionId))
                     if (hasAcceptedVideoInCurrentCall) {
-                        // After first accepted video join in this call, auto-enter video on later requests.
                         val sid = callingViewModel.pendingSessionIdForVideoCall.value.ifEmpty { callingViewModel.getSessionId(sessionId) }
                         if (sid.isNotEmpty()) {
                             onNavigateToVideoCall(sid, videoCallState)
@@ -234,13 +220,11 @@ class Calling {
                         showDialog.value = true
                     }
                 } else {
-                    //No video call request — only hide dialog; keep pending state so late Accept still works
                     logMessage("videoCallState", { "videoOffer null" })
                     showDialog.value = false
                 }
             }
 
-            //Dialog to accept/reject video call — use ViewModel's pending offer so Accept always navigates (survives recomposition)
             IncomingCallBottomSheet(
                 callerName = if(isCalling) callee.name else caller.name,
                 callerImage = if(isCalling) callee.image.toStorageUrl() else caller.image.toStorageUrl(),
@@ -278,120 +262,77 @@ class Calling {
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally) {
                 logMessage("CallingScreen", { "Calling Screen is shown" })
-                //Avatar
-                CompositionLocalProvider(
-                    localImageLoaderValue
-                ) {
+                CompositionLocalProvider(localImageLoaderValue) {
                     Surface(
                         shape = CircleShape,
                         tonalElevation = 6.dp,
                         shadowElevation = 6.dp,
                         border = BorderStroke(2.dp, MaterialTheme.colorScheme.outline),
-                        modifier = Modifier
-                            .size(150.dp)
-                            .padding(20.dp)
+                        modifier = Modifier.size(150.dp).padding(20.dp)
                     ) {
                         AutoSizeImage(
                             if (isCalling) callee.image else caller.image,
                             contentDescription = "image",
                             contentScale = ContentScale.Crop,
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .clip(CircleShape)
+                            modifier = Modifier.fillMaxSize().clip(CircleShape)
                                 .testTag(TestTag.TAG_USER_AVATAR)
-                                .semantics {
-                                    contentDescription = TestTag.TAG_USER_AVATAR
-                                }
+                                .semantics { contentDescription = TestTag.TAG_USER_AVATAR }
                         )
                     }
                 }
-
-                // User name with max width & ellipsis
                 Text(
                     text = if(isCalling) callee.name else caller.name,
                     color = MaterialTheme.colorScheme.onSurface,
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Center,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 20.dp),
-                    overflow = TextOverflow.Ellipsis, // Add "..." if too long
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
+                    overflow = TextOverflow.Ellipsis,
                     maxLines = 1
                 )
-
                 Text(
                     text = if(isCalling) "You are calling..." else "is calling you",
                     color = MaterialTheme.colorScheme.error,
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Center,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(10.dp)
+                    modifier = Modifier.fillMaxWidth().padding(10.dp)
                 )
-                //Audio call is happening, show count-up timer (synced with foreground notification)
                 if(startCount) {
                     Spacer(modifier = Modifier.height(20.dp))
                     val callDurationSeconds by CallEventFlow.callDurationSeconds.collectAsState()
-                    CountUpTimer(
-                        seconds = callDurationSeconds,
-                        isRunning = isRunning
-                    )
+                    CountUpTimer(seconds = callDurationSeconds, isRunning = isRunning)
                     Spacer(modifier = Modifier.height(20.dp))
-                    //Video call button
                     CallActionButton(
-                        "video_call",
-                        "VIDEO CALL",
-                        "Video Call Button",
-                        modifier = Modifier
-                            .testTag(TestTag.TAG_VIDEO_CALL_BUTTON)
-                            .semantics {
-                                contentDescription = TestTag.TAG_VIDEO_CALL_BUTTON
-                            },
+                        "video_call", "VIDEO CALL", "Video Call Button",
+                        modifier = Modifier.testTag(TestTag.TAG_VIDEO_CALL_BUTTON)
+                            .semantics { contentDescription = TestTag.TAG_VIDEO_CALL_BUTTON },
                         onClickButton = {
-                            if (!isStopCallPending) {
-                                onNavigateToVideoCall(callingViewModel.sessionId, null)
-                            }
+                            if (!isStopCallPending) onNavigateToVideoCall(callingViewModel.sessionId, null)
                         }
                     )
                 }
-
                 Spacer(modifier = Modifier.weight(1f))
-                //Speaker and mic button
                 if(isCalling || acceptCall) {
                     Row(horizontalArrangement = Arrangement.SpaceEvenly,
                         verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier
-                            .fillMaxWidth()) {
+                        modifier = Modifier.fillMaxWidth()) {
                         CallActionButton(
                             if(!isMuted) "unmute" else "mute",
                             if(!isMuted) "MUTE" else "UNMUTE",
                             "Mute button",
-                            modifier = Modifier
-                                .testTag(TestTag.TAG_BUTTON_MUTE)
-                                .semantics {
-                                    contentDescription = TestTag.TAG_BUTTON_MUTE
-                                },
+                            modifier = Modifier.testTag(TestTag.TAG_BUTTON_MUTE)
+                                .semantics { contentDescription = TestTag.TAG_BUTTON_MUTE },
                             onClickButton = {
                                 if (!isStopCallPending) callingViewModel.updateMuteStatus(!isMuted)
                             }
                         )
                         CallActionButton(
-                            when(currentSpeakerType) {
-                                SpeakerType.Audio -> "audio"
-                                SpeakerType.Speaker -> "speaker"
-                            },
-                            when(currentSpeakerType) {
-                                SpeakerType.Audio -> "AUDIO"
-                                SpeakerType.Speaker -> "SPEAKER"
-                            },
+                            when(currentSpeakerType) { SpeakerType.Audio -> "audio"; SpeakerType.Speaker -> "speaker" },
+                            when(currentSpeakerType) { SpeakerType.Audio -> "AUDIO"; SpeakerType.Speaker -> "SPEAKER" },
                             "Speaker button",
-                            modifier = Modifier
-                                .testTag(TestTag.TAG_BUTTON_SPEAKER)
-                                .semantics {
-                                    contentDescription = TestTag.TAG_BUTTON_SPEAKER
-                                },
+                            modifier = Modifier.testTag(TestTag.TAG_BUTTON_SPEAKER)
+                                .semantics { contentDescription = TestTag.TAG_BUTTON_SPEAKER },
                             onClickButton = {
                                 if (!isStopCallPending) {
                                     val nextSpeakerType = when(currentSpeakerType) {
@@ -405,7 +346,6 @@ class Calling {
                     }
                 }
                 Spacer(Modifier.height(20.dp))
-                //Accept and Reject button
                 Row(horizontalArrangement = Arrangement.Center,
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.padding(start = 40.dp, end = 40.dp)) {
@@ -415,36 +355,20 @@ class Calling {
                                 FloatingActionButton(
                                     onClick = {
                                         if (!isStopCallPending) {
-                                            startCount = true
-                                            isRunning = true
-                                            acceptCall = true
-                                            if(currentUser == callee) {
-                                                if(remoteOffer != null) {
-                                                    callingViewModel.acceptCall(
-                                                        sessionId,
-                                                        callee
-                                                    )
-                                                }
+                                            startCount = true; isRunning = true; acceptCall = true
+                                            if(currentUser == callee && remoteOffer != null) {
+                                                callingViewModel.acceptCall(sessionId, callee)
                                             }
                                             callingViewModel.resetCounter()
                                         }
                                     },
-                                    modifier = Modifier
-                                        .size(56.dp)
-                                        .testTag(TestTag.TAG_ACCEPT_CALL_BUTTON)
-                                        .semantics {
-                                            contentDescription = TestTag.TAG_ACCEPT_CALL_BUTTON
-                                        },
+                                    modifier = Modifier.size(56.dp).testTag(TestTag.TAG_ACCEPT_CALL_BUTTON)
+                                        .semantics { contentDescription = TestTag.TAG_ACCEPT_CALL_BUTTON },
                                     shape = CircleShape,
                                     containerColor = callAcceptColor,
-                                    elevation = FloatingActionButtonDefaults.elevation(
-                                        defaultElevation = 8.dp,
-                                        pressedElevation = 12.dp
-                                    )
+                                    elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 8.dp, pressedElevation = 12.dp)
                                 ) {
-                                    Icon(Icons.Default.Call,
-                                        contentDescription = "Accept Call",
-                                        tint = callAcceptOnColor)
+                                    Icon(Icons.Default.Call, contentDescription = "Accept Call", tint = callAcceptOnColor)
                                 }
                                 Spacer(modifier = Modifier.weight(1f))
                             }
@@ -453,10 +377,7 @@ class Calling {
                     LaunchedEffect(isStopCallPending) {
                         if (isStopCallPending) {
                             isRunning = false
-                            callingViewModel.stopCallAction(
-                                currentUser!!.uid,
-                                isCalling
-                            )
+                            callingViewModel.stopCallAction(currentUser!!.uid, isCalling)
                             if (isCalling) {
                                 sendNotification("", sessionId, caller, callee, "STOP_CALL")
                             } else {
@@ -468,47 +389,27 @@ class Calling {
                     }
                     FloatingActionButton(
                         onClick = {
-                            if (!isStopCallPending) {
-                                backgroundButton = callStopPendingColor
-                                isStopCallPending = true
-                            }
+                            if (!isStopCallPending) { backgroundButton = callStopPendingColor; isStopCallPending = true }
                         },
-                        modifier = Modifier
-                            .size(56.dp)
-                            .testTag(TestTag.TAG_REJECT_CALL_BUTTON)
-                            .semantics {
-                                contentDescription = TestTag.TAG_REJECT_CALL_BUTTON
-                            },
+                        modifier = Modifier.size(56.dp).testTag(TestTag.TAG_REJECT_CALL_BUTTON)
+                            .semantics { contentDescription = TestTag.TAG_REJECT_CALL_BUTTON },
                         shape = CircleShape,
                         containerColor = backgroundButton ?: MaterialTheme.colorScheme.error,
-                        elevation = FloatingActionButtonDefaults.elevation(
-                            defaultElevation = 8.dp,
-                            pressedElevation = 12.dp
-                        )
+                        elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 8.dp, pressedElevation = 12.dp)
                     ) {
-                        Icon(
-                            Icons.Default.CallEnd,
-                            contentDescription = "Reject Call",
-                            tint = MaterialTheme.colorScheme.onError
-                        )
+                        Icon(Icons.Default.CallEnd, contentDescription = "Reject Call", tint = MaterialTheme.colorScheme.onError)
                     }
                 }
             }
         }
 
-        fun getScreenName() : String {
-            return "CallingScreen"
-        }
+        fun getScreenName() : String = "CallingScreen"
 
         @Composable
-        fun CountUpTimer(
-            seconds : Int,
-            isRunning: Boolean = true
-        ) {
+        fun CountUpTimer(seconds : Int, isRunning: Boolean = true) {
             val hours = seconds / 3600
             val minutes = (seconds % 3600) / 60
             val secs = seconds % 60
-
             val formattedTime = buildString {
                 append(if (hours < 10) "0$hours" else "$hours")
                 append(":")
@@ -516,217 +417,90 @@ class Calling {
                 append(":")
                 append(if (secs < 10) "0$secs" else "$secs")
             }
-            Text(
-                text = formattedTime,
-                style = MaterialTheme.typography.headlineMedium,
-                modifier = Modifier.padding(16.dp)
-            )
+            Text(text = formattedTime, style = MaterialTheme.typography.headlineMedium, modifier = Modifier.padding(16.dp))
         }
 
-        fun countDownTimer(
-            onTimeOver: () -> Unit,
-            isCallAccepted: () -> Boolean
-        ) {
+        fun countDownTimer(onTimeOver: () -> Unit, isCallAccepted: () -> Boolean) {
             val backgroundScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
             backgroundScope.launch {
                 var seconds = 60
-                while (seconds != 0) {
-                    delay(1000L)
-                    seconds--
-                }
-                if (!isCallAccepted()) {
-                    onTimeOver()
-                }
+                while (seconds != 0) { delay(1000L); seconds-- }
+                if (!isCallAccepted()) { onTimeOver() }
             }
         }
 
         @Composable
-        fun CallActionButton(
-            icon : String,
-            text : String,
-            description : String,
-            modifier: Modifier = Modifier,
-            onClickButton : () -> Unit
-        ) {
-            Column(
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
+        fun CallActionButton(icon : String, text : String, description : String, modifier: Modifier = Modifier, onClickButton : () -> Unit) {
+            Column(verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
                 Box(
                     contentAlignment = Alignment.Center,
-                    modifier = modifier
-                        .size(56.dp)
-                        .clip(CircleShape)
-                        .background(iconButtonBackgroundColor)
-                        .clickable {
-                            onClickButton()
-                        }
+                    modifier = modifier.size(56.dp).clip(CircleShape).background(iconButtonBackgroundColor).clickable { onClickButton() }
                 ) {
                     CrossPlatformIcon(
                         icon = icon,
                         backgroundColor = iconButtonBackgroundColor.toHex(),
                         contentDescription = description,
                         contentScale = ContentScale.Fit,
-                        modifier = Modifier
-                            .size(30.dp)
-                            .padding(4.dp)
+                        modifier = Modifier.size(30.dp).padding(4.dp)
                     )
                 }
-                Text(
-                    text = text,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    style = MaterialTheme.typography.bodyMedium
-                )
+                Text(text = text, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium)
             }
         }
 
         @OptIn(ExperimentalMaterial3Api::class)
         @Composable
         fun IncomingCallBottomSheet(
-            callerName: String,
-            callerImage: String,
-            localImageLoaderValue : ProvidedValue<*>,
-            onAccept: () -> Unit,
-            onDecline: () -> Unit,
-            onDismiss: () -> Unit,
-            showDialog: MutableState<Boolean>
+            callerName: String, callerImage: String, localImageLoaderValue : ProvidedValue<*>,
+            onAccept: () -> Unit, onDecline: () -> Unit, onDismiss: () -> Unit, showDialog: MutableState<Boolean>
         ) {
             if (showDialog.value) {
                 ModalBottomSheet(
-                    onDismissRequest = {
-                        showDialog.value = false
-                        onDismiss()
-                    },
+                    onDismissRequest = { showDialog.value = false; onDismiss() },
                     shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
                     containerColor = MaterialTheme.colorScheme.surface,
                     dragHandle = {
-                        Box(
-                            modifier = Modifier
-                                .padding(top = 8.dp)
-                                .width(40.dp)
-                                .height(4.dp)
-                                .clip(RoundedCornerShape(50))
-                                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-                        )
+                        Box(modifier = Modifier.padding(top = 8.dp).width(40.dp).height(4.dp)
+                            .clip(RoundedCornerShape(50)).background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)))
                     }
                 ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 24.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-
+                    Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                         Spacer(modifier = Modifier.height(16.dp))
-
-                        // Avatar with green ring
                         Box(contentAlignment = Alignment.Center) {
-                            Box(
-                                modifier = Modifier
-                                    .size(150.dp)
-                                    .clip(CircleShape)
-                                    .background(callAcceptContainerColor)
-                            )
-
-                            CompositionLocalProvider(
-                                localImageLoaderValue
-                            ) {
-                                Surface(
-                                    shape = CircleShape,
-                                    tonalElevation = 6.dp,
-                                    shadowElevation = 6.dp,
+                            Box(modifier = Modifier.size(150.dp).clip(CircleShape).background(callAcceptContainerColor))
+                            CompositionLocalProvider(localImageLoaderValue) {
+                                Surface(shape = CircleShape, tonalElevation = 6.dp, shadowElevation = 6.dp,
                                     border = BorderStroke(2.dp, MaterialTheme.colorScheme.outline),
-                                    modifier = Modifier
-                                        .size(150.dp)
-                                        .padding(20.dp)
-                                ) {
-                                    AutoSizeImage(
-                                        callerImage,
-                                        contentDescription = "image",
-                                        contentScale = ContentScale.Crop,
-                                        modifier = Modifier
-                                            .fillMaxSize()
-                                            .clip(CircleShape)
+                                    modifier = Modifier.size(150.dp).padding(20.dp)) {
+                                    AutoSizeImage(callerImage, contentDescription = "image", contentScale = ContentScale.Crop,
+                                        modifier = Modifier.fillMaxSize().clip(CircleShape)
                                             .testTag(TestTag.TAG_USER_AVATAR)
-                                            .semantics {
-                                                contentDescription = TestTag.TAG_USER_AVATAR
-                                            }
-                                    )
+                                            .semantics { contentDescription = TestTag.TAG_USER_AVATAR })
                                 }
                             }
                         }
-
                         Spacer(modifier = Modifier.height(24.dp))
-
-                        // Caller name (2 lines max + ellipsis)
-                        Text(
-                            text = callerName,
-                            style = MaterialTheme.typography.headlineSmall.copy(
-                                fontWeight = FontWeight.Bold
-                            ),
-                            textAlign = TextAlign.Center,
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis
-                        )
-
+                        Text(text = callerName, style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
+                            textAlign = TextAlign.Center, maxLines = 2, overflow = TextOverflow.Ellipsis)
                         Spacer(modifier = Modifier.height(8.dp))
-
-                        // Incoming indicator
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Box(
-                                modifier = Modifier
-                                    .size(8.dp)
-                                    .clip(CircleShape)
-                                    .background(callAcceptColor)
-                            )
+                            Box(modifier = Modifier.size(8.dp).clip(CircleShape).background(callAcceptColor))
                             Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                text = "Incoming Video Call",
-                                color = MaterialTheme.colorScheme.onSurface,
-                                fontWeight = FontWeight.Medium
-                            )
+                            Text(text = "Incoming Video Call", color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Medium)
                         }
-
                         Spacer(modifier = Modifier.height(36.dp))
-
-                        // Accept button
-                        Button(
-                            onClick = {
-                                showDialog.value = false
-                                onAccept()
-                            },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(58.dp),
-                            shape = RoundedCornerShape(50),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = callAcceptColor
-                            )
-                        ) {
+                        Button(onClick = { showDialog.value = false; onAccept() },
+                            modifier = Modifier.fillMaxWidth().height(58.dp), shape = RoundedCornerShape(50),
+                            colors = ButtonDefaults.buttonColors(containerColor = callAcceptColor)) {
                             Icon(Icons.Default.Videocam, contentDescription = null, tint = callAcceptOnColor)
                             Spacer(modifier = Modifier.width(8.dp))
                             Text("Accept Call", fontWeight = FontWeight.Bold, color = callAcceptOnColor)
                         }
-
                         Spacer(modifier = Modifier.height(16.dp))
-
-                        // Decline button
-                        OutlinedButton(
-                            onClick = {
-                                showDialog.value = false
-                                onDecline()
-                            },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(58.dp),
-                            shape = RoundedCornerShape(50),
-                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.4f))
-                        ) {
-                            Icon(
-                                Icons.Default.CallEnd,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.error
-                            )
+                        OutlinedButton(onClick = { showDialog.value = false; onDecline() },
+                            modifier = Modifier.fillMaxWidth().height(58.dp), shape = RoundedCornerShape(50),
+                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.4f))) {
+                            Icon(Icons.Default.CallEnd, contentDescription = null, tint = MaterialTheme.colorScheme.error)
                             Spacer(modifier = Modifier.width(8.dp))
                             Text("Decline", color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold)
                         }
@@ -737,6 +511,4 @@ class Calling {
         }
     }
 }
-
-
 

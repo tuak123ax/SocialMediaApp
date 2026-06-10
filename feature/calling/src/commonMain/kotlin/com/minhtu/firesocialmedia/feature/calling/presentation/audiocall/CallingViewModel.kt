@@ -1,4 +1,4 @@
-package com.minhtu.firesocialmedia.presentation.calling.audiocall
+package com.minhtu.firesocialmedia.feature.calling.presentation.audiocall
 
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
@@ -40,14 +40,8 @@ class CallingViewModel(
         viewModelScope.launch {
             withContext(ioDispatcher) {
                 try {
-                    //Generate session id
                     sessionId = generateSessionId(caller.uid, callee.uid)
-                    //Start call service
-                    startCallServiceUseCase.invoke(
-                        sessionId,
-                        caller,
-                        callee
-                    )
+                    startCallServiceUseCase.invoke(sessionId, caller, callee)
                 } catch (e : Exception) {
                     logMessage("startCall Exception", { e.message.toString() })
                 }
@@ -72,13 +66,9 @@ class CallingViewModel(
         }
     }
 
-    /** Single source of truth for mute state (survives recomposition, can be synced later). */
     val isMuted = mutableStateOf(false)
-
-    /** Single source of truth for speaker mode (survives recomposition, can be synced later). */
     val currentSpeakerType = mutableStateOf<SpeakerType>(SpeakerType.Audio)
 
-    /** Resets mute and speaker to defaults (e.g. when call ends). */
     fun resetMuteAndSpeakerState() {
         isMuted.value = false
         currentSpeakerType.value = SpeakerType.Audio
@@ -88,13 +78,9 @@ class CallingViewModel(
         return listOf(callerId, calleeId).sorted().joinToString("_")
     }
 
-    fun requestPermissionAndStartAudioCall(
-        onGranted: () -> Unit,
-        onDenied: () -> Unit) {
+    fun requestPermissionAndStartAudioCall(onGranted: () -> Unit, onDenied: () -> Unit) {
         viewModelScope.launch {
-            val granted = withContext(Dispatchers.IO) {
-                requestPermissionUseCase.invoke()
-            }
+            val granted = withContext(Dispatchers.IO) { requestPermissionUseCase.invoke() }
             if (granted) {
                 logMessage("requestPermissionAndStartAudioCall", { "granted" })
                 onGranted()
@@ -105,30 +91,20 @@ class CallingViewModel(
         }
     }
 
-    fun getSessionId(ssId : String) : String {
-        return ssId.ifEmpty { sessionId }
-    }
+    fun getSessionId(ssId : String) : String = ssId.ifEmpty { sessionId }
 
-    fun acceptCall(
-        sessionId : String,
-        callee : UserInstance?
-    ) {
+    fun acceptCall(sessionId : String, callee : UserInstance?) {
         viewModelScope.launch(ioDispatcher) {
             manageCallStateUseCase.acceptCallFromApp(sessionId, callee?.uid)
         }
     }
 
     fun rejectVideoCall() {
-        viewModelScope.launch(ioDispatcher) {
-            manageCallStateUseCase.rejectVideoCall()
-        }
+        viewModelScope.launch(ioDispatcher) { manageCallStateUseCase.rejectVideoCall() }
     }
 
-    fun updateVideoState() {
-        CallEventFlow.videoCallState.value = null
-    }
+    fun updateVideoState() { CallEventFlow.videoCallState.value = null }
 
-    /** Clear video call state after a short delay so navigation and VideoCall screen composition complete first (avoids timing/reset issues). */
     fun clearVideoStateAfterNavigate() {
         viewModelScope.launch {
             delay(200)
@@ -136,7 +112,6 @@ class CallingViewModel(
         }
     }
 
-    /** Pending video offer and session for Accept — set when dialog is shown, used when user taps Accept so navigation always has valid data. */
     var pendingVideoOfferForAccept = mutableStateOf<OfferAnswer?>(null)
     var pendingSessionIdForVideoCall = mutableStateOf("")
 
@@ -149,10 +124,8 @@ class CallingViewModel(
         pendingVideoOfferForAccept.value = null
         pendingSessionIdForVideoCall.value = ""
     }
-    fun stopCallAction(
-        currentUser : String,
-        isCaller : Boolean
-    ) {
+
+    fun stopCallAction(currentUser : String, isCaller : Boolean) {
         viewModelScope.launch(ioDispatcher) {
             delay(2000L)
             stopCall(isCaller, currentUser)
@@ -162,22 +135,14 @@ class CallingViewModel(
 
     fun updateMuteStatus(muted: Boolean) {
         isMuted.value = muted
-        viewModelScope.launch(ioDispatcher) {
-            manageCallStateUseCase.updateMuteStatus(muted)
-        }
+        viewModelScope.launch(ioDispatcher) { manageCallStateUseCase.updateMuteStatus(muted) }
     }
 
     fun updateSpeakerStatus(speakerType: SpeakerType) {
         currentSpeakerType.value = speakerType
-        viewModelScope.launch(ioDispatcher) {
-            manageCallStateUseCase.updateSpeakerStatus(speakerType)
-        }
+        viewModelScope.launch(ioDispatcher) { manageCallStateUseCase.updateSpeakerStatus(speakerType) }
     }
 
-    /**
-     * Pushes current mute and speaker state to the call service.
-     * Call when the call becomes active so the device audio matches the UI (fixes no sound until user taps a button).
-     */
     fun syncAudioStateToService() {
         viewModelScope.launch(ioDispatcher) {
             manageCallStateUseCase.updateMuteStatus(isMuted.value)
@@ -185,3 +150,4 @@ class CallingViewModel(
         }
     }
 }
+
