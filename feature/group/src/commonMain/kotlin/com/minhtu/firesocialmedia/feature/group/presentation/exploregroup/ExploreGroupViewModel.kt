@@ -1,4 +1,4 @@
-package com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group
+package com.minhtu.firesocialmedia.feature.group.presentation.exploregroup
 
 import com.minhtu.firesocialmedia.core.domain.entity.group.GroupInstance
 import com.minhtu.firesocialmedia.core.domain.entity.user.UserInstance

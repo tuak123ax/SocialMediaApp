@@ -9,7 +9,7 @@ import com.minhtu.firesocialmedia.core.domain.usecases.common.GetUserUseCase
 import com.minhtu.firesocialmedia.core.domain.usecases.group.DemoteMemberUseCase
 import com.minhtu.firesocialmedia.core.domain.usecases.group.PromoteMemberUseCase
 import com.minhtu.firesocialmedia.core.domain.usecases.group.RemoveMemberUseCase
-import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.ManageMembersViewModel
+import com.minhtu.firesocialmedia.feature.group.presentation.managemembers.ManageMembersViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle

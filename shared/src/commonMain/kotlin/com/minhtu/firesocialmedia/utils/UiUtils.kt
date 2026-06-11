@@ -148,8 +148,7 @@ import com.minhtu.firesocialmedia.presentation.navigationscreen.friend.Friend
 import com.minhtu.firesocialmedia.presentation.navigationscreen.friend.FriendViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.notification.Notification
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.Settings
-import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.GroupDetails.Companion.DropdownMenuForMoreOptionsInGroup
-import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.PollViewModel
+import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.PollViewModelInterface
 import com.minhtu.firesocialmedia.presentation.search.SearchViewModel
 import com.minhtu.firesocialmedia.core.storage.toStorageUrl
 import com.seiko.imageloader.asImageBitmap
@@ -1680,7 +1679,7 @@ class UiUtils {
             onDelete: (NewsInstance) -> Unit
         ) {
             val currentUser = homeViewModel.currentUser
-            val vm = pollViewModel as? PollViewModel
+            val vm = pollViewModel as? PollViewModelInterface
 
             // ── Load full poll data lazily ──
             val pollId = news.pollId ?: ""
@@ -3087,6 +3086,37 @@ class UiUtils {
                             onClick()
                         }
                 )
+            }
+        }
+
+        @Composable
+        fun DropdownMenuForMoreOptionsInGroup(
+            expanded: Boolean,
+            isAdmin: Boolean = false,
+            onLeaveGroup: () -> Unit,
+            onDismissRequest: () -> Unit,
+            onManageMembers: () -> Unit
+        ) {
+            DropdownMenu(
+                expanded = expanded,
+                onDismissRequest = onDismissRequest
+            ) {
+                DropdownMenuItem(
+                    text = { Text("Leave group") },
+                    onClick = {
+                        onLeaveGroup()
+                        onDismissRequest()
+                    }
+                )
+                if (isAdmin) {
+                    DropdownMenuItem(
+                        text = { Text("Manage members") },
+                        onClick = {
+                            onManageMembers()
+                            onDismissRequest()
+                        }
+                    )
+                }
             }
         }
     }

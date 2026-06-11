@@ -9,8 +9,8 @@ import com.minhtu.firesocialmedia.core.domain.entity.group.GroupInstance
 import com.minhtu.firesocialmedia.core.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.core.domain.usecases.group.FetchFeatureGroupsUseCase
 import com.minhtu.firesocialmedia.core.domain.usecases.group.FetchRecommendGroupsUseCase
-import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.ExploreGroup
-import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.ExploreGroupViewModel
+import com.minhtu.firesocialmedia.feature.group.presentation.exploregroup.ExploreGroup
+import com.minhtu.firesocialmedia.feature.group.presentation.exploregroup.ExploreGroupViewModel
 import com.minhtu.firesocialmedia.presentation.search.SearchViewModel
 import com.seiko.imageloader.LocalImageLoader
 import org.junit.Rule

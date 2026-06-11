@@ -13,7 +13,7 @@ import com.minhtu.firesocialmedia.core.domain.usecases.group.JoinGroupUseCase
 import com.minhtu.firesocialmedia.core.domain.usecases.group.LeaveAndDeleteGroupUseCase
 import com.minhtu.firesocialmedia.core.domain.usecases.group.LeaveGroupUseCase
 import com.minhtu.firesocialmedia.core.domain.usecases.group.UpdateNotificationStatusUseCase
-import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.GroupDetailsViewModel
+import com.minhtu.firesocialmedia.feature.group.presentation.groupdetails.GroupDetailsViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi

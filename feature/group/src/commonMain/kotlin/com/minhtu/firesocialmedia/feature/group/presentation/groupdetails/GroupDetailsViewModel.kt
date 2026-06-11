@@ -1,4 +1,4 @@
-package com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group
+package com.minhtu.firesocialmedia.feature.group.presentation.groupdetails
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
@@ -27,24 +27,24 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class GroupDetailsViewModel(
-    private val fetchGroupInfoUseCase : FetchGroupInfoUseCase,
-    private val updateNotificationStatusUseCase : UpdateNotificationStatusUseCase,
-    private val fetchNotificationStateUseCase : FetchNotificationStateUseCase,
-    private val findGroupByIdUseCase : FindGroupByIdUseCase,
-    private val joinGroupUseCase : JoinGroupUseCase,
-    private val leaveGroupUseCase : LeaveGroupUseCase,
-    private val leaveAndDeleteGroupUseCase : LeaveAndDeleteGroupUseCase,
-    private val deletePollUseCase : DeletePollUseCase,
+    private val fetchGroupInfoUseCase: FetchGroupInfoUseCase,
+    private val updateNotificationStatusUseCase: UpdateNotificationStatusUseCase,
+    private val fetchNotificationStateUseCase: FetchNotificationStateUseCase,
+    private val findGroupByIdUseCase: FindGroupByIdUseCase,
+    private val joinGroupUseCase: JoinGroupUseCase,
+    private val leaveGroupUseCase: LeaveGroupUseCase,
+    private val leaveAndDeleteGroupUseCase: LeaveAndDeleteGroupUseCase,
+    private val deletePollUseCase: DeletePollUseCase,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : ViewModel() {
     var coverPhoto by mutableStateOf(Constants.DEFAULT_AVATAR_URL)
-    fun updateCover(input:String){
+    fun updateCover(input: String) {
         coverPhoto = input
     }
 
     private val _fetchGroupInfoState = MutableStateFlow<GroupInstance?>(null)
     var fetchGroupInfoState = _fetchGroupInfoState.asStateFlow()
-    fun fetchGroupInfo(groupId : String) {
+    fun fetchGroupInfo(groupId: String) {
         viewModelScope.launch {
             withContext(ioDispatcher) {
                 _fetchGroupInfoState.value = fetchGroupInfoUseCase.invoke(groupId)
@@ -60,21 +60,23 @@ class GroupDetailsViewModel(
     private val _updateNotificationState = MutableStateFlow<Boolean?>(null)
     var updateNotificationState = _updateNotificationState.asStateFlow()
     fun updateNotificationStateWhenClickButton() {
-        if(_notificationState.value != null) {
+        if (_notificationState.value != null) {
             _notificationState.value = !_notificationState.value!!
         }
     }
     fun updateNotificationStatus(
-        groupId : String,
-        userId : String) {
+        groupId: String,
+        userId: String
+    ) {
         viewModelScope.launch {
             withContext(ioDispatcher) {
                 updateNotificationStateWhenClickButton()
-                if(_notificationState.value != null) {
+                if (_notificationState.value != null) {
                     _updateNotificationState.value = updateNotificationStatusUseCase.invoke(
                         _notificationState.value!!,
                         groupId,
-                        userId)
+                        userId
+                    )
                 }
             }
         }
@@ -99,7 +101,7 @@ class GroupDetailsViewModel(
 
     private val _joinGroupStatus = MutableStateFlow<Boolean?>(null)
     var joinGroupStatus = _joinGroupStatus.asStateFlow()
-    fun joinGroup(currentUser: UserInstance, group : GroupInstance) {
+    fun joinGroup(currentUser: UserInstance, group: GroupInstance) {
         viewModelScope.launch(ioDispatcher) {
             _joinGroupStatus.value = joinGroupUseCase.invoke(currentUser, group)
         }
@@ -111,11 +113,13 @@ class GroupDetailsViewModel(
 
     private val _leaveGroupStatus = MutableStateFlow<Boolean?>(null)
     var leaveGroupStatus = _leaveGroupStatus.asStateFlow()
-    fun leaveGroup(currentUser: UserInstance,
-                   fetchGroupInfoState: GroupInstance) {
+    fun leaveGroup(
+        currentUser: UserInstance,
+        fetchGroupInfoState: GroupInstance
+    ) {
         viewModelScope.launch(ioDispatcher) {
-            if(fetchGroupInfoState.members.size > 1) {
-                //If the group has other members, only leave.
+            if (fetchGroupInfoState.members.size > 1) {
+                // If the group has other members, only leave.
                 _leaveGroupStatus.value = leaveGroupUseCase.invoke(
                     currentUser,
                     fetchGroupInfoState
@@ -195,3 +199,4 @@ class GroupDetailsViewModel(
         loading = false
     }
 }
+

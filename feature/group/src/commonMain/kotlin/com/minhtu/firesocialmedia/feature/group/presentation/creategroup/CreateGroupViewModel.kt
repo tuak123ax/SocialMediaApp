@@ -1,4 +1,4 @@
-package com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group
+package com.minhtu.firesocialmedia.feature.group.presentation.creategroup
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -92,3 +92,4 @@ class CreateGroupViewModel(
         return "group-"+ generateRandomId()
     }
 }
+

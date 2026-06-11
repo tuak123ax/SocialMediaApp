@@ -13,8 +13,8 @@ import com.minhtu.firesocialmedia.core.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.core.domain.repository.GroupRepository
 import com.minhtu.firesocialmedia.core.domain.usecases.group.CreateGroupUseCase
 import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
-import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.CreateGroup
-import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.CreateGroupViewModel
+import com.minhtu.firesocialmedia.feature.group.presentation.creategroup.CreateGroup
+import com.minhtu.firesocialmedia.feature.group.presentation.creategroup.CreateGroupViewModel
 import org.junit.Rule
 import org.junit.Test
 

@@ -5,7 +5,7 @@ import com.minhtu.firesocialmedia.core.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.core.domain.repository.GroupRepository
 import com.minhtu.firesocialmedia.core.domain.usecases.group.FetchFeatureGroupsUseCase
 import com.minhtu.firesocialmedia.core.domain.usecases.group.FetchRecommendGroupsUseCase
-import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.ExploreGroupViewModel
+import com.minhtu.firesocialmedia.feature.group.presentation.exploregroup.ExploreGroupViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle

@@ -124,14 +124,6 @@ import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
 import com.minhtu.firesocialmedia.presentation.navigation.RouterViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.friend.FriendViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.notification.NotificationViewModel
-import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.CreateGroupViewModel
-import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.CreatePollViewModel
-import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.ExploreGroupViewModel
-import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.GroupDetailsViewModel
-import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.InviteMemberViewModel
-import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.ManageMembersViewModel
-import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.PollViewModel
-import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.SelectGroupViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.notificationconfigs.NotificationConfigsViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security.SecuritySettingsViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security.changepassword.ChangePasswordViewModel
@@ -399,14 +391,7 @@ fun appModule() = module {
     viewModel { RouterViewModel(get(), get(), get(), get()) }
     viewModel { FriendViewModel(get(), get()) }
     viewModel { NotificationViewModel(get(), get(), get(), get()) }
-    viewModel { CreateGroupViewModel(get()) }
-    viewModel { CreatePollViewModel(get()) }
-    viewModel { ExploreGroupViewModel(get(), get()) }
-    viewModel { GroupDetailsViewModel(get(), get(), get(), get(), get(), get(), get(), get()) }
-    viewModel { InviteMemberViewModel(get(), get(), get()) }
-    viewModel { ManageMembersViewModel(get(), get(), get(), get()) }
-    viewModel { PollViewModel(get(), get(), get(), get()) }
-    viewModel { SelectGroupViewModel(get()) }
+    // Group ViewModels moved to feature:group groupModule()
     viewModel { NotificationConfigsViewModel() }
     viewModel { ChangePasswordViewModel(get(), get(), get()) }
     viewModel { LoginHistoryViewModel(get(), get(), get(), get(), get()) }

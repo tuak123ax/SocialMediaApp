@@ -5,7 +5,7 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import com.minhtu.firesocialmedia.core.constants.TestTag
 import com.minhtu.firesocialmedia.core.domain.entity.user.UserInstance
-import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.Group
+import com.minhtu.firesocialmedia.feature.group.presentation.group.Group
 import org.junit.Rule
 import org.junit.Test
 

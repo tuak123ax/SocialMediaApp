@@ -1,4 +1,4 @@
-package com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group
+package com.minhtu.firesocialmedia.feature.group.presentation.invitemember
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background

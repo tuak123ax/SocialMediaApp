@@ -1,4 +1,4 @@
-package com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group
+package com.minhtu.firesocialmedia.feature.group.presentation.selectgroup
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

@@ -113,6 +113,15 @@
 -keep interface com.minhtu.firesocialmedia.**.*Contract { *; }
 -keep interface com.minhtu.firesocialmedia.feature.**.*Contract { *; }
 
+# Keep PollViewModelInterface – cast to in UiUtils.kt at runtime via `as? PollViewModelInterface`
+-keep interface com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.PollViewModelInterface { *; }
+-keepclassmembers interface com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.PollViewModelInterface { *; }
+
+# Keep feature:group navigation interface and implementation
+-keep interface com.minhtu.firesocialmedia.feature.group.** { *; }
+-keep class com.minhtu.firesocialmedia.feature.group.navigation.GroupNavGraphImpl { *; }
+-dontwarn com.minhtu.firesocialmedia.feature.group.**
+
 # androidx.lifecycle ViewModel base class
 -keep class androidx.lifecycle.ViewModel { *; }
 -keepclassmembers class * extends androidx.lifecycle.ViewModel {

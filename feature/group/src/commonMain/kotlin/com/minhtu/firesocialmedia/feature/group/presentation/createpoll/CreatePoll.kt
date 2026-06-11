@@ -1,4 +1,4 @@
-package com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group
+package com.minhtu.firesocialmedia.feature.group.presentation.createpoll
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box

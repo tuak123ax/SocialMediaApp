@@ -8,7 +8,7 @@ import com.minhtu.firesocialmedia.core.domain.repository.UserRepository
 import com.minhtu.firesocialmedia.core.domain.usecases.common.GetUserUseCase
 import com.minhtu.firesocialmedia.core.domain.usecases.group.CopyLinkUseCase
 import com.minhtu.firesocialmedia.core.domain.usecases.group.InviteFriendToGroupUseCase
-import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.InviteMemberViewModel
+import com.minhtu.firesocialmedia.feature.group.presentation.invitemember.InviteMemberViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle

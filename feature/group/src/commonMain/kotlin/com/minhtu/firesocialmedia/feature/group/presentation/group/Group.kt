@@ -1,4 +1,4 @@
-package com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group
+package com.minhtu.firesocialmedia.feature.group.presentation.group
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background

@@ -1,4 +1,4 @@
-package com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group
+package com.minhtu.firesocialmedia.feature.group.presentation.exploregroup
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement

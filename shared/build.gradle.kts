@@ -139,6 +139,7 @@ kotlin {
                 implementation(kotlin("test"))
                 implementation("io.mockative:mockative:3.0.1")
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:$kotlinVersion")
+                implementation(project(":feature:groupfeature"))
             }
         }
         androidMain.dependencies {
@@ -213,6 +214,7 @@ kotlin {
             implementation("androidx.test.ext:junit:1.2.1")
             implementation("androidx.test.espresso:espresso-core:3.6.1")
             implementation("androidx.compose.ui:ui-test-junit4")
+            implementation(project(":feature:groupfeature"))
         }
 
         iosMain.dependencies {
@@ -224,6 +226,8 @@ kotlin {
             implementation(libs.ktor.client.darwin)
             implementation(libs.seiko.image.loader)
             implementation("com.squareup.okio:okio:3.9.0")
+
+            implementation(project(":feature:groupfeature"))
         }
     }
 }

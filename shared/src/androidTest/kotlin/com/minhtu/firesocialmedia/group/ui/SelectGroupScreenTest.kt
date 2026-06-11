@@ -8,8 +8,8 @@ import com.minhtu.firesocialmedia.core.constants.TestTag
 import com.minhtu.firesocialmedia.core.domain.entity.group.GroupInstance
 import com.minhtu.firesocialmedia.core.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.core.domain.usecases.group.GetAllGroupsUseCase
-import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.SelectGroup
-import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.SelectGroupViewModel
+import com.minhtu.firesocialmedia.feature.group.presentation.selectgroup.SelectGroup
+import com.minhtu.firesocialmedia.feature.group.presentation.selectgroup.SelectGroupViewModel
 import com.minhtu.firesocialmedia.presentation.search.SearchViewModel
 import com.seiko.imageloader.LocalImageLoader
 import org.junit.Rule
