@@ -1,4 +1,4 @@
-package com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security.twoFA
+package com.minhtu.firesocialmedia.feature.security.presentation.twofa
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background

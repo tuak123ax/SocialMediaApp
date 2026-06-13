@@ -1,4 +1,4 @@
-package com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security.changepassword
+package com.minhtu.firesocialmedia.feature.security.presentation.changepassword
 
 import com.minhtu.firesocialmedia.core.domain.entity.settings.ChangePasswordState
 import com.minhtu.firesocialmedia.core.domain.entity.user.UserInstance
@@ -17,47 +17,44 @@ import kotlin.time.Clock.System
 import kotlin.time.ExperimentalTime
 
 class ChangePasswordViewModel(
-    private val verifyCurrentPasswordUseCase : VerifyCurrentPasswordUseCase,
-    private val validateNewPasswordUseCase : ValidateNewPasswordUseCase,
-    private val changePasswordUseCase : ChangePasswordUseCase,
+    private val verifyCurrentPasswordUseCase: VerifyCurrentPasswordUseCase,
+    private val validateNewPasswordUseCase: ValidateNewPasswordUseCase,
+    private val changePasswordUseCase: ChangePasswordUseCase,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : ViewModel() {
     private var _currentPassword = MutableStateFlow("")
     var currentPassword = _currentPassword.asStateFlow()
-    fun updateCurrentPassword(input : String) {
+    fun updateCurrentPassword(input: String) {
         _currentPassword.value = input
     }
+
     private var _newPassword = MutableStateFlow("")
     var newPassword = _newPassword.asStateFlow()
-    fun updateNewPassword(input : String) {
+    fun updateNewPassword(input: String) {
         _newPassword.value = input
     }
+
     private var _confirmPassword = MutableStateFlow("")
     var confirmPassword = _confirmPassword.asStateFlow()
-    fun updateConfirmPassword(input : String) {
+    fun updateConfirmPassword(input: String) {
         _confirmPassword.value = input
     }
 
     private var _changePasswordState = MutableStateFlow<ChangePasswordState?>(null)
     var changePasswordState = _changePasswordState.asStateFlow()
+
     @OptIn(ExperimentalTime::class)
-    fun updatePassword(currentUser : UserInstance) {
+    fun updatePassword(currentUser: UserInstance) {
         viewModelScope.launch(ioDispatcher) {
-            //Validate new password and confirm password
             val validateNewPasswordResult = validateNewPasswordUseCase.invoke(_newPassword.value, _confirmPassword.value)
-            //Update password
-            if(validateNewPasswordResult.isValid) {
-                //Verify current password
-                val verifyCurrentPasswordResult = verifyCurrentPasswordUseCase.invoke(currentUser.email ,_currentPassword.value)
-                if(!verifyCurrentPasswordResult) {
+            if (validateNewPasswordResult.isValid) {
+                val verifyCurrentPasswordResult = verifyCurrentPasswordUseCase.invoke(currentUser.email, _currentPassword.value)
+                if (!verifyCurrentPasswordResult) {
                     _changePasswordState.value = ChangePasswordState(false, ChangePasswordError.CurrentPasswordWrongError)
                 } else {
                     _changePasswordState.value = changePasswordUseCase.invoke(currentUser, _newPassword.value)
-                    if(_changePasswordState.value != null && _changePasswordState.value!!.isValid) {
-                        //Change password success
-                        //Reset retry flag
+                    if (_changePasswordState.value != null && _changePasswordState.value!!.isValid) {
                         hasRetried = false
-                        //Update data for user
                         currentUser.lastTimeChangePassword = System.now().toEpochMilliseconds()
                     }
                 }
@@ -66,13 +63,13 @@ class ChangePasswordViewModel(
             }
         }
     }
+
     fun resetChangePasswordState() {
         _changePasswordState.value = null
     }
 
     private var hasRetried = false
     fun retryWithReAuth(currentUser: UserInstance) = viewModelScope.launch {
-        // Prevent infinite retry
         if (hasRetried) {
             _changePasswordState.value = ChangePasswordState(
                 false,
@@ -97,7 +94,7 @@ class ChangePasswordViewModel(
             return@launch
         }
 
-        // Retry update password
         updatePassword(currentUser)
     }
 }
+

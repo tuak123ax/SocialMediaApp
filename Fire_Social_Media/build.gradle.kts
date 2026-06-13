@@ -79,6 +79,7 @@ dependencies {
     implementation(projects.feature.home)
     implementation(projects.feature.profile)
     implementation(project(":feature:groupfeature"))
+    implementation(project(":feature:security"))
     implementation(projects.feature.calling)
     implementation(platform("androidx.compose:compose-bom:2025.02.00"))
     implementation("androidx.compose.ui:ui")

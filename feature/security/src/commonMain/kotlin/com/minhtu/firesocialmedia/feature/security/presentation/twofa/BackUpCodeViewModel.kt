@@ -1,4 +1,4 @@
-package com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security.twoFA
+package com.minhtu.firesocialmedia.feature.security.presentation.twofa
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -19,23 +19,19 @@ class BackUpCodeViewModel(
 ) : ViewModel() {
     private var _backupCode = MutableStateFlow("")
     var backupCode = _backupCode.asStateFlow()
+
     fun updateBackupCode(input: String) {
         _backupCode.value = input
     }
 
     private val _verifyBackupCodeStatus = MutableStateFlow<TwoFAResponse?>(null)
     val verifyBackupCodeStatus = _verifyBackupCodeStatus.asStateFlow()
-    fun verifyBackupCode(
-        backupCode: String
-    ) {
+
+    fun verifyBackupCode(backupCode: String) {
         viewModelScope.launch(ioDispatcher) {
-            //Get current userId first
             val userId = getCurrentUserUidUseCase.invoke()
-            if(userId != null) {
-                _verifyBackupCodeStatus.value = verifyBackupCodeUseCase.invoke(
-                    userId,
-                    backupCode
-                )
+            if (userId != null) {
+                _verifyBackupCodeStatus.value = verifyBackupCodeUseCase.invoke(userId, backupCode)
             }
         }
     }
@@ -44,3 +40,4 @@ class BackUpCodeViewModel(
         _verifyBackupCodeStatus.value = null
     }
 }
+

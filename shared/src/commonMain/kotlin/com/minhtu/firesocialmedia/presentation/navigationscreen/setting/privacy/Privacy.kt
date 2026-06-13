@@ -40,16 +40,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.minhtu.firesocialmedia.core.constants.TestTag
 import com.minhtu.firesocialmedia.core.domain.entity.user.UserInstance
-import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security.loginhistory.LoginHistoryViewModel
-import org.koin.compose.viewmodel.koinViewModel
 
 class Privacy {
     companion object {
         @OptIn(ExperimentalMaterial3Api::class)
         @Composable
         fun PrivacyScreen(
-            currentUser : UserInstance,
-            loginHistoryViewModel: LoginHistoryViewModel = koinViewModel(),
+            currentUser: UserInstance,
+            onAcknowledgePrivacyRead: () -> Unit = {},
             onClickBack: () -> Unit
         ) {
             Scaffold(
@@ -153,7 +151,7 @@ class Privacy {
                     item {
                         Button(
                             onClick = {
-                                loginHistoryViewModel.acknowledgePrivacyRead(currentUser)
+                                onAcknowledgePrivacyRead()
                                 onClickBack()
                             },
                             shape = RoundedCornerShape(10.dp),

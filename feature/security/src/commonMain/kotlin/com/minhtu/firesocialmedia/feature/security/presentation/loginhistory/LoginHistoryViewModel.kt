@@ -1,4 +1,4 @@
-package com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security.loginhistory
+package com.minhtu.firesocialmedia.feature.security.presentation.loginhistory
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -22,7 +22,7 @@ enum class AcknowledgeStatus { IDLE, LOADING, SUCCESS, ERROR }
 enum class LogoutSessionStatus { IDLE, WRONG_PASSWORD, ERROR }
 
 class LoginHistoryViewModel(
-    private val fetchLoginHistoryListUseCase : FetchLoginHistoryListUseCase,
+    private val fetchLoginHistoryListUseCase: FetchLoginHistoryListUseCase,
     private val updateUserTimestampUseCase: UpdateUserTimestampUseCase,
     private val deleteLoginSessionUseCase: DeleteLoginSessionUseCase,
     private val logoutSessionUseCase: LogoutSessionUseCase,
@@ -46,7 +46,7 @@ class LoginHistoryViewModel(
         _logoutSessionStatus.value = LogoutSessionStatus.IDLE
     }
 
-    fun fetchLoginHistoryList(userId : String) {
+    fun fetchLoginHistoryList(userId: String) {
         viewModelScope.launch(ioDispatcher) {
             _loginHistoryUiState.value = LoginHistoryUiState.Loading
 
@@ -143,3 +143,4 @@ class LoginHistoryViewModel(
         }
     }
 }
+

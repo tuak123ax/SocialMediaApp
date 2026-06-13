@@ -135,6 +135,7 @@ import com.minhtu.firesocialmedia.core.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.platform.CrossPlatformIcon
 import com.minhtu.firesocialmedia.platform.VideoPlayer
 import com.minhtu.firesocialmedia.platform.convertTimeToDateString
+import com.minhtu.firesocialmedia.platform.getCurrentTime
 import com.minhtu.firesocialmedia.platform.getUriStringFromLocalPath
 import com.minhtu.firesocialmedia.platform.launchShareAppWithDeepLink
 import com.minhtu.firesocialmedia.platform.queryShareApps
@@ -1696,7 +1697,7 @@ class UiUtils {
 
             val poll = allPolls[pollId]
             val myVotes = allMyVotes[pollId]          // null = not loaded yet; empty = loaded, no vote
-            val isExpired = poll?.expiresAt?.let { it > 0 && System.currentTimeMillis() > it } ?: false
+            val isExpired = poll?.expiresAt?.let { it > 0 && getCurrentTime() > it } ?: false
             val isOwner = currentUser != null && currentUser.uid == news.posterId
 
             // Load voters when the owner has poll data
@@ -1824,7 +1825,7 @@ class UiUtils {
                     // ── Expiry info ──
                     val pollExpiresAt = poll?.expiresAt
                     if (pollExpiresAt != null && pollExpiresAt > 0) {
-                        val remaining = pollExpiresAt - System.currentTimeMillis()
+                        val remaining = pollExpiresAt - getCurrentTime()
                         val expiryText = when {
                             isExpired -> "Poll ended"
                             remaining < 60 * 60 * 1000L -> "Ends in <1 hour"

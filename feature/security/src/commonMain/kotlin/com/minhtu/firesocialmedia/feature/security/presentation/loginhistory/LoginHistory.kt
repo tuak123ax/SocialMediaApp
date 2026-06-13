@@ -1,4 +1,4 @@
-package com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security.loginhistory
+package com.minhtu.firesocialmedia.feature.security.presentation.loginhistory
 
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode

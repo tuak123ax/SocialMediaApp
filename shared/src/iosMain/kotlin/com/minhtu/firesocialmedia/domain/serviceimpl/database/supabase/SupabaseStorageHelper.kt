@@ -10,7 +10,11 @@ import com.minhtu.firesocialmedia.data.remote.dto.user.UserDTO
 import com.minhtu.firesocialmedia.data.remote.dto.user.toMap
 import com.minhtu.firesocialmedia.core.domain.entity.base.BaseNewsInstance
 import com.minhtu.firesocialmedia.domain.serviceimpl.database.StorageHelperInterface
+import com.minhtu.firesocialmedia.domain.serviceimpl.notification.KtorProvider
+import com.minhtu.firesocialmedia.platform.getCurrentTime
 import com.minhtu.firesocialmedia.platform.logMessage
+import io.ktor.client.request.head
+import io.ktor.http.isSuccess
 import kotlinx.cinterop.BetaInteropApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -18,14 +22,10 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
-import platform.Foundation.NSHTTPURLResponse
 import platform.Foundation.NSMutableArray
 import platform.Foundation.NSMutableDictionary
-import platform.Foundation.NSMutableURLRequest
 import platform.Foundation.NSNumber
 import platform.Foundation.NSString
-import platform.Foundation.NSURL
-import platform.Foundation.NSURLSession
 import platform.Foundation.NSUserDefaults
 import platform.Foundation.create
 import platform.Foundation.numberWithBool
@@ -281,8 +281,7 @@ class SupabaseStorageHelper : StorageHelperInterface {
 
     // ─── Private helpers ───────────────────────────────────────────────────────
 
-    private fun currentTimeMillis(): Long =
-        (platform.Foundation.NSDate.date().timeIntervalSince1970 * 1000).toLong()
+    private fun currentTimeMillis(): Long = getCurrentTime()
 
     private suspend fun deleteOldMediaIfNeeded(path: String) {
         if (path.isEmpty()) return
@@ -405,8 +404,7 @@ class SupabaseStorageHelper : StorageHelperInterface {
                 input.contains("firebasestorage.googleapis.com") -> {
                     val path = try {
                         val encodedPath = input.substringAfter("/o/").substringBefore("?")
-                        (NSString.create(string = encodedPath) as platform.Foundation.NSString)
-                            .stringByRemovingPercentEncoding ?: encodedPath
+                        encodedPath
                     } catch (e: Exception) {
                         return input
                     }
@@ -494,21 +492,8 @@ class SupabaseStorageHelper : StorageHelperInterface {
             }
         }
 
-        private suspend fun headRequestSucceeds(url: String): Boolean = suspendCancellableCoroutine { cont ->
-            val nsUrl = NSURL.URLWithString(url)
-            if (nsUrl == null) {
-                cont.resume(false)
-                return@suspendCancellableCoroutine
-            }
-            val request = NSMutableURLRequest(uRL = nsUrl)
-            request.HTTPMethod = "HEAD"
-            request.timeoutInterval = 3.0
-            val task = NSURLSession.sharedSession.dataTaskWithRequest(request) { _, response, _ ->
-                val code = (response as? NSHTTPURLResponse)?.statusCode?.toInt() ?: 0
-                if (cont.isActive) cont.resume(code in 200..299)
-            }
-            task.resume()
-            cont.invokeOnCancellation { task.cancel() }
-        }
+        private suspend fun headRequestSucceeds(url: String): Boolean = runCatching {
+            KtorProvider.client.head(url).status.isSuccess()
+        }.getOrDefault(false)
     }
 }

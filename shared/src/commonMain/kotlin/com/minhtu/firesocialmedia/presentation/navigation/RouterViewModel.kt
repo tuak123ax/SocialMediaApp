@@ -10,7 +10,6 @@ import com.minhtu.firesocialmedia.core.domain.usecases.common.GetUserUseCase
 import com.minhtu.firesocialmedia.core.domain.usecases.settings.Get2FAVerifiedStatusUseCase
 import com.minhtu.firesocialmedia.core.domain.usecases.signin.CheckLocalAccountUseCase
 import com.minhtu.firesocialmedia.presentation.navigation.HomeNavGraph
-import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security.twoFA.VerifyOTP
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -53,7 +52,7 @@ class RouterViewModel(
 
         // 4. Decide navigation
         return if (user.twoFAEnabled) {
-            VerifyOTP.getScreenName()
+            "VerifyOTPScreen"
         } else {
             HomeNavGraph.HOME_SCREEN_NAME
         }

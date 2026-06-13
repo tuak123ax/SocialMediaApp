@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.only
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -28,22 +27,22 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.eygraber.uri.Uri
-import com.minhtu.firesocialmedia.di.PlatformContext
+import com.minhtu.firesocialmedia.core.constants.UiConstants
 import com.minhtu.firesocialmedia.core.domain.entity.call.OfferAnswer
 import com.minhtu.firesocialmedia.core.domain.entity.call.SharedCallData
 import com.minhtu.firesocialmedia.core.domain.entity.group.GroupInstance
 import com.minhtu.firesocialmedia.core.domain.entity.home.deeplinks.DeepLinksData
 import com.minhtu.firesocialmedia.core.domain.entity.news.NewsInstance
 import com.minhtu.firesocialmedia.core.domain.entity.user.UserInstance
+import com.minhtu.firesocialmedia.core.domain.signin.GoogleSignInHandler
 import com.minhtu.firesocialmedia.core.domain.usecases.settings.ObserveSessionStatusUseCase
 import com.minhtu.firesocialmedia.core.domain.usecases.settings.StopObserveSessionStatusUseCase
 import com.minhtu.firesocialmedia.core.domain.usecases.sync.SyncDataUseCase
+import com.minhtu.firesocialmedia.di.PlatformContext
 import com.minhtu.firesocialmedia.platform.generateImageLoader
-import com.minhtu.firesocialmedia.platform.rememberPlatformImagePicker
 import com.minhtu.firesocialmedia.platform.setupSignInLauncher
 import com.minhtu.firesocialmedia.platform.showToast
 import com.minhtu.firesocialmedia.presentation.comment.Comment
-
 import com.minhtu.firesocialmedia.presentation.home.HomeViewModelContract
 import com.minhtu.firesocialmedia.presentation.loading.GifLoading
 import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
@@ -51,30 +50,17 @@ import com.minhtu.firesocialmedia.presentation.navigationscreen.Screen
 import com.minhtu.firesocialmedia.presentation.navigationscreen.friend.Friend
 import com.minhtu.firesocialmedia.presentation.navigationscreen.notification.Notification
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.Settings
-
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.notificationconfigs.NotificationConfigs
-import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.privacy.Privacy
-import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security.SecuritySettings
-import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security.changepassword.ChangePassword
-import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security.loginhistory.LoginHistory
-import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security.twoFA.BackUpCode
-import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security.twoFA.TwoFA
-import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security.twoFA.TwoFactorEnabled
-import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security.twoFA.VerifyOTP
 import com.minhtu.firesocialmedia.presentation.postinformation.PostInformation
 import com.minhtu.firesocialmedia.presentation.postinformation.PostInformationViewModel
 import com.minhtu.firesocialmedia.presentation.search.Search
 import com.minhtu.firesocialmedia.presentation.showimage.ShowImage
-import com.minhtu.firesocialmedia.core.constants.UiConstants
-import com.minhtu.firesocialmedia.core.domain.signin.GoogleSignInHandler
 import com.minhtu.firesocialmedia.presentation.uploadnewsfeed.UploadNewfeedViewModelContract
 import com.minhtu.firesocialmedia.utils.UiUtils
 import com.minhtu.firesocialmedia.utils.UiUtils.Companion.BottomNavigationBar
 import com.seiko.imageloader.LocalImageLoader
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -98,6 +84,7 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
     val callingNavGraph: CallingNavGraph = koinInject()
     val uploadNewsfeedViewModel: UploadNewfeedViewModelContract = koinInject()
     val groupNavGraph: GroupNavGraph = koinInject()
+    val securityNavGraph: SecurityNavGraph = koinInject()
     val postInformationViewModel: PostInformationViewModel = koinViewModel()
 
     val syncDataUseCase: SyncDataUseCase = koinInject()
@@ -126,10 +113,6 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
     //Group
     var selectedGroup: GroupInstance? = null
 
-    //2FA
-    var localSecret = ""
-    var backupCode = ""
-    var isEnable2FAFlow = false
 
     // Force-logout from another device
     val observeSessionStatusUseCase: ObserveSessionStatusUseCase = koinInject()
@@ -264,7 +247,7 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                     platformContext = platformContext,
                     onNavigateToHome = { navController.navigate(route = homeNavGraph.getHomeRoute()) },
                     onNavigateToInformation = { navController.navigate(route = authNavGraph.getInformationRoute()) },
-                    onNavigateToVerifyOTP = { navController.navigate(route = VerifyOTP.getScreenName()) }
+                    onNavigateToVerifyOTP = { navController.navigate(route = "VerifyOTPScreen") }
                 )
                 homeNavGraph.registerRoutes(
                     navGraphBuilder = this,
@@ -559,10 +542,10 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                             navController.navigate(route = groupNavGraph.getGroupRoute())
                         },
                         onNavigateToPrivacyScreen = {
-                            navController.navigate(route = Privacy.getScreenName())
+                            navController.navigate(route = securityNavGraph.getPrivacyRoute())
                         },
                         onNavigateToSecuritySettingsScreen = {
-                            navController.navigate(route = SecuritySettings.getScreenName())
+                            navController.navigate(route = securityNavGraph.getSecuritySettingsRoute())
                         },
                         onNavigateToNotificationConfigsScreen = {
                             navController.navigate(route = NotificationConfigs.getScreenName())
@@ -854,53 +837,23 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                     }
                 )
 
-                composable(
-                    route = Privacy.getScreenName(),
-                    enterTransition = DefaultNavAnimations.enter,
-                    popEnterTransition = DefaultNavAnimations.popEnter,
-                    exitTransition = DefaultNavAnimations.exit,
-                    popExitTransition = DefaultNavAnimations.popExit
-                ) {
-                    if (homeViewModel.currentUser != null) {
-                        Privacy.PrivacyScreen(
-                            homeViewModel.currentUser!!,
-                            onClickBack = {
-                                navController.popBackStack()
-                            }
-                        )
-                    } else {
-                        showToast("Cannot get your information now. Please try again!")
+                securityNavGraph.registerRoutes(
+                    navGraphBuilder = this,
+                    navController = navController,
+                    loadingViewModel = loadingViewModel,
+                    localImageLoaderValue = localImageLoaderValue,
+                    getCurrentUser = { homeViewModel.currentUser ?: routerViewModel.currentUser.value },
+                    getHomeRoute = { homeNavGraph.getHomeRoute() },
+                    onNavigateToForgotPassword = {
+                        navController.navigate(UiConstants.ForgotPassword.SCREEN_NAME)
+                    },
+                    onNavigateToSignIn = {
+                        navController.navigate(UiConstants.SignIn.SCREEN_NAME) {
+                            popUpTo(0) { inclusive = true }
+                            launchSingleTop = true
+                        }
                     }
-                }
-
-                composable(
-                    route = SecuritySettings.getScreenName(),
-                    enterTransition = DefaultNavAnimations.enter,
-                    popEnterTransition = DefaultNavAnimations.popEnter,
-                    exitTransition = DefaultNavAnimations.exit,
-                    popExitTransition = DefaultNavAnimations.popExit
-                ) {
-                    if (homeViewModel.currentUser != null) {
-                        SecuritySettings.SecuritySettingsScreen(
-                            homeViewModel.currentUser!!,
-                            paddingValues,
-                            onNavigateBack = {
-                                navController.popBackStack()
-                            },
-                            onChangePassword = {
-                                navController.navigate(ChangePassword.getScreenName())
-                            },
-                            onNavigateTo2FAScreen = {
-                                navController.navigate(TwoFA.getScreenName())
-                            },
-                            onLoginActivity = {
-                                navController.navigate(LoginHistory.getScreenName())
-                            }
-                        )
-                    } else {
-                        showToast("Cannot get your information now. Please try again!")
-                    }
-                }
+                )
 
                 composable(
                     route = NotificationConfigs.getScreenName(),
@@ -911,159 +864,6 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                 ) {
                     NotificationConfigs.NotificationConfigsScreen(
                         paddingValues,
-                        onNavigateBack = {
-                            navController.popBackStack()
-                        }
-                    )
-                }
-
-                composable(
-                    route = ChangePassword.getScreenName(),
-                    enterTransition = DefaultNavAnimations.enter,
-                    popEnterTransition = DefaultNavAnimations.popEnter,
-                    exitTransition = DefaultNavAnimations.exit,
-                    popExitTransition = DefaultNavAnimations.popExit
-                ) {
-                    ChangePassword.ChangePasswordScreen(
-                        paddingValues,
-                        currentUser = if (homeViewModel.currentUser != null) homeViewModel.currentUser!! else UserInstance(),
-                        loadingViewModel = loadingViewModel,
-                        onNavigateToForgotPasswordScreen = {
-                            navController.navigate(UiConstants.ForgotPassword.SCREEN_NAME)
-                        },
-                        onNavigateToSignInScreen = {
-                            navController.navigate(UiConstants.SignIn.SCREEN_NAME) {
-                                popUpTo(0) {
-                                    inclusive = true
-                                }
-                                launchSingleTop = true
-                            }
-                        },
-                        onNavigateBack = {
-                            navController.popBackStack()
-                        }
-                    )
-                }
-
-                composable(
-                    route = TwoFA.getScreenName(),
-                    enterTransition = DefaultNavAnimations.enter,
-                    popEnterTransition = DefaultNavAnimations.popEnter,
-                    exitTransition = DefaultNavAnimations.exit,
-                    popExitTransition = DefaultNavAnimations.popExit
-                ) {
-                    TwoFA.TwoFAScreen(
-                        paddingValues,
-                        if (homeViewModel.currentUser != null) homeViewModel.currentUser!! else UserInstance(),
-                        onContinue = { secret ->
-                            localSecret = secret
-                            navController.navigate(VerifyOTP.getScreenName())
-                        },
-                        onNavigateBack = {
-                            localSecret = ""
-                            navController.popBackStack()
-                        }
-                    )
-                }
-
-                composable(
-                    route = VerifyOTP.getScreenName(),
-                    enterTransition = DefaultNavAnimations.enter,
-                    popEnterTransition = DefaultNavAnimations.popEnter,
-                    exitTransition = DefaultNavAnimations.exit,
-                    popExitTransition = DefaultNavAnimations.popExit
-                ) {
-                    VerifyOTP.VerifyOTPScreen(
-                        paddingValues,
-                        localImageLoaderValue,
-                        if (homeViewModel.currentUser != null) homeViewModel.currentUser!! else routerViewModel.currentUser.value,
-                        secretKey = localSecret,
-                        loadingViewModel,
-                        onNavigateToVerifyOTPSuccessScreen = { code ->
-                            backupCode = code
-                            isEnable2FAFlow = true
-                            navController.navigate(TwoFactorEnabled.getScreenName())
-                        },
-                        onNavigateToHomeScreen = {
-                            navController.navigate(route = homeNavGraph.getHomeRoute())
-                        },
-                        onNavigateToBackupCodeScreen = {
-                            navController.navigate(route = BackUpCode.getScreenName())
-                        },
-                        onNavigateBack = {
-                            navController.popBackStack()
-                        },
-                        onNavigateToSignInScreen = {
-                            navController.navigate(UiConstants.SignIn.SCREEN_NAME) {
-                                popUpTo(0) {
-                                    inclusive = true
-                                }
-                                launchSingleTop = true
-                            }
-                        }
-                    )
-                }
-                composable(
-                    route = TwoFactorEnabled.getScreenName(),
-                    enterTransition = DefaultNavAnimations.enter,
-                    popEnterTransition = DefaultNavAnimations.popEnter,
-                    exitTransition = DefaultNavAnimations.exit,
-                    popExitTransition = DefaultNavAnimations.popExit
-                ) {
-                    TwoFactorEnabled.TwoFactorEnabledScreen(
-                        paddingValues,
-                        backupCode,
-                        isEnable2FAFlow,
-                        onReturnClick = {
-                            if (isEnable2FAFlow) {
-                                navController.popBackStack(
-                                    SecuritySettings.getScreenName(),
-                                    false
-                                )
-                            } else {
-                                navController.navigate(homeNavGraph.getHomeRoute()) {
-                                    popUpTo(0) {
-                                        inclusive = true
-                                    }
-                                    launchSingleTop = true
-                                }
-                            }
-                        }
-                    )
-                }
-
-                composable(
-                    route = BackUpCode.getScreenName(),
-                    enterTransition = DefaultNavAnimations.enter,
-                    popEnterTransition = DefaultNavAnimations.popEnter,
-                    exitTransition = DefaultNavAnimations.exit,
-                    popExitTransition = DefaultNavAnimations.popExit
-                ) {
-                    BackUpCode.BackupCodeScreen(
-                        paddingValues,
-                        loadingViewModel,
-                        onNavigateBack = {
-                            navController.popBackStack()
-                        },
-                        onNavigateToVerifyBackupCodeSuccessScreen = { newBackupCode ->
-                            backupCode = newBackupCode
-                            isEnable2FAFlow = false
-                            navController.navigate(route = TwoFactorEnabled.getScreenName())
-                        }
-                    )
-                }
-
-                composable(
-                    route = LoginHistory.getScreenName(),
-                    enterTransition = DefaultNavAnimations.enter,
-                    popEnterTransition = DefaultNavAnimations.popEnter,
-                    exitTransition = DefaultNavAnimations.exit,
-                    popExitTransition = DefaultNavAnimations.popExit
-                ) {
-                    LoginHistory.LoginHistoryScreen(
-                        currentUser = homeViewModel.currentUser ?: UserInstance(),
-                        modifier = Modifier
-                            .padding(paddingValues),
                         onNavigateBack = {
                             navController.popBackStack()
                         }

@@ -226,8 +226,6 @@ kotlin {
             implementation(libs.ktor.client.darwin)
             implementation(libs.seiko.image.loader)
             implementation("com.squareup.okio:okio:3.9.0")
-
-            implementation(project(":feature:groupfeature"))
         }
     }
 }

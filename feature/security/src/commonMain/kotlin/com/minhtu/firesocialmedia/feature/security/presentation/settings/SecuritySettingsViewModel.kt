@@ -1,4 +1,4 @@
-package com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security
+package com.minhtu.firesocialmedia.feature.security.presentation.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -13,12 +13,13 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 class SecuritySettingsViewModel(
-    private val disable2FAUseCase : Disable2FAUseCase,
+    private val disable2FAUseCase: Disable2FAUseCase,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : ViewModel() {
     private var _disable2FAStatus = MutableStateFlow<TwoFAResponse?>(null)
     var disable2FAStatus = _disable2FAStatus.asStateFlow()
-    fun disable2FA(currentUser : UserInstance) {
+
+    fun disable2FA(currentUser: UserInstance) {
         viewModelScope.launch(ioDispatcher) {
             _disable2FAStatus.value = disable2FAUseCase.invoke(currentUser)
         }
@@ -28,3 +29,4 @@ class SecuritySettingsViewModel(
         _disable2FAStatus.value = null
     }
 }
+

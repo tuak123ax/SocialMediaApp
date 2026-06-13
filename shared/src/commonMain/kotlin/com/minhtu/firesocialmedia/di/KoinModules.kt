@@ -94,28 +94,13 @@ import com.minhtu.firesocialmedia.core.domain.usecases.notification.FindNewByIdI
 import com.minhtu.firesocialmedia.core.domain.usecases.notification.GetAllNotificationOfUserUseCase
 import com.minhtu.firesocialmedia.core.domain.usecases.notification.SaveNotificationToDatabaseUseCase
 import com.minhtu.firesocialmedia.core.domain.usecases.notification.UpdateIsReadStatusOfNotificationUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.settings.BuildOtpAuthUrlUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.settings.ChangePasswordUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.settings.CopyUseCase
 import com.minhtu.firesocialmedia.core.domain.usecases.settings.CreatePollUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.settings.DeleteLoginSessionUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.settings.Disable2FAUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.settings.Enable2FAUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.settings.FetchLoginHistoryListUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.settings.GenerateSecretFor2FAUseCase
 import com.minhtu.firesocialmedia.core.domain.usecases.settings.Get2FAVerifiedStatusUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.settings.LogoutSessionUseCase
 import com.minhtu.firesocialmedia.core.domain.usecases.settings.ObserveSessionStatusUseCase
 import com.minhtu.firesocialmedia.core.domain.usecases.settings.StopObserveSessionStatusUseCase
 import com.minhtu.firesocialmedia.core.domain.usecases.settings.UpdateUserAvatarUseCase
 import com.minhtu.firesocialmedia.core.domain.usecases.settings.UpdateUserBackgroundUseCase
 import com.minhtu.firesocialmedia.core.domain.usecases.settings.UpdateUserStringFieldUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.settings.UpdateUserTimestampUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.settings.UpdateVerify2FASuccessUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.settings.ValidateNewPasswordUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.settings.Verify2FAUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.settings.VerifyBackupCodeUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.settings.VerifyCurrentPasswordUseCase
 import com.minhtu.firesocialmedia.core.domain.usecases.showimage.DownloadImageUseCase
 import com.minhtu.firesocialmedia.core.domain.usecases.sync.LoadNewsPostedWhenOfflineUseCase
 import com.minhtu.firesocialmedia.core.domain.usecases.sync.SyncDataUseCase
@@ -125,13 +110,6 @@ import com.minhtu.firesocialmedia.presentation.navigation.RouterViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.friend.FriendViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.notification.NotificationViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.notificationconfigs.NotificationConfigsViewModel
-import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security.SecuritySettingsViewModel
-import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security.changepassword.ChangePasswordViewModel
-import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security.loginhistory.LoginHistoryViewModel
-import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security.twoFA.BackUpCodeViewModel
-import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security.twoFA.TwoFAViewModel
-import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security.twoFA.TwoFactorEnabledViewModel
-import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security.twoFA.VerifyOTPViewModel
 import com.minhtu.firesocialmedia.presentation.postinformation.PostInformationViewModel
 import com.minhtu.firesocialmedia.presentation.search.SearchViewModel
 import com.minhtu.firesocialmedia.presentation.showimage.ShowImageViewModel
@@ -306,29 +284,14 @@ fun appModule() = module {
     factory { SaveNotificationToDatabaseUseCase(get()) }
     factory { UpdateIsReadStatusOfNotificationUseCase(get()) }
 
-    // Settings Use Cases
-    factory { BuildOtpAuthUrlUseCase() }
-    factory { ChangePasswordUseCase(get()) }
-    factory { CopyUseCase(get()) }
+    // Settings Use Cases (non-security ones remain here)
     factory { CreatePollUseCase(get()) }
-    factory { DeleteLoginSessionUseCase(get()) }
-    factory { Disable2FAUseCase(get()) }
-    factory { Enable2FAUseCase(get()) }
-    factory { FetchLoginHistoryListUseCase(get()) }
-    factory { GenerateSecretFor2FAUseCase(get()) }
     factory { Get2FAVerifiedStatusUseCase(get()) }
-    factory { LogoutSessionUseCase(get()) }
     factory { ObserveSessionStatusUseCase(get()) }
     factory { StopObserveSessionStatusUseCase(get()) }
     factory { UpdateUserAvatarUseCase(get()) }
     factory { UpdateUserBackgroundUseCase(get()) }
     factory { UpdateUserStringFieldUseCase(get()) }
-    factory { UpdateUserTimestampUseCase(get()) }
-    factory { UpdateVerify2FASuccessUseCase(get()) }
-    factory { ValidateNewPasswordUseCase() }
-    factory { Verify2FAUseCase(get()) }
-    factory { VerifyBackupCodeUseCase(get()) }
-    factory { VerifyCurrentPasswordUseCase(get()) }
 
     // Show image Use Cases
     factory { DownloadImageUseCase(get()) }
@@ -393,13 +356,6 @@ fun appModule() = module {
     viewModel { NotificationViewModel(get(), get(), get(), get()) }
     // Group ViewModels moved to feature:group groupModule()
     viewModel { NotificationConfigsViewModel() }
-    viewModel { ChangePasswordViewModel(get(), get(), get()) }
-    viewModel { LoginHistoryViewModel(get(), get(), get(), get(), get()) }
-    viewModel { BackUpCodeViewModel(get(), get()) }
-    viewModel { TwoFactorEnabledViewModel(get(), get()) }
-    viewModel { TwoFAViewModel(get(), get(), get()) }
-    viewModel { VerifyOTPViewModel(get(), get(), get()) }
-    viewModel { SecuritySettingsViewModel(get()) }
     viewModel { PostInformationViewModel(get()) }
     viewModel { SearchViewModel() }
     viewModel { ShowImageViewModel(get()) }

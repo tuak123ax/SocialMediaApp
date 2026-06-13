@@ -1,4 +1,4 @@
-package com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security.loginhistory
+package com.minhtu.firesocialmedia.feature.security.presentation.loginhistory
 
 import com.minhtu.firesocialmedia.core.domain.entity.settings.SessionItem
 
@@ -8,3 +8,4 @@ sealed class LoginHistoryUiState {
     object Empty : LoginHistoryUiState()
     data class Error(val message: String) : LoginHistoryUiState()
 }
+

@@ -1,4 +1,4 @@
-package com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security.twoFA
+package com.minhtu.firesocialmedia.feature.security.presentation.twofa
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -11,7 +11,7 @@ import kotlinx.coroutines.launch
 
 class TwoFactorEnabledViewModel(
     private val copyUseCase: CopyUseCase,
-    private val updateVerify2FASuccessUseCase : UpdateVerify2FASuccessUseCase,
+    private val updateVerify2FASuccessUseCase: UpdateVerify2FASuccessUseCase,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : ViewModel() {
     fun copyToClipboard(backupCode: String) {
@@ -26,3 +26,4 @@ class TwoFactorEnabledViewModel(
         }
     }
 }
+

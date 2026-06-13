@@ -12,6 +12,7 @@ import io.ktor.http.isSuccess
 import kotlinx.cinterop.readBytes
 import platform.Foundation.NSData
 import platform.Foundation.NSURL
+import platform.Foundation.dataWithContentsOfURL
 
 object SupabaseStorage {
 

@@ -1,4 +1,4 @@
-package com.minhtu.firesocialmedia.presentation.navigationscreen.setting.security
+package com.minhtu.firesocialmedia.feature.security.presentation.settings
 
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
@@ -69,6 +69,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.minhtu.firesocialmedia.core.domain.entity.user.UserInstance
+import com.minhtu.firesocialmedia.platform.getCurrentTime
 import com.minhtu.firesocialmedia.platform.showToast
 import com.minhtu.firesocialmedia.utils.UiUtils
 import com.minhtu.firesocialmedia.utils.Utils.Companion.toTimeAgo
@@ -96,8 +97,8 @@ class SecuritySettings {
 
             val disable2FAStatus by securitySettingsViewModel.disable2FAStatus.collectAsState()
             LaunchedEffect(disable2FAStatus) {
-                if(disable2FAStatus != null) {
-                    if(disable2FAStatus!!.success) {
+                if (disable2FAStatus != null) {
+                    if (disable2FAStatus!!.success) {
                         showToast("Disable 2FA successfully!")
                         twoFactorEnabled = false
                     } else {
@@ -115,8 +116,6 @@ class SecuritySettings {
                     .background(MaterialTheme.colorScheme.background)
                     .padding(paddingValues)
             ) {
-
-                // Top bar
                 UiUtils.BackAndTitleAndMoreOptionsRow(
                     title = "Security Settings",
                     trailingIcon = "more_horiz",
@@ -130,10 +129,7 @@ class SecuritySettings {
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(16.dp)
                 ) {
-
-                    item {
-                        SectionTitle("Login & Security")
-                    }
+                    item { SectionTitle("Login & Security") }
 
                     item {
                         SecurityItem(
@@ -155,10 +151,8 @@ class SecuritySettings {
                             checked = twoFactorEnabled,
                             onCheckedChange = { newValue ->
                                 if (twoFactorEnabled && !newValue) {
-                                    // Trying to disable → show dialog
                                     showDisable2FAWarning = true
                                 } else {
-                                    // Enable flow
                                     twoFactorEnabled = newValue
                                     scope.launch {
                                         delay(100)
@@ -192,13 +186,10 @@ class SecuritySettings {
                 }
             }
 
-            // Disable confirmation dialog
             if (showDisable2FAWarning) {
                 Disable2FABottomSheet(
                     isLoading = isDisabling,
-                    onDismiss = {
-                        showDisable2FAWarning = false
-                    },
+                    onDismiss = { showDisable2FAWarning = false },
                     onConfirmDisable = {
                         isDisabling = true
                         securitySettingsViewModel.disable2FA(currentUser)
@@ -207,10 +198,7 @@ class SecuritySettings {
             }
         }
 
-
-        fun getScreenName() : String {
-            return "SecuritySettingsScreen"
-        }
+        fun getScreenName(): String = "SecuritySettingsScreen"
 
         @Composable
         fun SectionTitle(title: String) {
@@ -237,9 +225,7 @@ class SecuritySettings {
                     .padding(vertical = 12.dp)
             ) {
                 IconCircle(icon)
-
                 Spacer(modifier = Modifier.width(12.dp))
-
                 Column(modifier = Modifier.weight(1f)) {
                     Text(text = title, fontWeight = FontWeight.Medium)
                     subtitle?.let {
@@ -250,7 +236,6 @@ class SecuritySettings {
                         )
                     }
                 }
-
                 Icon(
                     imageVector = Icons.Default.ChevronRight,
                     contentDescription = null,
@@ -274,9 +259,7 @@ class SecuritySettings {
                     .padding(vertical = 12.dp)
             ) {
                 IconCircle(icon)
-
                 Spacer(modifier = Modifier.width(12.dp))
-
                 Column(modifier = Modifier.weight(1f)) {
                     Text(text = title, fontWeight = FontWeight.Medium)
                     Text(
@@ -285,7 +268,6 @@ class SecuritySettings {
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
-
                 Switch(
                     checked = checked,
                     onCheckedChange = onCheckedChange,
@@ -306,17 +288,13 @@ class SecuritySettings {
                     .clip(CircleShape)
                     .background(MaterialTheme.colorScheme.surfaceVariant)
             ) {
-                Icon(icon,
-                    contentDescription = null)
+                Icon(icon, contentDescription = null)
             }
         }
 
         @OptIn(ExperimentalMaterial3Api::class)
         @Composable
-        fun SecurityCheckupCard(
-            currentUser: UserInstance,
-            onClick: () -> Unit
-        ) {
+        fun SecurityCheckupCard(currentUser: UserInstance, onClick: () -> Unit) {
             var showCheckup by remember { mutableStateOf(false) }
 
             Card(
@@ -390,18 +368,13 @@ class SecuritySettings {
 
         @OptIn(ExperimentalMaterial3Api::class)
         @Composable
-        fun SecurityCheckupBottomSheet(
-            currentUser: UserInstance,
-            onDismiss: () -> Unit
-        ) {
+        fun SecurityCheckupBottomSheet(currentUser: UserInstance, onDismiss: () -> Unit) {
             val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-            val scope = rememberCoroutineScope()
 
-            // Scanning states
-            var scanPhase by remember { mutableStateOf(0) } // 0=scanning, 1=done
+            var scanPhase by remember { mutableStateOf(0) }
             var visibleItems by remember { mutableStateOf(0) }
 
-            val now = System.currentTimeMillis()
+            val now = getCurrentTime()
             val thirtyDays = 30L * 24 * 60 * 60 * 1000
             val ninetyDays = 90L * 24 * 60 * 60 * 1000
 
@@ -428,7 +401,6 @@ class SecuritySettings {
 
             val finalScore = checks.filter { it.passed }.sumOf { it.points }
 
-            // Drive the scan animation
             LaunchedEffect(Unit) {
                 repeat(checks.size) { i ->
                     delay(700L)
@@ -438,7 +410,6 @@ class SecuritySettings {
                 scanPhase = 1
             }
 
-            // Animated progress bar target
             val progressTarget = if (scanPhase == 1) finalScore / 100f else 0f
             val animatedProgress by animateFloatAsState(
                 targetValue = progressTarget,
@@ -446,7 +417,6 @@ class SecuritySettings {
                 label = "scoreProgress"
             )
 
-            // Rotating scan ring
             val infiniteTransition = rememberInfiniteTransition(label = "scan")
             val rotation by infiniteTransition.animateFloat(
                 initialValue = 0f, targetValue = 360f,
@@ -499,13 +469,8 @@ class SecuritySettings {
 
                     Spacer(modifier = Modifier.height(24.dp))
 
-                    // Score ring / scanning indicator
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier.size(140.dp)
-                    ) {
+                    Box(contentAlignment = Alignment.Center, modifier = Modifier.size(140.dp)) {
                         if (scanPhase == 0) {
-                            // Spinning scan ring
                             CircularProgressIndicator(
                                 modifier = Modifier.size(140.dp),
                                 color = Color(0xFFFF2D2D),
@@ -525,7 +490,6 @@ class SecuritySettings {
                                 modifier = Modifier.padding(top = 72.dp)
                             )
                         } else {
-                            // Score circle
                             CircularProgressIndicator(
                                 progress = { animatedProgress },
                                 modifier = Modifier.size(140.dp),
@@ -553,14 +517,12 @@ class SecuritySettings {
 
                     Spacer(modifier = Modifier.height(28.dp))
 
-                    // Check items list
                     Column(
                         modifier = Modifier.fillMaxWidth(),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         checks.forEachIndexed { index, item ->
-                            val isVisible = index < visibleItems
-                            if (isVisible) {
+                            if (index < visibleItems) {
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
                                     modifier = Modifier
@@ -601,11 +563,7 @@ class SecuritySettings {
                             colors = ButtonDefaults.buttonColors(containerColor = scoreColor),
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            Text(
-                                text = "Done",
-                                color = Color.White,
-                                fontWeight = FontWeight.Bold
-                            )
+                            Text(text = "Done", color = Color.White, fontWeight = FontWeight.Bold)
                         }
                     }
                 }
@@ -619,14 +577,10 @@ class SecuritySettings {
             onDismiss: () -> Unit,
             onConfirmDisable: () -> Unit
         ) {
-            val sheetState = rememberModalBottomSheetState(
-                skipPartiallyExpanded = true
-            )
+            val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
             ModalBottomSheet(
-                onDismissRequest = {
-                    if (!isLoading) onDismiss()
-                },
+                onDismissRequest = { if (!isLoading) onDismiss() },
                 sheetState = sheetState,
                 containerColor = MaterialTheme.colorScheme.background,
                 dragHandle = {
@@ -640,11 +594,8 @@ class SecuritySettings {
                     )
                 }
             ) {
-                BoxWithConstraints(
-                    modifier = Modifier.fillMaxWidth()
-                ) {
+                BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
                     val isTablet = maxWidth > 600.dp
-
                     val contentWidth = if (isTablet) 480.dp else maxWidth
                     val horizontalPadding = if (isTablet) 32.dp else 20.dp
                     val iconSize = if (isTablet) 88.dp else 72.dp
@@ -658,8 +609,6 @@ class SecuritySettings {
                             .verticalScroll(rememberScrollState()),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-
-                        // Warning Icon
                         Box(
                             modifier = Modifier
                                 .size(iconSize)
@@ -677,20 +626,15 @@ class SecuritySettings {
 
                         Spacer(modifier = Modifier.height(20.dp))
 
-                        // Title
                         Text(
                             text = "Disable Two-Factor Authentication?",
-                            style = if (isTablet)
-                                MaterialTheme.typography.headlineSmall
-                            else
-                                MaterialTheme.typography.titleLarge,
+                            style = if (isTablet) MaterialTheme.typography.headlineSmall else MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
                             textAlign = TextAlign.Center
                         )
 
                         Spacer(modifier = Modifier.height(12.dp))
 
-                        // Description
                         Text(
                             text = "Disabling 2FA removes an essential layer of security. " +
                                     "Your account will become significantly more vulnerable to unauthorized access and potential data breaches.",
@@ -701,7 +645,6 @@ class SecuritySettings {
 
                         Spacer(modifier = Modifier.height(28.dp))
 
-                        // Confirm Button
                         Button(
                             onClick = onConfirmDisable,
                             enabled = !isLoading,
@@ -709,9 +652,7 @@ class SecuritySettings {
                                 .fillMaxWidth()
                                 .height(if (isTablet) 60.dp else 54.dp),
                             shape = RoundedCornerShape(16.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.error
-                            )
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
                         ) {
                             if (isLoading) {
                                 Row(
@@ -741,11 +682,7 @@ class SecuritySettings {
 
                         Spacer(modifier = Modifier.height(12.dp))
 
-                        // Secondary action
-                        TextButton(
-                            onClick = onDismiss,
-                            enabled = !isLoading
-                        ) {
+                        TextButton(onClick = onDismiss, enabled = !isLoading) {
                             Text(
                                 text = "Keep Enabled",
                                 color = MaterialTheme.colorScheme.error,
@@ -760,3 +697,5 @@ class SecuritySettings {
         }
     }
 }
+
+
