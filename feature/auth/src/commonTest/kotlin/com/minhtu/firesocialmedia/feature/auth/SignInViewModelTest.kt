@@ -119,7 +119,7 @@ class SignInViewModelTest {
         advanceUntilIdle()
 
         val state = vm.signInState.value
-        assertEquals(false, state.isAuthenticated)
+        assertEquals(false, state.signInStatus)
         assertEquals(SignInError.DataEmpty, state.error)
     }
 
@@ -136,7 +136,7 @@ class SignInViewModelTest {
         advanceUntilIdle()
 
         val state = vm.signInState.value
-        assertEquals(true, state.isAuthenticated)
+        assertEquals(true, state.signInStatus)
         assertNull(state.error)
     }
 
@@ -151,7 +151,7 @@ class SignInViewModelTest {
         advanceUntilIdle()
 
         val state = vm.signInState.value
-        assertEquals(false, state.isAuthenticated)
+        assertEquals(false, state.signInStatus)
         assertEquals(SignInError.WrongPassword, state.error)
     }
 
@@ -194,7 +194,7 @@ class SignInViewModelTest {
 
         vm.resetSignInStatus()
 
-        assertEquals(false, vm.signInState.value.isAuthenticated)
+        assertEquals(false, vm.signInState.value.signInStatus)
         assertNull(vm.signInState.value.error)
     }
 

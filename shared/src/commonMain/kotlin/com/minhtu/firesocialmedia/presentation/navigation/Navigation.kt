@@ -48,9 +48,7 @@ import com.minhtu.firesocialmedia.presentation.loading.GifLoading
 import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.Screen
 import com.minhtu.firesocialmedia.presentation.navigationscreen.friend.Friend
-import com.minhtu.firesocialmedia.presentation.navigationscreen.notification.Notification
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.Settings
-import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.notificationconfigs.NotificationConfigs
 import com.minhtu.firesocialmedia.presentation.postinformation.PostInformation
 import com.minhtu.firesocialmedia.presentation.postinformation.PostInformationViewModel
 import com.minhtu.firesocialmedia.presentation.search.Search
@@ -85,6 +83,7 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
     val uploadNewsfeedViewModel: UploadNewfeedViewModelContract = koinInject()
     val groupNavGraph: GroupNavGraph = koinInject()
     val securityNavGraph: SecurityNavGraph = koinInject()
+    val notificationNavGraph: NotificationNavGraph = koinInject()
     val postInformationViewModel: PostInformationViewModel = koinViewModel()
 
     val syncDataUseCase: SyncDataUseCase = koinInject()
@@ -487,35 +486,29 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                         }
                     )
                 }
-                composable(
-                    route = Screen.Notification.route,
-                    enterTransition = DefaultNavAnimations.enter,
-                    popEnterTransition = DefaultNavAnimations.popEnter,
-                    exitTransition = DefaultNavAnimations.exit,
-                    popExitTransition = DefaultNavAnimations.popExit
-                ) {
-                    Notification.NotificationScreen(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(MaterialTheme.colorScheme.background),
-                        paddingValues = paddingValues,
-                        localImageLoaderValue = localImageLoaderValue,
-                        homeViewModel = homeViewModel,
-                        loadingViewModel = loadingViewModel,
-                        onNavigateToPostInformation = { new ->
-                            relatedNew = new
-                            navController.navigate(route = PostInformation.getScreenName())
-                        },
-                        onNavigateToUserInformation = { user ->
-                            selectedUser = user
-                            navController.navigate(route = profileNavGraph.getUserInformationRoute())
-                        },
-                        onNavigateToGroupDetails = { groupId ->
-                            selectedGroup = GroupInstance(id = groupId)
-                            navController.navigate(route = groupNavGraph.getGroupDetailsRoute())
-                        }
-                    )
-                }
+                notificationNavGraph.registerRoutes(
+                    navGraphBuilder = this,
+                    navController = navController,
+                    homeViewModel = homeViewModel,
+                    loadingViewModel = loadingViewModel,
+                    paddingValues = paddingValues,
+                    localImageLoaderValue = localImageLoaderValue,
+                    onNavigateToPostInformation = { new ->
+                        relatedNew = new
+                        navController.navigate(route = PostInformation.getScreenName())
+                    },
+                    onNavigateToUserInformation = { user ->
+                        selectedUser = user
+                        navController.navigate(route = profileNavGraph.getUserInformationRoute())
+                    },
+                    onNavigateToGroupDetails = { groupId ->
+                        selectedGroup = GroupInstance(id = groupId)
+                        navController.navigate(route = groupNavGraph.getGroupDetailsRoute())
+                    },
+                    onNavigateBackFromConfigs = {
+                        navController.popBackStack()
+                    }
+                )
                 composable(
                     route = Screen.Settings.route,
                     enterTransition = DefaultNavAnimations.enter,
@@ -548,7 +541,7 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                             navController.navigate(route = securityNavGraph.getSecuritySettingsRoute())
                         },
                         onNavigateToNotificationConfigsScreen = {
-                            navController.navigate(route = NotificationConfigs.getScreenName())
+                            navController.navigate(route = notificationNavGraph.getNotificationConfigsRoute())
                         }
                     )
                 }
@@ -855,20 +848,6 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                     }
                 )
 
-                composable(
-                    route = NotificationConfigs.getScreenName(),
-                    enterTransition = DefaultNavAnimations.enter,
-                    popEnterTransition = DefaultNavAnimations.popEnter,
-                    exitTransition = DefaultNavAnimations.exit,
-                    popExitTransition = DefaultNavAnimations.popExit
-                ) {
-                    NotificationConfigs.NotificationConfigsScreen(
-                        paddingValues,
-                        onNavigateBack = {
-                            navController.popBackStack()
-                        }
-                    )
-                }
 
                 profileNavGraph.registerPersonalInformationRoute(
                     navGraphBuilder = this,

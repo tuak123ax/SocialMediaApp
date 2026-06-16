@@ -14,6 +14,7 @@ import com.minhtu.firesocialmedia.feature.auth.di.authModule
 import com.minhtu.firesocialmedia.feature.calling.di.callingModule
 import com.minhtu.firesocialmedia.feature.group.di.groupModule
 import com.minhtu.firesocialmedia.feature.home.di.homeModule
+import com.minhtu.firesocialmedia.feature.notification.di.notificationModule
 import com.minhtu.firesocialmedia.feature.profile.di.profileModule
 import com.minhtu.firesocialmedia.feature.security.di.securityModule
 import com.minhtu.firesocialmedia.platform.initPlatformContext
@@ -39,6 +40,7 @@ class AppApplication : Application() {
                 profileModule(),
                 groupModule(),
                 securityModule(),
+                notificationModule(),
                 callingModule()
             )
         }

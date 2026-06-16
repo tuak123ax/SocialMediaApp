@@ -1,4 +1,4 @@
-package com.minhtu.firesocialmedia.presentation.navigationscreen.setting.notificationconfigs
+package com.minhtu.firesocialmedia.feature.notification.presentation.setting.notificationconfigs
 
 import androidx.lifecycle.ViewModel
 import com.minhtu.firesocialmedia.core.domain.entity.notification.NotificationType

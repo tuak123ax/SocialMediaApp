@@ -1,4 +1,4 @@
-package com.minhtu.firesocialmedia.presentation.navigationscreen.notification
+package com.minhtu.firesocialmedia.feature.notification.presentation.notification
 
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import com.minhtu.firesocialmedia.core.domain.entity.news.NewsInstance
@@ -10,7 +10,7 @@ import com.minhtu.firesocialmedia.core.domain.usecases.notification.DeleteAllNot
 import com.minhtu.firesocialmedia.core.domain.usecases.notification.FindNewByIdInDbUseCase
 import com.minhtu.firesocialmedia.core.domain.usecases.notification.UpdateIsReadStatusOfNotificationUseCase
 import com.minhtu.firesocialmedia.platform.logMessage
-import com.minhtu.firesocialmedia.presentation.navigationscreen.notification.instance.BasicResult
+import com.minhtu.firesocialmedia.feature.notification.presentation.notification.instance.BasicResult
 import com.minhtu.firesocialmedia.utils.Utils
 import com.rickclephas.kmp.observableviewmodel.ViewModel
 import com.rickclephas.kmp.observableviewmodel.launch

@@ -108,8 +108,6 @@ import com.minhtu.firesocialmedia.presentation.comment.CommentViewModel
 import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
 import com.minhtu.firesocialmedia.presentation.navigation.RouterViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.friend.FriendViewModel
-import com.minhtu.firesocialmedia.presentation.navigationscreen.notification.NotificationViewModel
-import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.notificationconfigs.NotificationConfigsViewModel
 import com.minhtu.firesocialmedia.presentation.postinformation.PostInformationViewModel
 import com.minhtu.firesocialmedia.presentation.search.SearchViewModel
 import com.minhtu.firesocialmedia.presentation.showimage.ShowImageViewModel
@@ -353,9 +351,7 @@ fun appModule() = module {
     viewModel { LoadingViewModel() }
     viewModel { RouterViewModel(get(), get(), get(), get()) }
     viewModel { FriendViewModel(get(), get()) }
-    viewModel { NotificationViewModel(get(), get(), get(), get()) }
     // Group ViewModels moved to feature:group groupModule()
-    viewModel { NotificationConfigsViewModel() }
     viewModel { PostInformationViewModel(get()) }
     viewModel { SearchViewModel() }
     viewModel { ShowImageViewModel(get()) }

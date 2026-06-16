@@ -1,4 +1,4 @@
-package com.minhtu.firesocialmedia.presentation.navigationscreen.setting.notificationconfigs
+package com.minhtu.firesocialmedia.feature.notification.presentation.setting.notificationconfigs
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement

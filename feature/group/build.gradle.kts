@@ -13,6 +13,51 @@ kotlin {
     iosArm64()
     iosSimulatorArm64()
 
+    targets.withType<org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget>().configureEach {
+        val isSimulator = name.contains("Simulator", ignoreCase = true) || name.contains("X64", ignoreCase = true)
+        val buildVariant = if (isSimulator) "Debug-iphonesimulator" else "Debug-iphoneos"
+        val podBuildSuffix = if (isSimulator) "IosSimulator" else "Ios"
+        val firebaseFrameworksDir = rootProject.layout.projectDirectory.dir("shared/build/cocoapods/synthetic/ios/build/$buildVariant").asFile
+        val firebaseFrameworkSearchPaths = listOf(
+            firebaseFrameworksDir.absolutePath,
+            "${firebaseFrameworksDir.absolutePath}/FirebaseAppCheckInterop",
+            "${firebaseFrameworksDir.absolutePath}/FirebaseAuth",
+            "${firebaseFrameworksDir.absolutePath}/FirebaseAuthInterop",
+            "${firebaseFrameworksDir.absolutePath}/FirebaseCore",
+            "${firebaseFrameworksDir.absolutePath}/FirebaseCoreExtension",
+            "${firebaseFrameworksDir.absolutePath}/FirebaseCoreInternal",
+            "${firebaseFrameworksDir.absolutePath}/FirebaseDatabase",
+            "${firebaseFrameworksDir.absolutePath}/FirebaseInstallations",
+            "${firebaseFrameworksDir.absolutePath}/FirebaseMessaging",
+            "${firebaseFrameworksDir.absolutePath}/FirebaseSharedSwift",
+            "${firebaseFrameworksDir.absolutePath}/FirebaseStorage",
+            "${firebaseFrameworksDir.absolutePath}/GTMSessionFetcher",
+            "${firebaseFrameworksDir.absolutePath}/GoogleDataTransport",
+            "${firebaseFrameworksDir.absolutePath}/GoogleUtilities",
+            "${firebaseFrameworksDir.absolutePath}/PromisesObjC",
+            "${firebaseFrameworksDir.absolutePath}/RecaptchaInterop",
+            "${firebaseFrameworksDir.absolutePath}/leveldb-library",
+            "${firebaseFrameworksDir.absolutePath}/nanopb"
+        )
+        val firebasePodBuildTasks = listOf(
+            ":shared:podInstallSyntheticIos",
+            ":shared:podBuildFirebaseAuth$podBuildSuffix",
+            ":shared:podBuildFirebaseDatabase$podBuildSuffix",
+            ":shared:podBuildFirebaseMessaging$podBuildSuffix",
+            ":shared:podBuildFirebaseStorage$podBuildSuffix"
+        )
+
+        binaries.all {
+            firebaseFrameworkSearchPaths.forEach {
+                linkerOpts("-F$it")
+                linkerOpts("-rpath", it)
+            }
+            linkTaskProvider.configure {
+                dependsOn(firebasePodBuildTasks)
+            }
+        }
+    }
+
     sourceSets {
         all {
             languageSettings.optIn("androidx.compose.material3.ExperimentalMaterial3Api")
