@@ -78,6 +78,7 @@ dependencies {
     implementation(projects.feature.auth)
     implementation(projects.feature.home)
     implementation(projects.feature.profile)
+    implementation(projects.feature.comment)
     implementation(project(":feature:groupfeature"))
     implementation(project(":feature:security"))
     implementation(project(":feature:notification"))

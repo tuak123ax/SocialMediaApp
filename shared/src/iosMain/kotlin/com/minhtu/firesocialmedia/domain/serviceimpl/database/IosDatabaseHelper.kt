@@ -281,7 +281,7 @@ class IosDatabaseHelper {
                 // Await upload completion
                 suspendCancellableCoroutine<Unit> { cont ->
                     uploadTask.observeStatus(FIRStorageTaskStatusSuccess) {
-                        cont.resume(Unit, onCancellation = {})
+                        cont.resume(Unit)
                     }
                     uploadTask.observeStatus(FIRStorageTaskStatusFailure) { taskSnapshot ->
                         val error = taskSnapshot?.error()
@@ -294,7 +294,7 @@ class IosDatabaseHelper {
                     storageReference.downloadURLWithCompletion { url, error ->
                         when {
                             error != null -> cont.resumeWithException(Throwable(error.localizedDescription))
-                            url != null -> cont.resume(url.absoluteString.toString(), onCancellation = {})
+                            url != null -> cont.resume(url.absoluteString.toString())
                             else -> cont.resumeWithException(Throwable("Unknown error getting download URL"))
                         }
                     }

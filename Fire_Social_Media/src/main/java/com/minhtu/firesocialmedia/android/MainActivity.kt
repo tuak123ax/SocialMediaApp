@@ -42,6 +42,13 @@ import com.minhtu.firesocialmedia.ui.theme.FireSocialMediaCommonTheme
 class MainActivity : ComponentActivity() {
     private var downloadReceiver: BroadcastReceiver? = null
     private lateinit var permissionManager: AndroidPermissionManager
+
+    private val requestMultiplePermissionsLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { grantResults ->
+        permissionManager.onPermissionsResult(grantResults)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -49,6 +56,7 @@ class MainActivity : ComponentActivity() {
         //Check if activity is started from notification
         val fromNotification = intent.getBooleanExtra(Constants.FROM_NOTIFICATION, false)
         permissionManager = AndroidPermissionManager(this)
+        permissionManager.setPermissionLauncher(requestMultiplePermissionsLauncher)
         PlatformContextHolder.instance = AndroidPlatformContext(applicationContext, permissionManager)
         setContent {
             FireSocialMediaCommonTheme{
@@ -164,17 +172,6 @@ class MainActivity : ComponentActivity() {
         RemoteConfigHelper.fetchMinAppSupportAndActiveConfig(RemoteConfigHelper.getRemoteConfig(), fetchResultCallback)
     }
 
-    @Deprecated("Deprecated in Java")
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<String>,
-        grantResults: IntArray
-    ) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-
-        // Forward to your permission manager
-        permissionManager.onRequestPermissionsResult(requestCode, grantResults)
-    }
 
     @Composable
     fun CheckAppVersionAndShowDialog(minSupportVersion: String) {

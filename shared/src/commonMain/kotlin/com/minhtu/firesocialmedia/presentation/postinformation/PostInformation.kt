@@ -5,6 +5,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -47,8 +48,8 @@ import com.minhtu.firesocialmedia.platform.CrossPlatformIcon
 import com.minhtu.firesocialmedia.platform.convertTimeToDateString
 import com.minhtu.firesocialmedia.platform.showToast
 import com.minhtu.firesocialmedia.platform.toHex
-import com.minhtu.firesocialmedia.presentation.comment.Comment
-import com.minhtu.firesocialmedia.presentation.comment.CommentViewModel
+import com.minhtu.firesocialmedia.presentation.comment.CommentScreenApi
+import com.minhtu.firesocialmedia.presentation.comment.CommentViewModelContract
 import com.minhtu.firesocialmedia.presentation.home.HomeViewModelContract
 import com.minhtu.firesocialmedia.core.storage.toStorageUrl
 import com.minhtu.firesocialmedia.utils.UiUtils
@@ -58,6 +59,7 @@ import com.minhtu.firesocialmedia.utils.UiUtils.Companion.NewsCardWithSharedCont
 import com.seiko.imageloader.ui.AutoSizeImage
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
 class PostInformation {
@@ -71,8 +73,9 @@ class PostInformation {
                                   onNavigateToUserInformation: (user: UserInstance?) -> Unit,
                                   onNavigateBack : () -> Unit,
                                   homeViewModel: HomeViewModelContract,
-                                  commentViewModel : CommentViewModel = koinViewModel(),
-                                  postInformationViewModel: PostInformationViewModel,
+                                  commentViewModel : CommentViewModelContract = koinInject(),
+                                  commentScreenApi: CommentScreenApi = koinInject(),
+                                   postInformationViewModel: PostInformationViewModel,
                                   onNavigateToUploadNews: (updateNew : NewsInstance?) -> Unit,
                                   onShareNews : (String, NewsInstance) -> Unit
         ) {
@@ -317,23 +320,24 @@ class PostInformation {
 
                     //Show comment screen at the end of this page
                     if(homeViewModel.currentUser != null) {
-                        Comment.CommentScreen(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .background(color = MaterialTheme.colorScheme.surface),
-                            platform = platform,
-                            localImageLoaderValue = localImageLoaderValue,
-                            showCloseIcon = false,
-                            commentViewModel = commentViewModel,
-                            currentUser = homeViewModel.currentUser!!,
-                            selectedNew = news,
-                            onNavigateToShowImageScreen = onNavigateToShowImageScreen,
-                            onNavigateToUserInformation = onNavigateToUserInformation,
-                            onNavigateToHomeScreen = {
-                                postInformationViewModel.resetShareNew()
-                                onNavigateBack()
-                            }
-                        )
+                        commentScreenApi.renderCommentScreen(
+                            paddingValues = PaddingValues(0.dp),
+                             modifier = Modifier
+                                 .fillMaxSize()
+                                 .background(color = MaterialTheme.colorScheme.surface),
+                             platform = platform,
+                             localImageLoaderValue = localImageLoaderValue,
+                             showCloseIcon = false,
+                             commentViewModel = commentViewModel,
+                             currentUser = homeViewModel.currentUser!!,
+                             selectedNew = news,
+                             onNavigateToShowImageScreen = onNavigateToShowImageScreen,
+                             onNavigateToUserInformation = onNavigateToUserInformation,
+                            onNavigateToHomeScreen = { _ ->
+                                 postInformationViewModel.resetShareNew()
+                                 onNavigateBack()
+                             }
+                         )
                     }
                 }
 

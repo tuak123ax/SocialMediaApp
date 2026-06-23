@@ -78,7 +78,7 @@ import com.minhtu.firesocialmedia.platform.CrossPlatformIcon
 import com.minhtu.firesocialmedia.platform.logMessage
 import com.minhtu.firesocialmedia.platform.showToast
 import com.minhtu.firesocialmedia.platform.toHex
-import com.minhtu.firesocialmedia.presentation.comment.CommentViewModel
+import com.minhtu.firesocialmedia.presentation.comment.CommentViewModelContract
 import com.minhtu.firesocialmedia.presentation.home.HomeViewModelContract
 import com.minhtu.firesocialmedia.presentation.loading.Loading
 import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
@@ -88,6 +88,7 @@ import com.seiko.imageloader.ui.AutoSizeImage
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
 class Home {
@@ -111,7 +112,7 @@ class Home {
             onNavigateToPostInformation: () -> Unit,
             onShareNews: (String, NewsInstance) -> Unit,
             onNavigateToJoinGroup: () -> Unit,
-            commentViewModel: CommentViewModel = koinViewModel(),
+            commentViewModel: CommentViewModelContract = koinInject(),
             platform: PlatformContext? = null
         ) {
             val isLoading by loadingViewModel.isLoading.collectAsState()

@@ -12,6 +12,7 @@ import com.minhtu.firesocialmedia.di.appModule
 import com.minhtu.firesocialmedia.domain.serviceimpl.database.supabase.SupabaseStorageHelper
 import com.minhtu.firesocialmedia.feature.auth.di.authModule
 import com.minhtu.firesocialmedia.feature.calling.di.callingModule
+import com.minhtu.firesocialmedia.feature.comment.di.commentModule
 import com.minhtu.firesocialmedia.feature.group.di.groupModule
 import com.minhtu.firesocialmedia.feature.home.di.homeModule
 import com.minhtu.firesocialmedia.feature.notification.di.notificationModule
@@ -38,6 +39,7 @@ class AppApplication : Application() {
                 authModule(),
                 homeModule(),
                 profileModule(),
+                commentModule(),
                 groupModule(),
                 securityModule(),
                 notificationModule(),

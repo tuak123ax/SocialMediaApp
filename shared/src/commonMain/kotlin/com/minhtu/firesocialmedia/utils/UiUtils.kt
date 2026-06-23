@@ -44,6 +44,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.Add
@@ -142,8 +144,8 @@ import com.minhtu.firesocialmedia.platform.queryShareApps
 import com.minhtu.firesocialmedia.platform.toHex
 import com.minhtu.firesocialmedia.presentation.home.HomeViewModelContract
 import com.minhtu.firesocialmedia.presentation.navigation.HomeNavGraph
-import com.minhtu.firesocialmedia.presentation.comment.Comment
-import com.minhtu.firesocialmedia.presentation.comment.CommentViewModel
+import com.minhtu.firesocialmedia.presentation.comment.CommentScreenApi
+import com.minhtu.firesocialmedia.presentation.comment.CommentViewModelContract
 import com.minhtu.firesocialmedia.presentation.navigationscreen.Screen
 import com.minhtu.firesocialmedia.presentation.navigationscreen.friend.Friend
 import com.minhtu.firesocialmedia.presentation.navigationscreen.friend.FriendViewModel
@@ -156,6 +158,7 @@ import com.seiko.imageloader.ui.AutoSizeImage
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
+import org.koin.compose.koinInject
 
 class UiUtils {
     companion object{
@@ -176,9 +179,10 @@ class UiUtils {
             onDelete: (action : String, new : NewsInstance) -> Unit,
             onNavigateToCreatePost : (updateNew : NewsInstance) -> Unit,
             showBottomSheet : (NewsInstance) -> Unit,
-            commentViewModel: CommentViewModel? = null,
+            commentViewModel: CommentViewModelContract? = null,
             platform: PlatformContext? = null,
             currentUser: UserInstance? = null) {
+            val commentScreenApi: CommentScreenApi = koinInject()
             LaunchedEffect(Unit) {
                 homeViewModel.updateLikeStatus()
             }
@@ -310,7 +314,9 @@ class UiUtils {
                                     },
                                     commentSheetContent = if (commentViewModel != null && platform != null && currentUser != null) {
                                         { onSheetDismiss ->
-                                            Comment.CommentScreen(
+                                            commentScreenApi.renderCommentScreen(
+                                                paddingValues = PaddingValues(0.dp),
+                                                modifier = Modifier,
                                                 platform = platform,
                                                 localImageLoaderValue = localImageLoaderValue,
                                                 showCloseIcon = false,
@@ -1426,7 +1432,7 @@ class UiUtils {
             onNavigateToShowImageScreen: (image : String) -> Unit,
             onNavigateToUserInformation: (user: UserInstance?) -> Unit,
             showBottomSheet: (NewsInstance) -> Unit,
-            commentViewModel: CommentViewModel? = null,
+            commentViewModel: CommentViewModelContract? = null,
             platform: PlatformContext? = null,
             currentUser: UserInstance? = null,
             groupId: String = "",
@@ -2959,7 +2965,8 @@ class UiUtils {
             onTextChange: (String) -> Unit,
             modifier: Modifier,
             placeholder: String,
-            keyboardController : SoftwareKeyboardController? = null
+            keyboardController : SoftwareKeyboardController? = null,
+            focusRequester: FocusRequester? = null
         ) {
             Box(
                 modifier = modifier
@@ -2986,7 +2993,14 @@ class UiUtils {
                         maxLines = 4,
                         modifier = Modifier
                             .weight(1f)
-                            .padding(vertical = 8.dp),
+                            .padding(vertical = 8.dp)
+                            .let { baseMod ->
+                                if (focusRequester != null) {
+                                    baseMod.focusRequester(focusRequester)
+                                } else {
+                                    baseMod
+                                }
+                            },
                         textStyle = MaterialTheme.typography.bodyMedium.copy(
                             color = MaterialTheme.colorScheme.onSurface
                         ),

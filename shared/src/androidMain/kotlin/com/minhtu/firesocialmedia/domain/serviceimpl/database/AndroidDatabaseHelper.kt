@@ -51,6 +51,7 @@ import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import kotlin.coroutines.resume
 
 class AndroidDatabaseHelper {
     companion object {
@@ -69,17 +70,17 @@ class AndroidDatabaseHelper {
             if (value.isNotEmpty()) {
                 databaseReference.setValue(value).addOnCompleteListener { task ->
                     if (task.isSuccessful) {
-                        if (continuation.isActive) continuation.resume(true, onCancellation = {})
+                        if (continuation.isActive) continuation.resume(true)
                     } else {
-                        if (continuation.isActive) continuation.resume(false, onCancellation = {})
+                        if (continuation.isActive) continuation.resume(false)
                     }
                 }
             } else {
                 databaseReference.removeValue().addOnCompleteListener { task ->
                     if (task.isSuccessful) {
-                        if (continuation.isActive) continuation.resume(true, onCancellation = {})
+                        if (continuation.isActive) continuation.resume(true)
                     } else {
-                        if (continuation.isActive) continuation.resume(false, onCancellation = {})
+                        if (continuation.isActive) continuation.resume(false)
                     }
                 }
             }
@@ -198,9 +199,9 @@ class AndroidDatabaseHelper {
                     context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
                 val result = downloadManager.enqueue(request)
                 if (result == -1L) {
-                    if (continuation.isActive) continuation.resume(false, onCancellation = {})
+                    if (continuation.isActive) continuation.resume(false)
                 } else {
-                    if (continuation.isActive) continuation.resume(true, onCancellation = {})
+                    if (continuation.isActive) continuation.resume(true)
                 }
             }
 
@@ -373,7 +374,7 @@ class AndroidDatabaseHelper {
                                 }
                             }
                     } else {
-                        if (continuation.isActive) continuation.resume(false, onCancellation = {})
+                        if (continuation.isActive) continuation.resume(false)
                     }
                 }
                 .addOnFailureListener {
@@ -410,7 +411,7 @@ class AndroidDatabaseHelper {
                                 }
                             }
                     } else {
-                        if (continuation.isActive) continuation.resume(false, onCancellation = {})
+                        if (continuation.isActive) continuation.resume(false)
                     }
                 }
                 .addOnFailureListener {
@@ -428,9 +429,9 @@ class AndroidDatabaseHelper {
             val database = FirebaseDatabase.getInstance().getReference(callPath).child(sessionId)
             database.removeValue().addOnCompleteListener { task ->
                 if (task.isSuccessful) {
-                    if (continuation.isActive) continuation.resume(true, onCancellation = {})
+                    if (continuation.isActive) continuation.resume(true)
                 } else {
-                    if (continuation.isActive) continuation.resume(false, onCancellation = {})
+                    if (continuation.isActive) continuation.resume(false)
                 }
             }
         }
@@ -1206,7 +1207,7 @@ class AndroidDatabaseHelper {
                         Log.d("Task", "updateChildren SUCCESS")
                     }
 
-                    continuation.resume(task.isSuccessful, onCancellation = {})
+                    continuation.resume(task.isSuccessful)
                 }
         }
 
@@ -1413,7 +1414,7 @@ class AndroidDatabaseHelper {
                         Log.d("Task", "updateChildren SUCCESS")
                     }
 
-                    continuation.resume(task.isSuccessful, onCancellation = {})
+                    continuation.resume(task.isSuccessful)
                 }
         }
 
@@ -1446,7 +1447,7 @@ class AndroidDatabaseHelper {
                         Log.d("Task", "updateChildren SUCCESS")
                     }
 
-                    continuation.resume(task.isSuccessful, onCancellation = {})
+                    continuation.resume(task.isSuccessful)
                 }
         }
 
@@ -1476,7 +1477,7 @@ class AndroidDatabaseHelper {
                         Log.d("Task", "updateChildren SUCCESS")
                     }
 
-                    continuation.resume(task.isSuccessful, onCancellation = {})
+                    continuation.resume(task.isSuccessful)
                 }
         }
 
@@ -1495,7 +1496,7 @@ class AndroidDatabaseHelper {
                 .child(memberPath)
                 .child(user.uid)
             databaseRef.setValue(role).addOnCompleteListener { task ->
-                continuation.resume(task.isSuccessful, onCancellation = {})
+                continuation.resume(task.isSuccessful)
             }
         }
 
@@ -1521,13 +1522,13 @@ class AndroidDatabaseHelper {
                             .sortedByDescending { it.memberCount }
 
                         if (continuation.isActive) {
-                            continuation.resume(rawList, onCancellation = {})
+                            continuation.resume(rawList)
                         }
                     }
 
                     override fun onCancelled(error: DatabaseError) {
                         if (continuation.isActive) {
-                            continuation.resume(emptyList(), onCancellation = {})
+                            continuation.resume(emptyList())
                         }
                     }
                 })
@@ -1961,7 +1962,7 @@ class AndroidDatabaseHelper {
                 } else {
                     Log.e("Task", "createPoll FAILED", task.exception)
                 }
-                continuation.resume(task.isSuccessful, onCancellation = {})
+                continuation.resume(task.isSuccessful)
             }
         }
 
@@ -1988,7 +1989,7 @@ class AndroidDatabaseHelper {
                 } else {
                     Log.e("Task", "deletePollFromDatabase FAILED", task.exception)
                 }
-                continuation.resume(task.isSuccessful, onCancellation = {})
+                continuation.resume(task.isSuccessful)
             }
         }
 
@@ -2129,7 +2130,7 @@ class AndroidDatabaseHelper {
                 if (!task.isSuccessful) {
                     Log.e("Task", "submitVote FAILED", task.exception)
                 }
-                continuation.resume(task.isSuccessful, onCancellation = {})
+                continuation.resume(task.isSuccessful)
             }
         }
     }

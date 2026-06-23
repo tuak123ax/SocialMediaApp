@@ -35,6 +35,7 @@ import com.minhtu.firesocialmedia.utils.IosUtils.Companion.toCommentDTO
 import com.minhtu.firesocialmedia.utils.IosUtils.Companion.toNewsDTO
 import com.minhtu.firesocialmedia.utils.IosUtils.Companion.toUserDTO
 import com.minhtu.firesocialmedia.core.utils.Utils
+import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -42,6 +43,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.suspendCancellableCoroutine
 import platform.Foundation.NSUUID
 import platform.UIKit.UIDevice
+private fun <T> CancellableContinuation<T>.resume(value: T) {
+    this.resume(value, onCancellation = null)
+}
 
 class IosDatabaseService() : DatabaseService {
     override suspend fun updateFCMTokenForCurrentUser(currentUser: UserDTO) {
@@ -62,7 +66,7 @@ class IosDatabaseService() : DatabaseService {
             FIRDataEventType.FIRDataEventTypeValue,
             withBlock = { snapshot: FIRDataSnapshot? ->
                 if (snapshot == null || !snapshot.exists()) {
-                    if(continuation.isActive) continuation.resume(SignInDTO(true, Constants.ACCOUNT_NOT_EXISTED), onCancellation = {})
+                    if(continuation.isActive) continuation.resume(SignInDTO(true, Constants.ACCOUNT_NOT_EXISTED))
                     return@observeEventType
                 }
 
@@ -76,7 +80,7 @@ class IosDatabaseService() : DatabaseService {
                     try {
                         val user = value.toUserDTO()
                         if (user.email == email) {
-                            if(continuation.isActive) continuation.resume(SignInDTO(true, Constants.ACCOUNT_EXISTED), onCancellation = {})
+                            if(continuation.isActive) continuation.resume(SignInDTO(true, Constants.ACCOUNT_EXISTED))
                             existed = true
                             break
                         }
@@ -86,11 +90,11 @@ class IosDatabaseService() : DatabaseService {
                 }
 
                 if (!existed) {
-                    if(continuation.isActive) continuation.resume(SignInDTO(true, Constants.ACCOUNT_NOT_EXISTED), onCancellation = {})
+                    if(continuation.isActive) continuation.resume(SignInDTO(true, Constants.ACCOUNT_NOT_EXISTED))
                 }
             },
             withCancelBlock = { error ->
-                if(continuation.isActive) continuation.resume(SignInDTO(false, Constants.LOGIN_ERROR), onCancellation = {})
+                if(continuation.isActive) continuation.resume(SignInDTO(false, Constants.LOGIN_ERROR))
             }
         )
     }
@@ -161,9 +165,9 @@ class IosDatabaseService() : DatabaseService {
                                 e.printStackTrace()
                             }
                         }
-                        if (continuation.isActive) continuation.resume(result, onCancellation = {})
+                        if (continuation.isActive) continuation.resume(result)
                     } else {
-                        if (continuation.isActive) continuation.resume(null, onCancellation = {})
+                        if (continuation.isActive) continuation.resume(null)
                     }
                 }
             )
@@ -307,15 +311,15 @@ class IosDatabaseService() : DatabaseService {
                             sorted,
                             if (newsList.size < number) null else oldest.timePosted.toDouble(),
                             oldest.id
-                        ), onCancellation = {})
+                        ))
                     } else {
                         if (continuation.isActive) continuation.resume(
-                            LatestNewsDTO(emptyList(), null, null), onCancellation = {}
+                            LatestNewsDTO(emptyList(), null, null)
                         )
                     }
                 }
             ) { _ ->
-                continuation.resume(LatestNewsDTO(null, null, null), onCancellation = {})
+                continuation.resume(LatestNewsDTO(null, null, null))
             }
         }
 
@@ -370,9 +374,9 @@ class IosDatabaseService() : DatabaseService {
                                 e.printStackTrace()
                             }
                         }
-                        if (continuation.isActive) continuation.resume(ArrayList(result), onCancellation = {})
+                        if (continuation.isActive) continuation.resume(ArrayList(result))
                     } else {
-                        if (continuation.isActive) continuation.resume(null, onCancellation = {})
+                        if (continuation.isActive) continuation.resume(null)
                     }
                 }
             )
@@ -418,14 +422,14 @@ class IosDatabaseService() : DatabaseService {
                                 e.printStackTrace()
                             }
                         }
-                        if (continuation.isActive) continuation.resume(result, onCancellation = {})
+                        if (continuation.isActive) continuation.resume(result)
                     } else {
-                        if (continuation.isActive) continuation.resume(null, onCancellation = {})
+                        if (continuation.isActive) continuation.resume(null)
                     }
                 }
             ) { error ->
                 logMessage("getAllNotificationsOfUser", { "Error: ${error?.localizedDescription}" })
-                if (continuation.isActive) continuation.resume(null, onCancellation = {})
+                if (continuation.isActive) continuation.resume(null)
             }
         } ?: return null
 
@@ -740,8 +744,8 @@ class IosDatabaseService() : DatabaseService {
                     result.add(GroupSummaryDTO(id = id, name = name, avatar = avatar, notificationOn = notificationOn))
                 }
             }
-            if (cont.isActive) cont.resume(result, onCancellation = {})
-        }) { _ -> if (cont.isActive) cont.resume(emptySet(), onCancellation = {}) }
+            if (cont.isActive) cont.resume(result)
+        }) { _ -> if (cont.isActive) cont.resume(emptySet()) }
     }
 
     override suspend fun fetchGroupInfo(groupId: String, groupPath: String): GroupDTO? = suspendCancellableCoroutine { cont ->
@@ -759,14 +763,14 @@ class IosDatabaseService() : DatabaseService {
                         createdDate = (map["createdDate"] as? Long) ?: 0L,
                         memberCount = (map["memberCount"] as? Long) ?: 0L
                     )
-                    if (cont.isActive) cont.resume(group, onCancellation = {})
+                    if (cont.isActive) cont.resume(group)
                 } else {
-                    if (cont.isActive) cont.resume(null, onCancellation = {})
+                    if (cont.isActive) cont.resume(null)
                 }
             } else {
-                if (cont.isActive) cont.resume(null, onCancellation = {})
+                if (cont.isActive) cont.resume(null)
             }
-        }) { _ -> if (cont.isActive) cont.resume(null, onCancellation = {}) }
+        }) { _ -> if (cont.isActive) cont.resume(null) }
     }
 
     override suspend fun updateNotificationStatus(
@@ -780,7 +784,7 @@ class IosDatabaseService() : DatabaseService {
         val ref = FIRDatabase.database().reference()
             .child(userPath).child(userId).child(groupPath).child(groupId).child(notificationStatusPath)
         ref.setValue(newStatus) { error, _ ->
-            if (cont.isActive) cont.resume(error == null, onCancellation = {})
+            if (cont.isActive) cont.resume(error == null)
         }
     }
 
@@ -801,8 +805,8 @@ class IosDatabaseService() : DatabaseService {
                     result[key] = value
                 }
             }
-            if (cont.isActive) cont.resume(result, onCancellation = {})
-        }) { _ -> if (cont.isActive) cont.resume(HashMap(), onCancellation = {}) }
+            if (cont.isActive) cont.resume(result)
+        }) { _ -> if (cont.isActive) cont.resume(HashMap()) }
     }
 
     override suspend fun getGroupConfigs(
@@ -822,11 +826,11 @@ class IosDatabaseService() : DatabaseService {
                     avatar = map["avatar"] as? String ?: "",
                     notificationOn = map["notificationOn"] as? Boolean ?: false
                 ) else GroupSummaryDTO()
-                if (cont.isActive) cont.resume(summary, onCancellation = {})
+                if (cont.isActive) cont.resume(summary)
             } else {
-                if (cont.isActive) cont.resume(GroupSummaryDTO(), onCancellation = {})
+                if (cont.isActive) cont.resume(GroupSummaryDTO())
             }
-        }) { _ -> if (cont.isActive) cont.resume(GroupSummaryDTO(), onCancellation = {}) }
+        }) { _ -> if (cont.isActive) cont.resume(GroupSummaryDTO()) }
     }
 
     override suspend fun fetchNotificationState(
@@ -840,8 +844,8 @@ class IosDatabaseService() : DatabaseService {
             .child(userPath).child(userId).child(groupPath).child(groupId).child(notificationStatusPath)
         ref.observeSingleEventOfType(FIRDataEventType.FIRDataEventTypeValue, withBlock = { snapshot ->
             val value = snapshot?.value as? Boolean ?: false
-            if (cont.isActive) cont.resume(value, onCancellation = {})
-        }) { _ -> if (cont.isActive) cont.resume(false, onCancellation = {}) }
+            if (cont.isActive) cont.resume(value)
+        }) { _ -> if (cont.isActive) cont.resume(false) }
     }
 
     override suspend fun inviteFriendToGroup(
@@ -880,7 +884,7 @@ class IosDatabaseService() : DatabaseService {
                     countRef.setValue(current + 1) { _, _ -> }
                 }) { _ -> }
             }
-            if (cont.isActive) cont.resume(error == null, onCancellation = {})
+            if (cont.isActive) cont.resume(error == null)
         }
     }
 
@@ -906,7 +910,7 @@ class IosDatabaseService() : DatabaseService {
                     countRef.setValue(newCount) { _, _ -> }
                 }) { _ -> }
             }
-            if (cont.isActive) cont.resume(error == null, onCancellation = {})
+            if (cont.isActive) cont.resume(error == null)
         }
     }
 
@@ -922,7 +926,7 @@ class IosDatabaseService() : DatabaseService {
             "$userPath/${user.uid}/$groupPath/${group.id}" to null
         )
         dbRef.updateChildValues(updates) { error, _ ->
-            if (cont.isActive) cont.resume(error == null, onCancellation = {})
+            if (cont.isActive) cont.resume(error == null)
         }
     }
 
@@ -936,7 +940,7 @@ class IosDatabaseService() : DatabaseService {
         val ref = FIRDatabase.database().reference()
             .child(groupPath).child(group.id).child(memberPath).child(user.uid)
         ref.setValue(role) { error, _ ->
-            if (cont.isActive) cont.resume(error == null, onCancellation = {})
+            if (cont.isActive) cont.resume(error == null)
         }
     }
 
@@ -962,8 +966,8 @@ class IosDatabaseService() : DatabaseService {
                         ))
                     }
                 }
-                if (cont.isActive) cont.resume(result.sortedByDescending { it.memberCount }, onCancellation = {})
-            }) { _ -> if (cont.isActive) cont.resume(emptyList(), onCancellation = {}) }
+                if (cont.isActive) cont.resume(result.sortedByDescending { it.memberCount })
+            }) { _ -> if (cont.isActive) cont.resume(emptyList()) }
     }
 
     override suspend fun updateIsReadStatusOfNotification(
@@ -998,8 +1002,8 @@ class IosDatabaseService() : DatabaseService {
             .child(userPath).child(uid).child(notificationPath)
         ref.removeValueWithCompletionBlock { error, _ ->
             if (cont.isActive) {
-                if (error == null) cont.resume(Result.success(Unit), onCancellation = {})
-                else cont.resume(Result.failure(Exception(error.localizedDescription)), onCancellation = {})
+                if (error == null) cont.resume(Result.success(Unit))
+                else cont.resume(Result.failure(Exception(error.localizedDescription)))
             }
         }
     }
@@ -1021,7 +1025,7 @@ class IosDatabaseService() : DatabaseService {
         val ref = FIRDatabase.database().reference()
             .child(historyPath).child(loginHistoryPath).child(userId).child(sessionId)
         ref.removeValueWithCompletionBlock { error, _ ->
-            if (cont.isActive) cont.resume(error == null, onCancellation = {})
+            if (cont.isActive) cont.resume(error == null)
         }
     }
 
@@ -1034,7 +1038,7 @@ class IosDatabaseService() : DatabaseService {
         val ref = FIRDatabase.database().reference()
             .child(historyPath).child(loginHistoryPath).child(userId).child(sessionId).child("status")
         ref.setValue("LOGOUT") { error, _ ->
-            if (cont.isActive) cont.resume(error == null, onCancellation = {})
+            if (cont.isActive) cont.resume(error == null)
         }
     }
 
@@ -1081,7 +1085,7 @@ class IosDatabaseService() : DatabaseService {
         val ref = FIRDatabase.database().reference()
             .child(userPath).child(userId).child(fieldPath)
         ref.setValue(value) { error, _ ->
-            if (cont.isActive) cont.resume(error == null, onCancellation = {})
+            if (cont.isActive) cont.resume(error == null)
         }
     }
 
@@ -1094,7 +1098,7 @@ class IosDatabaseService() : DatabaseService {
         val ref = FIRDatabase.database().reference()
             .child(userPath).child(userId).child(fieldPath)
         ref.setValue(value) { error, _ ->
-            if (cont.isActive) cont.resume(error == null, onCancellation = {})
+            if (cont.isActive) cont.resume(error == null)
         }
     }
 
@@ -1129,7 +1133,7 @@ class IosDatabaseService() : DatabaseService {
         val ref = FIRDatabase.database().reference()
             .child(userPath).child(userId).child(twoFaEnabledPath)
         ref.setValue(twoFAEnabled) { error, _ ->
-            if (cont.isActive) cont.resume(error == null, onCancellation = {})
+            if (cont.isActive) cont.resume(error == null)
         }
     }
 
@@ -1157,8 +1161,8 @@ class IosDatabaseService() : DatabaseService {
                     ))
                 }
             }
-            if (cont.isActive) cont.resume(result, onCancellation = {})
-        }) { _ -> if (cont.isActive) cont.resume(emptyList(), onCancellation = {}) }
+            if (cont.isActive) cont.resume(result)
+        }) { _ -> if (cont.isActive) cont.resume(emptyList()) }
     }
 
     override suspend fun saveLoginActivityInfo(
@@ -1183,7 +1187,7 @@ class IosDatabaseService() : DatabaseService {
             val ref = FIRDatabase.database().reference()
                 .child(historyPath).child(loginHistoryPath).child(userId).child(sessionId)
             suspendCancellableCoroutine<Unit> { cont ->
-                ref.setValue(sessionMap) { _, _ -> if (cont.isActive) cont.resume(Unit, onCancellation = {}) }
+                ref.setValue(sessionMap) { _, _ -> if (cont.isActive) cont.resume(Unit) }
             }
         } catch (e: Exception) {
             logMessage("saveLoginActivityInfo", { "Exception: ${e.message}" })
@@ -1228,7 +1232,7 @@ class IosDatabaseService() : DatabaseService {
             "$pollPath/${poll.id}" to pollMap
         )
         dbRef.updateChildValues(updates) { error, _ ->
-            if (cont.isActive) cont.resume(error == null, onCancellation = {})
+            if (cont.isActive) cont.resume(error == null)
         }
     }
 
@@ -1248,7 +1252,7 @@ class IosDatabaseService() : DatabaseService {
             "$pollVotesPath/$pollId" to null
         )
         dbRef.updateChildValues(updates) { error, _ ->
-            if (cont.isActive) cont.resume(error == null, onCancellation = {})
+            if (cont.isActive) cont.resume(error == null)
         }
     }
 
@@ -1286,14 +1290,14 @@ class IosDatabaseService() : DatabaseService {
                         expiresAt = map["expiresAt"] as? Long,
                         votes = votes
                     )
-                    if (cont.isActive) cont.resume(poll, onCancellation = {})
+                    if (cont.isActive) cont.resume(poll)
                 } else {
-                    if (cont.isActive) cont.resume(null, onCancellation = {})
+                    if (cont.isActive) cont.resume(null)
                 }
             } else {
-                if (cont.isActive) cont.resume(null, onCancellation = {})
+                if (cont.isActive) cont.resume(null)
             }
-        }) { _ -> if (cont.isActive) cont.resume(null, onCancellation = {}) }
+        }) { _ -> if (cont.isActive) cont.resume(null) }
     }
 
     override suspend fun loadMyVotes(
@@ -1313,8 +1317,8 @@ class IosDatabaseService() : DatabaseService {
                 }
                 list
             } else emptyList()
-            if (cont.isActive) cont.resume(result, onCancellation = {})
-        }) { _ -> if (cont.isActive) cont.resume(emptyList(), onCancellation = {}) }
+            if (cont.isActive) cont.resume(result)
+        }) { _ -> if (cont.isActive) cont.resume(emptyList()) }
     }
 
     override suspend fun loadAllVoters(pollId: String, pollVotesPath: String): Map<String, List<Int>> = suspendCancellableCoroutine { cont ->
@@ -1335,8 +1339,8 @@ class IosDatabaseService() : DatabaseService {
                     result[uid] = indices
                 }
             }
-            if (cont.isActive) cont.resume(result, onCancellation = {})
-        }) { _ -> if (cont.isActive) cont.resume(emptyMap(), onCancellation = {}) }
+            if (cont.isActive) cont.resume(result)
+        }) { _ -> if (cont.isActive) cont.resume(emptyMap()) }
     }
 
     override suspend fun submitVote(
@@ -1374,8 +1378,8 @@ class IosDatabaseService() : DatabaseService {
             }
             currentVotes.forEach { (k, v) -> updates["$pollPath/$pollId/votes/$k"] = v }
             dbRef.updateChildValues(updates) { error, _ ->
-                if (cont.isActive) cont.resume(error == null, onCancellation = {})
+                if (cont.isActive) cont.resume(error == null)
             }
-        }) { _ -> if (cont.isActive) cont.resume(false, onCancellation = {}) }
+        }) { _ -> if (cont.isActive) cont.resume(false) }
     }
 }

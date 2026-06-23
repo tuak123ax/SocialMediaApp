@@ -36,6 +36,7 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.tasks.await
 import java.security.SecureRandom
 import kotlin.coroutines.cancellation.CancellationException
+import kotlin.coroutines.resume
 
 class AndroidAuthService(var context: Context) : AuthService{
     override suspend fun signInWithEmailAndPassword(
@@ -114,11 +115,11 @@ class AndroidAuthService(var context: Context) : AuthService{
 
 
     override suspend fun getCurrentUserUid(): String? = suspendCancellableCoroutine{ continuation ->
-        if(continuation.isActive) continuation.resume(FirebaseAuth.getInstance().uid, onCancellation = {})
+        if(continuation.isActive) continuation.resume(FirebaseAuth.getInstance().uid)
     }
 
     override suspend fun getCurrentUserEmail(): String? = suspendCancellableCoroutine{ continuation ->
-        if(continuation.isActive) continuation.resume(FirebaseAuth.getInstance().currentUser?.email.toString(), onCancellation = {})
+        if(continuation.isActive) continuation.resume(FirebaseAuth.getInstance().currentUser?.email.toString())
     }
 
     override suspend fun fetchSignInMethodsForEmail(email: String) : EmailExistResult = suspendCancellableCoroutine{ continuation ->
@@ -128,15 +129,12 @@ class AndroidAuthService(var context: Context) : AuthService{
                     val signInMethods = task.result?.signInMethods
                     if (signInMethods.isNullOrEmpty()) {
                         if(continuation.isActive)
-                            continuation.resume(EmailExistResult(false, Constants.EMAIL_NOT_EXISTED),
-                                onCancellation = {})
+                            continuation.resume(EmailExistResult(false, Constants.EMAIL_NOT_EXISTED))
                     } else {
-                        continuation.resume(EmailExistResult(true, Constants.EMAIL_EXISTED),
-                            onCancellation = {})
+                        continuation.resume(EmailExistResult(true, Constants.EMAIL_EXISTED))
                     }
                 } else {
-                    continuation.resume(EmailExistResult(false, Constants.EMAIL_SERVER_ERROR),
-                        onCancellation = {})
+                    continuation.resume(EmailExistResult(false, Constants.EMAIL_SERVER_ERROR))
                 }
             }
     }
@@ -145,9 +143,9 @@ class AndroidAuthService(var context: Context) : AuthService{
         FirebaseAuth.getInstance().sendPasswordResetEmail(email)
             .addOnCompleteListener{ task ->
                 if(task.isSuccessful) {
-                    if(continuation.isActive) continuation.resume(true, onCancellation = {})
+                    if(continuation.isActive) continuation.resume(true)
                 } else {
-                    continuation.resume(true, onCancellation = {})
+                    continuation.resume(true)
                 }
             }
     }
@@ -165,26 +163,17 @@ class AndroidAuthService(var context: Context) : AuthService{
                             if (task.isSuccessful) {
                                 val user = Firebase.auth.currentUser
                                 if(user != null && continuation.isActive) {
-                                    continuation.resume(
-                                        user.email,
-                                        onCancellation = {
-                                        })
+                                    continuation.resume(user.email)
                                 }
                             } else {
-                                continuation.resume(
-                                    null,
-                                    onCancellation = {
-                                    })
+                                continuation.resume(null)
                             }
                         }
                 }
                 else -> {
                     // Shouldn't happen.
                     logMessage("Signin", { "No ID token!" })
-                    continuation.resume(
-                        null,
-                        onCancellation = {
-                        })
+                    continuation.resume(null)
                 }
             }
         }

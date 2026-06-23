@@ -104,7 +104,6 @@ import com.minhtu.firesocialmedia.core.domain.usecases.settings.UpdateUserString
 import com.minhtu.firesocialmedia.core.domain.usecases.showimage.DownloadImageUseCase
 import com.minhtu.firesocialmedia.core.domain.usecases.sync.LoadNewsPostedWhenOfflineUseCase
 import com.minhtu.firesocialmedia.core.domain.usecases.sync.SyncDataUseCase
-import com.minhtu.firesocialmedia.presentation.comment.CommentViewModel
 import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
 import com.minhtu.firesocialmedia.presentation.navigation.RouterViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.friend.FriendViewModel
@@ -346,8 +345,6 @@ fun appModule() = module {
     }
 
     // ── ViewModels ────────────────────//
-    viewModel { CommentViewModel(get(), get(), get(), get(), get(), get(), get(), get()) }
-    // HomeViewModel registration moved to feature:home homeModule()
     viewModel { LoadingViewModel() }
     viewModel { RouterViewModel(get(), get(), get(), get()) }
     viewModel { FriendViewModel(get(), get()) }

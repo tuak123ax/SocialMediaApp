@@ -42,7 +42,8 @@ import com.minhtu.firesocialmedia.di.PlatformContext
 import com.minhtu.firesocialmedia.platform.generateImageLoader
 import com.minhtu.firesocialmedia.platform.setupSignInLauncher
 import com.minhtu.firesocialmedia.platform.showToast
-import com.minhtu.firesocialmedia.presentation.comment.Comment
+import com.minhtu.firesocialmedia.presentation.comment.CommentScreenApi
+import com.minhtu.firesocialmedia.presentation.comment.CommentViewModelContract
 import com.minhtu.firesocialmedia.presentation.home.HomeViewModelContract
 import com.minhtu.firesocialmedia.presentation.loading.GifLoading
 import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
@@ -73,8 +74,10 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
 
     // Shared viewModels
     val homeViewModel: HomeViewModelContract = koinInject()
-    val loadingViewModel: LoadingViewModel = koinViewModel()
-    val routerViewModel: RouterViewModel = koinViewModel()
+    val commentViewModel: CommentViewModelContract = koinInject()
+     val loadingViewModel: LoadingViewModel = koinViewModel()
+     val routerViewModel: RouterViewModel = koinViewModel()
+    val commentScreenApi: CommentScreenApi = koinInject()
     val signInViewModel: GoogleSignInHandler = koinInject()
     val authNavGraph: AuthNavGraph = koinInject()
     val homeNavGraph: HomeNavGraph = koinInject()
@@ -277,7 +280,7 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                     },
                     onNavigateToCommentScreen = { new ->
                         selectedNew = new
-                        navController.navigate(route = Comment.getScreenName())
+                        navController.navigate(route = CommentNavGraph.COMMENT_SCREEN_ROUTE)
                     },
                     onNavigateToCallingScreen = { callingRequestData ->
                         sessionId = callingRequestData.sessionId
@@ -396,7 +399,7 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                         },
                         onNavigateToCommentScreen = { new ->
                             selectedNew = new
-                            navController.navigate(route = Comment.getScreenName())
+                            navController.navigate(route = CommentNavGraph.COMMENT_SCREEN_ROUTE)
                         },
                         onNavigateToUploadNewsFeed = { _ ->
                             navController.navigate(route = homeNavGraph.getUploadNewsfeedRoute())
@@ -425,7 +428,7 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                     },
                     onNavigateToCommentScreen = { new ->
                         selectedNew = new
-                        navController.navigate(route = Comment.getScreenName())
+                        navController.navigate(route = CommentNavGraph.COMMENT_SCREEN_ROUTE)
                     },
                     onNavigateToUploadNewsfeed = { new ->
                         updateNew = new
@@ -433,35 +436,37 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                     }
                 )
                 composable(
-                    route = Comment.getScreenName(),
-                    enterTransition = DefaultNavAnimations.enter,
-                    popEnterTransition = DefaultNavAnimations.popEnter,
-                    exitTransition = DefaultNavAnimations.exit,
-                    popExitTransition = DefaultNavAnimations.popExit
-                ) {
-                    Comment.CommentScreen(
-                        paddingValues,
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(color = MaterialTheme.colorScheme.background),
-                        platform = platformContext,
-                        localImageLoaderValue = localImageLoaderValue,
-                        showCloseIcon = true,
-                        currentUser = homeViewModel.currentUser!!,
-                        selectedNew = selectedNew,
-                        onNavigateToShowImageScreen = { image ->
-                            selectedImage = image
-                            navController.navigate(route = ShowImage.getScreenName())
-                        },
-                        onNavigateToUserInformation = { user ->
-                            selectedUser = user
-                            navController.navigate(route = profileNavGraph.getUserInformationRoute())
-                        }
-                    ) { numberOfComments ->
-                        homeViewModel.addCommentCountData(selectedNew.id, numberOfComments)
-                        navController.popBackStack()
-                    }
-                }
+                    route = CommentNavGraph.COMMENT_SCREEN_ROUTE,
+                     enterTransition = DefaultNavAnimations.enter,
+                     popEnterTransition = DefaultNavAnimations.popEnter,
+                     exitTransition = DefaultNavAnimations.exit,
+                     popExitTransition = DefaultNavAnimations.popExit
+                 ) {
+                    commentScreenApi.renderCommentScreen(
+                        paddingValues = paddingValues,
+                         modifier = Modifier
+                             .fillMaxSize()
+                             .background(color = MaterialTheme.colorScheme.background),
+                         platform = platformContext,
+                         localImageLoaderValue = localImageLoaderValue,
+                         showCloseIcon = true,
+                         commentViewModel = commentViewModel,
+                         currentUser = homeViewModel.currentUser!!,
+                         selectedNew = selectedNew,
+                         onNavigateToShowImageScreen = { image ->
+                             selectedImage = image
+                             navController.navigate(route = ShowImage.getScreenName())
+                         },
+                         onNavigateToUserInformation = { user ->
+                             selectedUser = user
+                             navController.navigate(route = profileNavGraph.getUserInformationRoute())
+                         },
+                         onNavigateToHomeScreen = { numberOfComments ->
+                             homeViewModel.addCommentCountData(selectedNew.id, numberOfComments)
+                             navController.popBackStack()
+                         }
+                    )
+                 }
                 composable(
                     route = Screen.Friend.route,
                     enterTransition = DefaultNavAnimations.enter,
@@ -722,7 +727,7 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                     },
                     onNavigateToCommentScreen = { new ->
                         selectedNew = new
-                        navController.navigate(route = Comment.getScreenName())
+                        navController.navigate(route = CommentNavGraph.COMMENT_SCREEN_ROUTE)
                     },
                     onNavigateToInviteMember = {
                         navController.navigate(route = groupNavGraph.getInviteMemberRoute())
@@ -787,7 +792,7 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                     },
                     onNavigateToCommentScreen = { new ->
                         selectedNew = new
-                        navController.navigate(route = Comment.getScreenName())
+                        navController.navigate(route = CommentNavGraph.COMMENT_SCREEN_ROUTE)
                     },
                     onNavigateToInviteMember = {
                         navController.navigate(route = groupNavGraph.getInviteMemberRoute())
@@ -905,4 +910,3 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
         }
     }
 }
-

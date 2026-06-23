@@ -1,8 +1,6 @@
-package com.minhtu.firesocialmedia.presentation.comment
+package com.minhtu.firesocialmedia.feature.comment.presentation.comment
 
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import com.minhtu.firesocialmedia.di.PlatformContext
 import com.minhtu.firesocialmedia.core.domain.entity.comment.CommentInstance
 import com.minhtu.firesocialmedia.core.domain.entity.news.NewsInstance
@@ -24,6 +22,7 @@ import com.minhtu.firesocialmedia.platform.getRandomIdForNotification
 import com.minhtu.firesocialmedia.platform.logMessage
 import com.minhtu.firesocialmedia.platform.sendMessageToServer
 import com.minhtu.firesocialmedia.platform.showToast
+import com.minhtu.firesocialmedia.presentation.comment.CommentViewModelContract
 import com.rickclephas.kmp.observableviewmodel.ViewModel
 import com.rickclephas.kmp.observableviewmodel.launch
 import kotlinx.coroutines.CoroutineDispatcher
@@ -37,47 +36,58 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-class CommentViewModel(
+class CommentFeatureViewModel(
     private val commentInteractor: CommentInteractor,
-    private val getUserUseCase : GetUserUseCase,
+    private val getUserUseCase: GetUserUseCase,
     private val saveLikedCommentsUseCase: SaveLikedCommentsUseCase,
     private val saveNotificationToDatabaseUseCase: SaveNotificationToDatabaseUseCase,
     private val updateCommentCountForNewUseCase: UpdateCommentCountForNewUseCase,
     private val updateReplyCountForCommentUseCase: UpdateReplyCountForCommentUseCase,
     private val updateLikeCountForCommentUseCase: UpdateLikeCountForCommentUseCase,
-    private val updateLikeCountForSubCommentUseCase : UpdateLikeCountForSubCommentUseCase,
+    private val updateLikeCountForSubCommentUseCase: UpdateLikeCountForSubCommentUseCase,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
-) : ViewModel() {
-    var listComments : ArrayList<CommentInstance> = ArrayList()
-    var mapSubComments : HashMap<String, CommentInstance> = HashMap()
-    private val _allComments : MutableStateFlow<ArrayList<CommentInstance>> = MutableStateFlow(ArrayList())
-    val allComments = _allComments.asStateFlow()
-    fun updateComments(comments: ArrayList<CommentInstance>) {
+) : ViewModel(), CommentViewModelContract {
+
+    var listComments: ArrayList<CommentInstance> = ArrayList()
+    var mapSubComments: HashMap<String, CommentInstance> = HashMap()
+
+    private val _allComments: MutableStateFlow<ArrayList<CommentInstance>> = MutableStateFlow(ArrayList())
+    override val allComments = _allComments.asStateFlow()
+
+    private fun updateComments(comments: ArrayList<CommentInstance>) {
         _allComments.value.clear()
         _allComments.value = ArrayList(comments)
     }
 
-    var message by mutableStateOf("")
-    fun updateMessage(input : String){
-        message = input
+    private val _message = MutableStateFlow("")
+    override val messageFlow = _message.asStateFlow()
+    override var message: String
+        get() = _message.value
+        set(value) {
+            _message.value = value
+        }
+
+    override fun updateMessage(input: String) {
+        _message.value = input
     }
 
-    var image by mutableStateOf("")
-    fun updateImage(input:String){
+    var image: String = ""
+
+    fun updateImage(input: String) {
         image = input
     }
 
-    private var _createCommentStatus : MutableStateFlow<Boolean?> = MutableStateFlow(null)
-    var createCommentStatus = _createCommentStatus.asStateFlow()
-    fun sendComment(currentUser : UserInstance,
-                    selectedNew : NewsInstance) {
+    private val _createCommentStatus: MutableStateFlow<Boolean?> = MutableStateFlow(null)
+    override val createCommentStatus = _createCommentStatus.asStateFlow()
+
+    override fun sendComment(currentUser: UserInstance, selectedNew: NewsInstance) {
         viewModelScope.launch {
             withContext(ioDispatcher) {
-                if(_commentBeReplied.value == null) {
+                if (_commentBeReplied.value == null) {
                     if (message.isNotBlank()) {
-                        try{
+                        try {
                             val commentRandomId = generateRandomId()
-                            val commentInstance = CommentInstance(commentRandomId,currentUser.uid, currentUser.name,currentUser.image,message,image)
+                            val commentInstance = CommentInstance(commentRandomId, currentUser.uid, currentUser.name, currentUser.image, message, image)
                             commentInstance.timePosted = getCurrentTime()
                             listComments.add(commentInstance)
                             updateComments(listComments)
@@ -93,15 +103,13 @@ class CommentViewModel(
                             )
                             updateMessage("")
 
-                            //Save and send notification
                             saveAndSendNotification(currentUser, selectedNew)
-                        } catch(e: Exception) {
-                            logMessage("sendComment", { "Error when sendComment: "+ e.message })
+                        } catch (e: Exception) {
+                            logMessage("sendComment") { "Error when sendComment: ${e.message}" }
                         }
                     }
                 } else {
-                    //Handle reply comment
-                    if(message.isNotEmpty()) {
+                    if (message.isNotEmpty()) {
                         onReplyComment(_commentBeReplied.value!!, currentUser, selectedNew)
                     }
                     updateCommentBeReplied(null)
@@ -110,65 +118,58 @@ class CommentViewModel(
         }
     }
 
-    fun resetCommentStatus() {
+    override fun resetCommentStatus() {
         _createCommentStatus.value = null
     }
 
-    private suspend fun saveAndSendNotification(currentUser : UserInstance, selectedNew : NewsInstance) {
+    private suspend fun saveAndSendNotification(currentUser: UserInstance, selectedNew: NewsInstance) {
         val notiContent = "${currentUser.name} commented in your post!"
-        val notification = NotificationInstance(getRandomIdForNotification(),
+        val notification = NotificationInstance(
+            getRandomIdForNotification(),
             notiContent,
             currentUser.image,
             currentUser.uid,
             getCurrentTime(),
             NotificationType.COMMENT,
-            selectedNew.id)
-        //Save notification to db
+            selectedNew.id
+        )
         val poster = getUserUseCase.invoke(selectedNew.posterId, false)
-        saveNotification(notification, poster!!, saveNotificationToDatabaseUseCase)
-        //Send notification to poster
-        val tokenList = ArrayList<String>()
-        tokenList.add(poster.token)
+        saveNotification(notification, poster ?: return)
+        val tokenList = arrayListOf(poster.token)
         sendMessageToServer(createMessageForServer(notiContent, tokenList, currentUser, "BASIC"))
     }
 
-    suspend fun saveNotification(
-        notification: NotificationInstance,
-        friend : UserInstance,
-        saveNotificationToDatabaseUseCase: SaveNotificationToDatabaseUseCase) {
-        //Save notification to friend's notification list
-        try{
+    private suspend fun saveNotification(notification: NotificationInstance, friend: UserInstance) {
+        try {
             friend.addNotification(notification)
-            saveNotificationToDatabaseUseCase.invoke(
-                friend.uid,
-                friend.notifications)
-        } catch(e: Exception) {
+            saveNotificationToDatabaseUseCase.invoke(friend.uid, friend.notifications)
+        } catch (_: Exception) {
         }
     }
 
-    fun copyToClipboard(text : String,platform: PlatformContext) {
+    override fun copyToClipboard(text: String, platform: PlatformContext) {
         viewModelScope.launch(ioDispatcher) {
             platform.clipboard.copy(text)
         }
     }
 
-    //Comment or reply comment
     private val _commentBeReplied = MutableStateFlow<CommentInstance?>(null)
-    val commentBeReplied = _commentBeReplied.asStateFlow()
+    override val commentBeReplied = _commentBeReplied.asStateFlow()
 
-    fun updateCommentBeReplied(value : CommentInstance?) {
+    override fun updateCommentBeReplied(value: CommentInstance?) {
         _commentBeReplied.value = value
     }
-    fun onReplyComment(currentComment: CommentInstance, currentUser : UserInstance, selectedNew : NewsInstance) {
+
+    private fun onReplyComment(currentComment: CommentInstance, currentUser: UserInstance, selectedNew: NewsInstance) {
         viewModelScope.launch {
             withContext(ioDispatcher) {
-                try{
+                try {
                     val commentRandomId = generateRandomId()
-                    val commentInstance = CommentInstance(commentRandomId,currentUser.uid, currentUser.name,currentUser.image,message,image)
+                    val commentInstance = CommentInstance(commentRandomId, currentUser.uid, currentUser.name, currentUser.image, message, image)
                     commentInstance.timePosted = getCurrentTime()
 
                     listComments.remove(currentComment)
-                    currentComment.listReplies.put(commentInstance.id, commentInstance)
+                    currentComment.listReplies[commentInstance.id] = commentInstance
                     listComments.add(currentComment)
                     updateComments(listComments)
                     _createCommentStatus.value = commentInteractor.saveSubComment(
@@ -178,47 +179,43 @@ class CommentViewModel(
                         commentInstance
                     )
 
-                    updateCommentCountForNewUseCase.invoke(
+                    updateReplyCountForCommentUseCase.invoke(
                         selectedNew.id,
+                        currentComment.id,
                         currentComment.listReplies.size
                     )
                     updateMessage("")
                     updateCommentBeReplied(null)
-
-                    //Save and send notification
-//                saveAndSendNotification(currentUser, selectedNew, listUsers, platform)
-                } catch(e: Exception) {
+                } catch (_: Exception) {
                 }
             }
         }
     }
 
-    //-----------------Like comment-----------------//
-    private var _likedComments = MutableStateFlow<HashMap<String,Int>>(HashMap())
-    val likedComments = _likedComments.asStateFlow()
-    private var likeCache : HashMap<String,Int> = HashMap()
-    private var unlikeCache : ArrayList<String> = ArrayList()
-    private var updateLikeJob : Job? = null
-    private var _likeCountList = MutableStateFlow<HashMap<String,Int>>(HashMap())
-    var likeCountList = _likeCountList.asStateFlow()
-    fun addLikeCountData(commentId : String, likeCount : Int) {
+    private val _likedComments = MutableStateFlow<HashMap<String, Int>>(HashMap())
+    override val likedComments = _likedComments.asStateFlow()
+    private var likeCache: HashMap<String, Int> = HashMap()
+    private var unlikeCache: ArrayList<String> = ArrayList()
+    private var updateLikeJob: Job? = null
+    private val _likeCountList = MutableStateFlow<HashMap<String, Int>>(HashMap())
+    override val likeCountList = _likeCountList.asStateFlow()
+
+    private fun addLikeCountData(commentId: String, likeCount: Int) {
         _likeCountList.value[commentId] = likeCount
     }
-    fun onLikeComment(selectedNew : NewsInstance, currentUser : UserInstance, comment : CommentInstance) {
-        logMessage("onLikeComment", { comment.id })
+
+    override fun onLikeComment(selectedNew: NewsInstance, currentUser: UserInstance, comment: CommentInstance) {
         val isLiked = likeCache[comment.id] == 1
         if (isLiked) {
-            // Unlike
             likeCache.remove(comment.id)
             unlikeCache.add(comment.id)
-            if(_likeCountList.value[comment.id] != null) {
+            if (_likeCountList.value[comment.id] != null) {
                 _likeCountList.value[comment.id] = _likeCountList.value[comment.id]!! - 1
             }
         } else {
-            // Like
             likeCache[comment.id] = 1
             unlikeCache.remove(comment.id)
-            if(_likeCountList.value[comment.id] != null) {
+            if (_likeCountList.value[comment.id] != null) {
                 _likeCountList.value[comment.id] = _likeCountList.value[comment.id]!! + 1
             } else {
                 _likeCountList.value[comment.id] = 1
@@ -228,8 +225,6 @@ class CommentViewModel(
         _likedComments.value = HashMap(likeCache)
 
         updateLikeJob?.cancel()
-        //Use background scope instead of viewModelScope here to prevent job cancellation
-        // when navigating to other screen.
         val backgroundScope = CoroutineScope(SupervisorJob() + ioDispatcher)
         updateLikeJob = backgroundScope.launch {
             sendLikeUpdatesToFirebase(HashMap(_likeCountList.value), selectedNew, currentUser)
@@ -237,28 +232,27 @@ class CommentViewModel(
     }
 
     val sendLikeDataStatus = mutableStateOf(false)
-    private suspend fun sendLikeUpdatesToFirebase(likeCountList : HashMap<String,Int>, selectedNew : NewsInstance, currentUser : UserInstance) {
+
+    private suspend fun sendLikeUpdatesToFirebase(
+        likeCountList: HashMap<String, Int>,
+        selectedNew: NewsInstance,
+        currentUser: UserInstance
+    ) {
         currentUser.likedComments = likeCache
-        saveLikedCommentsUseCase.invoke(
-            currentUser.uid,
-            likeCache
-        )
-        val result = saveLikedCommentsUseCase.invoke(
-            currentUser.uid,
-            likeCache
-        )
+        saveLikedCommentsUseCase.invoke(currentUser.uid, likeCache)
+        val result = saveLikedCommentsUseCase.invoke(currentUser.uid, likeCache)
         sendLikeDataStatus.value = result
-        val listCommentId = listComments.map { it.id}
-        for(likedComment in likeCache.keys) {
-            if(likeCountList[likedComment] != null) {
-                if(listCommentId.contains(likedComment)) {
+        val listCommentId = listComments.map { it.id }
+        for (likedComment in likeCache.keys) {
+            if (likeCountList[likedComment] != null) {
+                if (listCommentId.contains(likedComment)) {
                     updateLikeCountForCommentUseCase.invoke(
                         selectedNew.id,
                         likedComment,
                         likeCountList[likedComment]!!
                     )
                 }
-                if(mapSubComments.keys.contains(likedComment)) {
+                if (mapSubComments.keys.contains(likedComment)) {
                     updateLikeCountForSubCommentUseCase.invoke(
                         selectedNew.id,
                         likedComment,
@@ -268,16 +262,16 @@ class CommentViewModel(
                 }
             }
         }
-        for(unlikedComment in unlikeCache) {
-            if(likeCountList[unlikedComment] != null) {
-                if(listCommentId.contains(unlikedComment)) {
+        for (unlikedComment in unlikeCache) {
+            if (likeCountList[unlikedComment] != null) {
+                if (listCommentId.contains(unlikedComment)) {
                     updateLikeCountForCommentUseCase.invoke(
                         selectedNew.id,
                         unlikedComment,
                         likeCountList[unlikedComment]!!
                     )
                 }
-                if(mapSubComments.keys.contains(unlikedComment)) {
+                if (mapSubComments.keys.contains(unlikedComment)) {
                     updateLikeCountForSubCommentUseCase.invoke(
                         selectedNew.id,
                         unlikedComment,
@@ -289,51 +283,45 @@ class CommentViewModel(
         }
     }
 
-    private fun findParentCommentId(childCommentId : String) : String{
-        return listComments.firstOrNull { it.listReplies.containsKey(childCommentId)}?.id ?: ""
+    private fun findParentCommentId(childCommentId: String): String {
+        return listComments.firstOrNull { it.listReplies.containsKey(childCommentId) }?.id ?: ""
     }
 
-    fun updateLikeStatus(){
+    override fun updateLikeStatus() {
         _likedComments.value = HashMap(likeCache)
     }
 
-    fun updateLikeCommentOfCurrentUser(currentUser: UserInstance) {
+    override fun updateLikeCommentOfCurrentUser(currentUser: UserInstance) {
         likeCache = currentUser.likedComments
     }
 
-    fun onDeleteComment(selectedNew : NewsInstance, comment : CommentInstance) {
+    override fun onDeleteComment(selectedNew: NewsInstance, comment: CommentInstance) {
         val backgroundScope = CoroutineScope(SupervisorJob() + ioDispatcher)
         backgroundScope.launch {
-            val listCommentId = listComments.map { it.id}
-            if(listCommentId.contains(comment.id)){
-                commentInteractor.deleteComment(
-                    selectedNew.id,
-                    comment
-                )
+            val listCommentId = listComments.map { it.id }
+            if (listCommentId.contains(comment.id)) {
+                commentInteractor.deleteComment(selectedNew.id, comment)
             }
-            if(mapSubComments.keys.contains(comment.id)) {
-                commentInteractor.deleteSubComment(
-                    selectedNew.id,
-                    findParentCommentId(comment.id),
-                    comment
-                )
+            if (mapSubComments.keys.contains(comment.id)) {
+                commentInteractor.deleteSubComment(selectedNew.id, findParentCommentId(comment.id), comment)
             }
         }
     }
 
-    suspend fun findUserById(userId: String) : UserInstance?{
+    override suspend fun findUserById(userId: String): UserInstance? {
         return getUserUseCase.invoke(userId, false)
     }
 
-    fun getAllCommentsOfNew(newsId : String) {
+    override fun getAllCommentsOfNew(newsId: String) {
         viewModelScope.launch(ioDispatcher) {
-            val result = commentInteractor.getAllComments(
-                newsId
-            )
-            if(result == null) {
+            val result = commentInteractor.getAllComments(newsId)
+            if (result == null) {
                 showToast("Cannot get all comments of this new. Try again!")
             } else {
                 listComments.clear()
+                mapSubComments.clear()
+                _likeCountList.value.clear()
+
                 listComments.addAll(result)
                 updateComments(listComments)
 
@@ -349,7 +337,7 @@ class CommentViewModel(
         }
     }
 
-    fun clearCommentList() {
+    override fun clearCommentList() {
         _allComments.value.clear()
     }
 }

@@ -17,6 +17,7 @@ import com.minhtu.firesocialmedia.core.constants.Constants
 import com.minhtu.firesocialmedia.platform.getCurrentTime
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlin.coroutines.resume
 
 @Suppress("UNCHECKED_CAST")
 class IosAuthService() : AuthService{
@@ -28,10 +29,10 @@ class IosAuthService() : AuthService{
             FIRAuth.auth().signInWithEmail(email, password = password) { authResult, error ->
                 if (error != null) {
                     com.minhtu.firesocialmedia.platform.logMessage("iOSAuth") { "signIn error: ${error.localizedDescription}" }
-                    cont.resume(SignInError.Unknown(error.localizedDescription), onCancellation = {})
+                    cont.resume(SignInError.Unknown(error.localizedDescription))
                 } else {
                     com.minhtu.firesocialmedia.platform.logMessage("iOSAuth") { "signIn success" }
-                    cont.resume(null, onCancellation = {})
+                    cont.resume(null)
                 }
             }
         }
@@ -65,12 +66,12 @@ class IosAuthService() : AuthService{
     override suspend fun fetchSignInMethodsForEmail(email: String): EmailExistResult = suspendCancellableCoroutine { continuation ->
         FIRAuth.auth().fetchSignInMethodsForEmail(email) { result, error ->
             if (error != null || result == null) {
-                if(continuation.isActive) continuation.resume(EmailExistResult(false, Constants.EMAIL_SERVER_ERROR), onCancellation = {})
+                if(continuation.isActive) continuation.resume(EmailExistResult(false, Constants.EMAIL_SERVER_ERROR))
             } else {
                 if (result.isNotEmpty()) {
-                    if(continuation.isActive) continuation.resume(EmailExistResult(true, Constants.EMAIL_EXISTED), onCancellation = {})
+                    if(continuation.isActive) continuation.resume(EmailExistResult(true, Constants.EMAIL_EXISTED))
                 } else {
-                    if(continuation.isActive) continuation.resume(EmailExistResult(false, Constants.EMAIL_NOT_EXISTED), onCancellation = {})
+                    if(continuation.isActive) continuation.resume(EmailExistResult(false, Constants.EMAIL_NOT_EXISTED))
                 }
             }
         }
@@ -79,9 +80,9 @@ class IosAuthService() : AuthService{
     override suspend fun sendPasswordResetEmail(email: String): Boolean = suspendCancellableCoroutine{ continuation ->
         FIRAuth.auth().sendPasswordResetWithEmail(email) { error ->
             if(error == null) {
-                if(continuation.isActive) continuation.resume(true, onCancellation = {})
+                if(continuation.isActive) continuation.resume(true)
             } else {
-                if(continuation.isActive) continuation.resume(false, onCancellation = {})
+                if(continuation.isActive) continuation.resume(false)
             }
         }
     }
@@ -96,7 +97,7 @@ class IosAuthService() : AuthService{
         currentPassword: String
     ): Boolean = suspendCancellableCoroutine { cont ->
         val user = FIRAuth.auth().currentUser() ?: run {
-            cont.resume(false, onCancellation = {})
+            cont.resume(false)
             return@suspendCancellableCoroutine
         }
         val credential = cocoapods.FirebaseAuth.FIREmailAuthProvider.credentialWithEmail(
@@ -104,7 +105,7 @@ class IosAuthService() : AuthService{
             password = currentPassword
         )
         user.reauthenticateWithCredential(credential) { _, error ->
-            if (cont.isActive) cont.resume(error == null, onCancellation = {})
+            if (cont.isActive) cont.resume(error == null)
         }
     }
 
@@ -119,7 +120,7 @@ class IosAuthService() : AuthService{
 
         val updateResult = suspendCancellableCoroutine<Boolean> { cont ->
             user.updatePassword(newPassword) { error ->
-                if (cont.isActive) cont.resume(error == null, onCancellation = {})
+                if (cont.isActive) cont.resume(error == null)
             }
         }
         if (!updateResult) {
@@ -139,7 +140,7 @@ class IosAuthService() : AuthService{
             try {
                 dbSuccess = suspendCancellableCoroutine { cont ->
                     dbRef.setValue(getCurrentTime()) { error, _ ->
-                        if (cont.isActive) cont.resume(error == null, onCancellation = {})
+                        if (cont.isActive) cont.resume(error == null)
                     }
                 }
             } catch (_: Exception) {}
