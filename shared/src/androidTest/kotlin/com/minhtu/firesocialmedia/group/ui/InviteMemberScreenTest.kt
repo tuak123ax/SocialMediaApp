@@ -13,7 +13,7 @@ import com.minhtu.firesocialmedia.core.domain.usecases.group.CopyLinkUseCase
 import com.minhtu.firesocialmedia.core.domain.usecases.group.InviteFriendToGroupUseCase
 import com.minhtu.firesocialmedia.feature.group.presentation.invitemember.InviteMember
 import com.minhtu.firesocialmedia.feature.group.presentation.invitemember.InviteMemberViewModel
-import com.minhtu.firesocialmedia.presentation.search.SearchViewModel
+import com.minhtu.firesocialmedia.feature.search.presentation.search.SearchViewModel
 import com.seiko.imageloader.LocalImageLoader
 import org.junit.Rule
 import org.junit.Test

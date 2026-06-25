@@ -107,7 +107,6 @@ import com.minhtu.firesocialmedia.core.domain.usecases.sync.SyncDataUseCase
 import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
 import com.minhtu.firesocialmedia.presentation.navigation.RouterViewModel
 import com.minhtu.firesocialmedia.presentation.postinformation.PostInformationViewModel
-import com.minhtu.firesocialmedia.presentation.search.SearchViewModel
 import com.minhtu.firesocialmedia.presentation.showimage.ShowImageViewModel
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
@@ -349,7 +348,6 @@ fun appModule() = module {
     // FriendViewModel registration moved to feature:friend friendModule()
     // Group ViewModels moved to feature:group groupModule()
     viewModel { PostInformationViewModel(get()) }
-    viewModel { SearchViewModel() }
     viewModel { ShowImageViewModel(get()) }
     // UploadNewfeedViewModel registration moved to feature:home homeModule()
     // UserInformationViewModel registration moved to feature:profile profileModule()

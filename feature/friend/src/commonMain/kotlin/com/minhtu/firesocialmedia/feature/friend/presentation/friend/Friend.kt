@@ -39,8 +39,8 @@ import com.minhtu.firesocialmedia.core.constants.TestTag
 import com.minhtu.firesocialmedia.core.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.presentation.friend.FriendViewModelContract
 import com.minhtu.firesocialmedia.presentation.home.HomeViewModelContract
-import com.minhtu.firesocialmedia.presentation.search.Search
-import com.minhtu.firesocialmedia.presentation.search.SearchViewModel
+import com.minhtu.firesocialmedia.feature.search.presentation.search.Search
+import com.minhtu.firesocialmedia.feature.search.presentation.search.SearchViewModel
 import com.minhtu.firesocialmedia.utils.UiUtils
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll

@@ -11,7 +11,7 @@ import com.minhtu.firesocialmedia.core.domain.usecases.group.FetchFeatureGroupsU
 import com.minhtu.firesocialmedia.core.domain.usecases.group.FetchRecommendGroupsUseCase
 import com.minhtu.firesocialmedia.feature.group.presentation.exploregroup.ExploreGroup
 import com.minhtu.firesocialmedia.feature.group.presentation.exploregroup.ExploreGroupViewModel
-import com.minhtu.firesocialmedia.presentation.search.SearchViewModel
+import com.minhtu.firesocialmedia.feature.search.presentation.search.SearchViewModel
 import com.seiko.imageloader.LocalImageLoader
 import org.junit.Rule
 import org.junit.Test

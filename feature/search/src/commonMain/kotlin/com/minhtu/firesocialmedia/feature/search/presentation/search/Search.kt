@@ -1,4 +1,4 @@
-package com.minhtu.firesocialmedia.presentation.search
+package com.minhtu.firesocialmedia.feature.search.presentation.search
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -37,36 +37,39 @@ import com.minhtu.firesocialmedia.utils.UiUtils
 import org.koin.compose.viewmodel.koinViewModel
 
 class Search {
-    companion object{
+    companion object {
         @Composable
-        fun SearchScreen(modifier: Modifier,
-                         paddingValues: PaddingValues,
-                         searchViewModel: SearchViewModel = koinViewModel(),
-                         homeViewModel: HomeViewModelContract,
-                         localImageLoaderValue : ProvidedValue<*>,
-                         onNavigateBack: () -> Unit,
-                         onNavigateToUserInformation: (user : UserInstance?) -> Unit,
-                         onNavigateToShowImageScreen: (image : String) -> Unit,
-                         onNavigateToCommentScreen: (selectedNew : NewsInstance) -> Unit,
-                         onNavigateToUploadNewsFeed : (updateNew : NewsInstance?) -> Unit){
+        fun SearchScreen(
+            modifier: Modifier,
+            paddingValues: PaddingValues,
+            searchViewModel: SearchViewModel = koinViewModel(),
+            homeViewModel: HomeViewModelContract,
+            localImageLoaderValue: ProvidedValue<*>,
+            onNavigateBack: () -> Unit,
+            onNavigateToUserInformation: (user: UserInstance?) -> Unit,
+            onNavigateToShowImageScreen: (image: String) -> Unit,
+            onNavigateToCommentScreen: (selectedNew: NewsInstance) -> Unit,
+            onNavigateToUploadNewsFeed: (updateNew: NewsInstance?) -> Unit
+        ) {
             val commentStatus by homeViewModel.commentStatus.collectAsState()
             val listState = rememberLazyListState()
+
             LaunchedEffect(commentStatus) {
                 commentStatus?.let { selectedNew ->
                     onNavigateToCommentScreen(selectedNew)
                     homeViewModel.resetCommentStatus()
                 }
             }
-            Column(verticalArrangement = Arrangement.Top,
-                modifier = modifier
-                    .padding(paddingValues)) {
+
+            Column(
+                verticalArrangement = Arrangement.Top,
+                modifier = modifier.padding(paddingValues)
+            ) {
                 UiUtils.BackAndTitleAndMoreOptionsRow(
                     title = "Search",
                     trailingIcon = "more_horiz",
                     isMember = false,
-                    navigateBack = {
-                        onNavigateBack()
-                    }
+                    navigateBack = onNavigateBack
                 )
                 SearchBar(
                     query = searchViewModel.query,
@@ -79,22 +82,19 @@ class Search {
                         }
                 )
 
-                UiUtils.TabLayout(
-                    listState,
-                    listOf("People", "Posts"),
-                    localImageLoaderValue,
-                    homeViewModel,
-                    searchViewModel,
-                    onNavigateToShowImageScreen,
-                    onNavigateToUserInformation,
-                    onNavigateToUploadNewsFeed
+                SearchTabLayout(
+                    listState = listState,
+                    tabTitles = listOf("People", "Posts"),
+                    localImageLoaderValue = localImageLoaderValue,
+                    homeViewModel = homeViewModel,
+                    searchQuery = searchViewModel.query,
+                    onNavigateToShowImageScreen = onNavigateToShowImageScreen,
+                    onNavigateToUserInformation = onNavigateToUserInformation,
+                    onNavigateToUploadNewsfeed = onNavigateToUploadNewsFeed
                 )
             }
         }
 
-        fun getScreenName() : String {
-            return "SearchScreen"
-        }
         @Composable
         fun SearchBar(
             query: String,
@@ -154,3 +154,4 @@ class Search {
         }
     }
 }
+

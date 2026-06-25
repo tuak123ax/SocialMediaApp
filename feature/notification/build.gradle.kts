@@ -67,6 +67,7 @@ kotlin {
         commonMain.dependencies {
             implementation(project(":core"))
             implementation(project(":shared"))
+            implementation(project(":feature:search"))
 
             implementation(compose.runtime)
             implementation(compose.foundation)

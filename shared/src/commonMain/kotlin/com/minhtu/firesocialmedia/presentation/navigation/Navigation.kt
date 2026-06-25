@@ -51,7 +51,6 @@ import com.minhtu.firesocialmedia.presentation.navigationscreen.Screen
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.Settings
 import com.minhtu.firesocialmedia.presentation.postinformation.PostInformation
 import com.minhtu.firesocialmedia.presentation.postinformation.PostInformationViewModel
-import com.minhtu.firesocialmedia.presentation.search.Search
 import com.minhtu.firesocialmedia.presentation.showimage.ShowImage
 import com.minhtu.firesocialmedia.presentation.uploadnewsfeed.UploadNewfeedViewModelContract
 import com.minhtu.firesocialmedia.utils.UiUtils
@@ -87,6 +86,7 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
     val securityNavGraph: SecurityNavGraph = koinInject()
     val notificationNavGraph: NotificationNavGraph = koinInject()
     val friendNavGraph: FriendNavGraph = koinInject()
+    val searchNavGraph: SearchNavGraph = koinInject()
     val postInformationViewModel: PostInformationViewModel = koinViewModel()
 
     val syncDataUseCase: SyncDataUseCase = koinInject()
@@ -268,7 +268,7 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                         selectedImage = image
                         navController.navigate(route = ShowImage.getScreenName())
                     },
-                    onNavigateToSearch = { navController.navigate(route = Search.getScreenName()) },
+                    onNavigateToSearch = { navController.navigate(route = searchNavGraph.getSearchRoute()) },
                     onNavigateToSignIn = {
                         //Clear email/password before navigate
                         signInViewModel.reset()
@@ -372,40 +372,31 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                         }
                     )
                 }
-                composable(
-                    route = Search.getScreenName(),
-                    enterTransition = DefaultNavAnimations.enter,
-                    popEnterTransition = DefaultNavAnimations.popEnter,
-                    exitTransition = DefaultNavAnimations.exit,
-                    popExitTransition = DefaultNavAnimations.popExit
-                ) {
-                    Search.SearchScreen(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(color = MaterialTheme.colorScheme.background),
-                        paddingValues,
-                        homeViewModel = homeViewModel,
-                        localImageLoaderValue = localImageLoaderValue,
-                        onNavigateBack = {
-                            navController.popBackStack()
-                        },
-                        onNavigateToUserInformation = { user ->
-                            selectedUser = user
-                            navController.navigate(route = profileNavGraph.getUserInformationRoute())
-                        },
-                        onNavigateToShowImageScreen = { image ->
-                            selectedImage = image
-                            navController.navigate(route = ShowImage.getScreenName())
-                        },
-                        onNavigateToCommentScreen = { new ->
-                            selectedNew = new
-                            navController.navigate(route = CommentNavGraph.COMMENT_SCREEN_ROUTE)
-                        },
-                        onNavigateToUploadNewsFeed = { _ ->
-                            navController.navigate(route = homeNavGraph.getUploadNewsfeedRoute())
-                        }
-                    )
-                }
+                searchNavGraph.registerRoutes(
+                    navGraphBuilder = this,
+                    navController = navController,
+                    homeViewModel = homeViewModel,
+                    paddingValues = paddingValues,
+                    localImageLoaderValue = localImageLoaderValue,
+                    onNavigateBack = {
+                        navController.popBackStack()
+                    },
+                    onNavigateToUserInformation = { user ->
+                        selectedUser = user
+                        navController.navigate(route = profileNavGraph.getUserInformationRoute())
+                    },
+                    onNavigateToShowImageScreen = { image ->
+                        selectedImage = image
+                        navController.navigate(route = ShowImage.getScreenName())
+                    },
+                    onNavigateToCommentScreen = { new ->
+                        selectedNew = new
+                        navController.navigate(route = CommentNavGraph.COMMENT_SCREEN_ROUTE)
+                    },
+                    onNavigateToUploadNewsFeed = { _ ->
+                        navController.navigate(route = homeNavGraph.getUploadNewsfeedRoute())
+                    }
+                )
                 profileNavGraph.registerUserInformationRoute(
                     navGraphBuilder = this,
                     navController = navController,

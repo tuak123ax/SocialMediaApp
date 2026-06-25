@@ -1,4 +1,4 @@
-package com.minhtu.firesocialmedia.presentation.search
+package com.minhtu.firesocialmedia.feature.search.presentation.search
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -7,7 +7,9 @@ import com.rickclephas.kmp.observableviewmodel.ViewModel
 
 class SearchViewModel : ViewModel() {
     var query by mutableStateOf("")
+
     fun updateQuery(input: String) {
         query = input
     }
 }
+

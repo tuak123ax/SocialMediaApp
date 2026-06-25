@@ -18,6 +18,7 @@ import com.minhtu.firesocialmedia.feature.group.di.groupModule
 import com.minhtu.firesocialmedia.feature.home.di.homeModule
 import com.minhtu.firesocialmedia.feature.notification.di.notificationModule
 import com.minhtu.firesocialmedia.feature.profile.di.profileModule
+import com.minhtu.firesocialmedia.feature.search.di.searchModule
 import com.minhtu.firesocialmedia.feature.security.di.securityModule
 import com.minhtu.firesocialmedia.platform.initPlatformContext
 import org.koin.android.ext.koin.androidContext
@@ -45,6 +46,7 @@ class AppApplication : Application() {
                 securityModule(),
                 notificationModule(),
                 friendModule(),
+                searchModule(),
                 callingModule()
             )
         }

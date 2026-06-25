@@ -78,7 +78,7 @@ import com.minhtu.firesocialmedia.platform.toHex
 import com.minhtu.firesocialmedia.presentation.home.HomeViewModelContract
 import com.minhtu.firesocialmedia.presentation.loading.Loading
 import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
-import com.minhtu.firesocialmedia.presentation.search.SearchViewModel
+import com.minhtu.firesocialmedia.feature.search.presentation.search.SearchViewModel
 import com.minhtu.firesocialmedia.core.storage.toStorageUrl
 
 import com.seiko.imageloader.ui.AutoSizeImage

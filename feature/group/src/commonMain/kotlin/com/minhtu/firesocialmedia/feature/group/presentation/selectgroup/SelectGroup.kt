@@ -48,8 +48,8 @@ import com.minhtu.firesocialmedia.platform.CommonBackHandler
 import com.minhtu.firesocialmedia.platform.CrossPlatformIcon
 import com.minhtu.firesocialmedia.platform.showToast
 import com.minhtu.firesocialmedia.platform.toHex
-import com.minhtu.firesocialmedia.presentation.search.Search
-import com.minhtu.firesocialmedia.presentation.search.SearchViewModel
+import com.minhtu.firesocialmedia.feature.search.presentation.search.Search
+import com.minhtu.firesocialmedia.feature.search.presentation.search.SearchViewModel
 import com.minhtu.firesocialmedia.core.storage.toStorageUrl
 import com.seiko.imageloader.ui.AutoSizeImage
 import org.koin.compose.viewmodel.koinViewModel

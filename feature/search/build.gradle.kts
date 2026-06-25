@@ -65,7 +65,6 @@ kotlin {
         commonMain.dependencies {
             implementation(project(":core"))
             implementation(project(":shared"))
-            implementation(project(":feature:search"))
 
             implementation(compose.runtime)
             implementation(compose.foundation)
@@ -79,7 +78,6 @@ kotlin {
             implementation(libs.koin.compose)
             implementation(libs.koin.compose.viewmodel)
 
-            //Image loader
             api(libs.seiko.image.loader)
         }
         commonTest.dependencies {
@@ -90,7 +88,7 @@ kotlin {
 }
 
 android {
-    namespace = "com.minhtu.firesocialmedia.feature.group"
+    namespace = "com.minhtu.firesocialmedia.feature.search"
     compileSdk = 35
     defaultConfig {
         minSdk = 24
@@ -101,6 +99,4 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 }
-
-
 

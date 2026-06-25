@@ -215,6 +215,7 @@ kotlin {
             implementation("androidx.test.espresso:espresso-core:3.6.1")
             implementation("androidx.compose.ui:ui-test-junit4")
             implementation(project(":feature:groupfeature"))
+            implementation(project(":feature:search"))
         }
 
         iosMain.dependencies {

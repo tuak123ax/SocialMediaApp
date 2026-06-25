@@ -149,7 +149,6 @@ import com.minhtu.firesocialmedia.presentation.comment.CommentViewModelContract
 import com.minhtu.firesocialmedia.presentation.navigationscreen.Screen
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.Settings
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.PollViewModelInterface
-import com.minhtu.firesocialmedia.presentation.search.SearchViewModel
 import com.minhtu.firesocialmedia.core.storage.toStorageUrl
 import com.seiko.imageloader.asImageBitmap
 import com.seiko.imageloader.ui.AutoSizeImage
@@ -1082,126 +1081,6 @@ class UiUtils {
             }
         }
 
-        @Composable
-        fun TabLayout(
-            listState: LazyListState,
-            tabTitles : List<String>,
-            localImageLoaderValue : ProvidedValue<*>,
-            homeViewModel: HomeViewModelContract,
-            searchViewModel: SearchViewModel,
-            onNavigateToShowImageScreen: (image: String) -> Unit,
-            onNavigateToUserInformation: (user: UserInstance?) -> Unit,
-            onNavigateToUploadNewsfeed : (updateNew : NewsInstance?) -> Unit){
-            var selectedTabIndex by remember { mutableIntStateOf(0) }
-            var showBottomSheet by rememberSaveable { mutableStateOf(false) }
-            var newToBeShared by mutableStateOf<NewsInstance?>(null)
-            Box(modifier = Modifier.fillMaxSize()) {
-                Column(modifier = Modifier.fillMaxSize()){
-                    TabRow(
-                        selectedTabIndex = selectedTabIndex,
-                        containerColor = MaterialTheme.colorScheme.background,
-                        contentColor = MaterialTheme.colorScheme.onSurface,
-                        indicator = {
-                                tabPositions ->
-                            TabRowDefaults.Indicator(
-                                Modifier.tabIndicatorOffset(tabPositions[selectedTabIndex]),
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                        }
-                    ) {
-                        tabTitles.forEachIndexed{
-                                index, title ->
-                            Tab(
-                                selected = selectedTabIndex == index,
-                                onClick = {
-                                    selectedTabIndex = index
-                                },
-                                text = {
-                                    Text(
-                                        text = title,
-                                        style = MaterialTheme.typography.titleMedium,
-                                        color = if(selectedTabIndex == index) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
-                            )
-                        }
-                    }
-                    when(selectedTabIndex){
-                        0 -> {
-                            if(searchViewModel.query.isNotEmpty()) {
-                                var searchList by remember { mutableStateOf<List<UserInstance>>(emptyList()) }
-                                // Filtered List
-                                LaunchedEffect(searchViewModel.query) {
-                                    searchList = homeViewModel.searchUserByName(searchViewModel.query)
-                                }
-                                LazyColumn(modifier = Modifier
-                                    .testTag(TestTag.TAG_PEOPLE_COLUMN)
-                                    .semantics {
-                                        contentDescription = TestTag.TAG_PEOPLE_COLUMN
-                                    }
-                                ) {
-                                    items(searchList){user ->
-                                        SearchUserCard(
-                                            user,
-                                            localImageLoaderValue,
-                                            onClickViewProfileButton = {
-                                                onNavigateToUserInformation(user)
-                                            }
-                                        )
-                                    }
-                                }
-                            } else {
-                                Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center,
-                                    modifier = Modifier.fillMaxSize()){
-                                    Text(text = "Please input person you want to search",
-                                        textAlign = TextAlign.Center)
-                                }
-                            }
-                        }
-                        1 -> {
-                            if(searchViewModel.query.isNotEmpty()) {
-                                val filterList by remember {
-                                    derivedStateOf {
-                                        homeViewModel.listNews.filter { news ->
-                                            news.message.contains(searchViewModel.query, ignoreCase = true)
-                                        }
-                                    }
-                                }
-                                LazyColumnOfNewsWithSlideOutAnimationAndLoadMore(
-                                    localImageLoaderValue,
-                                    listState,
-                                    homeViewModel,
-                                    filterList,
-                                    onNavigateToUploadNewsfeed,
-                                    onNavigateToShowImageScreen,
-                                    onNavigateToUserInformation,
-                                    showBottomSheet = { news ->
-                                        newToBeShared = news
-                                        showBottomSheet = true
-                                    })
-                            } else {
-                                Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center,
-                                    modifier = Modifier.fillMaxSize()){
-                                    Text(text = "Please input content you want to search",
-                                        textAlign = TextAlign.Center)
-                                }
-                            }
-                        }
-                    }
-                }
-                if(showBottomSheet) {
-                    ShareBottomSheet(
-                        deepLink = "https://firechat-aa433.web.app/news/${newToBeShared?.id}",
-                        onDismiss = {
-                            showBottomSheet = false
-                        },
-                        onClick = {
-                            showBottomSheet = false
-                        }
-                    )
-                }
-            }
-        }
 
         @Composable
         fun UserRow(user : UserInstance,

@@ -16,7 +16,7 @@ import com.minhtu.firesocialmedia.core.domain.usecases.group.RemoveMemberUseCase
 import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
 import com.minhtu.firesocialmedia.feature.group.presentation.managemembers.ManageMembers
 import com.minhtu.firesocialmedia.feature.group.presentation.managemembers.ManageMembersViewModel
-import com.minhtu.firesocialmedia.presentation.search.SearchViewModel
+import com.minhtu.firesocialmedia.feature.search.presentation.search.SearchViewModel
 import com.seiko.imageloader.LocalImageLoader
 import org.junit.Rule
 import org.junit.Test
