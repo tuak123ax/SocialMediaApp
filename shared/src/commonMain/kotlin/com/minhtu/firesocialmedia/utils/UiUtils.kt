@@ -147,8 +147,6 @@ import com.minhtu.firesocialmedia.presentation.navigation.HomeNavGraph
 import com.minhtu.firesocialmedia.presentation.comment.CommentScreenApi
 import com.minhtu.firesocialmedia.presentation.comment.CommentViewModelContract
 import com.minhtu.firesocialmedia.presentation.navigationscreen.Screen
-import com.minhtu.firesocialmedia.presentation.navigationscreen.friend.Friend
-import com.minhtu.firesocialmedia.presentation.navigationscreen.friend.FriendViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.Settings
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.PollViewModelInterface
 import com.minhtu.firesocialmedia.presentation.search.SearchViewModel
@@ -833,7 +831,7 @@ class UiUtils {
                             val testTag = when(screen.route) {
                                 Screen.Notification.route -> TestTag.TAG_NOTIFICATION_BOTTOM
                                 HomeNavGraph.HOME_SCREEN_NAME -> TestTag.TAG_HOME_BOTTOM
-                                Friend.getScreenName() -> TestTag.TAG_FRIEND_BOTTOM
+                                Screen.Friend.route -> TestTag.TAG_FRIEND_BOTTOM
                                 Settings.getScreenName() -> TestTag.TAG_SETTING_BOTTOM
                                 else -> ""
                             }
@@ -1239,85 +1237,6 @@ class UiUtils {
                     modifier = Modifier.padding(end = 5.dp), // Adds padding around text
                     maxLines = 2
                 )
-            }
-        }
-
-        @Composable
-        fun FriendRequest(localImageLoaderValue : ProvidedValue<*>,
-                          requester : UserInstance,
-                          currentUser : UserInstance,
-                          onNavigateToUserInformation: (user: UserInstance) -> Unit,
-                          friendViewModel: FriendViewModel) {
-            Column(
-                verticalArrangement = Arrangement.Center,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(10.dp)
-            ) {
-                Row(horizontalArrangement = Arrangement.Start,
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable {
-                            onNavigateToUserInformation(requester)
-                        }
-                        .testTag(TestTag.TAG_FRIEND_REQUEST)
-                        .semantics{
-                            contentDescription = TestTag.TAG_FRIEND_REQUEST
-                        }){
-                    CompositionLocalProvider(
-                        localImageLoaderValue
-                    ) {
-                        AutoSizeImage(
-                            requester.image.toStorageUrl(),
-                            contentDescription = "Avatar",
-                            contentScale = ContentScale.Crop,
-                            modifier =  Modifier
-                                .size(80.dp)
-                                .padding(10.dp)
-                                .clip(CircleShape)
-                        )
-                    }
-                    Column(modifier = Modifier.padding(end = 5.dp)) {
-                        Text(
-                            text = requester.name,
-                            color = MaterialTheme.colorScheme.onSurface,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier
-                                .padding(5.dp)
-                        )
-                    }
-                }
-                Row(horizontalArrangement = Arrangement.Center,
-                    modifier = Modifier
-                        .fillMaxWidth()){
-                    Button(onClick = {
-                        friendViewModel.acceptFriendRequest(requester, currentUser)
-                    },
-                        elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.primary,
-                            contentColor = MaterialTheme.colorScheme.onPrimary
-                        ),
-                        modifier = Modifier
-                            .weight(1f)
-                    ){
-                        Text(text = "Accept")
-                    }
-                    Spacer(modifier = Modifier.width(10.dp))
-                    Button(onClick = {
-                        friendViewModel.rejectFriendRequest(requester, currentUser)
-                    },
-                        elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                            contentColor = MaterialTheme.colorScheme.onSurfaceVariant
-                        ),
-                        modifier = Modifier
-                            .weight(1f)){
-                        Text(text = "Decline")
-                    }
-                }
             }
         }
 

@@ -48,7 +48,6 @@ import com.minhtu.firesocialmedia.presentation.home.HomeViewModelContract
 import com.minhtu.firesocialmedia.presentation.loading.GifLoading
 import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.Screen
-import com.minhtu.firesocialmedia.presentation.navigationscreen.friend.Friend
 import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.Settings
 import com.minhtu.firesocialmedia.presentation.postinformation.PostInformation
 import com.minhtu.firesocialmedia.presentation.postinformation.PostInformationViewModel
@@ -87,6 +86,7 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
     val groupNavGraph: GroupNavGraph = koinInject()
     val securityNavGraph: SecurityNavGraph = koinInject()
     val notificationNavGraph: NotificationNavGraph = koinInject()
+    val friendNavGraph: FriendNavGraph = koinInject()
     val postInformationViewModel: PostInformationViewModel = koinViewModel()
 
     val syncDataUseCase: SyncDataUseCase = koinInject()
@@ -467,30 +467,17 @@ fun SetUpNavigation(context: Any, platformContext: PlatformContext) {
                          }
                     )
                  }
-                composable(
-                    route = Screen.Friend.route,
-                    enterTransition = DefaultNavAnimations.enter,
-                    popEnterTransition = DefaultNavAnimations.popEnter,
-                    exitTransition = DefaultNavAnimations.exit,
-                    popExitTransition = DefaultNavAnimations.popExit
-                ) {
-                    Friend.FriendScreen(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(MaterialTheme.colorScheme.background),
-                        paddingValues = paddingValues,
-                        localImageLoaderValue = localImageLoaderValue,
-                        homeViewModel = homeViewModel,
-                        onNavigateToUserInformation = { user ->
-                            selectedUser = user
-                            navController.navigate(route = profileNavGraph.getUserInformationRoute())
-                        },
-                        onNavigateToShowImageScreen = { image ->
-                            selectedImage = image
-                            navController.navigate(route = ShowImage.getScreenName())
-                        }
-                    )
-                }
+                friendNavGraph.registerRoutes(
+                    navGraphBuilder = this,
+                    navController = navController,
+                    homeViewModel = homeViewModel,
+                    paddingValues = paddingValues,
+                    localImageLoaderValue = localImageLoaderValue,
+                    onNavigateToUserInformation = { user ->
+                        selectedUser = user
+                        navController.navigate(route = profileNavGraph.getUserInformationRoute())
+                    }
+                )
                 notificationNavGraph.registerRoutes(
                     navGraphBuilder = this,
                     navController = navController,

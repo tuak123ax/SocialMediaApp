@@ -66,16 +66,16 @@ import com.minhtu.firesocialmedia.data.remote.service.imagepicker.ImagePicker
 import com.minhtu.firesocialmedia.platform.CommonBackHandler
 import com.minhtu.firesocialmedia.platform.getImageBytesFromDrawable
 import com.minhtu.firesocialmedia.platform.showToast
+import com.minhtu.firesocialmedia.presentation.friend.FriendViewModelContract
 import com.minhtu.firesocialmedia.presentation.home.HomeViewModelContract
 import com.minhtu.firesocialmedia.presentation.loading.Loading
 import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
-import com.minhtu.firesocialmedia.presentation.navigationscreen.friend.FriendViewModel
 import com.minhtu.firesocialmedia.utils.UiUtils
 import com.seiko.imageloader.ui.AutoSizeImage
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
-import org.koin.compose.viewmodel.koinViewModel
+import org.koin.compose.koinInject
 
 class UserInformation {
     companion object{
@@ -88,7 +88,7 @@ class UserInformation {
             paddingValues: PaddingValues,
             localImageLoaderValue : ProvidedValue<*>,
             homeViewModel : HomeViewModelContract,
-            friendViewModel: FriendViewModel = koinViewModel(),
+            friendViewModel: FriendViewModelContract = koinInject(),
             userInformationViewModel: UserInformationViewModel,
             loadingViewModel: LoadingViewModel,
             onNavigateToShowImageScreen : (image : String) -> Unit,
@@ -539,7 +539,7 @@ class UserInformation {
         @Composable
         fun DropdownMenuForResponse(
                                     expanded : Boolean,
-                                    friendViewModel: FriendViewModel,
+                                    friendViewModel: FriendViewModelContract,
                                     userInformationViewModel: UserInformationViewModel,
                                     requester : UserInstance,
                                     currentUser : UserInstance,

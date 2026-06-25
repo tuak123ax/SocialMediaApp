@@ -82,6 +82,7 @@ dependencies {
     implementation(project(":feature:groupfeature"))
     implementation(project(":feature:security"))
     implementation(project(":feature:notification"))
+    implementation(project(":feature:friend"))
     implementation(projects.feature.calling)
     implementation(platform("androidx.compose:compose-bom:2025.02.00"))
     implementation("androidx.compose.ui:ui")

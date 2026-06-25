@@ -13,6 +13,7 @@ import com.minhtu.firesocialmedia.domain.serviceimpl.database.supabase.SupabaseS
 import com.minhtu.firesocialmedia.feature.auth.di.authModule
 import com.minhtu.firesocialmedia.feature.calling.di.callingModule
 import com.minhtu.firesocialmedia.feature.comment.di.commentModule
+import com.minhtu.firesocialmedia.feature.friend.di.friendModule
 import com.minhtu.firesocialmedia.feature.group.di.groupModule
 import com.minhtu.firesocialmedia.feature.home.di.homeModule
 import com.minhtu.firesocialmedia.feature.notification.di.notificationModule
@@ -43,6 +44,7 @@ class AppApplication : Application() {
                 groupModule(),
                 securityModule(),
                 notificationModule(),
+                friendModule(),
                 callingModule()
             )
         }

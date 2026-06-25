@@ -1,4 +1,4 @@
-package com.minhtu.firesocialmedia.presentation.navigationscreen.friend
+package com.minhtu.firesocialmedia.feature.friend.presentation.friend
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -37,38 +37,41 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.minhtu.firesocialmedia.core.constants.TestTag
 import com.minhtu.firesocialmedia.core.domain.entity.user.UserInstance
+import com.minhtu.firesocialmedia.presentation.friend.FriendViewModelContract
 import com.minhtu.firesocialmedia.presentation.home.HomeViewModelContract
 import com.minhtu.firesocialmedia.presentation.search.Search
 import com.minhtu.firesocialmedia.presentation.search.SearchViewModel
 import com.minhtu.firesocialmedia.utils.UiUtils
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
 class Friend {
-    companion object{
+    companion object {
         @Composable
-        fun FriendScreen(modifier: Modifier,
-                         paddingValues: PaddingValues,
-                         localImageLoaderValue : ProvidedValue<*>,
-                         searchViewModel: SearchViewModel = koinViewModel(),
-                         homeViewModel: HomeViewModelContract,
-                         friendViewModel: FriendViewModel = koinViewModel(),
-                         onNavigateToUserInformation: (user : UserInstance) -> Unit,
-                         onNavigateToShowImageScreen: (image : String) -> Unit){
+        fun FriendScreen(
+            modifier: Modifier,
+            paddingValues: PaddingValues,
+            localImageLoaderValue: ProvidedValue<*>,
+            searchViewModel: SearchViewModel = koinViewModel(),
+            homeViewModel: HomeViewModelContract,
+            friendViewModel: FriendViewModelContract = koinInject(),
+            onNavigateToUserInformation: (user: UserInstance) -> Unit
+        ) {
             Column(
                 verticalArrangement = Arrangement.Top,
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = modifier.padding(paddingValues)
             ) {
-                val friendRequestsStatus =
-                    friendViewModel.friendRequestsStatus.collectAsState().value
+                val friendRequestsStatus = friendViewModel.friendRequestsStatus.collectAsState().value
                 val friendStatus = friendViewModel.friendStatus.collectAsState().value
 
                 LaunchedEffect(Unit) {
                     friendViewModel.updateFriendRequests(homeViewModel.currentUser!!.friendRequests)
                     friendViewModel.updateFriends(homeViewModel.currentUser!!.friends)
                 }
+
                 Text(
                     text = "Friends",
                     style = MaterialTheme.typography.titleLarge,
@@ -81,15 +84,14 @@ class Friend {
                 Search.SearchBar(
                     query = searchViewModel.query,
                     onQueryChange = { query -> searchViewModel.updateQuery(query) },
-                    modifier = Modifier.padding(horizontal = 10.dp)
+                    modifier = Modifier
+                        .padding(horizontal = 10.dp)
                         .testTag(TestTag.TAG_SEARCH_BAR)
-                        .semantics {
-                            contentDescription = TestTag.TAG_SEARCH_BAR
-                        }
+                        .semantics { contentDescription = TestTag.TAG_SEARCH_BAR }
                 )
                 TabLayoutForFriendScreen(
-                    listOf("Friends", "Requests"),
-                    localImageLoaderValue,
+                    tabTitles = listOf("Friends", "Requests"),
+                    localImageLoaderValue = localImageLoaderValue,
                     homeViewModel = homeViewModel,
                     searchViewModel = searchViewModel,
                     friendViewModel = friendViewModel,
@@ -100,53 +102,42 @@ class Friend {
             }
         }
 
-        fun getScreenName() : String {
-            return "FriendScreen"
-        }
-
         @Composable
-        fun TabLayoutForFriendScreen(
+        private fun TabLayoutForFriendScreen(
             tabTitles: List<String>,
             localImageLoaderValue: ProvidedValue<*>,
             homeViewModel: HomeViewModelContract,
             searchViewModel: SearchViewModel,
-            friendViewModel: FriendViewModel,
+            friendViewModel: FriendViewModelContract,
             friendRequestsStatus: List<String>,
             friendStatus: List<String>,
             onNavigateToUserInformation: (user: UserInstance) -> Unit
         ) {
             var selectedTabIndex by remember { mutableIntStateOf(0) }
-
             var filteredFriends by remember { mutableStateOf<List<UserInstance>>(emptyList()) }
             var filteredRequests by remember { mutableStateOf<List<UserInstance>>(emptyList()) }
 
-            // Filter friends
             LaunchedEffect(friendStatus, searchViewModel.query) {
                 filteredFriends = friendStatus.map { userId ->
                     async {
-                        homeViewModel.findUserById(userId)
-                            ?.takeIf {
-                                it.name.contains(searchViewModel.query, ignoreCase = true)
-                            }
+                        homeViewModel.findUserById(userId)?.takeIf {
+                            it.name.contains(searchViewModel.query, ignoreCase = true)
+                        }
                     }
                 }.awaitAll().filterNotNull().distinct()
             }
 
-            // Filter requests
             LaunchedEffect(friendRequestsStatus, searchViewModel.query) {
                 filteredRequests = friendRequestsStatus.map { userId ->
                     async {
-                        homeViewModel.findUserById(userId)
-                            ?.takeIf {
-                                it.name.contains(searchViewModel.query, ignoreCase = true)
-                            }
+                        homeViewModel.findUserById(userId)?.takeIf {
+                            it.name.contains(searchViewModel.query, ignoreCase = true)
+                        }
                     }
                 }.awaitAll().filterNotNull().distinct()
             }
 
             Column(modifier = Modifier.fillMaxSize()) {
-
-                // TAB ROW
                 TabRow(
                     selectedTabIndex = selectedTabIndex,
                     containerColor = MaterialTheme.colorScheme.background,
@@ -159,11 +150,7 @@ class Friend {
                     }
                 ) {
                     tabTitles.forEachIndexed { index, title ->
-
-                        val count = when (index) {
-                            0 -> filteredFriends.size
-                            else -> filteredRequests.size
-                        }
+                        val count = if (index == 0) filteredFriends.size else filteredRequests.size
 
                         Tab(
                             selected = selectedTabIndex == index,
@@ -176,7 +163,11 @@ class Friend {
                                     Text(
                                         text = title,
                                         style = MaterialTheme.typography.titleMedium,
-                                        color = if (selectedTabIndex == index) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                                        color = if (selectedTabIndex == index) {
+                                            MaterialTheme.colorScheme.primary
+                                        } else {
+                                            MaterialTheme.colorScheme.onSurfaceVariant
+                                        }
                                     )
 
                                     if (count > 0) {
@@ -198,7 +189,6 @@ class Friend {
                     }
                 }
 
-                // CONTENT
                 when (selectedTabIndex) {
                     0 -> {
                         LazyColumn(
@@ -208,29 +198,27 @@ class Friend {
                         ) {
                             items(filteredFriends) { user ->
                                 UiUtils.SearchUserCard(
-                                    user,
-                                    localImageLoaderValue,
-                                    onClickViewProfileButton = {
-                                        onNavigateToUserInformation(user)
-                                    }
+                                    user = user,
+                                    localImageLoaderValue = localImageLoaderValue,
+                                    onClickViewProfileButton = { onNavigateToUserInformation(user) }
                                 )
                             }
                         }
                     }
 
-                    1 -> {
+                    else -> {
                         LazyColumn(
                             modifier = Modifier
                                 .testTag(TestTag.TAG_FRIEND_REQUEST_TAB_LIST)
                                 .semantics { contentDescription = TestTag.TAG_FRIEND_REQUEST_TAB_LIST }
                         ) {
                             items(filteredRequests) { user ->
-                                UiUtils.FriendRequest(
-                                    localImageLoaderValue,
-                                    user,
-                                    homeViewModel.currentUser!!,
-                                    onNavigateToUserInformation,
-                                    friendViewModel
+                                FriendRequestCard(
+                                    localImageLoaderValue = localImageLoaderValue,
+                                    requester = user,
+                                    currentUser = homeViewModel.currentUser!!,
+                                    onNavigateToUserInformation = onNavigateToUserInformation,
+                                    friendViewModel = friendViewModel
                                 )
                             }
                         }
@@ -238,6 +226,5 @@ class Friend {
                 }
             }
         }
-
     }
 }

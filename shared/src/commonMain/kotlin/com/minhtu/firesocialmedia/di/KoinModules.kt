@@ -106,7 +106,6 @@ import com.minhtu.firesocialmedia.core.domain.usecases.sync.LoadNewsPostedWhenOf
 import com.minhtu.firesocialmedia.core.domain.usecases.sync.SyncDataUseCase
 import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
 import com.minhtu.firesocialmedia.presentation.navigation.RouterViewModel
-import com.minhtu.firesocialmedia.presentation.navigationscreen.friend.FriendViewModel
 import com.minhtu.firesocialmedia.presentation.postinformation.PostInformationViewModel
 import com.minhtu.firesocialmedia.presentation.search.SearchViewModel
 import com.minhtu.firesocialmedia.presentation.showimage.ShowImageViewModel
@@ -347,7 +346,7 @@ fun appModule() = module {
     // ── ViewModels ────────────────────//
     viewModel { LoadingViewModel() }
     viewModel { RouterViewModel(get(), get(), get(), get()) }
-    viewModel { FriendViewModel(get(), get()) }
+    // FriendViewModel registration moved to feature:friend friendModule()
     // Group ViewModels moved to feature:group groupModule()
     viewModel { PostInformationViewModel(get()) }
     viewModel { SearchViewModel() }
