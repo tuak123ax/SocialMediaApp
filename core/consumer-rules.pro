@@ -1,4 +1,4 @@
-# Consumer ProGuard rules for the :shared library module.
+# Consumer ProGuard rules for the :core library module.
 # These rules are merged into the final app's R8/ProGuard config automatically
 # because they are declared via consumerProguardFiles in build.gradle.kts.
 
@@ -41,4 +41,5 @@
 # Keep ResponseBody so Retrofit's built-in converter can handle it
 -keep class okhttp3.ResponseBody { *; }
 -keep class okhttp3.RequestBody { *; }
+
 

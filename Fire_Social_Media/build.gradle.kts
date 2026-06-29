@@ -73,7 +73,6 @@ android {
 }
 
 dependencies {
-    implementation(projects.shared)
     implementation(projects.core)
     implementation(projects.feature.auth)
     implementation(projects.feature.home)

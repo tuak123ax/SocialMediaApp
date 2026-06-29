@@ -13,7 +13,7 @@ import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
-import com.minhtu.firesocialmedia.R
+import com.minhtu.firesocialmedia.core.R
 import com.minhtu.firesocialmedia.core.constants.Constants
 
 /**

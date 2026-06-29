@@ -67,8 +67,8 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.google.android.gms.auth.api.identity.BeginSignInRequest
 import com.google.android.gms.auth.api.identity.Identity
-import com.minhtu.firesocialmedia.BuildConfig
-import com.minhtu.firesocialmedia.R
+import com.minhtu.firesocialmedia.core.BuildConfig
+import com.minhtu.firesocialmedia.core.R
 import com.minhtu.firesocialmedia.core.constants.Constants
 import com.minhtu.firesocialmedia.data.remote.service.imagepicker.ImagePicker
 import com.minhtu.firesocialmedia.data.remote.service.signinlauncher.SignInLauncher

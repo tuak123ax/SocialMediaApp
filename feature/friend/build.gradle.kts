@@ -17,7 +17,7 @@ kotlin {
         val isSimulator = name.contains("Simulator", ignoreCase = true) || name.contains("X64", ignoreCase = true)
         val buildVariant = if (isSimulator) "Debug-iphonesimulator" else "Debug-iphoneos"
         val podBuildSuffix = if (isSimulator) "IosSimulator" else "Ios"
-        val firebaseFrameworksDir = rootProject.layout.projectDirectory.dir("shared/build/cocoapods/synthetic/ios/build/$buildVariant").asFile
+        val firebaseFrameworksDir = rootProject.layout.projectDirectory.dir("core/build/cocoapods/synthetic/ios/build/$buildVariant").asFile
         val firebaseFrameworkSearchPaths = listOf(
             firebaseFrameworksDir.absolutePath,
             "${firebaseFrameworksDir.absolutePath}/FirebaseAppCheckInterop",
@@ -40,11 +40,11 @@ kotlin {
             "${firebaseFrameworksDir.absolutePath}/nanopb"
         )
         val firebasePodBuildTasks = listOf(
-            ":shared:podInstallSyntheticIos",
-            ":shared:podBuildFirebaseAuth$podBuildSuffix",
-            ":shared:podBuildFirebaseDatabase$podBuildSuffix",
-            ":shared:podBuildFirebaseMessaging$podBuildSuffix",
-            ":shared:podBuildFirebaseStorage$podBuildSuffix"
+            ":core:podInstallSyntheticIos",
+            ":core:podBuildFirebaseAuth$podBuildSuffix",
+            ":core:podBuildFirebaseDatabase$podBuildSuffix",
+            ":core:podBuildFirebaseMessaging$podBuildSuffix",
+            ":core:podBuildFirebaseStorage$podBuildSuffix"
         )
 
         binaries.all {
@@ -64,7 +64,7 @@ kotlin {
         }
         commonMain.dependencies {
             implementation(project(":core"))
-            implementation(project(":shared"))
+            
             implementation(project(":feature:search"))
 
             implementation(compose.runtime)

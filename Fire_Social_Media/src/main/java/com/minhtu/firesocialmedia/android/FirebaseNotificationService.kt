@@ -22,9 +22,9 @@ import coil.request.ImageRequest
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import com.google.gson.Gson
-import com.minhtu.firesocialmedia.R
 import com.minhtu.firesocialmedia.android.incomingcall.IncomingCallActivity
 import com.minhtu.firesocialmedia.android.incomingcall.IncomingCallWakeService
+import com.minhtu.firesocialmedia.core.R
 import com.minhtu.firesocialmedia.core.constants.Constants
 import com.minhtu.firesocialmedia.core.domain.entity.call.CallAction
 import com.minhtu.firesocialmedia.core.domain.entity.user.UserInstance

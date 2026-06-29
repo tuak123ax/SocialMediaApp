@@ -4,7 +4,7 @@ import android.content.Context
 import android.media.AudioAttributes
 import android.media.AudioManager
 import android.media.MediaPlayer
-import com.minhtu.firesocialmedia.R
+import com.minhtu.firesocialmedia.core.R
 import com.minhtu.firesocialmedia.platform.logMessage
 
 object CallSoundManager {

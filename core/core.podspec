@@ -1,15 +1,18 @@
 Pod::Spec.new do |spec|
     spec.name                     = 'core'
-    spec.version                  = '1.0'
+    spec.version                  = '2.0'
     spec.homepage                 = 'https://github.com/tuak123ax/SocialMediaApp'
     spec.source                   = { :http=> ''}
     spec.authors                  = ''
     spec.license                  = ''
-    spec.summary                  = 'Core module'
+    spec.summary                  = 'Core module for iOS and Android'
     spec.vendored_frameworks      = 'build/cocoapods/framework/core.framework'
     spec.libraries                = 'c++'
     spec.ios.deployment_target    = '16.0'
-                
+    spec.dependency 'FirebaseAuth'
+    spec.dependency 'FirebaseDatabase'
+    spec.dependency 'FirebaseMessaging'
+    spec.dependency 'FirebaseStorage'
                 
     if !Dir.exist?('build/cocoapods/framework/core.framework') || Dir.empty?('build/cocoapods/framework/core.framework')
         raise "

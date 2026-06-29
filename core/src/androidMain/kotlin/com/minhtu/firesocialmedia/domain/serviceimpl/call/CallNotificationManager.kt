@@ -10,7 +10,7 @@ import android.content.Context.NOTIFICATION_SERVICE
 import android.content.Intent
 import android.os.Build
 import androidx.core.app.NotificationCompat
-import com.minhtu.firesocialmedia.R
+import com.minhtu.firesocialmedia.core.R
 import com.minhtu.firesocialmedia.core.constants.Constants
 import com.minhtu.firesocialmedia.core.domain.entity.call.CallAction
 import com.minhtu.firesocialmedia.core.domain.entity.call.CallEventFlow
