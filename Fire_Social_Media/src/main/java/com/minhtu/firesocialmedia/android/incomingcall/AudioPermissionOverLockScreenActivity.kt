@@ -20,9 +20,9 @@ import androidx.compose.runtime.getValue
 import androidx.core.content.ContextCompat
 import com.minhtu.firesocialmedia.core.constants.Constants
 import com.minhtu.firesocialmedia.core.domain.entity.call.CallAction
-import com.minhtu.firesocialmedia.domain.serviceimpl.call.CallActionBroadcastReceiver
-import com.minhtu.firesocialmedia.domain.serviceimpl.call.CallNotificationManager.Companion.NOTIF_ID
-import com.minhtu.firesocialmedia.domain.serviceimpl.call.CallSoundManager
+import com.minhtu.firesocialmedia.android.service.serviceimpl.call.CallActionBroadcastReceiver
+import com.minhtu.firesocialmedia.android.service.serviceimpl.call.CallNotificationManager.Companion.NOTIF_ID
+import com.minhtu.firesocialmedia.android.service.serviceimpl.call.CallSoundManager
 import com.minhtu.firesocialmedia.ui.theme.FireSocialMediaCommonTheme
 
 /**

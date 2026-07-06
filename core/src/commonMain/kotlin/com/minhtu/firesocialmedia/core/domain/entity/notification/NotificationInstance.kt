@@ -53,3 +53,4 @@ fun NotificationInstance.Companion.fromMap(map: Map<String, Any?>): Notification
         beRead = map["beRead"] as? Boolean ?: false
     )
 }
+

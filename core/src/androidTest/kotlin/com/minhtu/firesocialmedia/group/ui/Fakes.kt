@@ -3,7 +3,7 @@ package com.minhtu.firesocialmedia.group.ui
 import com.minhtu.firesocialmedia.core.domain.entity.group.GroupInstance
 import com.minhtu.firesocialmedia.core.domain.entity.news.NewsInstance
 import com.minhtu.firesocialmedia.core.domain.entity.user.UserInstance
-import com.minhtu.firesocialmedia.core.domain.repository.GroupRepository
+import com.minhtu.firesocialmedia.domain.repository.GroupRepository
 
 open class BaseFakeGroupRepository : GroupRepository {
 	override suspend fun saveGroupAndUserGroups(group: GroupInstance, userId: String) = true

@@ -12,11 +12,11 @@ import androidx.activity.compose.setContent
 import androidx.compose.runtime.remember
 import com.minhtu.firesocialmedia.core.constants.Constants
 import com.minhtu.firesocialmedia.core.domain.entity.call.CallAction
-import com.minhtu.firesocialmedia.domain.serviceimpl.call.CallActionBroadcastReceiver
-import com.minhtu.firesocialmedia.domain.serviceimpl.call.CallNotificationManager.Companion.NOTIF_ID
-import com.minhtu.firesocialmedia.domain.serviceimpl.call.CallSoundManager
+import com.minhtu.firesocialmedia.android.service.serviceimpl.call.CallActionBroadcastReceiver
+import com.minhtu.firesocialmedia.android.service.serviceimpl.call.CallNotificationManager.Companion.NOTIF_ID
+import com.minhtu.firesocialmedia.android.service.serviceimpl.call.CallSoundManager
 import com.minhtu.firesocialmedia.platform.generateImageLoader
-import com.minhtu.firesocialmedia.feature.calling.presentation.incomingcall.IncomingCallScreen
+import com.minhtu.firesocialmedia.presentation.incomingcall.IncomingCallScreen
 import com.minhtu.firesocialmedia.ui.theme.FireSocialMediaCommonTheme
 import com.seiko.imageloader.LocalImageLoader
 

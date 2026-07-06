@@ -32,9 +32,9 @@ import com.google.firebase.messaging.FirebaseMessaging
 import com.minhtu.firesocialmedia.core.constants.Constants
 import com.minhtu.firesocialmedia.di.AndroidPlatformContext
 import com.minhtu.firesocialmedia.di.PlatformContextHolder
-import com.minhtu.firesocialmedia.domain.serviceimpl.permission.AndroidPermissionManager
-import com.minhtu.firesocialmedia.domain.serviceimpl.remoteconfig.FetchResultCallback
-import com.minhtu.firesocialmedia.domain.serviceimpl.remoteconfig.RemoteConfigHelper
+import com.minhtu.firesocialmedia.android.service.serviceimpl.permission.AndroidPermissionManager
+import com.minhtu.firesocialmedia.android.service.serviceimpl.remoteconfig.FetchResultCallback
+import com.minhtu.firesocialmedia.android.service.serviceimpl.remoteconfig.RemoteConfigHelper
 import com.minhtu.firesocialmedia.platform.MainApplication
 import com.minhtu.firesocialmedia.platform.TokenStorage.updateTokenInStorage
 import com.minhtu.firesocialmedia.ui.theme.FireSocialMediaCommonTheme

@@ -62,6 +62,13 @@ kotlin {
         all {
             languageSettings.optIn("androidx.compose.material3.ExperimentalMaterial3Api")
         }
+        commonMain {
+            kotlin.srcDir("src/commonMain/kotlin/com/minhtu/firesocialmedia/domain")
+            kotlin.srcDir("src/commonMain/kotlin/com/minhtu/firesocialmedia/di")
+            kotlin.exclude("com/minhtu/firesocialmedia/core/domain/**")
+            kotlin.exclude("com/minhtu/firesocialmedia/search/domain/**")
+            kotlin.exclude("com/minhtu/firesocialmedia/search/di/**")
+        }
         commonMain.dependencies {
             implementation(project(":core"))
             
@@ -88,7 +95,7 @@ kotlin {
 }
 
 android {
-    namespace = "com.minhtu.firesocialmedia.feature.search"
+    namespace = "com.minhtu.firesocialmedia.search"
     compileSdk = 35
     defaultConfig {
         minSdk = 24

@@ -1,5 +1,5 @@
 import SwiftUI
-import shared
+import core
 
 struct ContentView: UIViewControllerRepresentable {
     func makeUIViewController(context: Context) -> some UIViewController {

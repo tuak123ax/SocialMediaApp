@@ -62,6 +62,13 @@ kotlin {
         all {
             languageSettings.optIn("androidx.compose.material3.ExperimentalMaterial3Api")
         }
+        commonMain {
+            kotlin.srcDir("src/commonMain/kotlin/com/minhtu/firesocialmedia/domain")
+            kotlin.srcDir("src/commonMain/kotlin/com/minhtu/firesocialmedia/di")
+            kotlin.exclude("com/minhtu/firesocialmedia/core/domain/**")
+            kotlin.exclude("com/minhtu/firesocialmedia/calling/domain/**")
+            kotlin.exclude("com/minhtu/firesocialmedia/calling/di/**")
+        }
         commonMain.dependencies {
             implementation(project(":core"))
             
@@ -89,7 +96,7 @@ kotlin {
 }
 
 android {
-    namespace = "com.minhtu.firesocialmedia.feature.calling"
+    namespace = "com.minhtu.firesocialmedia.calling"
     compileSdk = 35
     defaultConfig { minSdk = 24 }
     compileOptions {

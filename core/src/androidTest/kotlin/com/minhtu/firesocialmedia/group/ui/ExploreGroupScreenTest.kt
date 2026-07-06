@@ -7,11 +7,11 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import com.minhtu.firesocialmedia.core.constants.TestTag
 import com.minhtu.firesocialmedia.core.domain.entity.group.GroupInstance
 import com.minhtu.firesocialmedia.core.domain.entity.user.UserInstance
-import com.minhtu.firesocialmedia.core.domain.usecases.group.FetchFeatureGroupsUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.group.FetchRecommendGroupsUseCase
-import com.minhtu.firesocialmedia.feature.group.presentation.exploregroup.ExploreGroup
-import com.minhtu.firesocialmedia.feature.group.presentation.exploregroup.ExploreGroupViewModel
-import com.minhtu.firesocialmedia.feature.search.presentation.search.SearchViewModel
+import com.minhtu.firesocialmedia.domain.usecases.group.FetchFeatureGroupsUseCase
+import com.minhtu.firesocialmedia.domain.usecases.group.FetchRecommendGroupsUseCase
+import com.minhtu.firesocialmedia.presentation.exploregroup.ExploreGroup
+import com.minhtu.firesocialmedia.presentation.exploregroup.ExploreGroupViewModel
+import com.minhtu.firesocialmedia.presentation.search.SearchViewModel
 import com.seiko.imageloader.LocalImageLoader
 import org.junit.Rule
 import org.junit.Test

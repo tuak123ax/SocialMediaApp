@@ -5,5 +5,5 @@ target 'Fire_Social_Media' do
   pod 'Firebase/Database'
   pod 'Firebase/Storage'
   pod 'Firebase/Messaging'
-  pod 'shared', :path => '../shared'
+  pod 'core', :path => '../core'
 end

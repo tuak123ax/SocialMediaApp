@@ -15,14 +15,14 @@ import com.minhtu.firesocialmedia.data.remote.service.clipboard.ClipboardService
 import com.minhtu.firesocialmedia.data.remote.service.database.DatabaseService
 import com.minhtu.firesocialmedia.data.remote.service.permission.PermissionManager
 import com.minhtu.firesocialmedia.core.domain.core.NetworkMonitor
-import com.minhtu.firesocialmedia.domain.serviceimpl.auth.AndroidAuthService
-import com.minhtu.firesocialmedia.domain.serviceimpl.call.AndroidAudioCallService
-import com.minhtu.firesocialmedia.domain.serviceimpl.clipboard.AndroidClipboardService
-import com.minhtu.firesocialmedia.domain.serviceimpl.crypto.AndroidCryptoService
-import com.minhtu.firesocialmedia.domain.serviceimpl.database.AndroidDatabaseService
-import com.minhtu.firesocialmedia.domain.serviceimpl.database.supabase.SupabaseStorageHelper
+import com.minhtu.firesocialmedia.android.service.serviceimpl.auth.AndroidAuthService
+import com.minhtu.firesocialmedia.android.service.serviceimpl.call.AndroidAudioCallService
+import com.minhtu.firesocialmedia.android.service.serviceimpl.clipboard.AndroidClipboardService
+import com.minhtu.firesocialmedia.android.service.serviceimpl.crypto.AndroidCryptoService
+import com.minhtu.firesocialmedia.android.service.serviceimpl.database.AndroidDatabaseService
+import com.minhtu.firesocialmedia.android.service.serviceimpl.database.supabase.SupabaseStorageHelper
 import com.minhtu.firesocialmedia.data.remote.service.security.IpInfoRemoteDataSource
-import com.minhtu.firesocialmedia.domain.serviceimpl.room.AndroidRoomService
+import com.minhtu.firesocialmedia.android.service.serviceimpl.room.AndroidRoomService
 import com.minhtu.firesocialmedia.platform.AppConfig
 
 class AndroidPlatformContext(

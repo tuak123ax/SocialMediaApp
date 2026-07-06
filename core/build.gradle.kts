@@ -1,4 +1,3 @@
-import org.jetbrains.kotlin.gradle.plugin.mpp.apple.XCFramework
 import java.util.Properties
 
 val localProperties = Properties().apply {
@@ -25,34 +24,15 @@ kotlin {
     androidTarget()
     jvmToolchain(17)
 
-    val iosX64 = iosX64()
-    val iosArm64 = iosArm64()
-    val iosSimulatorArm64 = iosSimulatorArm64("iosSimulator")
+    iosX64()
+    iosArm64()
+    iosSimulatorArm64("iosSimulator")
 
     // Link sqlite on Native/iOS
     targets.withType<org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget>().configureEach {
         binaries.all { linkerOpts("-lsqlite3") }
     }
 
-    val xcf = XCFramework()
-
-    iosX64.binaries.framework {
-        baseName = "core"
-        xcf.add(this)
-        freeCompilerArgs += listOf("-Xbinary=bundleId=com.minhtu.firesocialmedia.core")
-    }
-
-    iosArm64.binaries.framework {
-        baseName = "core"
-        xcf.add(this)
-        freeCompilerArgs += listOf("-Xbinary=bundleId=com.minhtu.firesocialmedia.core")
-    }
-
-    iosSimulatorArm64.binaries.framework {
-        baseName = "core"
-        xcf.add(this)
-        freeCompilerArgs += listOf("-Xbinary=bundleId=com.minhtu.firesocialmedia.core")
-    }
 
     targets.withType<org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget>().all {
         binaries.all {

@@ -38,8 +38,8 @@ import com.minhtu.firesocialmedia.data.remote.service.imagepicker.ImagePicker
 import com.minhtu.firesocialmedia.di.PlatformContext
 import com.minhtu.firesocialmedia.core.domain.entity.home.deeplinks.ShareApp
 import com.minhtu.firesocialmedia.core.domain.entity.user.UserInstance
-import com.minhtu.firesocialmedia.domain.serviceimpl.crypto.IosCryptoHelper
-import com.minhtu.firesocialmedia.domain.serviceimpl.notification.KtorProvider
+import com.minhtu.firesocialmedia.android.service.serviceimpl.crypto.IosCryptoHelper
+import com.minhtu.firesocialmedia.android.service.serviceimpl.notification.KtorProvider
 import com.minhtu.firesocialmedia.core.domain.signin.GoogleSignInHandler
 import com.minhtu.firesocialmedia.utils.NavigationHandler
 import com.russhwolf.settings.ExperimentalSettingsImplementation

@@ -8,7 +8,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import com.minhtu.firesocialmedia.core.domain.entity.call.CallAction
-import com.minhtu.firesocialmedia.domain.serviceimpl.call.CallActionBroadcastReceiver
+import com.minhtu.firesocialmedia.android.service.serviceimpl.call.CallActionBroadcastReceiver
 import com.minhtu.firesocialmedia.platform.showToast
 
 class PermissionRequestActivity : ComponentActivity() {

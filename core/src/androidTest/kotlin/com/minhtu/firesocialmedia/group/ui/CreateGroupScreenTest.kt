@@ -10,11 +10,11 @@ import com.minhtu.firesocialmedia.data.remote.service.imagepicker.ImagePicker
 import com.minhtu.firesocialmedia.core.domain.entity.group.GroupInstance
 import com.minhtu.firesocialmedia.core.domain.entity.news.NewsInstance
 import com.minhtu.firesocialmedia.core.domain.entity.user.UserInstance
-import com.minhtu.firesocialmedia.core.domain.repository.GroupRepository
-import com.minhtu.firesocialmedia.core.domain.usecases.group.CreateGroupUseCase
+import com.minhtu.firesocialmedia.domain.repository.GroupRepository
+import com.minhtu.firesocialmedia.domain.usecases.group.CreateGroupUseCase
 import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
-import com.minhtu.firesocialmedia.feature.group.presentation.creategroup.CreateGroup
-import com.minhtu.firesocialmedia.feature.group.presentation.creategroup.CreateGroupViewModel
+import com.minhtu.firesocialmedia.presentation.creategroup.CreateGroup
+import com.minhtu.firesocialmedia.presentation.creategroup.CreateGroupViewModel
 import org.junit.Rule
 import org.junit.Test
 
