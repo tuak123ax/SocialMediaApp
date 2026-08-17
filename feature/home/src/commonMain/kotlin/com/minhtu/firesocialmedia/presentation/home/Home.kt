@@ -65,24 +65,25 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.minhtu.firesocialmedia.core.constants.TestTag
-import com.minhtu.firesocialmedia.core.domain.core.DecentralizationType
-import com.minhtu.firesocialmedia.core.domain.entity.call.CallingRequestData
-import com.minhtu.firesocialmedia.core.domain.entity.home.deeplinks.DeepLinksData
-import com.minhtu.firesocialmedia.core.domain.entity.news.NewsInstance
-import com.minhtu.firesocialmedia.core.domain.entity.user.UserInstance
-import com.minhtu.firesocialmedia.core.storage.toStorageUrl
+import com.minhtu.firesocialmedia.constants.home.TestTag
+import com.minhtu.firesocialmedia.home.entity.core.DecentralizationType
+import com.minhtu.firesocialmedia.home.entity.call.CallingRequestData
+import com.minhtu.firesocialmedia.home.entity.news.NewsInstance
+import com.minhtu.firesocialmedia.home.entity.user.UserInstance
+import com.minhtu.firesocialmedia.storage.home.toStorageUrl
 import com.minhtu.firesocialmedia.di.PlatformContext
 import com.minhtu.firesocialmedia.platform.CommonBackHandler
 import com.minhtu.firesocialmedia.platform.CrossPlatformIcon
 import com.minhtu.firesocialmedia.platform.logMessage
 import com.minhtu.firesocialmedia.platform.showToast
 import com.minhtu.firesocialmedia.platform.toHex
-import com.minhtu.firesocialmedia.presentation.comment.CommentViewModelContract
-import com.minhtu.firesocialmedia.presentation.home.HomeViewModelContract
-import com.minhtu.firesocialmedia.presentation.loading.Loading
-import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
-import com.minhtu.firesocialmedia.utils.UiUtils
+import com.minhtu.firesocialmedia.presentation.comment.HomeCommentFeatureViewModel
+import com.minhtu.firesocialmedia.domain.usecases.home.NotificationPreloader
+import com.minhtu.firesocialmedia.presentation.share.ShareViewModel
+import com.minhtu.firesocialmedia.home.presentation.loading.Loading
+import com.minhtu.firesocialmedia.home.presentation.loading.LoadingViewModel
+import com.minhtu.firesocialmedia.home.utils.UiUtils
+import com.minhtu.firesocialmedia.utils.home.FeedListUtils
 import com.minhtu.sharedmodule.ui.theme.iconButtonBackgroundColor
 import com.seiko.imageloader.ui.AutoSizeImage
 import kotlinx.coroutines.flow.collectLatest
@@ -96,8 +97,7 @@ class Home {
         @Composable
         fun HomeScreen(
             modifier: Modifier,
-            homeViewModel: HomeViewModelContract,
-            loadingViewModel: LoadingViewModel,
+            homeViewModel: HomeViewModel,
             navigateToCallingScreen: Boolean,
             paddingValues: PaddingValues,
             localImageLoaderValue: ProvidedValue<*>,
@@ -109,12 +109,19 @@ class Home {
             onNavigateToCommentScreen: (selectedNew: NewsInstance) -> Unit,
             onNavigateToCallingScreen: suspend (CallingRequestData) -> Unit,
             onNavigateToCallingScreenWithUI: suspend () -> Unit,
+            onObservePhoneCall: () -> Unit,
+            incomingCallRequest: CallingRequestData?,
             onNavigateToPostInformation: () -> Unit,
             onShareNews: (String, NewsInstance) -> Unit,
             onNavigateToJoinGroup: () -> Unit,
-            commentViewModel: CommentViewModelContract = koinInject(),
+            deepLink: String = "",
+            commentViewModel: HomeCommentFeatureViewModel = koinInject(),
+            preloadNotificationsUseCase: NotificationPreloader = koinInject(),
+            accountViewModel: HomeAccountViewModel = koinInject(),
+            shareViewModel: ShareViewModel = koinInject(),
             platform: PlatformContext? = null
         ) {
+            val loadingViewModel: LoadingViewModel = koinViewModel()
             val isLoading by loadingViewModel.isLoading.collectAsState()
             val commentStatus by homeViewModel.commentStatus.collectAsState()
             var showBottomSheet by rememberSaveable { mutableStateOf(false) }
@@ -126,7 +133,7 @@ class Home {
             }
             UiUtils.LogoutBottomSheet(
                 onClickConfirm = {
-                    homeViewModel.clearAccountInStorage()
+                    accountViewModel.clearAccountInStorage()
                     homeViewModel.clearLocalData()
                 },
                 onNavigateToSignIn,
@@ -150,16 +157,16 @@ class Home {
                 //Load users list and news list.
                 homeViewModel.getCurrentUserAndFriends()
                 homeViewModel.getLatestNews()
-                homeViewModel.getAllNotificationsOfUser()
+                preloadNotificationsUseCase()
                 homeViewModel.decreaseNumberOfListNeedToLoad(1)
                 if (numberOfLists == 0) {
                     loadingViewModel.hideLoading()
                 }
                 //Check deeplink after loading necessary data
-                if (DeepLinksData.deepLink.isNotEmpty()) {
-                    if (DeepLinksData.deepLink.contains("news")) {
+                if (deepLink.isNotEmpty()) {
+                    if (deepLink.contains("news")) {
                         onNavigateToPostInformation()
-                    } else if (DeepLinksData.deepLink.contains("groups")) {
+                    } else if (deepLink.contains("groups")) {
                         onNavigateToJoinGroup()
                     }
                 }
@@ -182,7 +189,7 @@ class Home {
             LaunchedEffect(getCurrentUserStatus) {
                 if (getCurrentUserStatus) {
                     logMessage("observePhoneCall", { "start observe phone call" })
-                    homeViewModel.observePhoneCall()
+                    onObservePhoneCall()
                 }
             }
             LaunchedEffect(Unit) {
@@ -192,16 +199,15 @@ class Home {
                 }
             }
 
-            val phoneCallRequestStatus by homeViewModel.phoneCallRequestStatus.collectAsState()
-            LaunchedEffect(phoneCallRequestStatus) {
-                if (phoneCallRequestStatus != null) {
-                    onNavigateToCallingScreen(phoneCallRequestStatus!!)
+            LaunchedEffect(incomingCallRequest) {
+                if (incomingCallRequest != null) {
+                    onNavigateToCallingScreen(incomingCallRequest)
                 }
             }
 
             //Observe share post status
-            val sharePostStatus by homeViewModel.sharePostStatus.collectAsState()
-            val sharePostError by homeViewModel.shareError.collectAsState()
+            val sharePostStatus by shareViewModel.sharePostStatus.collectAsState()
+            val sharePostError by shareViewModel.shareError.collectAsState()
             LaunchedEffect(sharePostStatus) {
                 //Share post result
                 if (sharePostStatus != null) {
@@ -210,7 +216,7 @@ class Home {
                     } else {
                         showToast("Error happened. Please try again!!!")
                     }
-                    homeViewModel.resetShareContentAndStatus()
+                    shareViewModel.resetShareContentAndStatus()
                 }
             }
             LaunchedEffect(sharePostError) {
@@ -218,7 +224,7 @@ class Home {
                 if (sharePostError != null) {
                     showToast("Cannot get content to share. Please try again!!!")
                 }
-                homeViewModel.resetShareContentAndStatus()
+                shareViewModel.resetShareContentAndStatus()
             }
 
             // Preserve scroll position across navigation/back stack using rememberSaveable
@@ -452,7 +458,7 @@ class Home {
                             }
                         }
 
-                        UiUtils.LazyColumnOfNewsWithSlideOutAnimationAndLoadMore(
+                        FeedListUtils.LazyColumnOfNewsWithSlideOutAnimationAndLoadMore(
                             localImageLoaderValue,
                             listState,
                             homeViewModel,

@@ -3,20 +3,19 @@ package com.minhtu.firesocialmedia.presentation.audiocall
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.minhtu.firesocialmedia.core.domain.entity.call.CallEventFlow
-import com.minhtu.firesocialmedia.core.domain.entity.call.OfferAnswer
-import com.minhtu.firesocialmedia.core.domain.entity.call.SpeakerType
-import com.minhtu.firesocialmedia.core.domain.entity.user.UserInstance
-import com.minhtu.firesocialmedia.core.domain.usecases.call.ManageCallStateUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.call.RequestPermissionUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.call.StartCallServiceUseCase
+import com.minhtu.firesocialmedia.domain.entity.call.CallEventFlow
+import com.minhtu.firesocialmedia.domain.entity.call.OfferAnswer
+import com.minhtu.firesocialmedia.domain.entity.call.SpeakerType
+import com.minhtu.firesocialmedia.calling.entity.user.UserInstance
+import com.minhtu.firesocialmedia.domain.usecases.call.ManageCallStateUseCase
+import com.minhtu.firesocialmedia.domain.usecases.call.RequestPermissionUseCase
+import com.minhtu.firesocialmedia.domain.usecases.call.StartCallServiceUseCase
 import com.minhtu.firesocialmedia.platform.logMessage
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 class CallingViewModel(
     private val startCallServiceUseCase : StartCallServiceUseCase,
@@ -37,14 +36,12 @@ class CallingViewModel(
         secondsForCountUpTimer.value = 0
     }
     fun startCall(caller : UserInstance, callee: UserInstance) {
-        viewModelScope.launch {
-            withContext(ioDispatcher) {
-                try {
-                    sessionId = generateSessionId(caller.uid, callee.uid)
-                    startCallServiceUseCase.invoke(sessionId, caller, callee)
-                } catch (e : Exception) {
-                    logMessage("startCall Exception", { e.message.toString() })
-                }
+        viewModelScope.launch(ioDispatcher) {
+            try {
+                sessionId = generateSessionId(caller.uid, callee.uid)
+                startCallServiceUseCase.invoke(sessionId, caller, callee)
+            } catch (e : Exception) {
+                logMessage("startCall Exception", { e.message.toString() })
             }
         }
     }
@@ -79,8 +76,8 @@ class CallingViewModel(
     }
 
     fun requestPermissionAndStartAudioCall(onGranted: () -> Unit, onDenied: () -> Unit) {
-        viewModelScope.launch {
-            val granted = withContext(Dispatchers.IO) { requestPermissionUseCase.invoke() }
+        viewModelScope.launch(ioDispatcher) {
+            val granted = requestPermissionUseCase.invoke()
             if (granted) {
                 logMessage("requestPermissionAndStartAudioCall", { "granted" })
                 onGranted()

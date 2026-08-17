@@ -3,9 +3,9 @@ package com.minhtu.firesocialmedia.presentation.signup
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import com.minhtu.firesocialmedia.core.domain.entity.signup.SignUpState
-import com.minhtu.firesocialmedia.core.domain.error.signup.SignUpError
-import com.minhtu.firesocialmedia.core.domain.usecases.signup.SignUpUseCase
+import com.minhtu.firesocialmedia.domain.entity.signup.SignUpState
+import com.minhtu.firesocialmedia.domain.error.signup.SignUpError
+import com.minhtu.firesocialmedia.domain.usecases.signup.SignUpUseCase
 import com.rickclephas.kmp.observableviewmodel.ViewModel
 import com.rickclephas.kmp.observableviewmodel.launch
 import kotlinx.coroutines.CoroutineDispatcher

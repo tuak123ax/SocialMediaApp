@@ -2,11 +2,12 @@ package com.minhtu.firesocialmedia.presentation.twofa
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.minhtu.firesocialmedia.core.domain.entity.authentication.TwoFAResponse
-import com.minhtu.firesocialmedia.core.domain.entity.user.UserInstance
-import com.minhtu.firesocialmedia.core.domain.usecases.home.ClearAccountUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.settings.Enable2FAUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.settings.Verify2FAUseCase
+import com.minhtu.firesocialmedia.domain.entity.authentication.TwoFAResponse
+import com.minhtu.firesocialmedia.security.data.remote.dto.user.UserDTO
+import com.minhtu.firesocialmedia.security.entity.user.toSecurityUser
+import com.minhtu.firesocialmedia.domain.usecases.home.security.ClearAccountUseCase
+import com.minhtu.firesocialmedia.domain.usecases.settings.Enable2FAUseCase
+import com.minhtu.firesocialmedia.domain.usecases.settings.Verify2FAUseCase
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -32,15 +33,15 @@ class VerifyOTPViewModel(
     private var _verifyOTPResult = MutableStateFlow<TwoFAResponse?>(null)
     var verifyOTPResult = _verifyOTPResult.asStateFlow()
 
-    fun enableOTP(currentUser: UserInstance, secret: String, otpToVerify: String) {
+    fun enableOTP(currentUser: UserDTO, secret: String, otpToVerify: String) {
         viewModelScope.launch(ioDispatcher) {
-            _verifyOTPResult.value = enable2FAUseCase.invoke(currentUser, secret, otpToVerify)
+            _verifyOTPResult.value = enable2FAUseCase.invoke(currentUser.toSecurityUser(), secret, otpToVerify)
         }
     }
 
-    fun verifyOTP(currentUser: UserInstance, otpToVerify: String) {
+    fun verifyOTP(currentUser: UserDTO, otpToVerify: String) {
         viewModelScope.launch(ioDispatcher) {
-            _verifyOTPResult.value = verify2FAUseCase.invoke(currentUser, otpToVerify)
+            _verifyOTPResult.value = verify2FAUseCase.invoke(currentUser.toSecurityUser(), otpToVerify)
         }
     }
 

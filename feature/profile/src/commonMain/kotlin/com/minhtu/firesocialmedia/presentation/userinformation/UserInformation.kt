@@ -56,26 +56,30 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.minhtu.firesocialmedia.core.constants.Constants
-import com.minhtu.firesocialmedia.core.constants.TestTag
-import com.minhtu.firesocialmedia.core.domain.core.DecentralizationType
-import com.minhtu.firesocialmedia.core.domain.entity.news.NewsInstance
-import com.minhtu.firesocialmedia.core.domain.entity.user.UserInstance
-import com.minhtu.firesocialmedia.core.storage.toStorageUrl
-import com.minhtu.firesocialmedia.data.remote.service.imagepicker.ImagePicker
+import com.minhtu.firesocialmedia.storage.profile.SupabaseStorageProvider
+import com.minhtu.firesocialmedia.constants.profile.TestTag
+import com.minhtu.firesocialmedia.profile.entity.core.DecentralizationType
+import com.minhtu.firesocialmedia.profile.entity.news.NewsInstance
+import com.minhtu.firesocialmedia.profile.entity.user.UserInstance
+import com.minhtu.firesocialmedia.storage.profile.toStorageUrl
+import com.minhtu.firesocialmedia.data.remote.service.imagepicker.profile.ImagePicker
 import com.minhtu.firesocialmedia.platform.CommonBackHandler
 import com.minhtu.firesocialmedia.platform.getImageBytesFromDrawable
 import com.minhtu.firesocialmedia.platform.showToast
-import com.minhtu.firesocialmedia.presentation.friend.FriendViewModelContract
-import com.minhtu.firesocialmedia.presentation.home.HomeViewModelContract
-import com.minhtu.firesocialmedia.presentation.loading.Loading
-import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
-import com.minhtu.firesocialmedia.utils.UiUtils
+import com.minhtu.firesocialmedia.presentation.profile.SessionViewModel
+import com.minhtu.firesocialmedia.presentation.profile.EngagementViewModel
+import com.minhtu.firesocialmedia.profile.presentation.loading.Loading
+import com.minhtu.firesocialmedia.profile.presentation.loading.LoadingViewModel
+import com.minhtu.firesocialmedia.utils.profile.TitleBarUtils
+import com.minhtu.firesocialmedia.profile.utils.UiUtils
+import com.minhtu.firesocialmedia.utils.profile.FeedListUtils
 import com.seiko.imageloader.ui.AutoSizeImage
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
+import org.koin.compose.viewmodel.koinViewModel
 
 class UserInformation {
     companion object{
@@ -87,16 +91,18 @@ class UserInformation {
             isFriend : Boolean = false,
             paddingValues: PaddingValues,
             localImageLoaderValue : ProvidedValue<*>,
-            homeViewModel : HomeViewModelContract,
-            friendViewModel: FriendViewModelContract = koinInject(),
+            newsFeed: StateFlow<List<NewsInstance>>,
+            sessionViewModel: SessionViewModel = koinInject(),
+            engagementViewModel: EngagementViewModel = koinInject(),
+            friendViewModel: ProfileFriendViewModel = koinInject(),
             userInformationViewModel: UserInformationViewModel,
-            loadingViewModel: LoadingViewModel,
             onNavigateToShowImageScreen : (image : String) -> Unit,
             onNavigateBack : () -> Unit,
             onNavigateToUploadNewsfeed: (updateNew : NewsInstance?) -> Unit,
             onNavigateToCallingScreen : (user : UserInstance?) -> Unit,
             onNavigateToCommentScreen: (selectedNew : NewsInstance) -> Unit,
         ){
+            val loadingViewModel: LoadingViewModel = koinViewModel()
             CommonBackHandler {
                 onNavigateBack()
             }
@@ -106,7 +112,7 @@ class UserInformation {
 
             val isLoading by loadingViewModel.isLoading.collectAsState()
             val coroutineScope = rememberCoroutineScope()
-            val newsList = homeViewModel.allNews.collectAsState()
+            val newsList = newsFeed.collectAsState()
             val addFriendStatus by userInformationViewModel.addFriendStatus.collectAsState()
             var showBottomSheet by rememberSaveable { mutableStateOf(false) }
             var newToBeShared by remember { mutableStateOf<NewsInstance?>(null) }
@@ -117,7 +123,7 @@ class UserInformation {
             val backgroundUploadStatus by userInformationViewModel.backgroundUploadStatus.collectAsState()
             // Show confirm dialog whenever a new cover photo is picked
             LaunchedEffect(userInformationViewModel.coverPhoto) {
-                if (userInformationViewModel.coverPhoto != Constants.DEFAULT_AVATAR_URL && isCurrentUser) {
+                if (userInformationViewModel.coverPhoto != SupabaseStorageProvider.DEFAULT_AVATAR_URL && isCurrentUser) {
                     showCoverPhotoConfirmDialog = true
                 }
             }
@@ -137,14 +143,14 @@ class UserInformation {
                 if(fetchedUser != null) {
                     loadingViewModel.hideLoading()
                     val relationship =
-                        userInformationViewModel.checkRelationship(fetchedUser!!, homeViewModel.currentUser!!)
+                        userInformationViewModel.checkRelationship(fetchedUser!!, sessionViewModel.currentUser!!)
                     userInformationViewModel.updateRelationship(relationship)
                 }
             }
 
             LaunchedEffect(Unit) {
-                friendViewModel.updateFriendRequests(homeViewModel.currentUser!!.friendRequests)
-                friendViewModel.updateFriends(homeViewModel.currentUser!!.friends)
+                friendViewModel.updateFriendRequests(sessionViewModel.currentUser!!.friendRequests)
+                friendViewModel.updateFriends(sessionViewModel.currentUser!!.friends)
             }
 
             val calleeCurrentState by userInformationViewModel.calleeCurrentState.collectAsState()
@@ -167,12 +173,16 @@ class UserInformation {
                 }
             }
 
-            val commentStatus by homeViewModel.commentStatus.collectAsState()
+            val commentStatus by engagementViewModel.commentStatus.collectAsState()
             LaunchedEffect(commentStatus) {
                 commentStatus?.let { selectedNew ->
                     onNavigateToCommentScreen(selectedNew)
-                    homeViewModel.resetCommentStatus()
+                    engagementViewModel.resetCommentStatus()
                 }
+            }
+
+            LaunchedEffect(Unit) {
+                engagementViewModel.seedLikedPosts(sessionViewModel.currentUser)
             }
 
             // Preserve scroll position across navigation/back stack using rememberSaveable
@@ -214,7 +224,7 @@ class UserInformation {
                     verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.Start
                 ) {
-                    UiUtils.BackAndTitleAndMoreOptionsRow(
+                    TitleBarUtils.BackAndTitleAndMoreOptionsRow(
                         title = "User Information",
                         titleStyle = MaterialTheme.typography.titleLarge,
                         trailingIcon = "more_horiz",
@@ -242,7 +252,7 @@ class UserInformation {
                                     .semantics { contentDescription = TestTag.TAG_COVER_PHOTO }
 
                                 // Cover photo
-                                val hasLocalPick = userInformationViewModel.coverPhoto != Constants.DEFAULT_AVATAR_URL
+                                val hasLocalPick = userInformationViewModel.coverPhoto != SupabaseStorageProvider.DEFAULT_AVATAR_URL
                                 if (hasLocalPick) {
                                     val imageBytes = produceState<ByteArray?>(initialValue = null, userInformationViewModel.coverPhoto) {
                                         value = imagePicker.loadImageBytes(userInformationViewModel.coverPhoto)
@@ -412,13 +422,13 @@ class UserInformation {
                                                         val networkStatus = userInformationViewModel.checkInternetConnection()
                                                         if (networkStatus) {
                                                             if (addFriendStatus != Relationship.WAITING_RESPONSE) {
-                                                                val relationship = userInformationViewModel.checkRelationship(fetchedUser!!, homeViewModel.currentUser!!)
+                                                                val relationship = userInformationViewModel.checkRelationship(fetchedUser!!, sessionViewModel.currentUser!!)
                                                                 userInformationViewModel.updateRelationship(relationship)
                                                                 if (relationship == Relationship.NONE && addFriendTimes <= 0) {
                                                                     showToast("You only can add friend once when you go to this page!!!")
                                                                 } else {
                                                                     addFriendTimes -= 1
-                                                                    userInformationViewModel.clickAddFriendButton(friend = fetchedUser, currentUser = homeViewModel.currentUser)
+                                                                    userInformationViewModel.clickAddFriendButton(friend = fetchedUser, currentUser = sessionViewModel.currentUser)
                                                                 }
                                                             } else {
                                                                 showMenu = true
@@ -446,7 +456,7 @@ class UserInformation {
                                                         style = MaterialTheme.typography.labelLarge,
                                                         maxLines = 1
                                                     )
-                                                    DropdownMenuForResponse(showMenu, friendViewModel, userInformationViewModel, fetchedUser!!, homeViewModel.currentUser!!) { showMenu = false }
+                                                    DropdownMenuForResponse(showMenu, friendViewModel, userInformationViewModel, fetchedUser!!, sessionViewModel.currentUser!!) { showMenu = false }
                                                 }
                                             }
                                         }
@@ -467,19 +477,20 @@ class UserInformation {
                                 .filter { news ->
                                     when (news.decentralizationType) {
                                         DecentralizationType.Private ->
-                                            news.posterId == homeViewModel.currentUser?.uid
+                                            news.posterId == sessionViewModel.currentUser?.uid
                                         else -> true
                                     }
                                 }
                         }
                     }
 
-                    UiUtils.LazyColumnOfNewsWithSlideOutAnimationAndLoadMore(
+                    FeedListUtils.LazyColumnOfNewsWithSlideOutAnimationAndLoadMore(
                         localImageLoaderValue,
                         listState,
-                        homeViewModel,
+                        engagementViewModel,
+                        sessionViewModel,
                         filterList,
-                        onNavigateToUploadNewsfeed,
+                        { updateNew -> onNavigateToUploadNewsfeed(updateNew) },
                         onNavigateToShowImageScreen,
                         onNavigateToUserInformation = {
                             //Don't allow navigate to this screen again
@@ -495,7 +506,7 @@ class UserInformation {
                     AlertDialog(
                         onDismissRequest = {
                             showCoverPhotoConfirmDialog = false
-                            userInformationViewModel.updateCover(Constants.DEFAULT_AVATAR_URL) // discard pick
+                            userInformationViewModel.updateCover(SupabaseStorageProvider.DEFAULT_AVATAR_URL) // discard pick
                         },
                         title = { Text("Change Cover Photo") },
                         text = { Text("Are you sure you want to set this as your new cover photo?") },
@@ -512,7 +523,7 @@ class UserInformation {
                         dismissButton = {
                             TextButton(onClick = {
                                 showCoverPhotoConfirmDialog = false
-                                userInformationViewModel.updateCover(Constants.DEFAULT_AVATAR_URL) // discard pick
+                                userInformationViewModel.updateCover(SupabaseStorageProvider.DEFAULT_AVATAR_URL) // discard pick
                             }) {
                                 Text("Cancel")
                             }
@@ -539,7 +550,7 @@ class UserInformation {
         @Composable
         fun DropdownMenuForResponse(
                                     expanded : Boolean,
-                                    friendViewModel: FriendViewModelContract,
+                                    friendViewModel: ProfileFriendViewModel,
                                     userInformationViewModel: UserInformationViewModel,
                                     requester : UserInstance,
                                     currentUser : UserInstance,

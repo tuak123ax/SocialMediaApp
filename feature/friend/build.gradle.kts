@@ -61,6 +61,7 @@ kotlin {
     sourceSets {
         all {
             languageSettings.optIn("androidx.compose.material3.ExperimentalMaterial3Api")
+            languageSettings.optIn("kotlinx.cinterop.ExperimentalForeignApi")
         }
         commonMain {
             kotlin.srcDir("src/commonMain/kotlin/com/minhtu/firesocialmedia/domain")
@@ -71,8 +72,6 @@ kotlin {
         }
         commonMain.dependencies {
             implementation(project(":core"))
-            
-            implementation(project(":feature:search"))
 
             implementation(compose.runtime)
             implementation(compose.foundation)
@@ -91,6 +90,11 @@ kotlin {
         commonTest.dependencies {
             implementation(kotlin("test"))
             implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.1")
+        }
+        androidMain.dependencies {
+            implementation(project.dependencies.platform("com.google.firebase:firebase-bom:33.5.1"))
+            implementation("com.google.firebase:firebase-database")
+            implementation("com.google.firebase:firebase-auth")
         }
     }
 }

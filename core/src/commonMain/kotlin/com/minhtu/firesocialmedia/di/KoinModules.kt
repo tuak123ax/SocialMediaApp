@@ -1,113 +1,5 @@
 package com.minhtu.firesocialmedia.di
 
-import com.minhtu.firesocialmedia.core.application.interactor.CommentInteractorImpl
-import com.minhtu.firesocialmedia.core.application.interactor.NewsInteractorImpl
-import com.minhtu.firesocialmedia.core.application.interactor.NotificationInteractorImpl
-import com.minhtu.firesocialmedia.core.application.interactor.UserInteractorImpl
-import com.minhtu.firesocialmedia.data.repository.CommentRepositoryImpl
-import com.minhtu.firesocialmedia.data.repository.CommonDbRepositoryImpl
-import com.minhtu.firesocialmedia.data.repository.GroupRepositoryImpl
-import com.minhtu.firesocialmedia.data.repository.LocalRepositoryImpl
-import com.minhtu.firesocialmedia.data.repository.NetworkRepositoryImpl
-import com.minhtu.firesocialmedia.data.repository.NewsRepositoryImpl
-import com.minhtu.firesocialmedia.data.repository.NotificationRepositoryImpl
-import com.minhtu.firesocialmedia.data.repository.SettingsRepositoryImpl
-import com.minhtu.firesocialmedia.data.repository.ShowImageRepositoryImpl
-import com.minhtu.firesocialmedia.data.repository.UserRepositoryImpl
-import com.minhtu.firesocialmedia.core.domain.interactor.comment.CommentInteractor
-import com.minhtu.firesocialmedia.core.domain.interactor.home.NewsInteractor
-import com.minhtu.firesocialmedia.core.domain.interactor.home.NotificationInteractor
-import com.minhtu.firesocialmedia.core.domain.interactor.home.UserInteractor
-import com.minhtu.firesocialmedia.core.domain.repository.CommentRepository
-import com.minhtu.firesocialmedia.core.domain.repository.CommonDbRepository
-import com.minhtu.firesocialmedia.core.domain.repository.GroupRepository
-import com.minhtu.firesocialmedia.core.domain.repository.LocalRepository
-import com.minhtu.firesocialmedia.core.domain.repository.NetworkRepository
-import com.minhtu.firesocialmedia.core.domain.repository.NewsRepository
-import com.minhtu.firesocialmedia.core.domain.repository.NotificationRepository
-import com.minhtu.firesocialmedia.core.domain.repository.SettingsRepository
-import com.minhtu.firesocialmedia.core.domain.repository.ShowImageRepository
-import com.minhtu.firesocialmedia.core.domain.repository.UserRepository
-import com.minhtu.firesocialmedia.core.domain.usecases.comment.DeleteCommentFromDatabaseUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.comment.DeleteSubCommentFromDatabaseUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.comment.GetAllCommentsUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.comment.SaveCommentToDatabaseUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.comment.SaveLikedCommentsUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.comment.SaveSubCommentToDatabaseUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.comment.UpdateCommentCountForNewUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.comment.UpdateLikeCountForCommentUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.comment.UpdateLikeCountForSubCommentUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.comment.UpdateReplyCountForCommentUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.common.GetCurrentUserUidUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.common.GetFCMTokenUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.common.GetUserUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.friend.SaveFriendRequestUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.friend.SaveFriendUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.group.CopyLinkUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.group.CreateGroupUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.group.DemoteMemberUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.group.FetchFeatureGroupsUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.group.FetchGroupInfoUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.group.FetchNotificationStateUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.group.FetchRecommendGroupsUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.group.FindGroupByIdUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.group.FindGroupInformationUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.group.GetAllGroupsUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.group.GetAllMembersInGroupUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.group.GetGroupConfigsUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.group.InviteFriendToGroupUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.group.JoinGroupUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.group.LeaveAndDeleteGroupUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.group.LeaveGroupUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.group.PromoteMemberUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.group.RemoveMemberUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.group.SaveNewToGroupUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.group.UpdateNotificationStatusUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.home.ClearAccountUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.home.ClearLocalDataUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.home.ClearLocalFriendsUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.home.DeleteNewsFromDatabaseUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.home.GetLatestNewsUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.home.SaveCurrentUserInfoUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.home.SaveLikedPostUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.home.SearchUserByNameUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.home.StoreNewsToRoomUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.home.StoreNotificationsToRoomUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.home.StoreUserFriendsToRoomUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.home.UpdateFCMTokenUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.home.UpdateLikeCountForNewUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.information.CheckCalleeAvailableUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.information.SaveSignUpInformationUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.network.CheckInternetConnectionUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.newsfeed.DeleteAllDraftPostsUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.newsfeed.DeleteDraftPostUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.newsfeed.DeletePollUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.newsfeed.FetchPollUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.newsfeed.LoadAllVotersUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.newsfeed.LoadMyVotesUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.newsfeed.SaveNewToDatabaseUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.newsfeed.SubmitVoteUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.newsfeed.UpdateNewsFromDatabaseUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.notification.DeleteAllNotificationsUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.notification.DeleteNotificationFromDatabaseUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.notification.FindNewByIdInDbUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.notification.GetAllNotificationOfUserUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.notification.SaveNotificationToDatabaseUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.notification.UpdateIsReadStatusOfNotificationUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.settings.CreatePollUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.settings.Get2FAVerifiedStatusUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.settings.ObserveSessionStatusUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.settings.StopObserveSessionStatusUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.settings.UpdateUserAvatarUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.settings.UpdateUserBackgroundUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.settings.UpdateUserStringFieldUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.showimage.DownloadImageUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.sync.LoadNewsPostedWhenOfflineUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.sync.SyncDataUseCase
-import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
-import com.minhtu.firesocialmedia.presentation.navigation.RouterViewModel
-import com.minhtu.firesocialmedia.presentation.postinformation.PostInformationViewModel
-import com.minhtu.firesocialmedia.presentation.showimage.ShowImageViewModel
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
@@ -117,240 +9,170 @@ fun appModule() = module {
 
     // ── Repositories (singletons) ────────────────────//
 
-    single<CommentRepository> {
-        CommentRepositoryImpl(
-            get<PlatformContext>().database
-        )
-    }
+    // Note: CommonDbRepository has been decomposed by domain: liked-posts/news-offline-sync
+    // is bound by feature/home's HomeModule, comment CRUD/likes by feature/comment's
+    // CommentModule, friend requests by feature/friend's FriendModule, and login-activity
+    // by feature/auth's SaveLoginActivityInfoUseCase (backed directly by feature/auth's own
+    // AuthDatabaseService/IpInfoRemoteDataSource, not a repository) — all always loaded
+    // alongside this module (see AppApplication.kt / KoinInitializer.kt).
 
-    single<CommonDbRepository> {
-        CommonDbRepositoryImpl(
-            get<PlatformContext>().database,
-            get<PlatformContext>().room,
-            get<PlatformContext>().networkMonitor,
-            get<PlatformContext>().ipRemoteDataSource
-        )
-    }
+    // Note: the old cross-cutting LocalRepository (feature/auth) was deleted in Phase 4;
+    // its callers now inject narrow core interfaces (domain.usecases.local.*) implemented
+    // by profile/home/notification/comment directly, or CryptoService where the operation
+    // was crypto-backed rather than Room-backed.
 
-    single<GroupRepository> {
-        GroupRepositoryImpl(
-            get<PlatformContext>().database,
-            get<PlatformContext>().networkMonitor,
-            get<PlatformContext>().clipboard
-        )
-    }
+    // Note: UserRepository/UserInstance were removed from core entirely — each feature now
+    // owns its own local UserInstance clone + narrow UserRepository backed directly by
+    // DatabaseService/UserRoomService (see each feature's own *Module.kt).
 
-    single<LocalRepository> {
-        LocalRepositoryImpl(
-            get<PlatformContext>().crypto,
-            get<PlatformContext>().room
-        )
-    }
+    // Note: ShowImageRepository is bound by feature/security's SecurityModule,
+    // which is always loaded alongside this module (see AppApplication.kt / KoinInitializer.kt).
+    // ShowImageViewModel and its DownloadImageUseCase factory also moved there (Phase 3).
 
-    single<NetworkRepository> {
-        NetworkRepositoryImpl(
-            get<PlatformContext>().networkMonitor
-        )
-    }
+    // Note: PollRepository was removed from core entirely — feature/home's NewsRepository
+    // now declares the poll methods directly, and feature/group/feature/profile each own
+    // their own poll passthroughs on their respective news repositories instead of sharing
+    // feature/home's singleton. PostInformationViewModel moved to feature/home's HomeModule
+    // (Phase 3).
 
-    single<NewsRepository> {
-        NewsRepositoryImpl(
-            get<PlatformContext>().database,
-            get<PlatformContext>().room,
-            get<PlatformContext>().networkMonitor
-        )
-    }
+    // Note: SettingsRepository was removed from core entirely — feature/security now owns
+    // a trimmed interface (reAuthenticate/2FA/session-observing only). The other consumers
+    // (feature/auth, feature/group, feature/profile) each inject the underlying
+    // AuthService/DatabaseService, or feature/auth's own AuthDatabaseService/
+    // IpInfoRemoteDataSource, directly instead of sharing a repository for what was a
+    // single-method need.
 
-    single<NotificationRepository> {
-        NotificationRepositoryImpl(
-            get<PlatformContext>().database,
-            get<PlatformContext>().room,
-            get<PlatformContext>().networkMonitor
-        )
-    }
+    // Note: AuthSessionService (formerly PlatformContext.auth) was removed from core entirely —
+    // each of its 8 consumers (feature/auth, friend, group, home, notification, profile,
+    // security, appInit) now owns its own package-suffixed clone (interface + Android/iOS
+    // Firebase-backed impl), bound in that module's own Koin graph, matching the same
+    // "no shared cross-feature abstraction" convention as UserRepository/SettingsRepository above.
+    // PlatformContext now only exposes networkMonitor.
 
-    single<SettingsRepository> {
-        SettingsRepositoryImpl(
-            get<PlatformContext>().auth,
-            get<PlatformContext>().database,
-            get<PlatformContext>().clipboard,
-            get<PlatformContext>().crypto
-        )
-    }
+    // Note: AuthException was likewise removed from core — it only had two consumers
+    // (feature/auth, feature/security), each already using it with its own disjoint error-code
+    // vocabulary, so each now owns its own package-suffixed clone of the same one-line class.
 
-    single<ShowImageRepository> {
-        ShowImageRepositoryImpl(
-            get<PlatformContext>().database
-        )
-    }
+    // Note: ClipboardService was removed from core the same way — 4 consumers (feature/home,
+    // security, group, comment), each a trivial one-method wrapper around the platform clipboard
+    // with no shared state, so each now owns its own package-suffixed clone (interface +
+    // Android/iOS impl), bound in that module's own Koin graph.
 
-    single<UserRepository> {
-        UserRepositoryImpl(
-            get<PlatformContext>().auth,
-            get<PlatformContext>().database,
-            get<PlatformContext>().crypto,
-            get<PlatformContext>().room,
-            get<PlatformContext>().networkMonitor
-        )
-    }
+    // Note: AndroidCryptoHelper/IosCryptoHelper deliberately stay in core, unlike the types
+    // above — they are not a false shared abstraction, they are genuinely shared *stateful*
+    // infrastructure. Every consumer (feature/auth, home, profile, security, and core's own
+    // TokenStorage) reads and writes the same underlying encrypted store (Android:
+    // EncryptedSharedPreferences file "secure_prefs_file" under Keystore alias
+    // "_androidx_security_master_key_"; iOS: the shared Keychain-backed `settings`) — e.g.
+    // feature/auth writes KEY_FCM_TOKEN and feature/home reads it back; feature/home writes the
+    // cached user info and feature/profile reads it back. Cloning this per feature would only
+    // stay correct if every copy kept byte-for-byte identical file names/aliases/key constants
+    // forever — an unenforced, silently-breakable coupling with no compiler safety net. So this
+    // one keeps a single source of truth in core and features inject it directly instead.
+
+    // Note: AndroidDatabaseHelper/IosDatabaseHelper/SupabaseStorage were removed from core the
+    // same way as ClipboardService — every method opens a fresh Firebase reference or fires a
+    // stateless Ktor HTTP call per invocation, no shared mutable data, so each consuming feature
+    // (home, friend, security, group, comment, profile, auth) now owns its own package-suffixed,
+    // narrowly-trimmed clone (only the methods that feature actually calls), bound/called
+    // directly, no Koin binding needed since these were always plain object/companion-object
+    // utilities rather than injected interfaces. `SupabaseClient`'s BASE_URL constant was folded
+    // into each `SupabaseStorage` clone as a private const rather than kept as a separate file.
+    //
+    // `SupabaseStorageHelper` deliberately stays in core, unlike the types above — same reasoning
+    // as AndroidCryptoHelper/IosCryptoHelper: it is genuinely shared *stateful* infrastructure, an
+    // in-memory extension cache (Android: `ConcurrentHashMap`, iOS: `HashMap`) backed by a single
+    // persisted store (Android: SharedPreferences file "supabase_ext_cache"; iOS: NSUserDefaults
+    // key "supabase_ext_cache_v1"), warmed once at app startup and read/written by every feature
+    // that resolves a media URL. Duplicating it per feature would give each clone its own empty
+    // cache, defeating the point of caching and breaking the "warm once at startup" contract. So
+    // it keeps a single source of truth in core, along with `SupabaseClient` (still needed by
+    // `SupabaseStorageHelper` for its own base URL) and `KtorProvider`'s shared `HttpClient`,
+    // which the per-feature `SupabaseStorage` clones call into rather than construct their own.
+
+    // Note: ImagePicker and StorageProvider/SupabaseStorageProvider were removed from core
+    // the same way as ClipboardService/AndroidDatabaseHelper — both are stateless (no shared
+    // cache, no shared mutable resource; every method either builds a fresh platform picker
+    // UI or does a pure string transform), so each consuming feature (ImagePicker: home, auth,
+    // group, profile — home alone keeps pickVideo, the only consumer that calls it;
+    // StorageProvider/SupabaseStorageProvider: appInit, home, friend, calling, security, auth,
+    // group, notification, comment, profile) now owns its own package-suffixed clone (interface
+    // + Android/iOS impl for ImagePicker; object + toStorageUrl() extension for
+    // StorageProvider), called directly — no Koin binding needed for either, they were always
+    // plain composable-factory-function / object-extension utilities rather than injected
+    // interfaces.
+    //
+    // NetworkMonitor took a narrower cut: it stays in core, still backing
+    // `PlatformContext.networkMonitor` for appInit's `Navigation.kt` global offline banner (a
+    // genuine app-shell cross-cutting concern). But its other use — 5 features (home, group,
+    // notification, comment, profile) injecting `get<PlatformContext>().networkMonitor` into
+    // repository constructors purely for online/offline gating — was a false shared
+    // abstraction, so those 5 each gained their own independent, package-suffixed
+    // `NetworkMonitor` clone (interface + Android `ConnectivityManager`/iOS
+    // `nw_path_monitor`-backed impl), bound via `single<NetworkMonitor> { ... }` in that
+    // feature's own Koin module and injected in place of the old `PlatformContext` lookup. Two
+    // parallel `NetworkMonitor` implementations now coexist by design — core's (app-shell
+    // banner only) and each feature's own (repository gating only) — acceptable since the type
+    // is stateless.
+
+    // Note: createMessageForServer/createCallMessage/sendMessageToServer were removed from
+    // core the same way as ClipboardService/AndroidDatabaseHelper — pure JSON-string builders
+    // plus a fire-and-forget HTTP POST, no shared mutable state — so each of the 7 consuming
+    // features (home, group, profile, comment, calling, security, notification) now owns its
+    // own package-suffixed clone of only the functions it actually calls (see the table in
+    // the migration plan), called directly, no Koin binding needed. Each clone's
+    // sendMessageToServer still calls into core's existing `Client`/`NotificationApiService`
+    // (Android) or `KtorProvider` (iOS) rather than cloning that plumbing, same as the
+    // `SupabaseStorage` clones reuse core's `KtorProvider` — expensive-to-construct,
+    // no-business-logic infra stays centralized even though the business logic around it
+    // doesn't. iOS's createCallMessage was also fixed while cloning: it was previously an
+    // unimplemented stub returning "", silently breaking call-signaling push (ring/accept/
+    // reject) on iOS; each clone now builds the same JSON shape as the working Android
+    // implementation via kotlinx.serialization's buildJsonObject.
+    //
+    // `TokenStorage` deliberately stays in core, unlike the functions above — same reasoning
+    // as AndroidCryptoHelper/IosCryptoHelper: it writes into that same genuinely shared
+    // encrypted store, and its only two consumers (Fire_Social_Media's
+    // FirebaseNotificationService.kt/MainActivity.kt) are the Android app shell, not a
+    // feature module, so there was nothing to clone it into.
+
+    // Note: VideoPlayer was removed from core the same way as ImagePicker — stateless (each
+    // call site already builds and owns its own ExoPlayer/AVPlayer instance, no shared pool
+    // or cache), so each of its 4 consuming modules (appInit, home, group, profile) now owns
+    // its own package-suffixed clone of the composable plus its private helper
+    // composables/classes (Android: PlayerViewContent/FullscreenVideoDialog/
+    // VideoActionButton.kt; iOS: InlineVideoPlayerView/IosFullscreenVideoOverlay/
+    // IosActionButtonTokens and friends), called directly — no Koin binding needed. The
+    // Android video disk cache (videoSimpleCache/getVideoCache) was dead code — zero call
+    // sites, never wired to a player — so it was dropped entirely rather than carried into
+    // any of the 4 clones.
+
     // ── Use Cases (factory = new instance each time) ────────────────────//
 
-    // Comment Use Cases
-    factory { DeleteCommentFromDatabaseUseCase(get()) }
-    factory { DeleteSubCommentFromDatabaseUseCase(get()) }
-    factory { GetAllCommentsUseCase(get()) }
-    factory { SaveCommentToDatabaseUseCase(get()) }
-    factory { SaveLikedCommentsUseCase(get()) }
-    factory { SaveSubCommentToDatabaseUseCase(get()) }
-    factory { UpdateCommentCountForNewUseCase(get()) }
-    factory { UpdateLikeCountForCommentUseCase(get()) }
-    factory { UpdateLikeCountForSubCommentUseCase(get()) }
-    factory { UpdateReplyCountForCommentUseCase(get()) }
+    // Note: DeletePollUseCase used to be a shared core use case bound to PollRepository;
+    // it was removed in favor of each feature (home/group/profile) owning its own
+    // DeletePollUseCase backed by its own news repository, matching the
+    // "no shared cross-feature repository" architecture. SaveLikeNotificationUseCase
+    // itself is cloned locally into feature/group and feature/profile (2
+    // mutually-independent siblings, no Koin DI-contract needed for a concrete class)
+    // — see each feature's own *Module.kt.
 
-    // Common Use Cases
-    factory { GetCurrentUserUidUseCase(get()) }
-    factory { GetFCMTokenUseCase(get()) }
-    factory { GetUserUseCase(get()) }
+    // Note: ClearLocalDataUseCase (RoomService-based) moved fully to feature/security —
+    // its only real consumer, AccountViewModel — see feature/security's SecurityModule.kt.
 
-    // Friend Use Cases
-    factory { SaveFriendRequestUseCase(get()) }
-    factory { SaveFriendUseCase(get()) }
+    // Note: CheckLocalAccountUseCase is bound by feature/auth's AuthModule, and
+    // Get2FAVerifiedStatusUseCase by feature/security's SecurityModule — both always
+    // loaded alongside this module (see AppApplication.kt / KoinInitializer.kt), and
+    // both consumed by appInit's RouterViewModel.
 
-    // Group Use Cases
-    factory { CopyLinkUseCase(get()) }
-    factory { CreateGroupUseCase(get()) }
-    factory { DemoteMemberUseCase(get()) }
-    factory { FetchFeatureGroupsUseCase(get()) }
-    factory { FetchGroupInfoUseCase(get()) }
-    factory { FetchNotificationStateUseCase(get()) }
-    factory { FetchRecommendGroupsUseCase(get()) }
-    factory { FindGroupByIdUseCase(get()) }
-    factory { FindGroupInformationUseCase(get()) }
-    factory { GetAllGroupsUseCase(get()) }
-    factory { GetAllMembersInGroupUseCase(get()) }
-    factory { GetGroupConfigsUseCase(get()) }
-    factory { InviteFriendToGroupUseCase(get()) }
-    factory { JoinGroupUseCase(get()) }
-    factory { LeaveAndDeleteGroupUseCase(get()) }
-    factory { LeaveGroupUseCase(get()) }
-    factory { PromoteMemberUseCase(get()) }
-    factory { RemoveMemberUseCase(get()) }
-    factory { SaveNewToGroupUseCase(get()) }
-    factory { UpdateNotificationStatusUseCase(get()) }
-
-    // Home Use Cases
-    factory { ClearAccountUseCase(get()) }
-    factory { ClearLocalDataUseCase(get()) }
-    factory { ClearLocalFriendsUseCase(get()) }
-    factory { DeleteNewsFromDatabaseUseCase(get()) }
-    factory { GetLatestNewsUseCase(get()) }
-    factory { SaveCurrentUserInfoUseCase(get()) }
-    factory { SaveLikedPostUseCase(get()) }
-    factory { SearchUserByNameUseCase(get()) }
-    factory { StoreNewsToRoomUseCase(get()) }
-    factory { StoreNotificationsToRoomUseCase(get()) }
-    factory { StoreUserFriendsToRoomUseCase(get()) }
-    factory { UpdateFCMTokenUseCase(get()) }
-    factory { UpdateLikeCountForNewUseCase(get()) }
-
-    // Information Use Cases
-    factory { CheckCalleeAvailableUseCase(get()) }
-    factory { SaveSignUpInformationUseCase(get()) }
-
-    // Network Use Cases
-    factory { CheckInternetConnectionUseCase(get()) }
-
-    // Newsfeed Use Cases
-    factory { DeleteAllDraftPostsUseCase(get()) }
-    factory { DeleteDraftPostUseCase(get()) }
-    factory { DeletePollUseCase(get()) }
-    factory { FetchPollUseCase(get()) }
-    factory { LoadAllVotersUseCase(get()) }
-    factory { LoadMyVotesUseCase(get()) }
-    factory { SaveNewToDatabaseUseCase(get()) }
-    factory { SubmitVoteUseCase(get()) }
-    factory { UpdateNewsFromDatabaseUseCase(get()) }
-
-    // Notification Use Cases
-    factory { DeleteAllNotificationsUseCase(get()) }
-    factory { DeleteNotificationFromDatabaseUseCase(get()) }
-    factory { FindNewByIdInDbUseCase(get()) }
-    factory { GetAllNotificationOfUserUseCase(get()) }
-    factory { SaveNotificationToDatabaseUseCase(get()) }
-    factory { UpdateIsReadStatusOfNotificationUseCase(get()) }
-
-    // Settings Use Cases (non-security ones remain here)
-    factory { CreatePollUseCase(get()) }
-    factory { Get2FAVerifiedStatusUseCase(get()) }
-    factory { ObserveSessionStatusUseCase(get()) }
-    factory { StopObserveSessionStatusUseCase(get()) }
-    factory { UpdateUserAvatarUseCase(get()) }
-    factory { UpdateUserBackgroundUseCase(get()) }
-    factory { UpdateUserStringFieldUseCase(get()) }
-
-    // Show image Use Cases
-    factory { DownloadImageUseCase(get()) }
-
-    // Sync Use Cases
-    factory { LoadNewsPostedWhenOfflineUseCase(get()) }
-    factory { SyncDataUseCase(get()) }
-
-    // ── Interactors ────────────────────//
-    factory<UserInteractor> {
-        UserInteractorImpl(
-            get(),
-            get(),
-            get(),
-            get(),
-            get(),
-            get(),
-            get(),
-            get(),
-            get(),
-            get()
-        )
-    }
-
-    factory<NewsInteractor> {
-        NewsInteractorImpl(
-            get(),
-            get(),
-            get(),
-            get(),
-            get(),
-            get(),
-            get()
-        )
-    }
-
-    factory<NotificationInteractor> {
-        NotificationInteractorImpl(
-            get(),
-            get(),
-            get(),
-            get()
-        )
-    }
-
-    factory<CommentInteractor> {
-        CommentInteractorImpl(
-            get(),
-            get(),
-            get(),
-            get(),
-            get()
-        )
-    }
+    // Note: GetFCMTokenUseCase is bound by feature/auth's AuthModule — its only real
+    // consumer is feature/auth's InformationViewModel (see AppApplication.kt / KoinInitializer.kt).
 
     // ── ViewModels ────────────────────//
-    viewModel { LoadingViewModel() }
-    viewModel { RouterViewModel(get(), get(), get(), get()) }
-    // FriendViewModel registration moved to feature:friend friendModule()
-    // Group ViewModels moved to feature:group groupModule()
-    viewModel { PostInformationViewModel(get()) }
-    viewModel { ShowImageViewModel(get()) }
-    // UploadNewfeedViewModel registration moved to feature:home homeModule()
-    // UserInformationViewModel registration moved to feature:profile profileModule()
-    // PersonalInformationViewModel registration moved to feature:profile profileModule()
-    // InformationViewModel registration moved to feature:auth authModule()
+    // Note: LoadingViewModel was split: each feature module now owns its own minimal
+    // LoadingViewModel (isLoading/showLoading/hideLoading), bound in that feature's own
+    // Koin module; the sync-loading piece moved to appInit's SyncLoadingViewModel, bound
+    // in appInit's AppInitKoinModules.kt (same reasoning as RouterViewModel below).
+    // Note: RouterViewModel moved to appInit's own Koin module (Phase 3) — it's a
+    // composition-root/app-start-destination concern, not core infra.
 }

@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.androidLibrary)
     id("org.jetbrains.compose") version "1.7.3"
     id("org.jetbrains.kotlin.plugin.compose")
+    id("kotlinx-serialization")
 }
 
 kotlin {
@@ -61,6 +62,7 @@ kotlin {
     sourceSets {
         all {
             languageSettings.optIn("androidx.compose.material3.ExperimentalMaterial3Api")
+            languageSettings.optIn("kotlinx.cinterop.ExperimentalForeignApi")
         }
         commonMain {
             kotlin.srcDir("src/commonMain/kotlin/com/minhtu/firesocialmedia/domain")
@@ -71,8 +73,7 @@ kotlin {
         }
         commonMain.dependencies {
             implementation(project(":core"))
-            
-            implementation(project(":feature:search"))
+            implementation(project(":feature:notification"))
 
             implementation(compose.runtime)
             implementation(compose.foundation)
@@ -86,12 +87,43 @@ kotlin {
             implementation(libs.koin.compose)
             implementation(libs.koin.compose.viewmodel)
 
+            //Networking
+            implementation(libs.ktor.client.core)
+
             //Image loader
             api(libs.seiko.image.loader)
         }
         commonTest.dependencies {
             implementation(kotlin("test"))
             implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.1")
+        }
+
+        androidInstrumentedTest.dependencies {
+            implementation("androidx.test:core-ktx:1.6.1")
+            implementation("androidx.test.ext:junit:1.2.1")
+            implementation("androidx.test.espresso:espresso-core:3.6.1")
+            implementation("androidx.compose.ui:ui-test-junit4")
+        }
+        androidMain.dependencies {
+            implementation("androidx.core:core-ktx:1.13.1")
+            implementation(libs.koin.android)
+            implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:1.5.1")
+            implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.1")
+            implementation(project.dependencies.platform("com.google.firebase:firebase-bom:33.5.1"))
+            implementation("com.google.firebase:firebase-database")
+            implementation("com.google.firebase:firebase-storage")
+            implementation("com.google.firebase:firebase-auth")
+
+            implementation("androidx.media3:media3-exoplayer:1.7.1")
+            implementation("androidx.media3:media3-ui:1.7.1")
+            implementation("com.squareup.retrofit2:retrofit:2.9.0")
+            implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+            implementation("com.squareup.retrofit2:converter-scalars:2.9.0")
+        }
+        iosMain.dependencies {
+            implementation(libs.ktor.client.core)
+            implementation(libs.ktor.client.content.negotiation)
+            implementation(libs.ktor.serialization.kotlinx.json)
         }
     }
 }
@@ -107,6 +139,10 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
+}
+
+dependencies {
+    add("debugImplementation", "androidx.compose.ui:ui-test-manifest")
 }
 
 

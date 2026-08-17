@@ -3,6 +3,9 @@ plugins {
     alias(libs.plugins.androidLibrary)
     id("org.jetbrains.compose") version "1.7.3"
     id("org.jetbrains.kotlin.plugin.compose")
+    alias(libs.plugins.ksp)
+    //Room
+    alias(libs.plugins.androidx.room)
 }
 
 kotlin {
@@ -12,6 +15,11 @@ kotlin {
     iosX64()
     iosArm64()
     iosSimulatorArm64()
+
+    // Link sqlite on Native/iOS (Room KMP support; iOS impl remains a no-op stub, see instruction.md)
+    targets.withType<org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget>().configureEach {
+        binaries.all { linkerOpts("-lsqlite3") }
+    }
 
     targets.withType<org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget>().configureEach {
         val isSimulator = name.contains("Simulator", ignoreCase = true) || name.contains("X64", ignoreCase = true)
@@ -61,6 +69,7 @@ kotlin {
     sourceSets {
         all {
             languageSettings.optIn("androidx.compose.material3.ExperimentalMaterial3Api")
+            languageSettings.optIn("kotlinx.cinterop.ExperimentalForeignApi")
         }
         commonMain {
             kotlin.srcDir("src/commonMain/kotlin/com/minhtu/firesocialmedia/domain")
@@ -71,11 +80,12 @@ kotlin {
         }
         commonMain.dependencies {
             implementation(project(":core"))
-            
+            implementation(project(":feature:notification"))
 
             implementation(compose.runtime)
             implementation(compose.foundation)
             implementation(compose.material3)
+            implementation(compose.materialIconsExtended)
             implementation("org.jetbrains.androidx.navigation:navigation-compose:2.9.0-beta01")
 
             api("com.rickclephas.kmp:kmp-observableviewmodel-core:1.0.0-BETA-10")
@@ -84,12 +94,39 @@ kotlin {
             implementation(libs.koin.compose)
             implementation(libs.koin.compose.viewmodel)
 
+            //Networking
+            implementation(libs.ktor.client.core)
+
             //Image loader
             api(libs.seiko.image.loader)
+
+            //Room
+            implementation(libs.androidx.room.runtime)
+            implementation(libs.androidx.sqlite.bundled)
         }
         commonTest.dependencies {
             implementation(kotlin("test"))
             implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.1")
+        }
+        androidMain.dependencies {
+            //Room
+            implementation(libs.androidx.room.sqlite.wrapper)
+            implementation("androidx.core:core-ktx:1.13.1")
+            implementation(project.dependencies.platform("com.google.firebase:firebase-bom:33.5.1"))
+            implementation("com.google.firebase:firebase-database")
+            implementation("com.google.firebase:firebase-storage")
+            implementation("com.google.firebase:firebase-auth")
+
+            implementation("androidx.media3:media3-exoplayer:1.7.1")
+            implementation("androidx.media3:media3-ui:1.7.1")
+            implementation("com.squareup.retrofit2:retrofit:2.9.0")
+            implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+            implementation("com.squareup.retrofit2:converter-scalars:2.9.0")
+        }
+        iosMain.dependencies {
+            implementation(libs.ktor.client.core)
+            implementation(libs.ktor.client.content.negotiation)
+            implementation(libs.ktor.serialization.kotlinx.json)
         }
     }
 }
@@ -97,10 +134,21 @@ kotlin {
 android {
     namespace = "com.minhtu.firesocialmedia.home"
     compileSdk = 35
-    defaultConfig { minSdk = 24 }
+    defaultConfig {
+        minSdk = 24
+        consumerProguardFiles("consumer-rules.pro")
+    }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
+}
+
+dependencies {
+    add("kspAndroid", libs.androidx.room.compiler)
+}
+
+room {
+    schemaDirectory("$projectDir/schemas")
 }
 

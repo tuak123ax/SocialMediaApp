@@ -1,0 +1,37 @@
+package com.minhtu.firesocialmedia.constants.group
+
+class TestTag {
+    companion object{
+        const val TAG_SELECT_GROUP_BUTTON: String = "TAG_SELECT_GROUP_BUTTON"
+        const val TAG_SELECT_GROUP_AVATAR: String = "TAG_SELECT_GROUP_AVATAR"
+        const val TAG_GROUP_PASSWORD : String = "TAG_GROUP_PASSWORD"
+        const val TAG_MEMBERS_TAB : String = "TAG_MEMBERS_TAB"
+        const val TAG_ACTION_BUTTON_OF_USER_IN_GROUP_ROW : String = "TAG_ACTION_BUTTON_OF_USER_IN_GROUP_ROW"
+        const val TAG_ACTION_BUTTON_OF_USER_IN_GROUP : String = "TAG_ACTION_BUTTON_OF_USER_IN_GROUP"
+        const val TAG_RECOMMEND_GROUP : String = "TAG_RECOMMEND_GROUP"
+        const val TAG_CREATE_GROUP_BUTTON: String = "TAG_CREATE_GROUP_BUTTON"
+        const val TAG_FIND_GROUP_BUTTON: String = "TAG_FIND_GROUP_BUTTON"
+        const val TAG_GROUP_NAME : String = "TAG_GROUP_NAME"
+        const val TAG_BUTTON_NEXT: String = "TAG_BUTTON_NEXT"
+        const val TAG_SHOW_PASSWORD : String = "TAG_SHOW_PASSWORD"
+        const val TAG_CURRENT_USER: String = "TAG_CURRENT_USER"
+        const val TAG_BUTTON_ACCESS_MODIFIER: String = "TAG_BUTTON_ACCESS_MODIFIER"
+        const val TAG_SELECT_PUBLIC: String = "TAG_SELECT_PUBLIC"
+        const val TAG_SELECT_PRIVATE: String = "TAG_SELECT_PRIVATE"
+        const val TAG_SEARCH_BAR: String = "TAG_SEARCH_BAR"
+        const val TAG_COVER_PHOTO: String = "TAG_COVER_PHOTO"
+        const val TAG_BUTTON_NO: String = "TAG_BUTTON_NO"
+        const val TAG_POSTS_COLUMN: String = "TAG_POST_COLUMN"
+        const val TAG_BUTTON_BACK: String = "TAG_BUTTON_BACK"
+        const val TAG_BUTTON_MOREOPTIONS: String = "TAG_BUTTON_MOREOPTIONS"
+        const val TAG_POST_IN_COLUMN: String = "TAG_POST_IN_COLUMN"
+        const val TAG_POSTER_AVATAR: String = "TAG_POSTER_AVATAR"
+        const val TAG_POST_IMAGE: String = "TAG_POST_IMAGE"
+        const val TAG_POST_VIDEO: String = "TAG_POST_VIDEO"
+        const val TAG_POST_MESSAGE: String = "TAG_POST_MESSAGE"
+        const val TAG_SHARE_APPS_ROW: String = "TAG_SHARE_APPS_ROW"
+        const val TAG_BUTTON_LIKE: String = "TAG_BUTTON_LIKE"
+        const val TAG_BUTTON_COMMENT: String = "TAG_BUTTON_COMMENT"
+        const val TAG_BUTTON_SHARE: String = "TAG_BUTTON_SHARE"
+    }
+}

@@ -38,16 +38,17 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
-import com.minhtu.firesocialmedia.core.constants.TestTag
-import com.minhtu.firesocialmedia.core.constants.UiConstants
+import com.minhtu.firesocialmedia.constants.auth.TestTag
+import com.minhtu.firesocialmedia.constants.UiConstants
+import com.minhtu.firesocialmedia.core.constants.AuthRouteNames
 import com.minhtu.firesocialmedia.platform.showToast
 import com.minhtu.firesocialmedia.platform.toHex
-import com.minhtu.firesocialmedia.presentation.loading.Loading
-import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
-import com.minhtu.firesocialmedia.utils.UiUtils.Companion.IconAndTitle
-import com.minhtu.firesocialmedia.utils.UiUtils.Companion.PasswordVisibilityIcon
-import com.minhtu.firesocialmedia.utils.UiUtils.Companion.SubTitle
-import com.minhtu.firesocialmedia.utils.UiUtils.Companion.TextFieldWithLeadingIcon
+import com.minhtu.firesocialmedia.auth.presentation.loading.Loading
+import com.minhtu.firesocialmedia.auth.presentation.loading.LoadingViewModel
+import com.minhtu.firesocialmedia.auth.utils.UiUtils.Companion.IconAndTitle
+import com.minhtu.firesocialmedia.auth.utils.UiUtils.Companion.PasswordVisibilityIcon
+import com.minhtu.firesocialmedia.auth.utils.UiUtils.Companion.SubTitle
+import com.minhtu.firesocialmedia.auth.utils.UiUtils.Companion.TextFieldWithLeadingIcon
 import com.minhtu.firesocialmedia.presentation.information.InformationViewModel
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -57,11 +58,11 @@ class SignUp {
         fun SignUpScreen(
             signUpViewModel: SignUpViewModel = koinViewModel(),
             informationViewModel: InformationViewModel = koinViewModel(),
-            loadingViewModel: LoadingViewModel,
             modifier: Modifier,
             onNavigateToSignInScreen: () -> Unit,
             onNavigateToInformationScreen: () -> Unit
         ) {
+            val loadingViewModel: LoadingViewModel = koinViewModel()
             val focusManager = LocalFocusManager.current
             val isLoading by loadingViewModel.isLoading.collectAsState()
             val signUpStatus = signUpViewModel.signUpStatus.collectAsState()
@@ -201,7 +202,7 @@ class SignUp {
             }
         }
 
-        fun getScreenName(): String = UiConstants.SignUp.SCREEN_NAME
+        fun getScreenName(): String = AuthRouteNames.SignUp.SCREEN_NAME
     }
 }
 

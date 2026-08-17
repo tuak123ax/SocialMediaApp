@@ -1,11 +1,12 @@
 package com.minhtu.firesocialmedia.presentation.changepassword
 
-import com.minhtu.firesocialmedia.core.domain.entity.settings.ChangePasswordState
-import com.minhtu.firesocialmedia.core.domain.entity.user.UserInstance
-import com.minhtu.firesocialmedia.core.domain.error.changepassword.ChangePasswordError
-import com.minhtu.firesocialmedia.core.domain.usecases.settings.ChangePasswordUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.settings.ValidateNewPasswordUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.settings.VerifyCurrentPasswordUseCase
+import com.minhtu.firesocialmedia.domain.entity.settings.ChangePasswordState
+import com.minhtu.firesocialmedia.security.data.remote.dto.user.UserDTO
+import com.minhtu.firesocialmedia.security.entity.user.toSecurityUser
+import com.minhtu.firesocialmedia.domain.error.changepassword.ChangePasswordError
+import com.minhtu.firesocialmedia.domain.usecases.settings.ChangePasswordUseCase
+import com.minhtu.firesocialmedia.domain.usecases.settings.ValidateNewPasswordUseCase
+import com.minhtu.firesocialmedia.domain.usecases.settings.VerifyCurrentPasswordUseCase
 import com.rickclephas.kmp.observableviewmodel.ViewModel
 import com.rickclephas.kmp.observableviewmodel.launch
 import kotlinx.coroutines.CoroutineDispatcher
@@ -44,7 +45,7 @@ class ChangePasswordViewModel(
     var changePasswordState = _changePasswordState.asStateFlow()
 
     @OptIn(ExperimentalTime::class)
-    fun updatePassword(currentUser: UserInstance) {
+    fun updatePassword(currentUser: UserDTO) {
         viewModelScope.launch(ioDispatcher) {
             val validateNewPasswordResult = validateNewPasswordUseCase.invoke(_newPassword.value, _confirmPassword.value)
             if (validateNewPasswordResult.isValid) {
@@ -52,7 +53,7 @@ class ChangePasswordViewModel(
                 if (!verifyCurrentPasswordResult) {
                     _changePasswordState.value = ChangePasswordState(false, ChangePasswordError.CurrentPasswordWrongError)
                 } else {
-                    _changePasswordState.value = changePasswordUseCase.invoke(currentUser, _newPassword.value)
+                    _changePasswordState.value = changePasswordUseCase.invoke(currentUser.toSecurityUser(), _newPassword.value)
                     if (_changePasswordState.value != null && _changePasswordState.value!!.isValid) {
                         hasRetried = false
                         currentUser.lastTimeChangePassword = System.now().toEpochMilliseconds()
@@ -69,7 +70,7 @@ class ChangePasswordViewModel(
     }
 
     private var hasRetried = false
-    fun retryWithReAuth(currentUser: UserInstance) = viewModelScope.launch {
+    fun retryWithReAuth(currentUser: UserDTO) = viewModelScope.launch {
         if (hasRetried) {
             _changePasswordState.value = ChangePasswordState(
                 false,

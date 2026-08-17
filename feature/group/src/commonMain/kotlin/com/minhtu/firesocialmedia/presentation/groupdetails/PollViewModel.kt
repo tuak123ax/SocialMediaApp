@@ -2,14 +2,13 @@ package com.minhtu.firesocialmedia.presentation.groupdetails
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.minhtu.firesocialmedia.core.domain.entity.settings.PollObject
-import com.minhtu.firesocialmedia.core.domain.entity.user.UserInstance
-import com.minhtu.firesocialmedia.core.domain.usecases.common.GetUserUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.newsfeed.FetchPollUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.newsfeed.LoadAllVotersUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.newsfeed.LoadMyVotesUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.newsfeed.SubmitVoteUseCase
-import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.group.PollViewModelInterface
+import com.minhtu.firesocialmedia.domain.entity.settings.group.PollObject
+import com.minhtu.firesocialmedia.group.entity.user.UserInstance
+import com.minhtu.firesocialmedia.domain.usecases.common.group.GetUserUseCase
+import com.minhtu.firesocialmedia.domain.usecases.newsfeed.group.FetchPollUseCase
+import com.minhtu.firesocialmedia.domain.usecases.newsfeed.group.LoadAllVotersUseCase
+import com.minhtu.firesocialmedia.domain.usecases.newsfeed.group.LoadMyVotesUseCase
+import com.minhtu.firesocialmedia.domain.usecases.newsfeed.group.SubmitVoteUseCase
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -30,15 +29,15 @@ class PollViewModel(
     private val loadAllVotersUseCase: LoadAllVotersUseCase? = null,
     private val getUserUseCase: GetUserUseCase? = null,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
-) : ViewModel(), PollViewModelInterface {
+) : ViewModel() {
 
     // Cache of fully-loaded polls: pollId -> PollObject
     private val _polls = MutableStateFlow<Map<String, PollObject>>(emptyMap())
-    override val polls: StateFlow<Map<String, PollObject>> = _polls.asStateFlow()
+    val polls: StateFlow<Map<String, PollObject>> = _polls.asStateFlow()
 
     // Cache of current user votes: pollId -> selected option indices
     private val _myVotes = MutableStateFlow<Map<String, List<Int>>>(emptyMap())
-    override val myVotes: StateFlow<Map<String, List<Int>>> = _myVotes.asStateFlow()
+    val myVotes: StateFlow<Map<String, List<Int>>> = _myVotes.asStateFlow()
 
     // Tracks what is actually persisted on the server for each poll.
     // Used as previousIndices when submitting a changed vote.
@@ -50,11 +49,11 @@ class PollViewModel(
 
     // submitVote result: pollId -> success flag  (null = idle)
     private val _submitState = MutableStateFlow<Map<String, Boolean?>>(emptyMap())
-    override val submitState: StateFlow<Map<String, Boolean?>> = _submitState.asStateFlow()
+    val submitState: StateFlow<Map<String, Boolean?>> = _submitState.asStateFlow()
 
     // All voters for a poll (poll owner only): pollId -> list of (user, selectedIndices)
     private val _allVoters = MutableStateFlow<Map<String, List<Pair<UserInstance?, List<Int>>>>>(emptyMap())
-    override val allVoters: StateFlow<Map<String, List<Pair<UserInstance?, List<Int>>>>> = _allVoters.asStateFlow()
+    val allVoters: StateFlow<Map<String, List<Pair<UserInstance?, List<Int>>>>> = _allVoters.asStateFlow()
 
     // Track which polls have had voters loaded
     private val loadedVoterPollIds = mutableSetOf<String>()
@@ -63,7 +62,7 @@ class PollViewModel(
      * Load full poll data + current user's votes.
      * Safe to call multiple times — skips if already loaded/loading.
      */
-    override fun loadPoll(pollId: String, userId: String) {
+    fun loadPoll(pollId: String, userId: String) {
         if (pollId.isEmpty()) return
         if (_polls.value.containsKey(pollId) && _myVotes.value.containsKey(pollId)) return
         if (loadingPollIds.contains(pollId)) return
@@ -91,7 +90,7 @@ class PollViewModel(
      * Force-refresh a poll (e.g. after another user votes and we want live results).
      * Keeps existing poll data in cache so UI doesn't flash "Loading poll…" during refresh.
      */
-    override fun refreshPoll(pollId: String, userId: String) {
+    fun refreshPoll(pollId: String, userId: String) {
         if (loadingPollIds.contains(pollId)) return
         loadingPollIds.add(pollId)
         viewModelScope.launch(ioDispatcher) {
@@ -111,7 +110,7 @@ class PollViewModel(
         }
     }
 
-    override fun submitVote(
+    fun submitVote(
         pollId: String,
         userId: String,
         selectedIndices: List<Int>
@@ -132,7 +131,7 @@ class PollViewModel(
         }
     }
 
-    override fun resetSubmitState(pollId: String) {
+    fun resetSubmitState(pollId: String) {
         _submitState.value = _submitState.value + (pollId to null)
     }
 
@@ -141,7 +140,7 @@ class PollViewModel(
      * _serverVotes is intentionally NOT cleared — it still holds the real persisted indices
      * so that a subsequent submitVote can correctly decrement the old option counts.
      */
-    override fun clearMyVote(pollId: String) {
+    fun clearMyVote(pollId: String) {
         _myVotes.value = _myVotes.value + (pollId to emptyList())
     }
 
@@ -149,7 +148,7 @@ class PollViewModel(
      * Load all voters for a poll. Only intended for the poll owner.
      * Fetches userId -> indices map and resolves user names via [getUserUseCase].
      */
-    override fun loadAllVoters(pollId: String) {
+    fun loadAllVoters(pollId: String) {
         if (pollId.isEmpty()) return
         if (loadedVoterPollIds.contains(pollId)) return
         loadedVoterPollIds.add(pollId)
@@ -166,7 +165,7 @@ class PollViewModel(
     }
 
     /** Refresh the voter list (e.g. after a new vote is submitted). */
-    override fun refreshAllVoters(pollId: String) {
+    fun refreshAllVoters(pollId: String) {
         loadedVoterPollIds.remove(pollId)
         loadAllVoters(pollId)
     }

@@ -43,17 +43,20 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.minhtu.firesocialmedia.core.constants.Constants
-import com.minhtu.firesocialmedia.core.constants.TestTag
-import com.minhtu.firesocialmedia.data.remote.service.imagepicker.ImagePicker
+import com.minhtu.firesocialmedia.storage.auth.SupabaseStorageProvider
+import com.minhtu.firesocialmedia.constants.auth.TestTag
+import com.minhtu.firesocialmedia.data.remote.service.auth.auth.AuthSessionService
+import com.minhtu.firesocialmedia.data.remote.service.imagepicker.auth.ImagePicker
 import com.minhtu.firesocialmedia.di.PlatformContext
 import com.minhtu.firesocialmedia.platform.CommonBackHandler
 import com.minhtu.firesocialmedia.platform.getImageBytesFromDrawable
 import com.minhtu.firesocialmedia.platform.showToast
-import com.minhtu.firesocialmedia.presentation.loading.Loading
-import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
-import com.minhtu.firesocialmedia.utils.UiUtils
+import com.minhtu.firesocialmedia.auth.presentation.loading.Loading
+import com.minhtu.firesocialmedia.auth.presentation.loading.LoadingViewModel
+import com.minhtu.firesocialmedia.utils.auth.TitleBarUtils
 import com.minhtu.sharedmodule.ui.theme.avatarGrayBackground
+import org.koin.compose.koinInject
+import org.koin.compose.viewmodel.koinViewModel
 
 class Information {
     companion object {
@@ -64,9 +67,10 @@ class Information {
             signUpEmail: String = "",
             signUpPassword: String = "",
             informationViewModel: InformationViewModel,
-            loadingViewModel: LoadingViewModel,
-            onNavigateToHomeScreen: () -> Unit
+            onNavigateToHomeScreen: () -> Unit,
+            authSessionService: AuthSessionService = koinInject()
         ) {
+            val loadingViewModel: LoadingViewModel = koinViewModel()
             val isLoading by loadingViewModel.isLoading.collectAsState()
             imagePicker.RegisterLauncher { loadingViewModel.hideLoading() }
 
@@ -76,7 +80,7 @@ class Information {
                     informationViewModel.updateEmail(signUpEmail)
                     informationViewModel.updatePassword(signUpPassword)
                 } else {
-                    informationViewModel.updateEmail(platform.auth.getCurrentUserEmail().toString())
+                    informationViewModel.updateEmail(authSessionService.getCurrentUserEmail().toString())
                 }
             }
             LaunchedEffect(addInformationStatus.value) {
@@ -113,7 +117,7 @@ class Information {
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Spacer(Modifier.height(20.dp))
-                    UiUtils.BackAndTitleAndMoreOptionsRow(
+                    TitleBarUtils.BackAndTitleAndMoreOptionsRow(
                         "Create Your Profile",
                         titleStyle = MaterialTheme.typography.titleLarge,
                         subTitle = "Customize how you appear to others",
@@ -122,7 +126,7 @@ class Information {
                     Spacer(modifier = Modifier.padding(20.dp))
                     val imageBytes =
                         produceState<ByteArray?>(initialValue = null, informationViewModel.avatar) {
-                            value = if (informationViewModel.avatar == Constants.DEFAULT_DECADE_AVATAR_URL) {
+                            value = if (informationViewModel.avatar == SupabaseStorageProvider.DEFAULT_DECADE_AVATAR_URL) {
                                 getImageBytesFromDrawable("decadeavatar")
                             } else {
                                 imagePicker.loadImageBytes(informationViewModel.avatar)

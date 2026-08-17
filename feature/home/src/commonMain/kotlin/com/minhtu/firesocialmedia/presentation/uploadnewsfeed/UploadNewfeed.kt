@@ -72,23 +72,24 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
-import com.minhtu.firesocialmedia.core.constants.TestTag
-import com.minhtu.firesocialmedia.data.remote.service.imagepicker.ImagePicker
-import com.minhtu.firesocialmedia.core.domain.core.DecentralizationType
-import com.minhtu.firesocialmedia.core.domain.entity.news.NewsInstance
+import com.minhtu.firesocialmedia.constants.home.TestTag
+import com.minhtu.firesocialmedia.data.remote.service.imagepicker.home.ImagePicker
+import com.minhtu.firesocialmedia.home.entity.core.DecentralizationType
+import com.minhtu.firesocialmedia.home.entity.news.NewsInstance
 import com.minhtu.firesocialmedia.platform.CommonBackHandler
 import com.minhtu.firesocialmedia.platform.CrossPlatformIcon
-import com.minhtu.firesocialmedia.platform.VideoPlayer
+import com.minhtu.firesocialmedia.home.platform.VideoPlayer
 import com.minhtu.firesocialmedia.platform.getUriStringFromLocalPath
 import com.minhtu.firesocialmedia.platform.showToast
 import com.minhtu.firesocialmedia.platform.toHex
-import com.minhtu.firesocialmedia.presentation.home.HomeViewModelContract
-import com.minhtu.firesocialmedia.presentation.loading.Loading
-import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
-import com.minhtu.firesocialmedia.presentation.uploadnewsfeed.UploadNewfeedViewModelContract
-import com.minhtu.firesocialmedia.utils.UiUtils
+import com.minhtu.firesocialmedia.presentation.home.HomeViewModel
+import com.minhtu.firesocialmedia.home.presentation.loading.Loading
+import com.minhtu.firesocialmedia.home.presentation.loading.LoadingViewModel
+import com.minhtu.firesocialmedia.utils.home.DialogUtils
+import com.minhtu.firesocialmedia.utils.home.NewsCardUtils
 import com.seiko.imageloader.ui.AutoSizeImage
 import kotlinx.coroutines.delay
+import org.koin.compose.viewmodel.koinViewModel
 
 class UploadNewsfeed {
     companion object{
@@ -96,11 +97,11 @@ class UploadNewsfeed {
         fun UploadNewsfeedScreen(paddingValues : PaddingValues,
                                  imagePicker: ImagePicker,
                                  localImageLoaderValue : ProvidedValue<*>,
-                                 homeViewModel: HomeViewModelContract,
-                                 uploadNewsfeedViewModel: UploadNewfeedViewModelContract,
-                                 loadingViewModel: LoadingViewModel,
+                                 homeViewModel: HomeViewModel,
+                                 uploadNewsfeedViewModel: UploadNewfeedViewModel,
                                  updateNew : NewsInstance?,
                                  onNavigateBack: () -> Unit){
+            val loadingViewModel: LoadingViewModel = koinViewModel()
             val isLoading by loadingViewModel.isLoading.collectAsState()
             uploadNewsfeedViewModel.updateCurrentUser(homeViewModel.currentUser!!)
             val textScrollState = rememberScrollState()
@@ -180,7 +181,7 @@ class UploadNewsfeed {
                 showDialog.value = true
             }
             if (showDialog.value) {
-                UiUtils.ShowDiscardDialog(
+                DialogUtils.ShowDiscardDialog(
                     title = "Warning",
                     message = "Are you sure you want to exit? All data will be lost!",
                     icon = Icons.Default.Warning,
@@ -709,7 +710,7 @@ class UploadNewsfeed {
                                             animationSpec = tween(durationMillis = 200)
                                         )
                                     ) {
-                                        UiUtils.SimpleNewsCardSlideable(
+                                        NewsCardUtils.SimpleNewsCardSlideable(
                                             draft,
                                             localImageLoaderValue,
                                             onSelected = {

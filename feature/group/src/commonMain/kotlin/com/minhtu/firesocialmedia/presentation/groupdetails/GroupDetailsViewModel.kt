@@ -6,18 +6,18 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.minhtu.firesocialmedia.core.constants.Constants
-import com.minhtu.firesocialmedia.core.domain.entity.group.GroupInstance
-import com.minhtu.firesocialmedia.core.domain.entity.news.NewsInstance
-import com.minhtu.firesocialmedia.core.domain.entity.user.UserInstance
-import com.minhtu.firesocialmedia.core.domain.usecases.group.FetchGroupInfoUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.group.FetchNotificationStateUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.group.FindGroupByIdUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.group.JoinGroupUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.group.LeaveAndDeleteGroupUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.group.LeaveGroupUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.group.UpdateNotificationStatusUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.newsfeed.DeletePollUseCase
+import com.minhtu.firesocialmedia.storage.group.SupabaseStorageProvider
+import com.minhtu.firesocialmedia.domain.entity.group.GroupInstance
+import com.minhtu.firesocialmedia.group.entity.news.NewsInstance
+import com.minhtu.firesocialmedia.group.entity.user.UserInstance
+import com.minhtu.firesocialmedia.domain.usecases.group.FetchGroupInfoUseCase
+import com.minhtu.firesocialmedia.domain.usecases.group.FetchNotificationStateUseCase
+import com.minhtu.firesocialmedia.domain.usecases.group.FindGroupByIdUseCase
+import com.minhtu.firesocialmedia.domain.usecases.group.JoinGroupUseCase
+import com.minhtu.firesocialmedia.domain.usecases.group.LeaveAndDeleteGroupUseCase
+import com.minhtu.firesocialmedia.domain.usecases.group.LeaveGroupUseCase
+import com.minhtu.firesocialmedia.domain.usecases.group.UpdateNotificationStatusUseCase
+import com.minhtu.firesocialmedia.domain.usecases.newsfeed.group.DeletePollUseCase
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -37,7 +37,7 @@ class GroupDetailsViewModel(
     private val deletePollUseCase: DeletePollUseCase,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : ViewModel() {
-    var coverPhoto by mutableStateOf(Constants.DEFAULT_AVATAR_URL)
+    var coverPhoto by mutableStateOf(SupabaseStorageProvider.DEFAULT_AVATAR_URL)
     fun updateCover(input: String) {
         coverPhoto = input
     }

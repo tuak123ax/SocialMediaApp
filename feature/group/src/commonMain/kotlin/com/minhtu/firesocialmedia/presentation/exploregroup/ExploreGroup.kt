@@ -33,6 +33,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.ProvidedValue
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -45,16 +48,15 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.minhtu.firesocialmedia.core.constants.TestTag
-import com.minhtu.firesocialmedia.core.domain.entity.group.GroupInstance
-import com.minhtu.firesocialmedia.core.domain.entity.user.UserInstance
+import com.minhtu.firesocialmedia.constants.group.TestTag
+import com.minhtu.firesocialmedia.domain.entity.group.GroupInstance
+import com.minhtu.firesocialmedia.group.entity.user.UserInstance
 import com.minhtu.firesocialmedia.platform.CommonBackHandler
-import com.minhtu.firesocialmedia.presentation.search.Search
-import com.minhtu.firesocialmedia.presentation.search.SearchViewModel
-import com.minhtu.firesocialmedia.core.storage.toStorageUrl
-import com.minhtu.firesocialmedia.utils.UiUtils
-import com.minhtu.firesocialmedia.utils.UiUtils.Companion.TitleAndSubTitleBelow
-import com.minhtu.firesocialmedia.utils.Utils
+import com.minhtu.firesocialmedia.storage.group.toStorageUrl
+import com.minhtu.firesocialmedia.utils.group.TitleBarUtils
+import com.minhtu.firesocialmedia.group.utils.UiUtils.Companion.GroupSearchBar
+import com.minhtu.firesocialmedia.group.utils.UiUtils.Companion.TitleAndSubTitleBelow
+import com.minhtu.firesocialmedia.group.utils.Utils
 
 import com.seiko.imageloader.ui.AutoSizeImage
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -70,18 +72,18 @@ class ExploreGroup {
             paddingValues: PaddingValues,
             localImageLoaderValue : ProvidedValue<*>,
             exploreGroupViewModel: ExploreGroupViewModel = koinViewModel(),
-            searchViewModel : SearchViewModel = koinViewModel(),
             onNavigateBack : () -> Unit,
             onNavigateToGroupDetails : (GroupInstance) -> Unit
         ) {
             CommonBackHandler {
                 onNavigateBack()
             }
+            var searchQuery by remember { mutableStateOf("") }
             val recommendGroups by exploreGroupViewModel.fetchRecommendGroups.collectAsState()
             val featureGroups by exploreGroupViewModel.fetchFeatureGroups.collectAsState()
-            LaunchedEffect(searchViewModel.query) {
-                exploreGroupViewModel.loadInitialRecommendGroups(currentUser, searchViewModel.query)
-                exploreGroupViewModel.loadInitialFeatureGroups(currentUser, searchViewModel.query)
+            LaunchedEffect(searchQuery) {
+                exploreGroupViewModel.loadInitialRecommendGroups(currentUser, searchQuery)
+                exploreGroupViewModel.loadInitialFeatureGroups(currentUser, searchQuery)
             }
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -89,13 +91,13 @@ class ExploreGroup {
                     .fillMaxSize()
                     .padding(paddingValues)
             ){
-                UiUtils.BackAndTitleAndMoreOptionsRow(
+                TitleBarUtils.BackAndTitleAndMoreOptionsRow(
                     title = "Explore All Groups",
                     navigateBack = onNavigateBack
                 )
-                Search.SearchBar(
-                    query = searchViewModel.query,
-                    onQueryChange = { query -> searchViewModel.updateQuery(query) },
+                GroupSearchBar(
+                    query = searchQuery,
+                    onQueryChange = { query -> searchQuery = query },
                     modifier = Modifier
                         .padding(horizontal = 10.dp)
                         .testTag(TestTag.TAG_SEARCH_BAR)
@@ -148,7 +150,7 @@ class ExploreGroup {
                     )
                 }
             // Load more when featured row scrolled to end
-            LaunchedEffect(featuredState, searchViewModel.query) {
+            LaunchedEffect(featuredState, searchQuery) {
                 snapshotFlow {
                     val layoutInfo = featuredState.layoutInfo
                     val lastVisible = layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
@@ -158,11 +160,11 @@ class ExploreGroup {
                     .distinctUntilChanged()
                     .filter { it }
                     .collect {
-                        exploreGroupViewModel.loadMoreFeatureGroups(currentUser, searchViewModel.query)
+                        exploreGroupViewModel.loadMoreFeatureGroups(currentUser, searchQuery)
                     }
             }
             // Load more when recommended column scrolled to end
-            LaunchedEffect(recommendedState, searchViewModel.query) {
+            LaunchedEffect(recommendedState, searchQuery) {
                 snapshotFlow {
                     val layoutInfo = recommendedState.layoutInfo
                     val lastVisible = layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
@@ -172,7 +174,7 @@ class ExploreGroup {
                     .distinctUntilChanged()
                     .filter { it }
                     .collect {
-                        exploreGroupViewModel.loadMoreRecommendGroups(currentUser, searchViewModel.query)
+                        exploreGroupViewModel.loadMoreRecommendGroups(currentUser, searchQuery)
                     }
             }
             }

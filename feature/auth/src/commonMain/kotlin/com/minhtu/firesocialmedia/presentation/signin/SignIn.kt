@@ -47,31 +47,31 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.minhtu.firesocialmedia.core.constants.TestTag
-import com.minhtu.firesocialmedia.core.constants.UiConstants
-import com.minhtu.firesocialmedia.core.domain.error.signin.SignInError
+import com.minhtu.firesocialmedia.constants.auth.TestTag
+import com.minhtu.firesocialmedia.constants.UiConstants
+import com.minhtu.firesocialmedia.core.constants.AuthRouteNames
+import com.minhtu.firesocialmedia.domain.error.signin.SignInError
 import com.minhtu.firesocialmedia.platform.CommonBackHandler
 import com.minhtu.firesocialmedia.platform.CrossPlatformIcon
 import com.minhtu.firesocialmedia.platform.exitApp
 import com.minhtu.firesocialmedia.platform.showToast
 import com.minhtu.firesocialmedia.platform.toHex
-import com.minhtu.firesocialmedia.presentation.loading.Loading
-import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
-import com.minhtu.firesocialmedia.presentation.navigation.RouterViewModel
+import com.minhtu.firesocialmedia.auth.presentation.loading.Loading
+import com.minhtu.firesocialmedia.auth.presentation.loading.LoadingViewModel
+import com.minhtu.firesocialmedia.domain.entity.user.auth.UserInstance
 import com.minhtu.firesocialmedia.presentation.signin.SignInViewModel
 import org.koin.compose.viewmodel.koinViewModel
-import com.minhtu.firesocialmedia.utils.UiUtils.Companion.IconAndTitle
-import com.minhtu.firesocialmedia.utils.UiUtils.Companion.PasswordVisibilityIcon
-import com.minhtu.firesocialmedia.utils.UiUtils.Companion.SubTitle
-import com.minhtu.firesocialmedia.utils.UiUtils.Companion.TextFieldWithLeadingIcon
+import com.minhtu.firesocialmedia.auth.utils.UiUtils.Companion.IconAndTitle
+import com.minhtu.firesocialmedia.auth.utils.UiUtils.Companion.PasswordVisibilityIcon
+import com.minhtu.firesocialmedia.auth.utils.UiUtils.Companion.SubTitle
+import com.minhtu.firesocialmedia.auth.utils.UiUtils.Companion.TextFieldWithLeadingIcon
 
 class SignIn {
     companion object {
         @Composable
         fun SignInScreen(
             signInViewModel: SignInViewModel = koinViewModel(),
-            loadingViewModel: LoadingViewModel,
-            routerViewModel: RouterViewModel,
+            onUserSignedIn: (UserInstance) -> Unit,
             modifier: Modifier,
             onNavigateToSignUpScreen: () -> Unit,
             onNavigateToHomeScreen: () -> Unit,
@@ -79,6 +79,7 @@ class SignIn {
             onNavigateToForgotPasswordScreen: () -> Unit,
             onNavigateToVerifyOTP: () -> Unit
         ) {
+            val loadingViewModel: LoadingViewModel = koinViewModel()
             val focusManager = LocalFocusManager.current
             val isLoading = loadingViewModel.isLoading.collectAsState()
             val localCredentials = signInViewModel.localCredentials
@@ -123,7 +124,7 @@ class SignIn {
             val check2FAStatus by signInViewModel.check2FAStatus.collectAsState()
             LaunchedEffect(check2FAStatus) {
                 if (check2FAStatus != null) {
-                    signInViewModel.currentUser.value?.let { routerViewModel.currentUser.value = it }
+                    signInViewModel.currentUser.value?.let { onUserSignedIn(it) }
                     if (check2FAStatus!!) {
                         onNavigateToVerifyOTP()
                     } else {
@@ -344,7 +345,7 @@ class SignIn {
             )
         }
 
-        fun getScreenName(): String = UiConstants.SignIn.SCREEN_NAME
+        fun getScreenName(): String = AuthRouteNames.SignIn.SCREEN_NAME
     }
 }
 

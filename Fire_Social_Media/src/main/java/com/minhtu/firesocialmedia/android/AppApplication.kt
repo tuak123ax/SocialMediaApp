@@ -8,19 +8,21 @@ import android.os.StrictMode
 import android.util.Log
 import androidx.annotation.RequiresApi
 import com.minhtu.firesocialmedia.android.BuildConfig
-import com.minhtu.firesocialmedia.core.constants.Constants
+import com.minhtu.firesocialmedia.android.constants.AppConstants
 import com.minhtu.firesocialmedia.di.appModule
 import com.minhtu.firesocialmedia.android.service.serviceimpl.database.supabase.SupabaseStorageHelper
-import com.minhtu.firesocialmedia.di.authModule
-import com.minhtu.firesocialmedia.di.callingModule
-import com.minhtu.firesocialmedia.di.commentModule
-import com.minhtu.firesocialmedia.di.friendModule
-import com.minhtu.firesocialmedia.di.groupModule
-import com.minhtu.firesocialmedia.di.homeModule
-import com.minhtu.firesocialmedia.di.notificationModule
-import com.minhtu.firesocialmedia.di.profileModule
-import com.minhtu.firesocialmedia.di.searchModule
-import com.minhtu.firesocialmedia.di.securityModule
+import com.minhtu.firesocialmedia.di.allFeatureModules
+import com.minhtu.firesocialmedia.di.appInitModule
+import com.minhtu.firesocialmedia.di.appInitAndroidModule
+import com.minhtu.firesocialmedia.di.authAndroidModule
+import com.minhtu.firesocialmedia.di.callingAndroidModule
+import com.minhtu.firesocialmedia.di.commentAndroidModule
+import com.minhtu.firesocialmedia.di.friendAndroidModule
+import com.minhtu.firesocialmedia.di.groupAndroidModule
+import com.minhtu.firesocialmedia.di.homeAndroidModule
+import com.minhtu.firesocialmedia.di.notificationAndroidModule
+import com.minhtu.firesocialmedia.di.profileAndroidModule
+import com.minhtu.firesocialmedia.di.securityAndroidModule
 import com.minhtu.firesocialmedia.platform.initPlatformContext
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.GlobalContext.startKoin
@@ -39,16 +41,18 @@ class AppApplication : Application() {
             androidContext(this@AppApplication)
             modules(
                 appModule(),
-                authModule(),
-                homeModule(),
-                profileModule(),
-                commentModule(),
-                groupModule(),
-                securityModule(),
-                notificationModule(),
-                friendModule(),
-                searchModule(),
-                callingModule()
+                appInitModule(),
+                appInitAndroidModule(),
+                *allFeatureModules().toTypedArray(),
+                authAndroidModule(),
+                groupAndroidModule(),
+                securityAndroidModule(),
+                callingAndroidModule(),
+                commentAndroidModule(),
+                profileAndroidModule(),
+                homeAndroidModule(),
+                notificationAndroidModule(),
+                friendAndroidModule()
             )
         }
         createChannelNotification()
@@ -59,7 +63,7 @@ class AppApplication : Application() {
     private fun createChannelNotification() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
-                Constants.CHANNEL_ID,
+                AppConstants.CHANNEL_ID,
                 "Notification",
                 NotificationManager.IMPORTANCE_DEFAULT
             )

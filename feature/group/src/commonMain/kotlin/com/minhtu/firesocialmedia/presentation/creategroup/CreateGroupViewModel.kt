@@ -5,11 +5,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.minhtu.firesocialmedia.core.constants.Constants
-import com.minhtu.firesocialmedia.core.domain.core.DecentralizationType
-import com.minhtu.firesocialmedia.core.domain.entity.group.GroupInstance
-import com.minhtu.firesocialmedia.core.domain.entity.user.UserInstance
-import com.minhtu.firesocialmedia.core.domain.usecases.group.CreateGroupUseCase
+import com.minhtu.firesocialmedia.storage.group.SupabaseStorageProvider
+import com.minhtu.firesocialmedia.group.entity.core.DecentralizationType
+import com.minhtu.firesocialmedia.domain.entity.group.GroupInstance
+import com.minhtu.firesocialmedia.group.entity.user.UserInstance
+import com.minhtu.firesocialmedia.domain.usecases.group.CreateGroupUseCase
 import com.minhtu.firesocialmedia.platform.generateRandomId
 import com.minhtu.firesocialmedia.platform.getCurrentTime
 import kotlinx.coroutines.CoroutineDispatcher
@@ -35,7 +35,7 @@ class CreateGroupViewModel(
         password.value =  input
     }
 
-    var avatar by mutableStateOf(Constants.DEFAULT_ARK_AVATAR_URL_FOR_GROUP)
+    var avatar by mutableStateOf(SupabaseStorageProvider.DEFAULT_GROUP_AVATAR_URL)
     fun updateAvatar(newAvatar : String) {
         avatar = newAvatar
     }
@@ -54,7 +54,7 @@ class CreateGroupViewModel(
         _createGroupState.value = null
     }
     fun resetCreateGroupUiState() {
-        avatar = Constants.DEFAULT_ARK_AVATAR_URL_FOR_GROUP
+        avatar = SupabaseStorageProvider.DEFAULT_GROUP_AVATAR_URL
         _groupName.value = ""
         _accessPermission.value = DecentralizationType.Public
         password.value = ""
@@ -74,7 +74,7 @@ class CreateGroupViewModel(
                 members = memberMap,
                 posts = HashMap()
             )
-            currentUser.groups[groupInstance.id] = groupInstance
+            currentUser.groups.add(groupInstance.id)
             val result = createGroupUseCase.invoke(
                 groupInstance,
                 currentUser.uid)

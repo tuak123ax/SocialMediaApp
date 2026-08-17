@@ -1,6 +1,6 @@
 package com.minhtu.firesocialmedia.core.connectivity
 
-import com.minhtu.firesocialmedia.core.domain.core.NetworkMonitor
+import com.minhtu.firesocialmedia.network.NetworkMonitor
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow

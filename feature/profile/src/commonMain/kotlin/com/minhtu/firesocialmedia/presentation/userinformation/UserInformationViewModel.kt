@@ -3,23 +3,23 @@ package com.minhtu.firesocialmedia.presentation.userinformation
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import com.minhtu.firesocialmedia.core.constants.Constants
-import com.minhtu.firesocialmedia.core.domain.entity.notification.NotificationInstance
-import com.minhtu.firesocialmedia.core.domain.entity.notification.NotificationType
-import com.minhtu.firesocialmedia.core.domain.entity.user.UserInstance
-import com.minhtu.firesocialmedia.core.domain.usecases.common.GetUserUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.friend.SaveFriendRequestUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.friend.SaveFriendUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.information.CheckCalleeAvailableUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.network.CheckInternetConnectionUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.notification.SaveNotificationToDatabaseUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.settings.UpdateUserBackgroundUseCase
-import com.minhtu.firesocialmedia.platform.createMessageForServer
+import com.minhtu.firesocialmedia.storage.profile.SupabaseStorageProvider
+import com.minhtu.firesocialmedia.domain.usecases.common.profile.GetUserUseCase
+import com.minhtu.firesocialmedia.domain.usecases.notification.SaveNotificationToDatabaseUseCase
+import com.minhtu.firesocialmedia.profile.entity.notification.NotificationInstance
+import com.minhtu.firesocialmedia.profile.entity.notification.NotificationType
+import com.minhtu.firesocialmedia.profile.entity.user.UserInstance
+import com.minhtu.firesocialmedia.domain.usecases.friend.ProfileSaveFriendRequestUseCase
+import com.minhtu.firesocialmedia.domain.usecases.friend.ProfileSaveFriendUseCase
+import com.minhtu.firesocialmedia.domain.usecases.information.CheckCalleeAvailableUseCase
+import com.minhtu.firesocialmedia.domain.usecases.network.CheckInternetConnectionUseCase
+import com.minhtu.firesocialmedia.domain.usecases.settings.UpdateUserBackgroundUseCase
+import com.minhtu.firesocialmedia.profile.platform.createMessageForServer
 import com.minhtu.firesocialmedia.platform.getCurrentTime
 import com.minhtu.firesocialmedia.platform.getRandomIdForNotification
 import com.minhtu.firesocialmedia.platform.logMessage
-import com.minhtu.firesocialmedia.platform.sendMessageToServer
-import com.minhtu.firesocialmedia.utils.Utils
+import com.minhtu.firesocialmedia.profile.platform.sendMessageToServer
+import com.minhtu.firesocialmedia.profile.utils.Utils
 import com.rickclephas.kmp.observableviewmodel.ViewModel
 import com.rickclephas.kmp.observableviewmodel.launch
 import kotlinx.coroutines.CoroutineDispatcher
@@ -41,9 +41,9 @@ enum class Relationship{
     NONE
 }
 class UserInformationViewModel(
-    private val saveFriendUseCase: SaveFriendUseCase,
-    private val saveFriendRequestUseCase: SaveFriendRequestUseCase,
-    private val saveNotificationToDatabaseUseCase : SaveNotificationToDatabaseUseCase,
+    private val saveFriendUseCase: ProfileSaveFriendUseCase,
+    private val saveFriendRequestUseCase: ProfileSaveFriendRequestUseCase,
+    private val saveNotificationToDatabaseUseCase: SaveNotificationToDatabaseUseCase,
     private val checkCalleeAvailableUseCase: CheckCalleeAvailableUseCase,
     private val getUserUseCase: GetUserUseCase,
     private val checkInternetConnectionUseCase : CheckInternetConnectionUseCase,
@@ -51,7 +51,7 @@ class UserInformationViewModel(
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : ViewModel() {
     // Local URI of a newly picked cover photo (prior to upload)
-    var coverPhoto by mutableStateOf(Constants.DEFAULT_AVATAR_URL)
+    var coverPhoto by mutableStateOf(SupabaseStorageProvider.DEFAULT_AVATAR_URL)
     fun updateCover(input: String) { coverPhoto = input }
 
     // Local URI of successfully uploaded background (show without refetch)
@@ -62,13 +62,13 @@ class UserInformationViewModel(
     val backgroundUploadStatus = _backgroundUploadStatus.asStateFlow()
 
     fun uploadBackground(userId: String) {
-        val uri = coverPhoto.takeIf { it != Constants.DEFAULT_AVATAR_URL } ?: return
+        val uri = coverPhoto.takeIf { it != SupabaseStorageProvider.DEFAULT_AVATAR_URL } ?: return
         viewModelScope.launch(ioDispatcher) {
             val result = updateUserBackgroundUseCase(userId, uri)
             _backgroundUploadStatus.value = result
             if (result) {
                 uploadedBackgroundUri = uri
-                coverPhoto = Constants.DEFAULT_AVATAR_URL
+                coverPhoto = SupabaseStorageProvider.DEFAULT_AVATAR_URL
             }
         }
     }
@@ -122,7 +122,7 @@ class UserInformationViewModel(
                                         currentUser.uid)
                                     //Save notification to db
                                     Utils.saveNotification(notification, friend, saveNotificationToDatabaseUseCase)
-                                    sendMessageToServer(createMessageForServer(notiContent, tokenList , currentUser, "BASIC"))
+                                    sendMessageToServer(createMessageForServer(notiContent, tokenList , currentUser.token, currentUser.uid, currentUser.image, currentUser.email, currentUser.name, "BASIC"))
                                     _addFriendStatus.value = Relationship.FRIEND_REQUEST
                                 }
                                 else -> {
@@ -225,7 +225,7 @@ class UserInformationViewModel(
 
     fun resetOldData() {
         _fetchedUser.value = null
-        coverPhoto = Constants.DEFAULT_AVATAR_URL
+        coverPhoto = SupabaseStorageProvider.DEFAULT_AVATAR_URL
         uploadedBackgroundUri = null
         _addFriendStatus.value = null
     }

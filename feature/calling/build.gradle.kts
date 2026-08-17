@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.androidLibrary)
     id("org.jetbrains.compose") version "1.7.3"
     id("org.jetbrains.kotlin.plugin.compose")
+    id("kotlinx-serialization")
 }
 
 kotlin {
@@ -92,13 +93,33 @@ kotlin {
             implementation(kotlin("test"))
             implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.1")
         }
+        androidMain.dependencies {
+            implementation("androidx.core:core-ktx:1.13.1")
+            implementation(libs.koin.android)
+            implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:1.5.1")
+            implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.1")
+            implementation("io.getstream:stream-webrtc-android:1.3.8")
+            implementation(project.dependencies.platform("com.google.firebase:firebase-bom:33.5.1"))
+            implementation("com.google.firebase:firebase-database")
+            implementation("com.squareup.retrofit2:retrofit:2.9.0")
+            implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+            implementation("com.squareup.retrofit2:converter-scalars:2.9.0")
+        }
+        iosMain.dependencies {
+            implementation(libs.ktor.client.core)
+            implementation(libs.ktor.client.content.negotiation)
+            implementation(libs.ktor.serialization.kotlinx.json)
+        }
     }
 }
 
 android {
     namespace = "com.minhtu.firesocialmedia.calling"
     compileSdk = 35
-    defaultConfig { minSdk = 24 }
+    defaultConfig {
+        minSdk = 24
+        consumerProguardFiles("consumer-rules.pro")
+    }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17

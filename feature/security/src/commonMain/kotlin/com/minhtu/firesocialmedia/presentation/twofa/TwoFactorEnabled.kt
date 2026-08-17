@@ -48,7 +48,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.minhtu.firesocialmedia.platform.CommonBackHandler
-import com.minhtu.firesocialmedia.utils.UiUtils
+import com.minhtu.firesocialmedia.utils.security.TitleBarUtils
 import org.koin.compose.viewmodel.koinViewModel
 
 class TwoFactorEnabled {
@@ -85,7 +85,7 @@ class TwoFactorEnabled {
                 Column(modifier = Modifier.fillMaxSize()) {
 
                     // HEADER
-                    UiUtils.BackAndTitleAndMoreOptionsRow(
+                    TitleBarUtils.BackAndTitleAndMoreOptionsRow(
                         title = if (isEnable2FAFlow) "Two Factor Enabled" else "Access Granted",
                         showBackButton = false
                     )

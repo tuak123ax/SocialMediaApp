@@ -1,5 +1,6 @@
 import SwiftUI
 import core
+import AppKoin
 
 @main
 struct iOSApp: App {
@@ -7,7 +8,7 @@ struct iOSApp: App {
 
     init() {
         // Start Koin for iOS
-        KoinInitializerKt.doInitKoin(platformContext: IosPlatformContext())
+        AppKoinInitKt.doInitAllKoin(platformContext: IosPlatformContext())
     }
     var body: some Scene {
         WindowGroup {

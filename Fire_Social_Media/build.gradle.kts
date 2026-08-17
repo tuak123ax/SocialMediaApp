@@ -21,11 +21,11 @@ plugins {
 
 android {
     namespace = "com.minhtu.firesocialmedia.android"
-    compileSdk = 36
+    compileSdk = 35
     defaultConfig {
         applicationId = "com.minhtu.firesocialmedia"
         minSdk = 24
-        targetSdk = 36
+        targetSdk = 35
         versionCode = 600000
         versionName = "6.0.0"
 
@@ -73,17 +73,18 @@ android {
 }
 
 dependencies {
-    implementation(projects.core)
-    implementation(projects.feature.auth)
-    implementation(projects.feature.home)
-    implementation(projects.feature.profile)
-    implementation(projects.feature.comment)
-    implementation(project(":feature:groupfeature"))
+    implementation(project(":core"))
+    implementation(project(":appInit"))
+    implementation(project(":feature:auth"))
+    implementation(project(":feature:home"))
+    implementation(project(":feature:profile"))
+    implementation(project(":feature:comment"))
+    implementation(project(":feature:calling"))
+    implementation(project(":feature:group"))
     implementation(project(":feature:security"))
     implementation(project(":feature:notification"))
     implementation(project(":feature:friend"))
-    implementation(project(":feature:search"))
-    implementation(projects.feature.calling)
+
     implementation(platform("androidx.compose:compose-bom:2025.02.00"))
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-tooling-preview")
@@ -129,8 +130,10 @@ dependencies {
 
     //Monitor memory leak
     debugImplementation("com.squareup.leakcanary:leakcanary-android:2.13")
+
+    // Timber for logging
     debugImplementation("com.jakewharton.timber:timber:5.0.1")
 
-    //Di
+    // Koin dependency injection
     implementation(libs.koin.android)
 }

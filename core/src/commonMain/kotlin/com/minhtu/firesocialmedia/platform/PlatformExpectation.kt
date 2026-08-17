@@ -8,13 +8,7 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
-import com.minhtu.firesocialmedia.data.remote.service.imagepicker.ImagePicker
-import com.minhtu.firesocialmedia.di.PlatformContext
-import com.minhtu.firesocialmedia.core.domain.entity.authentication.TwoFARequest
-import com.minhtu.firesocialmedia.core.domain.entity.authentication.TwoFAResponse
-import com.minhtu.firesocialmedia.core.domain.entity.home.deeplinks.ShareApp
-import com.minhtu.firesocialmedia.core.domain.entity.user.UserInstance
-import com.minhtu.firesocialmedia.core.domain.signin.GoogleSignInHandler
+import com.minhtu.firesocialmedia.utils.NavigationHandler
 import com.russhwolf.settings.Settings
 import com.seiko.imageloader.ImageLoader
 import kotlin.math.roundToInt
@@ -91,25 +85,6 @@ expect fun CommonBackHandler(enabled: Boolean = true, onBack: () -> Unit)
 
 expect fun exitApp()
 
-expect fun createMessageForServer(
-    message: String,
-    tokenList: ArrayList<String>,
-    sender: UserInstance,
-    type: String
-): String
-
-expect fun createCallMessage(
-    message: String,
-    tokenList: ArrayList<String>,
-    sessionId: String,
-    sender: UserInstance,
-    receiver: UserInstance,
-    type: String
-): String
-
-expect fun sendMessageToServer(request: String)
-expect suspend fun send2FARequest(request: TwoFARequest): TwoFAResponse
-
 expect object TokenStorage {
     fun updateTokenInStorage(token: String?)
 }
@@ -128,45 +103,6 @@ expect suspend fun getImageBytesFromDrawable(name: String): ByteArray?
 
 expect fun generateImageLoader(): ImageLoader
 
-expect object MainApplication {
-    @Composable
-    fun MainApp(context: Any, platformContext: PlatformContext)
-
-    @Composable
-    fun MainAppWithDeepLink(context: Any, deepLink: String, platformContext: PlatformContext)
-
-    @Composable
-    fun MainAppFromNotification(
-        context: Any,
-        platformContext: PlatformContext,
-        sessionId: String?,
-        callerId: String?,
-        calleeId: String?
-    )
-}
-
-@Composable
-expect fun SetUpNavigation(
-    context: Any,
-    platformContext: PlatformContext
-)
-
-@Composable
-expect fun SetUpNavigation(
-    context: Any,
-    platformContext: PlatformContext,
-    sessionId: String?,
-    callerId: String?,
-    calleeId: String?
-)
-
-@Composable
-expect fun SetUpNavigationWithDeepLink(
-    context: Any,
-    deepLink: String,
-    platformContext: PlatformContext
-)
-
 object SharedPushHandler {
     fun handlePushNotification(payload: Map<String, Any?>) {
         onPushNotificationReceived(payload)
@@ -177,52 +113,14 @@ expect fun onPushNotificationReceived(data: Map<String, Any?>)
 
 expect val settings: Settings?
 
-@Composable
-expect fun VideoPlayer(
-    uri: String, modifier: Modifier = Modifier,
-    isLiked: Boolean = false,
-    onLikeClick: () -> Unit = {},
-    onCommentClick: () -> Unit = {},
-    onShareClick: () -> Unit = {},
-    commentSheetContent: (@Composable (onDismiss: () -> Unit) -> Unit)? = null
-)
-
-expect class WebRTCVideoTrack
-
-@Composable
-expect fun WebRTCVideoView(
-    localTrack: WebRTCVideoTrack?,
-    remoteTrack: WebRTCVideoTrack?,
-    isLocalVideoOff: Boolean,
-    modifier: Modifier
-)
-
 // Platform helpers for common navigation
 @Composable
-expect fun rememberPlatformImagePicker(
-    context: Any?,
-    onImagePicked: (String) -> Unit,
-    onVideoPicked: (String) -> Unit
-): ImagePicker
-
-@Composable
-expect fun setupSignInLauncher(
-    context: Any?,
-    signInViewModel: GoogleSignInHandler,
-    platformContext: PlatformContext
-)
-
-@Composable
-expect fun rememberNavigationHandler(navController: Any): com.minhtu.firesocialmedia.utils.NavigationHandler
+expect fun rememberNavigationHandler(navController: Any): NavigationHandler
 
 @Composable
 expect fun <T : Any> platformViewModel(key: String? = null, factory: () -> T): T
 
 expect fun getUriStringFromLocalPath(localPath: String): String
-
-expect suspend fun queryShareApps(text: String): MutableList<ShareApp>
-
-expect fun launchShareAppWithDeepLink(app: ShareApp, deepLink: String)
 
 expect fun getAppVersion(): String
 

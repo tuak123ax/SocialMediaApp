@@ -5,26 +5,20 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import com.minhtu.firesocialmedia.core.constants.Constants
-import com.minhtu.firesocialmedia.core.domain.entity.call.CallEvent
-import com.minhtu.firesocialmedia.core.domain.entity.call.CallEventFlow
-import com.minhtu.firesocialmedia.core.domain.entity.call.CallingRequestData
-import com.minhtu.firesocialmedia.core.domain.entity.news.NewsInstance
-import com.minhtu.firesocialmedia.core.domain.entity.notification.NotificationInstance
-import com.minhtu.firesocialmedia.core.domain.entity.notification.NotificationType
-import com.minhtu.firesocialmedia.core.domain.entity.user.UserInstance
-import com.minhtu.firesocialmedia.core.domain.interactor.home.CallInteractor
-import com.minhtu.firesocialmedia.core.domain.interactor.home.NewsInteractor
-import com.minhtu.firesocialmedia.core.domain.interactor.home.NotificationInteractor
-import com.minhtu.firesocialmedia.core.domain.interactor.home.UserInteractor
-import com.minhtu.firesocialmedia.platform.createMessageForServer
-import com.minhtu.firesocialmedia.platform.generateRandomId
+import com.minhtu.firesocialmedia.home.entity.news.NewsInstance
+import com.minhtu.firesocialmedia.home.entity.notification.NotificationInstance
+import com.minhtu.firesocialmedia.home.entity.notification.NotificationType
+import com.minhtu.firesocialmedia.home.entity.notification.toSharedNotification
+import com.minhtu.firesocialmedia.home.entity.user.UserInstance
+import com.minhtu.firesocialmedia.domain.interactor.home.NewsInteractor
+import com.minhtu.firesocialmedia.domain.usecases.notification.SaveNotificationToDatabaseUseCase
+import com.minhtu.firesocialmedia.domain.interactor.home.UserInteractor
+import com.minhtu.firesocialmedia.home.platform.createMessageForServer
 import com.minhtu.firesocialmedia.platform.getCurrentTime
 import com.minhtu.firesocialmedia.platform.getRandomIdForNotification
 import com.minhtu.firesocialmedia.platform.logMessage
-import com.minhtu.firesocialmedia.platform.sendMessageToServer
-import com.minhtu.firesocialmedia.presentation.home.HomeViewModelContract
-import com.minhtu.firesocialmedia.utils.Utils
+import com.minhtu.firesocialmedia.home.platform.sendMessageToServer
+import com.minhtu.firesocialmedia.home.utils.Utils
 import com.rickclephas.kmp.observableviewmodel.ViewModel
 import com.rickclephas.kmp.observableviewmodel.launch
 import kotlinx.coroutines.CoroutineDispatcher
@@ -49,20 +43,18 @@ import kotlinx.coroutines.withContext
 class HomeViewModel(
     private val userInteractor: UserInteractor,
     private val newsInteractor: NewsInteractor,
-    private val notificationInteractor: NotificationInteractor,
-    private val callInteractor: CallInteractor,
+    private val saveNotificationToDatabaseUseCase: SaveNotificationToDatabaseUseCase,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
-) : ViewModel(), HomeViewModelContract {
-    override var isRefreshing = mutableStateOf(false)
-    override var listNews: ArrayList<NewsInstance> = ArrayList()
-    override var listNotificationOfCurrentUser = mutableStateListOf<NotificationInstance>()
+) : ViewModel() {
+    var isRefreshing = mutableStateOf(false)
+    var listNews: ArrayList<NewsInstance> = ArrayList()
     //Cache loaded users, only fetch new user if that user is not in this cache
-    override var loadedUsersCache : HashMap<String,UserInstance?> = HashMap()
+    var loadedUsersCache : HashMap<String,UserInstance?> = HashMap()
     val _loadedUserState = MutableStateFlow<Map<String, UserInstance?>>(emptyMap())
-    override var loadedUserState = _loadedUserState.asStateFlow()
-    override var currentUser: UserInstance? = null
-    override var currentUserState by mutableStateOf(currentUser)
-    override suspend fun updateCurrentUser(user: UserInstance) {
+    var loadedUserState = _loadedUserState.asStateFlow()
+    var currentUser: UserInstance? = null
+    var currentUserState by mutableStateOf(currentUser)
+    suspend fun updateCurrentUser(user: UserInstance) {
         currentUser = user
         currentUserState = currentUser
         updateFCMTokenForCurrentUser(user)
@@ -71,8 +63,8 @@ class HomeViewModel(
     }
 
     val _getCurrentUserStatus = mutableStateOf(false)
-    override val getCurrentUserStatus = _getCurrentUserStatus
-    override fun getCurrentUserAndFriends() {
+    val getCurrentUserStatus = _getCurrentUserStatus
+    fun getCurrentUserAndFriends() {
         viewModelScope.launch(ioDispatcher) {
             try{
                 val currentUserId = userInteractor.getCurrentUserId()
@@ -81,7 +73,7 @@ class HomeViewModel(
                     if(user != null) {
                         updateCurrentUser(user)
                         _getCurrentUserStatus.value = true
-                        getAllUserFriends(user)
+                        getAllUserFriends(user.friends)
                     } else {
                         _getCurrentUserStatus.value = false
                     }
@@ -94,12 +86,11 @@ class HomeViewModel(
         }
     }
 
-    override suspend fun getAllUserFriends(user: UserInstance) {
+    private suspend fun getAllUserFriends(friendIds: List<String>) {
         //Clear old User's friends in local database
         userInteractor.clearLocalFriends()
         //Fetch new User's friends and save into local database
         viewModelScope.launch(ioDispatcher) {
-            val friendIds = user.friends
             // Thresholds
             val maxParallel = 20
             val chunkSize = 10
@@ -130,12 +121,12 @@ class HomeViewModel(
     }
 
     val _getAllNewsStatus = mutableStateOf(false)
-    override val getAllNewsStatus = _getAllNewsStatus
-    override var isLoadingMore = mutableStateOf(false)
-    override var hasMoreData = mutableStateOf(true)
+    val getAllNewsStatus = _getAllNewsStatus
+    var isLoadingMore = mutableStateOf(false)
+    var hasMoreData = mutableStateOf(true)
     private var lastTimePosted: Double? = null
     private var lastKey: String? = null
-    override fun getLatestNews() {
+    fun getLatestNews() {
         viewModelScope.launch(ioDispatcher) {
             if (!isLoadingMore.value && hasMoreData.value) {
                 isLoadingMore.value = true
@@ -173,7 +164,7 @@ class HomeViewModel(
         }
     }
 
-    override fun resetGetLatestNewsParams() {
+    fun resetGetLatestNewsParams() {
         _getAllNewsStatus.value = false
         isLoadingMore.value = false
         hasMoreData.value = true
@@ -184,7 +175,7 @@ class HomeViewModel(
     }
 
     private val cacheMutex = Mutex()
-    override fun checkUsersInCacheAndGetMore() {
+    fun checkUsersInCacheAndGetMore() {
         viewModelScope.launch(ioDispatcher) {
             val neededIds = listNews.asSequence()
                 .map { it.posterId }
@@ -218,7 +209,7 @@ class HomeViewModel(
     }
 
     // Ensure a single user is present in cache; fetch and cache if missing
-    override fun ensureUserLoaded(userId: String) {
+    fun ensureUserLoaded(userId: String) {
         if (userId.isBlank()) return
         viewModelScope.launch(ioDispatcher) {
             val alreadyCached = cacheMutex.withLock { loadedUsersCache.containsKey(userId) }
@@ -233,41 +224,13 @@ class HomeViewModel(
         }
     }
 
-    val _getAllNotificationsOfCurrentUser = mutableStateOf(false)
-    override val getAllNotificationsOfCurrentUser = _getAllNotificationsOfCurrentUser
-    override fun getAllNotificationsOfUser() {
-        viewModelScope.launch(ioDispatcher) {
-            val currentUserId = userInteractor.getCurrentUserId()
-            if(currentUserId != null) {
-                val notifications = notificationInteractor.allNotificationsOf(
-                    currentUserId)
-                if (notifications != null) {
-                    for(notification in notifications) {
-                        logMessage("getAllNotifications",
-                            { notification.id + "isRead: "+ notification.beRead })
-                    }
-                    listNotificationOfCurrentUser.clear()
-                    listNotificationOfCurrentUser.addAll(notifications)
-                    updateNotifications(ArrayList(listNotificationOfCurrentUser.toList()))
-                    _getAllNotificationsOfCurrentUser.value = true
-                } else {
-                    _getAllNotificationsOfCurrentUser.value = false
-                }
-            }
-        }
-    }
-
-    override fun removeNotificationInList(notification: NotificationInstance) {
-        listNotificationOfCurrentUser.remove(notification)
-    }
-
     private suspend fun updateFCMTokenForCurrentUser(user: UserInstance) {
         userInteractor.updateFcmToken(user)
     }
 
     private val _allUserFriends = MutableStateFlow<List<UserInstance?>>(emptyList())
-    override val allUserFriends = _allUserFriends.asStateFlow()
-    override fun updateUserFriends(users: ArrayList<UserInstance?>) {
+    val allUserFriends = _allUserFriends.asStateFlow()
+    private fun updateUserFriends(users: ArrayList<UserInstance?>) {
         _allUserFriends.value = users
         //Add loaded user friends to cache
         val loadedFriendsMap = users
@@ -281,38 +244,24 @@ class HomeViewModel(
     }
 
     private val _allNews = MutableStateFlow<List<NewsInstance>>(emptyList())
-    override val allNews = _allNews.asStateFlow()
-    override fun addNews(news: ArrayList<NewsInstance>) {
+    val allNews = _allNews.asStateFlow()
+    fun addNews(news: ArrayList<NewsInstance>) {
         _allNews.update { old ->
             (old + news).distinctBy(NewsInstance::id)
         }
     }
-    override fun updateNews(news: ArrayList<NewsInstance>) {
+    fun updateNews(news: ArrayList<NewsInstance>) {
         _allNews.value = news
     }
 
-    private val _allNotifications = MutableStateFlow<List<NotificationInstance>>(emptyList())
-    override val allNotifications = _allNotifications.asStateFlow()
-    override fun updateNotifications(notifications: ArrayList<NotificationInstance>) {
-        _allNotifications.value = notifications
-    }
-
-    override var numberOfListNeedToLoad by mutableIntStateOf(2)
-    override fun decreaseNumberOfListNeedToLoad(input: Int) {
+    var numberOfListNeedToLoad by mutableIntStateOf(2)
+    fun decreaseNumberOfListNeedToLoad(input: Int) {
         if (numberOfListNeedToLoad > 0) {
             numberOfListNeedToLoad -= input
         }
     }
 
-    override fun clearAccountInStorage() {
-        viewModelScope.launch {
-            withContext(ioDispatcher) {
-                userInteractor.clearLocalAccount()
-            }
-        }
-    }
-
-    override fun clearLocalData() {
+    fun clearLocalData() {
         viewModelScope.launch {
             withContext(ioDispatcher) {
                 userInteractor.clearLocalData()
@@ -323,31 +272,31 @@ class HomeViewModel(
     //-----------------------------Like and comment function-----------------------------//
     // StateFlow to update UI in Compose
     private var _likedPosts = MutableStateFlow<HashMap<String, Int>>(HashMap())
-    override val likedPosts = _likedPosts.asStateFlow()
+    val likedPosts = _likedPosts.asStateFlow()
     private var likeCache: HashMap<String, Int> = HashMap()
     private var unlikeCache: ArrayList<String> = ArrayList()
     private var updateLikeJob: Job? = null
     private var _likeCountList = MutableStateFlow<HashMap<String, Int>>(HashMap())
-    override var likeCountList = _likeCountList
-    override fun addLikeCountData(newsId: String, likeCount: Int) {
+    var likeCountList = _likeCountList
+    fun addLikeCountData(newsId: String, likeCount: Int) {
         _likeCountList.value[newsId] = likeCount
     }
 
-    override fun clickLikeButton(news: NewsInstance) {
-        val isLiked = likeCache[news.id] == 1
+    fun clickLikeButton(newsId: String) {
+        val isLiked = likeCache[newsId] == 1
         if (isLiked) {
-            likeCache.remove(news.id) // Unlike
-            unlikeCache.add(news.id)
-            if (_likeCountList.value[news.id] != null) {
-                _likeCountList.value[news.id] = _likeCountList.value[news.id]!! - 1
+            likeCache.remove(newsId) // Unlike
+            unlikeCache.add(newsId)
+            if (_likeCountList.value[newsId] != null) {
+                _likeCountList.value[newsId] = _likeCountList.value[newsId]!! - 1
             }
         } else {
-            likeCache[news.id] = 1 // Like
-            unlikeCache.remove(news.id)
-            if (_likeCountList.value[news.id] != null) {
-                _likeCountList.value[news.id] = _likeCountList.value[news.id]!! + 1
+            likeCache[newsId] = 1 // Like
+            unlikeCache.remove(newsId)
+            if (_likeCountList.value[newsId] != null) {
+                _likeCountList.value[newsId] = _likeCountList.value[newsId]!! + 1
             } else {
-                _likeCountList.value[news.id] = 1
+                _likeCountList.value[newsId] = 1
             }
         }
 
@@ -403,24 +352,24 @@ class HomeViewModel(
         }
     }
 
-    override fun updateLikeStatus() {
+    fun updateLikeStatus() {
         _likedPosts.value = HashMap(likeCache)
     }
 
     //-----------------------------Comment-----------------------------//
     private var _commentCountList = MutableStateFlow<HashMap<String, Int>>(HashMap())
-    override var commentCountList = _commentCountList
-    override fun addCommentCountData(newsId: String, commentCount: Int) {
+    var commentCountList = _commentCountList
+    fun addCommentCountData(newsId: String, commentCount: Int) {
         _commentCountList.value[newsId] = commentCount
     }
 
     private var _commentStatus: MutableStateFlow<NewsInstance?> = MutableStateFlow(null)
-    override var commentStatus: StateFlow<NewsInstance?> = _commentStatus.asStateFlow()
-    override fun clickCommentButton(newsInstance: NewsInstance) {
+    var commentStatus: StateFlow<NewsInstance?> = _commentStatus.asStateFlow()
+    fun clickCommentButton(newsInstance: NewsInstance) {
         _commentStatus.value = newsInstance
     }
 
-    override fun resetCommentStatus() {
+    fun resetCommentStatus() {
         _commentStatus.value = null
     }
 
@@ -442,28 +391,19 @@ class HomeViewModel(
         val poster = userInteractor.getUser(selectedNew.posterId, false)
         if(poster != null) {
             poster.addNotification(notification)
-            notificationInteractor.saveNotificationToDatabase(
+            saveNotificationToDatabaseUseCase.invoke(
                 poster.uid,
-                poster.notifications
+                ArrayList(poster.notifications.map { it.toSharedNotification() })
             )
             //Send notification to poster
             val tokenList = ArrayList<String>()
             tokenList.add(poster.token)
-            sendMessageToServer(createMessageForServer(notiContent, tokenList, currentUser, "BASIC"))
+            sendMessageToServer(createMessageForServer(notiContent, tokenList, currentUser.token, currentUser.uid, currentUser.image, currentUser.email, currentUser.name, "BASIC"))
         }
     }
 
-    override suspend fun deleteNotification(notification: NotificationInstance) {
-        if(currentUser != null) {
-            currentUser!!.notifications.remove(notification)
-            notificationInteractor.deleteNotificationFromDatabase(
-                currentUser!!.uid,
-                notification
-            )
-        }
-    }
-
-    override fun deleteOrHideNew(action: String, new: NewsInstance) {
+    fun deleteOrHideNew(action: String, newsId: String) {
+        val new = listNews.find { it.id == newsId } ?: return
         val backgroundScope = CoroutineScope(SupervisorJob() + ioDispatcher)
         backgroundScope.launch {
             if (action == "Delete") {
@@ -478,7 +418,8 @@ class HomeViewModel(
         }
     }
 
-    override fun deletePoll(news: NewsInstance, groupId: String) {
+    fun deletePoll(newsId: String, groupId: String) {
+        val news = listNews.find { it.id == newsId } ?: return
         val pollId = news.pollId ?: return
         val backgroundScope = CoroutineScope(SupervisorJob() + ioDispatcher)
         backgroundScope.launch {
@@ -490,231 +431,37 @@ class HomeViewModel(
         }
     }
 
-    //----------------------------CALL FEATURE-----------------------------------//
 
-    override var isInCall = MutableStateFlow(false)
-
-    override fun updateIsInCall(input : Boolean) {
-        isInCall.value = input
-    }
-    private val _endCallStatus = MutableStateFlow(false)
-    override val endCallStatus = _endCallStatus.asStateFlow()
-
-    private var _phoneCallRequestStatus = MutableStateFlow<CallingRequestData?>(null)
-    override val phoneCallRequestStatus = _phoneCallRequestStatus.asStateFlow()
-    private var whoStopCall : String = ""
-    override fun setWhoStopCall(input : String) {
-        whoStopCall = input
-    }
-    override fun resetCallEvent() {
-        whoStopCall = ""
-        CallEventFlow.events.value = null
-        updateIsInCall(false)
-    }
-    override fun observePhoneCall() {
-        viewModelScope.launch(Dispatchers.IO) {
-            if(currentUser != null) {
-                try{
-                    callInteractor.observe(
-                        isInCall,
-                        currentUser!!.uid,
-                        onReceivePhoneCallRequest = {callingRequestData ->
-                            _phoneCallRequestStatus.value = callingRequestData
-                        },
-                        whoEndCallCallBack = { whoEndCall ->
-                            whoStopCall = whoEndCall
-                        },
-                        onEndCall = {
-                            logMessage("observePhoneCall", { "onEndCall" })
-                            _endCallStatus.value = true
-                            resetPhoneCallRequestStatus()
-                            //Send StopVideoCall first for user who is in video call screen.
-                            CallEventFlow.events.value = CallEvent.StopVideoCall
-                            //Delay to wait to back to audio call screen.
-                            delay(2000)
-                            viewModelScope.launch(ioDispatcher) {
-                                if(CallEventFlow.events.value != CallEvent.StopCalling &&
-                                    CallEventFlow.events.value != CallEvent.CallEnded) {
-                                    if(whoStopCall == currentUser!!.uid) {
-                                        logMessage("observePhoneCall", { "StopCalling whoStopCall from db" })
-                                        CallEventFlow.events.value = CallEvent.StopCalling
-                                    } else {
-                                        if(whoStopCall.isEmpty()) {
-                                            logMessage("observePhoneCall", { "whoStopCall is empty" })
-                                            if(_phoneCallRequestStatus.value == null) {
-                                                logMessage("observePhoneCall", { "StopCalling" })
-                                                CallEventFlow.events.value = CallEvent.StopCalling
-                                            } else {
-                                                logMessage("observePhoneCall", { "CallEnded" })
-                                                CallEventFlow.events.value = CallEvent.CallEnded
-                                            }
-                                        } else {
-                                            logMessage("observePhoneCall", { "whoStopCall is not empty" })
-                                            logMessage("observePhoneCall", { "StopCalling whoStopCall from db" })
-                                            callInteractor.stopCallService()
-                                            CallEventFlow.events.value = CallEvent.CallEnded
-                                        }
-                                    }
-                                }
-                                isInCall.value = false
-                                // Reset all call state after a delay so next call starts clean (if user wasn't on Calling screen to trigger reset there)
-                                viewModelScope.launch {
-                                    delay(2000L);
-                                    CallEventFlow.reset()
-                                }
-                            }
-                        }
-                    )
-                } catch(e : Exception){
-                    logMessage("observePhoneCall Exception", { e.message.toString() })
-                }
-            }
-        }
-    }
-
-    override fun stopObservePhoneCall() {
-        callInteractor.stopObservePhoneCall()
-    }
-
-    override fun resetPhoneCallRequestStatus() {
-        _phoneCallRequestStatus.value = null
-    }
-
-    override fun resetEndCallStatus() {
-        _endCallStatus.value = false
-    }
-    //---------------------------------------------------------------------------//
-
-    override fun loadMoreNews() {
+    fun loadMoreNews() {
         if(isLoadingMore.value) return
         viewModelScope.launch(ioDispatcher) {
             getLatestNews()
         }
     }
 
-    override fun refreshNews() {
+    fun refreshNews() {
         isRefreshing.value = true
         resetGetLatestNewsParams()
         loadMoreNews()
     }
 
-    override suspend fun findUserById(userId: String) : UserInstance? = withContext(ioDispatcher){
+    suspend fun findUserById(userId: String) : UserInstance? = withContext(ioDispatcher){
         userInteractor.getUser(userId, false)
     }
 
-    override fun findUserByIdInCache(userId: String) : UserInstance? {
+    fun findUserByIdInCache(userId: String) : UserInstance? {
         return loadedUsersCache[userId]
     }
 
-    override suspend fun searchUserByName(name: String) : List<UserInstance>{
+    suspend fun searchUserByName(name: String) : List<UserInstance>{
         if(name.isBlank()) return emptyList()
         val resultList = userInteractor.searchUserByName(name)
         return resultList ?: emptyList()
     }
-    //---------------------------Share news--------------------------------//
-    private val _shareMessage = MutableStateFlow("")
-    private val _shareContent = MutableStateFlow<NewsInstance?>(null)
-    private var _sharePostStatus = MutableStateFlow<Boolean?>(null)
-    override var sharePostStatus = _sharePostStatus.asStateFlow()
-    private var _shareError = MutableStateFlow<String?>(null)
-    override var shareError = _shareError.asStateFlow()
-    override fun updateShareMessage(message : String) {
-        _shareMessage.value = message
-    }
-    override fun updateShareContent(news : NewsInstance) {
-        logMessage("updateShareContent", { "id: "+news.id + " message:" + news.message })
-        _shareContent.value = news
-    }
-
-    override fun sharePost(user : UserInstance){
-        viewModelScope.launch {
-            withContext(ioDispatcher) {
-                val newsRandomId = generateRandomId()
-                if(_shareContent.value != null) {
-                    logMessage("sharePost", { "id: ${_shareContent.value!!.id}" })
-                    //Save post to db
-                    val newsInstance = NewsInstance(
-                        newsRandomId,
-                        user.uid,
-                        user.name,
-                        user.image,
-                        _shareMessage.value,
-                        shareContentId = _shareContent.value!!.id)
-                    newsInstance.timePosted = getCurrentTime()
-                    _sharePostStatus.value = newsInteractor.saveNews(
-                        newsInstance
-                    )
-
-                    //Create noti object
-                    val notiContent = _shareMessage.value
-                    val notification = NotificationInstance(getRandomIdForNotification(),
-                        notiContent,user.image,
-                        user.uid,
-                        getCurrentTime(),
-                        NotificationType.SHARE_NEW,
-                        newsInstance.id)
-                    //Send Notification
-                    val friendTokens = getFriendTokens(currentUser!!)
-                    if(friendTokens.isNotEmpty()){
-                        if(notification.content.isNotEmpty()) {
-                            sendMessageToServer(createMessageForServer(notification.content, friendTokens, user, "BASIC"))
-                        } else {
-                            val content = "Shared a post!"
-                            notification.updateContent(content)
-                            sendMessageToServer(createMessageForServer(content, friendTokens, user, "BASIC"))
-                        }
-                    }
-
-                    //Save notification to db
-                    for(friend in user.friends) {
-                        val friendsOfCurrentUser = findUserById(friend)
-                        saveNotification(
-                            notification,
-                            friendsOfCurrentUser!!)
-                    }
-                } else {
-                    _shareError.value = Constants.POST_NEWS_EMPTY_ERROR
-                }
-            }
-        }
-    }
-
-    override suspend fun getFriendTokens(currentUser : UserInstance): ArrayList<String> {
-        val friendTokens = ArrayList<String>()
-        for(friend in currentUser.friends) {
-            val user = findUserById(friend)
-            if(user != null) {
-                friendTokens.add(user.token)
-            }
-        }
-        return friendTokens
-    }
-
-    override suspend fun saveNotification(
-        notification: NotificationInstance,
-        friend : UserInstance) {
-        //Save notification to friend's notification list
-        try{
-            friend.addNotification(notification)
-            notificationInteractor.saveNotificationToDatabase(
-                friend.uid,
-                friend.notifications
-            )
-        } catch(_: Exception) {
-        }
-    }
-
-    override fun resetShareContentAndStatus() {
-        _shareMessage.value = ""
-        _shareContent.value = null
-        _sharePostStatus.value = null
-        _shareError.value = null
-    }
-
     // Per-id cache to avoid global shared state updates thrashing item layout
     private val _sharedNewsById = MutableStateFlow<Map<String, NewsInstance?>>(emptyMap())
-    override val sharedNewsById: StateFlow<Map<String, NewsInstance?>> = _sharedNewsById.asStateFlow()
-    override suspend fun ensureSharedNew(sharedNewId: String) {
+    val sharedNewsById: StateFlow<Map<String, NewsInstance?>> = _sharedNewsById.asStateFlow()
+    suspend fun ensureSharedNew(sharedNewId: String) {
         if (sharedNewId.isBlank()) return
         if (_sharedNewsById.value.containsKey(sharedNewId)) return
         val local = listNews.firstOrNull { it.id == sharedNewId }
@@ -722,7 +469,7 @@ class HomeViewModel(
         _sharedNewsById.update { old -> old + (sharedNewId to value) }
     }
 
-    override fun isFriendOf(posterId: String): Boolean {
+    fun isFriendOf(posterId: String): Boolean {
         return _allUserFriends.value.any { it?.uid == posterId}
     }
 }

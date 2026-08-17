@@ -1,4 +1,4 @@
-package com.minhtu.firesocialmedia.notification.domain.entity.notification
+package com.minhtu.firesocialmedia.domain.entity.notification
 
 enum class NotificationType{
     NONE,

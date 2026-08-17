@@ -36,38 +36,40 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
-import com.minhtu.firesocialmedia.core.constants.TestTag
-import com.minhtu.firesocialmedia.core.domain.entity.call.CallEvent
-import com.minhtu.firesocialmedia.core.domain.entity.call.CallEventFlow
-import com.minhtu.firesocialmedia.core.domain.entity.call.OfferAnswer
-import com.minhtu.firesocialmedia.core.domain.entity.call.SpeakerType
-import com.minhtu.firesocialmedia.core.domain.entity.user.UserInstance
+import com.minhtu.firesocialmedia.constants.calling.TestTag
+import com.minhtu.firesocialmedia.domain.entity.call.CallEvent
+import com.minhtu.firesocialmedia.domain.entity.call.CallEventFlow
+import com.minhtu.firesocialmedia.domain.entity.call.OfferAnswer
+import com.minhtu.firesocialmedia.domain.entity.call.SpeakerType
+import com.minhtu.firesocialmedia.calling.data.remote.dto.user.UserDTO
+import com.minhtu.firesocialmedia.calling.entity.user.toCallingUser
 import com.minhtu.firesocialmedia.platform.WebRTCVideoTrack
 import com.minhtu.firesocialmedia.platform.WebRTCVideoView
 import com.minhtu.firesocialmedia.platform.logMessage
 import com.minhtu.firesocialmedia.platform.showToast
-import com.minhtu.firesocialmedia.presentation.loading.Loading
-import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
+import com.minhtu.firesocialmedia.calling.presentation.loading.Loading
+import com.minhtu.firesocialmedia.calling.presentation.loading.LoadingViewModel
 import com.minhtu.sharedmodule.ui.theme.activeColor
 import com.minhtu.sharedmodule.ui.theme.callStopPendingColor
 import com.minhtu.sharedmodule.ui.theme.inactiveColor
 import com.minhtu.sharedmodule.ui.theme.videoCallButtonColor
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.koin.compose.viewmodel.koinViewModel
 
 class VideoCall {
     companion object{
         @Composable
         fun VideoCallScreen(
             sessionId: String,
-            caller: UserInstance?,
-            callee: UserInstance?,
+            caller: UserDTO?,
+            callee: UserDTO?,
             currentUserId: String?,
             remoteVideoOffer: OfferAnswer?,
             videoCallViewModel: VideoCallViewModel,
-            loadingViewModel: LoadingViewModel,
             onNavigateBack: () -> Unit
         ) {
+            val loadingViewModel: LoadingViewModel = koinViewModel()
             val pendingSessionId by videoCallViewModel.pendingVideoCallSessionId
             val pendingOffer by videoCallViewModel.pendingRemoteVideoOffer
             val effectiveSessionId = sessionId.ifEmpty { pendingSessionId }
@@ -95,7 +97,7 @@ class VideoCall {
                     onGranted = {
                         if (caller != null && callee != null) {
                             loadingViewModel.showLoading()
-                            videoCallViewModel.startVideoCall(effectiveOffer, caller, callee, currentUserId, effectiveSessionId)
+                            videoCallViewModel.startVideoCall(effectiveOffer, caller.toCallingUser(), callee.toCallingUser(), currentUserId, effectiveSessionId)
                             CallEventFlow.hasAcceptedVideoInCurrentCall.value = true
                             videoCallViewModel.clearPendingVideoCallParams()
                         } else {
@@ -138,7 +140,7 @@ class VideoCall {
                         if (caller != null && callee != null && effectiveSessionId.isNotEmpty()) {
                             loadingViewModel.showLoading()
                             lastHandledOfferKey = incomingKey
-                            videoCallViewModel.startVideoCall(incomingOffer, caller, callee, currentUserId, effectiveSessionId)
+                            videoCallViewModel.startVideoCall(incomingOffer, caller.toCallingUser(), callee.toCallingUser(), currentUserId, effectiveSessionId)
                             CallEventFlow.hasAcceptedVideoInCurrentCall.value = true
                         }
                     }

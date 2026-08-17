@@ -45,7 +45,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.minhtu.firesocialmedia.core.domain.entity.user.UserInstance
+import com.minhtu.firesocialmedia.group.entity.user.UserInstance
 import com.minhtu.firesocialmedia.platform.showToast
 import org.koin.compose.viewmodel.koinViewModel
 

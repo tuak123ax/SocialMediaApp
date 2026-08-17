@@ -40,6 +40,7 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.ProvidedValue
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -59,16 +60,14 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.minhtu.firesocialmedia.core.constants.TestTag
-import com.minhtu.firesocialmedia.data.remote.constant.DataConstant
-import com.minhtu.firesocialmedia.core.domain.entity.group.GroupInstance
-import com.minhtu.firesocialmedia.core.domain.entity.user.UserInstance
+import com.minhtu.firesocialmedia.constants.group.TestTag
+import com.minhtu.firesocialmedia.constants.group.DataConstant
+import com.minhtu.firesocialmedia.group.entity.user.UserInstance
 import com.minhtu.firesocialmedia.platform.CommonBackHandler
-import com.minhtu.firesocialmedia.presentation.search.Search
-import com.minhtu.firesocialmedia.presentation.search.SearchViewModel
-import com.minhtu.firesocialmedia.core.storage.toStorageUrl
-import com.minhtu.firesocialmedia.utils.UiUtils
-import com.minhtu.firesocialmedia.utils.UiUtils.Companion.ShareAppRow
+import com.minhtu.firesocialmedia.storage.group.toStorageUrl
+import com.minhtu.firesocialmedia.utils.group.TitleBarUtils
+import com.minhtu.firesocialmedia.group.utils.UiUtils.Companion.GroupSearchBar
+import com.minhtu.firesocialmedia.group.utils.UiUtils.Companion.ShareAppRow
 import com.seiko.imageloader.ui.AutoSizeImage
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -79,25 +78,33 @@ class InviteMember {
     companion object {
         @Composable
         fun InviteMemberScreen(
-            group : GroupInstance,
+            groupId : String,
             currentUser : UserInstance,
             paddingValues: PaddingValues,
             localImageLoaderValue : ProvidedValue<*>,
             inviteMemberViewModel: InviteMemberViewModel = koinViewModel(),
-            searchViewModel: SearchViewModel = koinViewModel(),
             onNavigateBack : () -> Unit
         ) {
             CommonBackHandler {
                 onNavigateBack()
             }
+            var searchQuery by remember { mutableStateOf("") }
             var showBottomSheet by rememberSaveable { mutableStateOf(false) }
+            val fetchedGroup by inviteMemberViewModel.fetchGroupInfoState.collectAsState()
+            LaunchedEffect(groupId) {
+                inviteMemberViewModel.fetchGroupInfo(groupId)
+            }
+            if (fetchedGroup == null) {
+                return
+            }
+            val group = fetchedGroup!!
             Box(modifier = Modifier.padding(paddingValues)) {
                 Column(
                     verticalArrangement = Arrangement.Center,
                     modifier = Modifier
                         .fillMaxWidth()
                 ) {
-                    UiUtils.BackAndTitleAndMoreOptionsRow(
+                    TitleBarUtils.BackAndTitleAndMoreOptionsRow(
                         title = "Invite Members",
                         trailingIcon = "more_horiz",
                         navigateBack = onNavigateBack
@@ -107,9 +114,9 @@ class InviteMember {
                         thickness = 1.dp,
                         color = MaterialTheme.colorScheme.outline
                     )
-                    Search.SearchBar(
-                        query = searchViewModel.query,
-                        onQueryChange = { query -> searchViewModel.updateQuery(query) },
+                    GroupSearchBar(
+                        query = searchQuery,
+                        onQueryChange = { query -> searchQuery = query },
                         modifier = Modifier.height(80.dp).padding(vertical = 10.dp)
                             .testTag(TestTag.TAG_SEARCH_BAR)
                             .semantics {
@@ -137,12 +144,12 @@ class InviteMember {
                     if(currentUser.friends.isNotEmpty()) {
                         var memberList by remember { mutableStateOf<List<UserInstance>>(emptyList()) }
                         // Run filtering when friend list or search query changes
-                        LaunchedEffect(searchViewModel.query) {
+                        LaunchedEffect(searchQuery) {
                             memberList = coroutineScope {
                                 currentUser.friends.map { userId ->
                                     async {
                                         inviteMemberViewModel.findUserById(userId)
-                                            ?.takeIf { it.name.contains(searchViewModel.query, ignoreCase = true) }
+                                            ?.takeIf { it.name.contains(searchQuery, ignoreCase = true) }
                                     }
                                 }.awaitAll().filterNotNull()
                             }

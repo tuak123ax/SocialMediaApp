@@ -14,7 +14,7 @@ import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import com.minhtu.firesocialmedia.core.R
-import com.minhtu.firesocialmedia.core.constants.Constants
+import com.minhtu.firesocialmedia.android.constants.AppConstants
 
 /**
  * A short-lived foreground service (foregroundServiceType="shortService") that directly starts
@@ -43,20 +43,20 @@ class IncomingCallWakeService : Service() {
             callerName: String,
             callerAvatar: String
         ): Intent = Intent(context, IncomingCallWakeService::class.java).apply {
-            putExtra(Constants.KEY_SESSION_ID, sessionId)
-            putExtra(Constants.KEY_CALLEE_ID, calleeId)
-            putExtra(Constants.KEY_CALLER_NAME, callerName)
-            putExtra(Constants.KEY_CALLER_AVATAR, callerAvatar)
+            putExtra(AppConstants.KEY_SESSION_ID, sessionId)
+            putExtra(AppConstants.KEY_CALLEE_ID, calleeId)
+            putExtra(AppConstants.KEY_CALLER_NAME, callerName)
+            putExtra(AppConstants.KEY_CALLER_AVATAR, callerAvatar)
         }
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        val sessionId = intent?.getStringExtra(Constants.KEY_SESSION_ID)
-        val calleeId = intent?.getStringExtra(Constants.KEY_CALLEE_ID)
-        val callerName = intent?.getStringExtra(Constants.KEY_CALLER_NAME).orEmpty()
-        val callerAvatar = intent?.getStringExtra(Constants.KEY_CALLER_AVATAR).orEmpty()
+        val sessionId = intent?.getStringExtra(AppConstants.KEY_SESSION_ID)
+        val calleeId = intent?.getStringExtra(AppConstants.KEY_CALLEE_ID)
+        val callerName = intent?.getStringExtra(AppConstants.KEY_CALLER_NAME).orEmpty()
+        val callerAvatar = intent?.getStringExtra(AppConstants.KEY_CALLER_AVATAR).orEmpty()
 
         ensureChannel()
 
@@ -81,10 +81,10 @@ class IncomingCallWakeService : Service() {
 
         // Build a tap-to-open PendingIntent for the notification banner (used on all API levels)
         val tapIntent = Intent(this, targetActivityClass).apply {
-            putExtra(Constants.KEY_SESSION_ID, sessionId)
-            putExtra(Constants.KEY_CALLEE_ID, calleeId)
-            putExtra(Constants.KEY_CALLER_NAME, callerName)
-            putExtra(Constants.KEY_CALLER_AVATAR, callerAvatar)
+            putExtra(AppConstants.KEY_SESSION_ID, sessionId)
+            putExtra(AppConstants.KEY_CALLEE_ID, calleeId)
+            putExtra(AppConstants.KEY_CALLER_NAME, callerName)
+            putExtra(AppConstants.KEY_CALLER_AVATAR, callerAvatar)
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
         }
         val tapPendingIntent = PendingIntent.getActivity(

@@ -26,18 +26,19 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
-import com.minhtu.firesocialmedia.core.constants.Constants
-import com.minhtu.firesocialmedia.core.constants.TestTag
-import com.minhtu.firesocialmedia.core.constants.UiConstants
+import com.minhtu.firesocialmedia.constants.auth.Constants
+import com.minhtu.firesocialmedia.constants.auth.TestTag
+import com.minhtu.firesocialmedia.constants.UiConstants
+import com.minhtu.firesocialmedia.core.constants.AuthRouteNames
 import com.minhtu.firesocialmedia.platform.CrossPlatformIcon
 import com.minhtu.firesocialmedia.platform.showToast
 import com.minhtu.firesocialmedia.platform.toHex
 import com.minhtu.firesocialmedia.presentation.forgotpassword.ForgotPasswordViewModel
-import com.minhtu.firesocialmedia.presentation.loading.Loading
-import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
-import com.minhtu.firesocialmedia.utils.UiUtils.Companion.IconAndTitle
-import com.minhtu.firesocialmedia.utils.UiUtils.Companion.SubTitle
-import com.minhtu.firesocialmedia.utils.UiUtils.Companion.TextFieldWithLeadingIcon
+import com.minhtu.firesocialmedia.auth.presentation.loading.Loading
+import com.minhtu.firesocialmedia.auth.presentation.loading.LoadingViewModel
+import com.minhtu.firesocialmedia.auth.utils.UiUtils.Companion.IconAndTitle
+import com.minhtu.firesocialmedia.auth.utils.UiUtils.Companion.SubTitle
+import com.minhtu.firesocialmedia.auth.utils.UiUtils.Companion.TextFieldWithLeadingIcon
 import org.koin.compose.viewmodel.koinViewModel
 
 class ForgotPassword {
@@ -45,10 +46,10 @@ class ForgotPassword {
         @Composable
         fun ForgotPasswordScreen(
             forgotPasswordViewModel: ForgotPasswordViewModel = koinViewModel(),
-            loadingViewModel: LoadingViewModel,
             modifier: Modifier = Modifier,
             onNavigateToSignInScreen: () -> Unit
         ) {
+            val loadingViewModel: LoadingViewModel = koinViewModel()
             val isLoading by loadingViewModel.isLoading.collectAsState()
             val emailExisted by forgotPasswordViewModel.emailExisted.collectAsState()
             val emailSent by forgotPasswordViewModel.emailSent.collectAsState()
@@ -146,7 +147,7 @@ class ForgotPassword {
             }
         }
 
-        fun getScreenName(): String = UiConstants.ForgotPassword.SCREEN_NAME
+        fun getScreenName(): String = AuthRouteNames.ForgotPassword.SCREEN_NAME
     }
 }
 

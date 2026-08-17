@@ -2,13 +2,13 @@ package com.minhtu.firesocialmedia.presentation.loginhistory
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.minhtu.firesocialmedia.data.remote.constant.DataConstant
-import com.minhtu.firesocialmedia.core.domain.entity.user.UserInstance
-import com.minhtu.firesocialmedia.core.domain.usecases.settings.DeleteLoginSessionUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.settings.FetchLoginHistoryListUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.settings.LogoutSessionUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.settings.UpdateUserTimestampUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.settings.VerifyCurrentPasswordUseCase
+import com.minhtu.firesocialmedia.constants.security.DataConstant
+import com.minhtu.firesocialmedia.security.data.remote.dto.user.UserDTO
+import com.minhtu.firesocialmedia.domain.usecases.settings.DeleteLoginSessionUseCase
+import com.minhtu.firesocialmedia.domain.usecases.settings.FetchLoginHistoryListUseCase
+import com.minhtu.firesocialmedia.domain.usecases.settings.LogoutSessionUseCase
+import com.minhtu.firesocialmedia.domain.usecases.settings.UpdateUserTimestampUseCase
+import com.minhtu.firesocialmedia.domain.usecases.settings.VerifyCurrentPasswordUseCase
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -110,7 +110,7 @@ class LoginHistoryViewModel(
     }
 
     @OptIn(ExperimentalTime::class)
-    fun acknowledgeLoginHistory(user: UserInstance) {
+    fun acknowledgeLoginHistory(user: UserDTO) {
         viewModelScope.launch(ioDispatcher) {
             _acknowledgeStatus.value = AcknowledgeStatus.LOADING
             val now = System.now().toEpochMilliseconds()
@@ -129,7 +129,7 @@ class LoginHistoryViewModel(
     }
 
     @OptIn(ExperimentalTime::class)
-    fun acknowledgePrivacyRead(user: UserInstance) {
+    fun acknowledgePrivacyRead(user: UserDTO) {
         viewModelScope.launch(ioDispatcher) {
             val now = System.now().toEpochMilliseconds()
             val success = updateUserTimestampUseCase.invoke(

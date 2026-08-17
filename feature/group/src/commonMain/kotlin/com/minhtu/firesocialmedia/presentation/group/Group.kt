@@ -46,14 +46,14 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.minhtu.firesocialmedia.core.constants.TestTag
-import com.minhtu.firesocialmedia.core.domain.entity.user.UserInstance
+import com.minhtu.firesocialmedia.constants.group.TestTag
+import com.minhtu.firesocialmedia.group.entity.user.UserInstance
 import com.minhtu.firesocialmedia.platform.getIconPainter
 import com.minhtu.firesocialmedia.platform.showToast
-import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.BaseSettingInstance
-import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.SettingInstance
-import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.Settings.Companion.SettingItem
-import com.minhtu.firesocialmedia.utils.UiUtils
+import com.minhtu.firesocialmedia.group.presentation.setting.BaseSettingInstance
+import com.minhtu.firesocialmedia.group.presentation.setting.SettingInstance
+import com.minhtu.firesocialmedia.group.presentation.setting.SettingItem
+import com.minhtu.firesocialmedia.utils.group.TitleBarUtils
 
 
 class Group {
@@ -75,7 +75,7 @@ class Group {
                     .padding(paddingValues)
             ) {
                 // Top bar
-                UiUtils.BackAndTitleAndMoreOptionsRow(
+                TitleBarUtils.BackAndTitleAndMoreOptionsRow(
                     title = "Groups",
                     navigateBack = { onNavigateBack() }
                 )

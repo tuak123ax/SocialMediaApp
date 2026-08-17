@@ -3,12 +3,12 @@ package com.minhtu.firesocialmedia.presentation.information
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import com.minhtu.firesocialmedia.core.constants.Constants
-import com.minhtu.firesocialmedia.core.domain.entity.user.UserInstance
-import com.minhtu.firesocialmedia.core.domain.usecases.common.GetCurrentUserUidUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.common.GetFCMTokenUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.information.SaveSignUpInformationUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.signin.SaveLoginActivityInfoUseCase
+import com.minhtu.firesocialmedia.storage.auth.SupabaseStorageProvider
+import com.minhtu.firesocialmedia.domain.entity.user.auth.UserInstance
+import com.minhtu.firesocialmedia.domain.usecases.common.auth.GetCurrentUserUidUseCase
+import com.minhtu.firesocialmedia.domain.usecases.common.auth.GetFCMTokenUseCase
+import com.minhtu.firesocialmedia.domain.usecases.information.SaveSignUpInformationUseCase
+import com.minhtu.firesocialmedia.domain.usecases.signin.SaveLoginActivityInfoUseCase
 import com.minhtu.firesocialmedia.platform.logMessage
 import com.rickclephas.kmp.observableviewmodel.ViewModel
 import com.rickclephas.kmp.observableviewmodel.launch
@@ -46,7 +46,7 @@ class InformationViewModel(
         password =  input
     }
 
-    var avatar by mutableStateOf(Constants.DEFAULT_DECADE_AVATAR_URL)
+    var avatar by mutableStateOf(SupabaseStorageProvider.DEFAULT_DECADE_AVATAR_URL)
     fun updateAvatar(input:String){
         avatar = input
     }

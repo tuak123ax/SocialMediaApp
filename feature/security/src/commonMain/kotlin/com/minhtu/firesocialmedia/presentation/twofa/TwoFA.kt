@@ -46,11 +46,11 @@ import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.minhtu.firesocialmedia.core.constants.Constants
-import com.minhtu.firesocialmedia.core.domain.entity.user.UserInstance
+import com.minhtu.firesocialmedia.constants.security.Constants
+import com.minhtu.firesocialmedia.security.data.remote.dto.user.UserDTO
 import com.minhtu.firesocialmedia.platform.generateQrImage
 import com.minhtu.firesocialmedia.platform.showToast
-import com.minhtu.firesocialmedia.utils.UiUtils
+import com.minhtu.firesocialmedia.utils.security.TitleBarUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.koin.compose.viewmodel.koinViewModel
@@ -60,7 +60,7 @@ class TwoFA {
         @Composable
         fun TwoFAScreen(
             paddingValues: PaddingValues,
-            currentUser : UserInstance,
+            currentUser : UserDTO,
             twoFAViewModel: TwoFAViewModel = koinViewModel(),
             onContinue: (String) -> Unit,
             onNavigateBack: () -> Unit
@@ -104,7 +104,7 @@ class TwoFA {
                         .padding(bottom = 140.dp) // space for bottom actions
                 ) {
 
-                    UiUtils.BackAndTitleAndMoreOptionsRow(
+                    TitleBarUtils.BackAndTitleAndMoreOptionsRow(
                         title = "2FA",
                         navigateBack = onNavigateBack
                     )

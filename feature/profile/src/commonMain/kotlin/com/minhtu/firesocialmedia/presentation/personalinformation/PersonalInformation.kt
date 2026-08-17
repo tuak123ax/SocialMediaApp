@@ -62,14 +62,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import com.minhtu.firesocialmedia.data.remote.service.imagepicker.ImagePicker
-import com.minhtu.firesocialmedia.core.domain.entity.user.UserInstance
+import com.minhtu.firesocialmedia.data.remote.service.imagepicker.profile.ImagePicker
+import com.minhtu.firesocialmedia.profile.entity.user.UserInstance
 import com.minhtu.firesocialmedia.platform.CommonBackHandler
 import com.minhtu.firesocialmedia.platform.generateImageLoader
 import com.minhtu.firesocialmedia.platform.showToast
-import com.minhtu.firesocialmedia.core.storage.toStorageUrl
-import com.minhtu.firesocialmedia.utils.PasswordVerifyDialog
-import com.minhtu.firesocialmedia.utils.UiUtils
+import com.minhtu.firesocialmedia.storage.profile.toStorageUrl
+import com.minhtu.firesocialmedia.utils.profile.PasswordVerifyDialog
+import com.minhtu.firesocialmedia.utils.profile.TitleBarUtils
 import com.seiko.imageloader.LocalImageLoader
 import com.seiko.imageloader.ui.AutoSizeImage
 
@@ -169,7 +169,7 @@ class PersonalInformation {
                             .verticalScroll(rememberScrollState())
                     ) {
                         // Top bar
-                        UiUtils.BackAndTitleAndMoreOptionsRow(
+                        TitleBarUtils.BackAndTitleAndMoreOptionsRow(
                             title = "Personal Information",
                             isMember = false,
                             navigateBack = { onNavigateBack() }

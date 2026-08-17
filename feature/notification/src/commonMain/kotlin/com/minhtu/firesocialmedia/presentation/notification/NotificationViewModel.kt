@@ -1,17 +1,17 @@
 package com.minhtu.firesocialmedia.presentation.notification
 
 import androidx.compose.runtime.snapshots.SnapshotStateList
-import com.minhtu.firesocialmedia.core.domain.entity.news.NewsInstance
-import com.minhtu.firesocialmedia.core.domain.entity.news.isDefaultNewsInstance
-import com.minhtu.firesocialmedia.core.domain.entity.notification.NotificationInstance
-import com.minhtu.firesocialmedia.core.domain.entity.user.UserInstance
-import com.minhtu.firesocialmedia.core.domain.usecases.common.GetUserUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.notification.DeleteAllNotificationsUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.notification.FindNewByIdInDbUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.notification.UpdateIsReadStatusOfNotificationUseCase
+import com.minhtu.firesocialmedia.notification.entity.news.NewsInstance
+import com.minhtu.firesocialmedia.notification.entity.news.isDefaultNewsInstance
+import com.minhtu.firesocialmedia.domain.entity.notification.NotificationInstance
+import com.minhtu.firesocialmedia.domain.entity.user.notification.UserInstance
+import com.minhtu.firesocialmedia.domain.usecases.common.notification.GetUserUseCase
+import com.minhtu.firesocialmedia.domain.usecases.notification.DeleteAllNotificationsUseCase
+import com.minhtu.firesocialmedia.domain.usecases.news.notification.FindNewByIdInDbUseCase
+import com.minhtu.firesocialmedia.domain.usecases.notification.UpdateIsReadStatusOfNotificationUseCase
 import com.minhtu.firesocialmedia.platform.logMessage
 import com.minhtu.firesocialmedia.presentation.notification.instance.BasicResult
-import com.minhtu.firesocialmedia.utils.Utils
+import com.minhtu.firesocialmedia.notification.utils.Utils
 import com.rickclephas.kmp.observableviewmodel.ViewModel
 import com.rickclephas.kmp.observableviewmodel.launch
 import kotlinx.coroutines.CoroutineDispatcher
@@ -117,16 +117,16 @@ class NotificationViewModel (
         user.notifications = ArrayList(updatedNotifications)
 
         updateIsReadStatusOfNotificationUseCase.invoke(
-            user,
+            user.uid,
             updatedNotification
         )
     }
 
     private val _deleteAllNotificationsStatus = MutableStateFlow<BasicResult?>(null)
     var deleteAllNotificationsStatus = _deleteAllNotificationsStatus.asStateFlow()
-    fun deleteAllNotifications(currentUser : UserInstance) {
+    fun deleteAllNotifications(userId : String) {
         viewModelScope.launch(ioDispatcher) {
-            val result = deleteAllNotificationsUseCase.invoke(currentUser)
+            val result = deleteAllNotificationsUseCase.invoke(userId)
             if(result.isSuccess) {
                 _deleteAllNotificationsStatus.value = BasicResult(true)
             } else {

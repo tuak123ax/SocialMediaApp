@@ -5,7 +5,7 @@ import android.net.ConnectivityManager
 import android.net.Network
 import android.net.NetworkCapabilities
 import android.net.NetworkRequest
-import com.minhtu.firesocialmedia.core.domain.core.NetworkMonitor
+import com.minhtu.firesocialmedia.network.NetworkMonitor
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.distinctUntilChanged
 

@@ -13,5 +13,3 @@
 -keep class com.minhtu.firesocialmedia.feature.friend.navigation.** { *; }
 -keep interface com.minhtu.firesocialmedia.presentation.navigation.FriendNavGraph { *; }
 
-# Keep friend contract used across modules.
--keep interface com.minhtu.firesocialmedia.presentation.friend.FriendViewModelContract { *; }

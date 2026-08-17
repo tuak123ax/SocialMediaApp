@@ -79,33 +79,35 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.minhtu.firesocialmedia.core.constants.Constants
-import com.minhtu.firesocialmedia.core.constants.TestTag
-import com.minhtu.firesocialmedia.data.remote.constant.DataConstant
-import com.minhtu.firesocialmedia.data.remote.service.imagepicker.ImagePicker
-import com.minhtu.firesocialmedia.core.domain.entity.group.GroupInstance
-import com.minhtu.firesocialmedia.core.domain.entity.news.NewsInstance
-import com.minhtu.firesocialmedia.core.domain.entity.user.UserInstance
+import com.minhtu.firesocialmedia.storage.group.SupabaseStorageProvider
+import com.minhtu.firesocialmedia.constants.group.TestTag
+import com.minhtu.firesocialmedia.constants.group.DataConstant
+import com.minhtu.firesocialmedia.data.remote.service.imagepicker.group.ImagePicker
+import com.minhtu.firesocialmedia.domain.entity.group.GroupInstance
+import com.minhtu.firesocialmedia.group.entity.news.NewsInstance
+import com.minhtu.firesocialmedia.group.entity.user.UserInstance
 import com.minhtu.firesocialmedia.platform.CommonBackHandler
 import com.minhtu.firesocialmedia.platform.getImageBytesFromDrawable
 import com.minhtu.firesocialmedia.platform.showToast
-import com.minhtu.firesocialmedia.presentation.home.HomeViewModelContract
-import com.minhtu.firesocialmedia.presentation.loading.Loading
-import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
-import com.minhtu.firesocialmedia.presentation.search.SearchViewModel
-import com.minhtu.firesocialmedia.utils.UiUtils.Companion.DropdownMenuForCoverPhoto
-import com.minhtu.firesocialmedia.core.storage.toStorageUrl
-import com.minhtu.firesocialmedia.utils.UiUtils
-import com.minhtu.firesocialmedia.utils.UiUtils.Companion.LazyColumnOfNewsWithSlideOutAnimationAndLoadMore
-import com.minhtu.firesocialmedia.utils.UiUtils.Companion.SearchUserCard
-import com.minhtu.firesocialmedia.utils.UiUtils.Companion.ShareBottomSheet
-import com.minhtu.firesocialmedia.utils.Utils.Companion.convertToNumberString
+import com.minhtu.firesocialmedia.presentation.group.SessionViewModel
+import com.minhtu.firesocialmedia.presentation.group.EngagementViewModel
+import com.minhtu.firesocialmedia.group.presentation.loading.Loading
+import com.minhtu.firesocialmedia.group.presentation.loading.LoadingViewModel
+import com.minhtu.firesocialmedia.utils.group.TitleBarUtils
+import com.minhtu.firesocialmedia.group.utils.UiUtils.Companion.DropdownMenuForCoverPhoto
+import com.minhtu.firesocialmedia.storage.group.toStorageUrl
+import com.minhtu.firesocialmedia.utils.group.FeedListUtils
+import com.minhtu.firesocialmedia.group.utils.UiUtils.Companion.SearchUserCard
+import com.minhtu.firesocialmedia.group.utils.UiUtils.Companion.ShareBottomSheet
+import com.minhtu.firesocialmedia.group.utils.Utils.Companion.convertToNumberString
+import com.minhtu.firesocialmedia.utils.group.DialogUtils
 import com.seiko.imageloader.ui.AutoSizeImage
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
 class GroupDetails {
@@ -118,9 +120,8 @@ class GroupDetails {
             paddingValues: PaddingValues,
             localImageLoaderValue : ProvidedValue<*>,
             modifier: Modifier = Modifier,
-            homeViewModel : HomeViewModelContract,
-            searchViewModel : SearchViewModel = koinViewModel(),
-            loadingViewModel : LoadingViewModel,
+            sessionViewModel: SessionViewModel = koinInject(),
+            engagementViewModel: EngagementViewModel = koinInject(),
             groupDetailsViewModel: GroupDetailsViewModel,
             pollViewModel: PollViewModel = koinViewModel(),
             onNavigateToShowImageScreen : (image : String) -> Unit,
@@ -133,6 +134,7 @@ class GroupDetails {
             onManageMembers : (GroupInstance) -> Unit,
             onCreatePoll : () -> Unit
         ){
+            val loadingViewModel: LoadingViewModel = koinViewModel()
             CommonBackHandler{
                 onNavigateBack()
             }
@@ -151,12 +153,16 @@ class GroupDetails {
                 groupDetailsViewModel.fetchNotificationState(currentUser.uid, groupId)
             }
 
-            val commentStatus by homeViewModel.commentStatus.collectAsState()
+            val commentStatus by engagementViewModel.commentStatus.collectAsState()
             LaunchedEffect(commentStatus) {
                 commentStatus?.let { selectedNew ->
                     onNavigateToCommentScreen(selectedNew)
-                    homeViewModel.resetCommentStatus()
+                    engagementViewModel.resetCommentStatus()
                 }
+            }
+
+            LaunchedEffect(Unit) {
+                engagementViewModel.seedLikedPosts(sessionViewModel.currentUser)
             }
 
             // LaunchedEffect to track the scroll state (hide top bar and show load more)
@@ -214,7 +220,7 @@ class GroupDetails {
             }
 
             val showAlertDialog = remember { mutableStateOf(false) }
-            UiUtils.ShowDiscardDialog(
+            DialogUtils.ShowDiscardDialog(
                     "Leave Group",
             "Are you sure you want to leave this group?",
                 icon = Icons.AutoMirrored.Filled.Logout,
@@ -283,7 +289,7 @@ class GroupDetails {
                                     groupDetailsViewModel.coverPhoto
                                 ) {
                                     value =
-                                        if (groupDetailsViewModel.coverPhoto == Constants.DEFAULT_AVATAR_URL) {
+                                        if (groupDetailsViewModel.coverPhoto == SupabaseStorageProvider.DEFAULT_AVATAR_URL) {
                                             getImageBytesFromDrawable("unknownavatar")
                                         } else {
                                             imagePicker.loadImageBytes(groupDetailsViewModel.coverPhoto)
@@ -302,7 +308,7 @@ class GroupDetails {
                                 DropdownMenuForCoverPhoto(
                                     showMenu,
                                     isAdmin,
-                                    coverUrl = groupDetailsViewModel.coverPhoto.takeIf { it != Constants.DEFAULT_AVATAR_URL } ?: "",
+                                    coverUrl = groupDetailsViewModel.coverPhoto.takeIf { it != SupabaseStorageProvider.DEFAULT_AVATAR_URL } ?: "",
                                     { onNavigateToShowImageScreen(groupDetailsViewModel.coverPhoto) },
                                     { imagePicker.pickImage() },
                                     { showMenu = false })
@@ -517,7 +523,8 @@ class GroupDetails {
                                     listState,
                                     listOf("Feed", "Members", "Photos"),
                                     localImageLoaderValue,
-                                    homeViewModel,
+                                    sessionViewModel,
+                                    engagementViewModel,
                                     groupDetailsViewModel,
                                     loadingViewModel,
                                     onNavigateToShowImageScreen,
@@ -563,7 +570,7 @@ class GroupDetails {
                         }
                     }
                 }
-                UiUtils.BackAndTitleAndMoreOptionsRow(
+                TitleBarUtils.BackAndTitleAndMoreOptionsRow(
                     "Group Details",
                     trailingIcon = "more_horiz",
                     showMoreOptionsMenu = showMoreOptionsMenu,
@@ -651,7 +658,8 @@ class GroupDetails {
             listState: LazyListState,
             tabTitles : List<String>,
             localImageLoaderValue : ProvidedValue<*>,
-            homeViewModel: HomeViewModelContract,
+            sessionViewModel: SessionViewModel,
+            engagementViewModel: EngagementViewModel,
             groupDetailsViewModel : GroupDetailsViewModel,
             loadingViewModel: LoadingViewModel,
             onNavigateToShowImageScreen: (image: String) -> Unit,
@@ -703,14 +711,15 @@ class GroupDetails {
                                 onNavigateToUploadNewsfeed,
                                 onCreatePoll
                             )
-                            LazyColumnOfNewsWithSlideOutAnimationAndLoadMore(
+                            FeedListUtils.LazyColumnOfNewsWithSlideOutAnimationAndLoadMore(
                                 localImageLoaderValue,
                                 listState,
-                                homeViewModel,
+                                engagementViewModel,
+                                sessionViewModel,
                                 group.posts.values.toList().sortedByDescending { it.timePosted },
                                 onNavigateToUploadNewsfeed,
                                 onNavigateToShowImageScreen,
-                                onNavigateToUserInformation,
+                                onNavigateToUserInformation = onNavigateToUserInformation,
                                 showBottomSheet = { news ->
                                     newToBeShared = news
                                     showBottomSheet = true
@@ -732,7 +741,7 @@ class GroupDetails {
                                 memberList = coroutineScope {
                                     group.members.keys.map { userId ->
                                         async {
-                                            homeViewModel.findUserById(userId)
+                                            sessionViewModel.findUserById(userId)
                                         }
                                     }.awaitAll().filterNotNull()
                                 }

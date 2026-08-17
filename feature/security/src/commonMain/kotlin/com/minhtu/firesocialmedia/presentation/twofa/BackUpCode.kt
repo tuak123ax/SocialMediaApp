@@ -60,8 +60,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.minhtu.firesocialmedia.platform.showToast
-import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
-import com.minhtu.firesocialmedia.utils.UiUtils
+import com.minhtu.firesocialmedia.security.presentation.loading.LoadingViewModel
+import com.minhtu.firesocialmedia.utils.security.TitleBarUtils
 import org.koin.compose.viewmodel.koinViewModel
 
 class BackUpCode {
@@ -70,11 +70,11 @@ class BackUpCode {
         @Composable
         fun BackupCodeScreen(
             paddingValues: PaddingValues,
-            loadingViewModel: LoadingViewModel,
             backUpCodeViewModel: BackUpCodeViewModel = koinViewModel(),
             onNavigateBack: () -> Unit,
             onNavigateToVerifyBackupCodeSuccessScreen: (String) -> Unit
         ) {
+            val loadingViewModel: LoadingViewModel = koinViewModel()
             val focusManager = LocalFocusManager.current
             val isLoading by loadingViewModel.isLoading.collectAsState()
             val backupCode by backUpCodeViewModel.backupCode.collectAsState()
@@ -106,7 +106,7 @@ class BackUpCode {
                     .background(MaterialTheme.colorScheme.surface)) {
 
                     // HEADER
-                    UiUtils.BackAndTitleAndMoreOptionsRow(
+                    TitleBarUtils.BackAndTitleAndMoreOptionsRow(
                         title = "Enter Backup Code",
                         navigateBack = onNavigateBack
                     )

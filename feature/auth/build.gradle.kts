@@ -3,6 +3,8 @@ plugins {
     alias(libs.plugins.androidLibrary)
     id("org.jetbrains.compose") version "1.7.3"
     id("org.jetbrains.kotlin.plugin.compose")
+    id("io.mockative") version "3.0.1"
+    id("kotlinx-serialization")
 }
 
 kotlin {
@@ -61,6 +63,7 @@ kotlin {
     sourceSets {
         all {
             languageSettings.optIn("androidx.compose.material3.ExperimentalMaterial3Api")
+            languageSettings.optIn("kotlinx.cinterop.ExperimentalForeignApi")
         }
         commonMain {
             kotlin.srcDir("src/commonMain/kotlin/com/minhtu/firesocialmedia/domain")
@@ -84,10 +87,29 @@ kotlin {
             implementation(libs.koin.core)
             implementation(libs.koin.compose)
             implementation(libs.koin.compose.viewmodel)
+
+            //Networking
+            implementation(libs.ktor.client.core)
+            implementation(libs.ktor.client.content.negotiation)
+            implementation(libs.ktor.serialization.kotlinx.json)
+            implementation(libs.ktor.client.logging)
+            implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:1.5.1")
+            implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.1")
         }
         commonTest.dependencies {
             implementation(kotlin("test"))
             implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.1")
+            implementation("io.mockative:mockative:3.0.1")
+        }
+        androidMain.dependencies {
+            implementation("com.google.android.gms:play-services-auth:21.2.0")
+            implementation(project.dependencies.platform("com.google.firebase:firebase-bom:33.5.1"))
+            implementation("com.google.firebase:firebase-database")
+            implementation("com.google.firebase:firebase-auth")
+            implementation(libs.ktor.client.okhttp)
+        }
+        iosMain.dependencies {
+            implementation(libs.ktor.client.darwin)
         }
     }
 }
@@ -95,7 +117,10 @@ kotlin {
 android {
     namespace = "com.minhtu.firesocialmedia.auth"
     compileSdk = 35
-    defaultConfig { minSdk = 24 }
+    defaultConfig {
+        minSdk = 24
+        consumerProguardFiles("consumer-rules.pro")
+    }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17

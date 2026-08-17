@@ -50,14 +50,14 @@ import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.minhtu.firesocialmedia.core.constants.Constants
-import com.minhtu.firesocialmedia.core.domain.entity.user.UserInstance
-import com.minhtu.firesocialmedia.core.domain.error.changepassword.ChangePasswordError
+import com.minhtu.firesocialmedia.constants.security.Constants
+import com.minhtu.firesocialmedia.security.data.remote.dto.user.UserDTO
+import com.minhtu.firesocialmedia.domain.error.changepassword.ChangePasswordError
 import com.minhtu.firesocialmedia.platform.showToast
-import com.minhtu.firesocialmedia.presentation.loading.Loading
-import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
-import com.minhtu.firesocialmedia.utils.UiUtils
-import com.minhtu.firesocialmedia.utils.UiUtils.Companion.PasswordField
+import com.minhtu.firesocialmedia.security.presentation.loading.Loading
+import com.minhtu.firesocialmedia.security.presentation.loading.LoadingViewModel
+import com.minhtu.firesocialmedia.security.utils.UiUtils
+import com.minhtu.firesocialmedia.security.utils.UiUtils.Companion.PasswordField
 import org.koin.compose.viewmodel.koinViewModel
 
 class ChangePassword {
@@ -65,13 +65,13 @@ class ChangePassword {
         @Composable
         fun ChangePasswordScreen(
             paddingValues: PaddingValues,
-            currentUser: UserInstance,
+            currentUser: UserDTO,
             changePasswordViewModel: ChangePasswordViewModel = koinViewModel(),
-            loadingViewModel: LoadingViewModel,
             onNavigateToForgotPasswordScreen: () -> Unit,
             onNavigateToSignInScreen: () -> Unit,
             onNavigateBack: () -> Unit
         ) {
+            val loadingViewModel: LoadingViewModel = koinViewModel()
             val uriHandler = LocalUriHandler.current
             val currentPassword by changePasswordViewModel.currentPassword.collectAsState()
             val newPassword by changePasswordViewModel.newPassword.collectAsState()

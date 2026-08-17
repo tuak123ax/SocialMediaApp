@@ -67,23 +67,22 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import com.minhtu.firesocialmedia.core.constants.TestTag
-import com.minhtu.firesocialmedia.core.domain.entity.news.NewsInstance
-import com.minhtu.firesocialmedia.core.domain.entity.notification.NotificationInstance
-import com.minhtu.firesocialmedia.core.domain.entity.notification.NotificationType
-import com.minhtu.firesocialmedia.core.domain.entity.user.UserInstance
+import com.minhtu.firesocialmedia.constants.notification.TestTag
+import com.minhtu.firesocialmedia.notification.entity.news.NewsInstance
+import com.minhtu.firesocialmedia.domain.entity.notification.NotificationInstance
+import com.minhtu.firesocialmedia.domain.entity.notification.NotificationType
+import com.minhtu.firesocialmedia.domain.entity.user.notification.UserInstance
 import com.minhtu.firesocialmedia.platform.CrossPlatformIcon
 import com.minhtu.firesocialmedia.platform.showToast
 import com.minhtu.firesocialmedia.platform.toHex
-import com.minhtu.firesocialmedia.presentation.home.HomeViewModelContract
-import com.minhtu.firesocialmedia.presentation.loading.Loading
-import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
-import com.minhtu.firesocialmedia.presentation.search.SearchViewModel
-import com.minhtu.firesocialmedia.core.storage.toStorageUrl
+import com.minhtu.firesocialmedia.notification.presentation.loading.Loading
+import com.minhtu.firesocialmedia.notification.presentation.loading.LoadingViewModel
+import com.minhtu.firesocialmedia.storage.notification.toStorageUrl
 
 import com.seiko.imageloader.ui.AutoSizeImage
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.math.roundToInt
 
@@ -93,16 +92,16 @@ class Notification {
         fun NotificationScreen(modifier: Modifier,
                                paddingValues: PaddingValues,
                                localImageLoaderValue : ProvidedValue<*>,
-                               searchViewModel: SearchViewModel = koinViewModel(),
-                               homeViewModel: HomeViewModelContract,
+                               sessionViewModel: SessionViewModel = koinInject(),
                                notificationViewModel : NotificationViewModel = koinViewModel(),
-                               loadingViewModel: LoadingViewModel,
+                               notificationsViewModel: NotificationsViewModel = koinInject(),
                                onNavigateToPostInformation: (new : NewsInstance) -> Unit,
                                onNavigateToUserInformation: (user : UserInstance?) -> Unit,
                                onNavigateToGroupDetails : (groupId : String) -> Unit){
+            val loadingViewModel: LoadingViewModel = koinViewModel()
             val isLoading by loadingViewModel.isLoading.collectAsState()
             val getNeededUsersStatus by notificationViewModel.getNeededUsersStatus.collectAsState()
-            val getAllNotificationsStatus = homeViewModel.getAllNotificationsOfCurrentUser.value
+            val getAllNotificationsStatus = notificationsViewModel.getAllNotificationsOfCurrentUser.value
             var showDropDownMenu by remember { mutableStateOf(false) }
             LaunchedEffect(Unit) {
                 // Only show loading if notifications haven't been loaded yet
@@ -111,8 +110,8 @@ class Notification {
                 }
                 //Get more users to show notification information
                 notificationViewModel.checkUsersInCacheAndGetMore(
-                    homeViewModel.loadedUsersCache,
-                    homeViewModel.listNotificationOfCurrentUser)
+                    sessionViewModel.loadedUsersCache,
+                    notificationsViewModel.listNotificationOfCurrentUser)
             }
             
             // Hide loading when both notifications are loaded and users are ready
@@ -128,7 +127,7 @@ class Notification {
                     if(deleteAllNotificationsStatus!!.success) {
                         showToast("Delete all notifications successfully!")
                         //Clear current notification data
-                        homeViewModel.listNotificationOfCurrentUser.clear()
+                        notificationsViewModel.listNotificationOfCurrentUser.clear()
                     } else {
                         showToast(deleteAllNotificationsStatus!!.message)
                     }
@@ -197,9 +196,9 @@ class Notification {
                                 showDropDownMenu = false
                             },
                             onDeleteAll = {
-                                if (homeViewModel.currentUser != null) {
+                                if (sessionViewModel.currentUser != null) {
                                     notificationViewModel.deleteAllNotifications(
-                                        homeViewModel.currentUser!!
+                                        sessionViewModel.currentUser!!.uid
                                     )
                                 }
                             }
@@ -215,8 +214,8 @@ class Notification {
                     color = MaterialTheme.colorScheme.outlineVariant
                 )
                 //Sort notification list by timeSend
-                val notificationList = remember(homeViewModel.listNotificationOfCurrentUser) {
-                    homeViewModel.listNotificationOfCurrentUser.sortedByDescending { it.timeSend }
+                val notificationList = remember(notificationsViewModel.listNotificationOfCurrentUser) {
+                    notificationsViewModel.listNotificationOfCurrentUser.sortedByDescending { it.timeSend }
                 }
                 LazyColumn(
                     modifier = Modifier
@@ -225,7 +224,7 @@ class Notification {
                             contentDescription = TestTag.TAG_NOTIFICATION_LIST
                         }
                 ) {
-                    if(getNeededUsersStatus && homeViewModel.listNotificationOfCurrentUser.isNotEmpty()) {
+                    if(getNeededUsersStatus && notificationsViewModel.listNotificationOfCurrentUser.isNotEmpty()) {
                         items(notificationList, key = { it.id }) { notification ->
                             //State to track visibility of a notification
                             var visible by remember { mutableStateOf(true) }
@@ -235,8 +234,10 @@ class Notification {
                                 // wait for animation before removing
                                 LaunchedEffect(Unit) {
                                     delay(200)
-                                    homeViewModel.removeNotificationInList(notification)
-                                    homeViewModel.deleteNotification(notification)
+                                    notificationsViewModel.removeNotificationInList(notification)
+                                    sessionViewModel.currentUser?.let { cu ->
+                                        notificationsViewModel.deleteNotification(notification, cu)
+                                    }
                                 }
                             }
 
@@ -254,7 +255,8 @@ class Notification {
                                         notification,
                                         user,
                                         localImageLoaderValue,
-                                        homeViewModel,
+                                        sessionViewModel,
+                                        notificationsViewModel,
                                         notificationViewModel,
                                         onDelete = {
                                             visible = false
@@ -267,7 +269,7 @@ class Notification {
                                 }
                             }
                         }
-                    } else if (getNeededUsersStatus && homeViewModel.listNotificationOfCurrentUser.isEmpty()) {
+                    } else if (getNeededUsersStatus && notificationsViewModel.listNotificationOfCurrentUser.isEmpty()) {
                         item {
                             Box(
                                 modifier = Modifier
@@ -294,7 +296,8 @@ class Notification {
         fun NotificationHasSwipeToDelete(notification: NotificationInstance,
                                          user: UserInstance,
                                          localImageLoaderValue : ProvidedValue<*>,
-                                         homeViewModel: HomeViewModelContract,
+                                         sessionViewModel: SessionViewModel,
+                                         notificationsViewModel: NotificationsViewModel,
                                          notificationViewModel: NotificationViewModel,
                                          onDelete: () -> Unit,
                                          onNavigateToPostInformation: (new : NewsInstance) -> Unit,
@@ -304,7 +307,7 @@ class Notification {
             var offsetX by remember { mutableFloatStateOf(0f) }
             val animatedOffsetX by animateFloatAsState(targetValue = offsetX)
             val swipeThreshold = -swipeDistancePx / 2
-            val currentUser = homeViewModel.currentUser
+            val currentUser = sessionViewModel.currentUser
             val coroutineScope = rememberCoroutineScope()
             Box(
                 modifier = Modifier
@@ -372,7 +375,7 @@ class Notification {
                                 ) {
                                     notificationViewModel.onNotificationClick(
                                         notification,
-                                        homeViewModel.listNews,
+                                        ArrayList<NewsInstance>(),
                                         onNavigateToPostInformation = { relatedNew ->
                                             onNavigateToPostInformation(relatedNew)
                                         },
@@ -403,12 +406,12 @@ class Notification {
                                         updatedNotification,
                                         currentUser
                                     )
-                                    val updatedNotifications = homeViewModel.listNotificationOfCurrentUser.map {
+                                    val updatedNotifications = notificationsViewModel.listNotificationOfCurrentUser.map {
                                         if (it.id == updatedNotification.id) updatedNotification else it
                                     }
 
-                                    homeViewModel.listNotificationOfCurrentUser.clear()
-                                    homeViewModel.listNotificationOfCurrentUser.addAll(updatedNotifications)
+                                    notificationsViewModel.listNotificationOfCurrentUser.clear()
+                                    notificationsViewModel.listNotificationOfCurrentUser.addAll(updatedNotifications)
                                 }
                             }
                         }

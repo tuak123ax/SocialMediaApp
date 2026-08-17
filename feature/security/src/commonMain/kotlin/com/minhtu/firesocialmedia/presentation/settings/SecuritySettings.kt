@@ -68,11 +68,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.minhtu.firesocialmedia.core.domain.entity.user.UserInstance
+import com.minhtu.firesocialmedia.security.data.remote.dto.user.UserDTO
 import com.minhtu.firesocialmedia.platform.getCurrentTime
 import com.minhtu.firesocialmedia.platform.showToast
-import com.minhtu.firesocialmedia.utils.UiUtils
-import com.minhtu.firesocialmedia.utils.Utils.Companion.toTimeAgo
+import com.minhtu.firesocialmedia.utils.security.TitleBarUtils
+import com.minhtu.firesocialmedia.security.utils.Utils.Companion.toTimeAgo
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
@@ -81,7 +81,7 @@ class SecuritySettings {
     companion object {
         @Composable
         fun SecuritySettingsScreen(
-            currentUser: UserInstance,
+            currentUser: UserDTO,
             paddingValues: PaddingValues,
             securitySettingsViewModel: SecuritySettingsViewModel = koinViewModel(),
             onNavigateBack: () -> Unit,
@@ -116,7 +116,7 @@ class SecuritySettings {
                     .background(MaterialTheme.colorScheme.background)
                     .padding(paddingValues)
             ) {
-                UiUtils.BackAndTitleAndMoreOptionsRow(
+                TitleBarUtils.BackAndTitleAndMoreOptionsRow(
                     title = "Security Settings",
                     trailingIcon = "more_horiz",
                     isMember = false,
@@ -294,7 +294,7 @@ class SecuritySettings {
 
         @OptIn(ExperimentalMaterial3Api::class)
         @Composable
-        fun SecurityCheckupCard(currentUser: UserInstance, onClick: () -> Unit) {
+        fun SecurityCheckupCard(currentUser: UserDTO, onClick: () -> Unit) {
             var showCheckup by remember { mutableStateOf(false) }
 
             Card(
@@ -368,7 +368,7 @@ class SecuritySettings {
 
         @OptIn(ExperimentalMaterial3Api::class)
         @Composable
-        fun SecurityCheckupBottomSheet(currentUser: UserInstance, onDismiss: () -> Unit) {
+        fun SecurityCheckupBottomSheet(currentUser: UserDTO, onDismiss: () -> Unit) {
             val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
             var scanPhase by remember { mutableStateOf(0) }

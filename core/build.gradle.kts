@@ -134,12 +134,10 @@ kotlin {
             implementation(platform("com.google.firebase:firebase-bom:33.5.1"))
             implementation("com.google.firebase:firebase-analytics")
             implementation("com.google.firebase:firebase-crashlytics")
-            implementation("com.google.firebase:firebase-auth")
             implementation("com.google.firebase:firebase-messaging")
             implementation("com.google.firebase:firebase-database")
             implementation("com.google.firebase:firebase-storage")
             implementation("com.google.firebase:firebase-config")
-            implementation("com.google.android.gms:play-services-auth:21.2.0")
 
             implementation("androidx.compose.material:material-icons-extended")
             implementation("androidx.compose.runtime:runtime-livedata")
@@ -167,9 +165,6 @@ kotlin {
 
             implementation("androidx.media3:media3-exoplayer:1.7.1")
             implementation("androidx.media3:media3-ui:1.7.1")
-
-            //webRTC
-            implementation("io.getstream:stream-webrtc-android:1.3.8")
 
             //Room
             implementation(libs.androidx.room.sqlite.wrapper)

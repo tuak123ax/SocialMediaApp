@@ -5,23 +5,22 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ProvidedValue
 import androidx.compose.ui.Modifier
 import com.minhtu.firesocialmedia.di.PlatformContext
-import com.minhtu.firesocialmedia.core.domain.entity.news.NewsInstance
-import com.minhtu.firesocialmedia.core.domain.entity.user.UserInstance
+import com.minhtu.firesocialmedia.comment.entity.user.UserInstance
 import com.minhtu.firesocialmedia.presentation.comment.CommentFeatureScreen
-import com.minhtu.firesocialmedia.presentation.comment.CommentScreenApi
-import com.minhtu.firesocialmedia.presentation.comment.CommentViewModelContract
+import com.minhtu.firesocialmedia.presentation.comment.CommentFeatureViewModel
 
-class CommentNavGraphImpl : CommentScreenApi {
+class CommentNavGraphImpl {
     @Composable
-    override fun renderCommentScreen(
+    fun renderCommentScreen(
         paddingValues: PaddingValues,
         modifier: Modifier,
         platform: PlatformContext,
         localImageLoaderValue: ProvidedValue<*>,
         showCloseIcon: Boolean,
-        commentViewModel: CommentViewModelContract,
+        commentViewModel: CommentFeatureViewModel,
         currentUser: UserInstance,
-        selectedNew: NewsInstance,
+        selectedNewId: String,
+        selectedNewPosterId: String,
         onNavigateToShowImageScreen: (image: String) -> Unit,
         onNavigateToUserInformation: (user: UserInstance?) -> Unit,
         onNavigateToHomeScreen: (numberOfComments: Int) -> Unit
@@ -34,7 +33,8 @@ class CommentNavGraphImpl : CommentScreenApi {
             showCloseIcon = showCloseIcon,
             commentViewModel = commentViewModel,
             currentUser = currentUser,
-            selectedNew = selectedNew,
+            selectedNewId = selectedNewId,
+            selectedNewPosterId = selectedNewPosterId,
             onNavigateToShowImageScreen = onNavigateToShowImageScreen,
             onNavigateToUserInformation = onNavigateToUserInformation,
             onNavigateToHomeScreen = onNavigateToHomeScreen

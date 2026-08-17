@@ -54,20 +54,21 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.minhtu.firesocialmedia.core.constants.TestTag
-import com.minhtu.firesocialmedia.core.domain.entity.call.CallEvent
-import com.minhtu.firesocialmedia.core.domain.entity.call.CallEventFlow
-import com.minhtu.firesocialmedia.core.domain.entity.call.OfferAnswer
-import com.minhtu.firesocialmedia.core.domain.entity.call.SpeakerType
-import com.minhtu.firesocialmedia.core.domain.entity.user.UserInstance
+import com.minhtu.firesocialmedia.constants.calling.TestTag
+import com.minhtu.firesocialmedia.domain.entity.call.CallEvent
+import com.minhtu.firesocialmedia.domain.entity.call.CallEventFlow
+import com.minhtu.firesocialmedia.domain.entity.call.OfferAnswer
+import com.minhtu.firesocialmedia.domain.entity.call.SpeakerType
+import com.minhtu.firesocialmedia.calling.data.remote.dto.user.UserDTO
+import com.minhtu.firesocialmedia.calling.entity.user.toCallingUser
 import com.minhtu.firesocialmedia.platform.CrossPlatformIcon
 import com.minhtu.firesocialmedia.platform.logMessage
 import com.minhtu.firesocialmedia.platform.showToast
 import com.minhtu.firesocialmedia.platform.toHex
-import com.minhtu.firesocialmedia.presentation.home.HomeViewModelContract
-import com.minhtu.firesocialmedia.core.storage.toStorageUrl
+import org.koin.compose.koinInject
+import com.minhtu.firesocialmedia.storage.calling.toStorageUrl
 import com.minhtu.firesocialmedia.utils.NavigationHandler
-import com.minhtu.firesocialmedia.utils.Utils.Companion.sendNotification
+import com.minhtu.firesocialmedia.calling.utils.Utils.Companion.sendNotification
 import com.minhtu.sharedmodule.ui.theme.callAcceptColor
 import com.minhtu.sharedmodule.ui.theme.callAcceptContainerColor
 import com.minhtu.sharedmodule.ui.theme.callAcceptOnColor
@@ -87,17 +88,17 @@ class Calling {
         fun CallingScreen(
             localImageLoaderValue : ProvidedValue<*>,
             sessionId : String,
-            callee : UserInstance,
-            caller : UserInstance,
-            currentUser : UserInstance?,
+            callee : UserDTO,
+            caller : UserDTO,
+            currentUser : UserDTO?,
             remoteOffer : OfferAnswer?,
             navigateToCallingScreenFromNotification : Boolean,
             callingViewModel: CallingViewModel,
-            homeViewModel: HomeViewModelContract,
             navHandler : NavigationHandler,
             onStopCallAndNavigateBack : () -> Unit,
             onNavigateToVideoCall : (sessionId : String, videoOffer : OfferAnswer?) -> Unit,
-            modifier: Modifier){
+            modifier: Modifier,
+            callViewModel: CallViewModel = koinInject()){
             val isCalling = (currentUser == caller)
             var startCount by rememberSaveable { mutableStateOf(false) }
             var isRunning by rememberSaveable { mutableStateOf(false) }
@@ -121,7 +122,7 @@ class Calling {
                         backgroundButton = null
                         isRunning = false
                         callingViewModel.stopCallAction(currentUser!!.uid, isCalling)
-                        sendNotification("", sessionId, caller, callee, "STOP_CALL")
+                        sendNotification("", sessionId, caller.toCallingUser(), callee.toCallingUser(), "STOP_CALL")
                     },
                     isCallAccepted = { acceptCall }
                 )
@@ -133,7 +134,7 @@ class Calling {
                             logMessage("grantPermission", { "caller and callee not null" })
                             if(currentUser == caller) {
                                 if(!navigateToCallingScreenFromNotification){
-                                    callingViewModel.startCall(caller, callee)
+                                    callingViewModel.startCall(caller.toCallingUser(), callee.toCallingUser())
                                 } else {
                                     logMessage("navigateToCallingScreenFromNotification", { "caller start timer" })
                                     startCount = true
@@ -357,7 +358,7 @@ class Calling {
                                         if (!isStopCallPending) {
                                             startCount = true; isRunning = true; acceptCall = true
                                             if(currentUser == callee && remoteOffer != null) {
-                                                callingViewModel.acceptCall(sessionId, callee)
+                                                callingViewModel.acceptCall(sessionId, callee.toCallingUser())
                                             }
                                             callingViewModel.resetCounter()
                                         }
@@ -379,11 +380,11 @@ class Calling {
                             isRunning = false
                             callingViewModel.stopCallAction(currentUser!!.uid, isCalling)
                             if (isCalling) {
-                                sendNotification("", sessionId, caller, callee, "STOP_CALL")
+                                sendNotification("", sessionId, caller.toCallingUser(), callee.toCallingUser(), "STOP_CALL")
                             } else {
-                                sendNotification("", sessionId, callee, caller, "STOP_CALL")
+                                sendNotification("", sessionId, callee.toCallingUser(), caller.toCallingUser(), "STOP_CALL")
                             }
-                            homeViewModel.setWhoStopCall(currentUser.uid)
+                            callViewModel.setWhoStopCall(currentUser.uid)
                             isStopCallPending = false
                         }
                     }

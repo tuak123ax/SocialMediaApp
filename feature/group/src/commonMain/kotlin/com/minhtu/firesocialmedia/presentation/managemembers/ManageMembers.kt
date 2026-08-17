@@ -72,17 +72,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.minhtu.firesocialmedia.core.constants.TestTag
-import com.minhtu.firesocialmedia.core.domain.entity.group.GroupInstance
-import com.minhtu.firesocialmedia.core.domain.entity.user.UserInstance
+import com.minhtu.firesocialmedia.constants.group.TestTag
+import com.minhtu.firesocialmedia.group.entity.user.UserInstance
 import com.minhtu.firesocialmedia.platform.CommonBackHandler
 import com.minhtu.firesocialmedia.platform.showToast
-import com.minhtu.firesocialmedia.presentation.loading.Loading
-import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
-import com.minhtu.firesocialmedia.presentation.search.Search
-import com.minhtu.firesocialmedia.presentation.search.SearchViewModel
-import com.minhtu.firesocialmedia.core.storage.toStorageUrl
-import com.minhtu.firesocialmedia.utils.UiUtils
+import com.minhtu.firesocialmedia.group.presentation.loading.Loading
+import com.minhtu.firesocialmedia.group.presentation.loading.LoadingViewModel
+import com.minhtu.firesocialmedia.storage.group.toStorageUrl
+import com.minhtu.firesocialmedia.utils.group.TitleBarUtils
+import com.minhtu.firesocialmedia.utils.group.DialogUtils
+import com.minhtu.firesocialmedia.group.utils.UiUtils.Companion.GroupSearchBar
 
 
 
@@ -98,10 +97,8 @@ class ManageMembers {
         @Composable
         fun ManageMembersScreen(
             currentUser : UserInstance,
-            group : GroupInstance,
+            groupId : String,
             manageMembersViewModel: ManageMembersViewModel = koinViewModel(),
-            searchViewModel : SearchViewModel = koinViewModel(),
-            loadingViewModel: LoadingViewModel,
             paddingValues: PaddingValues,
             localImageLoaderValue : ProvidedValue<*>,
             onNavigateBack : () -> Unit,
@@ -109,15 +106,24 @@ class ManageMembers {
             onNavigateToUserInformationScreen : (UserInstance) -> Unit,
             onNavigateToSelectGroupScreen : () -> Unit
         ) {
+            val loadingViewModel: LoadingViewModel = koinViewModel()
             CommonBackHandler {
                 onNavigateBack()
             }
+            var searchQuery by remember { mutableStateOf("") }
             val isLoading by loadingViewModel.isLoading.collectAsState()
             val removeMemberStatus by manageMembersViewModel.removeMemberStatus.collectAsState()
             var adminToDelete by remember { mutableStateOf<UserInstance?>(null) }
             val showAlertDialog = remember { mutableStateOf(false) }
-            val adminSet = group.members.filterValues {it == "admin"}.keys
-            val memberSet = group.members.filterValues {it == "member"}.keys
+            val group by manageMembersViewModel.fetchGroupInfoState.collectAsState()
+            LaunchedEffect(groupId) {
+                manageMembersViewModel.fetchGroupInfo(groupId)
+            }
+            if (group == null) {
+                return
+            }
+            val adminSet = group!!.members.filterValues {it == "admin"}.keys
+            val memberSet = group!!.members.filterValues {it == "member"}.keys
             val adminList by manageMembersViewModel.fetchAdminListStatus.collectAsState()
             val memberList by manageMembersViewModel.fetchMemberListStatus.collectAsState()
             //Selected member to be added or removed from list when promoting or demoting
@@ -190,7 +196,7 @@ class ManageMembers {
                     modifier = Modifier
                         .fillMaxWidth()
                 ) {
-                    UiUtils.BackAndTitleAndMoreOptionsRow(
+                    TitleBarUtils.BackAndTitleAndMoreOptionsRow(
                         title = "Manage Members",
                         trailingIcon = "add_member",
                         trailingIconTint = MaterialTheme.colorScheme.error,
@@ -202,9 +208,9 @@ class ManageMembers {
                             onInviteMembers()
                         }
                     )
-                    Search.SearchBar(
-                        query = searchViewModel.query,
-                        onQueryChange = { query -> searchViewModel.updateQuery(query) },
+                    GroupSearchBar(
+                        query = searchQuery,
+                        onQueryChange = { query -> searchQuery = query },
                         modifier = Modifier.height(80.dp).padding(vertical = 10.dp)
                             .testTag(TestTag.TAG_SEARCH_BAR)
                             .semantics {
@@ -229,7 +235,7 @@ class ManageMembers {
                                 headerTextColor = MaterialTheme.colorScheme.error
                             )}
                             val filterAdminList = adminList.filter {
-                                it.name.contains(searchViewModel.query, ignoreCase = true)
+                                it.name.contains(searchQuery, ignoreCase = true)
                             }
                             items(filterAdminList, key = {it.uid}) { admin ->
                                 val visible = adminPendingDeleteId != admin.uid
@@ -269,8 +275,7 @@ class ManageMembers {
                                                     if(adminList.size > 1) {
                                                         selectedMember = admin
                                                         manageMembersViewModel.demoteMember(
-                                                            admin,
-                                                            group
+                                                            admin
                                                         )
                                                     } else {
                                                         showToast("Cannot demote the last admin of group!!!")
@@ -294,7 +299,7 @@ class ManageMembers {
                                 headerTextColor = MaterialTheme.colorScheme.onSurfaceVariant
                             )}
                             val filterMemberList = memberList.filter {
-                                it.name.contains(searchViewModel.query, ignoreCase = true)
+                                it.name.contains(searchQuery, ignoreCase = true)
                             }
                             items(filterMemberList, key = {it.uid}) { member ->
                                 //State to track visibility of a member
@@ -307,8 +312,7 @@ class ManageMembers {
                                     LaunchedEffect(Unit) {
                                         delay(200)
                                         manageMembersViewModel.removeMember(
-                                            member,
-                                            group
+                                            member
                                         )
                                         manageMembersViewModel.removeMemberFromList(member)
                                     }
@@ -347,8 +351,7 @@ class ManageMembers {
                                                 onClickPromoteButton = {
                                                     selectedMember = member
                                                     manageMembersViewModel.promoteMember(
-                                                        member,
-                                                        group)
+                                                        member)
                                                 },
                                                 onClickRemoveButton = {
                                                     visible = false
@@ -369,8 +372,7 @@ class ManageMembers {
                             delay(200)
                             adminToDelete?.let { admin ->
                                 manageMembersViewModel.removeMember(
-                                    admin,
-                                    group
+                                    admin
                                 )
                                 manageMembersViewModel.removeAdminFromList(admin)
                             }
@@ -379,7 +381,7 @@ class ManageMembers {
                     }
 
                     adminToDelete?.let { admin ->
-                        UiUtils.ShowDiscardDialog(
+                        DialogUtils.ShowDiscardDialog(
                             "Remove Admin?",
                             "Are you sure you want to remove this admin from the group? This action cannot be undone.",
                             icon = Icons.Default.PersonRemove,

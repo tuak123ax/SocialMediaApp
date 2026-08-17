@@ -40,13 +40,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.minhtu.firesocialmedia.core.domain.entity.notification.NotificationType
-import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.BaseSettingInstance
-import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.NotificationConfig
-import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.Settings.Companion.SettingItem
-import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.Settings.Companion.SoftSwitch
-import com.minhtu.firesocialmedia.presentation.navigationscreen.setting.TrailingContentType
-import com.minhtu.firesocialmedia.utils.UiUtils
+import com.minhtu.firesocialmedia.domain.entity.notification.NotificationType
+import com.minhtu.firesocialmedia.notification.presentation.setting.BaseSettingInstance
+import com.minhtu.firesocialmedia.notification.presentation.setting.NotificationConfig
+import com.minhtu.firesocialmedia.notification.presentation.setting.SettingItem
+import com.minhtu.firesocialmedia.notification.presentation.setting.SoftSwitch
+import com.minhtu.firesocialmedia.notification.presentation.setting.TrailingContentType
+import com.minhtu.firesocialmedia.utils.notification.TitleBarUtils
 import org.koin.compose.viewmodel.koinViewModel
 
 
@@ -65,7 +65,7 @@ class NotificationConfigs {
                     .padding(paddingValues)
             ) {
                 // Top bar
-                UiUtils.BackAndTitleAndMoreOptionsRow(
+                TitleBarUtils.BackAndTitleAndMoreOptionsRow(
                     title = "Notification Configs",
                     trailingIcon = "more_horiz",
                     isMember = false,

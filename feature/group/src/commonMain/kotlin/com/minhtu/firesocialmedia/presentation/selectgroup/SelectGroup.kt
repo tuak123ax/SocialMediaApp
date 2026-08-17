@@ -26,6 +26,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.ProvidedValue
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -41,16 +42,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.minhtu.firesocialmedia.core.constants.TestTag
-import com.minhtu.firesocialmedia.core.domain.entity.group.GroupInstance
-import com.minhtu.firesocialmedia.core.domain.entity.user.UserInstance
+import com.minhtu.firesocialmedia.constants.group.TestTag
+import com.minhtu.firesocialmedia.group.entity.user.UserInstance
+import com.minhtu.firesocialmedia.domain.entity.group.GroupInstance
 import com.minhtu.firesocialmedia.platform.CommonBackHandler
 import com.minhtu.firesocialmedia.platform.CrossPlatformIcon
 import com.minhtu.firesocialmedia.platform.showToast
 import com.minhtu.firesocialmedia.platform.toHex
-import com.minhtu.firesocialmedia.presentation.search.Search
-import com.minhtu.firesocialmedia.presentation.search.SearchViewModel
-import com.minhtu.firesocialmedia.core.storage.toStorageUrl
+import com.minhtu.firesocialmedia.storage.group.toStorageUrl
+import com.minhtu.firesocialmedia.group.utils.UiUtils.Companion.GroupSearchBar
 import com.seiko.imageloader.ui.AutoSizeImage
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -60,7 +60,6 @@ class SelectGroup {
         fun SelectGroupScreen(
             currentUser : UserInstance,
             selectGroupViewModel: SelectGroupViewModel = koinViewModel(),
-            searchViewModel : SearchViewModel = koinViewModel(),
             paddingValues : PaddingValues,
             localImageLoaderValue : ProvidedValue<*>,
             onNavigateBack : () -> Unit,
@@ -70,7 +69,11 @@ class SelectGroup {
             CommonBackHandler {
                 onNavigateBack()
             }
-            val groupList = currentUser.groups.values
+            LaunchedEffect(Unit) {
+                selectGroupViewModel.getAllGroupsOfUser(currentUser.uid)
+            }
+            val allGroupsState by selectGroupViewModel.getAllGroupsState.collectAsState()
+            val groupList = allGroupsState?.toList() ?: emptyList()
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -112,9 +115,10 @@ class SelectGroup {
                     thickness = 1.dp,
                     color = MaterialTheme.colorScheme.outlineVariant
                 )
-                Search.SearchBar(
-                    query = searchViewModel.query,
-                    onQueryChange = { query -> searchViewModel.updateQuery(query) },
+                var searchQuery by remember { mutableStateOf("") }
+                GroupSearchBar(
+                    query = searchQuery,
+                    onQueryChange = { query -> searchQuery = query },
                     modifier = Modifier
                         .padding(horizontal = 10.dp)
                         .testTag(TestTag.TAG_SEARCH_BAR)
@@ -159,8 +163,8 @@ class SelectGroup {
                 //All groups
                 var filterList by remember { mutableStateOf<List<GroupInstance>>(emptyList()) }
                 // Run filtering when friend list or search query changes
-                LaunchedEffect( searchViewModel.query) {
-                    filterList = groupList.filter { it.name.contains(searchViewModel.query) }
+                LaunchedEffect(searchQuery) {
+                    filterList = groupList.filter { it.name.contains(searchQuery) }
                 }
                 LazyColumn(
                     modifier = Modifier

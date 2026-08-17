@@ -3,28 +3,28 @@ package com.minhtu.firesocialmedia.presentation.uploadnewsfeed
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import com.minhtu.firesocialmedia.core.constants.Constants
-import com.minhtu.firesocialmedia.core.domain.core.DecentralizationType
-import com.minhtu.firesocialmedia.core.domain.entity.news.NewsInstance
-import com.minhtu.firesocialmedia.core.domain.entity.notification.NotificationInstance
-import com.minhtu.firesocialmedia.core.domain.entity.notification.NotificationType
-import com.minhtu.firesocialmedia.core.domain.entity.user.UserInstance
-import com.minhtu.firesocialmedia.core.domain.usecases.common.GetUserUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.group.GetAllMembersInGroupUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.group.GetGroupConfigsUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.group.SaveNewToGroupUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.newsfeed.DeleteAllDraftPostsUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.newsfeed.DeleteDraftPostUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.newsfeed.SaveNewToDatabaseUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.newsfeed.UpdateNewsFromDatabaseUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.notification.SaveNotificationToDatabaseUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.sync.LoadNewsPostedWhenOfflineUseCase
-import com.minhtu.firesocialmedia.platform.createMessageForServer
+import com.minhtu.firesocialmedia.constants.home.Constants
+import com.minhtu.firesocialmedia.home.entity.core.DecentralizationType
+import com.minhtu.firesocialmedia.home.entity.news.NewsInstance
+import com.minhtu.firesocialmedia.home.entity.notification.NotificationInstance
+import com.minhtu.firesocialmedia.home.entity.notification.NotificationType
+import com.minhtu.firesocialmedia.home.entity.notification.toSharedNotification
+import com.minhtu.firesocialmedia.home.entity.user.UserInstance
+import com.minhtu.firesocialmedia.domain.usecases.home.GetUserUseCase
+import com.minhtu.firesocialmedia.domain.usecases.group.home.GetAllMembersInGroupUseCase
+import com.minhtu.firesocialmedia.domain.usecases.group.home.GetGroupConfigsUseCase
+import com.minhtu.firesocialmedia.domain.usecases.group.home.SaveNewToGroupUseCase
+import com.minhtu.firesocialmedia.domain.usecases.newsfeed.DeleteAllDraftPostsUseCase
+import com.minhtu.firesocialmedia.domain.usecases.newsfeed.DeleteDraftPostUseCase
+import com.minhtu.firesocialmedia.domain.usecases.newsfeed.SaveNewToDatabaseUseCase
+import com.minhtu.firesocialmedia.domain.usecases.newsfeed.UpdateNewsFromDatabaseUseCase
+import com.minhtu.firesocialmedia.domain.usecases.notification.SaveNotificationToDatabaseUseCase
+import com.minhtu.firesocialmedia.domain.usecases.sync.LoadNewsPostedWhenOfflineUseCase
+import com.minhtu.firesocialmedia.home.platform.createMessageForServer
 import com.minhtu.firesocialmedia.platform.generateRandomId
 import com.minhtu.firesocialmedia.platform.getCurrentTime
 import com.minhtu.firesocialmedia.platform.getRandomIdForNotification
-import com.minhtu.firesocialmedia.platform.sendMessageToServer
-import com.minhtu.firesocialmedia.presentation.uploadnewsfeed.UploadNewfeedViewModelContract
+import com.minhtu.firesocialmedia.home.platform.sendMessageToServer
 import com.rickclephas.kmp.observableviewmodel.ViewModel
 import com.rickclephas.kmp.observableviewmodel.launch
 import kotlinx.coroutines.CoroutineDispatcher
@@ -52,64 +52,64 @@ class UploadNewfeedViewModel(
     private val getAllMembersInGroupUseCase : GetAllMembersInGroupUseCase,
     private val getGroupConfigsUseCase : GetGroupConfigsUseCase,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
-) : ViewModel(), UploadNewfeedViewModelContract {
-    override var currentUser : UserInstance? = null
-    override fun updateCurrentUser(user: UserInstance) {
+) : ViewModel() {
+    var currentUser : UserInstance? = null
+    fun updateCurrentUser(user: UserInstance) {
         currentUser = user
     }
-    override var message by mutableStateOf("")
-    override fun updateMessage(input : String){
+    var message by mutableStateOf("")
+    fun updateMessage(input : String){
         message = input
     }
 
-    override var image by mutableStateOf("")
-    override fun updateImage(input:String){
+    var image by mutableStateOf("")
+    fun updateImage(input:String){
         image = input
         video = ""
     }
 
-    override var video by mutableStateOf("")
-    override fun updateVideo(input : String) {
+    var video by mutableStateOf("")
+    fun updateVideo(input : String) {
         video = input
         image = ""
     }
 
-    override var groupId by mutableStateOf("")
-    override fun updateGroupId(input : String) {
+    var groupId by mutableStateOf("")
+    fun updateGroupId(input : String) {
         groupId = input
     }
-    override fun resetGroupId() {
+    fun resetGroupId() {
         groupId = ""
     }
 
     private var _createPostStatus = MutableStateFlow<Boolean?>(null)
-    override var createPostStatus = _createPostStatus.asStateFlow()
+    var createPostStatus = _createPostStatus.asStateFlow()
     private var _updatePostStatus = MutableStateFlow<Boolean?>(null)
-    override var updatePostStatus = _updatePostStatus.asStateFlow()
+    var updatePostStatus = _updatePostStatus.asStateFlow()
     private var _postError = MutableStateFlow<String?>(null)
-    override var postError = _postError.asStateFlow()
+    var postError = _postError.asStateFlow()
 
-    override fun resetPostError(){
+    fun resetPostError(){
         _postError.value = null
     }
 
     private var _clickBackButton = MutableStateFlow(false)
-    override var clickBackButton = _clickBackButton.asStateFlow()
-    override fun onClickBackButton() {
+    var clickBackButton = _clickBackButton.asStateFlow()
+    fun onClickBackButton() {
         _clickBackButton.value = true
     }
-    override fun resetBackValue() {
+    fun resetBackValue() {
         _clickBackButton.value = false
     }
     private val _accessPermission = MutableStateFlow<DecentralizationType>(DecentralizationType.Public)
-    override var accessPermission = _accessPermission.asStateFlow()
-    override fun updateAccessPermission(permission : DecentralizationType) {
+    var accessPermission = _accessPermission.asStateFlow()
+    fun updateAccessPermission(permission : DecentralizationType) {
         _accessPermission.value = permission
     }
-    override fun resetAccessPermission() {
+    fun resetAccessPermission() {
         _accessPermission.value = DecentralizationType.Public
     }
-    override fun createPost(user : UserInstance){
+    fun createPost(user : UserInstance){
         viewModelScope.launch {
             withContext(ioDispatcher) {
                 val newsRandomId = generateRandomId()
@@ -157,17 +157,17 @@ class UploadNewfeedViewModel(
                             val friendTokens = getFriendTokens()
                             if(friendTokens.isNotEmpty()){
                                 if(notification.content.isNotEmpty()) {
-                                    sendMessageToServer(createMessageForServer(notification.content, friendTokens, currentUser!!, "BASIC"))
+                                    sendMessageToServer(createMessageForServer(notification.content, friendTokens, currentUser!!.token, currentUser!!.uid, currentUser!!.image, currentUser!!.email, currentUser!!.name, "BASIC"))
                                 } else {
                                     if(image.isNotEmpty()) {
                                         val content = "Posted a picture!"
                                         notification.updateContent(content)
-                                        sendMessageToServer(createMessageForServer(content, friendTokens, currentUser!!, "BASIC"))
+                                        sendMessageToServer(createMessageForServer(content, friendTokens, currentUser!!.token, currentUser!!.uid, currentUser!!.image, currentUser!!.email, currentUser!!.name, "BASIC"))
                                     } else {
                                         if(video.isNotEmpty()) {
                                             val content = "Posted a video!"
                                             notification.updateContent(content)
-                                            sendMessageToServer(createMessageForServer(content, friendTokens, currentUser!!, "BASIC"))
+                                            sendMessageToServer(createMessageForServer(content, friendTokens, currentUser!!.token, currentUser!!.uid, currentUser!!.image, currentUser!!.email, currentUser!!.name, "BASIC"))
                                         }
                                     }
                                 }
@@ -194,8 +194,8 @@ class UploadNewfeedViewModel(
                                 allMembersInfo.keys
                                     .map { userId ->
                                         async {
-                                            val config = getGroupConfigsUseCase.invoke(userId, groupId)
-                                            if (config.notificationOn) userId else null
+                                            val notificationOn = getGroupConfigsUseCase.invoke(userId, groupId)
+                                            if (notificationOn) userId else null
                                         }
                                     }
                                     .awaitAll()
@@ -204,17 +204,17 @@ class UploadNewfeedViewModel(
                             val memberTokens = getMemberTokens(userIdsWithNotificationOn)
                             if(memberTokens.isNotEmpty()){
                                 if(notification.content.isNotEmpty()) {
-                                    sendMessageToServer(createMessageForServer(notification.content, memberTokens, currentUser!!, "BASIC"))
+                                    sendMessageToServer(createMessageForServer(notification.content, memberTokens, currentUser!!.token, currentUser!!.uid, currentUser!!.image, currentUser!!.email, currentUser!!.name, "BASIC"))
                                 } else {
                                     if(image.isNotEmpty()) {
                                         val content = "Posted a picture!"
                                         notification.updateContent(content)
-                                        sendMessageToServer(createMessageForServer(content, memberTokens, currentUser!!, "BASIC"))
+                                        sendMessageToServer(createMessageForServer(content, memberTokens, currentUser!!.token, currentUser!!.uid, currentUser!!.image, currentUser!!.email, currentUser!!.name, "BASIC"))
                                     } else {
                                         if(video.isNotEmpty()) {
                                             val content = "Posted a video!"
                                             notification.updateContent(content)
-                                            sendMessageToServer(createMessageForServer(content, memberTokens, currentUser!!, "BASIC"))
+                                            sendMessageToServer(createMessageForServer(content, memberTokens, currentUser!!.token, currentUser!!.uid, currentUser!!.image, currentUser!!.email, currentUser!!.name, "BASIC"))
                                         }
                                     }
                                 }
@@ -245,7 +245,7 @@ class UploadNewfeedViewModel(
             friend.addNotification(notification)
             saveNotificationToDatabaseUseCase.invoke(
                 friend.uid,
-                friend.notifications)
+                ArrayList(friend.notifications.map { it.toSharedNotification() }))
         } catch(_: Exception) {
         }
     }
@@ -266,7 +266,7 @@ class UploadNewfeedViewModel(
             }
     }
 
-    override fun resetPostStatus() {
+    fun resetPostStatus() {
         _createPostStatus.value = null
         _updatePostStatus.value = null
         message = ""
@@ -295,7 +295,7 @@ class UploadNewfeedViewModel(
             .filterNotNull())
     }
 
-    override fun updateNewInformation(new: NewsInstance) {
+    fun updateNewInformation(new: NewsInstance) {
         val backgroundScope = CoroutineScope(SupervisorJob() + ioDispatcher)
         backgroundScope.launch {
             if(message.isNotEmpty() || image.isNotEmpty() || video.isNotEmpty()) {
@@ -318,9 +318,9 @@ class UploadNewfeedViewModel(
     }
 
     private val _newsPostedWhenOffline = MutableStateFlow<List<NewsInstance>>(emptyList())
-    override var newsPostedWhenOffline = _newsPostedWhenOffline.asStateFlow()
-    override val localPathOfSelectedDraft = mutableStateOf("")
-    override suspend fun loadNewsPostedWhenOffline() {
+    var newsPostedWhenOffline = _newsPostedWhenOffline.asStateFlow()
+    val localPathOfSelectedDraft = mutableStateOf("")
+    suspend fun loadNewsPostedWhenOffline() {
         _newsPostedWhenOffline.value = loadNewsPostedWhenOfflineUseCase.invoke()
     }
 
@@ -333,7 +333,7 @@ class UploadNewfeedViewModel(
         _newsPostedWhenOffline.value = emptyList()
     }
 
-    override fun updatePostData(message: String, image: String, video: String) {
+    fun updatePostData(message: String, image: String, video: String) {
         updateMessage(message)
         if(image.isNotEmpty()){
             updateImage(image)
@@ -343,16 +343,16 @@ class UploadNewfeedViewModel(
         }
     }
 
-    override fun updateLocalPath(localPath: String) {
+    fun updateLocalPath(localPath: String) {
         localPathOfSelectedDraft.value = localPath
     }
 
     private val _deleteDraftStatus = MutableStateFlow<Boolean?>(null)
-    override val deleteDraftStatus = _deleteDraftStatus.asStateFlow()
-    override fun resetDeleteDraftStatus() {
+    val deleteDraftStatus = _deleteDraftStatus.asStateFlow()
+    fun resetDeleteDraftStatus() {
         _deleteDraftStatus.value = null
     }
-    override fun deleteAllDraftPosts() {
+    fun deleteAllDraftPosts() {
         viewModelScope.launch(ioDispatcher) {
             //Reset delete state before execute new delete operation
             resetDeleteDraftStatus()
@@ -367,7 +367,7 @@ class UploadNewfeedViewModel(
         }
     }
 
-    override fun deleteDraftPost(newId : String) {
+    fun deleteDraftPost(newId : String) {
         viewModelScope.launch(ioDispatcher) {
             //Reset delete state before execute new delete operation
             resetDeleteDraftStatus()
@@ -383,7 +383,7 @@ class UploadNewfeedViewModel(
     }
 
     private val groupMembers = MutableStateFlow<HashMap<String, String>>(HashMap())
-    override fun getGroupMembersFromGroupDetails(members: HashMap<String, String>) {
+    fun getGroupMembersFromGroupDetails(members: HashMap<String, String>) {
         groupMembers.value = members
     }
 }

@@ -11,7 +11,6 @@
         android:required="true" />
     <uses-permission android:name="android.permission.CAMERA"/>
     <uses-permission android:name="android.permission.READ_MEDIA_VIDEO"/>
-    <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.RECORD_AUDIO"/>
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
@@ -29,19 +28,17 @@
     <application
         android:name=".AppApplication"
         android:allowBackup="true"
-        android:dataExtractionRules="@xml/data_extraction_rules"
-        android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/app_logo"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/app_logo"
         android:supportsRtl="true"
-        android:theme="@style/Theme.FireSocialMedia"
+        android:theme="@style/AppTheme"
         tools:targetApi="31">
         <activity
             android:name=".MainActivity"
             android:exported="true"
             android:screenOrientation="portrait"
-            android:theme="@style/Theme.FireSocialMedia">
+            android:theme="@style/AppTheme">
             <!-- Deep links for HTTPS -->
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW"/>
@@ -73,7 +70,7 @@
             android:showWhenLocked="true"
             android:turnScreenOn="true"
             android:screenOrientation="portrait"
-            android:theme="@style/Theme.FireSocialMedia" />
+            android:theme="@style/AppTheme" />
         <!--
              Transparent activity that requests RECORD_AUDIO over the lock screen.
              showWhenLocked + turnScreenOn ensure the system permission dialog
@@ -109,15 +106,12 @@
             android:exported="false"/>
 
         <service
-            android:name="com.minhtu.firesocialmedia.domain.serviceimpl.call.CallForegroundService"
+            android:name="com.minhtu.firesocialmedia.android.service.serviceimpl.call.CallForegroundService"
             android:foregroundServiceType="microphone"
             android:exported="false"/>
 
         <receiver
-            android:name="com.minhtu.firesocialmedia.domain.serviceimpl.call.CallActionBroadcastReceiver"
+            android:name="com.minhtu.firesocialmedia.android.service.serviceimpl.call.CallActionBroadcastReceiver"
             android:exported="true" />
     </application>
-    <queries>
-        <package android:name="com.example.firechat" />
-    </queries>
 </manifest>

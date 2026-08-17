@@ -1,7 +1,7 @@
 package com.minhtu.firesocialmedia.presentation.setting.notificationconfigs
 
 import androidx.lifecycle.ViewModel
-import com.minhtu.firesocialmedia.core.domain.entity.notification.NotificationType
+import com.minhtu.firesocialmedia.domain.entity.notification.NotificationType
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO

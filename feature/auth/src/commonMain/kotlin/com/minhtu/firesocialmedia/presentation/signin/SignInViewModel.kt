@@ -2,19 +2,19 @@ package com.minhtu.firesocialmedia.presentation.signin
 
 import androidx.compose.runtime.mutableStateOf
 import com.minhtu.firesocialmedia.data.remote.service.signinlauncher.SignInLauncher
-import com.minhtu.firesocialmedia.core.domain.entity.crypto.Credentials
-import com.minhtu.firesocialmedia.core.domain.entity.signin.SignInState
-import com.minhtu.firesocialmedia.core.domain.entity.user.UserInstance
-import com.minhtu.firesocialmedia.core.domain.error.signin.SignInError
-import com.minhtu.firesocialmedia.core.domain.signin.GoogleSignInHandler
-import com.minhtu.firesocialmedia.core.domain.usecases.common.GetCurrentUserUidUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.common.GetUserUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.signin.CheckLocalAccountUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.signin.CheckUserExistsUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.signin.HandleSignInGoogleResultUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.signin.RememberPasswordUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.signin.SaveLoginActivityInfoUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.signin.SignInUseCase
+import com.minhtu.firesocialmedia.domain.entity.crypto.Credentials
+import com.minhtu.firesocialmedia.domain.entity.signin.SignInState
+import com.minhtu.firesocialmedia.domain.entity.user.auth.UserInstance
+import com.minhtu.firesocialmedia.domain.error.signin.SignInError
+import com.minhtu.firesocialmedia.domain.signin.GoogleSignInHandler
+import com.minhtu.firesocialmedia.domain.usecases.common.auth.GetCurrentUserUidUseCase
+import com.minhtu.firesocialmedia.domain.usecases.common.auth.GetUserUseCase
+import com.minhtu.firesocialmedia.domain.usecases.signin.CheckLocalAccountUseCase
+import com.minhtu.firesocialmedia.domain.usecases.signin.CheckUserExistsUseCase
+import com.minhtu.firesocialmedia.domain.usecases.signin.HandleSignInGoogleResultUseCase
+import com.minhtu.firesocialmedia.domain.usecases.signin.RememberPasswordUseCase
+import com.minhtu.firesocialmedia.domain.usecases.signin.SaveLoginActivityInfoUseCase
+import com.minhtu.firesocialmedia.domain.usecases.signin.SignInUseCase
 import com.minhtu.firesocialmedia.platform.logMessage
 import com.rickclephas.kmp.observableviewmodel.ViewModel
 import com.rickclephas.kmp.observableviewmodel.launch
@@ -48,8 +48,8 @@ class SignInViewModel(
     private var _signInStatus = MutableStateFlow(SignInState(false, null))
     var signInState = _signInStatus.asStateFlow()
 
-    override fun updateSignInStatus(state: SignInState) {
-        _signInStatus.value = state
+    override fun updateSignInStatus(success: Boolean) {
+        _signInStatus.value = SignInState(success, null)
     }
 
     fun resetSignInStatus() {

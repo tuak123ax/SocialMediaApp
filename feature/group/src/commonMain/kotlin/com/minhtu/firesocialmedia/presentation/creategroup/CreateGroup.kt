@@ -50,23 +50,22 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.minhtu.firesocialmedia.core.constants.Constants
-import com.minhtu.firesocialmedia.core.constants.TestTag
-import com.minhtu.firesocialmedia.data.remote.service.imagepicker.ImagePicker
-import com.minhtu.firesocialmedia.core.domain.core.DecentralizationType
-import com.minhtu.firesocialmedia.core.domain.entity.group.GroupInstance
-import com.minhtu.firesocialmedia.core.domain.entity.user.UserInstance
+import com.minhtu.firesocialmedia.storage.group.SupabaseStorageProvider
+import com.minhtu.firesocialmedia.constants.group.TestTag
+import com.minhtu.firesocialmedia.data.remote.service.imagepicker.group.ImagePicker
+import com.minhtu.firesocialmedia.group.entity.core.DecentralizationType
+import com.minhtu.firesocialmedia.domain.entity.group.GroupInstance
+import com.minhtu.firesocialmedia.group.entity.user.UserInstance
 import com.minhtu.firesocialmedia.platform.CommonBackHandler
 import com.minhtu.firesocialmedia.platform.getImageBytesFromDrawable
 import com.minhtu.firesocialmedia.platform.showToast
 import com.minhtu.firesocialmedia.platform.toHex
-import com.minhtu.firesocialmedia.presentation.loading.Loading
-import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
-import com.minhtu.firesocialmedia.presentation.uploadnewsfeed.AccessPermissionBottomSheet
-import com.minhtu.firesocialmedia.presentation.uploadnewsfeed.AccessPermissionButtonContent
-import com.minhtu.firesocialmedia.utils.UiUtils
-import com.minhtu.firesocialmedia.utils.UiUtils.Companion.PasswordVisibilityIcon
+import com.minhtu.firesocialmedia.group.presentation.loading.Loading
+import com.minhtu.firesocialmedia.group.presentation.loading.LoadingViewModel
+import com.minhtu.firesocialmedia.utils.group.TitleBarUtils
+import com.minhtu.firesocialmedia.group.utils.UiUtils.Companion.PasswordVisibilityIcon
 import com.minhtu.sharedmodule.ui.theme.avatarGrayBackground
+import org.koin.compose.viewmodel.koinViewModel
 
 class CreateGroup {
     companion object {
@@ -74,12 +73,12 @@ class CreateGroup {
         fun CreateGroupScreen(
             paddingValues: PaddingValues,
             createGroupViewModel: CreateGroupViewModel,
-            loadingViewModel : LoadingViewModel,
             imagePicker: ImagePicker,
             currentUser : UserInstance,
             onCreateGroupSuccess : (GroupInstance) -> Unit,
             onNavigateBack : () -> Unit
         ) {
+            val loadingViewModel: LoadingViewModel = koinViewModel()
             CommonBackHandler {
                 createGroupViewModel.resetCreateGroupUiState()
                 onNavigateBack()
@@ -102,7 +101,7 @@ class CreateGroup {
                 if(createGroupState != null) {
                     if(createGroupState!!.id.isNotEmpty()) {
                         showToast("Create group successfully!!!")
-                        currentUser.groups[createGroupState!!.id] = createGroupState!!
+                        currentUser.groups.add(createGroupState!!.id)
                         createGroupViewModel.resetAccessPermission()
                         createGroupViewModel.resetCreateGroupUiState()
                         onCreateGroupSuccess(createGroupState!!)
@@ -123,7 +122,7 @@ class CreateGroup {
                         .fillMaxSize()
                 ) {
                     Spacer(Modifier.height(20.dp))
-                    UiUtils.BackAndTitleAndMoreOptionsRow(
+                    TitleBarUtils.BackAndTitleAndMoreOptionsRow(
                         "Create New Group",
                         titleColor = MaterialTheme.colorScheme.onSurface,
                         titleStyle = MaterialTheme.typography.headlineMedium,
@@ -134,7 +133,7 @@ class CreateGroup {
                     Spacer(Modifier.height(20.dp))
                     val imageBytes =
                         produceState<ByteArray?>(initialValue = null, createGroupViewModel.avatar) {
-                            value = if (createGroupViewModel.avatar == Constants.DEFAULT_ARK_AVATAR_URL_FOR_GROUP) {
+                            value = if (createGroupViewModel.avatar == SupabaseStorageProvider.DEFAULT_GROUP_AVATAR_URL) {
                                 getImageBytesFromDrawable("arkavatar")
                             } else {
                                 imagePicker.loadImageBytes(createGroupViewModel.avatar)

@@ -64,19 +64,19 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.minhtu.firesocialmedia.core.domain.entity.settings.SessionItem
-import com.minhtu.firesocialmedia.core.domain.entity.user.UserInstance
+import com.minhtu.firesocialmedia.domain.entity.settings.SessionItem
+import com.minhtu.firesocialmedia.security.data.remote.dto.user.UserDTO
 import com.minhtu.firesocialmedia.platform.convertTimeToDateString
 import com.minhtu.firesocialmedia.platform.showToast
 import com.minhtu.firesocialmedia.utils.PasswordVerifyDialog
-import com.minhtu.firesocialmedia.utils.UiUtils
+import com.minhtu.firesocialmedia.utils.security.TitleBarUtils
 import org.koin.compose.viewmodel.koinViewModel
 
 class LoginHistory {
     companion object {
         @Composable
         fun LoginHistoryScreen(
-            currentUser: UserInstance,
+            currentUser: UserDTO,
             loginHistoryViewModel: LoginHistoryViewModel = koinViewModel(),
             modifier: Modifier = Modifier,
             onNavigateBack: () -> Unit
@@ -142,7 +142,7 @@ class LoginHistory {
                 ) {
 
                     item {
-                        UiUtils.BackAndTitleAndMoreOptionsRow(
+                        TitleBarUtils.BackAndTitleAndMoreOptionsRow(
                             title = "Login History",
                             navigateBack = onNavigateBack
                         )

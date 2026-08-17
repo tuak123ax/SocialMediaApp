@@ -3,21 +3,20 @@ package com.minhtu.firesocialmedia.presentation.videocall
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.minhtu.firesocialmedia.core.domain.entity.call.OfferAnswer
-import com.minhtu.firesocialmedia.core.domain.entity.call.SpeakerType
-import com.minhtu.firesocialmedia.core.domain.entity.user.UserInstance
-import com.minhtu.firesocialmedia.core.domain.usecases.call.ManageCallStateUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.call.RequestCameraAndAudioPermissionsUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.call.StartVideoCallServiceUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.call.UpdateCameraStatusUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.call.UpdateMicStatusUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.call.UpdateSpeakerStatusUseCase
+import com.minhtu.firesocialmedia.domain.entity.call.OfferAnswer
+import com.minhtu.firesocialmedia.domain.entity.call.SpeakerType
+import com.minhtu.firesocialmedia.calling.entity.user.UserInstance
+import com.minhtu.firesocialmedia.domain.usecases.call.ManageCallStateUseCase
+import com.minhtu.firesocialmedia.domain.usecases.call.RequestCameraAndAudioPermissionsUseCase
+import com.minhtu.firesocialmedia.domain.usecases.call.StartVideoCallServiceUseCase
+import com.minhtu.firesocialmedia.domain.usecases.call.UpdateCameraStatusUseCase
+import com.minhtu.firesocialmedia.domain.usecases.call.UpdateMicStatusUseCase
+import com.minhtu.firesocialmedia.domain.usecases.call.UpdateSpeakerStatusUseCase
 import com.minhtu.firesocialmedia.platform.logMessage
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 class VideoCallViewModel(
     val startVideoCallServiceUseCase: StartVideoCallServiceUseCase,
@@ -45,28 +44,26 @@ class VideoCallViewModel(
         lastStartVideoCallSignature = startSignature
         isStartingVideoCall = true
         logMessage("startVideoCall", { sessionId })
-        viewModelScope.launch {
-            withContext(ioDispatcher) {
-                try {
-                    startVideoCallServiceUseCase.invoke(sessionId, caller, callee, currentUserId, remoteVideoOffer)
-                } catch (e : Exception) {
-                    logMessage("startVideoCall Exception", { e.message.toString() })
-                } finally {
-                    isStartingVideoCall = false
-                }
+        viewModelScope.launch(ioDispatcher) {
+            try {
+                startVideoCallServiceUseCase.invoke(sessionId, caller, callee, currentUserId, remoteVideoOffer)
+            } catch (e : Exception) {
+                logMessage("startVideoCall Exception", { e.message.toString() })
+            } finally {
+                isStartingVideoCall = false
             }
         }
     }
 
     fun requestPermissionsAndStartVideoCall(onGranted: () -> Unit, onDenied: () -> Unit) {
-        viewModelScope.launch {
-            val granted = withContext(Dispatchers.IO) { requestCameraAndAudioPermissionsUseCase.invoke() }
+        viewModelScope.launch(ioDispatcher) {
+            val granted = requestCameraAndAudioPermissionsUseCase.invoke()
             if (granted) onGranted() else onDenied()
         }
     }
 
     fun updateMicStatus(micMuted: Boolean) {
-        viewModelScope.launch { updateMicStatusUseCase.invoke(micMuted) }
+        viewModelScope.launch(ioDispatcher) { updateMicStatusUseCase.invoke(micMuted) }
     }
 
     fun updateCameraStatus(cameraOff: Boolean) {

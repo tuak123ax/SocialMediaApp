@@ -2,12 +2,13 @@ package com.minhtu.firesocialmedia.presentation.managemembers
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.minhtu.firesocialmedia.core.domain.entity.group.GroupInstance
-import com.minhtu.firesocialmedia.core.domain.entity.user.UserInstance
-import com.minhtu.firesocialmedia.core.domain.usecases.common.GetUserUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.group.DemoteMemberUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.group.PromoteMemberUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.group.RemoveMemberUseCase
+import com.minhtu.firesocialmedia.domain.entity.group.GroupInstance
+import com.minhtu.firesocialmedia.group.entity.user.UserInstance
+import com.minhtu.firesocialmedia.domain.usecases.common.group.GetUserUseCase
+import com.minhtu.firesocialmedia.domain.usecases.group.DemoteMemberUseCase
+import com.minhtu.firesocialmedia.domain.usecases.group.FetchGroupInfoUseCase
+import com.minhtu.firesocialmedia.domain.usecases.group.PromoteMemberUseCase
+import com.minhtu.firesocialmedia.domain.usecases.group.RemoveMemberUseCase
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -16,25 +17,42 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class ManageMembersViewModel(
     private val getUserUseCase : GetUserUseCase,
     private val removeMemberUseCase : RemoveMemberUseCase,
     private val promoteMemberUseCase : PromoteMemberUseCase,
     private val demoteMemberUseCase : DemoteMemberUseCase,
+    private val fetchGroupInfoUseCase : FetchGroupInfoUseCase,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : ViewModel() {
     suspend fun findUserById(userId: String) : UserInstance? {
         return getUserUseCase.invoke(userId, false)
     }
 
+    private val _fetchGroupInfoState = MutableStateFlow<GroupInstance?>(null)
+    var fetchGroupInfoState = _fetchGroupInfoState.asStateFlow()
+    fun fetchGroupInfo(groupId: String) {
+        viewModelScope.launch {
+            withContext(ioDispatcher) {
+                _fetchGroupInfoState.value = fetchGroupInfoUseCase.invoke(groupId)
+            }
+        }
+    }
+    fun resetFetchGroupInfoState() {
+        _fetchGroupInfoState.value = null
+    }
+
     private val _removeMemberStatus = MutableStateFlow<Boolean?>(null)
     var removeMemberStatus = _removeMemberStatus.asStateFlow()
-    fun removeMember(member : UserInstance,
-                     group : GroupInstance) {
+    fun removeMember(member : UserInstance) {
+        val group = _fetchGroupInfoState.value ?: return
         viewModelScope.launch(ioDispatcher) {
             _removeMemberStatus.value = removeMemberUseCase.invoke(member, group)
-            group.members.remove(member.uid)
+            _fetchGroupInfoState.value = group.copy(
+                members = HashMap(group.members).apply { remove(member.uid) }
+            )
             member.groups.remove(group.id)
         }
     }
@@ -44,12 +62,15 @@ class ManageMembersViewModel(
 
     private val _promoteMemberStatus = MutableStateFlow<Boolean?>(null)
     var promoteMemberStatus = _promoteMemberStatus.asStateFlow()
-    fun promoteMember(member: UserInstance, group: GroupInstance) {
+    fun promoteMember(member: UserInstance) {
+        val group = _fetchGroupInfoState.value ?: return
         viewModelScope.launch(ioDispatcher) {
             _promoteMemberStatus.value = promoteMemberUseCase.invoke(
                 member,
                 group)
-            group.members[member.uid] = "admin"
+            _fetchGroupInfoState.value = group.copy(
+                members = HashMap(group.members).apply { put(member.uid, "admin") }
+            )
         }
     }
     fun resetPromoteMemberStatus() {
@@ -57,12 +78,15 @@ class ManageMembersViewModel(
     }
     private val _demoteMemberStatus = MutableStateFlow<Boolean?>(null)
     var demoteMemberStatus = _demoteMemberStatus.asStateFlow()
-    fun demoteMember(member: UserInstance, group: GroupInstance) {
+    fun demoteMember(member: UserInstance) {
+        val group = _fetchGroupInfoState.value ?: return
         viewModelScope.launch(ioDispatcher) {
             _demoteMemberStatus.value = demoteMemberUseCase.invoke(
                 member,
                 group)
-            group.members[member.uid] = "member"
+            _fetchGroupInfoState.value = group.copy(
+                members = HashMap(group.members).apply { put(member.uid, "member") }
+            )
         }
     }
     fun resetDemoteMemberStatus() {

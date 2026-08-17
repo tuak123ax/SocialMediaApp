@@ -1,437 +1,22 @@
 package com.minhtu.firesocialmedia.android.service.serviceimpl.database.supabase
 
-import android.util.Log
-import com.google.firebase.database.DatabaseReference
-import com.google.firebase.database.FirebaseDatabase
-import com.minhtu.firesocialmedia.core.constants.Constants
-import com.minhtu.firesocialmedia.data.remote.dto.group.GroupDTO
-import com.minhtu.firesocialmedia.data.remote.dto.group.GroupSummaryDTO
-import com.minhtu.firesocialmedia.data.remote.dto.news.NewsDTO
-import com.minhtu.firesocialmedia.data.remote.dto.user.UserDTO
-import com.minhtu.firesocialmedia.core.domain.entity.base.BaseNewsInstance
-import com.minhtu.firesocialmedia.android.service.serviceimpl.database.StorageHelperInterface
 import com.minhtu.firesocialmedia.android.service.serviceimpl.database.supabase.SupabaseStorageHelper.Companion.CANDIDATE_EXTENSIONS
 import com.minhtu.firesocialmedia.android.service.serviceimpl.database.supabase.SupabaseStorageHelper.Companion.initExtensionCache
+import com.minhtu.firesocialmedia.android.service.serviceimpl.notification.KtorProvider
+import com.minhtu.firesocialmedia.platform.AppConfig
 import com.minhtu.firesocialmedia.platform.logMessage
+import io.ktor.client.request.delete
+import io.ktor.client.request.header
+import io.ktor.http.isSuccess
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import java.net.URLDecoder
 
-class SupabaseStorageHelper : StorageHelperInterface {
-    override suspend fun saveInstanceToDatabase(
-        commentId: String,
-        path: String,
-        instance: BaseNewsInstance
-    ): Boolean {
-        Log.d("Task", "saveInstanceToDatabase")
-
-        val databaseReference = FirebaseDatabase.getInstance()
-            .getReference()
-            .child(path)
-            .child(commentId)
-
-        return try {
-            when {
-                instance.image.isNotEmpty() -> {
-                    val extension = getFileExtension(instance.image, "jpg")
-                    val remotePath = "$path/${commentId}_${System.currentTimeMillis()}.$extension"
-
-                    SupabaseStorage.upload(
-                        filePath = instance.image,
-                        remotePath = remotePath
-                    )
-
-                    instance.updateImage(remotePath) // store relative path
-                    instance.updateVideo("")
-                }
-
-                instance.video.isNotEmpty() -> {
-                    val extension = getFileExtension(instance.video, "mp4")
-                    val remotePath = "$path/${commentId}_${System.currentTimeMillis()}.$extension"
-
-                    SupabaseStorage.upload(
-                        filePath = instance.video,
-                        remotePath = remotePath
-                    )
-
-                    instance.updateVideo(remotePath) // store relative path
-                    instance.updateImage("")
-                }
-
-                else -> {
-                    // no media
-                }
-            }
-
-            databaseReference.setValue(instance).await()
-            true
-
-        } catch (e: Exception) {
-            logMessage(
-                "saveInstanceToDatabase",
-                { "Exception with Supabase upload: ${e.message}" }
-            )
-            false
-        }
-    }
-
-    override suspend fun deleteNewsFromDatabase(
-        path: String,
-        new: NewsDTO
-    ) {
-        Log.d("Task", "deleteNewsFromDatabase")
-
-        // 1. Delete from Firebase Realtime DB
-        FirebaseDatabase.getInstance()
-            .getReference()
-            .child(path)
-            .child(new.id)
-            .removeValue()
-            .await()
-
-        // 2. Delete media from Supabase Storage
-        try {
-            when {
-                new.image.isNotEmpty() -> {
-                    SupabaseStorage.delete(new.image) // correct path
-                }
-
-                new.video.isNotEmpty() -> {
-                    SupabaseStorage.delete(new.video) // correct path
-                }
-            }
-        } catch (e: Exception) {
-            Log.w("Task", "Supabase Storage delete: ${e.message}")
-        }
-    }
-
-    override suspend fun updateNewsFromDatabase(
-        path: String,
-        newContent: String,
-        newImage: String,
-        newVideo: String,
-        new: NewsDTO
-    ): Boolean {
-        Log.d("Task", "updateNewsFromDatabase")
-
-        val dbRef = FirebaseDatabase.getInstance()
-            .getReference(path)
-            .child(new.id)
-
-        return try {
-            val updates = mutableMapOf<String, Any>(
-                "message" to newContent
-            )
-
-            when {
-                // Image branch
-                newImage.isNotEmpty() -> {
-                    if (newImage != new.image) {
-
-                        val extension = getFileExtension(newImage, "jpg")
-                        val remotePath =
-                            "$path/${new.id}_${System.currentTimeMillis()}.$extension"
-
-                        SupabaseStorage.upload(
-                            filePath = newImage,
-                            remotePath = remotePath
-                        )
-
-                        // delete old file safely
-                        deleteOldMediaIfNeeded(new.image)
-
-                        updates["image"] = remotePath
-                        updates["video"] = ""
-                    } else {
-                        updates["image"] = new.image
-                        updates["video"] = ""
-                    }
-                }
-
-                // Video branch
-                newVideo.isNotEmpty() -> {
-                    if (newVideo != new.video) {
-
-                        val extension = getFileExtension(newVideo, "mp4")
-                        val remotePath =
-                            "$path/${new.id}_${System.currentTimeMillis()}.$extension"
-
-                        SupabaseStorage.upload(
-                            filePath = newVideo,
-                            remotePath = remotePath
-                        )
-
-                        // delete old file safely
-                        deleteOldMediaIfNeeded(new.video)
-
-                        updates["video"] = remotePath
-                        updates["image"] = ""
-                    } else {
-                        updates["video"] = new.video
-                        updates["image"] = ""
-                    }
-                }
-
-                // No media → clear & delete old file
-                else -> {
-                    updates["image"] = ""
-                    updates["video"] = ""
-
-                    deleteOldMediaIfNeeded(new.image)
-                    deleteOldMediaIfNeeded(new.video)
-                }
-            }
-
-            dbRef.updateChildren(updates).await()
-            true
-
-        } catch (t: Throwable) {
-            Log.e("Task", "updateNewsFromDatabase failed", t)
-            false
-        }
-    }
-
-    override suspend fun saveNewToDatabase(
-        commentId: String,
-        path: String,
-        instance: NewsDTO
-    ): Boolean {
-        return runCatching {
-            val dbRef = FirebaseDatabase.getInstance()
-                .getReference()
-                .child(path)
-                .child(commentId)
-
-            when {
-                instance.image.isNotEmpty() -> {
-                    val filePath = instance.localPath.ifEmpty { instance.image }
-                    val extension = getFileExtension(filePath, "jpg")
-
-                    val remotePath =
-                        "$path/${commentId}_${System.currentTimeMillis()}.$extension"
-
-                    SupabaseStorage.upload(
-                        filePath = filePath,
-                        remotePath = remotePath
-                    )
-
-                    instance.updateImage(remotePath) // store path only
-                    instance.updateVideo("")
-                }
-
-                instance.video.isNotEmpty() -> {
-                    val filePath = instance.localPath.ifEmpty { instance.video }
-                    val extension = getFileExtension(filePath, "mp4")
-
-                    val remotePath =
-                        "$path/${commentId}_${System.currentTimeMillis()}.$extension"
-
-                    SupabaseStorage.upload(
-                        filePath = filePath,
-                        remotePath = remotePath
-                    )
-
-                    instance.updateVideo(remotePath) // store path only
-                    instance.updateImage("")
-                }
-
-                else -> {
-                    // No media → just save
-                }
-            }
-
-            dbRef.setValue(instance).await()
-            true
-
-        }.getOrElse { e ->
-            Log.e("Task", "saveNewToDatabase failed: ${e.message}", e)
-            false
-        }
-    }
-
-    override suspend fun saveGroupAndUserGroups(
-        groupRootPath: String,
-        userRootPath: String,
-        userGroupsField: String,
-        groupAvatarsStoragePath: String,
-        group: GroupDTO,
-        userId: String
-    ): Boolean {
-        val databaseRef = FirebaseDatabase.getInstance().reference
-
-        return try {
-            val shouldUploadAvatar =
-                group.avatar != Constants.DEFAULT_AVATAR_URL &&
-                        group.avatar != Constants.DEFAULT_DECADE_AVATAR_URL &&
-                        group.avatar != Constants.DEFAULT_ARK_AVATAR_URL_FOR_GROUP
-
-            if (shouldUploadAvatar) {
-                val extension = getFileExtension(group.avatar, "jpg")
-
-                val remotePath =
-                    "$groupRootPath/$groupAvatarsStoragePath/${group.id}_${System.currentTimeMillis()}.$extension"
-
-                SupabaseStorage.upload(
-                    filePath = group.avatar,
-                    remotePath = remotePath
-                )
-
-                group.avatar = remotePath // store relative path
-            }
-
-            updateGroupDataOnServer(
-                databaseRef = databaseRef,
-                groupRootPath = groupRootPath,
-                userRootPath = userRootPath,
-                userGroupsField = userGroupsField,
-                group = group,
-                userId = userId
-            )
-
-            true
-
-        } catch (ex: Exception) {
-            logMessage(
-                "saveGroupAndUserGroups",
-                { "Exception with Supabase: ${ex.message}" }
-            )
-            false
-        }
-    }
-
-    suspend fun updateGroupDataOnServer(
-        databaseRef: DatabaseReference,
-        groupRootPath: String,
-        userRootPath: String,
-        userGroupsField: String,
-        group: GroupDTO,
-        userId: String
-    ): Boolean {
-        return try {
-            val groupSummary = GroupSummaryDTO(
-                id = group.id,
-                name = group.name,
-                avatar = group.avatar
-            )
-
-            val updates = hashMapOf<String, Any?>(
-                "$groupRootPath/${group.id}" to group,
-                "$userRootPath/$userId/$userGroupsField/${group.id}" to groupSummary
-            )
-
-            databaseRef.updateChildren(updates).await()
-
-            Log.d("Task", "updateChildren SUCCESS")
-            true
-
-        } catch (e: Exception) {
-            Log.e("Task", "updateChildren FAILED", e)
-            false
-        }
-    }
-
-    override suspend fun saveNewToGroup(
-        newsDTO: NewsDTO,
-        groupId: String,
-        groupPath: String,
-        postsPath: String,
-        imagePath: String
-    ): Boolean {
-        return runCatching {
-            val dbRef = FirebaseDatabase.getInstance()
-                .getReference()
-                .child(groupPath)
-                .child(groupId)
-                .child(postsPath)
-                .child(newsDTO.id)
-
-            when {
-                newsDTO.image.isNotEmpty() -> {
-                    val filePath = newsDTO.localPath.ifEmpty { newsDTO.image }
-                    val extension = getFileExtension(filePath, "jpg")
-
-                    val remotePath =
-                        "$groupPath/$groupId/$imagePath/${newsDTO.id}_${System.currentTimeMillis()}.$extension"
-
-                    SupabaseStorage.upload(
-                        filePath = filePath,
-                        remotePath = remotePath
-                    )
-
-                    newsDTO.updateImage(remotePath) // store relative path
-                    newsDTO.updateVideo("")
-                }
-
-                newsDTO.video.isNotEmpty() -> {
-                    val filePath = newsDTO.localPath.ifEmpty { newsDTO.video }
-                    val extension = getFileExtension(filePath, "mp4")
-
-                    val remotePath =
-                        "$groupPath/$groupId/$imagePath/${newsDTO.id}_${System.currentTimeMillis()}.$extension"
-
-                    SupabaseStorage.upload(
-                        filePath = filePath,
-                        remotePath = remotePath
-                    )
-
-                    newsDTO.updateVideo(remotePath) // store relative path
-                    newsDTO.updateImage("")
-                }
-
-                else -> {
-                    // No media → just save
-                }
-            }
-
-            dbRef.setValue(newsDTO).await()
-            true
-
-        }.getOrElse { e ->
-            Log.e("Task", "saveNewToGroup failed: ${e.message}", e)
-            false
-        }
-    }
-
-    override suspend fun saveSignUpInformation(user: UserDTO): Boolean {
-        val databaseReference = FirebaseDatabase.getInstance()
-            .getReference()
-            .child("users")
-            .child(user.uid)
-
-        return try {
-            val shouldUploadAvatar =
-                user.image != Constants.DEFAULT_AVATAR_URL &&
-                        user.image != Constants.DEFAULT_DECADE_AVATAR_URL &&
-                        user.image != Constants.DEFAULT_ARK_AVATAR_URL_FOR_GROUP
-
-            if (shouldUploadAvatar) {
-                val extension = getFileExtension(user.image, "jpg")
-
-                val remotePath =
-                    "avatar/${user.uid}_${System.currentTimeMillis()}.$extension"
-
-                SupabaseStorage.upload(
-                    filePath = user.image,
-                    remotePath = remotePath
-                )
-
-                user.updateImage(remotePath) // store relative path
-            }
-
-            databaseReference.setValue(user).await()
-            true
-
-        } catch (e: Exception) {
-            Log.e("Task", "saveSignUpInformation failed: ${e.message}", e)
-            false
-        }
-    }
-
+class SupabaseStorageHelper {
     fun getFileExtension(path: String, defaultExt: String): String {
         // For content:// URIs, sniff MIME type from ContentResolver
         if (path.startsWith("content://")) {
@@ -461,7 +46,7 @@ class SupabaseStorageHelper : StorageHelperInterface {
 
         runCatching {
             try{
-                SupabaseStorage.delete(cleanPath)
+                deleteFromSupabaseStorage(cleanPath)
             } catch (e : Exception) {
                 logMessage("deleteOldMediaIfNeeded", { "Error happened: ${e.message}" })
             }
@@ -487,6 +72,22 @@ class SupabaseStorageHelper : StorageHelperInterface {
         private const val BASE_BUCKET_ENDPOINT = "storage/v1/object/public/uploads/"
         private const val SUPABASE_BASE = SupabaseClient.BASE_URL + BASE_BUCKET_ENDPOINT
         private const val PREFS_NAME = "supabase_ext_cache"
+        private const val BUCKET = "uploads"
+
+        /**
+         * Delete the object at [remotePath] from Supabase Storage. Inlined here (rather than
+         * delegating to a per-feature `SupabaseStorage` clone) because this helper itself is
+         * shared, stateful infra that stays in core — see the note in KoinModules.kt.
+         */
+        private suspend fun deleteFromSupabaseStorage(remotePath: String) {
+            val url = "${SupabaseClient.BASE_URL}storage/v1/object/$BUCKET/$remotePath"
+            val response = KtorProvider.client.delete(url) {
+                header("Authorization", "Bearer ${AppConfig.supabaseApiKey}")
+            }
+            if (!response.status.isSuccess()) {
+                throw Exception("Delete failed: ${response.status.value} ${response.status.description}")
+            }
+        }
 
         /** Candidate extensions — images first (most common), then video. */
         private val CANDIDATE_EXTENSIONS = listOf("jpg", "jpeg", "png", "webp", "gif", "mp4", "mov")
@@ -571,11 +172,10 @@ class SupabaseStorageHelper : StorageHelperInterface {
                 }
                 // Wait for first success or all completions
                 val winner = withTimeoutOrNull(5_000) {
-                    // Drain jobs; return first channel value
-                    val deferred = async { channel.receive() }
+                    val deferred = async { channel.receiveCatching().getOrNull() }
                     jobs.forEach { it.join() }
                     channel.close()
-                    runCatching { deferred.await() }.getOrNull()
+                    deferred.await()
                 }
                 jobs.forEach { it.cancel() }
                 winner

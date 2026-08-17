@@ -29,8 +29,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 import com.google.firebase.messaging.FirebaseMessaging
-import com.minhtu.firesocialmedia.core.constants.Constants
+import com.minhtu.firesocialmedia.android.constants.AppConstants
 import com.minhtu.firesocialmedia.di.AndroidPlatformContext
+import com.minhtu.firesocialmedia.di.PermissionManagerHolder
 import com.minhtu.firesocialmedia.di.PlatformContextHolder
 import com.minhtu.firesocialmedia.android.service.serviceimpl.permission.AndroidPermissionManager
 import com.minhtu.firesocialmedia.android.service.serviceimpl.remoteconfig.FetchResultCallback
@@ -54,10 +55,11 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         val deepLink = intent.data.toString()
         //Check if activity is started from notification
-        val fromNotification = intent.getBooleanExtra(Constants.FROM_NOTIFICATION, false)
+        val fromNotification = intent.getBooleanExtra(AppConstants.FROM_NOTIFICATION, false)
         permissionManager = AndroidPermissionManager(this)
         permissionManager.setPermissionLauncher(requestMultiplePermissionsLauncher)
-        PlatformContextHolder.instance = AndroidPlatformContext(applicationContext, permissionManager)
+        PermissionManagerHolder.instance = permissionManager
+        PlatformContextHolder.instance = AndroidPlatformContext(applicationContext)
         setContent {
             FireSocialMediaCommonTheme{
                 // A surface container using the 'background' color from the theme
@@ -81,7 +83,7 @@ class MainActivity : ComponentActivity() {
                         checkFCMToken()
                         askNotificationPermission()
                     }
-                    val platformContext = remember { AndroidPlatformContext(applicationContext, permissionManager) }
+                    val platformContext = remember { AndroidPlatformContext(applicationContext) }
                     Box(modifier = Modifier.fillMaxSize()) {
                         if(fromNotification) {
                             val sessionId = intent.getStringExtra("sessionId")

@@ -2,9 +2,9 @@ package com.minhtu.firesocialmedia.presentation.twofa
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.minhtu.firesocialmedia.core.domain.usecases.settings.BuildOtpAuthUrlUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.settings.CopyUseCase
-import com.minhtu.firesocialmedia.core.domain.usecases.settings.GenerateSecretFor2FAUseCase
+import com.minhtu.firesocialmedia.domain.usecases.settings.BuildOtpAuthUrlUseCase
+import com.minhtu.firesocialmedia.domain.usecases.settings.CopyUseCase
+import com.minhtu.firesocialmedia.domain.usecases.settings.GenerateSecretFor2FAUseCase
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO

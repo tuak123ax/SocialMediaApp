@@ -7,8 +7,6 @@ import android.security.keystore.KeyProperties
 import android.util.Log
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
-import com.minhtu.firesocialmedia.core.constants.Constants
-import com.minhtu.firesocialmedia.data.remote.dto.user.UserDTO
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -18,6 +16,10 @@ import java.security.KeyStore
 import javax.crypto.Cipher
 import javax.crypto.spec.GCMParameterSpec
 import javax.crypto.spec.SecretKeySpec
+
+private const val KEY_EMAIL = "email"
+private const val KEY_PASSWORD = "password"
+private const val KEY_2FA_VERIFIED = "2fa_verified"
 
 class AndroidCryptoHelper {
     companion object {
@@ -119,8 +121,8 @@ class AndroidCryptoHelper {
             CoroutineScope(Dispatchers.IO).launch {
                 val secureSharedPreferences: SharedPreferences =
                     getEncryptedSharedPreferences(context)
-                secureSharedPreferences.edit().putString(Constants.KEY_EMAIL, email).apply()
-                secureSharedPreferences.edit().putString(Constants.KEY_PASSWORD, password).apply()
+                secureSharedPreferences.edit().putString(KEY_EMAIL, email).apply()
+                secureSharedPreferences.edit().putString(KEY_PASSWORD, password).apply()
             }
         }
 
@@ -129,63 +131,20 @@ class AndroidCryptoHelper {
             secureSharedPreferences.edit().clear().apply()
         }
 
-        suspend fun saveCurrentUserInfo(context: Context, user: UserDTO) {
-            val secureSharedPreferences: SharedPreferences = getEncryptedSharedPreferences(context)
-            secureSharedPreferences.edit().putString(Constants.KEY_AVATAR, user.image).apply()
-            secureSharedPreferences.edit().putString(Constants.KEY_NAME, user.name).apply()
-            secureSharedPreferences.edit().putString(Constants.KEY_STATUS, user.status).apply()
-            secureSharedPreferences.edit().putString(Constants.KEY_FCM_TOKEN, user.token).apply()
-            secureSharedPreferences.edit().putString(Constants.KEY_USER_ID, user.uid).apply()
-            secureSharedPreferences.edit().putStringSet(Constants.KEY_FRIENDS, user.friends.toSet())
-                .apply()
-            secureSharedPreferences.edit()
-                .putStringSet(Constants.KEY_FRIEND_REQUEST, user.friendRequests.toSet()).apply()
-
-        }
-
-        suspend fun getCurrentUserInfo(context: Context): UserDTO? {
-            val secureSharedPreferences = getEncryptedSharedPreferences(context)
-            val image = secureSharedPreferences.getString(Constants.KEY_AVATAR, "")
-            val name = secureSharedPreferences.getString(Constants.KEY_NAME, "")
-            val status = secureSharedPreferences.getString(Constants.KEY_STATUS, "")
-            val token = secureSharedPreferences.getString(Constants.KEY_FCM_TOKEN, "")
-            val uid = secureSharedPreferences.getString(Constants.KEY_USER_ID, "")
-            val friends = secureSharedPreferences.getStringSet(Constants.KEY_FRIENDS, emptySet())
-            val friendRequests =
-                secureSharedPreferences.getStringSet(Constants.KEY_FRIEND_REQUEST, emptySet())
-            return if (!uid.isNullOrEmpty() &&
-                !name.isNullOrEmpty() &&
-                !image.isNullOrEmpty() &&
-                status != null && token != null && friends != null && friendRequests != null
-            ) {
-                UserDTO(
-                    image = image,
-                    name = name,
-                    status = status,
-                    token = token,
-                    uid = uid,
-                    friends = friends.toCollection(ArrayList()),
-                    friendRequests = friendRequests.toCollection(ArrayList())
-                )
-            } else {
-                null
-            }
-        }
-
         suspend fun save2FAStatus(context: Context, status: Boolean) {
             val secureSharedPreferences: SharedPreferences = getEncryptedSharedPreferences(context)
-            secureSharedPreferences.edit().putBoolean(Constants.KEY_2FA_VERIFIED, status).apply()
+            secureSharedPreferences.edit().putBoolean(KEY_2FA_VERIFIED, status).apply()
         }
 
         suspend fun get2FAStatus(context: Context): Boolean {
             val secureSharedPreferences: SharedPreferences = getEncryptedSharedPreferences(context)
-            return secureSharedPreferences.getBoolean(Constants.KEY_2FA_VERIFIED, false)
+            return secureSharedPreferences.getBoolean(KEY_2FA_VERIFIED, false)
         }
 
         suspend fun delete2FAStatus(context: Context) {
             val secureSharedPreferences = getEncryptedSharedPreferences(context)
             secureSharedPreferences.edit()
-                .remove(Constants.KEY_2FA_VERIFIED)
+                .remove(KEY_2FA_VERIFIED)
                 .apply()
         }
     }
