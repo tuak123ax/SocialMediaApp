@@ -22,12 +22,25 @@ jobs:
     if: ${{ github.event.inputs.platform == 'android' || github.event.inputs.platform == 'both' }}
     name: Android APK
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout selected ref
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.inputs.branch }}
           lfs: true
+
+      - name: Create local.properties
+        env:
+          APP_SCRIPT_KEY: ${{ secrets.APP_SCRIPT_FOR_2FA_AUTHENTICATION_API_KEY }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_API_KEY }}
+          IPINFO_KEY: ${{ secrets.IPINFO_API_KEY }}
+        run: |
+          {
+            echo "APP_SCRIPT_FOR_2FA_AUTHENTICATION_API_KEY=$APP_SCRIPT_KEY"
+            echo "SUPABASE_API_KEY=$SUPABASE_KEY"
+            echo "IPINFO_API_KEY=$IPINFO_KEY"
+          } > local.properties
 
       - name: Set up JDK
         uses: actions/setup-java@v4
@@ -49,8 +62,14 @@ jobs:
           echo "Start running unit tests"
           echo "Running unit tests for shared module"
           ./gradlew :shared:testDebugUnitTest --no-daemon
+
           echo "Running unit tests for android app (skip kapt to avoid processor errors)"
-          ./gradlew :Fire_Social_Media:testDebugUnitTest -x :Fire_Social_Media:kaptDebugKotlin -x :Fire_Social_Media:kaptDebugUnitTestKotlin -x :Fire_Social_Media:kaptGenerateStubsDebugKotlin -x :Fire_Social_Media:kaptGenerateStubsDebugUnitTestKotlin --no-daemon
+          ./gradlew :Fire_Social_Media:testDebugUnitTest \
+            -x :Fire_Social_Media:kaptDebugKotlin \
+            -x :Fire_Social_Media:kaptDebugUnitTestKotlin \
+            -x :Fire_Social_Media:kaptGenerateStubsDebugKotlin \
+            -x :Fire_Social_Media:kaptGenerateStubsDebugUnitTestKotlin \
+            --no-daemon
 
       - name: Build
         run: |
@@ -71,8 +90,9 @@ jobs:
     if: ${{ github.event.inputs.platform == 'ios' || github.event.inputs.platform == 'both' }}
     name: iOS IPA
     runs-on: macos-14
+
     env:
-      WORKSPACE: Fire_Social_Media.xcworkspace   # workspace name only
+      WORKSPACE: Fire_Social_Media.xcworkspace
       SCHEME: Fire_Social_Media
       CONFIGURATION: Release
       ARCHIVE_PATH: build/ios/App.xcarchive
@@ -83,6 +103,18 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.inputs.branch }}
+
+      - name: Create local.properties
+        env:
+          APP_SCRIPT_KEY: ${{ secrets.APP_SCRIPT_FOR_2FA_AUTHENTICATION_API_KEY }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_API_KEY }}
+          IPINFO_KEY: ${{ secrets.IPINFO_API_KEY }}
+        run: |
+          {
+            echo "APP_SCRIPT_FOR_2FA_AUTHENTICATION_API_KEY=$APP_SCRIPT_KEY"
+            echo "SUPABASE_API_KEY=$SUPABASE_KEY"
+            echo "IPINFO_API_KEY=$IPINFO_KEY"
+          } > local.properties
 
       - uses: actions/setup-java@v4
         with:
@@ -112,6 +144,7 @@ jobs:
           p12-file-base64: ${{ secrets.IOS_CERT_BASE64 }}
           p12-password: ${{ secrets.IOS_CERT_PASSWORD }}
           mobileprovision-base64: ${{ secrets.IOS_PROFILE_BASE64 }}
+
       - name: Archive
         working-directory: Fire_Social_Media
         run: |
