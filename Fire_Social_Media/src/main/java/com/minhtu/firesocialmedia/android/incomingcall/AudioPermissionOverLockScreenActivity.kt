@@ -18,11 +18,11 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.getValue
 import androidx.core.content.ContextCompat
-import com.minhtu.firesocialmedia.constants.Constants
+import com.minhtu.firesocialmedia.android.constants.AppConstants
 import com.minhtu.firesocialmedia.domain.entity.call.CallAction
-import com.minhtu.firesocialmedia.domain.serviceimpl.call.CallActionBroadcastReceiver
-import com.minhtu.firesocialmedia.domain.serviceimpl.call.CallNotificationManager.Companion.NOTIF_ID
-import com.minhtu.firesocialmedia.domain.serviceimpl.call.CallSoundManager
+import com.minhtu.firesocialmedia.android.service.serviceimpl.call.CallActionBroadcastReceiver
+import com.minhtu.firesocialmedia.android.service.serviceimpl.call.CallNotificationManager.Companion.NOTIF_ID
+import com.minhtu.firesocialmedia.android.service.serviceimpl.call.CallSoundManager
 import com.minhtu.firesocialmedia.ui.theme.FireSocialMediaCommonTheme
 
 /**
@@ -86,10 +86,10 @@ class AudioPermissionOverLockScreenActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         applyOverLockScreenFlags()
 
-        sessionId = intent.getStringExtra(Constants.KEY_SESSION_ID)
-        calleeId = intent.getStringExtra(Constants.KEY_CALLEE_ID)
-        callerName = intent.getStringExtra(Constants.KEY_CALLER_NAME).orEmpty()
-        callerAvatar = intent.getStringExtra(Constants.KEY_CALLER_AVATAR).orEmpty()
+        sessionId = intent.getStringExtra(AppConstants.KEY_SESSION_ID)
+        calleeId = intent.getStringExtra(AppConstants.KEY_CALLEE_ID)
+        callerName = intent.getStringExtra(AppConstants.KEY_CALLER_NAME).orEmpty()
+        callerAvatar = intent.getStringExtra(AppConstants.KEY_CALLER_AVATAR).orEmpty()
 
         // If permission was granted between the service check and our onCreate
         // (extremely rare but possible), go straight to the call screen.
@@ -178,10 +178,10 @@ class AudioPermissionOverLockScreenActivity : ComponentActivity() {
     /** Hands off to IncomingCallActivity with the full call data and exits. */
     private fun launchIncomingCallActivity() {
         val intent = Intent(this, IncomingCallActivity::class.java).apply {
-            putExtra(Constants.KEY_SESSION_ID, sessionId)
-            putExtra(Constants.KEY_CALLEE_ID, calleeId)
-            putExtra(Constants.KEY_CALLER_NAME, callerName)
-            putExtra(Constants.KEY_CALLER_AVATAR, callerAvatar)
+            putExtra(AppConstants.KEY_SESSION_ID, sessionId)
+            putExtra(AppConstants.KEY_CALLEE_ID, calleeId)
+            putExtra(AppConstants.KEY_CALLER_NAME, callerName)
+            putExtra(AppConstants.KEY_CALLER_AVATAR, callerAvatar)
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
         }
         startActivity(intent)
@@ -195,8 +195,8 @@ class AudioPermissionOverLockScreenActivity : ComponentActivity() {
     private fun rejectAndFinish() {
         val broadcastIntent = Intent(this, CallActionBroadcastReceiver::class.java).apply {
             action = CallAction.REJECT_CALL_ACTION
-            putExtra(Constants.KEY_SESSION_ID, sessionId)
-            putExtra(Constants.KEY_CALLEE_ID, calleeId)
+            putExtra(AppConstants.KEY_SESSION_ID, sessionId)
+            putExtra(AppConstants.KEY_CALLEE_ID, calleeId)
         }
         sendBroadcast(broadcastIntent)
         CallSoundManager.stopRingtone()

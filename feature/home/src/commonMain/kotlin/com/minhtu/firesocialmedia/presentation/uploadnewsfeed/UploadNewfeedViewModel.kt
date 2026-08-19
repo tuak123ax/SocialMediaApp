@@ -1,0 +1,389 @@
+package com.minhtu.firesocialmedia.presentation.uploadnewsfeed
+
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import com.minhtu.firesocialmedia.constants.home.Constants
+import com.minhtu.firesocialmedia.home.entity.core.DecentralizationType
+import com.minhtu.firesocialmedia.home.entity.news.NewsInstance
+import com.minhtu.firesocialmedia.home.entity.notification.NotificationInstance
+import com.minhtu.firesocialmedia.home.entity.notification.NotificationType
+import com.minhtu.firesocialmedia.home.entity.notification.toSharedNotification
+import com.minhtu.firesocialmedia.home.entity.user.UserInstance
+import com.minhtu.firesocialmedia.domain.usecases.home.GetUserUseCase
+import com.minhtu.firesocialmedia.domain.usecases.group.home.GetAllMembersInGroupUseCase
+import com.minhtu.firesocialmedia.domain.usecases.group.home.GetGroupConfigsUseCase
+import com.minhtu.firesocialmedia.domain.usecases.group.home.SaveNewToGroupUseCase
+import com.minhtu.firesocialmedia.domain.usecases.newsfeed.DeleteAllDraftPostsUseCase
+import com.minhtu.firesocialmedia.domain.usecases.newsfeed.DeleteDraftPostUseCase
+import com.minhtu.firesocialmedia.domain.usecases.newsfeed.SaveNewToDatabaseUseCase
+import com.minhtu.firesocialmedia.domain.usecases.newsfeed.UpdateNewsFromDatabaseUseCase
+import com.minhtu.firesocialmedia.domain.usecases.notification.SaveNotificationToDatabaseUseCase
+import com.minhtu.firesocialmedia.domain.usecases.sync.LoadNewsPostedWhenOfflineUseCase
+import com.minhtu.firesocialmedia.home.platform.createMessageForServer
+import com.minhtu.firesocialmedia.platform.generateRandomId
+import com.minhtu.firesocialmedia.platform.getCurrentTime
+import com.minhtu.firesocialmedia.platform.getRandomIdForNotification
+import com.minhtu.firesocialmedia.home.platform.sendMessageToServer
+import com.rickclephas.kmp.observableviewmodel.ViewModel
+import com.rickclephas.kmp.observableviewmodel.launch
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+
+class UploadNewfeedViewModel(
+    private val getUserUseCase: GetUserUseCase,
+    private val saveNotificationToDatabaseUseCase: SaveNotificationToDatabaseUseCase,
+    private val saveNewToDatabaseUseCase : SaveNewToDatabaseUseCase,
+    private val updateNewsFromDatabaseUseCase: UpdateNewsFromDatabaseUseCase,
+    private val loadNewsPostedWhenOfflineUseCase : LoadNewsPostedWhenOfflineUseCase,
+    private val deleteAllDraftPostsUseCase : DeleteAllDraftPostsUseCase,
+    private val deleteDraftPostUseCase: DeleteDraftPostUseCase,
+    private val saveNewToGroupUseCase : SaveNewToGroupUseCase,
+    private val getAllMembersInGroupUseCase : GetAllMembersInGroupUseCase,
+    private val getGroupConfigsUseCase : GetGroupConfigsUseCase,
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
+) : ViewModel() {
+    var currentUser : UserInstance? = null
+    fun updateCurrentUser(user: UserInstance) {
+        currentUser = user
+    }
+    var message by mutableStateOf("")
+    fun updateMessage(input : String){
+        message = input
+    }
+
+    var image by mutableStateOf("")
+    fun updateImage(input:String){
+        image = input
+        video = ""
+    }
+
+    var video by mutableStateOf("")
+    fun updateVideo(input : String) {
+        video = input
+        image = ""
+    }
+
+    var groupId by mutableStateOf("")
+    fun updateGroupId(input : String) {
+        groupId = input
+    }
+    fun resetGroupId() {
+        groupId = ""
+    }
+
+    private var _createPostStatus = MutableStateFlow<Boolean?>(null)
+    var createPostStatus = _createPostStatus.asStateFlow()
+    private var _updatePostStatus = MutableStateFlow<Boolean?>(null)
+    var updatePostStatus = _updatePostStatus.asStateFlow()
+    private var _postError = MutableStateFlow<String?>(null)
+    var postError = _postError.asStateFlow()
+
+    fun resetPostError(){
+        _postError.value = null
+    }
+
+    private var _clickBackButton = MutableStateFlow(false)
+    var clickBackButton = _clickBackButton.asStateFlow()
+    fun onClickBackButton() {
+        _clickBackButton.value = true
+    }
+    fun resetBackValue() {
+        _clickBackButton.value = false
+    }
+    private val _accessPermission = MutableStateFlow<DecentralizationType>(DecentralizationType.Public)
+    var accessPermission = _accessPermission.asStateFlow()
+    fun updateAccessPermission(permission : DecentralizationType) {
+        _accessPermission.value = permission
+    }
+    fun resetAccessPermission() {
+        _accessPermission.value = DecentralizationType.Public
+    }
+    fun createPost(user : UserInstance){
+        viewModelScope.launch {
+            withContext(ioDispatcher) {
+                val newsRandomId = generateRandomId()
+                if(message.isNotBlank() || image.isNotBlank() || video.isNotBlank()) {
+                    //Save post to db
+                    val newsInstance = NewsInstance(
+                        newsRandomId,
+                        user.uid,
+                        user.name,
+                        user.image,
+                        message,
+                        image,
+                        video,
+                        groupId = groupId)
+                    newsInstance.timePosted = getCurrentTime()
+                    if(localPathOfSelectedDraft.value.isNotEmpty()) {
+                        newsInstance.localPath = localPathOfSelectedDraft.value
+                    }
+                    //Add access permission
+                    newsInstance.decentralizationType = _accessPermission.value
+                    if(newsInstance.groupId.isEmpty()) {
+                        _createPostStatus.value = saveNewToDatabaseUseCase.invoke(
+                            newsInstance
+                        )
+                    } else{
+                        _createPostStatus.value = saveNewToGroupUseCase.invoke(
+                            newsInstance,
+                            groupId
+                        )
+                    }
+
+                    //Only send notification if the access permission is not private
+                    if(newsInstance.decentralizationType != DecentralizationType.Private) {
+                        //Create noti object
+                        val notiContent = message
+                        val notification = NotificationInstance(getRandomIdForNotification(),
+                            notiContent,currentUser!!.image,
+                            currentUser!!.uid,
+                            getCurrentTime(),
+                            NotificationType.UPLOAD_NEW,
+                            newsInstance.id)
+                        //Send Notification
+                        if(newsInstance.groupId.isEmpty()) {
+                            //Run normal flow if the post is not in a group
+                            val friendTokens = getFriendTokens()
+                            if(friendTokens.isNotEmpty()){
+                                if(notification.content.isNotEmpty()) {
+                                    sendMessageToServer(createMessageForServer(notification.content, friendTokens, currentUser!!.token, currentUser!!.uid, currentUser!!.image, currentUser!!.email, currentUser!!.name, "BASIC"))
+                                } else {
+                                    if(image.isNotEmpty()) {
+                                        val content = "Posted a picture!"
+                                        notification.updateContent(content)
+                                        sendMessageToServer(createMessageForServer(content, friendTokens, currentUser!!.token, currentUser!!.uid, currentUser!!.image, currentUser!!.email, currentUser!!.name, "BASIC"))
+                                    } else {
+                                        if(video.isNotEmpty()) {
+                                            val content = "Posted a video!"
+                                            notification.updateContent(content)
+                                            sendMessageToServer(createMessageForServer(content, friendTokens, currentUser!!.token, currentUser!!.uid, currentUser!!.image, currentUser!!.email, currentUser!!.name, "BASIC"))
+                                        }
+                                    }
+                                }
+                            }
+
+                            //Save notification to db
+                            if(currentUser != null) {
+                                saveNotificationsForUsers(
+                                    currentUser!!.friends,
+                                    notification
+                                )
+                            }
+                        } else {
+                            //You post in a group
+                            //First, need to get all members in group
+                            var allMembersInfo = HashMap<String, String>()
+                            //Check if we have that info already
+                            allMembersInfo = groupMembers.value.ifEmpty {
+                                //Try to fetch new data
+                                getAllMembersInGroupUseCase.invoke(newsInstance.groupId)
+                            }
+                            //Fetch group configs of each user based on userId
+                            val userIdsWithNotificationOn =
+                                allMembersInfo.keys
+                                    .map { userId ->
+                                        async {
+                                            val notificationOn = getGroupConfigsUseCase.invoke(userId, groupId)
+                                            if (notificationOn) userId else null
+                                        }
+                                    }
+                                    .awaitAll()
+                                    .filterNotNull()
+                            //Only send notification to members with notification is ON
+                            val memberTokens = getMemberTokens(userIdsWithNotificationOn)
+                            if(memberTokens.isNotEmpty()){
+                                if(notification.content.isNotEmpty()) {
+                                    sendMessageToServer(createMessageForServer(notification.content, memberTokens, currentUser!!.token, currentUser!!.uid, currentUser!!.image, currentUser!!.email, currentUser!!.name, "BASIC"))
+                                } else {
+                                    if(image.isNotEmpty()) {
+                                        val content = "Posted a picture!"
+                                        notification.updateContent(content)
+                                        sendMessageToServer(createMessageForServer(content, memberTokens, currentUser!!.token, currentUser!!.uid, currentUser!!.image, currentUser!!.email, currentUser!!.name, "BASIC"))
+                                    } else {
+                                        if(video.isNotEmpty()) {
+                                            val content = "Posted a video!"
+                                            notification.updateContent(content)
+                                            sendMessageToServer(createMessageForServer(content, memberTokens, currentUser!!.token, currentUser!!.uid, currentUser!!.image, currentUser!!.email, currentUser!!.name, "BASIC"))
+                                        }
+                                    }
+                                }
+                            }
+
+                            //Save notification to db
+                            saveNotificationsForUsers(
+                                userIdsWithNotificationOn,
+                                notification
+                            )
+                        }
+                    }
+                } else {
+                    _postError.value = Constants.POST_NEWS_EMPTY_ERROR
+                }
+                resetAccessPermission()
+                resetGroupId()
+            }
+        }
+    }
+
+    suspend fun saveNotification(
+        notification: NotificationInstance,
+        friend : UserInstance,
+        saveNotificationToDatabaseUseCase: SaveNotificationToDatabaseUseCase) {
+        //Save notification to friend's notification list
+        try{
+            friend.addNotification(notification)
+            saveNotificationToDatabaseUseCase.invoke(
+                friend.uid,
+                ArrayList(friend.notifications.map { it.toSharedNotification() }))
+        } catch(_: Exception) {
+        }
+    }
+
+    suspend fun saveNotificationsForUsers(
+        ids: List<String>,
+        notification: NotificationInstance
+    ) = coroutineScope {
+        ids
+            .chunked(10)
+            .forEach { chunk ->
+                chunk.map { memberId ->
+                    async {
+                        val user = findUserById(memberId) ?: return@async
+                        saveNotification(notification, user, saveNotificationToDatabaseUseCase)
+                    }
+                }.awaitAll()
+            }
+    }
+
+    fun resetPostStatus() {
+        _createPostStatus.value = null
+        _updatePostStatus.value = null
+        message = ""
+        image = ""
+        video = ""
+        localPathOfSelectedDraft.value = ""
+    }
+
+    suspend fun getFriendTokens(): ArrayList<String> = coroutineScope {
+        ArrayList(currentUser!!.friends.map { friend ->
+            async {
+                findUserById(friend)?.token
+            }
+        }.awaitAll()
+            .filterNotNull())
+    }
+
+    suspend fun getMemberTokens(memberIds: List<String>): ArrayList<String> = coroutineScope {
+        ArrayList(memberIds
+            .map { memberId ->
+                async {
+                    findUserById(memberId)?.token
+                }
+            }
+            .awaitAll()
+            .filterNotNull())
+    }
+
+    fun updateNewInformation(new: NewsInstance) {
+        val backgroundScope = CoroutineScope(SupervisorJob() + ioDispatcher)
+        backgroundScope.launch {
+            if(message.isNotEmpty() || image.isNotEmpty() || video.isNotEmpty()) {
+                new.decentralizationType = _accessPermission.value
+                _updatePostStatus.value = updateNewsFromDatabaseUseCase.invoke(
+                    message,
+                    image,
+                    video,
+                    new
+                )
+            } else {
+                _postError.value = Constants.POST_NEWS_EMPTY_ERROR
+            }
+            resetAccessPermission()
+        }
+    }
+
+    suspend fun findUserById(userId: String) : UserInstance? {
+        return getUserUseCase.invoke(userId, false)
+    }
+
+    private val _newsPostedWhenOffline = MutableStateFlow<List<NewsInstance>>(emptyList())
+    var newsPostedWhenOffline = _newsPostedWhenOffline.asStateFlow()
+    val localPathOfSelectedDraft = mutableStateOf("")
+    suspend fun loadNewsPostedWhenOffline() {
+        _newsPostedWhenOffline.value = loadNewsPostedWhenOfflineUseCase.invoke()
+    }
+
+    fun removeOfflineNewsById(id: String) {
+        _newsPostedWhenOffline.value =
+            _newsPostedWhenOffline.value.filterNot { it.id == id }
+    }
+
+    fun clearAllOfflineNews() {
+        _newsPostedWhenOffline.value = emptyList()
+    }
+
+    fun updatePostData(message: String, image: String, video: String) {
+        updateMessage(message)
+        if(image.isNotEmpty()){
+            updateImage(image)
+        }
+        if(video.isNotEmpty()) {
+            updateVideo(video)
+        }
+    }
+
+    fun updateLocalPath(localPath: String) {
+        localPathOfSelectedDraft.value = localPath
+    }
+
+    private val _deleteDraftStatus = MutableStateFlow<Boolean?>(null)
+    val deleteDraftStatus = _deleteDraftStatus.asStateFlow()
+    fun resetDeleteDraftStatus() {
+        _deleteDraftStatus.value = null
+    }
+    fun deleteAllDraftPosts() {
+        viewModelScope.launch(ioDispatcher) {
+            //Reset delete state before execute new delete operation
+            resetDeleteDraftStatus()
+            //Execute delete all drafts
+            val result = deleteAllDraftPostsUseCase.invoke()
+            _deleteDraftStatus.value = result
+            if(result) {
+                clearAllOfflineNews()
+            } else {
+                loadNewsPostedWhenOffline()
+            }
+        }
+    }
+
+    fun deleteDraftPost(newId : String) {
+        viewModelScope.launch(ioDispatcher) {
+            //Reset delete state before execute new delete operation
+            resetDeleteDraftStatus()
+            //Execute delete draft
+            val result = deleteDraftPostUseCase.invoke(newId)
+            _deleteDraftStatus.value = result
+            if(result) {
+                removeOfflineNewsById(newId)
+            } else {
+                loadNewsPostedWhenOffline()
+            }
+        }
+    }
+
+    private val groupMembers = MutableStateFlow<HashMap<String, String>>(HashMap())
+    fun getGroupMembersFromGroupDetails(members: HashMap<String, String>) {
+        groupMembers.value = members
+    }
+}

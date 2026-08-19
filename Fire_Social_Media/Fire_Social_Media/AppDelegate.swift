@@ -3,7 +3,7 @@ import FirebaseCore
 import FirebaseDatabase
 import FirebaseMessaging
 import UserNotifications
-import shared
+import core
 
 class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterDelegate, MessagingDelegate {
 

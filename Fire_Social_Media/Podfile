@@ -1,9 +1,12 @@
+source 'https://cdn.cocoapods.org'
+
 target 'Fire_Social_Media' do
   use_frameworks! :linkage => :static
   platform :ios, '16.0'
-  pod 'Firebase/Auth'
-  pod 'Firebase/Database'
-  pod 'Firebase/Storage'
-  pod 'Firebase/Messaging'
-  pod 'shared', :path => '../shared'
+  pod 'FirebaseAuth'
+  pod 'FirebaseDatabase'
+  pod 'FirebaseStorage'
+  pod 'FirebaseMessaging'
+  pod 'core', :path => '../core'
+  pod 'appInit', :path => '../appInit'
 end

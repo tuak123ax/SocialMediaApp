@@ -22,16 +22,15 @@ import coil.request.ImageRequest
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import com.google.gson.Gson
-import com.minhtu.firesocialmedia.R
 import com.minhtu.firesocialmedia.android.incomingcall.IncomingCallActivity
 import com.minhtu.firesocialmedia.android.incomingcall.IncomingCallWakeService
-import com.minhtu.firesocialmedia.constants.Constants
+import com.minhtu.firesocialmedia.core.R
+import com.minhtu.firesocialmedia.android.constants.AppConstants
 import com.minhtu.firesocialmedia.domain.entity.call.CallAction
-import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
-import com.minhtu.firesocialmedia.domain.serviceimpl.call.CallActionBroadcastReceiver
-import com.minhtu.firesocialmedia.domain.serviceimpl.call.CallNotificationManager.Companion.NOTIF_ID
-import com.minhtu.firesocialmedia.domain.serviceimpl.call.CallNotificationManager.Companion.channelId
-import com.minhtu.firesocialmedia.domain.serviceimpl.call.CallSoundManager
+import com.minhtu.firesocialmedia.android.service.serviceimpl.call.CallActionBroadcastReceiver
+import com.minhtu.firesocialmedia.android.service.serviceimpl.call.CallNotificationManager.Companion.NOTIF_ID
+import com.minhtu.firesocialmedia.android.service.serviceimpl.call.CallNotificationManager.Companion.channelId
+import com.minhtu.firesocialmedia.android.service.serviceimpl.call.CallSoundManager
 import com.minhtu.firesocialmedia.platform.TokenStorage.updateTokenInStorage
 import com.minhtu.firesocialmedia.platform.showToast
 import kotlinx.coroutines.CoroutineScope
@@ -42,26 +41,28 @@ import kotlinx.coroutines.withContext
 import java.io.IOException
 import java.net.URL
 
+data class NotificationSender(val image: String, val name: String)
+
 class AppFirebaseNotificationService: FirebaseMessagingService() {
     private val notificationScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     override fun onMessageReceived(message: RemoteMessage) {
         Log.d("FCM", "📩 Message received!")
 
         // 🔹 Retrieve Data Payload
-        val user : UserInstance?
+        val user : NotificationSender?
         if (message.data.isNotEmpty()) {
-            val notificationType = message.data[Constants.REMOTE_MSG_TYPE]
+            val notificationType = message.data[AppConstants.REMOTE_MSG_TYPE]
             //Notification of foreground service to make audio call
             when(notificationType) {
                 "CALL" -> {
                     //Extract data
-                    val sessionId = message.data[Constants.KEY_SESSION_ID]
-                    val callerName = message.data[Constants.KEY_CALLER_NAME]
-                    val callerAvatar = message.data[Constants.KEY_CALLER_AVATAR]
-                    val callerId = message.data[Constants.KEY_CALLER_ID]
-                    val calleeName = message.data[Constants.KEY_CALLEE_NAME]
-                    val calleeAvatar = message.data[Constants.KEY_CALLEE_AVATAR]
-                    val calleeId = message.data[Constants.KEY_CALLEE_ID]
+                    val sessionId = message.data[AppConstants.KEY_SESSION_ID]
+                    val callerName = message.data[AppConstants.KEY_CALLER_NAME]
+                    val callerAvatar = message.data[AppConstants.KEY_CALLER_AVATAR]
+                    val callerId = message.data[AppConstants.KEY_CALLER_ID]
+                    val calleeName = message.data[AppConstants.KEY_CALLEE_NAME]
+                    val calleeAvatar = message.data[AppConstants.KEY_CALLEE_AVATAR]
+                    val calleeId = message.data[AppConstants.KEY_CALLEE_ID]
 
                     if(sessionId != null && calleeId != null && callerName != null && callerAvatar != null) {
                         // If the phone is already ringing for a previous caller, ignore this
@@ -81,10 +82,10 @@ class AppFirebaseNotificationService: FirebaseMessagingService() {
                 }
                 else -> {
                     //Normal notification
-                    val fcmToken = message.data[Constants.KEY_FCM_TOKEN]
-                    val userId = message.data[Constants.KEY_USER_ID]
-                    val avatar = message.data[Constants.KEY_AVATAR]
-                    val email = message.data[Constants.KEY_EMAIL]
+                    val fcmToken = message.data[AppConstants.KEY_FCM_TOKEN]
+                    val userId = message.data[AppConstants.KEY_USER_ID]
+                    val avatar = message.data[AppConstants.KEY_AVATAR]
+                    val email = message.data[AppConstants.KEY_EMAIL]
 
                     Log.d("FCM", "📊 Data Payload:")
                     Log.d("FCM", "🔹 fcm_token: $fcmToken")
@@ -92,11 +93,11 @@ class AppFirebaseNotificationService: FirebaseMessagingService() {
                     Log.d("FCM", "🔹 avatar: $avatar")
                     Log.d("FCM", "🔹 email: $email")
 
-                    val title = message.data[Constants.REMOTE_MSG_TITLE]
-                    val body = message.data[Constants.REMOTE_MSG_BODY]
+                    val title = message.data[AppConstants.REMOTE_MSG_TITLE]
+                    val body = message.data[AppConstants.REMOTE_MSG_BODY]
                     Log.d("FCM", "🔹 title: $title")
                     Log.d("FCM", "🔹 body: $body")
-                    user = UserInstance(email = email!!, image = avatar!!, name = title!!, token = fcmToken!!, uid = userId!!)
+                    user = NotificationSender(image = avatar!!, name = title!!)
                     sendNotification(user, body)
                 }
             }
@@ -104,7 +105,7 @@ class AppFirebaseNotificationService: FirebaseMessagingService() {
 
     }
 
-    private fun sendNotification(user: UserInstance, content: String?) {
+    private fun sendNotification(user: NotificationSender, content: String?) {
         var bitmap: Bitmap? = null
         try {
             val url = URL(user.image)
@@ -120,7 +121,7 @@ class AppFirebaseNotificationService: FirebaseMessagingService() {
         intent.putExtras(receiverData)
         val pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_IMMUTABLE)
         val builder: NotificationCompat.Builder =
-            NotificationCompat.Builder(this, Constants.CHANNEL_ID)
+            NotificationCompat.Builder(this, AppConstants.CHANNEL_ID)
                 .setContentTitle(user.name)
                 .setContentText(content)
                 .setSmallIcon(R.drawable.ic_launcher_foreground)
@@ -158,9 +159,9 @@ class AppFirebaseNotificationService: FirebaseMessagingService() {
 
         val acceptIntent = Intent(this, CallActionBroadcastReceiver::class.java).apply {
             action = CallAction.ACCEPT_CALL_ACTION
-            putExtra(Constants.KEY_SESSION_ID, sessionId)
-            putExtra(Constants.KEY_CALLEE_ID, calleeId)
-            putExtra(Constants.FROM_NOTIFICATION, true)
+            putExtra(AppConstants.KEY_SESSION_ID, sessionId)
+            putExtra(AppConstants.KEY_CALLEE_ID, calleeId)
+            putExtra(AppConstants.FROM_NOTIFICATION, true)
         }
 
         val acceptPendingIntent = PendingIntent.getBroadcast(
@@ -172,8 +173,8 @@ class AppFirebaseNotificationService: FirebaseMessagingService() {
 
         val rejectIntent = Intent(this, CallActionBroadcastReceiver::class.java).apply {
             action = CallAction.REJECT_CALL_ACTION
-            putExtra(Constants.KEY_SESSION_ID, sessionId)
-            putExtra(Constants.KEY_CALLEE_ID, calleeId)
+            putExtra(AppConstants.KEY_SESSION_ID, sessionId)
+            putExtra(AppConstants.KEY_CALLEE_ID, calleeId)
         }
 
         val rejectPendingIntent = PendingIntent.getBroadcast(
@@ -201,10 +202,10 @@ class AppFirebaseNotificationService: FirebaseMessagingService() {
 
         //Fullscreen view to show when device is locked or in do not disturb mode, this will open IncomingCallActivity
         val fullScreenIntent = Intent(this, IncomingCallActivity::class.java).apply {
-            putExtra(Constants.KEY_SESSION_ID, sessionId)
-            putExtra(Constants.KEY_CALLEE_ID, calleeId)
-            putExtra(Constants.KEY_CALLER_NAME, callerName)
-            putExtra(Constants.KEY_CALLER_AVATAR, callerAvatar)
+            putExtra(AppConstants.KEY_SESSION_ID, sessionId)
+            putExtra(AppConstants.KEY_CALLEE_ID, calleeId)
+            putExtra(AppConstants.KEY_CALLER_NAME, callerName)
+            putExtra(AppConstants.KEY_CALLER_AVATAR, callerAvatar)
 
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or
                     Intent.FLAG_ACTIVITY_CLEAR_TOP

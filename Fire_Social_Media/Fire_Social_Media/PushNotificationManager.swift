@@ -2,7 +2,7 @@ import UIKit
 import Firebase
 import FirebaseMessaging
 import UserNotifications
-import shared
+import core
 
 class PushNotificationManager: NSObject, UNUserNotificationCenterDelegate, MessagingDelegate {
     

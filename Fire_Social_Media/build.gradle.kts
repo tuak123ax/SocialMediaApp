@@ -26,8 +26,8 @@ android {
         applicationId = "com.minhtu.firesocialmedia"
         minSdk = 24
         targetSdk = 35
-        versionCode = 500400
-        versionName = "5.4.0"
+        versionCode = 600000
+        versionName = "6.0.0"
 
         signingConfig = signingConfigs.getByName("debug")
     }
@@ -73,7 +73,18 @@ android {
 }
 
 dependencies {
-    implementation(projects.shared)
+    implementation(project(":core"))
+    implementation(project(":appInit"))
+    implementation(project(":feature:auth"))
+    implementation(project(":feature:home"))
+    implementation(project(":feature:profile"))
+    implementation(project(":feature:comment"))
+    implementation(project(":feature:calling"))
+    implementation(project(":feature:group"))
+    implementation(project(":feature:security"))
+    implementation(project(":feature:notification"))
+    implementation(project(":feature:friend"))
+
     implementation(platform("androidx.compose:compose-bom:2025.02.00"))
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-tooling-preview")
@@ -119,5 +130,10 @@ dependencies {
 
     //Monitor memory leak
     debugImplementation("com.squareup.leakcanary:leakcanary-android:2.13")
+
+    // Timber for logging
     debugImplementation("com.jakewharton.timber:timber:5.0.1")
+
+    // Koin dependency injection
+    implementation(libs.koin.android)
 }

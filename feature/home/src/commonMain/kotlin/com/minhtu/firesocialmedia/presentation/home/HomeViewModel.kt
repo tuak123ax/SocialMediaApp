@@ -1,0 +1,498 @@
+package com.minhtu.firesocialmedia.presentation.home
+
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import com.minhtu.firesocialmedia.home.entity.news.NewsInstance
+import com.minhtu.firesocialmedia.home.entity.notification.NotificationInstance
+import com.minhtu.firesocialmedia.home.entity.notification.NotificationType
+import com.minhtu.firesocialmedia.home.entity.notification.toSharedNotification
+import com.minhtu.firesocialmedia.home.entity.user.UserInstance
+import com.minhtu.firesocialmedia.domain.interactor.home.NewsInteractor
+import com.minhtu.firesocialmedia.domain.usecases.notification.SaveNotificationToDatabaseUseCase
+import com.minhtu.firesocialmedia.domain.interactor.home.UserInteractor
+import com.minhtu.firesocialmedia.home.platform.createMessageForServer
+import com.minhtu.firesocialmedia.platform.getCurrentTime
+import com.minhtu.firesocialmedia.platform.getRandomIdForNotification
+import com.minhtu.firesocialmedia.platform.logMessage
+import com.minhtu.firesocialmedia.home.platform.sendMessageToServer
+import com.minhtu.firesocialmedia.home.utils.Utils
+import com.rickclephas.kmp.observableviewmodel.ViewModel
+import com.rickclephas.kmp.observableviewmodel.launch
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.supervisorScope
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
+
+class HomeViewModel(
+    private val userInteractor: UserInteractor,
+    private val newsInteractor: NewsInteractor,
+    private val saveNotificationToDatabaseUseCase: SaveNotificationToDatabaseUseCase,
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
+) : ViewModel() {
+    var isRefreshing = mutableStateOf(false)
+    var listNews: ArrayList<NewsInstance> = ArrayList()
+    //Cache loaded users, only fetch new user if that user is not in this cache
+    var loadedUsersCache : HashMap<String,UserInstance?> = HashMap()
+    val _loadedUserState = MutableStateFlow<Map<String, UserInstance?>>(emptyMap())
+    var loadedUserState = _loadedUserState.asStateFlow()
+    var currentUser: UserInstance? = null
+    var currentUserState by mutableStateOf(currentUser)
+    suspend fun updateCurrentUser(user: UserInstance) {
+        currentUser = user
+        currentUserState = currentUser
+        updateFCMTokenForCurrentUser(user)
+        userInteractor.saveCurrentUserInfo(user)
+        likeCache = currentUser!!.likedPosts
+    }
+
+    val _getCurrentUserStatus = mutableStateOf(false)
+    val getCurrentUserStatus = _getCurrentUserStatus
+    fun getCurrentUserAndFriends() {
+        viewModelScope.launch(ioDispatcher) {
+            try{
+                val currentUserId = userInteractor.getCurrentUserId()
+                if(currentUserId != null) {
+                    val user = userInteractor.getUser(currentUserId, true)
+                    if(user != null) {
+                        updateCurrentUser(user)
+                        _getCurrentUserStatus.value = true
+                        getAllUserFriends(user.friends)
+                    } else {
+                        _getCurrentUserStatus.value = false
+                    }
+                } else {
+                    _getCurrentUserStatus.value = false
+                }
+            } catch (ex : Exception) {
+                _getCurrentUserStatus.value = false
+            }
+        }
+    }
+
+    private suspend fun getAllUserFriends(friendIds: List<String>) {
+        //Clear old User's friends in local database
+        userInteractor.clearLocalFriends()
+        //Fetch new User's friends and save into local database
+        viewModelScope.launch(ioDispatcher) {
+            // Thresholds
+            val maxParallel = 20
+            val chunkSize = 10
+            val friends = if (friendIds.size <= maxParallel) {
+                // Fetch all in parallel
+                friendIds.map { friendId ->
+                    async {
+                        userInteractor.getUser(friendId, false)
+                    }
+                }.awaitAll()
+            } else {
+                // Batch mode
+                val resultList = mutableListOf<UserInstance>()
+                val batches = friendIds.chunked(chunkSize)
+                for (batch in batches) {
+                    val batchResults = batch.map { id ->
+                        async {
+                            userInteractor.getUser(id, false)
+                        }
+                    }.awaitAll().filterNotNull()
+                    resultList.addAll(batchResults)
+                }
+                resultList
+            }
+
+            updateUserFriends(ArrayList(friends))
+        }
+    }
+
+    val _getAllNewsStatus = mutableStateOf(false)
+    val getAllNewsStatus = _getAllNewsStatus
+    var isLoadingMore = mutableStateOf(false)
+    var hasMoreData = mutableStateOf(true)
+    private var lastTimePosted: Double? = null
+    private var lastKey: String? = null
+    fun getLatestNews() {
+        viewModelScope.launch(ioDispatcher) {
+            if (!isLoadingMore.value && hasMoreData.value) {
+                isLoadingMore.value = true
+                try{
+                    val latestNewsResult = newsInteractor.pageLatest(
+                        10,
+                        lastTimePosted,
+                        lastKey
+                    )
+                    if(latestNewsResult != null) {
+                        val freshNews = latestNewsResult.news
+                        if(freshNews != null) {
+                            // Track whether this page actually contributed any post we didn't
+                            // already have. If the paging cursor (lastTimePosted/lastKey) ever
+                            // fails to advance - e.g. ties in timePosted - Firebase can keep
+                            // returning the same page forever: hasMoreData would stay true,
+                            // the scroll-triggered loadMoreNews() in Home.kt would keep firing,
+                            // and the "loading more" spinner would flash continuously even
+                            // though the user has genuinely reached the end. Guard against that
+                            // by treating a page with no new ids as the end of the data too.
+                            val existingIds = listNews.mapTo(HashSet()) { it.id }
+                            var addedNewItem = false
+                            addNews(ArrayList(freshNews))
+                            for (new in freshNews) {
+                                if (existingIds.add(new.id)) {
+                                    listNews.add(new)
+                                    addedNewItem = true
+                                }
+                                addLikeCountData(new.id, new.likeCount)
+                                addCommentCountData(new.id, new.commentCount)
+                            }
+                            _getAllNewsStatus.value = true
+                            if(latestNewsResult.lastTimePostedValue == null || !addedNewItem) {
+                                hasMoreData.value = false
+                            }
+                            lastTimePosted = latestNewsResult.lastTimePostedValue
+                            lastKey = latestNewsResult.lastKeyValue
+                            checkUsersInCacheAndGetMore()
+                        }
+                    } else {
+                        // A null result here means either a real fetch failure, or - just as
+                        // likely - LatestNewsDTO.toDomain() (HomeMapper.kt) discarding a
+                        // legitimate final page because its cursor fields came back null/blank
+                        // (e.g. a legacy post with a corrupted timePosted/id poisoning the
+                        // cursor). Either way, retrying the exact same (lastTimePosted, lastKey)
+                        // will just get the same null result again: without this, hasMoreData
+                        // stays true forever and the scroll-triggered loadMoreNews() in Home.kt
+                        // spins the "loading more" indicator in an infinite loop. Treat a null
+                        // result as "no more data" so pagination terminates.
+                        _getAllNewsStatus.value = false
+                        hasMoreData.value = false
+                    }
+                } finally {
+                    isLoadingMore.value = false
+                    isRefreshing.value = false
+                }
+            }
+        }
+    }
+
+    fun resetGetLatestNewsParams() {
+        _getAllNewsStatus.value = false
+        isLoadingMore.value = false
+        hasMoreData.value = true
+        lastTimePosted = null
+        lastKey = null
+        updateNews(ArrayList(emptyList()))
+        listNews.clear()
+    }
+
+    private val cacheMutex = Mutex()
+    fun checkUsersInCacheAndGetMore() {
+        viewModelScope.launch(ioDispatcher) {
+            val neededIds = listNews.asSequence()
+                .map { it.posterId }
+                .filter { it.isNotBlank() }
+                .distinct()
+                .toList()
+
+            // compute missing under lock to avoid races
+            val missingIds = cacheMutex.withLock {
+                neededIds.filterNot { id -> loadedUsersCache.containsKey(id) }
+            }
+            if (missingIds.isEmpty()) return@launch
+
+            try {
+                val newUsers: List<Pair<String, UserInstance?>> = supervisorScope {
+                    missingIds.map { id ->
+                        async { id to runCatching { userInteractor.getUser(id, false) }.getOrNull() }
+                    }.awaitAll()
+                }
+
+                cacheMutex.withLock {
+                    for ((id, user) in newUsers) {
+                        if (user != null) loadedUsersCache[id] = user
+                    }
+                    _loadedUserState.value = loadedUsersCache.toMap()
+                }
+            } catch (e: Exception) {
+                logMessage("checkUsersInCacheAndGetMore") { "Exception when get more users: ${e.message}" }
+            }
+        }
+    }
+
+    // Ensure a single user is present in cache; fetch and cache if missing
+    fun ensureUserLoaded(userId: String) {
+        if (userId.isBlank()) return
+        viewModelScope.launch(ioDispatcher) {
+            val alreadyCached = cacheMutex.withLock { loadedUsersCache.containsKey(userId) }
+            if (alreadyCached) return@launch
+            val user = runCatching { userInteractor.getUser(userId, false) }.getOrNull()
+            cacheMutex.withLock {
+                if (!loadedUsersCache.containsKey(userId)) {
+                    loadedUsersCache[userId] = user
+                    _loadedUserState.value = loadedUsersCache.toMap()
+                }
+            }
+        }
+    }
+
+    private suspend fun updateFCMTokenForCurrentUser(user: UserInstance) {
+        userInteractor.updateFcmToken(user)
+    }
+
+    private val _allUserFriends = MutableStateFlow<List<UserInstance?>>(emptyList())
+    val allUserFriends = _allUserFriends.asStateFlow()
+    private fun updateUserFriends(users: ArrayList<UserInstance?>) {
+        _allUserFriends.value = users
+        //Add loaded user friends to cache
+        val loadedFriendsMap = users
+            .filterNotNull()
+            .associateBy { it.uid }
+
+        if (loadedFriendsMap.isNotEmpty()) {
+            loadedUsersCache.putAll(loadedFriendsMap)
+            _loadedUserState.value = loadedUsersCache.toMap()
+        }
+    }
+
+    private val _allNews = MutableStateFlow<List<NewsInstance>>(emptyList())
+    val allNews = _allNews.asStateFlow()
+    fun addNews(news: ArrayList<NewsInstance>) {
+        _allNews.update { old ->
+            (old + news).distinctBy(NewsInstance::id)
+        }
+    }
+    fun updateNews(news: ArrayList<NewsInstance>) {
+        _allNews.value = news
+    }
+
+    var numberOfListNeedToLoad by mutableIntStateOf(2)
+    fun decreaseNumberOfListNeedToLoad(input: Int) {
+        if (numberOfListNeedToLoad > 0) {
+            numberOfListNeedToLoad -= input
+        }
+    }
+
+    fun clearLocalData() {
+        viewModelScope.launch {
+            withContext(ioDispatcher) {
+                userInteractor.clearLocalData()
+            }
+        }
+    }
+
+    //-----------------------------Like and comment function-----------------------------//
+    // StateFlow to update UI in Compose
+    private var _likedPosts = MutableStateFlow<HashMap<String, Int>>(HashMap())
+    val likedPosts = _likedPosts.asStateFlow()
+    private var likeCache: HashMap<String, Int> = HashMap()
+    private var unlikeCache: ArrayList<String> = ArrayList()
+    private var updateLikeJob: Job? = null
+    private var _likeCountList = MutableStateFlow<HashMap<String, Int>>(HashMap())
+    var likeCountList = _likeCountList
+    fun addLikeCountData(newsId: String, likeCount: Int) {
+        _likeCountList.value[newsId] = likeCount
+    }
+
+    fun clickLikeButton(newsId: String) {
+        val isLiked = likeCache[newsId] == 1
+        if (isLiked) {
+            likeCache.remove(newsId) // Unlike
+            unlikeCache.add(newsId)
+            if (_likeCountList.value[newsId] != null) {
+                _likeCountList.value[newsId] = _likeCountList.value[newsId]!! - 1
+            }
+        } else {
+            likeCache[newsId] = 1 // Like
+            unlikeCache.remove(newsId)
+            if (_likeCountList.value[newsId] != null) {
+                _likeCountList.value[newsId] = _likeCountList.value[newsId]!! + 1
+            } else {
+                _likeCountList.value[newsId] = 1
+            }
+        }
+
+        _likedPosts.value = HashMap(likeCache)
+
+        updateLikeJob?.cancel()
+        //Use background scope instead of viewModelScope here to prevent job cancellation
+        // when navigating to other screen.
+        val backgroundScope = CoroutineScope(SupervisorJob() + ioDispatcher)
+        updateLikeJob = backgroundScope.launch {
+            sendLikeUpdatesToFirebase(HashMap(_likeCountList.value))
+        }
+    }
+
+    val saveLikeDataStatus = mutableStateOf(false)
+    val updateCountAndSendNotiStatus = mutableStateOf(false)
+    private suspend fun sendLikeUpdatesToFirebase(
+        likeCountList: HashMap<String, Int>,
+    ) {
+        if(currentUser != null) {
+            currentUser!!.likedPosts = likeCache
+            val result = userInteractor.saveLikedPost(
+                currentUser!!.uid,
+                likeCache)
+            saveLikeDataStatus.value = result
+            try {
+                for (likedNew in likeCache.keys) {
+                    if (likeCountList[likedNew] != null) {
+                        newsInteractor.like(
+                            likedNew,
+                            likeCountList[likedNew]!!
+                        )
+                        val new = Utils.findNewById(likedNew, listNews)
+                        //Save and send notification
+                        if (new != null) {
+                            saveAndSendNotification(currentUser!!, new)
+                        }
+                    }
+                }
+                for (unlikedNew in unlikeCache) {
+                    if (likeCountList[unlikedNew] != null) {
+                        newsInteractor.unlike(
+                            unlikedNew,
+                            likeCountList[unlikedNew]!!
+                        )
+                    }
+                }
+                updateCountAndSendNotiStatus.value = true
+            } catch (e: Exception) {
+                logMessage("sendLikeUpdatesToFirebase", { e.message.toString() })
+                updateCountAndSendNotiStatus.value = false
+            }
+        }
+    }
+
+    fun updateLikeStatus() {
+        _likedPosts.value = HashMap(likeCache)
+    }
+
+    //-----------------------------Comment-----------------------------//
+    private var _commentCountList = MutableStateFlow<HashMap<String, Int>>(HashMap())
+    var commentCountList = _commentCountList
+    fun addCommentCountData(newsId: String, commentCount: Int) {
+        _commentCountList.value[newsId] = commentCount
+    }
+
+    private var _commentStatus: MutableStateFlow<NewsInstance?> = MutableStateFlow(null)
+    var commentStatus: StateFlow<NewsInstance?> = _commentStatus.asStateFlow()
+    fun clickCommentButton(newsInstance: NewsInstance) {
+        _commentStatus.value = newsInstance
+    }
+
+    fun resetCommentStatus() {
+        _commentStatus.value = null
+    }
+
+    private suspend fun saveAndSendNotification(
+        currentUser: UserInstance,
+        selectedNew: NewsInstance
+    ) {
+        val notiContent = "${currentUser.name} liked your post!"
+        val notification = NotificationInstance(
+            getRandomIdForNotification(),
+            notiContent,
+            currentUser.image,
+            currentUser.uid,
+            getCurrentTime(),
+            NotificationType.LIKE,
+            selectedNew.id
+        )
+        //Save notification to db
+        val poster = userInteractor.getUser(selectedNew.posterId, false)
+        if(poster != null) {
+            poster.addNotification(notification)
+            saveNotificationToDatabaseUseCase.invoke(
+                poster.uid,
+                ArrayList(poster.notifications.map { it.toSharedNotification() })
+            )
+            //Send notification to poster
+            val tokenList = ArrayList<String>()
+            tokenList.add(poster.token)
+            sendMessageToServer(createMessageForServer(notiContent, tokenList, currentUser.token, currentUser.uid, currentUser.image, currentUser.email, currentUser.name, "BASIC"))
+        }
+    }
+
+    fun deleteOrHideNew(action: String, newsId: String) {
+        val new = listNews.find { it.id == newsId } ?: return
+        val backgroundScope = CoroutineScope(SupervisorJob() + ioDispatcher)
+        backgroundScope.launch {
+            if (action == "Delete") {
+                newsInteractor.delete(
+                    new
+                )
+            }
+            listNews.remove(new)
+            withContext(Dispatchers.Main) {
+                updateNews(listNews)
+            }
+        }
+    }
+
+    fun deletePoll(newsId: String, groupId: String) {
+        val news = listNews.find { it.id == newsId } ?: return
+        val pollId = news.pollId ?: return
+        val backgroundScope = CoroutineScope(SupervisorJob() + ioDispatcher)
+        backgroundScope.launch {
+            newsInteractor.deletePoll(news.id, pollId, groupId)
+            listNews.remove(news)
+            withContext(Dispatchers.Main) {
+                updateNews(listNews)
+            }
+        }
+    }
+
+
+    fun loadMoreNews() {
+        if(isLoadingMore.value) return
+        viewModelScope.launch(ioDispatcher) {
+            getLatestNews()
+        }
+    }
+
+    fun refreshNews() {
+        isRefreshing.value = true
+        resetGetLatestNewsParams()
+        loadMoreNews()
+    }
+
+    suspend fun findUserById(userId: String) : UserInstance? = withContext(ioDispatcher){
+        userInteractor.getUser(userId, false)
+    }
+
+    fun findUserByIdInCache(userId: String) : UserInstance? {
+        return loadedUsersCache[userId]
+    }
+
+    suspend fun searchUserByName(name: String) : List<UserInstance>{
+        if(name.isBlank()) return emptyList()
+        val resultList = userInteractor.searchUserByName(name)
+        return resultList ?: emptyList()
+    }
+    // Per-id cache to avoid global shared state updates thrashing item layout
+    private val _sharedNewsById = MutableStateFlow<Map<String, NewsInstance?>>(emptyMap())
+    val sharedNewsById: StateFlow<Map<String, NewsInstance?>> = _sharedNewsById.asStateFlow()
+    suspend fun ensureSharedNew(sharedNewId: String) {
+        if (sharedNewId.isBlank()) return
+        if (_sharedNewsById.value.containsKey(sharedNewId)) return
+        val local = listNews.firstOrNull { it.id == sharedNewId }
+        val value = local ?: runCatching { newsInteractor.findNewById(sharedNewId) }.getOrNull()
+        _sharedNewsById.update { old -> old + (sharedNewId to value) }
+    }
+
+    fun isFriendOf(posterId: String): Boolean {
+        return _allUserFriends.value.any { it?.uid == posterId}
+    }
+}

@@ -10,13 +10,13 @@ import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.remember
-import com.minhtu.firesocialmedia.constants.Constants
+import com.minhtu.firesocialmedia.android.constants.AppConstants
 import com.minhtu.firesocialmedia.domain.entity.call.CallAction
-import com.minhtu.firesocialmedia.domain.serviceimpl.call.CallActionBroadcastReceiver
-import com.minhtu.firesocialmedia.domain.serviceimpl.call.CallNotificationManager.Companion.NOTIF_ID
-import com.minhtu.firesocialmedia.domain.serviceimpl.call.CallSoundManager
+import com.minhtu.firesocialmedia.android.service.serviceimpl.call.CallActionBroadcastReceiver
+import com.minhtu.firesocialmedia.android.service.serviceimpl.call.CallNotificationManager.Companion.NOTIF_ID
+import com.minhtu.firesocialmedia.android.service.serviceimpl.call.CallSoundManager
 import com.minhtu.firesocialmedia.platform.generateImageLoader
-import com.minhtu.firesocialmedia.presentation.calling.incomingcall.IncomingCallScreen
+import com.minhtu.firesocialmedia.presentation.incomingcall.IncomingCallScreen
 import com.minhtu.firesocialmedia.ui.theme.FireSocialMediaCommonTheme
 import com.seiko.imageloader.LocalImageLoader
 
@@ -36,10 +36,10 @@ class IncomingCallActivity : ComponentActivity() {
         acquireWakeLock()
         applyWakeAndLockScreenFlags()
 
-        val sessionId = intent.getStringExtra(Constants.KEY_SESSION_ID)
-        val calleeId = intent.getStringExtra(Constants.KEY_CALLEE_ID)
-        val callerName = intent.getStringExtra(Constants.KEY_CALLER_NAME).orEmpty()
-        val callerAvatar = intent.getStringExtra(Constants.KEY_CALLER_AVATAR).orEmpty()
+        val sessionId = intent.getStringExtra(AppConstants.KEY_SESSION_ID)
+        val calleeId = intent.getStringExtra(AppConstants.KEY_CALLEE_ID)
+        val callerName = intent.getStringExtra(AppConstants.KEY_CALLER_NAME).orEmpty()
+        val callerAvatar = intent.getStringExtra(AppConstants.KEY_CALLER_AVATAR).orEmpty()
 
         setContent {
             FireSocialMediaCommonTheme {
@@ -116,10 +116,10 @@ class IncomingCallActivity : ComponentActivity() {
     ) {
         val intent = Intent(this, CallActionBroadcastReceiver::class.java).apply {
             this.action = action
-            putExtra(Constants.KEY_SESSION_ID, sessionId)
-            putExtra(Constants.KEY_CALLEE_ID, calleeId)
+            putExtra(AppConstants.KEY_SESSION_ID, sessionId)
+            putExtra(AppConstants.KEY_CALLEE_ID, calleeId)
             if (fromNotification) {
-                putExtra(Constants.FROM_NOTIFICATION, true)
+                putExtra(AppConstants.FROM_NOTIFICATION, true)
             }
         }
         sendBroadcast(intent)

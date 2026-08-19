@@ -1,0 +1,81 @@
+package com.minhtu.firesocialmedia.comment.platform
+
+import com.minhtu.firesocialmedia.ios.service.serviceimpl.notification.KtorProvider
+import com.minhtu.firesocialmedia.platform.logMessage
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
+import io.ktor.http.ContentType
+import io.ktor.http.contentType
+import io.ktor.http.isSuccess
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.putJsonArray
+import kotlinx.serialization.json.putJsonObject
+
+private const val REMOTE_MSG_TOKENS = "tokens"
+private const val REMOTE_MSG_TYPE = "type"
+private const val REMOTE_MSG_DATA = "data"
+private const val REMOTE_MSG_TITLE = "title"
+private const val REMOTE_MSG_BODY = "body"
+private const val KEY_FCM_TOKEN = "fcm_token"
+private const val KEY_USER_ID = "user_id"
+private const val KEY_AVATAR = "avatar"
+private const val KEY_EMAIL = "email"
+private const val APP_SCRIPT_URL = "https://script.google.com/macros/s/"
+private const val APP_SCRIPT_ENDPOINT = "AKfycbw4JXnBNCl-hoHi2l0_l-Ugp-9icTBWPJVR5PyKqe5o7-JJ-p26yFVpBO8kUZhxtUSzWA/exec"
+
+actual fun createMessageForServer(
+    message: String,
+    tokenList: ArrayList<String>,
+    senderToken: String,
+    senderUid: String,
+    senderImage: String,
+    senderEmail: String,
+    senderName: String,
+    type: String
+): String {
+    try {
+        val body = buildJsonObject {
+            putJsonObject(REMOTE_MSG_DATA) {
+                put(KEY_FCM_TOKEN, JsonPrimitive(senderToken))
+                put(KEY_USER_ID, JsonPrimitive(senderUid))
+                put(KEY_AVATAR, JsonPrimitive(senderImage))
+                put(KEY_EMAIL, JsonPrimitive(senderEmail))
+                put(REMOTE_MSG_TITLE, JsonPrimitive(senderName))
+                put(REMOTE_MSG_BODY, JsonPrimitive(message))
+                put(REMOTE_MSG_TYPE, JsonPrimitive(type))
+            }
+            putJsonArray(REMOTE_MSG_TOKENS) {
+                for (token in tokenList) {
+                    add(JsonPrimitive(token))
+                }
+            }
+        }
+        return body.toString()
+    } catch (e: Exception) {
+        e.printStackTrace()
+        return ""
+    }
+}
+
+actual fun sendMessageToServer(request: String) {
+    CoroutineScope(Dispatchers.Default).launch {
+        try {
+            val response = KtorProvider.client.post(APP_SCRIPT_URL + APP_SCRIPT_ENDPOINT) {
+                contentType(ContentType.Application.Json)
+                setBody(request)
+            }
+            if (response.status.isSuccess()) {
+                logMessage("sendMessageToServer", { "Notification sent successfully" })
+            } else {
+                logMessage("sendMessageToServer",
+                    { "Failed to send notification: ${response.status}" })
+            }
+        } catch (e: Exception) {
+            logMessage("sendMessageToServer", { e.message.toString() })
+        }
+    }
+}
