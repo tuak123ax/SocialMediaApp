@@ -7,9 +7,12 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -257,6 +260,11 @@ class CreateGroup {
                         )
                     }
                     Spacer(Modifier.weight(1f))
+                    // The root Scaffold only reserves the top safe-drawing inset (see
+                    // SetUpNavigation in Navigation.kt), so this button's bottom padding must
+                    // clear the system navigation bar itself. coerceAtLeast keeps the original
+                    // 20.dp gap on devices with a thin/no nav bar inset.
+                    val navigationBarPadding = WindowInsets.navigationBars.asPaddingValues()
                     Button(
                         onClick = {
                             if(createGroupViewModel.groupName.value.isEmpty()) {
@@ -278,7 +286,8 @@ class CreateGroup {
                         elevation = ButtonDefaults.buttonElevation(4.dp),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(20.dp)
+                            .padding(horizontal = 20.dp, vertical = 20.dp)
+                            .padding(bottom = (navigationBarPadding.calculateBottomPadding() - 20.dp).coerceAtLeast(0.dp))
                             .testTag(TestTag.TAG_BUTTON_NEXT)
                             .semantics {
                                 contentDescription = TestTag.TAG_BUTTON_NEXT

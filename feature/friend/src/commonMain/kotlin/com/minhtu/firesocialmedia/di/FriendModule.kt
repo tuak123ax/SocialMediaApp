@@ -4,13 +4,13 @@ import com.minhtu.firesocialmedia.data.remote.service.auth.friend.AuthSessionSer
 import com.minhtu.firesocialmedia.data.repository.FriendDbRepositoryImpl
 import com.minhtu.firesocialmedia.data.repository.friend.UserRepositoryImpl
 import com.minhtu.firesocialmedia.domain.repository.FriendDbRepository
-import com.minhtu.firesocialmedia.domain.repository.friend.UserRepository
+import com.minhtu.firesocialmedia.domain.repository.UserRepository
 import com.minhtu.firesocialmedia.domain.usecases.common.friend.GetCurrentUserUidUseCase
 import com.minhtu.firesocialmedia.domain.usecases.common.friend.GetUserUseCase
 import com.minhtu.firesocialmedia.domain.usecases.friend.SaveFriendRequestUseCase
 import com.minhtu.firesocialmedia.domain.usecases.friend.SaveFriendUseCase
 import com.minhtu.firesocialmedia.presentation.friend.FriendViewModel
-import com.minhtu.firesocialmedia.presentation.friend.SessionViewModel
+import com.minhtu.firesocialmedia.presentation.SessionViewModel
 import org.koin.dsl.module
 
 fun friendModule() = module {

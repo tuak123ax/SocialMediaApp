@@ -40,15 +40,15 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import com.minhtu.firesocialmedia.constants.auth.TestTag
 import com.minhtu.firesocialmedia.constants.UiConstants
-import com.minhtu.firesocialmedia.core.constants.AuthRouteNames
+import com.minhtu.firesocialmedia.constants.AuthRouteNames
 import com.minhtu.firesocialmedia.platform.showToast
 import com.minhtu.firesocialmedia.platform.toHex
-import com.minhtu.firesocialmedia.auth.presentation.loading.Loading
-import com.minhtu.firesocialmedia.auth.presentation.loading.LoadingViewModel
-import com.minhtu.firesocialmedia.auth.utils.UiUtils.Companion.IconAndTitle
-import com.minhtu.firesocialmedia.auth.utils.UiUtils.Companion.PasswordVisibilityIcon
-import com.minhtu.firesocialmedia.auth.utils.UiUtils.Companion.SubTitle
-import com.minhtu.firesocialmedia.auth.utils.UiUtils.Companion.TextFieldWithLeadingIcon
+import com.minhtu.firesocialmedia.presentation.loading.Loading
+import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
+import com.minhtu.firesocialmedia.utils.auth.UiUtils.Companion.IconAndTitle
+import com.minhtu.firesocialmedia.utils.auth.UiUtils.Companion.PasswordVisibilityIcon
+import com.minhtu.firesocialmedia.utils.auth.UiUtils.Companion.SubTitle
+import com.minhtu.firesocialmedia.utils.auth.UiUtils.Companion.TextFieldWithLeadingIcon
 import com.minhtu.firesocialmedia.presentation.information.InformationViewModel
 import org.koin.compose.viewmodel.koinViewModel
 

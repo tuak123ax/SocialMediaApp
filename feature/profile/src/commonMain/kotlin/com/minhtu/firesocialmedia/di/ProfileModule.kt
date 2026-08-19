@@ -26,6 +26,7 @@ import com.minhtu.firesocialmedia.domain.usecases.friend.ProfileSaveFriendUseCas
 import com.minhtu.firesocialmedia.domain.usecases.news.profile.DeleteNewsUseCase
 import com.minhtu.firesocialmedia.domain.usecases.newsfeed.profile.DeletePollUseCase
 import com.minhtu.firesocialmedia.domain.usecases.news.profile.GetNewByIdUseCase
+import com.minhtu.firesocialmedia.domain.usecases.news.profile.GetNewsByUserUseCase
 import com.minhtu.firesocialmedia.domain.usecases.news.profile.UpdateLikeCountForNewUseCase
 import com.minhtu.firesocialmedia.domain.usecases.information.CheckCalleeAvailableUseCase
 import com.minhtu.firesocialmedia.domain.usecases.network.CheckInternetConnectionUseCase
@@ -77,6 +78,7 @@ fun profileModule() = module {
         )
     }
     factory { GetNewByIdUseCase(get()) }
+    factory { GetNewsByUserUseCase(get()) }
     factory { DeleteNewsUseCase(get()) }
     factory { UpdateLikeCountForNewUseCase(get()) }
     factory { DeletePollUseCase(get()) }
@@ -103,7 +105,7 @@ fun profileModule() = module {
     // 3rd arg (SaveNotificationToDatabaseUseCase) resolves via feature:notification's Koin module.
     viewModel {
         UserInformationViewModel(
-            get(), get(), get(), get(), get(), get(), get()
+            get(), get(), get(), get(), get(), get(), get(), get()
         )
     }
     viewModel {

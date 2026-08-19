@@ -7,7 +7,7 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
-import com.minhtu.firesocialmedia.core.constants.AuthRouteNames
+import com.minhtu.firesocialmedia.constants.AuthRouteNames
 import com.minhtu.firesocialmedia.domain.signin.GoogleSignInHandler
 import com.minhtu.firesocialmedia.domain.entity.user.auth.toDto
 import com.minhtu.firesocialmedia.entity.bridge.toAppInitUserDto
@@ -20,7 +20,7 @@ import com.minhtu.firesocialmedia.presentation.information.InformationViewModel
 import com.minhtu.firesocialmedia.presentation.signin.SignIn
 import com.minhtu.firesocialmedia.presentation.signin.SignInViewModel
 import com.minhtu.firesocialmedia.presentation.signup.SignUp
-import com.minhtu.firesocialmedia.data.remote.service.imagepicker.auth.rememberPlatformImagePicker
+import com.minhtu.firesocialmedia.data.remote.auth.service.imagepicker.auth.rememberPlatformImagePicker
 import com.minhtu.firesocialmedia.presentation.navigation.AuthNavGraph
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
@@ -87,10 +87,11 @@ class AuthNavGraphImpl : AuthNavGraph {
 
         navGraphBuilder.composable(route = Information.getScreenName()) {
             val informationViewModel: InformationViewModel = koinViewModel()
-            val picker = rememberPlatformImagePicker(
-                context = context,
-                onImagePicked = { uri -> informationViewModel.updateAvatar(uri) }
-            )
+            val picker =
+                _root_ide_package_.com.minhtu.firesocialmedia.data.remote.auth.service.imagepicker.auth.rememberPlatformImagePicker(
+                    context = context,
+                    onImagePicked = { uri -> informationViewModel.updateAvatar(uri) }
+                )
             Information.InformationScreen(
                 platform = platformContext,
                 imagePicker = picker,

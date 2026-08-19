@@ -5,8 +5,12 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
@@ -51,12 +55,24 @@ class FeedListUtils {
             onNavigateToUploadNews: (updateNew: NewsInstance?) -> Unit,
             onNavigateToShowImageScreen: (image: String) -> Unit,
             onNavigateToUserInformation: (user: UserInstance?) -> Unit,
-            showBottomSheet: (NewsInstance) -> Unit) {
+            showBottomSheet: (NewsInstance) -> Unit,
+            // UserInformation paginates via its own UserInformationViewModel
+            // (isLoadingMoreUserNews), not engagementViewModel, so the loading row below can't
+            // just read engagementViewModel.isLoadingMore like Group's feed does. Callers that
+            // drive their own pagination pass their own flag here; callers that page through
+            // engagementViewModel (e.g. Group) can rely on the default.
+            isLoadingMore: Boolean = engagementViewModel.isLoadingMore.value) {
             val coroutineScope = rememberCoroutineScope()
             val likeStatus by engagementViewModel.likedPosts.collectAsState()
             val likeCountList = engagementViewModel.likeCountList.collectAsState()
             val commentCountList = engagementViewModel.commentCountList.collectAsState()
             val loadedUsers by sessionViewModel.loadedUserState.collectAsState()
+            // The root Scaffold only reserves the top safe-drawing inset (see SetUpNavigation in
+            // Navigation.kt), so on screens without their own bottom bar - like this one - the
+            // system navigation bar can overlap the last item's like/comment row. Pad the list's
+            // content (not the list itself, which would just clip scrolling) by the nav bar's
+            // height so the last post always comes to rest above it.
+            val navigationBarPadding = WindowInsets.navigationBars.asPaddingValues()
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
@@ -65,7 +81,8 @@ class FeedListUtils {
                     .semantics{
                         contentDescription = TestTag.TAG_POSTS_COLUMN
                     },
-                state = listState
+                state = listState,
+                contentPadding = PaddingValues(bottom = navigationBarPadding.calculateBottomPadding() + 16.dp)
             ) {
                 items(
                     items = list,
@@ -154,7 +171,7 @@ class FeedListUtils {
                 }
 
                 // Loading row at the bottom
-                if (engagementViewModel.isLoadingMore.value) {
+                if (isLoadingMore) {
                     item {
                         Box(
                             modifier = Modifier

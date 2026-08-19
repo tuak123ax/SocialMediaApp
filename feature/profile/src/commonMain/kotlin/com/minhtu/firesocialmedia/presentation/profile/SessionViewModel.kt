@@ -13,8 +13,13 @@ class SessionViewModel(
     private val getUserUseCase: GetUserUseCase,
     private val getCurrentUserUidUseCase: GetCurrentUserUidUseCase
 ) : ViewModel() {
-    var currentUser: UserInstance? = null
-        private set
+    private val _currentUserState = MutableStateFlow<UserInstance?>(null)
+    val currentUserState: StateFlow<UserInstance?> = _currentUserState.asStateFlow()
+
+    // Kept for callers that only need a synchronous snapshot (e.g. click handlers
+    // fired after the screen has already observed a non-null currentUserState).
+    val currentUser: UserInstance?
+        get() = _currentUserState.value
 
     var loadedUsersCache: HashMap<String, UserInstance?> = HashMap()
     private val _loadedUserState = MutableStateFlow<Map<String, UserInstance?>>(emptyMap())
@@ -23,7 +28,7 @@ class SessionViewModel(
     init {
         viewModelScope.launch {
             val uid = getCurrentUserUidUseCase.invoke() ?: return@launch
-            currentUser = getUserUseCase.invoke(uid, true)
+            _currentUserState.value = getUserUseCase.invoke(uid, true)
         }
     }
 

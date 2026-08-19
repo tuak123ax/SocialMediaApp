@@ -120,6 +120,7 @@ class SelectGroup {
                     query = searchQuery,
                     onQueryChange = { query -> searchQuery = query },
                     modifier = Modifier
+                        .fillMaxWidth()
                         .padding(horizontal = 10.dp)
                         .testTag(TestTag.TAG_SEARCH_BAR)
                         .semantics {
@@ -161,10 +162,12 @@ class SelectGroup {
                         .padding(top = 20.dp, start = 20.dp)
                 )
                 //All groups
-                var filterList by remember { mutableStateOf<List<GroupInstance>>(emptyList()) }
-                // Run filtering when friend list or search query changes
-                LaunchedEffect(searchQuery) {
-                    filterList = groupList.filter { it.name.contains(searchQuery) }
+                // Keyed on both groupList and searchQuery - a plain derived computation, not
+                // async work, so a LaunchedEffect keyed only on searchQuery would (and did)
+                // miss re-running when groupList arrives after the initial Firebase fetch,
+                // leaving the list stuck empty even though the data exists.
+                val filterList = remember(groupList, searchQuery) {
+                    groupList.filter { it.name.contains(searchQuery) }
                 }
                 LazyColumn(
                     modifier = Modifier

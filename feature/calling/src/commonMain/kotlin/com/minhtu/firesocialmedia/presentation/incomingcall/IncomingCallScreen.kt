@@ -15,8 +15,11 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -93,6 +96,12 @@ fun IncomingCallScreen(
         val verticalPadding = when { isLandscape -> 20.dp; else -> 40.dp }
         val buttonSize = when { isTablet -> 90.dp; else -> 76.dp }
         val spacing = when { isLandscape -> 16.dp; else -> 28.dp }
+        // The root Scaffold only reserves the top safe-drawing inset (see SetUpNavigation in
+        // Navigation.kt), so the accept/reject FABs below must clear the system navigation bar
+        // themselves. coerceAtLeast preserves the original verticalPadding gap on devices with a
+        // thin/no nav bar inset.
+        val navigationBarBottomPadding = WindowInsets.navigationBars.asPaddingValues()
+            .calculateBottomPadding().coerceAtLeast(verticalPadding)
 
         Box(modifier = Modifier.fillMaxSize().background(
             Brush.verticalGradient(colors = listOf(
@@ -105,13 +114,17 @@ fun IncomingCallScreen(
                 .background(brush = Brush.radialGradient(colors = listOf(callAcceptColor.copy(alpha = 0.18f), Color.Transparent)), shape = CircleShape))
 
             if (isLandscape) {
-                Row(modifier = Modifier.fillMaxSize().padding(horizontal = horizontalPadding, vertical = verticalPadding),
+                Row(modifier = Modifier.fillMaxSize().padding(
+                        start = horizontalPadding, end = horizontalPadding,
+                        top = verticalPadding, bottom = navigationBarBottomPadding),
                     verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceEvenly) {
                     CallerSection(callerName, callerAvatar, localImageLoaderValue, avatarSize, pulseSize, pulseScale, pulseAlpha)
                     ActionButtonsSection(buttonSize, spacing, onAccept, onReject)
                 }
             } else {
-                Column(modifier = Modifier.fillMaxSize().padding(horizontal = horizontalPadding, vertical = verticalPadding),
+                Column(modifier = Modifier.fillMaxSize().padding(
+                        start = horizontalPadding, end = horizontalPadding,
+                        top = verticalPadding, bottom = navigationBarBottomPadding),
                     horizontalAlignment = Alignment.CenterHorizontally) {
                     Spacer(modifier = Modifier.height(12.dp))
                     Surface(color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f), shape = RoundedCornerShape(50)) {

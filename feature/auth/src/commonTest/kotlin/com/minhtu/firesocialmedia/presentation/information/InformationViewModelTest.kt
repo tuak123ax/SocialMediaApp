@@ -1,6 +1,6 @@
 package com.minhtu.firesocialmedia.presentation.information
 
-import com.minhtu.firesocialmedia.auth.data.remote.dto.user.UserDTO
+import com.minhtu.firesocialmedia.data.remote.dto.user.UserDTO
 import com.minhtu.firesocialmedia.data.local.service.crypto.AuthCryptoService
 import com.minhtu.firesocialmedia.data.remote.dto.crypto.CredentialsDTO
 import com.minhtu.firesocialmedia.data.remote.dto.settings.auth.IpInfoResponseDTO

@@ -1,7 +1,7 @@
 package com.minhtu.firesocialmedia.data.repository.auth
-import com.minhtu.firesocialmedia.auth.data.remote.dto.user.UserDTO
-import com.minhtu.firesocialmedia.data.remote.service.auth.auth.AuthSessionService
-import com.minhtu.firesocialmedia.data.remote.service.database.AuthDatabaseService
+import com.minhtu.firesocialmedia.data.remote.auth.dto.user.UserDTO
+import com.minhtu.firesocialmedia.data.remote.auth.service.auth.auth.AuthSessionService
+import com.minhtu.firesocialmedia.data.remote.auth.service.database.AuthDatabaseService
 import com.minhtu.firesocialmedia.domain.repository.auth.UserRepository
 
 class UserRepositoryImpl(

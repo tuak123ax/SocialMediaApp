@@ -5,8 +5,12 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
@@ -44,6 +48,7 @@ class FeedListUtils {
     companion object {
         @Composable
         fun LazyColumnOfNewsWithSlideOutAnimationAndLoadMore(
+            paddingValues: PaddingValues,
             localImageLoaderValue: ProvidedValue<*>,
             listState: LazyListState,
             homeViewModel: HomeViewModel,
@@ -60,6 +65,8 @@ class FeedListUtils {
             val likeCountList = homeViewModel.likeCountList.collectAsState()
             val commentCountList = homeViewModel.commentCountList.collectAsState()
             val loadedUsers by homeViewModel.loadedUserState.collectAsState()
+
+            val navigationBarPadding = WindowInsets.navigationBars.asPaddingValues()
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
@@ -68,7 +75,8 @@ class FeedListUtils {
                     .semantics{
                         contentDescription = TestTag.TAG_POSTS_COLUMN
                     },
-                state = listState
+                state = listState,
+                contentPadding = PaddingValues(bottom = navigationBarPadding.calculateBottomPadding().coerceAtLeast(118.dp))
             ) {
                 items(
                     items = list,
@@ -93,6 +101,7 @@ class FeedListUtils {
                                 NewsCard(
                                     news = news,
                                     user = user,
+                                    paddingValues,
                                     isLiked = likeStatus.containsKey(news.id),
                                     likeCountList.value,
                                     commentCountList.value,
@@ -121,6 +130,7 @@ class FeedListUtils {
                                 val sharedNew = sharedNewMap[news.shareContentId]
                                 if(sharedNew != null) {
                                     NewsCardWithSharedContent(
+                                        paddingValues,
                                         news = news,
                                         sharedNew = sharedNew,
                                         user = user,

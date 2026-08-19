@@ -1,7 +1,7 @@
 package com.minhtu.firesocialmedia.domain.usecases.common.friend
 
-import com.minhtu.firesocialmedia.domain.repository.friend.UserRepository
-import com.minhtu.firesocialmedia.friend.data.remote.dto.user.UserDTO
+import com.minhtu.firesocialmedia.domain.repository.UserRepository
+import com.minhtu.firesocialmedia.data.remote.dto.user.UserDTO
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals

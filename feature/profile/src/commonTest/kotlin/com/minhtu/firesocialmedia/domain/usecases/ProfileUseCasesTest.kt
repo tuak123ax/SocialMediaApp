@@ -26,7 +26,9 @@ import com.minhtu.firesocialmedia.domain.usecases.settings.UpdateUserStringField
 import com.minhtu.firesocialmedia.domain.usecases.settings.profile.VerifyCurrentPasswordUseCase
 import com.minhtu.firesocialmedia.profile.data.remote.dto.news.NewsDTO
 import com.minhtu.firesocialmedia.profile.data.remote.dto.user.UserDTO
+import com.minhtu.firesocialmedia.profile.data.remote.dto.news.ProfileLatestNewsDTO
 import com.minhtu.firesocialmedia.profile.entity.news.NewsInstance
+import com.minhtu.firesocialmedia.profile.entity.news.ProfileNewsPage
 import com.minhtu.firesocialmedia.profile.entity.user.UserInstance
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -86,6 +88,8 @@ private class FakeProfileNewsRepository(
     var lastDeletedNews: NewsInstance? = null
     var lastDeletePollArgs: Triple<String, String, String>? = null
     override suspend fun getNew(newId: String): NewsInstance? = newInstance
+    override suspend fun getNewsByUser(posterId: String, number: Int, lastTimePosted: Double?, lastKey: String?): ProfileNewsPage =
+        ProfileNewsPage(emptyList(), null, null)
     override suspend fun deleteNewsFromDatabase(new: NewsInstance): Boolean {
         lastDeletedNews = new
         return deleteResult
@@ -116,6 +120,13 @@ private class FakeProfileDatabaseService(
     var lastUpdatedAvatar: Pair<String, String>? = null
     var lastUpdatedBackground: Pair<String, String>? = null
     override suspend fun getNew(newId: String, newsPath: String): NewsDTO? = null
+    override suspend fun getNewsByPoster(
+        posterId: String,
+        number: Int,
+        lastTimePosted: Double?,
+        lastKey: String?,
+        newsPath: String
+    ): ProfileLatestNewsDTO = ProfileLatestNewsDTO(emptyList(), null, null)
     override suspend fun deleteNewsFromDatabase(new: NewsDTO, newsPath: String): Boolean = true
     override suspend fun updateLikeCountForNew(newsId: String, value: Int, newsPath: String, likedCountPath: String) {}
     override suspend fun deletePollFromDatabase(

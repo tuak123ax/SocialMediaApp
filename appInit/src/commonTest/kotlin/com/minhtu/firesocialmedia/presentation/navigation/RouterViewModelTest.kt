@@ -1,7 +1,7 @@
 package com.minhtu.firesocialmedia.presentation.navigation
 
 import com.minhtu.firesocialmedia.appinit.data.remote.dto.user.UserDTO
-import com.minhtu.firesocialmedia.core.constants.AuthRouteNames
+import com.minhtu.firesocialmedia.constants.AuthRouteNames
 import com.minhtu.firesocialmedia.domain.entity.crypto.Credentials
 import com.minhtu.firesocialmedia.domain.entity.forgotpassword.EmailExistResult
 import com.minhtu.firesocialmedia.domain.entity.signin.SignInState

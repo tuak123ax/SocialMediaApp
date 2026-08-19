@@ -27,7 +27,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.eygraber.uri.Uri
-import com.minhtu.firesocialmedia.core.constants.AuthRouteNames
+import com.minhtu.firesocialmedia.constants.AuthRouteNames
 import com.minhtu.firesocialmedia.domain.entity.call.OfferAnswer
 import com.minhtu.firesocialmedia.domain.entity.call.CallingRequestData
 import com.minhtu.firesocialmedia.home.entity.call.CallingRequestData as HomeCallingRequestData
@@ -55,6 +55,8 @@ import com.minhtu.firesocialmedia.presentation.notification.NotificationsViewMod
 import com.minhtu.firesocialmedia.presentation.settings.AccountViewModel
 import com.minhtu.firesocialmedia.presentation.share.ShareViewModel
 import com.minhtu.firesocialmedia.presentation.home.HomeViewModel
+import com.minhtu.firesocialmedia.presentation.profile.EngagementViewModel as ProfileEngagementViewModel
+import com.minhtu.firesocialmedia.presentation.group.EngagementViewModel as GroupEngagementViewModel
 import com.minhtu.firesocialmedia.presentation.loading.GifLoading
 import com.minhtu.firesocialmedia.presentation.loading.SyncLoadingViewModel
 import com.minhtu.firesocialmedia.presentation.navigationscreen.Screen
@@ -110,6 +112,15 @@ fun SetUpNavigation(
 
     // Shared viewModels
     val homeViewModel: HomeViewModel = koinInject()
+    val profileEngagementViewModel: ProfileEngagementViewModel = koinInject()
+    val groupEngagementViewModel: GroupEngagementViewModel = koinInject()
+    // CommentScreen is a single shared route reached from Home, Search, Profile, and Group. Its
+    // "done" callback only knows the refreshed comment count, not which screen's engagement
+    // view model owns the count list that needs updating - so each onNavigateToCommentScreen call
+    // site below sets this alongside selectedNew, and the shared route dispatches through it.
+    // Defaults to Home's view model since Home is the first destination in the graph.
+    var commentCountUpdateTarget: (newsId: String, commentCount: Int) -> Unit =
+        { newsId, commentCount -> homeViewModel.addCommentCountData(newsId, commentCount) }
     val notificationsViewModel: NotificationsViewModel = koinInject()
     val accountViewModel: AccountViewModel = koinInject()
     val callViewModel: CallViewModel = koinInject()
@@ -320,6 +331,7 @@ fun SetUpNavigation(
                     },
                     onNavigateToCommentScreen = { new ->
                         selectedNew = new
+                        commentCountUpdateTarget = { newsId, commentCount -> homeViewModel.addCommentCountData(newsId, commentCount) }
                         navController.navigate(route = CommentNavGraph.COMMENT_SCREEN_ROUTE)
                     },
                     onNavigateToCallingScreen = { callingRequestData ->
@@ -432,6 +444,8 @@ fun SetUpNavigation(
                     },
                     onNavigateToCommentScreen = { new ->
                         selectedNew = new
+                        // Search renders posts via homeViewModel's own like/comment count lists.
+                        commentCountUpdateTarget = { newsId, commentCount -> homeViewModel.addCommentCountData(newsId, commentCount) }
                         navController.navigate(route = CommentNavGraph.COMMENT_SCREEN_ROUTE)
                     },
                     onNavigateToUploadNewsFeed = { _ ->
@@ -459,6 +473,8 @@ fun SetUpNavigation(
                     },
                     onNavigateToCommentScreen = { new ->
                         selectedNew = new
+                        // Profile's UserInformation screen renders posts via its own EngagementViewModel.
+                        commentCountUpdateTarget = { newsId, commentCount -> profileEngagementViewModel.addCommentCountData(newsId, commentCount) }
                         navController.navigate(route = CommentNavGraph.COMMENT_SCREEN_ROUTE)
                     },
                     onNavigateToUploadNewsfeed = { new ->
@@ -494,7 +510,7 @@ fun SetUpNavigation(
                              navController.navigate(route = profileNavGraph.getUserInformationRoute())
                          },
                          onNavigateToHomeScreen = { numberOfComments ->
-                             homeViewModel.addCommentCountData(selectedNew.id, numberOfComments)
+                             commentCountUpdateTarget(selectedNew.id, numberOfComments)
                              navController.popBackStack()
                          }
                     )
@@ -579,6 +595,7 @@ fun SetUpNavigation(
                             .background(MaterialTheme.colorScheme.background),
                         platformContext,
                         localImageLoaderValue = localImageLoaderValue,
+                        paddingValues,
                         relatedNew,
                         onNavigateToShowImageScreen = { image ->
                             selectedImage = image
@@ -646,6 +663,7 @@ fun SetUpNavigation(
                                 .background(MaterialTheme.colorScheme.background),
                             platformContext,
                             localImageLoaderValue = localImageLoaderValue,
+                            paddingValues,
                             newsState!!,
                             onNavigateToShowImageScreen = { image ->
                                 selectedImage = image
@@ -741,6 +759,8 @@ fun SetUpNavigation(
                     },
                     onNavigateToCommentScreen = { new ->
                         selectedNew = new
+                        // Group screens render posts via their own EngagementViewModel.
+                        commentCountUpdateTarget = { newsId, commentCount -> groupEngagementViewModel.addCommentCountData(newsId, commentCount) }
                         navController.navigate(route = CommentNavGraph.COMMENT_SCREEN_ROUTE)
                     },
                     onNavigateToInviteMember = {
@@ -805,6 +825,8 @@ fun SetUpNavigation(
                     },
                     onNavigateToCommentScreen = { new ->
                         selectedNew = new
+                        // Group screens render posts via their own EngagementViewModel.
+                        commentCountUpdateTarget = { newsId, commentCount -> groupEngagementViewModel.addCommentCountData(newsId, commentCount) }
                         navController.navigate(route = CommentNavGraph.COMMENT_SCREEN_ROUTE)
                     },
                     onNavigateToInviteMember = {
@@ -851,6 +873,7 @@ fun SetUpNavigation(
                     navGraphBuilder = this,
                     navController = navController,
                     localImageLoaderValue = localImageLoaderValue,
+                    paddingValues = paddingValues,
                     getCurrentUser = { homeViewModel.currentUser?.toHomeUserDto()?.toAppInitUserDto()?.toSearchUser() ?: routerViewModel.currentUser.value },
                     getHomeRoute = { homeNavGraph.getHomeRoute() },
                     onNavigateToForgotPassword = {

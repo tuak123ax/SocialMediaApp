@@ -15,9 +15,12 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -77,6 +80,7 @@ class LoginHistory {
         @Composable
         fun LoginHistoryScreen(
             currentUser: UserDTO,
+            paddingValues: PaddingValues,
             loginHistoryViewModel: LoginHistoryViewModel = koinViewModel(),
             modifier: Modifier = Modifier,
             onNavigateBack: () -> Unit
@@ -127,10 +131,14 @@ class LoginHistory {
             }
 
             BoxWithConstraints(
-                modifier = modifier.fillMaxSize()
+                modifier = modifier.fillMaxSize().padding(paddingValues)
             ) {
                 val isTablet = maxWidth > 600.dp
                 val contentMaxWidth = if (isTablet) 600.dp else Dp.Unspecified
+                // The root Scaffold only reserves the top safe-drawing inset (see SetUpNavigation
+                // in Navigation.kt), so this LazyColumn - which is the entire screen content -
+                // must clear the system navigation bar itself via contentPadding.
+                val navigationBarPadding = WindowInsets.navigationBars.asPaddingValues()
 
                 LazyColumn(
                     modifier = Modifier
@@ -138,7 +146,8 @@ class LoginHistory {
                         .widthIn(max = contentMaxWidth)
                         .align(Alignment.TopCenter)
                         .padding(horizontal = if (isTablet) 24.dp else 16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    contentPadding = PaddingValues(bottom = navigationBarPadding.calculateBottomPadding() + 16.dp)
                 ) {
 
                     item {

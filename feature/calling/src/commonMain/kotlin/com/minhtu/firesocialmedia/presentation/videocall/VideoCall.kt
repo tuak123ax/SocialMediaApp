@@ -4,7 +4,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -173,8 +176,14 @@ class VideoCall {
                 )
                 if (isLoading) { Loading.LoadingScreen() }
 
+                // The root Scaffold only reserves the top safe-drawing inset (see
+                // SetUpNavigation in Navigation.kt), so these mic/speaker/exit FABs must clear
+                // the system navigation bar themselves. coerceAtLeast preserves the original
+                // 40.dp gap on devices with a thin/no nav bar inset.
+                val navigationBarPadding = WindowInsets.navigationBars.asPaddingValues()
                 Row(
-                    modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 40.dp),
+                    modifier = Modifier.align(Alignment.BottomCenter)
+                        .padding(bottom = navigationBarPadding.calculateBottomPadding().coerceAtLeast(40.dp)),
                     horizontalArrangement = Arrangement.spacedBy(24.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {

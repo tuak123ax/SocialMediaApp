@@ -33,27 +33,13 @@ class AndroidSecurityDatabaseService(context: Context) : SecurityDatabaseService
                 .child(loginHistoryPath)
                 .child(userId)
 
-            Log.d("fetchLoginHistoryList", "Fetching login history...")
-            Log.d("fetchLoginHistoryList", "UserId: $userId")
-
             val snapshot = ref.get().await()
 
-            Log.d("fetchLoginHistoryList", "Snapshot exists: ${snapshot.exists()}")
-            Log.d("fetchLoginHistoryList", "Children count: ${snapshot.childrenCount}")
-
             val result = snapshot.children.mapNotNull { child ->
-                Log.d("fetchLoginHistoryList", "Raw child key: ${child.key}")
-                Log.d("fetchLoginHistoryList", "Raw value: ${child.value}")
 
                 // The node key IS the sessionId — populate it from the key
                 val item = child.getValue(SessionItemDTO::class.java)
                     ?.copy(sessionId = child.key ?: "")
-
-                if (item == null) {
-                    Log.e("fetchLoginHistoryList", "Failed to parse child: ${child.key}")
-                } else {
-                    Log.d("fetchLoginHistoryList", "Parsed item: $item")
-                }
 
                 item
             }

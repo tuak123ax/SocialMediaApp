@@ -1,7 +1,7 @@
 package com.minhtu.firesocialmedia.presentation.signin
 
 import androidx.compose.runtime.mutableStateOf
-import com.minhtu.firesocialmedia.data.remote.service.signinlauncher.SignInLauncher
+import com.minhtu.firesocialmedia.data.remote.auth.service.signinlauncher.SignInLauncher
 import com.minhtu.firesocialmedia.domain.entity.crypto.Credentials
 import com.minhtu.firesocialmedia.domain.entity.signin.SignInState
 import com.minhtu.firesocialmedia.domain.entity.user.auth.UserInstance

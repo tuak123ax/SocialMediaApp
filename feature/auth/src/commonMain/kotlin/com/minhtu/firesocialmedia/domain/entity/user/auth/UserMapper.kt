@@ -1,5 +1,6 @@
 package com.minhtu.firesocialmedia.domain.entity.user.auth
-import com.minhtu.firesocialmedia.auth.data.remote.dto.user.UserDTO
+
+import com.minhtu.firesocialmedia.data.remote.auth.dto.user.UserDTO
 
 fun UserDTO.toDomain(): UserInstance = UserInstance(
     email = email, image = image, name = name, status = status, phone = phone, token = token, uid = uid,

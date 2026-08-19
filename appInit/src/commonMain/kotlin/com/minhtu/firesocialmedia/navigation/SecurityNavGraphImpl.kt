@@ -1,5 +1,6 @@
 package com.minhtu.firesocialmedia.navigation
 
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.ProvidedValue
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
@@ -32,6 +33,7 @@ class SecurityNavGraphImpl : SecurityNavGraph {
         navGraphBuilder: NavGraphBuilder,
         navController: NavHostController,
         localImageLoaderValue: ProvidedValue<*>,
+        paddingValues: PaddingValues,
         getCurrentUser: () -> UserInstance?,
         getHomeRoute: () -> String,
         onNavigateToForgotPassword: () -> Unit,
@@ -74,7 +76,7 @@ class SecurityNavGraphImpl : SecurityNavGraph {
             if (user != null) {
                 SecuritySettings.SecuritySettingsScreen(
                     currentUser = user.toDto().toSecurityUserDto(),
-                    paddingValues = androidx.compose.foundation.layout.PaddingValues(),
+                    paddingValues = paddingValues,
                     onNavigateBack = { navController.popBackStack() },
                     onChangePassword = { navController.navigate(ChangePassword.getScreenName()) },
                     onNavigateTo2FAScreen = { navController.navigate(TwoFA.getScreenName()) },
@@ -93,7 +95,7 @@ class SecurityNavGraphImpl : SecurityNavGraph {
             popExitTransition = DefaultNavAnimations.popExit
         ) {
             ChangePassword.ChangePasswordScreen(
-                paddingValues = androidx.compose.foundation.layout.PaddingValues(),
+                paddingValues = paddingValues,
                 currentUser = getCurrentUser()?.toDto()?.toSecurityUserDto() ?: UserDTO(),
                 onNavigateToForgotPasswordScreen = onNavigateToForgotPassword,
                 onNavigateToSignInScreen = onNavigateToSignIn,
@@ -204,6 +206,7 @@ class SecurityNavGraphImpl : SecurityNavGraph {
         ) {
             LoginHistory.LoginHistoryScreen(
                 currentUser = getCurrentUser()?.toDto()?.toSecurityUserDto() ?: UserDTO(),
+                paddingValues = paddingValues,
                 modifier = androidx.compose.ui.Modifier,
                 onNavigateBack = { navController.popBackStack() }
             )

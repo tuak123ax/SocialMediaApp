@@ -3,7 +3,7 @@ package com.minhtu.firesocialmedia.presentation.friend
 import com.minhtu.firesocialmedia.domain.repository.FriendDbRepository
 import com.minhtu.firesocialmedia.domain.usecases.friend.SaveFriendRequestUseCase
 import com.minhtu.firesocialmedia.domain.usecases.friend.SaveFriendUseCase
-import com.minhtu.firesocialmedia.friend.entity.user.UserInstance
+import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle

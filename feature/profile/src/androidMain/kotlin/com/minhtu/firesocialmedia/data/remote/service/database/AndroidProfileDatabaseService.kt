@@ -9,6 +9,7 @@ import com.minhtu.firesocialmedia.android.service.serviceimpl.database.profile.A
 import com.minhtu.firesocialmedia.android.service.serviceimpl.database.supabase.SupabaseStorageHelper.Companion.resolveMediaUrlAsync
 import com.minhtu.firesocialmedia.constants.profile.DataConstant
 import com.minhtu.firesocialmedia.profile.data.remote.dto.news.NewsDTO
+import com.minhtu.firesocialmedia.profile.data.remote.dto.news.ProfileLatestNewsDTO
 import com.minhtu.firesocialmedia.profile.data.remote.dto.user.UserDTO
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeout
@@ -18,6 +19,16 @@ import kotlin.coroutines.suspendCoroutine
 class AndroidProfileDatabaseService : ProfileDatabaseService {
     override suspend fun getNew(newId: String, newsPath: String): NewsDTO? {
         return AndroidProfileDatabaseHelper.getNew(newId, newsPath)
+    }
+
+    override suspend fun getNewsByPoster(
+        posterId: String,
+        number: Int,
+        lastTimePosted: Double?,
+        lastKey: String?,
+        newsPath: String
+    ): ProfileLatestNewsDTO {
+        return AndroidProfileDatabaseHelper.getNewsByPoster(posterId, number, lastTimePosted, lastKey, newsPath)
     }
 
     override suspend fun deleteNewsFromDatabase(new: NewsDTO, newsPath: String): Boolean {

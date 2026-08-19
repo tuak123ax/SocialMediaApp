@@ -5,6 +5,7 @@ import com.minhtu.firesocialmedia.domain.repository.NetworkRepository
 import com.minhtu.firesocialmedia.domain.repository.NotificationRepository
 import com.minhtu.firesocialmedia.domain.repository.ProfileFriendDbRepository
 import com.minhtu.firesocialmedia.domain.repository.call.profile.CallRepository
+import com.minhtu.firesocialmedia.domain.repository.news.ProfileNewsRepository
 import com.minhtu.firesocialmedia.domain.repository.profile.UserRepository
 import com.minhtu.firesocialmedia.domain.entity.notification.NotificationInstance as SharedNotificationInstance
 import com.minhtu.firesocialmedia.domain.usecases.common.profile.GetUserUseCase
@@ -12,10 +13,14 @@ import com.minhtu.firesocialmedia.domain.usecases.friend.ProfileSaveFriendReques
 import com.minhtu.firesocialmedia.domain.usecases.friend.ProfileSaveFriendUseCase
 import com.minhtu.firesocialmedia.domain.usecases.information.CheckCalleeAvailableUseCase
 import com.minhtu.firesocialmedia.domain.usecases.network.CheckInternetConnectionUseCase
+import com.minhtu.firesocialmedia.domain.usecases.news.profile.GetNewsByUserUseCase
 import com.minhtu.firesocialmedia.domain.usecases.notification.SaveNotificationToDatabaseUseCase
 import com.minhtu.firesocialmedia.domain.usecases.settings.UpdateUserBackgroundUseCase
 import com.minhtu.firesocialmedia.profile.data.remote.dto.news.NewsDTO
+import com.minhtu.firesocialmedia.profile.data.remote.dto.news.ProfileLatestNewsDTO
 import com.minhtu.firesocialmedia.profile.data.remote.dto.user.UserDTO
+import com.minhtu.firesocialmedia.profile.entity.news.NewsInstance
+import com.minhtu.firesocialmedia.profile.entity.news.ProfileNewsPage
 import com.minhtu.firesocialmedia.profile.entity.user.UserInstance
 import com.minhtu.firesocialmedia.storage.profile.SupabaseStorageProvider
 import kotlinx.coroutines.Dispatchers
@@ -66,6 +71,33 @@ private class FakeUiNetworkRepository(private val hasConnection: Boolean = true)
     override suspend fun hasInternetConnection(): Flow<Boolean> = flowOf(hasConnection)
 }
 
+private class FakeUiNewsRepository(
+    private val newsByPoster: Map<String, List<NewsInstance>> = emptyMap(),
+    // When set, each successive call to getNewsByUser returns the next entry here instead of
+    // the single-shot newsByPoster behavior, letting tests script multi-page pagination.
+    private val pageResults: List<ProfileNewsPage> = emptyList()
+) : ProfileNewsRepository {
+    var callCount = 0
+        private set
+
+    override suspend fun getNew(newId: String): NewsInstance? = null
+    override suspend fun getNewsByUser(
+        posterId: String,
+        number: Int,
+        lastTimePosted: Double?,
+        lastKey: String?
+    ): ProfileNewsPage {
+        val index = callCount
+        callCount++
+        return pageResults.getOrElse(index) {
+            ProfileNewsPage(newsByPoster[posterId] ?: emptyList(), lastTimePosted = null, lastKey = null)
+        }
+    }
+    override suspend fun deleteNewsFromDatabase(new: NewsInstance): Boolean = true
+    override suspend fun updateLikeCountForNew(newsId: String, value: Int) {}
+    override suspend fun deletePollFromDatabase(newsId: String, pollId: String, groupId: String): Boolean = true
+}
+
 private class FakeUiUserRepository(
     private val usersById: Map<String, UserDTO?> = emptyMap()
 ) : UserRepository {
@@ -79,6 +111,13 @@ private class FakeUiProfileDatabaseService(
 ) : ProfileDatabaseService {
     var lastUpdatedBackground: Pair<String, String>? = null
     override suspend fun getNew(newId: String, newsPath: String): NewsDTO? = null
+    override suspend fun getNewsByPoster(
+        posterId: String,
+        number: Int,
+        lastTimePosted: Double?,
+        lastKey: String?,
+        newsPath: String
+    ): ProfileLatestNewsDTO = ProfileLatestNewsDTO(emptyList(), null, null)
     override suspend fun deleteNewsFromDatabase(new: NewsDTO, newsPath: String): Boolean = true
     override suspend fun updateLikeCountForNew(newsId: String, value: Int, newsPath: String, likedCountPath: String) {}
     override suspend fun deletePollFromDatabase(
@@ -132,7 +171,8 @@ class UserInformationViewModelTest {
         callRepo: FakeUiCallRepository = FakeUiCallRepository(),
         networkRepo: FakeUiNetworkRepository = FakeUiNetworkRepository(),
         userRepo: FakeUiUserRepository = FakeUiUserRepository(),
-        databaseService: FakeUiProfileDatabaseService = FakeUiProfileDatabaseService()
+        databaseService: FakeUiProfileDatabaseService = FakeUiProfileDatabaseService(),
+        newsRepo: ProfileNewsRepository = FakeUiNewsRepository()
     ): UserInformationViewModel {
         val dispatcher = StandardTestDispatcher(scheduler)
         Dispatchers.setMain(dispatcher)
@@ -144,6 +184,7 @@ class UserInformationViewModelTest {
             GetUserUseCase(userRepo),
             CheckInternetConnectionUseCase(networkRepo),
             UpdateUserBackgroundUseCase(databaseService),
+            GetNewsByUserUseCase(newsRepo),
             dispatcher
         )
     }
@@ -295,6 +336,81 @@ class UserInformationViewModelTest {
         advanceUntilIdle()
 
         assertEquals("Alice", vm.fetchedUser.value?.name)
+    }
+
+    @Test
+    fun `fetchInitialUserNews resets state and loads the first page`() = runTest {
+        val userRepo = FakeUiUserRepository(usersById = mapOf("u1" to UserDTO(uid = "u1", name = "Alice")))
+        val newsRepo = FakeUiNewsRepository(
+            newsByPoster = mapOf("u1" to listOf(NewsInstance(id = "n1", posterId = "u1")))
+        )
+        val vm = buildViewModel(testScheduler, userRepo = userRepo, newsRepo = newsRepo)
+
+        vm.fetchUserInformation("u1", isCurrentUser = true)
+        vm.fetchInitialUserNews("u1")
+        advanceUntilIdle()
+
+        assertEquals(listOf("n1"), vm.userNews.value.map { it.id })
+        assertEquals(1, newsRepo.callCount)
+    }
+
+    @Test
+    fun `hasMoreUserNews becomes false once a page returns a null cursor`() = runTest {
+        val newsRepo = FakeUiNewsRepository(
+            newsByPoster = mapOf("u1" to listOf(NewsInstance(id = "n1", posterId = "u1")))
+        )
+        val vm = buildViewModel(testScheduler, newsRepo = newsRepo)
+
+        vm.fetchInitialUserNews("u1")
+        advanceUntilIdle()
+
+        assertFalse(vm.hasMoreUserNews)
+    }
+
+    @Test
+    fun `loadMoreUserNews is a no-op once hasMoreUserNews is false`() = runTest {
+        val newsRepo = FakeUiNewsRepository(
+            newsByPoster = mapOf("u1" to listOf(NewsInstance(id = "n1", posterId = "u1")))
+        )
+        val vm = buildViewModel(testScheduler, newsRepo = newsRepo)
+
+        vm.fetchInitialUserNews("u1")
+        advanceUntilIdle()
+        assertFalse(vm.hasMoreUserNews)
+
+        vm.loadMoreUserNews("u1")
+        advanceUntilIdle()
+
+        // Only the initial fetchInitialUserNews page fetch should have happened.
+        assertEquals(1, newsRepo.callCount)
+    }
+
+    @Test
+    fun `loadMoreUserNews appends the next page and advances the cursor`() = runTest {
+        val page1 = ProfileNewsPage(
+            news = listOf(NewsInstance(id = "n1", posterId = "u1")),
+            lastTimePosted = 100.0,
+            lastKey = "k1"
+        )
+        val page2 = ProfileNewsPage(
+            news = listOf(NewsInstance(id = "n2", posterId = "u1")),
+            lastTimePosted = null,
+            lastKey = null
+        )
+        val newsRepo = FakeUiNewsRepository(pageResults = listOf(page1, page2))
+        val vm = buildViewModel(testScheduler, newsRepo = newsRepo)
+
+        vm.fetchInitialUserNews("u1")
+        advanceUntilIdle()
+        assertEquals(listOf("n1"), vm.userNews.value.map { it.id })
+        assertTrue(vm.hasMoreUserNews)
+
+        vm.loadMoreUserNews("u1")
+        advanceUntilIdle()
+
+        assertEquals(listOf("n1", "n2"), vm.userNews.value.map { it.id })
+        assertFalse(vm.hasMoreUserNews)
+        assertEquals(2, newsRepo.callCount)
     }
 
     @Test

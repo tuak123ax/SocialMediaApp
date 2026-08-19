@@ -1,5 +1,6 @@
 package com.minhtu.firesocialmedia.auth.presentation.loading
 
+import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
 import kotlin.test.Test
 import kotlin.test.assertEquals
 

@@ -11,7 +11,7 @@ import androidx.compose.ui.platform.LocalContext
 import com.google.android.gms.auth.api.identity.BeginSignInRequest
 import com.google.android.gms.auth.api.identity.Identity
 import com.minhtu.firesocialmedia.domain.signin.GoogleSignInHandler
-import com.minhtu.firesocialmedia.data.remote.service.signinlauncher.SignInLauncher
+import com.minhtu.firesocialmedia.data.remote.auth.service.signinlauncher.SignInLauncher
 import com.minhtu.firesocialmedia.di.PlatformContext
 
 @Composable

@@ -14,11 +14,14 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -478,7 +481,13 @@ class UploadNewsfeed {
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
-                    Spacer(Modifier.height(10.dp))
+                    // The root Scaffold only reserves the top safe-drawing inset (see
+                    // SetUpNavigation in Navigation.kt), so this trailing spacer must clear the
+                    // system navigation bar itself instead of using a fixed height. Use
+                    // coerceAtLeast so the original 10.dp gap is preserved on devices with a
+                    // thin/no nav bar inset.
+                    val navigationBarPadding = WindowInsets.navigationBars.asPaddingValues()
+                    Spacer(Modifier.height(navigationBarPadding.calculateBottomPadding().coerceAtLeast(10.dp)))
                 }
                 DraftPostPickerDialog(
                     localImageLoaderValue = localImageLoaderValue,

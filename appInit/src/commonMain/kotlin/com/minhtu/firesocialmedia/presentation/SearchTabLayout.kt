@@ -1,4 +1,4 @@
-package com.minhtu.firesocialmedia.presentation.search
+package com.minhtu.firesocialmedia.presentation
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -16,13 +16,13 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.ProvidedValue
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
@@ -39,6 +39,8 @@ import com.minhtu.firesocialmedia.search.entity.news.toSearchNews
 import com.minhtu.firesocialmedia.search.entity.user.UserInstance
 import com.minhtu.firesocialmedia.search.utils.UiUtils
 import com.minhtu.firesocialmedia.utils.search.FeedListUtils
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
 
 @Composable
 fun SearchTabLayout(
@@ -127,13 +129,30 @@ fun SearchTabLayout(
 
                 1 -> {
                     if (searchQuery.isNotEmpty()) {
-                        val filterList by remember {
-                            derivedStateOf {
-                                homeViewModel.listNews.filter { news ->
-                                    news.message.contains(searchQuery, ignoreCase = true)
-                                }.map { it.toSearchNews() }
-                            }
+                        LaunchedEffect(searchQuery) {
+                            sessionViewModel.searchNews(searchQuery)
                         }
+                        val filterList = sessionViewModel.newsSearchResults.map { it.toSearchNews() }
+
+                        LaunchedEffect(listState) {
+                            snapshotFlow {
+                                val layoutInfo = listState.layoutInfo
+                                val lastVisible = layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
+                                val totalItems = layoutInfo.totalItemsCount
+                                lastVisible to totalItems
+                            }
+                                .distinctUntilChanged()
+                                .collectLatest { (lastVisible, totalItems) ->
+                                    if (totalItems > 0 &&
+                                        lastVisible >= totalItems - 3 &&
+                                        !sessionViewModel.isLoadingMoreNews &&
+                                        sessionViewModel.hasMoreNews
+                                    ) {
+                                        sessionViewModel.loadMoreMatchingNews()
+                                    }
+                                }
+                        }
+
                         FeedListUtils.LazyColumnOfNewsWithSlideOutAnimationAndLoadMore(
                             localImageLoaderValue = localImageLoaderValue,
                             listState = listState,
@@ -146,7 +165,8 @@ fun SearchTabLayout(
                             showBottomSheet = { news ->
                                 newToBeShared = news
                                 showBottomSheet = true
-                            }
+                            },
+                            isLoadingMore = sessionViewModel.isLoadingMoreNews
                         )
                     } else {
                         Column(

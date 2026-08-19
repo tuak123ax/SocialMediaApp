@@ -19,7 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.core.net.toUri
-import com.minhtu.firesocialmedia.data.remote.service.imagepicker.auth.ImagePicker
+import com.minhtu.firesocialmedia.data.remote.auth.service.imagepicker.auth.ImagePicker
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream

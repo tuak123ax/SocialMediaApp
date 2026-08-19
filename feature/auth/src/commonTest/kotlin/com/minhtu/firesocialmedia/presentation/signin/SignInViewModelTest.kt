@@ -1,9 +1,8 @@
 package com.minhtu.firesocialmedia.presentation.signin
 
-import com.minhtu.firesocialmedia.auth.data.remote.dto.user.UserDTO
+import com.minhtu.firesocialmedia.data.remote.dto.user.UserDTO
 import com.minhtu.firesocialmedia.data.remote.dto.settings.auth.IpInfoResponseDTO
 import com.minhtu.firesocialmedia.data.remote.service.database.AuthDatabaseService
-import com.minhtu.firesocialmedia.data.remote.service.security.IpInfoRemoteDataSource
 import com.minhtu.firesocialmedia.domain.entity.crypto.Credentials
 import com.minhtu.firesocialmedia.domain.entity.forgotpassword.EmailExistResult
 import com.minhtu.firesocialmedia.domain.entity.signin.SignInState

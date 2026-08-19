@@ -3,8 +3,8 @@ package com.minhtu.firesocialmedia.data.remote.service.database
 import cocoapods.FirebaseDatabase.FIRDataEventType
 import cocoapods.FirebaseDatabase.FIRDatabase
 import cocoapods.FirebaseDatabase.FIRDatabaseReference
-import com.minhtu.firesocialmedia.auth.data.remote.dto.user.UserDTO
-import com.minhtu.firesocialmedia.auth.data.remote.dto.user.toMap
+import com.minhtu.firesocialmedia.data.remote.dto.user.UserDTO
+import com.minhtu.firesocialmedia.data.remote.dto.user.toMap
 import com.minhtu.firesocialmedia.constants.auth.Constants
 import com.minhtu.firesocialmedia.storage.auth.SupabaseStorageProvider
 import com.minhtu.firesocialmedia.constants.auth.DataConstant

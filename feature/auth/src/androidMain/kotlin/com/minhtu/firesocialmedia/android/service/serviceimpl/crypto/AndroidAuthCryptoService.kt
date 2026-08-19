@@ -3,7 +3,7 @@ package com.minhtu.firesocialmedia.android.service.serviceimpl.crypto
 import android.content.Context
 import com.minhtu.firesocialmedia.constants.auth.Constants
 import com.minhtu.firesocialmedia.data.local.service.crypto.AuthCryptoService
-import com.minhtu.firesocialmedia.data.remote.dto.crypto.CredentialsDTO
+import com.minhtu.firesocialmedia.data.remote.auth.dto.crypto.CredentialsDTO
 
 class AndroidAuthCryptoService(private val context: Context) : AuthCryptoService {
     override fun saveAccount(email: String, password: String) {

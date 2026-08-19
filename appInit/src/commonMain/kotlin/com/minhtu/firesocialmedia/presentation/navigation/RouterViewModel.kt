@@ -3,7 +3,7 @@ package com.minhtu.firesocialmedia.presentation.navigation
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.minhtu.firesocialmedia.core.constants.AuthRouteNames
+import com.minhtu.firesocialmedia.constants.AuthRouteNames
 import com.minhtu.firesocialmedia.domain.usecases.common.appinit.GetCurrentUserUidUseCase
 import com.minhtu.firesocialmedia.domain.usecases.common.appinit.GetUserUseCase
 import com.minhtu.firesocialmedia.search.entity.user.UserInstance

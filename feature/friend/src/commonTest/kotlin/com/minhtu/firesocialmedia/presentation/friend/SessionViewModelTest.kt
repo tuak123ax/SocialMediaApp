@@ -1,9 +1,10 @@
 package com.minhtu.firesocialmedia.presentation.friend
 
-import com.minhtu.firesocialmedia.domain.repository.friend.UserRepository
+import com.minhtu.firesocialmedia.domain.repository.UserRepository
 import com.minhtu.firesocialmedia.domain.usecases.common.friend.GetCurrentUserUidUseCase
 import com.minhtu.firesocialmedia.domain.usecases.common.friend.GetUserUseCase
-import com.minhtu.firesocialmedia.friend.data.remote.dto.user.UserDTO
+import com.minhtu.firesocialmedia.data.remote.dto.user.UserDTO
+import com.minhtu.firesocialmedia.presentation.SessionViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher

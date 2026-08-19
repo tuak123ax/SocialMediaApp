@@ -1,6 +1,6 @@
 package com.minhtu.firesocialmedia.data.local.service.crypto
 
-import com.minhtu.firesocialmedia.data.remote.dto.crypto.CredentialsDTO
+import com.minhtu.firesocialmedia.data.remote.auth.dto.crypto.CredentialsDTO
 
 /**
  * feature/auth's own local clone of core's former `CryptoService` contract, trimmed to only the

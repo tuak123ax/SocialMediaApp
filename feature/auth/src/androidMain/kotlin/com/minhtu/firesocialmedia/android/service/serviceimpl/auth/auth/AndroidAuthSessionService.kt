@@ -1,7 +1,7 @@
 package com.minhtu.firesocialmedia.android.service.serviceimpl.auth.auth
 
 import com.google.firebase.auth.FirebaseAuth
-import com.minhtu.firesocialmedia.data.remote.service.auth.auth.AuthSessionService
+import com.minhtu.firesocialmedia.data.remote.auth.service.auth.auth.AuthSessionService
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 

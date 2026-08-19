@@ -5,6 +5,7 @@ import cocoapods.FirebaseDatabase.FIRDataSnapshot
 import cocoapods.FirebaseDatabase.FIRDatabase
 import com.minhtu.firesocialmedia.constants.profile.DataConstant
 import com.minhtu.firesocialmedia.profile.data.remote.dto.news.NewsDTO
+import com.minhtu.firesocialmedia.profile.data.remote.dto.news.ProfileLatestNewsDTO
 import com.minhtu.firesocialmedia.profile.data.remote.dto.user.UserDTO
 import com.minhtu.firesocialmedia.ios.service.serviceimpl.database.profile.IosDatabaseHelper
 import com.minhtu.firesocialmedia.ios.service.serviceimpl.database.supabase.profile.SupabaseStorage
@@ -23,7 +24,9 @@ private fun Map<String, Any?>.toProfileNewsDTO(): NewsDTO {
         message = this["message"] as? String ?: "",
         image = this["image"] as? String ?: "",
         video = this["video"] as? String ?: "",
-        isVisible = this["isVisible"] as? Boolean ?: true,
+        // Firebase serializes Kotlin's "isVisible" Boolean without the "is" prefix (JavaBean
+        // convention), so the stored key is "visible", not "isVisible".
+        isVisible = this["visible"] as? Boolean ?: true,
         likeCount = (this["likeCount"] as? Long)?.toInt() ?: 0,
         commentCount = (this["commentCount"] as? Long)?.toInt() ?: 0,
         timePosted = this["timePosted"] as? Long ?: 0,
@@ -76,6 +79,13 @@ private fun Map<*, *>.toProfileUserDTO(): UserDTO {
 }
 
 class IosProfileDatabaseService : ProfileDatabaseService {
+    companion object {
+        // How many raw feed entries (ordered by timePosted, unfiltered) to pull per round trip
+        // while hunting for posts by a specific poster.
+        private const val RAW_PAGE_SIZE = 20
+    }
+
+
     override suspend fun getNew(newId: String, newsPath: String): NewsDTO? {
         val raw = suspendCancellableCoroutine<NewsDTO?> { continuation ->
             val databaseReference = FIRDatabase.database().reference()
@@ -105,6 +115,91 @@ class IosProfileDatabaseService : ProfileDatabaseService {
         raw.image = SupabaseStorageHelper.resolveMediaUrlAsync(raw.image)
         raw.video = SupabaseStorageHelper.resolveMediaUrlAsync(raw.video)
         return raw
+    }
+
+    override suspend fun getNewsByPoster(
+        posterId: String,
+        number: Int,
+        lastTimePosted: Double?,
+        lastKey: String?,
+        newsPath: String
+    ): ProfileLatestNewsDTO {
+        // There's no composite (posterId, timePosted) index, so we can't ask Firebase for "the
+        // next N posts by this user" directly. Instead page through the raw feed ordered by
+        // timePosted (same ordering/index Home already relies on) in RAW_PAGE_SIZE chunks,
+        // filtering each chunk client-side by posterId, until `number` matches are collected or
+        // the feed is exhausted. The cursor returned always points at the raw feed position, so a
+        // later "load more" call resumes paging from exactly where this call stopped.
+        val matched = mutableListOf<NewsDTO>()
+        var cursorTime = lastTimePosted
+        var cursorKey = lastKey
+        var exhausted = false
+
+        while (matched.size < number && !exhausted) {
+            val page = suspendCancellableCoroutine<Triple<List<NewsDTO>, Double?, String?>> { continuation ->
+                val query = FIRDatabase.database().reference().child(newsPath)
+                    .queryOrderedByChild("timePosted")
+                    .let { base ->
+                        if (cursorTime != null && !cursorKey.isNullOrBlank()) {
+                            base.queryEndingBeforeValue(cursorTime, childKey = cursorKey)
+                        } else base
+                    }
+                    .queryLimitedToLast(RAW_PAGE_SIZE.toULong())
+
+                query.observeSingleEventOfType(
+                    FIRDataEventType.FIRDataEventTypeValue,
+                    withBlock = { snapshot ->
+                        val enumerator = snapshot?.children
+                        val newsList = mutableListOf<NewsDTO>()
+                        if (enumerator != null) {
+                            while (true) {
+                                val child = enumerator.nextObject() as? FIRDataSnapshot ?: break
+                                val childRaw = child.value as? Map<*, *> ?: continue
+                                val value = childRaw.entries
+                                    .associate { (k, v) -> (k as? String) to v }
+                                    .filterKeys { it != null } as Map<String, Any?>
+                                try {
+                                    newsList.add(value.toProfileNewsDTO())
+                                } catch (_: Exception) {
+                                }
+                            }
+                        }
+                        if (newsList.isEmpty()) {
+                            if (continuation.isActive) continuation.resume(Triple(emptyList(), null, null)) {}
+                        } else {
+                            val sorted = newsList.sortedByDescending { it.timePosted }
+                            val oldest = sorted.last()
+                            if (continuation.isActive) continuation.resume(Triple(sorted, oldest.timePosted.toDouble(), oldest.id)) {}
+                        }
+                    }
+                ) { _ -> if (continuation.isActive) continuation.resume(Triple(emptyList(), null, null)) {} }
+            }
+
+            val (rawNews, nextTime, nextKey) = page
+            if (rawNews.isEmpty()) {
+                exhausted = true
+                break
+            }
+            matched += rawNews.filter { it.posterId == posterId }
+            cursorTime = nextTime
+            cursorKey = nextKey
+            if (rawNews.size < RAW_PAGE_SIZE) {
+                exhausted = true
+            }
+        }
+
+        val resolved = matched.map { news ->
+            news.avatar = SupabaseStorageHelper.resolveMediaUrlAsync(news.avatar)
+            news.image = SupabaseStorageHelper.resolveMediaUrlAsync(news.image)
+            news.video = SupabaseStorageHelper.resolveMediaUrlAsync(news.video)
+            news
+        }
+
+        return ProfileLatestNewsDTO(
+            news = resolved,
+            lastTimePostedValue = if (exhausted) null else cursorTime,
+            lastKeyValue = if (exhausted) null else cursorKey
+        )
     }
 
     override suspend fun deleteNewsFromDatabase(new: NewsDTO, newsPath: String): Boolean =

@@ -12,9 +12,12 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -572,6 +575,12 @@ class FeedListUtils {
             val likeCountList = engagementViewModel.likeCountList.collectAsState()
             val commentCountList = engagementViewModel.commentCountList.collectAsState()
             val loadedUsers by sessionViewModel.loadedUserState.collectAsState()
+            // The root Scaffold only reserves the top safe-drawing inset (see SetUpNavigation in
+            // Navigation.kt), so on screens without their own bottom bar - like this one - the
+            // system navigation bar can overlap the last item's like/comment row. Pad the list's
+            // content (not the list itself, which would just clip scrolling) by the nav bar's
+            // height so the last post always comes to rest above it.
+            val navigationBarPadding = WindowInsets.navigationBars.asPaddingValues()
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
@@ -580,7 +589,8 @@ class FeedListUtils {
                     .semantics{
                         contentDescription = TestTag.TAG_POSTS_COLUMN
                     },
-                state = listState
+                state = listState,
+                contentPadding = PaddingValues(bottom = navigationBarPadding.calculateBottomPadding() + 16.dp)
             ) {
                 items(
                     items = list,
@@ -590,6 +600,13 @@ class FeedListUtils {
                     val sharedNewMap by engagementViewModel.sharedNewsById.collectAsState()
                     LaunchedEffect(news.shareContentId) {
                         engagementViewModel.ensureSharedNew(news.shareContentId)
+                    }
+                    // news.posterId is only ever loaded into sessionViewModel's user cache via
+                    // the Members tab or shared-post owners - never for a normal feed post.
+                    // Without this, user is always null below, so every post falls through to
+                    // NewsCardPlaceholder() forever instead of rendering.
+                    LaunchedEffect(news.posterId) {
+                        sessionViewModel.ensureUserLoaded(news.posterId)
                     }
                     AnimatedVisibility(
                         visible = isVisible,

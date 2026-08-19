@@ -1,6 +1,6 @@
 package com.minhtu.firesocialmedia.domain.usecases.common.auth
 
-import com.minhtu.firesocialmedia.auth.data.remote.dto.user.UserDTO
+import com.minhtu.firesocialmedia.data.remote.dto.user.UserDTO
 import com.minhtu.firesocialmedia.data.local.service.crypto.AuthCryptoService
 import com.minhtu.firesocialmedia.data.remote.dto.crypto.CredentialsDTO
 import com.minhtu.firesocialmedia.domain.repository.auth.UserRepository

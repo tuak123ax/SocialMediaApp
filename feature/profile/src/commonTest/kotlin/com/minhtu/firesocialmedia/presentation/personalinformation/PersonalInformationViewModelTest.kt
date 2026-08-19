@@ -9,6 +9,7 @@ import com.minhtu.firesocialmedia.domain.usecases.settings.UpdateUserAvatarUseCa
 import com.minhtu.firesocialmedia.domain.usecases.settings.UpdateUserStringFieldUseCase
 import com.minhtu.firesocialmedia.domain.usecases.settings.profile.VerifyCurrentPasswordUseCase
 import com.minhtu.firesocialmedia.profile.data.remote.dto.news.NewsDTO
+import com.minhtu.firesocialmedia.profile.data.remote.dto.news.ProfileLatestNewsDTO
 import com.minhtu.firesocialmedia.profile.data.remote.dto.user.UserDTO
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -44,6 +45,13 @@ private class FakeProfileDatabaseService(
     var lastUpdatedField: Triple<String, String, String>? = null
     var lastUpdatedAvatar: Pair<String, String>? = null
     override suspend fun getNew(newId: String, newsPath: String): NewsDTO? = null
+    override suspend fun getNewsByPoster(
+        posterId: String,
+        number: Int,
+        lastTimePosted: Double?,
+        lastKey: String?,
+        newsPath: String
+    ): ProfileLatestNewsDTO = ProfileLatestNewsDTO(emptyList(), null, null)
     override suspend fun deleteNewsFromDatabase(new: NewsDTO, newsPath: String): Boolean = true
     override suspend fun updateLikeCountForNew(newsId: String, value: Int, newsPath: String, likedCountPath: String) {}
     override suspend fun deletePollFromDatabase(

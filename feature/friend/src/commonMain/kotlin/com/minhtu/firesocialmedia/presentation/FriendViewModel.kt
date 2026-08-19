@@ -1,6 +1,6 @@
 package com.minhtu.firesocialmedia.presentation.friend
 
-import com.minhtu.firesocialmedia.friend.entity.user.UserInstance
+import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
 import com.minhtu.firesocialmedia.domain.usecases.friend.SaveFriendRequestUseCase
 import com.minhtu.firesocialmedia.domain.usecases.friend.SaveFriendUseCase
 import com.rickclephas.kmp.observableviewmodel.ViewModel

@@ -8,9 +8,12 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -346,7 +349,12 @@ class Calling {
                         )
                     }
                 }
-                Spacer(Modifier.height(20.dp))
+                // The root Scaffold only reserves the top safe-drawing inset (see
+                // SetUpNavigation in Navigation.kt), so this spacer above the accept/reject FABs
+                // must clear the system navigation bar itself. coerceAtLeast preserves the
+                // original 20.dp gap on devices with a thin/no nav bar inset.
+                val navigationBarPadding = WindowInsets.navigationBars.asPaddingValues()
+                Spacer(Modifier.height(navigationBarPadding.calculateBottomPadding().coerceAtLeast(20.dp)))
                 Row(horizontalArrangement = Arrangement.Center,
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.padding(start = 40.dp, end = 40.dp)) {

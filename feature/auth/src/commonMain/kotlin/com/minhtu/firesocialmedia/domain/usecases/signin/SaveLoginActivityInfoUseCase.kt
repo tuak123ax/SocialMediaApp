@@ -1,8 +1,8 @@
 package com.minhtu.firesocialmedia.domain.usecases.signin
 
 import com.minhtu.firesocialmedia.constants.auth.DataConstant
-import com.minhtu.firesocialmedia.data.remote.service.database.AuthDatabaseService
-import com.minhtu.firesocialmedia.data.remote.service.security.IpInfoRemoteDataSource
+import com.minhtu.firesocialmedia.data.remote.auth.service.database.AuthDatabaseService
+import com.minhtu.firesocialmedia.data.remote.auth.service.security.IpInfoRemoteDataSource
 
 class SaveLoginActivityInfoUseCase(
     private val authDatabaseService: AuthDatabaseService,

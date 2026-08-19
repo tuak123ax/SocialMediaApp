@@ -13,6 +13,7 @@ import com.minhtu.firesocialmedia.domain.usecases.newsfeed.profile.DeletePollUse
 import com.minhtu.firesocialmedia.domain.usecases.notification.SaveNotificationToDatabaseUseCase
 import com.minhtu.firesocialmedia.profile.data.remote.dto.user.UserDTO
 import com.minhtu.firesocialmedia.profile.entity.news.NewsInstance
+import com.minhtu.firesocialmedia.profile.entity.news.ProfileNewsPage
 import com.minhtu.firesocialmedia.profile.entity.user.UserInstance
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
@@ -43,6 +44,8 @@ private class FakeProfileNewsRepository(
     var deletedNews: NewsInstance? = null
     var lastDeletePollArgs: Triple<String, String, String>? = null
     override suspend fun getNew(newId: String): NewsInstance? = newInstance
+    override suspend fun getNewsByUser(posterId: String, number: Int, lastTimePosted: Double?, lastKey: String?): ProfileNewsPage =
+        ProfileNewsPage(emptyList(), null, null)
     override suspend fun deleteNewsFromDatabase(new: NewsInstance): Boolean {
         deletedNews = new
         return true
@@ -169,6 +172,8 @@ class EngagementViewModelTest {
                 callCount++
                 return NewsInstance(id = newId)
             }
+            override suspend fun getNewsByUser(posterId: String, number: Int, lastTimePosted: Double?, lastKey: String?): ProfileNewsPage =
+        ProfileNewsPage(emptyList(), null, null)
             override suspend fun deleteNewsFromDatabase(new: NewsInstance): Boolean = true
             override suspend fun updateLikeCountForNew(newsId: String, value: Int) {}
             override suspend fun deletePollFromDatabase(newsId: String, pollId: String, groupId: String): Boolean = true

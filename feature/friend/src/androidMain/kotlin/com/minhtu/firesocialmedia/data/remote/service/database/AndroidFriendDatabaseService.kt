@@ -8,7 +8,7 @@ import com.minhtu.firesocialmedia.android.service.serviceimpl.database.friend.An
 import com.minhtu.firesocialmedia.android.service.serviceimpl.database.supabase.SupabaseStorageHelper
 import com.minhtu.firesocialmedia.android.service.serviceimpl.database.supabase.SupabaseStorageHelper.Companion.resolveMediaUrlAsync
 import com.minhtu.firesocialmedia.constants.friend.DataConstant
-import com.minhtu.firesocialmedia.friend.data.remote.dto.user.UserDTO
+import com.minhtu.firesocialmedia.data.remote.dto.user.UserDTO
 import kotlinx.coroutines.withTimeout
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine

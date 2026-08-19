@@ -7,6 +7,7 @@ import com.minhtu.firesocialmedia.domain.repository.news.ProfileNewsRepository
 import com.minhtu.firesocialmedia.profile.data.remote.dto.news.NewsDTO
 import com.minhtu.firesocialmedia.profile.entity.core.DecentralizationType
 import com.minhtu.firesocialmedia.profile.entity.news.NewsInstance
+import com.minhtu.firesocialmedia.profile.entity.news.ProfileNewsPage
 import kotlinx.coroutines.flow.first
 
 private fun NewsDTO.toProfileDomain(): NewsInstance = NewsInstance(
@@ -41,6 +42,23 @@ class ProfileNewsRepositoryImpl(
         return if (isOnline) {
             databaseService.getNew(newId, DataConstant.NEWS_PATH)?.toProfileDomain()
         } else null
+    }
+
+    override suspend fun getNewsByUser(
+        posterId: String,
+        number: Int,
+        lastTimePosted: Double?,
+        lastKey: String?
+    ): ProfileNewsPage {
+        val isOnline = networkMonitor.isOnline.first()
+        if (!isOnline) return ProfileNewsPage(emptyList(), lastTimePosted, lastKey)
+
+        val result = databaseService.getNewsByPoster(posterId, number, lastTimePosted, lastKey, DataConstant.NEWS_PATH)
+        return ProfileNewsPage(
+            news = result.news.map { it.toProfileDomain() },
+            lastTimePosted = result.lastTimePostedValue,
+            lastKey = result.lastKeyValue
+        )
     }
 
     override suspend fun deleteNewsFromDatabase(new: NewsInstance): Boolean {

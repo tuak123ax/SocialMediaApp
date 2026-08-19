@@ -68,6 +68,7 @@ class PostInformation {
         fun PostInformationScreen(modifier : Modifier,
                                   platform : PlatformContext,
                                   localImageLoaderValue : ProvidedValue<*>,
+                                  paddingValues : PaddingValues,
                                   news: NewsInstance,
                                   onNavigateToShowImageScreen: (image: String) -> Unit,
                                   onNavigateToUserInformation: (user: UserInstance?) -> Unit,
@@ -285,6 +286,7 @@ class PostInformation {
                                     NewsCardUnavailable()
                                 } else {
                                     NewsCardWithSharedContent(
+                                        paddingValues,
                                         news = news,
                                         sharedNew = sharedNew!!,
                                         user = user!!,

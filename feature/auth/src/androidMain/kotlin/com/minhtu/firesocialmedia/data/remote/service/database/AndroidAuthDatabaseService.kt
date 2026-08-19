@@ -10,18 +10,16 @@ import com.google.firebase.database.ValueEventListener
 import com.minhtu.firesocialmedia.android.service.serviceimpl.database.supabase.auth.SupabaseStorage
 import com.minhtu.firesocialmedia.android.service.serviceimpl.database.supabase.SupabaseStorageHelper
 import com.minhtu.firesocialmedia.android.service.serviceimpl.database.supabase.SupabaseStorageHelper.Companion.resolveMediaUrlAsync
-import com.minhtu.firesocialmedia.auth.data.remote.dto.user.UserDTO
 import com.minhtu.firesocialmedia.constants.auth.Constants
 import com.minhtu.firesocialmedia.storage.auth.SupabaseStorageProvider
 import com.minhtu.firesocialmedia.constants.auth.DataConstant
-import com.minhtu.firesocialmedia.data.remote.dto.settings.auth.IpInfoResponseDTO
-import com.minhtu.firesocialmedia.data.remote.dto.settings.auth.SessionItemDTO
+import com.minhtu.firesocialmedia.data.remote.auth.dto.settings.auth.IpInfoResponseDTO
+import com.minhtu.firesocialmedia.data.remote.auth.dto.settings.auth.SessionItemDTO
+import com.minhtu.firesocialmedia.data.remote.auth.dto.user.UserDTO
+import com.minhtu.firesocialmedia.data.remote.auth.service.database.AuthDatabaseService
 import com.minhtu.firesocialmedia.platform.logMessage
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withTimeout
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 

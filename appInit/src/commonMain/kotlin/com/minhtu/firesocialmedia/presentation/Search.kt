@@ -31,6 +31,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.minhtu.firesocialmedia.constants.search.TestTag
 import com.minhtu.firesocialmedia.home.entity.news.NewsInstance
+import com.minhtu.firesocialmedia.presentation.SearchTabLayout
 import com.minhtu.firesocialmedia.search.entity.user.UserInstance
 import com.minhtu.firesocialmedia.presentation.home.HomeViewModel
 import com.minhtu.firesocialmedia.utils.search.TitleBarUtils

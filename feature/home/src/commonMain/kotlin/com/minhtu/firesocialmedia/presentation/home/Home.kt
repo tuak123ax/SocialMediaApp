@@ -459,6 +459,7 @@ class Home {
                         }
 
                         FeedListUtils.LazyColumnOfNewsWithSlideOutAnimationAndLoadMore(
+                            paddingValues,
                             localImageLoaderValue,
                             listState,
                             homeViewModel,
@@ -531,7 +532,7 @@ class Home {
                             contentDescription = "User Avatar",
                             contentScale = ContentScale.Crop,
                             modifier = Modifier
-                                .weight(1f) // Allocates equal space to the image and text
+                                .size(55.dp) // Fixed square size so CircleShape clips a true circle
                                 .clip(CircleShape)
                                 .clickable {
                                     // Handle image click

@@ -5,8 +5,12 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
@@ -57,12 +61,23 @@ class FeedListUtils {
             showBottomSheet: (NewsInstance) -> Unit,
             commentViewModel: CommentFeatureViewModel? = null,
             platform: PlatformContext? = null,
-            currentUser: UserInstance? = null) {
+            currentUser: UserInstance? = null,
+            // Posts search paginates via SessionViewModel.loadMoreMatchingNews (its own
+            // cursor, independent of Home's feed), not homeViewModel, so the loading row below
+            // can't just read homeViewModel.isLoadingMore.value. Callers that drive their own
+            // pagination pass their own flag here; other callers keep relying on the default.
+            isLoadingMore: Boolean = homeViewModel.isLoadingMore.value) {
             val coroutineScope = rememberCoroutineScope()
             val likeStatus by homeViewModel.likedPosts.collectAsState()
             val likeCountList = homeViewModel.likeCountList.collectAsState()
             val commentCountList = homeViewModel.commentCountList.collectAsState()
             val loadedUsers by sessionViewModel.loadedUserState.collectAsState()
+            // The root Scaffold only reserves the top safe-drawing inset (see SetUpNavigation in
+            // Navigation.kt), so on screens without their own bottom bar - like this one - the
+            // system navigation bar can overlap the last item's like/comment row. Pad the list's
+            // content (not the list itself, which would just clip scrolling) by the nav bar's
+            // height so the last post always comes to rest above it.
+            val navigationBarPadding = WindowInsets.navigationBars.asPaddingValues()
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
@@ -71,7 +86,8 @@ class FeedListUtils {
                     .semantics{
                         contentDescription = TestTag.TAG_POSTS_COLUMN
                     },
-                state = listState
+                state = listState,
+                contentPadding = PaddingValues(bottom = navigationBarPadding.calculateBottomPadding() + 16.dp)
             ) {
                 items(
                     items = list,
@@ -81,6 +97,14 @@ class FeedListUtils {
                     val sharedNewMap by homeViewModel.sharedNewsById.collectAsState()
                     LaunchedEffect(news.shareContentId) {
                         homeViewModel.ensureSharedNew(news.shareContentId)
+                    }
+                    // news comes from homeViewModel.listNews, whose posters were only ever
+                    // loaded into homeViewModel's own user cache - not sessionViewModel's, which
+                    // is what loadedUsers below reads. Without this, user is always null here, so
+                    // every search result falls through to NewsCardPlaceholder() forever instead
+                    // of showing the actual post.
+                    LaunchedEffect(news.posterId) {
+                        sessionViewModel.ensureUserLoaded(news.posterId)
                     }
                     AnimatedVisibility(
                         visible = isVisible,
@@ -159,7 +183,7 @@ class FeedListUtils {
                 }
 
                 // Loading row at the bottom
-                if (homeViewModel.isLoadingMore.value) {
+                if (isLoadingMore) {
                     item {
                         Box(
                             modifier = Modifier

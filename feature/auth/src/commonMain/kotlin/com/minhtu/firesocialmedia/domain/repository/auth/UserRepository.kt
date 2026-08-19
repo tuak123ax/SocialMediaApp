@@ -1,5 +1,5 @@
 package com.minhtu.firesocialmedia.domain.repository.auth
-import com.minhtu.firesocialmedia.auth.data.remote.dto.user.UserDTO
+import com.minhtu.firesocialmedia.data.remote.auth.dto.user.UserDTO
 
 interface UserRepository {
     suspend fun getUser(userId: String, isCurrentUser: Boolean): UserDTO?

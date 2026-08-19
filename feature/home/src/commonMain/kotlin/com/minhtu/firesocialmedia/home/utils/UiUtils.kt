@@ -101,6 +101,7 @@ class UiUtils {
         fun NewsCard(
             news: NewsInstance,
             user : UserInstance,
+            paddingValues: PaddingValues,
             isLiked : Boolean,
             likeCountList : HashMap<String, Int>,
             commentCountList : HashMap<String, Int>,
@@ -249,7 +250,7 @@ class UiUtils {
                                     commentSheetContent = if (commentViewModel != null && platform != null && currentUser != null) {
                                         { onSheetDismiss ->
                                             HomeCommentFeatureScreen.CommentScreen(
-                                                paddingValues = PaddingValues(0.dp),
+                                                paddingValues = paddingValues,
                                                 modifier = Modifier,
                                                 platform = platform,
                                                 localImageLoaderValue = localImageLoaderValue,
@@ -312,6 +313,7 @@ class UiUtils {
 
         @Composable
         fun NewsCardWithSharedContent(
+            paddingValues: PaddingValues,
             news: NewsInstance,
             sharedNew : NewsInstance,
             user : UserInstance,
@@ -421,6 +423,7 @@ class UiUtils {
                             NewsCard(
                                 sharedNew,
                                 ownerUser,
+                                paddingValues,
                                 isLiked,
                                 likeCountList,
                                 commentCountList,

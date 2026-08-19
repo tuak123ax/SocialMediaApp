@@ -6,9 +6,9 @@ import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 import com.minhtu.firesocialmedia.constants.auth.Constants
-import com.minhtu.firesocialmedia.data.remote.dto.signin.SignInDTO
-import com.minhtu.firesocialmedia.auth.data.remote.dto.user.UserDTO
-import com.minhtu.firesocialmedia.data.remote.service.auth.SignInLookupService
+import com.minhtu.firesocialmedia.data.remote.auth.dto.signin.SignInDTO
+import com.minhtu.firesocialmedia.data.remote.auth.dto.user.UserDTO
+import com.minhtu.firesocialmedia.data.remote.auth.service.auth.SignInLookupService
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 

@@ -639,12 +639,13 @@ class UiUtils {
                                     listState : LazyListState,
                                     onDelete: (action : String, new : NewsInstance) -> Unit?,
                                     onNavigateToCreatePost : (updateNew : NewsInstance) -> Unit) {
+            val currentUser by sessionViewModel.currentUserState.collectAsState()
             DropdownMenu(
                 expanded = expanded,
                 onDismissRequest = onDismissRequest
             ) {
                 var buttonText = "Hide"
-                if(selectedNew.posterId == sessionViewModel.currentUser!!.uid) {
+                if(selectedNew.posterId == currentUser?.uid) {
                     buttonText = "Delete"
                     DropdownMenuItem(
                         text = { Text("Update") },

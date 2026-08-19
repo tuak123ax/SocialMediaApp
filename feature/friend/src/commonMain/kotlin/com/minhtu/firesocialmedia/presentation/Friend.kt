@@ -44,11 +44,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.minhtu.firesocialmedia.constants.friend.TestTag
-import com.minhtu.firesocialmedia.friend.entity.user.UserInstance
-import com.minhtu.firesocialmedia.friend.utils.UiUtils
+import com.minhtu.firesocialmedia.domain.entity.user.UserInstance
+import com.minhtu.firesocialmedia.utils.UiUtils
+import com.minhtu.firesocialmedia.presentation.SessionViewModel
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 
 class Friend {
@@ -71,10 +71,12 @@ class Friend {
                 var searchQuery by remember { mutableStateOf("") }
                 val friendRequestsStatus = friendViewModel.friendRequestsStatus.collectAsState().value
                 val friendStatus = friendViewModel.friendStatus.collectAsState().value
+                val currentUser = sessionViewModel.currentUserState.collectAsState().value
 
-                LaunchedEffect(Unit) {
-                    friendViewModel.updateFriendRequests(sessionViewModel.currentUser!!.friendRequests)
-                    friendViewModel.updateFriends(sessionViewModel.currentUser!!.friends)
+                LaunchedEffect(currentUser) {
+                    val user = currentUser ?: return@LaunchedEffect
+                    friendViewModel.updateFriendRequests(user.friendRequests)
+                    friendViewModel.updateFriends(user.friends)
                 }
 
                 Text(
@@ -283,12 +285,14 @@ class Friend {
                                     requester = user,
                                     onNavigateToUserInformation = onNavigateToUserInformation,
                                     onAccept = {
-                                        val currentUser = sessionViewModel.currentUser!!
-                                        friendViewModel.acceptFriendRequest(user, currentUser)
+                                        sessionViewModel.currentUser?.let { currentUser ->
+                                            friendViewModel.acceptFriendRequest(user, currentUser)
+                                        }
                                     },
                                     onReject = {
-                                        val currentUser = sessionViewModel.currentUser!!
-                                        friendViewModel.rejectFriendRequest(user, currentUser)
+                                        sessionViewModel.currentUser?.let { currentUser ->
+                                            friendViewModel.rejectFriendRequest(user, currentUser)
+                                        }
                                     }
                                 )
                             }

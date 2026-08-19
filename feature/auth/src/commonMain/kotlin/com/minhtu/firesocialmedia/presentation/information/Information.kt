@@ -7,9 +7,12 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -45,14 +48,14 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.minhtu.firesocialmedia.storage.auth.SupabaseStorageProvider
 import com.minhtu.firesocialmedia.constants.auth.TestTag
-import com.minhtu.firesocialmedia.data.remote.service.auth.auth.AuthSessionService
-import com.minhtu.firesocialmedia.data.remote.service.imagepicker.auth.ImagePicker
+import com.minhtu.firesocialmedia.data.remote.auth.service.auth.auth.AuthSessionService
+import com.minhtu.firesocialmedia.data.remote.auth.service.imagepicker.auth.ImagePicker
 import com.minhtu.firesocialmedia.di.PlatformContext
 import com.minhtu.firesocialmedia.platform.CommonBackHandler
 import com.minhtu.firesocialmedia.platform.getImageBytesFromDrawable
 import com.minhtu.firesocialmedia.platform.showToast
-import com.minhtu.firesocialmedia.auth.presentation.loading.Loading
-import com.minhtu.firesocialmedia.auth.presentation.loading.LoadingViewModel
+import com.minhtu.firesocialmedia.presentation.loading.Loading
+import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
 import com.minhtu.firesocialmedia.utils.auth.TitleBarUtils
 import com.minhtu.sharedmodule.ui.theme.avatarGrayBackground
 import org.koin.compose.koinInject
@@ -266,7 +269,12 @@ class Information {
                         modifier = Modifier
                             .fillMaxWidth()
                     )
-                    Spacer(Modifier.height(20.dp))
+                    // The root Scaffold only reserves the top safe-drawing inset (see
+                    // SetUpNavigation in Navigation.kt), so this trailing spacer must clear the
+                    // system navigation bar itself instead of using a fixed height. coerceAtLeast
+                    // preserves the original 20.dp gap on devices with a thin/no nav bar inset.
+                    val navigationBarPadding = WindowInsets.navigationBars.asPaddingValues()
+                    Spacer(Modifier.height(navigationBarPadding.calculateBottomPadding().coerceAtLeast(20.dp)))
                 }
                 if (isLoading) {
                     Loading.LoadingScreen()

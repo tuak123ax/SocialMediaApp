@@ -8,14 +8,14 @@ import com.minhtu.firesocialmedia.domain.entity.user.auth.toDto
 import com.minhtu.firesocialmedia.domain.error.signin.SignInError
 import com.minhtu.firesocialmedia.domain.repository.AuthenticationRepository
 import com.minhtu.firesocialmedia.data.local.service.crypto.AuthCryptoService
-import com.minhtu.firesocialmedia.data.remote.mapper.auth.toEmailExistResult
-import com.minhtu.firesocialmedia.data.remote.mapper.auth.toSignInError
-import com.minhtu.firesocialmedia.data.remote.mapper.auth.toSignUpError
-import com.minhtu.firesocialmedia.data.remote.mapper.crypto.toDomain
-import com.minhtu.firesocialmedia.data.remote.mapper.signin.toDomain
-import com.minhtu.firesocialmedia.data.remote.service.auth.AuthService
-import com.minhtu.firesocialmedia.data.remote.service.auth.SignInLookupService
-import com.minhtu.firesocialmedia.data.remote.service.database.AuthDatabaseService
+import com.minhtu.firesocialmedia.data.remote.auth.mapper.auth.toEmailExistResult
+import com.minhtu.firesocialmedia.data.remote.auth.mapper.auth.toSignInError
+import com.minhtu.firesocialmedia.data.remote.auth.mapper.auth.toSignUpError
+import com.minhtu.firesocialmedia.data.remote.auth.mapper.crypto.toDomain
+import com.minhtu.firesocialmedia.data.remote.auth.mapper.signin.toDomain
+import com.minhtu.firesocialmedia.data.remote.auth.service.auth.AuthService
+import com.minhtu.firesocialmedia.data.remote.auth.service.auth.SignInLookupService
+import com.minhtu.firesocialmedia.data.remote.auth.service.database.AuthDatabaseService
 
 class AuthenticationRepositoryImpl(
     private val authService: AuthService,

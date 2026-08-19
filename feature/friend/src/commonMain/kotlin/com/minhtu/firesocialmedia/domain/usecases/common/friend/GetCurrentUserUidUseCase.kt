@@ -1,5 +1,5 @@
 package com.minhtu.firesocialmedia.domain.usecases.common.friend
-import com.minhtu.firesocialmedia.domain.repository.friend.UserRepository
+import com.minhtu.firesocialmedia.domain.repository.UserRepository
 
 class GetCurrentUserUidUseCase(
     private val userRepository: UserRepository

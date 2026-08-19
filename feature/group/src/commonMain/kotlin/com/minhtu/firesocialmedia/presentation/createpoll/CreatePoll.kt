@@ -6,9 +6,12 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -135,13 +138,20 @@ class CreatePoll {
                 containerColor = MaterialTheme.colorScheme.surface
             ) { paddingValues ->
 
+                // The root Scaffold only reserves the top safe-drawing inset (see
+                // SetUpNavigation in Navigation.kt), so this list's own contentPadding must
+                // clear the system navigation bar itself, same as the already-fixed
+                // FeedListUtils.kt lists.
+                val navigationBarPadding = WindowInsets.navigationBars.asPaddingValues()
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(paddingValues),
                     contentPadding = PaddingValues(
-                        horizontal = 24.dp,
-                        vertical = 16.dp
+                        start = 24.dp,
+                        end = 24.dp,
+                        top = 16.dp,
+                        bottom = navigationBarPadding.calculateBottomPadding() + 16.dp
                     ),
                     verticalArrangement = Arrangement.spacedBy(24.dp)
                 ) {

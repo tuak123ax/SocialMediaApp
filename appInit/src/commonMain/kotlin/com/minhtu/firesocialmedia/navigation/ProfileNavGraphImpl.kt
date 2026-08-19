@@ -1,9 +1,7 @@
 package com.minhtu.firesocialmedia.navigation
 
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.ProvidedValue
-import androidx.compose.runtime.remember
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
@@ -16,7 +14,6 @@ import com.minhtu.firesocialmedia.profile.entity.user.toProfileUser
 import com.minhtu.firesocialmedia.profile.entity.user.toDto as profileUserToDto
 import com.minhtu.firesocialmedia.entity.bridge.toAppInitUserDto
 import com.minhtu.firesocialmedia.entity.bridge.toProfileUserDto
-import kotlinx.coroutines.flow.MutableStateFlow
 import com.minhtu.firesocialmedia.presentation.personalinformation.PersonalInformation
 import com.minhtu.firesocialmedia.presentation.personalinformation.PersonalInformationViewModel
 import com.minhtu.firesocialmedia.presentation.userinformation.UserInformation
@@ -27,37 +24,8 @@ import com.minhtu.firesocialmedia.presentation.navigation.DefaultNavAnimations
 import com.minhtu.firesocialmedia.presentation.navigation.ProfileNavGraph
 import org.koin.compose.viewmodel.koinViewModel
 
-// Composition-root-only conversions between home's canonical NewsInstance and
-// profile's local NewsInstance.
-private fun NewsInstance.toProfileNews(): ProfileNewsInstance = ProfileNewsInstance(
-    id = id,
-    posterId = posterId,
-    posterName = posterName,
-    avatar = avatar,
-    message = message,
-    image = image,
-    video = video,
-    isVisible = isVisible,
-    likeCount = likeCount,
-    commentCount = commentCount,
-    timePosted = timePosted,
-    localPath = localPath,
-    shareContentId = shareContentId,
-    decentralizationType = decentralizationType?.let {
-        when (it) {
-            is com.minhtu.firesocialmedia.home.entity.core.DecentralizationType.Public ->
-                com.minhtu.firesocialmedia.profile.entity.core.DecentralizationType.Public
-            is com.minhtu.firesocialmedia.home.entity.core.DecentralizationType.OnlyFriends ->
-                com.minhtu.firesocialmedia.profile.entity.core.DecentralizationType.OnlyFriends
-            is com.minhtu.firesocialmedia.home.entity.core.DecentralizationType.Private ->
-                com.minhtu.firesocialmedia.profile.entity.core.DecentralizationType.Private
-        }
-    },
-    groupId = groupId,
-    type = type,
-    pollId = pollId
-)
-
+// Composition-root-only conversion from profile's local NewsInstance back to
+// home's canonical NewsInstance.
 private fun ProfileNewsInstance.toCoreNews(): NewsInstance = NewsInstance(
     id = id,
     posterId = posterId,
@@ -118,12 +86,6 @@ class ProfileNavGraphImpl : ProfileNavGraph {
                 onImagePicked = { uri -> userInformationViewModel.updateCover(uri) }
             )
             val isFriend = selectedUser?.friends?.contains(homeViewModel.currentUser?.uid) == true
-            val profileNewsFeed = remember { MutableStateFlow<List<ProfileNewsInstance>>(emptyList()) }
-            LaunchedEffect(homeViewModel.allNews) {
-                homeViewModel.allNews.collect { news ->
-                    profileNewsFeed.value = news.map { it.toProfileNews() }
-                }
-            }
             UserInformation.UserInformationScreen(
                 imagePicker = picker,
                 user = selectedUser?.searchUserToDto()?.toProfileUserDto()?.toProfileUser(),
@@ -131,7 +93,6 @@ class ProfileNavGraphImpl : ProfileNavGraph {
                 isFriend = isFriend,
                 paddingValues = paddingValues,
                 localImageLoaderValue = localImageLoaderValue,
-                newsFeed = profileNewsFeed,
                 userInformationViewModel = userInformationViewModel,
                 onNavigateToShowImageScreen = onNavigateToShowImageScreen,
                 onNavigateBack = {

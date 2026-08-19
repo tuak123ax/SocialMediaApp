@@ -1,6 +1,6 @@
 package com.minhtu.firesocialmedia.domain.usecases.signin
 
-import com.minhtu.firesocialmedia.auth.data.remote.dto.user.UserDTO
+import com.minhtu.firesocialmedia.data.remote.dto.user.UserDTO
 import com.minhtu.firesocialmedia.constants.auth.DataConstant
 import com.minhtu.firesocialmedia.data.remote.dto.settings.auth.IpInfoResponseDTO
 import com.minhtu.firesocialmedia.data.remote.service.database.AuthDatabaseService

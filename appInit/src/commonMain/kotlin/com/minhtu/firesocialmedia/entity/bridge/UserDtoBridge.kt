@@ -2,8 +2,8 @@ package com.minhtu.firesocialmedia.entity.bridge
 
 import com.minhtu.firesocialmedia.appinit.data.remote.dto.user.UserDTO
 import com.minhtu.firesocialmedia.home.data.remote.dto.user.UserDTO as HomeUserDTO
-import com.minhtu.firesocialmedia.auth.data.remote.dto.user.UserDTO as AuthUserDTO
-import com.minhtu.firesocialmedia.friend.data.remote.dto.user.UserDTO as FriendUserDTO
+import com.minhtu.firesocialmedia.data.remote.auth.dto.user.UserDTO as AuthUserDTO
+import com.minhtu.firesocialmedia.data.remote.dto.user.UserDTO as FriendUserDTO
 import com.minhtu.firesocialmedia.comment.data.remote.dto.user.UserDTO as CommentUserDTO
 import com.minhtu.firesocialmedia.notification.data.remote.dto.user.UserDTO as NotificationUserDTO
 import com.minhtu.firesocialmedia.profile.data.remote.dto.user.UserDTO as ProfileUserDTO

@@ -14,8 +14,8 @@ import com.google.firebase.auth.FirebaseAuthUserCollisionException
 import com.google.firebase.auth.FirebaseAuthWeakPasswordException
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.auth
-import com.minhtu.firesocialmedia.data.remote.service.auth.auth.AuthException
-import com.minhtu.firesocialmedia.data.remote.service.auth.AuthService
+import com.minhtu.firesocialmedia.data.remote.auth.service.auth.AuthService
+import com.minhtu.firesocialmedia.data.remote.auth.service.auth.auth.AuthException
 import com.minhtu.firesocialmedia.platform.logMessage
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.tasks.await

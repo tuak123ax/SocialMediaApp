@@ -4,7 +4,7 @@ import cocoapods.FirebaseDatabase.FIRDataEventType
 import cocoapods.FirebaseDatabase.FIRDatabase
 import cocoapods.FirebaseDatabase.FIRDatabaseReference
 import com.minhtu.firesocialmedia.constants.friend.DataConstant
-import com.minhtu.firesocialmedia.friend.data.remote.dto.user.UserDTO
+import com.minhtu.firesocialmedia.data.remote.dto.user.UserDTO
 import com.minhtu.firesocialmedia.ios.service.serviceimpl.database.friend.IosDatabaseHelper
 import com.minhtu.firesocialmedia.ios.service.serviceimpl.database.supabase.SupabaseStorageHelper
 import kotlinx.coroutines.suspendCancellableCoroutine

@@ -139,14 +139,27 @@ class HomeViewModel(
                     if(latestNewsResult != null) {
                         val freshNews = latestNewsResult.news
                         if(freshNews != null) {
+                            // Track whether this page actually contributed any post we didn't
+                            // already have. If the paging cursor (lastTimePosted/lastKey) ever
+                            // fails to advance - e.g. ties in timePosted - Firebase can keep
+                            // returning the same page forever: hasMoreData would stay true,
+                            // the scroll-triggered loadMoreNews() in Home.kt would keep firing,
+                            // and the "loading more" spinner would flash continuously even
+                            // though the user has genuinely reached the end. Guard against that
+                            // by treating a page with no new ids as the end of the data too.
+                            val existingIds = listNews.mapTo(HashSet()) { it.id }
+                            var addedNewItem = false
                             addNews(ArrayList(freshNews))
                             for (new in freshNews) {
-                                listNews.add(new)
+                                if (existingIds.add(new.id)) {
+                                    listNews.add(new)
+                                    addedNewItem = true
+                                }
                                 addLikeCountData(new.id, new.likeCount)
                                 addCommentCountData(new.id, new.commentCount)
                             }
                             _getAllNewsStatus.value = true
-                            if(latestNewsResult.lastTimePostedValue == null) {
+                            if(latestNewsResult.lastTimePostedValue == null || !addedNewItem) {
                                 hasMoreData.value = false
                             }
                             lastTimePosted = latestNewsResult.lastTimePostedValue
@@ -154,7 +167,17 @@ class HomeViewModel(
                             checkUsersInCacheAndGetMore()
                         }
                     } else {
+                        // A null result here means either a real fetch failure, or - just as
+                        // likely - LatestNewsDTO.toDomain() (HomeMapper.kt) discarding a
+                        // legitimate final page because its cursor fields came back null/blank
+                        // (e.g. a legacy post with a corrupted timePosted/id poisoning the
+                        // cursor). Either way, retrying the exact same (lastTimePosted, lastKey)
+                        // will just get the same null result again: without this, hasMoreData
+                        // stays true forever and the scroll-triggered loadMoreNews() in Home.kt
+                        // spins the "loading more" indicator in an infinite loop. Treat a null
+                        // result as "no more data" so pagination terminates.
                         _getAllNewsStatus.value = false
+                        hasMoreData.value = false
                     }
                 } finally {
                     isLoadingMore.value = false

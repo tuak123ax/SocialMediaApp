@@ -11,7 +11,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
 import com.minhtu.firesocialmedia.search.entity.user.UserInstance
 import com.minhtu.firesocialmedia.search.entity.user.toSearchUser
-import com.minhtu.firesocialmedia.friend.entity.user.toDto
+import com.minhtu.firesocialmedia.data.mapper.toDto
 import com.minhtu.firesocialmedia.entity.bridge.toAppInitUserDto
 import com.minhtu.firesocialmedia.presentation.friend.Friend
 import com.minhtu.firesocialmedia.presentation.home.HomeViewModel

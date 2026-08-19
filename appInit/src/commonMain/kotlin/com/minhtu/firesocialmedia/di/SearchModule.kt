@@ -21,7 +21,7 @@ fun searchModule() = module {
     factory { SearchUserByNameUseCase(get()) }
 
     viewModel { SearchViewModel() }
-    single { SessionViewModel(get(), get(), get()) }
+    single { SessionViewModel(get(), get(), get(), get()) }
 
     // Note: SearchNavGraph binding moved to appInit's own Koin module (Phase 3) —
     // it's a composition-root/cross-feature nav contract, not feature-owned infra.

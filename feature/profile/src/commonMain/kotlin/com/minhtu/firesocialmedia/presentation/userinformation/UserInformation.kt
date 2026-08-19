@@ -65,6 +65,7 @@ import com.minhtu.firesocialmedia.storage.profile.toStorageUrl
 import com.minhtu.firesocialmedia.data.remote.service.imagepicker.profile.ImagePicker
 import com.minhtu.firesocialmedia.platform.CommonBackHandler
 import com.minhtu.firesocialmedia.platform.getImageBytesFromDrawable
+import com.minhtu.firesocialmedia.platform.logMessage
 import com.minhtu.firesocialmedia.platform.showToast
 import com.minhtu.firesocialmedia.presentation.profile.SessionViewModel
 import com.minhtu.firesocialmedia.presentation.profile.EngagementViewModel
@@ -74,7 +75,6 @@ import com.minhtu.firesocialmedia.utils.profile.TitleBarUtils
 import com.minhtu.firesocialmedia.profile.utils.UiUtils
 import com.minhtu.firesocialmedia.utils.profile.FeedListUtils
 import com.seiko.imageloader.ui.AutoSizeImage
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
@@ -91,7 +91,6 @@ class UserInformation {
             isFriend : Boolean = false,
             paddingValues: PaddingValues,
             localImageLoaderValue : ProvidedValue<*>,
-            newsFeed: StateFlow<List<NewsInstance>>,
             sessionViewModel: SessionViewModel = koinInject(),
             engagementViewModel: EngagementViewModel = koinInject(),
             friendViewModel: ProfileFriendViewModel = koinInject(),
@@ -112,11 +111,11 @@ class UserInformation {
 
             val isLoading by loadingViewModel.isLoading.collectAsState()
             val coroutineScope = rememberCoroutineScope()
-            val newsList = newsFeed.collectAsState()
             val addFriendStatus by userInformationViewModel.addFriendStatus.collectAsState()
             var showBottomSheet by rememberSaveable { mutableStateOf(false) }
             var newToBeShared by remember { mutableStateOf<NewsInstance?>(null) }
             val fetchedUser by userInformationViewModel.fetchedUser.collectAsState()
+            val currentUser by sessionViewModel.currentUserState.collectAsState()
             var addFriendTimes by rememberSaveable { mutableStateOf(1) }
             var callButtonEnabled by remember { mutableStateOf(true) }
             var showCoverPhotoConfirmDialog by remember { mutableStateOf(false) }
@@ -133,24 +132,30 @@ class UserInformation {
                     userInformationViewModel.resetBackgroundUploadStatus()
                 }
             }
-            LaunchedEffect(Unit) {
+            LaunchedEffect(user, isCurrentUser) {
                 if(user != null) {
                     loadingViewModel.showLoading()
                     userInformationViewModel.fetchUserInformation(user.uid, isCurrentUser)
                 }
             }
-            LaunchedEffect(fetchedUser) {
-                if(fetchedUser != null) {
-                    loadingViewModel.hideLoading()
-                    val relationship =
-                        userInformationViewModel.checkRelationship(fetchedUser!!, sessionViewModel.currentUser!!)
-                    userInformationViewModel.updateRelationship(relationship)
-                }
+            LaunchedEffect(fetchedUser?.uid) {
+                val uid = fetchedUser?.uid ?: return@LaunchedEffect
+                logMessage("UserInformationScreen", { "fetchInitialUserNews for $uid" })
+                sessionViewModel.ensureUserLoaded(uid)
+                userInformationViewModel.fetchInitialUserNews(uid)
+            }
+            LaunchedEffect(fetchedUser, currentUser) {
+                val fetched = fetchedUser ?: return@LaunchedEffect
+                val loggedInUser = currentUser ?: return@LaunchedEffect
+                loadingViewModel.hideLoading()
+                val relationship = userInformationViewModel.checkRelationship(fetched, loggedInUser)
+                userInformationViewModel.updateRelationship(relationship)
             }
 
-            LaunchedEffect(Unit) {
-                friendViewModel.updateFriendRequests(sessionViewModel.currentUser!!.friendRequests)
-                friendViewModel.updateFriends(sessionViewModel.currentUser!!.friends)
+            LaunchedEffect(currentUser) {
+                val loggedInUser = currentUser ?: return@LaunchedEffect
+                friendViewModel.updateFriendRequests(loggedInUser.friendRequests)
+                friendViewModel.updateFriends(loggedInUser.friends)
             }
 
             val calleeCurrentState by userInformationViewModel.calleeCurrentState.collectAsState()
@@ -181,8 +186,8 @@ class UserInformation {
                 }
             }
 
-            LaunchedEffect(Unit) {
-                engagementViewModel.seedLikedPosts(sessionViewModel.currentUser)
+            LaunchedEffect(currentUser) {
+                engagementViewModel.seedLikedPosts(currentUser)
             }
 
             // Preserve scroll position across navigation/back stack using rememberSaveable
@@ -212,6 +217,17 @@ class UserInformation {
                             true
                         } else {
                             firstVisible == 0
+                        }
+                        // Trigger load more when near bottom
+                        val uid = fetchedUser?.uid
+                        if (
+                            uid != null &&
+                            firstVisible > 0 &&
+                            lastVisible >= totalItems - 3 &&
+                            !userInformationViewModel.isLoadingMoreUserNews &&
+                            userInformationViewModel.hasMoreUserNews
+                        ) {
+                            userInformationViewModel.loadMoreUserNews(uid)
                         }
                     }
             }
@@ -418,17 +434,22 @@ class UserInformation {
                                             var showMenu by remember { mutableStateOf(false) }
                                             Surface(
                                                 onClick = {
+                                                    val loggedInUser = currentUser
+                                                    val fetched = fetchedUser
+                                                    if (loggedInUser == null || fetched == null) {
+                                                        return@Surface
+                                                    }
                                                     coroutineScope.launch {
                                                         val networkStatus = userInformationViewModel.checkInternetConnection()
                                                         if (networkStatus) {
                                                             if (addFriendStatus != Relationship.WAITING_RESPONSE) {
-                                                                val relationship = userInformationViewModel.checkRelationship(fetchedUser!!, sessionViewModel.currentUser!!)
+                                                                val relationship = userInformationViewModel.checkRelationship(fetched, loggedInUser)
                                                                 userInformationViewModel.updateRelationship(relationship)
                                                                 if (relationship == Relationship.NONE && addFriendTimes <= 0) {
                                                                     showToast("You only can add friend once when you go to this page!!!")
                                                                 } else {
                                                                     addFriendTimes -= 1
-                                                                    userInformationViewModel.clickAddFriendButton(friend = fetchedUser, currentUser = sessionViewModel.currentUser)
+                                                                    userInformationViewModel.clickAddFriendButton(friend = fetched, currentUser = loggedInUser)
                                                                 }
                                                             } else {
                                                                 showMenu = true
@@ -456,7 +477,9 @@ class UserInformation {
                                                         style = MaterialTheme.typography.labelLarge,
                                                         maxLines = 1
                                                     )
-                                                    DropdownMenuForResponse(showMenu, friendViewModel, userInformationViewModel, fetchedUser!!, sessionViewModel.currentUser!!) { showMenu = false }
+                                                    currentUser?.let { loggedInUser ->
+                                                        DropdownMenuForResponse(showMenu, friendViewModel, userInformationViewModel, fetchedUser!!, loggedInUser) { showMenu = false }
+                                                    }
                                                 }
                                             }
                                         }
@@ -466,21 +489,42 @@ class UserInformation {
                         }
                     }
 
+                    val userNews by userInformationViewModel.userNews.collectAsState()
+
+                    // Home seeds EngagementViewModel's like/comment counts as soon as it fetches
+                    // each news item (see HomeViewModel.getLatestNews()). Since UserInformation now
+                    // fetches its own news independently instead of reusing Home's already-seeded
+                    // list, we must do the same seeding here, otherwise NewsCard's
+                    // likeCountList[news.id] ?: 0 / commentCountList[news.id] ?: 0 silently show 0.
+                    // Track already-seeded ids so a later recomposition (e.g. after loadMoreUserNews
+                    // appends a page) doesn't clobber local optimistic updates from clickLikeButton
+                    // or a comment count refreshed after returning from CommentScreen.
+                    val seededCountIds = remember { mutableSetOf<String>() }
+                    LaunchedEffect(userNews) {
+                        userNews.forEach { news ->
+                            if (seededCountIds.add(news.id)) {
+                                engagementViewModel.addLikeCountData(news.id, news.likeCount)
+                                engagementViewModel.addCommentCountData(news.id, news.commentCount)
+                            }
+                        }
+                    }
+
                     val filterList by remember {
                         derivedStateOf {
                             val user = fetchedUser ?: return@derivedStateOf emptyList()
 
-                            newsList.value
+                            userNews
                                 .filter { news ->
                                     news.posterId == user.uid
                                 }
                                 .filter { news ->
                                     when (news.decentralizationType) {
                                         DecentralizationType.Private ->
-                                            news.posterId == sessionViewModel.currentUser?.uid
+                                            news.posterId == currentUser?.uid
                                         else -> true
                                     }
                                 }
+                                .sortedByDescending { news -> news.timePosted }
                         }
                     }
 
@@ -498,7 +542,11 @@ class UserInformation {
                         showBottomSheet = { news ->
                             newToBeShared = news
                             showBottomSheet = true
-                        }
+                        },
+                        // This screen pages through userInformationViewModel (loadMoreUserNews),
+                        // not engagementViewModel, so pass its own loading flag through so the
+                        // three-dots loading row shows the same way it does on Home.
+                        isLoadingMore = userInformationViewModel.isLoadingMoreUserNews
                     )
                 }
                 // Cover photo change confirmation dialog

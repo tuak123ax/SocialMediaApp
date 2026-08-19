@@ -1,6 +1,6 @@
 package com.minhtu.firesocialmedia.data.remote.service.database
 
-import com.minhtu.firesocialmedia.friend.data.remote.dto.user.UserDTO
+import com.minhtu.firesocialmedia.data.remote.dto.user.UserDTO
 
 /**
  * feature/friend's own database service, holding only the User-related query it needs

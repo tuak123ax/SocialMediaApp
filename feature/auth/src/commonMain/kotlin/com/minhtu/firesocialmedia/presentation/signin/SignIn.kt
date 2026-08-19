@@ -49,22 +49,21 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.minhtu.firesocialmedia.constants.auth.TestTag
 import com.minhtu.firesocialmedia.constants.UiConstants
-import com.minhtu.firesocialmedia.core.constants.AuthRouteNames
+import com.minhtu.firesocialmedia.constants.AuthRouteNames
 import com.minhtu.firesocialmedia.domain.error.signin.SignInError
 import com.minhtu.firesocialmedia.platform.CommonBackHandler
 import com.minhtu.firesocialmedia.platform.CrossPlatformIcon
 import com.minhtu.firesocialmedia.platform.exitApp
 import com.minhtu.firesocialmedia.platform.showToast
 import com.minhtu.firesocialmedia.platform.toHex
-import com.minhtu.firesocialmedia.auth.presentation.loading.Loading
-import com.minhtu.firesocialmedia.auth.presentation.loading.LoadingViewModel
+import com.minhtu.firesocialmedia.presentation.loading.Loading
+import com.minhtu.firesocialmedia.presentation.loading.LoadingViewModel
 import com.minhtu.firesocialmedia.domain.entity.user.auth.UserInstance
-import com.minhtu.firesocialmedia.presentation.signin.SignInViewModel
 import org.koin.compose.viewmodel.koinViewModel
-import com.minhtu.firesocialmedia.auth.utils.UiUtils.Companion.IconAndTitle
-import com.minhtu.firesocialmedia.auth.utils.UiUtils.Companion.PasswordVisibilityIcon
-import com.minhtu.firesocialmedia.auth.utils.UiUtils.Companion.SubTitle
-import com.minhtu.firesocialmedia.auth.utils.UiUtils.Companion.TextFieldWithLeadingIcon
+import com.minhtu.firesocialmedia.utils.auth.UiUtils.Companion.IconAndTitle
+import com.minhtu.firesocialmedia.utils.auth.UiUtils.Companion.PasswordVisibilityIcon
+import com.minhtu.firesocialmedia.utils.auth.UiUtils.Companion.SubTitle
+import com.minhtu.firesocialmedia.utils.auth.UiUtils.Companion.TextFieldWithLeadingIcon
 
 class SignIn {
     companion object {
@@ -95,14 +94,15 @@ class SignIn {
 
             val signInStatus = signInViewModel.signInState.collectAsState()
             LaunchedEffect(signInStatus.value) {
-                loadingViewModel.hideLoading()
                 if (signInStatus.value.signInStatus) {
                     if (signInStatus.value.error == SignInError.AccountNotExist) {
+                        loadingViewModel.hideLoading()
                         onNavigateToInformationScreen()
                     } else {
                         signInViewModel.check2FAStatus()
                     }
                 } else {
+                    loadingViewModel.hideLoading()
                     when (signInStatus.value.error) {
                         SignInError.DataEmpty -> showToast(UiConstants.SignIn.Error.DATA_EMPTY)
                         SignInError.InvalidCredentials -> showToast(UiConstants.SignIn.Error.INVALID_CREDENTIALS)
@@ -125,6 +125,7 @@ class SignIn {
             LaunchedEffect(check2FAStatus) {
                 if (check2FAStatus != null) {
                     signInViewModel.currentUser.value?.let { onUserSignedIn(it) }
+                    loadingViewModel.hideLoading()
                     if (check2FAStatus!!) {
                         onNavigateToVerifyOTP()
                     } else {

@@ -88,7 +88,6 @@ class PersonalInformation {
 
             // Register image picker launcher — when an image is picked, store URI and trigger upload
             imagePicker.RegisterLauncher {
-                // hideLoading no-op here; loading is handled by ViewModel
             }
 
             val isLoading by personalInformationViewModel.isLoading.collectAsState()
@@ -97,7 +96,7 @@ class PersonalInformation {
             val fetchedUser by personalInformationViewModel.fetchedUser.collectAsState()
 
             // Use freshly fetched data if available, otherwise fall back to passed-in currentUser
-            val user = fetchedUser ?: currentUser
+            val userToUse = fetchedUser ?: currentUser
 
             // Trigger fetch on first entry
             LaunchedEffect(Unit) {
@@ -105,12 +104,12 @@ class PersonalInformation {
             }
 
             // Editable field states — update when fresh data arrives
-            var name by remember { mutableStateOf(currentUser.name) }
-            var status by remember { mutableStateOf(currentUser.status) }
-            var phone by remember { mutableStateOf(currentUser.phone) }
+            var name by remember { mutableStateOf(userToUse.name) }
+            var status by remember { mutableStateOf(userToUse.status) }
+            var phone by remember { mutableStateOf(userToUse.phone) }
 
-            LaunchedEffect(fetchedUser) {
-                fetchedUser?.let {
+            LaunchedEffect(userToUse) {
+                userToUse.let {
                     name = it.name
                     status = it.status
                     phone = it.phone
@@ -205,7 +204,7 @@ class PersonalInformation {
                                 } else if (uploadedAvatarUri != null) {
                                     // Show the just-uploaded image from local URI (no refetch needed)
                                     val imageBytes = produceState<ByteArray?>(initialValue = null, uploadedAvatarUri) {
-                                        value = imagePicker.loadImageBytes(uploadedAvatarUri!!)
+                                        value = imagePicker.loadImageBytes(uploadedAvatarUri)
                                     }
                                     imagePicker.ByteArrayImage(
                                         imageBytes.value,
@@ -215,7 +214,7 @@ class PersonalInformation {
                                             .border(2.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape)
                                     )
                                 } else {
-                                    val avatarUrl = user.image.toStorageUrl()
+                                    val avatarUrl = userToUse.image.toStorageUrl()
                                     if (avatarUrl.isNotBlank()) {
                                         CompositionLocalProvider(localImageLoaderValue) {
                                             AutoSizeImage(
@@ -278,7 +277,7 @@ class PersonalInformation {
 
                             Spacer(modifier = Modifier.height(12.dp))
                             Text(
-                                text = name.ifBlank { currentUser.name },
+                                text = name.ifBlank { userToUse.name },
                                 style = MaterialTheme.typography.titleLarge,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onBackground
@@ -314,7 +313,7 @@ class PersonalInformation {
                                 PersonalInfoRow(
                                     icon = Icons.Default.Email,
                                     label = "Email",
-                                    value = user.email.ifBlank { "—" },
+                                    value = userToUse.email.ifBlank { "—" },
                                     onEdit = null  // email is read-only
                                 )
                                 Divider(
@@ -374,7 +373,7 @@ class PersonalInformation {
                 confirmButton = {
                     Button(onClick = {
                         showAvatarConfirmDialog = false
-                        personalInformationViewModel.updateAvatar(currentUser.uid)
+                        personalInformationViewModel.updateAvatar(userToUse.uid)
                     }) {
                         Text("Update")
                     }
@@ -396,9 +395,9 @@ class PersonalInformation {
                     onConfirm = { password ->
                         showPasswordVerifyDialog = false
                         personalInformationViewModel.reAuthAndUpdatePhone(
-                            currentUser.email,
+                            userToUse.email,
                             password,
-                            currentUser.uid,
+                            userToUse.uid,
                             pendingPhone
                         )
                     },
@@ -456,7 +455,7 @@ class PersonalInformation {
                                     when (field) {
                                         "name" -> {
                                             name = trimmed
-                                            personalInformationViewModel.updateName(currentUser.uid, trimmed)
+                                            personalInformationViewModel.updateName(userToUse.uid, trimmed)
                                             editingField = null
                                         }
                                         "phone" -> {
@@ -467,7 +466,7 @@ class PersonalInformation {
                                         }
                                         else -> {
                                             status = trimmed
-                                            personalInformationViewModel.updateStatus(currentUser.uid, trimmed)
+                                            personalInformationViewModel.updateStatus(userToUse.uid, trimmed)
                                             editingField = null
                                         }
                                     }
