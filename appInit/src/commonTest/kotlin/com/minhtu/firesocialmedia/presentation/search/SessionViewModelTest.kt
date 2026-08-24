@@ -1,10 +1,13 @@
 package com.minhtu.firesocialmedia.presentation.search
 
 import com.minhtu.firesocialmedia.appinit.data.remote.dto.user.UserDTO
+import com.minhtu.firesocialmedia.domain.entity.home.LatestNewsResult
+import com.minhtu.firesocialmedia.domain.interactor.home.NewsInteractor
 import com.minhtu.firesocialmedia.domain.repository.appinit.UserRepository
 import com.minhtu.firesocialmedia.domain.usecases.common.appinit.GetCurrentUserUidUseCase
 import com.minhtu.firesocialmedia.domain.usecases.common.appinit.GetUserUseCase
 import com.minhtu.firesocialmedia.domain.usecases.common.appinit.SearchUserByNameUseCase
+import com.minhtu.firesocialmedia.home.entity.news.NewsInstance
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -34,6 +37,17 @@ private class FakeUserRepository(
     override suspend fun searchUserByName(name: String): List<UserDTO>? = searchResults
 }
 
+private class FakeNewsInteractor : NewsInteractor {
+    override suspend fun pageLatest(number: Int, lastTimePosted: Double?, lastKey: String?): LatestNewsResult? = null
+    override suspend fun like(id: String, value: Int) {}
+    override suspend fun unlike(id: String, value: Int) {}
+    override suspend fun delete(new: NewsInstance) {}
+    override suspend fun deletePoll(newsId: String, pollId: String, groupId: String): Boolean = true
+    override suspend fun storeNewsToRoom(news: List<NewsInstance>) {}
+    override suspend fun saveNews(news: NewsInstance): Boolean = true
+    override suspend fun findNewById(newsId: String): NewsInstance? = null
+}
+
 @OptIn(ExperimentalCoroutinesApi::class)
 class SessionViewModelTest {
 
@@ -41,7 +55,8 @@ class SessionViewModelTest {
         return SessionViewModel(
             getUserUseCase = GetUserUseCase(repo),
             getCurrentUserUidUseCase = GetCurrentUserUidUseCase(repo),
-            searchUserByNameUseCase = SearchUserByNameUseCase(repo)
+            searchUserByNameUseCase = SearchUserByNameUseCase(repo),
+            newsInteractor = FakeNewsInteractor()
         )
     }
 

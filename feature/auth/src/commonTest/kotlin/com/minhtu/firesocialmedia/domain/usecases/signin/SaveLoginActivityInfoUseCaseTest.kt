@@ -1,9 +1,9 @@
 package com.minhtu.firesocialmedia.domain.usecases.signin
 
-import com.minhtu.firesocialmedia.data.remote.dto.user.UserDTO
+import com.minhtu.firesocialmedia.data.remote.auth.dto.user.UserDTO
 import com.minhtu.firesocialmedia.constants.auth.DataConstant
-import com.minhtu.firesocialmedia.data.remote.dto.settings.auth.IpInfoResponseDTO
-import com.minhtu.firesocialmedia.data.remote.service.database.AuthDatabaseService
+import com.minhtu.firesocialmedia.data.remote.auth.dto.settings.auth.IpInfoResponseDTO
+import com.minhtu.firesocialmedia.data.remote.auth.service.database.AuthDatabaseService
 import com.minhtu.firesocialmedia.testutil.fakeIpInfoRemoteDataSource
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
