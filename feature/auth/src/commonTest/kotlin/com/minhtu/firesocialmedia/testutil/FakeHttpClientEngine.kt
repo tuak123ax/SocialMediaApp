@@ -1,6 +1,6 @@
 package com.minhtu.firesocialmedia.testutil
 
-import com.minhtu.firesocialmedia.data.remote.service.security.IpInfoRemoteDataSource
+import com.minhtu.firesocialmedia.data.remote.auth.service.security.IpInfoRemoteDataSource
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.HttpClientEngineBase
 import io.ktor.client.engine.HttpClientEngineConfig

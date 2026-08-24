@@ -59,12 +59,8 @@ jobs:
 
       - name: Run unit tests
         run: |
-          echo "Start running unit tests"
-          echo "Running unit tests for shared module"
-          ./gradlew :shared:testDebugUnitTest --no-daemon
-
-          echo "Running unit tests for android app (skip kapt to avoid processor errors)"
-          ./gradlew :Fire_Social_Media:testDebugUnitTest \
+          echo "Running unit tests for all modules (skip kapt on Fire_Social_Media to avoid processor errors)"
+          ./gradlew testDebugUnitTest \
             -x :Fire_Social_Media:kaptDebugKotlin \
             -x :Fire_Social_Media:kaptDebugUnitTestKotlin \
             -x :Fire_Social_Media:kaptGenerateStubsDebugKotlin \
